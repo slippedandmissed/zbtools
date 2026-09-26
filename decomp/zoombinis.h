@@ -133,6 +133,14 @@ struct InputState
     short unknown2E;
 };
 
+/* A scene (a puzzle or screen) of the game; only its frame function is known. */
+struct Scene
+{
+    long unknown0;
+    long unknown4;
+    Callback frame; /* called every pass of the main loop (gameFrame) */
+};
+
 /* The display mode WinMain asks for (640x480, 256 colours). */
 struct DisplayMode
 {
@@ -266,6 +274,7 @@ extern time_t g_4a07b8;
 extern Callback g_4a07c4;
 extern Callback g_4a07e8;
 extern long g_4a07ec;
+extern Scene *scenes[]; /* @data 0x4a26e8 */
 extern short g_4a3e5c; /* set when the game data is found in INSTALLFROMDIR */
 extern char installFromDirKey[]; /* @data 0x4a3f06 */
 extern char dataDirName[]; /* @data 0x4a3f15 */
@@ -273,6 +282,8 @@ extern char installToDirKey[]; /* @data 0x4a3f1b */
 extern char userFileName[]; /* @data 0x4a4900 */
 extern char rosterFileName[]; /* @data 0x4a4920 */
 extern short aboveWindows311; /* @data 0x4a494a */
+extern short g_4a4974;
+extern short g_4a4976[12];
 extern long g_4a4a00;
 extern HWND mainWindow; /* @data 0x4a4a04 */
 extern char *appName; /* @data 0x4a4a08 */
@@ -345,6 +356,7 @@ extern Event eventQueue[32]; /* @data 0x4aa5da */
 extern short eventHead; /* @data 0x4aa79a */
 extern short eventTail; /* @data 0x4aa79c */
 extern long g_4aa7a4;
+extern long g_4aa7c8;
 extern short g_4aa7cc;
 extern long g_4aafe8;
 extern short bitsPerPixel; /* @data 0x4aafec */
@@ -358,7 +370,7 @@ extern short g_4af350;
 extern short g_4af35a;
 extern short g_4afb90;
 extern short g_4aff9a[];
-extern short g_4b0d4e;
+extern short currentScene; /* @data 0x4b0d4e */
 extern short g_4b0d50;
 extern short g_4b0d52;
 extern short g_4b0d54;
@@ -371,6 +383,7 @@ extern unsigned short instanceAtom; /* @data 0x4b2ae0 */
 extern short quickTimeReady; /* @data 0x4b2ae8 */
 extern short g_4b2aea;
 extern short g_4b2aec;
+extern short g_4b2aee;
 extern HINSTANCE appInstance; /* @data 0x4b2af0 */
 extern HINSTANCE appPreviousInstance; /* @data 0x4b2af4 */
 extern char *appCommandLine; /* @data 0x4b2af8 */
@@ -398,6 +411,7 @@ extern long g_4b7b68;
 extern long cursors[6]; /* @data 0x4b80ac */
 extern short g_4b80c4[6];
 extern short g_4b80d2;
+extern unsigned long g_4b80d4;
 extern unsigned long g_4b80d8;
 extern unsigned long g_4b80dc;
 extern short g_4b80e0; /* ends the main loop when set */
@@ -446,8 +460,9 @@ void fn_41f6fc(long);
 void fn_44695c();
 void fn_454c8e();
 void fn_454caa();
-void fn_454f61();
 void fn_455f66();
+void fn_455023(short);
+void fn_46251c(long);
 LRESULT CALLBACK fn_45605e(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
 void fn_456914();
 void fn_4625b8();
@@ -624,6 +639,7 @@ void fn_446962(char *, const char *);
 void findGameData();
 short preferFirstFile(const char *first, const char *fallback);
 void __cdecl fn_454ca4();
+void gameFrame();
 void mainLoopEvents();
 void checkDisplayMode(DisplayMode *mode);
 void handleWaitingMessage();

@@ -115,6 +115,7 @@
 0x00446969 findGameData
 0x00446b48 preferFirstFile
 0x00454ca4 fn_454ca4
+0x00454f61 gameFrame
 0x00455013 fn_455013
 0x00455530 checkDisplayMode
 0x004556aa createMainWindow

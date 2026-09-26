@@ -8,6 +8,37 @@
 #include <string.h>
 #include "zoombinis.h"
 
+/*
+ * The game's part of each pass of the main loop (WinMain registers it with
+ * fn_415604; mainLoopEvents calls it): runs the current scene's frame
+ * function, and every 12 ticks steps through g_4a4976 (fn_46251c; an
+ * animated cursor?).
+ */
+/* @zoombi32 0x00454f61 */
+void gameFrame()
+{
+    if (currentScene != -1 && scenes[currentScene]->frame) {
+        long saved = getPort();
+        setPort(g_4aa7c8);
+        scenes[currentScene]->frame();
+        setPort(saved);
+    }
+    if (g_4a4974)
+        fn_455023(1);
+    else
+        fn_455023(0);
+    if (g_4b80d2 >= 1) {
+        unsigned long now = fn_41571f();
+        if (now >= g_4b80d4) {
+            g_4b80d4 = now + 12;
+            if (g_4b2aee >= 12)
+                g_4b2aee = 0;
+            fn_46251c(g_4a4976[g_4b2aee]);
+            g_4b2aee++;
+        }
+    }
+}
+
 /* @zoombi32 0x00455013 */
 long fn_455013(long, long)
 {
@@ -76,7 +107,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     g_4aa428 = 0;
     g_4a4a0c = 1;
     g_4aa7cc = 0;
-    fn_415604(fn_454f61);
+    fn_415604(gameFrame);
     fn_4153b0(fn_454caa);
     fn_415a11(fn_44695c);
     fn_456a2f(fn_4625b8);
@@ -144,7 +175,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     g_4b0d52 = 0;
     g_4b0d56 = -1;
     g_4b0d54 = -1;
-    g_4b0d4e = -1;
+    currentScene = -1;
     fn_46310c();
     fn_456c67(1);
 
