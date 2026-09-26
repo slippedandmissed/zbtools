@@ -110,7 +110,7 @@ The game's code is reproduced by BCC32 with **`-p`** (the Pascal calling convent
 
 - Four functions match byte for byte with the defaults, including two with loops, register-allocated locals and hoisted addresses (`fn_4572bf`, `fn_437390`); what looks like optimisation in the game (registers for locals, rotated loops, no stack frame for argument-less functions) is BCC32's default code generation.
 - `-O1` and `-O2` break two and three of them respectively; `-r-` (no register variables) breaks two.
-- The CPU target (`-3`/`-4`/`-5`), `-a4` and `-k-` don't change these functions, so they aren't pinned down; the defaults are assumed. A structure with a pointer at the unaligned offset `0xe` (in `fn_4115f5`) fits the default byte alignment.
+- The CPU target (`-3`/`-4`/`-5`) and `-a4` don't change these functions, so they aren't pinned down (`-k-` is, below); the defaults are assumed. A structure with a pointer at the unaligned offset `0xe` (in `fn_4115f5`) fits the default byte alignment.
 - 4.5 and 4.52 produce identical code, with the same settings, for the game functions and for test code with floating point, division and a `switch`. 4.52's one addition is `-fp` (the Pentium FDIV workaround; 4.5 rejects the option), and the game contains none of its support code.
 
 Details that depend on how the source is written, found while matching:
