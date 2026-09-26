@@ -134,7 +134,7 @@ void fn_46be2e(long value)
 
 ```sh
 uv run match                      # check every marked function in decomp/
-uv run match decomp/winmain.cpp -r 4.5 --flags "-O2"   # one file, one release, extra BCC32 options
+uv run match decomp/platform.cpp -r 4.5 --flags "-O2"   # one file, one release, extra BCC32 options
 ```
 
 Functions are named for what they do once that's clear (`isMousePresent`), and after their address until then (`fn_46be2e`; globals `g_4a7f58`); the marker keeps the address either way. Rerun `uv run ghidra label` after renaming to carry the names into Ghidra.

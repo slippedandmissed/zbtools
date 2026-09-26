@@ -138,12 +138,12 @@ note = "'INSTALLFROMDIR'"
 [[module]]
 start = 0x44b550
 name = "game"
-note = "cheats ('Cheat on ', 'You have entered the psychedelic ZB Zone!'), memory statistics"
+note = "WinMain (0x4546f8); cheats ('Cheat on ', 'You have entered the psychedelic ZB Zone!'), memory statistics"
 
 [[module]]
 start = 0x455530
-name = "winmain"
-note = "PeekMessageA, LoadIconA; 'Invalid display mode.', '256 colors'"
+name = "platform"
+note = "the Windows layer: the window class and procedure (0x45605e), the message loop (PeekMessageA, GetMessageA), keyboard and cursor; 'Invalid display mode.', '256 colors'"
 
 [[module]]
 start = 0x456c00

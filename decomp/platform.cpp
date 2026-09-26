@@ -1,5 +1,6 @@
 /*
- * winmain (0x455530-0x456c00): PeekMessageA, LoadIconA; 'Invalid display mode.', '256 colors'
+ * platform (0x455530-0x456c00): the Windows layer: the window class and procedure
+ * (0x45605e), the message loop (PeekMessageA, GetMessageA), keyboard and cursor
  */
 
 #include <windows.h>
