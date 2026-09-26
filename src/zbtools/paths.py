@@ -7,11 +7,23 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO_ROOT / "data"
 GAME_ISO = DATA_DIR / "Logical Journey of the Zoombinis.iso"
 WINDOWS_ISO = DATA_DIR / "Windows 98 Second Edition.iso"
+# Borland C++ CDs, by release. The game was built with 4.5 or 4.52.
+BORLAND_ISOS = {
+    "4.5": DATA_DIR / "Borland C++ 4.5.iso",
+    "4.52": DATA_DIR / "Borland C++ 4.52.iso",
+}
 ENV_FILE = REPO_ROOT / ".env"
 
 BUILD_DIR = REPO_ROOT / "build"
 DISC_DIR = BUILD_DIR / "disc"
 GAME32_DIR = BUILD_DIR / "zoombi32"
+
+# Borland C++ BIN, LIB and INCLUDE, one directory per release.
+TOOLCHAIN_DIR = BUILD_DIR / "toolchain"
+# Wine: the downloaded build (macOS only) and the prefix the compilers run in.
+WINE_DIR = BUILD_DIR / "wine"
+WINE_DIST = WINE_DIR / "dist"
+WINE_PREFIX = WINE_DIR / "prefix"
 
 VM_DIR = BUILD_DIR / "vm"
 # Pristine Windows 98 install, written once by `vm install` and never modified.
@@ -57,9 +69,11 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "vm-game": [WIN98_GAME, WIN98_OVERLAY],
     "vm-base": [WIN98_BASE, "vm-game"],
     "vm": ["vm-base", "vm-state"],
+    "toolchain": [TOOLCHAIN_DIR, WINE_PREFIX],
+    "wine": [WINE_DIR],
     "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
     # The whole build/ directory, so stray files can't survive a full clean.
     "all": [BUILD_DIR, "python"],
 }
 # What `uv run clean` removes with no arguments: everything cheap to rebuild.
-CLEAN_DEFAULT: list[str] = ["extracted", "vm-state", "python"]
+CLEAN_DEFAULT: list[str] = ["extracted", "vm-state", "toolchain", "python"]

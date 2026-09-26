@@ -17,8 +17,10 @@ Supported hosts: macOS on Apple Silicon (tested) and Linux (should work, unteste
 - [uv](https://docs.astral.sh/uv/) for the Python tooling
 - [QEMU](https://www.qemu.org/) for the Windows 98 VM: `brew install qemu` on macOS; `qemu-system-x86` and `qemu-utils` (Debian/Ubuntu) or `qemu-system-x86` and `qemu-img` (Fedora) on Linux
 - [mtools](https://www.gnu.org/software/mtools/) for editing the setup floppy image: `brew install mtools`, or the `mtools` package on Linux
+- [7-Zip](https://www.7-zip.org/) for reading the Borland C++ CDs: `brew install sevenzip`, or the `7zip` package on Linux
+- Wine, to run the Borland compiler: on macOS the tools download a pinned build into `build/wine/` themselves (it needs [Rosetta 2](https://support.apple.com/en-us/102527)); on Linux, install the `wine` package
 
-The tools tell you if QEMU or mtools is missing and how to install it.
+The tools tell you if anything is missing and how to install it.
 - Your own copies of the game and Windows 98 SE (see below)
 
 ### Bring-your-own files
@@ -29,6 +31,7 @@ No game files or Windows media are committed to this repository; you need your o
 | --- | --- |
 | `data/Logical Journey of the Zoombinis.iso` | The game CD, e.g. from [the Internet Archive](https://archive.org/details/logical-journey-of-the-zoombinis) |
 | `data/Windows 98 Second Edition.iso` | Windows 98 SE install CD, for the emulated PC |
+| `data/Borland C++ 4.5.iso` and/or `data/Borland C++ 4.52.iso` | Borland C++ CDs, for the compiler the game was built with (4.5 or 4.52; see `docs/findings.md`) |
 
 Then create a gitignored `.env` file in the repo root with your Windows product key:
 
@@ -76,6 +79,21 @@ To play, type `zoombi32` in the Start menu's Run box.
 
 The VM's disk is a stack of read-only layers: the Windows install (`build/vm/win98-base.qcow2`), then QuickTime and the game (`build/vm/win98-game.qcow2`). The VM runs from a throwaway copy-on-write overlay on top (`build/vm/win98.qcow2`), so `vm reset` gets you back to a freshly installed game in seconds. `--force` redoes either install.
 
+### Borland C++ toolchain
+
+```sh
+uv run toolchain setup
+```
+
+Copies the compiler, linker, libraries and headers from each Borland C++ CD in `data/` into `build/toolchain/<release>/`, then compiles, links and runs a test program with each release under Wine. The first run downloads Wine on macOS (~180 MB). After that:
+
+```sh
+uv run toolchain check                       # re-run the test program with each release
+uv run toolchain run 4.5 BCC32 -c foo.c      # run any Borland tool, in the current directory
+```
+
+Under Wine, release 4.5 is drive `T:` and 4.52 is drive `U:` (e.g. `T:\BC45\INCLUDE`); host files are on `Z:`.
+
 ### Cleaning up
 
 ```sh
@@ -91,10 +109,12 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `vm-game` | the QuickTime and game install (and the overlay on it) | `uv run vm install-game` (1 min) |
 | `vm-base` | the Windows 98 install (and everything layered on it) | `uv run vm install` (30-60 min) |
 | `vm` | all of the above | |
+| `toolchain` | the extracted Borland toolchains and the Wine prefix | `uv run toolchain setup` |
+| `wine` | the downloaded Wine build (macOS) and the Wine prefix | `uv run toolchain setup` (downloads ~180 MB) |
 | `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
 | `all` | all of the above plus anything else in `build/` | |
 
-With no arguments it removes `extracted`, `vm-state` and `python`: everything that's cheap to rebuild, keeping the Windows install. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
+With no arguments it removes `extracted`, `vm-state`, `toolchain` and `python`: everything that's cheap to rebuild, keeping the VM installs and the Wine download. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
 
 ## Development
 
@@ -144,7 +164,8 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [ ] Game verified playable in the VM (sound, music, movies)
 - [ ] Mohawk archive lister / extractor
 - [ ] Ghidra project with imports and runtime functions labeled
-- [ ] Borland C++ toolchain + object diff tool
+- [x] Borland C++ 4.5 and 4.52 toolchains running under Wine (`uv run toolchain`)
+- [ ] Object diff tool; settle 4.5 vs 4.52 and the compiler flags
 - [ ] First decompiled function
 
 ## Legal

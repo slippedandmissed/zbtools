@@ -19,6 +19,7 @@ clean = "zbtools.clean:app"
 lint = "zbtools.lint:app"
 extract-game = "zbtools.extract_game:app"
 vm = "zbtools.vm:app"
+toolchain = "zbtools.toolchain:app"
 unpack-isz = "zbtools.unpack_isz:app"
 
 [build-system]

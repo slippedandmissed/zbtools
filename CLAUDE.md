@@ -16,7 +16,7 @@ Decompilation of *Logical Journey of the Zoombinis* (Broderbund, 1996, Windows r
 - **Reproducibility:** every setup step a developer needs after cloning must be committed or performed by a script. The only manual inputs are bring-your-own files (the game in `data/`, Windows install media). Exploratory work is fine, but always finish by folding it into a script and documenting it in the README's Setup section.
 - **Legal:** `data/` is gitignored and holds the user's ISOs (game disc and Windows 98 SE, default names in `src/zbtools/paths.py`); `.env` holds their Windows product key (`WINDOWS_PRODUCT_KEY`). Never commit game files, extracted assets, Windows media, or large verbatim disassembly of the original binaries.
 - Treat `data/` as read-only. Write extracted or derived output to the gitignored `build/` directory.
-- Host platform: macOS on Apple Silicon. Rosetta 2 cannot run 16-bit Windows code, so Wine cannot run the game (the QuickTime installer needs 16-bit code); use the emulated VM instead.
+- Host platform: macOS on Apple Silicon. Rosetta 2 cannot run 16-bit Windows code, so Wine cannot run the game (the QuickTime installer needs 16-bit code); use the emulated VM instead. Wine *is* used for the 32-bit Borland command-line tools (`uv run toolchain`).
 
 ## Layout
 
@@ -25,6 +25,7 @@ Decompilation of *Logical Journey of the Zoombinis* (Broderbund, 1996, Windows r
 - `build/`: gitignored output (`build/disc/` = disc contents, `build/zoombi32/` = Windows 95 build, `build/vm/` = VM disks).
 - `src/zbtools/host.py`: the only place that knows about the host OS (binary locations and install hints, QEMU display/audio backends). Route any new host-specific behaviour through it.
 - `src/zbtools/vm.py`: `uv run vm`. `install` builds a read-only Windows base disk (unattended Windows 98 SE setup driven by a customized boot floppy + MSBATCH.INF); `install-game` layers QuickTime and the game on it; `run` boots a throwaway qcow2 overlay on top; `reset` discards the overlay. VM automation (watching the screen, typing) goes through QMP with `qemu.qmp`.
+- `src/zbtools/toolchain.py`: `uv run toolchain`. Extracts `BC45/{BIN,LIB,INCLUDE}` from each Borland CD (with 7-Zip) into `build/toolchain/<release>/`, maps each release to a Wine drive (4.5 = `T:`, 4.52 = `U:`, host root = `Z:`) and rewrites its BCC32.CFG/TLINK32.CFG to match; runs tools under Wine with the release's `BIN` on the Windows PATH (BCC32 finds TLINK32 via PATH). Borland `.OBJ` files embed timestamps and include paths in COMENT records, so object comparisons must ignore those.
 - `src/zbtools/game_install.py`: builds the "tools CD" that `install-game` runs inside the VM. `src/zbtools/screen.py`: recognisers for Windows screens (logon prompt, idle desktop).
 - `docs/findings.md`: confirmed facts about the game and its installer, with the evidence (addresses, strings, experiments).
 - **Keep `uv run clean` up to date:** it deletes by category, from `paths.CLEAN_CATEGORIES`. Every path a tool generates must belong to a category (categories may include other categories by name); add new ones there, and to `CLEAN_DEFAULT` if they're cheap to rebuild. Keep the README's cleaning table in sync.
