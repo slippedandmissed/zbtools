@@ -6,7 +6,8 @@ a 4-byte boundary, so where a function is followed by 1-3 zero bytes up to an
 aligned address, a module ends. (A module whose code is already aligned shows
 no padding.) For each range of the map, this prints its size, whether its start
 is confirmed by padding, the strings its code refers to and the imported
-functions it calls, and it lists padding the map doesn't account for yet.
+functions it calls, and it lists padding the map doesn't account for yet and
+decompiled functions that aren't in their module's file (decomp/<module>.cpp).
 """
 
 import bisect
@@ -17,7 +18,7 @@ from dataclasses import dataclass
 import typer
 from pydantic import BaseModel, ConfigDict
 
-from zbtools import ghidra, paths, runtime_symbols
+from zbtools import ghidra, match, paths, runtime_symbols
 from zbtools.exe import Executable, disassemble
 
 MODULES = paths.DECOMP_DIR / "modules.toml"
@@ -141,3 +142,10 @@ def main() -> None:
     if unmapped:
         where = ", ".join(f"{a:#x}" for a in unmapped)
         print(f"\nPadding (a module end) not in {MODULES.name}: {where}")
+    module_map = ModuleMap(module=modules)
+    for source in match.decomp_sources():
+        for target in match.find_targets(source.read_text()):
+            owner = module_map.of(target.address)
+            if owner and owner.name != source.stem:
+                where = f"{target.name} ({target.address:#x}) is in {source.name}"
+                print(f"{where}, not {owner.name}.cpp")

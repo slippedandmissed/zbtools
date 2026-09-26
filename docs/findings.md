@@ -55,7 +55,7 @@ So the game's runtime code is consistent with either release. The remaining test
 
 ## First matched functions
 
-`decomp/first.c`: `fn_46be2e` (stores its argument in the global at `0x4a7f58`) and `fn_455e85` (returns 0, ignoring two arguments). Both match byte for byte with BCC32's default options under both 4.5 and 4.52, so they don't distinguish the releases or flags.
+The first matches (then in `decomp/first.c`): `fn_46be2e` (stores its argument in the global at `0x4a7f58`) and `fn_455e85` (returns 0, ignoring two arguments). Both match byte for byte with BCC32's default options under both 4.5 and 4.52, so they don't distinguish the releases or flags.
 
 ## Ghidra's view of zoombi32.exe
 
@@ -135,7 +135,7 @@ Ghidra's 32-bit x86 support has no `__pascal` convention, so `ghidra label` mark
 
 `-k-` only shows in functions that make calls but have no parameters and no stack locals: without it they get a `push ebp` / `mov ebp, esp` frame; with it they don't. Functions with parameters (used or not) or stack locals get a frame either way, which is why it didn't show in the earlier tests.
 
-`isMousePresent` (`0x455903`) (wraps `GetSystemMetrics(SM_MOUSEPRESENT)`) has no frame and matches only with `-k-`; `currentTimeMs` (`0x46dda5`) (wraps `timeGetTime()`) has one and matches only without. Counting the functions that make calls but never touch a parameter or stack local: in the game's own code 166 have no frame and 23 have one (callbacks that take a parameter they don't use); in the support library from `0x46d754` to the runtime (`0x46f7a4`), the stretch holding the `fileSpec` and threading classes, all 14 have one. (The QuickTime glue in between, below, is Apple's code and doesn't count.) So that support library was compiled with frames and the rest of the game with `-k-`. Decompiled functions from that range go in `decomp/support.cpp`, which sets `/* @flags -p */`.
+`isMousePresent` (`0x455903`) (wraps `GetSystemMetrics(SM_MOUSEPRESENT)`) has no frame and matches only with `-k-`; `currentTimeMs` (`0x46dda5`) (wraps `timeGetTime()`) has one and matches only without. Counting the functions that make calls but never touch a parameter or stack local: in the game's own code 166 have no frame and 23 have one (callbacks that take a parameter they don't use); in the support library from `0x46d754` to the runtime (`0x46f7a4`), the stretch holding the `fileSpec` and threading classes, all 14 have one. (The QuickTime glue in between, below, is Apple's code and doesn't count.) So that support library was compiled with frames and the rest of the game with `-k-`. Its modules (`decomp/os_*.cpp`) set `/* @flags -p */`.
 
 The game was evidently built with per-module options (as an IDE project allows), so other modules may turn out to differ too.
 
@@ -157,7 +157,7 @@ BCC32 compiles a `switch` to `jmp dword ptr [reg*4 + table]` with the table righ
 
 BCC32 only compiles inline `asm` with TASM32, which isn't part of Borland C++ 4.5, so functions that can't come from C++ are listed here as they turn up. So few have that `__emit__` covers them for now.
 
-- `0x46dabb`, `0x46da9d`, `0x46daac`: `lock inc`, `lock dec`, `xchg` (matched with `__emit__`, in `decomp/support.cpp`).
+- `0x46dabb`, `0x46da9d`, `0x46daac`: `lock inc`, `lock dec`, `xchg` (matched with `__emit__`, in `decomp/os_manager.cpp`).
 - `0x46db83`: an `int3` mid-function (not reproduced; see above).
 - `0x46f6f9`: a `longjmp`-style unwinder that restores `ebp` and `esp` and jumps (support library; may be unidentified runtime code).
 - `0x46f771`: walks `depth` stack frames up with a hand-written loop (matched: the loop is emitted with `__emit__`, the rest is C).
