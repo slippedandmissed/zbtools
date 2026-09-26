@@ -157,3 +157,39 @@ void fn_42c6cb(short value)
 {
     g_4af350 = value;
 }
+
+/* @zoombi32 0x0041581b */
+void fn_41581b(short flag)
+{
+    if (flag)
+        fn_415811();
+}
+
+extern short g_4a4ce6;
+
+/* @zoombi32 0x0045b39a */
+void fn_45b39a(short value)
+{
+    g_4a4ce6 = value & 3;
+}
+
+extern long g_4a4a18;
+extern long g_4a4a1c;
+
+/* @zoombi32 0x00456a3e */
+void fn_456a3e(long first, long second)
+{
+    g_4a4a18 = first;
+    g_4a4a1c = second;
+}
+
+extern short g_4b7b38;
+extern short g_4b7b3a;
+
+/* @zoombi32 0x00457fbb */
+short fn_457fbb()
+{
+    if (g_4b7b3a)
+        return g_4b7b38 + 1;
+    return 0;
+}

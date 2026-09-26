@@ -65,3 +65,74 @@ int __cdecl highByte(unsigned short value)
 {
     return value >> 8;
 }
+
+extern short g_4b9cf0;
+extern short g_4b9cf4;
+extern short g_4b9d4c;
+
+/* @zoombi32 0x0046da35 */
+void fn_46da35(short value)
+{
+    g_4b9cf0 = value;
+}
+
+/* @zoombi32 0x0046e1e7 */
+void fn_46e1e7(short value)
+{
+    g_4b9cf4 = value;
+}
+
+/* @zoombi32 0x0046f78e */
+void fn_46f78e(short value)
+{
+    g_4b9d4c = value;
+}
+
+extern long g_4b9cfc;
+
+/* Sets g_4b9cfc, returning its old value. */
+/* @zoombi32 0x0046e0d7 */
+long fn_46e0d7(long value)
+{
+    long old = g_4b9cfc;
+    g_4b9cfc = value;
+    return old;
+}
+
+long __cdecl fn_46f43a(long value);
+extern long g_4b9d70;
+extern long g_4b9d74;
+
+/* @zoombi32 0x0046e5dc */
+long fn_46e5dc()
+{
+    return fn_46f43a(g_4b9d74);
+}
+
+/* @zoombi32 0x0046e5f4 */
+long fn_46e5f4()
+{
+    return fn_46f43a(g_4b9d70);
+}
+
+extern short g_4b9cf6;
+
+/* @zoombi32 0x0046dff7 */
+short fn_46dff7()
+{
+    return g_4b9cf6 ? 0x500 : 0;
+}
+
+/* Something reference-counted, with its count at +8. */
+struct Counted
+{
+    long unknown0;
+    long unknown4;
+    long references;
+};
+
+/* @zoombi32 0x0046d827 */
+long __cdecl fn_46d827(Counted *object)
+{
+    return atomicIncrement(&object->references);
+}

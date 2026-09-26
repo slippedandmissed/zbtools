@@ -79,3 +79,23 @@ void spliceList(Link *other, Link *list)
         last->next->prev = last;
     }
 }
+
+/* @zoombi32 0x00437acb */
+short fn_437acb(short i)
+{
+    return g_4aff9a[i];
+}
+
+extern short g_4aa79a;
+extern short g_4aa79c;
+
+/* How many entries are queued in a 32-entry ring buffer (g_4aa79a is where
+   reading starts, g_4aa79c where writing does). */
+/* @zoombi32 0x00413dc0 */
+short fn_413dc0()
+{
+    short count = g_4aa79c - g_4aa79a;
+    if (count < 0)
+        count += 32;
+    return count;
+}
