@@ -2,8 +2,9 @@ r"""Borland C++ 4.5x toolchain (compiler, linker, libraries), run under Wine.
 
 `setup` copies BIN, LIB and INCLUDE from each Borland C++ CD in data/ into
 build/toolchain/<release>/. Each release gets its own Wine drive (4.5 is T:,
-4.52 is U:), and its default BCC32.CFG and TLINK32.CFG, which point at the CD
-drive (D:\BC45), are rewritten to point there instead. `run` runs a tool from a
+4.52 is U:; the repository is R:, keeping paths short), and its default
+BCC32.CFG and TLINK32.CFG, which point at the CD drive (D:\BC45), are
+rewritten to point there instead. `run` runs a tool from a
 release; `check` compiles, links and runs a small program with each release.
 """
 
@@ -21,6 +22,9 @@ from zbtools import host, paths
 
 # Wine drive each release is mapped to.
 DRIVES = {"4.5": "T:", "4.52": "U:"}
+# Wine drive the repository is mapped to, so paths in it stay short wherever
+# it's cloned: the Borland tools truncate paths longer than 80 characters.
+REPO_DRIVE = "R:"
 _PARTS = ("BIN", "LIB", "INCLUDE")
 
 _CHECK_SOURCE = r"""#include <stdio.h>
@@ -41,8 +45,13 @@ def bc45_dir(release: str) -> Path:
 
 
 def windows_path(path: Path) -> str:
-    """A host path as Wine sees it: Wine maps the host's root directory to Z:."""
-    return "Z:" + str(path.resolve()).replace("/", "\\")
+    """A host path as Wine sees it: under R: if it's in the repository, else
+    under Z:, where Wine maps the host's root directory."""
+    resolved = path.resolve()
+    if resolved.is_relative_to(paths.REPO_ROOT.resolve()):
+        relative = resolved.relative_to(paths.REPO_ROOT.resolve())
+        return REPO_DRIVE + "\\" + str(relative).replace("/", "\\")
+    return "Z:" + str(resolved).replace("/", "\\")
 
 
 def installed_releases() -> list[str]:
@@ -92,7 +101,8 @@ def install(release: str, iso: Path) -> None:
 
 
 def ensure_prefix() -> None:
-    """Create the Wine prefix if needed and map each installed release's drive."""
+    """Create the Wine prefix if needed, and map each installed release's
+    drive and the repository's."""
     bin_dir = host.wine_bin_dir()
     if not (paths.WINE_PREFIX / "system.reg").exists():
         print("Creating the Wine prefix (first run only)")
@@ -102,6 +112,10 @@ def ensure_prefix() -> None:
         )
         subprocess.run([str(bin_dir / "wineserver"), "-w"], env=_wine_env(), check=True)
     dosdevices = paths.WINE_PREFIX / "dosdevices"
+    repo = dosdevices / REPO_DRIVE.lower()
+    if not repo.is_symlink() or repo.resolve() != paths.REPO_ROOT.resolve():
+        repo.unlink(missing_ok=True)
+        repo.symlink_to(paths.REPO_ROOT.resolve(), target_is_directory=True)
     for release in installed_releases():
         link = dosdevices / DRIVES[release].lower()
         link.unlink(missing_ok=True)

@@ -1,4 +1,14 @@
-from zbtools.match import Marker, Sibling, Target, _local_calls, find_targets
+from pathlib import Path
+
+from zbtools.match import (
+    Marker,
+    Sibling,
+    Target,
+    _local_calls,
+    cache_key,
+    find_targets,
+    local_headers,
+)
 
 
 def _call(source: int, destination: int) -> bytes:
@@ -66,3 +76,19 @@ long portable(long *value) { return 0; }
         Target("close", 0x401010, Marker.NONMATCHING),
         Target("portable", 0x401020, Marker.FUNCTIONAL),
     ]
+
+
+def test_cache_key_follows_the_source_and_its_headers(tmp_path: Path) -> None:
+    header = tmp_path / "zoombinis.h"
+    header.write_text('#include "types.h"\nlong g;\n')
+    (tmp_path / "types.h").write_text("typedef long LONG;\n")
+    source = tmp_path / "config.cpp"
+    source.write_text('#include <windows.h>\n#include "zoombinis.h"\nvoid f() {}\n')
+    assert local_headers(source) == [(tmp_path / "types.h").resolve(), header.resolve()]
+
+    key = cache_key("4.5", source, "-p -k-")
+    assert cache_key("4.5", source, "-p -k-") == key
+    assert cache_key("4.52", source, "-p -k-") != key
+    assert cache_key("4.5", source, "-p") != key
+    (tmp_path / "types.h").write_text("typedef long LONG; /* changed */\n")
+    assert cache_key("4.5", source, "-p -k-") != key

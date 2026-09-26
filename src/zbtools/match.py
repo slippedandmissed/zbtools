@@ -27,6 +27,7 @@ function at the callee's marker address. Mismatches are shown side by side.
 """
 
 import difflib
+import hashlib
 import itertools
 import re
 import shlex
@@ -221,10 +222,60 @@ def _flags_for(source: str, override: str | None) -> str:
     return directive.group(1) if directive else DEFAULT_FLAGS
 
 
-def compile_source(release: str, source: Path, flags: str) -> omf.ObjectFile:
-    out_dir = paths.MATCH_DIR / release
-    out_dir.mkdir(parents=True, exist_ok=True)
-    obj_path = out_dir / f"{source.stem}.obj"
+# Bump when what's cached, or how it's keyed, changes.
+_CACHE_VERSION = 1
+_INCLUDE = re.compile(r'^\s*#\s*include\s+"([^"]+)"', re.MULTILINE)
+
+
+def local_headers(source: Path) -> list[Path]:
+    """The headers a source includes with `#include "..."`, recursively,
+    looked up next to the including file, then next to the source (as BCC32
+    does with match's -I). System headers (`<...>`) come with the toolchain,
+    which the cache key covers by its release."""
+    found: set[Path] = set()
+    pending = [source]
+    while pending:
+        current = pending.pop()
+        for name in _INCLUDE.findall(current.read_text(errors="replace")):
+            for base in (current.parent, source.parent):
+                header = (base / name).resolve()
+                if header.is_file():
+                    if header not in found:
+                        found.add(header)
+                        pending.append(header)
+                    break
+    return sorted(found)
+
+
+def cache_key(release: str, source: Path, flags: str) -> str:
+    """What a compiled object depends on: the source, the headers it includes,
+    the options and the release."""
+    digest = hashlib.sha256()
+    for part in (str(_CACHE_VERSION), release, flags):
+        digest.update(part.encode() + b"\0")
+    for path in [source, *local_headers(source)]:
+        digest.update(path.name.encode() + b"\0" + path.read_bytes() + b"\0")
+    return digest.hexdigest()
+
+
+@dataclass(frozen=True)
+class Compiled:
+    obj: omf.ObjectFile
+    cached: bool  # reused from build/match-cache rather than compiled
+
+
+def compile_source(release: str, source: Path, flags: str, *, use_cache: bool = True) -> Compiled:
+    """Compile a source, or reuse the object compiled from it before if nothing
+    it depends on has changed (see `cache_key`)."""
+    cache_dir = paths.MATCH_CACHE / release
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    # One entry per source file, so the cache doesn't grow as sources change.
+    name = f"{source.stem}-{hashlib.sha256(str(source).encode()).hexdigest()[:8]}"
+    obj_path, key_path = cache_dir / f"{name}.obj", cache_dir / f"{name}.key"
+    key = cache_key(release, source, flags)
+    if use_cache and obj_path.exists() and key_path.exists() and key_path.read_text() == key:
+        return Compiled(omf.read(obj_path.read_bytes()), cached=True)
+    key_path.unlink(missing_ok=True)
     obj_path.unlink(missing_ok=True)
     # -I: the source's own directory, so it can include headers next to it.
     args = [
@@ -233,10 +284,13 @@ def compile_source(release: str, source: Path, flags: str) -> omf.ObjectFile:
         *shlex.split(flags),
         f"-o{toolchain.windows_path(obj_path)}",
     ]
-    result = toolchain.run_tool(release, "BCC32", [*args, toolchain.windows_path(source)], out_dir)
+    result = toolchain.run_tool(
+        release, "BCC32", [*args, toolchain.windows_path(source)], cache_dir
+    )
     if result.returncode != 0 or not obj_path.exists():
         raise RuntimeError(f"compiling {source.name} failed:\n{result.stdout}{result.stderr}")
-    return omf.read(obj_path.read_bytes())
+    key_path.write_text(key)
+    return Compiled(omf.read(obj_path.read_bytes()), cached=False)
 
 
 def _alignment_keys(
@@ -321,12 +375,19 @@ class Checked:
     target: Target
     result: Result | None  # None if it couldn't be compiled or found
     error: str | None = None
+    cached: bool = False  # its source's object came from the cache
 
 
 def check(
-    sources: list[Path], release: str, exe: Executable, flags: str | None = None
+    sources: list[Path],
+    release: str,
+    exe: Executable,
+    flags: str | None = None,
+    *,
+    use_cache: bool = True,
 ) -> list[Checked]:
-    """Compile each source and compare every function marked in it."""
+    """Compile each source (or reuse its cached object) and compare every
+    function marked in it."""
     checked = []
     for source in sources:
         text = source.read_text()
@@ -334,10 +395,13 @@ def check(
         if not targets:
             continue
         try:
-            obj = compile_source(release, source.resolve(), _flags_for(text, flags))
+            compiled = compile_source(
+                release, source.resolve(), _flags_for(text, flags), use_cache=use_cache
+            )
         except RuntimeError as e:
             checked += [Checked(source, t, None, str(e)) for t in targets]
             continue
+        obj, cached = compiled.obj, compiled.cached
         siblings = {}
         for target in targets:
             try:
@@ -347,9 +411,10 @@ def check(
             siblings[public.segment, public.offset] = Sibling(target.address, public.name)
         for target in targets:
             try:
-                checked.append(Checked(source, target, compare(target, obj, exe, siblings)))
+                result = compare(target, obj, exe, siblings)
+                checked.append(Checked(source, target, result, cached=cached))
             except ValueError as e:
-                checked.append(Checked(source, target, None, str(e)))
+                checked.append(Checked(source, target, None, str(e), cached=cached))
     return checked
 
 
@@ -377,6 +442,9 @@ def main(
     quiet: Annotated[
         bool, typer.Option("--quiet", "-q", help="Don't show disassembly of mismatches")
     ] = False,
+    no_cache: Annotated[
+        bool, typer.Option("--no-cache", help="Recompile everything, ignoring build/match-cache")
+    ] = False,
 ) -> None:
     sources = files or decomp_sources()
     releases = release or [default_release()]
@@ -385,7 +453,8 @@ def main(
     failed = 0
     for rel in releases:
         print(f"Borland C++ {rel}:")
-        for item in check(sources, rel, exe, flags):
+        results = check(sources, rel, exe, flags, use_cache=not no_cache)
+        for item in results:
             target, result = item.target, item.result
             where = f"{target.name} @ {target.address:#x}"
             if result is None:
@@ -410,5 +479,8 @@ def main(
                 print(f"  MISMATCH  {where}: {len(result.mismatches)} of {size} bytes differ")
                 if not quiet:
                     print("\n".join(_side_by_side(result)))
+        by_source = {item.source: item.cached for item in results}
+        reused = sum(by_source.values())
+        print(f"  ({len(by_source) - reused} files compiled, {reused} from the cache)")
     if failed:
         raise typer.Exit(1)

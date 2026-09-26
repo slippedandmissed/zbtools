@@ -141,7 +141,7 @@ Functions are named for what they do once that's clear (`isMousePresent`), and a
 
 A function that's written but not yet an exact match is marked `/* @zoombi32-nonmatching 0x... */`: it's still compiled and reported with how close it is, but doesn't fail the run. The decompiled code is portable C++, so a function the original wrote in machine code (inline assembly) is written portably and marked `/* @zoombi32-functional 0x... */`: complete, but not byte-exact by design.
 
-`match` compiles each file with Borland C++ 4.5 and the game's usual options (`-p -k-`; a file can set its own with a `/* @flags ... */` comment, as some modules were built differently) and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets); a call to another marked function in the same file must go to that function's address in the game. Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. It needs `uv run extract-game` and `uv run toolchain setup` first.
+`match` compiles each file with Borland C++ 4.5 and the game's usual options (`-p -k-`; a file can set its own with a `/* @flags ... */` comment, as some modules were built differently) and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets); a call to another marked function in the same file must go to that function's address in the game. Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. Compiled objects are cached in `build/match-cache/`, keyed on each source, the headers it includes, its options and the release, so reruns (and `uv run report`) only recompile what changed; `--no-cache` recompiles everything. It needs `uv run extract-game` and `uv run toolchain setup` first.
 
 ### Choosing what to decompile, and tracking progress
 
@@ -174,7 +174,8 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `vm-game` | the QuickTime and game install (and the overlay on it) | `uv run vm install-game` (1 min) |
 | `vm-base` | the Windows 98 install (and everything layered on it) | `uv run vm install` (30-60 min) |
 | `vm` | all of the above | |
-| `toolchain` | the extracted Borland toolchains and the Wine prefix | `uv run toolchain setup` |
+| `match-cache` | objects `match` compiled, reused while their sources are unchanged (`build/match-cache/`) | automatically by `uv run match` |
+| `toolchain` | the extracted Borland toolchains, the Wine prefix and `match-cache` | `uv run toolchain setup` |
 | `wine` | the downloaded Wine build (macOS) and the Wine prefix | `uv run toolchain setup` (downloads ~180 MB) |
 | `ghidra-project` | the Ghidra project, **including any work done in Ghidra's GUI**, and its function list | `uv run ghidra setup` |
 | `ghidra` | all of Ghidra: the download, native build and project | `uv run ghidra setup` (downloads ~540 MB) |

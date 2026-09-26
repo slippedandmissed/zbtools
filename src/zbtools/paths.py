@@ -28,8 +28,9 @@ CLASSES = SYMBOLS_DIR / "classes.json"
 # The progress report `uv run report` writes (local only: it contains disassembly).
 REPORT_DIR = BUILD_DIR / "report"
 REPORT = REPORT_DIR / "index.html"
-# Objects `uv run match` compiles, one directory per release.
-MATCH_DIR = BUILD_DIR / "match"
+# Objects `uv run match` compiles, kept to reuse while their sources don't
+# change: one directory per release.
+MATCH_CACHE = BUILD_DIR / "match-cache"
 
 # Borland C++ BIN, LIB and INCLUDE, one directory per release.
 TOOLCHAIN_DIR = BUILD_DIR / "toolchain"
@@ -92,7 +93,9 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "vm-game": [WIN98_GAME, WIN98_OVERLAY],
     "vm-base": [WIN98_BASE, "vm-game"],
     "vm": ["vm-base", "vm-state"],
-    "toolchain": [TOOLCHAIN_DIR, WINE_PREFIX, MATCH_DIR],
+    "match-cache": [MATCH_CACHE],
+    # Objects compiled by a toolchain are no use without it.
+    "toolchain": [TOOLCHAIN_DIR, WINE_PREFIX, "match-cache"],
     "wine": [WINE_DIR],
     # Includes any work done in Ghidra's GUI: only removed when asked for.
     "ghidra-project": [GHIDRA_PROJECT_DIR, GHIDRA_FUNCTIONS],
