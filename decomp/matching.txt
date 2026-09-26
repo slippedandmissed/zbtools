@@ -15,6 +15,7 @@
 0x004153ce fn_4153ce
 0x00415514 fn_415514
 0x00415604 fn_415604
+0x00415613 mainLoopEvents
 0x004157f3 fn_4157f3
 0x00415811 fn_415811
 0x0041581b fn_41581b
@@ -65,7 +66,12 @@
 0x00455dc5 brightenPalette
 0x00455e26 fn_455e26
 0x00455e2d fn_455e2d
+0x00455e34 handleWaitingMessage
 0x00455e85 fn_455e85
+0x00455e8e waitWhilePaused
+0x00455f96 pumpMessage
+0x00455fff handleSystemKey
+0x00456041 handleMessage
 0x004565c8 fn_4565c8
 0x00456638 dumpMessages
 0x004568d8 fn_4568d8
@@ -77,6 +83,7 @@
 0x00457fbb fn_457fbb
 0x0045b39a fn_45b39a
 0x0045bfc0 fn_45bfc0
+0x004623b8 mainLoopUpdate
 0x00465175 fn_465175
 0x0046b07b fn_46b07b
 0x0046b747 fn_46b747

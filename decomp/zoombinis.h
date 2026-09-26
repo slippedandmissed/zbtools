@@ -169,6 +169,7 @@ extern long g_4a4a00;
 extern HWND mainWindow; /* @data 0x4a4a04 */
 extern char *appName; /* @data 0x4a4a08 */
 extern short g_4a4a0c;
+extern short g_4a4a10;
 extern Callback g_4a4a14;
 extern long g_4a4a18;
 extern long g_4a4a1c;
@@ -183,6 +184,7 @@ extern unsigned short resolutionHeights[4]; /* @data 0x4a4ab4 */
 extern long buttonKeys[3]; /* @data 0x4a4abc */
 extern UINT buttonUpMessages[3]; /* @data 0x4a4ac8 */
 extern char messageLogName[]; /* @data 0x4a4ad8 */
+extern short g_4a4b98;
 extern char *g_4a4ba0;
 extern short g_4a4ce6;
 extern char msgRequiresQuickTime[]; /* @data 0x4a4dc7 */
@@ -199,6 +201,9 @@ extern char msgNoWaveDevices[]; /* @data 0x4a4f3f */
 extern char msgNoMidiDevices[]; /* @data 0x4a4f5e */
 extern char msgOutOfMemory[]; /* @data 0x4a5063 */
 extern char configFileName[]; /* @data 0x4a5149 */
+extern short g_4a79c0;
+extern unsigned long g_4a79c4;
+extern unsigned long g_4a79c8;
 extern short g_4a7b94;
 extern long g_4a7f58;
 extern Counted *g_4a8dcc;
@@ -208,6 +213,8 @@ extern long g_4aa498;
 extern long g_4aa4c4;
 extern char allocationFailed; /* @data 0x4aa4c8 */
 extern char g_4aa4c9;
+extern short g_4aa5d6;
+extern short g_4aa5d8;
 extern short g_4aa79a;
 extern short g_4aa79c;
 extern long g_4aa7a4;
@@ -215,6 +222,7 @@ extern short g_4aa7cc;
 extern long g_4aafe8;
 extern short bitsPerPixel; /* @data 0x4aafec */
 extern short debugMode; /* @data 0x4ab474 */
+extern short g_4ab480;
 extern short g_4ab482;
 extern short g_4ab49c;
 extern short g_4ab49e;
@@ -245,7 +253,11 @@ extern char programPath[0x100]; /* @data 0x4b2b06 */
 extern char savedDirectory[]; /* @data 0x4b2c06 */
 extern WNDCLASS windowClass; /* @data 0x4b2d06 */
 extern short classRegistered; /* @data 0x4b2d2e */
+extern short g_4b2d32;
+extern short g_4b2d34;
+extern short g_4b2d36;
 extern short windowed; /* @data 0x4b2d38 */
+extern short g_4b2d3c;
 extern short g_4b2d42;
 extern long g_4b2d44[0x400];
 extern long g_4b3d44[0x400];
@@ -258,6 +270,9 @@ extern short g_4b7b3a;
 extern long g_4b7b68;
 extern long cursors[6]; /* @data 0x4b80ac */
 extern short g_4b80c4[6];
+extern short g_4b80d2;
+extern unsigned long g_4b80d8;
+extern unsigned long g_4b80dc;
 extern short g_4b80e0; /* ends the main loop when set */
 extern short g_4b83e4[];
 extern short g_4b99d4;
@@ -283,8 +298,17 @@ void __cdecl fn_41541a(const char *format, ...);
 void fn_4144d0(DisplayMode *mode, long);
 /* Formats into `buffer` (of `size` bytes), printf-style. */
 void __cdecl fn_4150c7(long size, char *buffer, const char *format, ...);
-void fn_415613();
 void fn_415910();
+void fn_4124cc(Point *where, long);
+void fn_4140d6(long);
+short fn_4140f3();
+unsigned long fn_41571f(); /* a tick count */
+void fn_415880();
+void fn_43ac20();
+void fn_4624f4();
+void fn_464d7d();
+unsigned long fn_464d88();
+void __cdecl fn_46db93(const char *format, ...);
 void fn_41f195(const char *message);
 void fn_41f2c8(long, long);
 void fn_41f668();
@@ -296,7 +320,6 @@ void fn_454f61();
 void fn_455f66();
 LRESULT CALLBACK fn_45605e(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
 void fn_456914();
-short fn_4623b8();
 void fn_4625b8();
 void fn_46310c();
 void fn_456c67(long);
@@ -403,7 +426,13 @@ void fn_446962(char *, const char *);
 void findGameData();
 short preferFirstFile(const char *first, const char *fallback);
 void __cdecl fn_454ca4();
+void mainLoopEvents();
 void checkDisplayMode(DisplayMode *mode);
+void handleWaitingMessage();
+void waitWhilePaused();
+short pumpMessage(MSG *message, unsigned short first, unsigned short last, unsigned short flags);
+void handleSystemKey(MSG *message);
+void handleMessage(MSG *message);
 short createMainWindow(long, long);
 short addModifierKeys(short modifiers);
 void getCursorPosition(Point *where);
@@ -427,6 +456,7 @@ void fn_455e2d(long);
 long fn_455e85(long, long);
 void fn_456a2f(Callback callback);
 short fn_4568d8();
+short mainLoopUpdate();
 void fn_456a3e(long first, long second);
 void fn_456a55(long value);
 short fn_456bf6();

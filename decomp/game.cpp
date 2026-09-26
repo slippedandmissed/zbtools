@@ -169,8 +169,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         quickTimeReady = 1;
 
     g_4b0d50 = 0;
-    while (fn_4623b8() && !g_4b80e0)
-        fn_415613();
+    while (mainLoopUpdate() && !g_4b80e0)
+        mainLoopEvents();
     fn_454c8e();
     return 0;
 }

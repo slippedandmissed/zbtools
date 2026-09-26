@@ -25,6 +25,25 @@ void fn_415811()
     g_4ab49e = 1;
 }
 
+/*
+ * The main loop's other half (see mainLoopUpdate): handles a waiting
+ * message, calls the game's registered callback (g_4a07c4, set by
+ * fn_415604), and in debug mode stops at a requested breakpoint.
+ */
+/* @zoombi32 0x00415613 */
+void mainLoopEvents()
+{
+    handleWaitingMessage();
+    if (!g_4ab480 && g_4a07c4)
+        g_4a07c4();
+    if (debugMode && g_4aa5d8) {
+        g_4aa5d8 = 0;
+        fn_46db93("generic breakpoint");
+        debugBreak(0);
+    }
+    fn_415880();
+}
+
 /* @zoombi32 0x0041581b */
 void fn_41581b(short flag)
 {

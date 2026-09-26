@@ -329,6 +329,29 @@ short fn_4568d8()
     return 0;
 }
 
+/* Handles a message, if one is waiting. */
+/* @zoombi32 0x00455e34 */
+void handleWaitingMessage()
+{
+    MSG message;
+
+    pumpMessage(&message, 0, 0, 0);
+}
+
+/* While the game is paused (and not stopping), keep handling messages. */
+/* @zoombi32 0x00455e8e */
+void waitWhilePaused()
+{
+    MSG message;
+
+    if (g_4b2d34 && !g_4b2d3c && !g_4b2d32) {
+        g_4b2d36 = g_4b2d3c = 1;
+        while (g_4b2d34 && !g_4b2d32)
+            pumpMessage(&message, 0, 0, 0);
+        g_4b2d36 = g_4b2d3c = 0;
+    }
+}
+
 /*
  * Brightens `count` palette entries from `first`: each component c becomes
  * c + 31 - c/8 (black stays black). Presumably adjusting colours made for the
@@ -380,6 +403,49 @@ void fn_4565c8(long a, long b, long c, short d, long e)
         g_4b5d44[g_4b2d42] = e;
         g_4b2d42++;
     }
+}
+
+/*
+ * Takes a waiting message in the range first-last (all, if both are 0) and
+ * handles it; whether there was one. Paint messages are taken with GetMessage
+ * too, and system keys are also handled as plain keys.
+ */
+/* @zoombi32 0x00455f96 */
+short pumpMessage(MSG *message, unsigned short first, unsigned short last, unsigned short flags)
+{
+    waitWhilePaused();
+    if (!PeekMessage(message, 0, first, last, flags | PM_REMOVE))
+        return 0;
+    UINT kind = message->message;
+    if (kind == WM_PAINT)
+        GetMessage(message, 0, WM_PAINT, WM_PAINT);
+    if (kind >= WM_SYSKEYDOWN && kind <= WM_KEYLAST)
+        handleSystemKey(message);
+    handleMessage(message);
+    return 1;
+}
+
+/* Handles a system key message (Alt held) as the plain key message. */
+/* @zoombi32 0x00455fff */
+void handleSystemKey(MSG *message)
+{
+    short saved = g_4aa5d6;
+    MSG key = *message;
+
+    key.message -= WM_SYSKEYDOWN - WM_KEYDOWN;
+    /* Clears the Alt context bit (29) in lParam's high word; the original works on
+       that word, as here (which assumes little-endian, like every current target). */
+    ((WORD *)&key.lParam)[1] &= ~0x2000;
+    handleMessage(&key);
+    g_4aa5d6 = saved;
+}
+
+/* @zoombi32 0x00456041 */
+void handleMessage(MSG *message)
+{
+    TranslateMessage(message);
+    DispatchMessage(message);
+    waitWhilePaused();
 }
 
 /*
