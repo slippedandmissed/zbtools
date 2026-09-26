@@ -91,12 +91,13 @@ struct Group
     char unknownB[5];
 };
 
-/* A list of groups. */
+/* A list of groups (12 bytes); g_4a01ac is an array of them. */
 struct GroupList
 {
     Group *groups;
     short count;
     unsigned char flags;
+    char unknown7[5];
 };
 
 /* The state (0x30 bytes) fn_413a4e loads into the globals and fn_413afd
@@ -243,7 +244,7 @@ private:
 
 extern Entry *g_4a00a0;
 extern long g_4a00dc[];
-extern long g_4a01ac;
+extern GroupList *g_4a01ac;
 extern short g_4a01b0;
 extern char emptyString[]; /* @data 0x4a01b8 */
 extern short breakpointKey; /* @data 0x4a0708 */
@@ -308,6 +309,7 @@ extern short g_4aa42a;
 extern InputItem *g_4aa484;
 extern unsigned char g_4aa48a;
 extern unsigned char g_4aa48b;
+extern short g_4aa48c; /* how many lists g_4a01ac has */
 extern GroupList *g_4aa490;
 extern Group *g_4aa494;
 extern InputItem *g_4aa498;
@@ -523,6 +525,10 @@ void fn_413bad(Point *where);
 short fn_41382a(Group *group, short start);
 short fn_4138a2(Group *group, short start);
 short fn_41391d(InputItem *item);
+short fn_413693(GroupList *list, short first, short start);
+short fn_413755(GroupList *list, short first, short start);
+short fn_41348b(short list, short group, short start);
+short fn_41357a(short list, short group, short start);
 void fn_413bcf(void (*hook)(Point *where));
 void fn_413c6d(void **block);
 short queuedEvents();

@@ -2,6 +2,7 @@
  * module_4124a4 (0x4124a4-0x413c24): no strings; uses isMousePresent and toUpperAscii (input?)
  */
 
+#include <string.h>
 #include "zoombinis.h"
 
 /* Passes `value` to the current handlers' slot 0x28, or else to the engine;
@@ -248,6 +249,130 @@ short fn_4133a4()
 {
     short noMouse = !(unsigned short)isMousePresent();
     return g_4aa48b & 0x20 && !noMouse || g_4aa48b & 0x10 && noMouse;
+}
+
+/* Searches all lists (g_4a01ac) from list `list`, group `group`, item `start`,
+   onwards (fn_413693); whether an item was found. */
+/* @zoombi32 0x0041348b */
+short fn_41348b(short list, short group, short start)
+{
+    short found, i, j;
+    GroupList *current;
+
+    memset(&g_4aa49c, 0, sizeof g_4aa49c);
+    if (!fn_412884())
+        return 0;
+    g_4aa49c.a.y = group;
+    g_4aa49c.b.x = start;
+    for (i = 0; i < list; i++) {
+        g_4aa49c.a.y += g_4a01ac[i].count;
+        for (j = 0; j < g_4a01ac[i].count; j++)
+            g_4aa49c.b.x += g_4a01ac[i].groups[j].count;
+    }
+    g_4aa49c.a.x = list;
+    found = 0;
+    for (current = &g_4a01ac[list]; g_4aa49c.a.x < g_4aa48c && !found; current++) {
+        found = fn_413693(current, group, start);
+        group = start = 0;
+        g_4aa49c.a.x++;
+    }
+    if (!found)
+        g_4aa49c.a.x = g_4aa49c.a.y = g_4aa49c.b.x = 0;
+    return found;
+}
+
+/* The same as fn_41348b, backwards (each earlier list from its last item). */
+/* @zoombi32 0x0041357a */
+short fn_41357a(short list, short group, short start)
+{
+    short found, i, j;
+    GroupList *current;
+
+    memset(&g_4aa49c, 0, sizeof g_4aa49c);
+    if (!fn_412884())
+        return 0;
+    g_4aa49c.a.y = group;
+    g_4aa49c.b.x = start;
+    for (i = 0; i < list; i++) {
+        g_4aa49c.a.y += g_4a01ac[i].count;
+        for (j = 0; j < g_4a01ac[i].count; j++)
+            g_4aa49c.b.x += g_4a01ac[i].groups[j].count;
+    }
+    g_4aa49c.a.x = list;
+    found = 0;
+    for (current = &g_4a01ac[list]; g_4aa49c.a.x >= 0 && !found; current--) {
+        found = fn_413755(current, group, start);
+        group = g_4a01ac[g_4aa49c.a.x - 1].count - 1;
+        start = g_4a01ac[g_4aa49c.a.x - 1].groups[group].count - 1;
+        g_4aa49c.a.x--;
+    }
+    g_4aa49c.a.x++;
+    g_4aa49c.a.y++;
+    g_4aa49c.b.x++;
+    if (!found)
+        g_4aa49c.a.x = g_4aa49c.a.y = g_4aa49c.b.x = 0;
+    return found;
+}
+
+/* Searches a list's groups from group `first`, item `start`, onwards
+   (fn_41382a), moving the cursor along; whether an item was found. */
+/* @zoombi32 0x00413693 */
+short fn_413693(GroupList *list, short first, short start)
+{
+    short found, i;
+    Group *group;
+
+    g_4aa49c.b.y = g_4aa49c.c.x = g_4aa49c.c.y = 0;
+    if (!fn_4128c6(list))
+        return 0;
+    g_4aa490 = list;
+    g_4aa49c.c.x = start;
+    for (i = 0; i < first; i++) {
+        g_4aa49c.b.x += list->groups[i].count;
+        g_4aa49c.c.x += list->groups[i].count;
+    }
+    g_4aa49c.b.y = first;
+    found = 0;
+    for (group = &list->groups[first]; g_4aa49c.b.y < list->count && !found; group++) {
+        found = fn_41382a(group, start);
+        start = 0;
+        g_4aa49c.b.y++;
+        g_4aa49c.a.y++;
+    }
+    if (!found)
+        g_4aa49c.b.y = g_4aa49c.c.x = 0;
+    return found;
+}
+
+/* The same as fn_413693, backwards (each earlier group from its last item). */
+/* @zoombi32 0x00413755 */
+short fn_413755(GroupList *list, short first, short start)
+{
+    short found, i;
+    Group *group;
+
+    g_4aa49c.b.y = g_4aa49c.c.x = g_4aa49c.c.y = 0;
+    if (!fn_4128c6(list))
+        return 0;
+    g_4aa490 = list;
+    g_4aa49c.c.x = start;
+    for (i = 0; i < first; i++) {
+        g_4aa49c.b.x += list->groups[i].count;
+        g_4aa49c.c.x += list->groups[i].count;
+    }
+    g_4aa49c.b.y = first;
+    found = 0;
+    for (group = &list->groups[first]; g_4aa49c.b.y >= 0 && !found; group--) {
+        found = fn_4138a2(group, start);
+        start = list->groups[g_4aa49c.b.y - 1].count - 1;
+        g_4aa49c.b.y--;
+        g_4aa49c.a.y--;
+    }
+    g_4aa49c.b.y++;
+    g_4aa49c.c.x++;
+    if (!found)
+        g_4aa49c.b.y = g_4aa49c.c.x = 0;
+    return found;
 }
 
 /* Searches a group's items from `start` onwards with fn_41391d, moving the
