@@ -102,7 +102,7 @@ short fn_41295f(Group *group)
 {
     if (!group)
         return 0;
-    if (g_4aa4c2 && !group->handlers->unknown2C)
+    if (g_4aa4c2 && !group->handlers->enter)
         return 0;
     switch (g_4aa4c0) {
     case 0:
@@ -155,7 +155,7 @@ void fn_412b8f()
 /* @zoombi32 0x00412bb3 */
 void fn_412bb3(short alternative)
 {
-    if (g_4aa494->flags & 0x80 && g_4aa498 != g_4aa4a8)
+    if (g_4aa494->flags & 0x80 && g_4aa498 != enteredItem)
         return;
     if (g_4aa48a & 2 || g_4aa490->flags & 2 || g_4aa494->flags & 2 || g_4aa498->flags & 2) {
         fn_412cdf();
@@ -177,7 +177,7 @@ void fn_412bb3(short alternative)
 /* @zoombi32 0x00412c3d */
 void fn_412c3d()
 {
-    if (g_4aa494->flags & 0x80 && g_4aa498 != g_4aa4a8)
+    if (g_4aa494->flags & 0x80 && g_4aa498 != enteredItem)
         return;
     if (g_4aa48a & 2 || g_4aa490->flags & 2 || g_4aa494->flags & 2 || g_4aa498->flags & 2) {
         fn_412d57();
@@ -246,19 +246,32 @@ void fn_412d57()
     fn_412b4d(g_4aa494->handlers->handler24);
 }
 
-/* If an item is pending (g_4aa4a8), focuses it (in mode 1) and calls its
-   group's handler at 0x30; then it's no longer pending. */
+/* Enters the focused item (calls its group's enter handler), leaving the
+   one entered before. */
+/* @zoombi32 0x00412d67 */
+void enterFocusedItem()
+{
+    if (enteredItem) {
+        if (enteredItem == g_4aa498)
+            return;
+        leaveEnteredItem();
+    }
+    enteredItem = g_4aa498;
+    fn_412b4d(g_4aa494->handlers->enter);
+}
+
+/* Leaves the item entered last (calls its group's leave handler). */
 /* @zoombi32 0x00412d9c */
-void fn_412d9c()
+void leaveEnteredItem()
 {
     InputState saved;
 
-    if (g_4aa4a8) {
+    if (enteredItem) {
         fn_413afd(&saved, 0);
         g_4aa4c0 = 1;
-        if (focusItem(g_4aa4a8))
-            fn_412b4d(g_4aa494->handlers->handler30);
-        g_4aa4a8 = 0;
+        if (focusItem(enteredItem))
+            fn_412b4d(g_4aa494->handlers->leave);
+        enteredItem = 0;
         fn_413a4e(&saved, 0);
     }
 }
@@ -295,6 +308,53 @@ InputItem *itemAt(short x, short y)
     return item;
 }
 
+/*
+ * Moves the focus to the next item (direction > 0) or the previous one,
+ * within the current list if it has flag 8, else across all lists, wrapping
+ * round once; whether there was one.
+ */
+/* @zoombi32 0x00412ff6 */
+short moveFocus(short direction)
+{
+    short tries = 2;
+    short list = g_4aa49c.a.x - 1;
+    short group = g_4aa49c.b.y - 1;
+    short item;
+
+    if (direction > 0)
+        item = g_4aa49c.c.y;
+    else
+        item = g_4aa49c.c.y - 2;
+    do {
+        if (direction > 0) {
+            if (g_4aa490->flags & 8) {
+                if (fn_413693(g_4aa490, group, item))
+                    return 1;
+                group = item = 0;
+            } else {
+                if (fn_41348b(list, group, item))
+                    return 1;
+                list = group = item = 0;
+            }
+        } else {
+            if (g_4aa490->flags & 8) {
+                if (fn_413755(g_4aa490, group, item))
+                    return 1;
+                group = g_4aa490->count - 1;
+                item = g_4aa490->groups[group].count - 1;
+            } else {
+                if (fn_41357a(list, group, item))
+                    return 1;
+                list = g_4aa48c - 1;
+                group = g_4a01ac[list].count - 1;
+                item = g_4a01ac[list].groups[group].count - 1;
+            }
+        }
+        tries--;
+    } while (tries);
+    return 0;
+}
+
 /* Calls the handler of the item at a position (from 1), keeping the state. */
 /* @zoombi32 0x00413237 */
 void activateItemAt(short x, short y)
@@ -321,6 +381,29 @@ void visitAllItems()
     g_4aa4c0 = 1;
     fn_41348b(0, 0, 0);
     fn_413a4e(&saved, 1);
+}
+
+/* Moves the mouse, if fn_41336f says it follows the focus. */
+/* @zoombi32 0x004132d2 */
+void moveMouseTo(short x, short y)
+{
+    if (fn_41336f())
+        setCursorPosition(x, y);
+}
+
+/* Moves the mouse to the focused item (its centre or its hotspot), if it
+   follows the focus. */
+/* @zoombi32 0x00413312 */
+void moveMouseToFocus()
+{
+    if (fn_41336f()) {
+        if (g_4aa494->flags & 0x40) {
+            InputItem *item = g_4aa498;
+            setCursorPosition((item->bounds.right + item->bounds.left) / 2,
+                              (item->bounds.bottom + item->bounds.top) / 2);
+        } else
+            setCursorPosition(g_4aa498->hotspot.x, g_4aa498->hotspot.y);
+    }
 }
 
 /* Flag 0x80 of g_4aa48b applies with a mouse, 0x40 without one. */

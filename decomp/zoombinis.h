@@ -53,10 +53,20 @@ struct Cursor
     Point c; /* c.y: the item's index */
 };
 
+/* A rectangle of shorts (Windows' order). */
+struct ShortRect
+{
+    short left;
+    short top;
+    short right;
+    short bottom;
+};
+
 /* An item (0x24 bytes). */
 struct InputItem
 {
-    char unknown0[0xc];
+    ShortRect bounds;
+    Point hotspot; /* where the mouse goes, unless the group says its centre */
     short key; /* the key that selects it */
     char unknownE[4];
     unsigned short flags;
@@ -78,8 +88,8 @@ struct InputHandlers
     void (*handler20)(InputItem *item);
     void (*handler24)(InputItem *item);
     short (*handler28)(long value, InputItem *item);
-    long unknown2C;
-    void (*handler30)(InputItem *item);
+    void (*enter)(InputItem *item); /* +0x2c */
+    void (*leave)(InputItem *item); /* +0x30 */
 };
 
 /* A group of items with its handlers (16 bytes). */
@@ -315,7 +325,7 @@ extern GroupList *g_4aa490;
 extern Group *g_4aa494;
 extern InputItem *g_4aa498;
 extern Cursor g_4aa49c;
-extern InputItem *g_4aa4a8;
+extern InputItem *enteredItem; /* @data 0x4aa4a8 */
 extern short g_4aa4ac;
 extern long g_4aa4b0;
 extern InputItem *g_4aa4b4;
@@ -537,7 +547,11 @@ short focusItem(InputItem *item);
 void visitAllItems();
 void numberAllItems();
 void setGroupLists(GroupList *lists, short count, unsigned short flags);
-void fn_412d9c();
+void leaveEnteredItem();
+void enterFocusedItem();
+void moveMouseTo(short x, short y);
+void moveMouseToFocus();
+short moveFocus(short direction);
 void getItemPosition(InputItem *item, Cursor *where);
 InputItem *itemAt(short x, short y);
 void activateItemAt(short x, short y);
