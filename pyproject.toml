@@ -30,6 +30,7 @@ runtime-symbols = "zbtools.runtime_symbols:app"
 classes = "zbtools.rtti:app"
 worklist = "zbtools.worklist:app"
 report = "zbtools.report:app"
+modules = "zbtools.modules:app"
 unpack-isz = "zbtools.unpack_isz:app"
 
 [build-system]

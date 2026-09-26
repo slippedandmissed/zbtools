@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from zbtools import ghidra, match, quicktime, rtti, runtime_symbols
+from zbtools import ghidra, match, modules, quicktime, rtti, runtime_symbols
 from zbtools.exe import Executable, disassemble
 
 _DIRECT_CALL = re.compile(r"^call (0x[0-9a-f]+)$")
@@ -68,6 +68,7 @@ class Function:
     indirect_calls: int  # calls through registers or memory (vtables, pointers)
     status: Status
     decompiled: Decompiled | None
+    module: str | None  # for the game's own code: its source module (decomp/modules.toml)
 
 
 @dataclass(frozen=True)
@@ -121,6 +122,13 @@ def _regions(
     return Regions(game_start, runtime_start, engine_start)
 
 
+def _module(module_map: modules.ModuleMap, address: int, region: Region) -> str | None:
+    if region not in (Region.GAME, Region.QUICKTIME):
+        return None
+    found = module_map.of(address)
+    return found.name if found else None
+
+
 def decompiled_targets(sources: Iterable[Path] | None = None) -> dict[int, Decompiled]:
     """Functions marked in decomp/ (or the given sources), by address."""
     found = {}
@@ -139,6 +147,7 @@ def load(exe: Executable) -> list[Function]:
     data = {c.descriptor for c in classes} | {v.address for c in classes for v in c.vtables}
     library = {s.address for s in runtime.symbols}
     decompiled = decompiled_targets()
+    module_map = modules.load()
 
     inventory = []
     for f in sorted(functions, key=lambda f: f.address):
@@ -175,6 +184,7 @@ def load(exe: Executable) -> list[Function]:
                 indirect_calls=indirect,
                 status=status,
                 decompiled=done,
+                module=_module(module_map, f.address, region),
             )
         )
     return inventory

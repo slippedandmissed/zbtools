@@ -17,14 +17,15 @@ _DONE = {Status.MATCHED, Status.LIBRARY}
 
 
 def ready_and_blocked(
-    functions: list[inventory.Function], region: Region
+    functions: list[inventory.Function], region: Region, module: str | None = None
 ) -> tuple[list[inventory.Function], dict[int, list[int]]]:
-    """Functions in the region still to do that are ready, and for the rest, the
-    unfinished same-region functions each one is waiting on."""
+    """Functions in the region (and module, if given) still to do that are
+    ready, and for the rest, the unfinished same-region functions each one is
+    waiting on."""
     by_address = {f.address: f for f in functions}
     ready, blocked = [], {}
     for f in functions:
-        if f.region != region or f.status in _DONE:
+        if f.region != region or f.status in _DONE or (module and f.module != module):
             continue
         waiting = [
             callee
@@ -48,13 +49,17 @@ app = typer.Typer(add_completion=False)
 def main(
     region: Annotated[Region, typer.Option(help="Which code to work on")] = Region.GAME,
     limit: Annotated[int, typer.Option(help="How many ready functions to list")] = 25,
+    module: Annotated[
+        str | None, typer.Option(help="Only this source module (see `uv run modules`)")
+    ] = None,
 ) -> None:
     functions = inventory.load(match.game_executable())
-    ready, blocked = ready_and_blocked(functions, region)
-    in_region = [f for f in functions if f.region == region]
+    ready, blocked = ready_and_blocked(functions, region, module)
+    in_region = [f for f in functions if f.region == region and (not module or f.module == module)]
     done = [f for f in in_region if f.status in _DONE]
+    where = f"{region} code" + (f" in {module}" if module else "")
     print(
-        f"{region} code: {len(in_region)} functions, {len(done)} done, "
+        f"{where}: {len(in_region)} functions, {len(done)} done, "
         f"{len(ready)} ready to decompile, {len(blocked)} waiting on others."
     )
     print(f"\nReady, smallest first ({min(limit, len(ready))} of {len(ready)}):")
@@ -63,4 +68,6 @@ def main(
         calls = f"{len(f.calls)} direct calls" + (
             f", {f.indirect_calls} indirect" if f.indirect_calls else ""
         )
-        print(f"  {f.address:#010x}  {f.size:5} bytes  {f.name:24} {calls}{note}")
+        print(
+            f"  {f.address:#010x}  {f.size:5} bytes  {f.name:24} {f.module or '':14} {calls}{note}"
+        )

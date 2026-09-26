@@ -1,0 +1,224 @@
+# The source modules (object files) of zoombi32.exe's own code, in link order.
+#
+# TLINK32 lays each object file's code out contiguously and pads it with zeros
+# to a 4-byte boundary, so most module ends show as padding; a module whose
+# code is already aligned shows none, so a range here may still hold several
+# modules. `uv run modules` checks this map against the padding and prints the
+# evidence (strings, imports) for each range. See docs/findings.md.
+#
+# Each module runs from its start to the next one's. `name` is the file stem
+# its code goes in (decomp/<name>.cpp); modules whose purpose isn't clear yet
+# are named after their address. `note` gives the evidence for the name.
+
+[[module]]
+start = 0x41008c
+name = "anim"
+note = "'e2SetupAnim error', 'Cast member out of range %d', 'script'"
+
+[[module]]
+start = 0x411350
+name = "sound"
+note = "'waveform', 'midi', 'unknown chunk type:', 'unable to prepare'"
+
+[[module]]
+start = 0x4121cc
+name = "buttons"
+note = "'too many graphic button groups:'"
+
+[[module]]
+start = 0x4124a4
+name = "module_4124a4"
+note = "no strings; uses isMousePresent and toUpperAscii (input?)"
+
+[[module]]
+start = 0x413c24
+name = "module_413c24"
+note = "no strings"
+
+[[module]]
+start = 0x413dc0
+name = "module_413dc0"
+note = "no strings; a 32-entry ring buffer (an event queue?): fn_413dc0, nextRingIndex"
+
+[[module]]
+start = 0x4144d0
+name = "graphics"
+note = "'unable to initialize graphics', 'unable to create palette', 'work port', 'back port'"
+
+[[module]]
+start = 0x414f30
+name = "loading"
+note = "'Unable to load ', 'Not enough memory for ', 'Unable to allocate port for '"
+
+[[module]]
+start = 0x415514
+name = "module_415514"
+note = "no strings; calls time()"
+
+[[module]]
+start = 0x41559c
+name = "module_41559c"
+note = "one function"
+
+[[module]]
+start = 0x4155d0
+name = "module_4155d0"
+note = "one function"
+
+[[module]]
+start = 0x415604
+name = "debug"
+note = "'generic breakpoint', 'System starvation warning!', 'e2GetPoolValue Error'"
+
+[[module]]
+start = 0x415a30
+name = "basecamp"
+note = "'BaseCamp.MHK'"
+
+[[module]]
+start = 0x418698
+name = "bctwo"
+note = "'bctwo.mhk'"
+
+[[module]]
+start = 0x41a404
+name = "bridge"
+note = "The Allergic Cliffs: 'bridge.mhk', 'Upper bridge accepts:'"
+
+[[module]]
+start = 0x41c09c
+name = "roster"
+note = "Saved players: 'ZBUser', 'Could not Open/Create Roster file.', 'Zoombini.who'"
+
+[[module]]
+start = 0x41f8cc
+name = "module_41f8cc"
+note = "'Play FrogMan SCRB id:'"
+
+[[module]]
+start = 0x42160c
+name = "ferry"
+note = "'Ferry.MHK', 'Fleens.MHK' (may be two modules)"
+
+[[module]]
+start = 0x424274
+name = "lilly"
+note = "'Lilly.MHK'; 46 KB, so probably several modules"
+
+[[module]]
+start = 0x42f920
+name = "picker"
+note = "'Picker.MHK', 'New Game', 'Snoids to practice with = '"
+
+[[module]]
+start = 0x433510
+name = "module_433510"
+note = "'Picker.MHK'"
+
+[[module]]
+start = 0x439560
+name = "net"
+note = "'Net.MHK'"
+
+[[module]]
+start = 0x4402c0
+name = "pizza"
+note = "Pizza Pass: the trolls 'Arno', 'Willa', 'Shyler'"
+
+[[module]]
+start = 0x44695c
+name = "config"
+note = "'Zoombi32.CFG', 'INSTALLFROMDIR', 'Zoombini CD must be inserted in drive.'"
+
+[[module]]
+start = 0x446bf8
+name = "module_446bf8"
+note = "'INSTALLFROMDIR'"
+
+[[module]]
+start = 0x44b550
+name = "game"
+note = "cheats ('Cheat on ', 'You have entered the psychedelic ZB Zone!'), memory statistics"
+
+[[module]]
+start = 0x455530
+name = "winmain"
+note = "PeekMessageA, LoadIconA; 'Invalid display mode.', '256 colors'"
+
+[[module]]
+start = 0x456c00
+name = "snoids"
+note = "'Too many snoid NORMAL scripts', 'Zoombini.MHK', name syllables"
+
+[[module]]
+start = 0x45c0f4
+name = "town"
+note = "'Town.MHK', 'Cheat Text:'"
+
+[[module]]
+start = 0x45e2d8
+name = "tunnels"
+note = "'Tunnels.MHK'"
+
+[[module]]
+start = 0x4623b8
+name = "module_4623b8"
+note = "debug keys: 'ALL in party', 'midi test on'"
+
+[[module]]
+start = 0x463034
+name = "view"
+note = "'view port', 'gCurrentViewRgn', 'gFeatureClipRgn'"
+
+[[module]]
+start = 0x465bd0
+name = "features"
+note = "'Feature Group out of range', 'Que overflow id: '"
+
+[[module]]
+start = 0x4696f0
+name = "xfer"
+note = "'xfer.MHK'"
+
+[[module]]
+start = 0x46be28
+name = "e2memory"
+note = "'e2AllocHandle error: memHandle already in use', 'e2GetShapes error'"
+
+[[module]]
+start = 0x46cca0
+name = "quicktime"
+note = "QuickTime for Windows' SDK glue (library code; see quicktime.py)"
+
+# The Mohawk OS layer, compiled with stack frames (@flags -p): its window
+# class is 'MOHAWK OS Manager'.
+
+[[module]]
+start = 0x46d754
+name = "os_46d754"
+note = "the start of the Mohawk OS layer"
+
+[[module]]
+start = 0x46d7f8
+name = "os_refcount"
+note = "calls atomicIncrement/Decrement/Exchange"
+
+[[module]]
+start = 0x46d95c
+name = "os_localmem"
+note = "LocalAlloc, LocalReAlloc, LocalFree"
+
+[[module]]
+start = 0x46da64
+name = "os_manager"
+note = "'MOHAWK OS Manager'; SetTimer, window hooks"
+
+[[module]]
+start = 0x46e2a4
+name = "os_threads"
+note = "the threading classes; timeGetTime"
+
+[[module]]
+start = 0x46f5c0
+name = "os_46f5c0"
+note = "follows the threading classes (after event::~event)"

@@ -16,7 +16,7 @@ from typing import Annotated
 import jinja2
 import typer
 
-from zbtools import ghidra, inventory, match, paths
+from zbtools import ghidra, inventory, match, modules, paths
 from zbtools.demangle import qualified_name
 from zbtools.exe import Instruction
 from zbtools.inventory import Region, Status
@@ -44,6 +44,18 @@ class RegionStats:
 
 _IDENTIFIER = re.compile(r"[A-Za-z_]\w*")
 _BRANCH = re.compile(r"^(?:call|j\w+) (0x[0-9a-f]+)$")
+
+
+@dataclass(frozen=True)
+class ModuleStats:
+    name: str
+    start: int
+    total: Tally
+    done: Tally  # matched or library
+
+    @property
+    def percent(self) -> float:
+        return 100 * self.done.size / self.total.size if self.total.size else 0.0
 
 
 @dataclass(frozen=True)
@@ -178,6 +190,19 @@ def _stats(functions: list[inventory.Function]) -> list[RegionStats]:
     return stats
 
 
+def _module_stats(functions: list[inventory.Function]) -> list[ModuleStats]:
+    stats = []
+    for module in modules.load().module:
+        total, done = Tally(), Tally()
+        for f in functions:
+            if f.module == module.name:
+                total = total.add(f.size)
+                if f.status in (Status.MATCHED, Status.LIBRARY):
+                    done = done.add(f.size)
+        stats.append(ModuleStats(module.name, module.start, total, done))
+    return stats
+
+
 def build(release: str) -> str:
     exe = match.game_executable()
     functions = inventory.load(exe)
@@ -201,6 +226,7 @@ def build(release: str) -> str:
         generated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
         release=release,
         stats=_stats(functions),
+        module_stats=_module_stats(functions),
         functions=functions,
         details=details,
         Status=Status,
