@@ -37,8 +37,8 @@ note = "no strings"
 
 [[module]]
 start = 0x413dc0
-name = "module_413dc0"
-note = "no strings; a 32-entry ring buffer (an event queue?): fn_413dc0, nextRingIndex"
+name = "events"
+note = "the event queue: 32 events (key and mouse button), Mac-style post/get/flush"
 
 [[module]]
 start = 0x4144d0

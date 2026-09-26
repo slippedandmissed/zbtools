@@ -36,8 +36,8 @@ void mainLoopEvents()
     handleWaitingMessage();
     if (!g_4ab480 && g_4a07c4)
         g_4a07c4();
-    if (debugMode && g_4aa5d8) {
-        g_4aa5d8 = 0;
+    if (debugMode && breakpointRequested) {
+        breakpointRequested = 0;
         fn_46db93("generic breakpoint");
         debugBreak(0);
     }

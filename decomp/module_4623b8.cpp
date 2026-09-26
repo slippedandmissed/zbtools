@@ -8,7 +8,7 @@
  * One pass of the main loop (WinMain runs it and mainLoopEvents until it's
  * told to quit); always carries on. While g_4a4a10 is set it runs the game's
  * timed work, and if g_4b80d2 is 1 that's all; otherwise it handles a pending
- * event (fn_4140f3/fn_4140d6), or passes on where the cursor is (fn_4124cc).
+ * event (handleNextEvent/discardEvents), or passes on where the cursor is (fn_4124cc).
  */
 /* @zoombi32 0x004623b8 */
 short mainLoopUpdate()
@@ -33,8 +33,8 @@ short mainLoopUpdate()
             return 1;
         }
     }
-    if (fn_4140f3()) {
-        fn_4140d6(2);
+    if (handleNextEvent()) {
+        discardEvents(2);
         g_4a79c0 = 1;
         g_4b80dc = fn_41571f();
     } else {

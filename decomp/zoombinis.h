@@ -28,6 +28,16 @@ struct Point
     short y;
 };
 
+/* An input event, as the event queue holds them (Mac-style). */
+struct Event
+{
+    short type; /* 1 a key, 2 a mouse button */
+    Point where; /* for mouse buttons */
+    long unknown6;
+    short code; /* the key or the button */
+    short unknownC;
+};
+
 /* The display mode WinMain asks for (640x480, 256 colours). */
 struct DisplayMode
 {
@@ -151,6 +161,7 @@ private:
 extern Entry *g_4a00a0;
 extern long g_4a00dc[];
 extern char emptyString[]; /* @data 0x4a01b8 */
+extern short breakpointKey; /* @data 0x4a0708 */
 extern Callback g_4a07ac;
 extern long g_4a07b0;
 extern long g_4a07b4;
@@ -213,10 +224,12 @@ extern long g_4aa498;
 extern long g_4aa4c4;
 extern char allocationFailed; /* @data 0x4aa4c8 */
 extern char g_4aa4c9;
-extern short g_4aa5d6;
-extern short g_4aa5d8;
-extern short g_4aa79a;
-extern short g_4aa79c;
+extern short breakpointKeyEnabled; /* @data 0x4aa5d4 */
+extern short dispatchingEvents; /* @data 0x4aa5d6 */
+extern short breakpointRequested; /* @data 0x4aa5d8 */
+extern Event eventQueue[32]; /* @data 0x4aa5da */
+extern short eventHead; /* @data 0x4aa79a */
+extern short eventTail; /* @data 0x4aa79c */
 extern long g_4aa7a4;
 extern short g_4aa7cc;
 extern long g_4aafe8;
@@ -300,11 +313,13 @@ void fn_4144d0(DisplayMode *mode, long);
 void __cdecl fn_4150c7(long size, char *buffer, const char *format, ...);
 void fn_415910();
 void fn_4124cc(Point *where, long);
-void fn_4140d6(long);
-short fn_4140f3();
 unsigned long fn_41571f(); /* a tick count */
 void fn_415880();
 void fn_43ac20();
+short fn_45590b();
+void fn_455ab0(short type);
+void fn_46293a(short key);
+void fn_4624bd(Point *where, short button);
 void fn_4624f4();
 void fn_464d7d();
 unsigned long fn_464d88();
@@ -383,8 +398,19 @@ void fn_4117a8(HasHandle *object);
 short fn_412b4d(void (*callback)(long));
 void fn_413bcf(long value);
 void fn_413c6d(void **block);
-short fn_413dc0();
-void __cdecl nextRingIndex(short *index);
+short queuedEvents();
+void postEvent(Event *event);
+short getEvent(Event *event);
+short hasEvent(short type);
+void removeEvents(short type);
+void postKeyEvent(short key);
+void postMouseEvent(Point *where, short button);
+short isEventWaiting(short type, short discard);
+void discardEvents(short type);
+short handleNextEvent();
+void getMousePosition(Point *where);
+void waitForEvent(short type, short discard);
+void __cdecl nextEventIndex(short *index);
 void fn_414358(void **block);
 void fn_414ce7(short *handle);
 void fn_4153b0(Callback callback);
@@ -443,7 +469,7 @@ void getClockTime(char *hour, char *minute, char *second);
 void enterProgramDirectory();
 void restoreDirectory();
 void brightenPalette(PALETTEENTRY *entries, short first, short count);
-short isInputWaiting(long which);
+short isInputWaiting(short which);
 void fn_4565c8(long a, long b, long c, short d, long e);
 void dumpMessages();
 long fn_455013(long, long);
@@ -453,7 +479,7 @@ char *intToDecimal(int value, char *buffer);
 char *unsignedToDecimal(unsigned long value, char *buffer);
 void fn_455e26(long);
 void fn_455e2d(long);
-long fn_455e85(long, long);
+short fn_455e85(Point *where, short button);
 void fn_456a2f(Callback callback);
 short fn_4568d8();
 short mainLoopUpdate();

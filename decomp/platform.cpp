@@ -151,7 +151,7 @@ void fn_455e2d(long)
 }
 
 /* @zoombi32 0x00455e85 */
-long fn_455e85(long, long)
+short fn_455e85(Point *, short)
 {
     return 0;
 }
@@ -371,7 +371,7 @@ void brightenPalette(PALETTEENTRY *entries, short first, short count)
 /* Whether input is waiting (without taking it): keys if `which` has bit 0,
    mouse clicks if it has bit 1. */
 /* @zoombi32 0x00455b1b */
-short isInputWaiting(long which)
+short isInputWaiting(short which)
 {
     MSG message;
 
@@ -429,7 +429,7 @@ short pumpMessage(MSG *message, unsigned short first, unsigned short last, unsig
 /* @zoombi32 0x00455fff */
 void handleSystemKey(MSG *message)
 {
-    short saved = g_4aa5d6;
+    short saved = dispatchingEvents;
     MSG key = *message;
 
     key.message -= WM_SYSKEYDOWN - WM_KEYDOWN;
@@ -437,7 +437,7 @@ void handleSystemKey(MSG *message)
        that word, as here (which assumes little-endian, like every current target). */
     ((WORD *)&key.lParam)[1] &= ~0x2000;
     handleMessage(&key);
-    g_4aa5d6 = saved;
+    dispatchingEvents = saved;
 }
 
 /* @zoombi32 0x00456041 */
