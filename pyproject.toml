@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "capstone>=5.0.9",
     "fonttools>=4.66.0",
+    "jinja2>=3.1.6",
     "pefile>=2024.8.26",
     "pillow>=12.3.0",
     "pycdlib>=1.21.0",
@@ -27,6 +28,8 @@ match = "zbtools.match:app"
 ghidra = "zbtools.ghidra:app"
 runtime-symbols = "zbtools.runtime_symbols:app"
 classes = "zbtools.rtti:app"
+worklist = "zbtools.worklist:app"
+report = "zbtools.report:app"
 unpack-isz = "zbtools.unpack_isz:app"
 
 [build-system]

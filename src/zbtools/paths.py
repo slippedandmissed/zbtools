@@ -25,6 +25,9 @@ SYMBOLS_DIR = BUILD_DIR / "symbols"
 RUNTIME_SYMBOLS = SYMBOLS_DIR / "runtime.json"
 # Classes `uv run classes` recovered from the game's RTTI.
 CLASSES = SYMBOLS_DIR / "classes.json"
+# The progress report `uv run report` writes (local only: it contains disassembly).
+REPORT_DIR = BUILD_DIR / "report"
+REPORT = REPORT_DIR / "index.html"
 # Objects `uv run match` compiles, one directory per release.
 MATCH_DIR = BUILD_DIR / "match"
 
@@ -94,9 +97,10 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     # Includes any work done in Ghidra's GUI: only removed when asked for.
     "ghidra-project": [GHIDRA_PROJECT_DIR, GHIDRA_FUNCTIONS],
     "ghidra": [GHIDRA_DIR],
+    "report": [REPORT_DIR],
     "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
     # The whole build/ directory, so stray files can't survive a full clean.
     "all": [BUILD_DIR, "python"],
 }
 # What `uv run clean` removes with no arguments: everything cheap to rebuild.
-CLEAN_DEFAULT: list[str] = ["extracted", "vm-state", "toolchain", "python"]
+CLEAN_DEFAULT: list[str] = ["extracted", "vm-state", "toolchain", "report", "python"]

@@ -71,6 +71,19 @@ class Result:
         return not self.mismatches
 
 
+@dataclass(frozen=True)
+class MarkerPosition:
+    address: int
+    start: int  # of the marker comment in the source
+    end: int
+
+
+def marker_positions(source: str) -> list[MarkerPosition]:
+    return [
+        MarkerPosition(int(m.group(2), 16), m.start(), m.end()) for m in _MARKER.finditer(source)
+    ]
+
+
 def find_targets(source: str) -> list[Target]:
     """Marked functions: the first `name(` after each @zoombi32 marker."""
     found = []
@@ -165,9 +178,18 @@ def _alignment_keys(
     return keys
 
 
-def _side_by_side(result: Result) -> list[str]:
+@dataclass(frozen=True)
+class Row:
+    """One line of the side-by-side comparison."""
+
+    compiled: Instruction | None
+    original: Instruction | None
+    same: bool
+
+
+def aligned_rows(result: Result) -> list[Row]:
     """Disassembly of both versions, aligned so an inserted or missing
-    instruction shows as one line rather than shifting everything after it."""
+    instruction shows as one row rather than shifting everything after it."""
     base = result.target.address
     left = disassemble(result.compiled, base)
     right = disassemble(result.original, base)
@@ -177,16 +199,75 @@ def _side_by_side(result: Result) -> list[str]:
         _alignment_keys(right, base, result.original_masked),
         autojunk=False,
     )
+    return [
+        Row(a, b, tag == "equal")
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes()
+        for a, b in itertools.zip_longest(left[i1:i2], right[j1:j2])
+    ]
+
+
+def _side_by_side(result: Result) -> list[str]:
+    base = result.target.address
 
     def column(ins: Instruction | None) -> str:
         return f"{ins.address - base:04x} {ins.raw.hex():<14} {ins.text}" if ins else ""
 
     lines = [f"    {'compiled':<48} original"]
-    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        mark = " " if tag == "equal" else "*"
-        for a, b in itertools.zip_longest(left[i1:i2], right[j1:j2]):
-            lines.append(f"  {mark} {column(a):<48.48} {column(b)}")
+    for row in aligned_rows(result):
+        mark = " " if row.same else "*"
+        lines.append(f"  {mark} {column(row.compiled):<48.48} {column(row.original)}")
     return lines
+
+
+def decomp_sources() -> list[Path]:
+    return sorted([*paths.DECOMP_DIR.rglob("*.cpp"), *paths.DECOMP_DIR.rglob("*.c")])
+
+
+def default_release() -> str:
+    installed = toolchain.installed_releases()
+    if not installed:
+        raise typer.BadParameter("no toolchain installed; run `uv run toolchain setup` first")
+    return DEFAULT_RELEASE if DEFAULT_RELEASE in installed else installed[0]
+
+
+def game_executable() -> Executable:
+    game = paths.GAME32_DIR / "zoombi32.exe"
+    if not game.exists():
+        raise typer.BadParameter(f"{game} not found; run `uv run extract-game` first")
+    return Executable(game)
+
+
+@dataclass(frozen=True)
+class Checked:
+    """The outcome of checking one marked function."""
+
+    source: Path
+    target: Target
+    result: Result | None  # None if it couldn't be compiled or found
+    error: str | None = None
+
+
+def check(
+    sources: list[Path], release: str, exe: Executable, flags: str | None = None
+) -> list[Checked]:
+    """Compile each source and compare every function marked in it."""
+    checked = []
+    for source in sources:
+        text = source.read_text()
+        targets = find_targets(text)
+        if not targets:
+            continue
+        try:
+            obj = compile_source(release, source.resolve(), _flags_for(text, flags))
+        except RuntimeError as e:
+            checked += [Checked(source, t, None, str(e)) for t in targets]
+            continue
+        for target in targets:
+            try:
+                checked.append(Checked(source, target, compare(target, obj, exe)))
+            except ValueError as e:
+                checked.append(Checked(source, target, None, str(e)))
+    return checked
 
 
 app = typer.Typer(add_completion=False)
@@ -214,40 +295,32 @@ def main(
         bool, typer.Option("--quiet", "-q", help="Don't show disassembly of mismatches")
     ] = False,
 ) -> None:
-    sources = files or sorted([*paths.DECOMP_DIR.rglob("*.cpp"), *paths.DECOMP_DIR.rglob("*.c")])
-    installed = toolchain.installed_releases()
-    if not installed:
-        raise typer.BadParameter("no toolchain installed; run `uv run toolchain setup` first")
-    releases = release or [DEFAULT_RELEASE if DEFAULT_RELEASE in installed else installed[0]]
-    game = paths.GAME32_DIR / "zoombi32.exe"
-    if not game.exists():
-        raise typer.BadParameter(f"{game} not found; run `uv run extract-game` first")
-    exe = Executable(game)
+    sources = files or decomp_sources()
+    releases = release or [default_release()]
+    exe = game_executable()
 
     failed = 0
     for rel in releases:
         print(f"Borland C++ {rel}:")
-        for source in sources:
-            text = source.read_text()
-            targets = find_targets(text)
-            if not targets:
+        for item in check(sources, rel, exe, flags):
+            target, result = item.target, item.result
+            where = f"{target.name} @ {target.address:#x}"
+            if result is None:
+                failed += 1
+                print(f"  ERROR     {where}: {item.error}")
                 continue
-            obj = compile_source(rel, source.resolve(), _flags_for(text, flags))
-            for target in targets:
-                result = compare(target, obj, exe)
-                where = f"{target.name} @ {target.address:#x}"
-                size = len(result.compiled)
-                if result.matches:
-                    note = " (marked non-matching: remove the mark)" if target.nonmatching else ""
-                    relocated = len(result.masked)
-                    print(f"  match     {where}: {size} bytes ({relocated} relocated){note}")
-                elif target.nonmatching:
-                    differ = f"{len(result.mismatches)} of {size} bytes differ"
-                    print(f"  nonmatch  {where}: {differ} (marked non-matching)")
-                else:
-                    failed += 1
-                    print(f"  MISMATCH  {where}: {len(result.mismatches)} of {size} bytes differ")
-                    if not quiet:
-                        print("\n".join(_side_by_side(result)))
+            size = len(result.compiled)
+            if result.matches:
+                note = " (marked non-matching: remove the mark)" if target.nonmatching else ""
+                relocated = len(result.masked)
+                print(f"  match     {where}: {size} bytes ({relocated} relocated){note}")
+            elif target.nonmatching:
+                differ = f"{len(result.mismatches)} of {size} bytes differ"
+                print(f"  nonmatch  {where}: {differ} (marked non-matching)")
+            else:
+                failed += 1
+                print(f"  MISMATCH  {where}: {len(result.mismatches)} of {size} bytes differ")
+                if not quiet:
+                    print("\n".join(_side_by_side(result)))
     if failed:
         raise typer.Exit(1)

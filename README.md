@@ -138,6 +138,18 @@ A function that's written but not yet an exact match is marked `/* @zoombi32-non
 
 `match` compiles each file with Borland C++ 4.5 and the game's options (`-p`: Pascal calling convention by default; a file can set its own with a `/* @flags ... */` comment) and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets). Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. It needs `uv run extract-game` and `uv run toolchain setup` first.
 
+### Choosing what to decompile, and tracking progress
+
+```sh
+uv run worklist                # game functions ready to decompile next, smallest first
+uv run worklist --region engine
+uv run report --open           # progress report in your browser
+```
+
+A function is *ready* when everything it calls directly is done (matched, identified runtime code, or outside the region you're working on). `report` writes `build/report/index.html`: statistics per region (by function and by bytes), every function with its status, and for each decompiled function its original machine code, C++ and recompiled machine code side by side, with differences highlighted. It contains the game's disassembly, so keep it local.
+
+Both need `uv run ghidra setup`, `uv run runtime-symbols` and `uv run classes` to have run.
+
 ### Cleaning up
 
 ```sh
@@ -157,10 +169,11 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `wine` | the downloaded Wine build (macOS) and the Wine prefix | `uv run toolchain setup` (downloads ~180 MB) |
 | `ghidra-project` | the Ghidra project, **including any work done in Ghidra's GUI**, and its function list | `uv run ghidra setup` |
 | `ghidra` | all of Ghidra: the download, native build and project | `uv run ghidra setup` (downloads ~540 MB) |
+| `report` | `build/report/` | `uv run report` |
 | `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
 | `all` | all of the above plus anything else in `build/` | |
 
-With no arguments it removes `extracted`, `vm-state`, `toolchain` and `python`: everything that's cheap to rebuild, keeping the VM installs and the Wine download. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
+With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report` and `python`: everything that's cheap to rebuild, keeping the VM installs and the Wine download. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
 
 ## Development
 
