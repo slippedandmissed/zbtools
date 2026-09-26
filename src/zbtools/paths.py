@@ -25,6 +25,16 @@ MATCH_DIR = BUILD_DIR / "match"
 
 # Borland C++ BIN, LIB and INCLUDE, one directory per release.
 TOOLCHAIN_DIR = BUILD_DIR / "toolchain"
+# Ghidra: the downloaded release, and the project holding the analysed game.
+# The project also holds any work done in Ghidra's GUI (names, comments), so
+# no default `clean` removes it.
+GHIDRA_DIR = BUILD_DIR / "ghidra"
+GHIDRA_DIST = GHIDRA_DIR / "dist"
+GHIDRA_PROJECT_DIR = GHIDRA_DIR / "project"
+GHIDRA_PROJECT_NAME = "zoombinis"
+# Every function Ghidra found, exported by `uv run ghidra setup`.
+GHIDRA_FUNCTIONS = GHIDRA_DIR / "functions.json"
+
 # Wine: the downloaded build (macOS only) and the prefix the compilers run in.
 WINE_DIR = BUILD_DIR / "wine"
 WINE_DIST = WINE_DIR / "dist"
@@ -76,6 +86,9 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "vm": ["vm-base", "vm-state"],
     "toolchain": [TOOLCHAIN_DIR, WINE_PREFIX, MATCH_DIR],
     "wine": [WINE_DIR],
+    # Includes any work done in Ghidra's GUI: only removed when asked for.
+    "ghidra-project": [GHIDRA_PROJECT_DIR, GHIDRA_FUNCTIONS],
+    "ghidra": [GHIDRA_DIR],
     "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
     # The whole build/ directory, so stray files can't survive a full clean.
     "all": [BUILD_DIR, "python"],

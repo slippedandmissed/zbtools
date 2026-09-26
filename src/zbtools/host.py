@@ -6,16 +6,14 @@ The exception is Wine on macOS, which has no maintained package: a pinned,
 checksum-verified build is downloaded into build/wine/ instead.
 """
 
-import hashlib
+import os
 import platform
 import shutil
 import subprocess
 import sys
-import tarfile
-import urllib.request
 from pathlib import Path
 
-from zbtools import paths
+from zbtools import download, paths
 
 SYSTEM = platform.system()  # "Darwin" or "Linux"
 
@@ -33,6 +31,16 @@ _INSTALL_HINTS: dict[str, dict[str, str]] = {
     "7-Zip": {
         "Darwin": "brew install sevenzip",
         "Linux": "sudo apt install 7zip   # Debian/Ubuntu\n  sudo dnf install 7zip   # Fedora",
+    },
+    "JDK 21": {
+        "Darwin": "brew install openjdk@21",
+        "Linux": "sudo apt install openjdk-21-jdk          # Debian/Ubuntu\n"
+        "  sudo dnf install java-21-openjdk-devel   # Fedora",
+    },
+    "C/C++ build tools": {
+        "Darwin": "xcode-select --install",
+        "Linux": "sudo apt install build-essential           # Debian/Ubuntu\n"
+        "  sudo dnf group install development-tools   # Fedora",
     },
     "Wine": {
         "Linux": "sudo apt install wine   # Debian/Ubuntu\n  sudo dnf install wine   # Fedora",
@@ -88,16 +96,10 @@ def _download_macos_wine() -> None:
             "error: Wine needs Rosetta 2. Install it with:\n"
             "  softwareupdate --install-rosetta --agree-to-license"
         )
-    paths.WINE_DIST.mkdir(parents=True, exist_ok=True)
     archive = paths.WINE_DIST / "wine.tar.xz"
-    print(f"Downloading Wine (~180 MB) from {_MACOS_WINE_URL}")
-    urllib.request.urlretrieve(_MACOS_WINE_URL, archive)
-    digest = hashlib.sha256(archive.read_bytes()).hexdigest()
-    if digest != _MACOS_WINE_SHA256:
-        archive.unlink()
-        sys.exit(f"error: Wine download has SHA-256 {digest}, expected {_MACOS_WINE_SHA256}")
-    with tarfile.open(archive) as tar:
-        tar.extractall(paths.WINE_DIST, filter="tar")
+    print("Downloading Wine (~180 MB)")
+    download.fetch(_MACOS_WINE_URL, _MACOS_WINE_SHA256, archive)
+    download.extract_tar(archive, paths.WINE_DIST)
     archive.unlink()
 
 
@@ -109,6 +111,38 @@ def wine_bin_dir() -> Path:
             _download_macos_wine()
         return _MACOS_WINE_BIN
     return Path(require("Wine", "wine")).parent
+
+
+def java_home() -> Path:
+    """A JDK 21 installation (Ghidra 12 needs it): $JAVA_HOME if it's set,
+    otherwise the platform's usual install locations."""
+    candidates = [Path(os.environ["JAVA_HOME"])] if os.environ.get("JAVA_HOME") else []
+    if SYSTEM == "Darwin":
+        candidates += [
+            Path(prefix) / "opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
+            for prefix in ("/opt/homebrew", "/usr/local")
+        ]
+        candidates += Path("/Library/Java/JavaVirtualMachines").glob("*21*/Contents/Home")
+    else:
+        candidates += Path("/usr/lib/jvm").glob("java-21-*")
+    for candidate in candidates:
+        if (candidate / "bin" / "java").exists():
+            return candidate
+    return Path(require("JDK 21", "java-21")).parent.parent  # exits with a hint
+
+
+def ghidra_platform() -> str:
+    """Ghidra's name for this machine's platform, e.g. "mac_arm_64"."""
+    os_name = {"Darwin": "mac", "Linux": "linux"}[SYSTEM]
+    arch = "arm_64" if platform.machine() in ("arm64", "aarch64") else "x86_64"
+    return f"{os_name}_{arch}"
+
+
+def require_native_build_tools() -> None:
+    """Ghidra ships native binaries only for some platforms; building the rest
+    needs a C/C++ compiler and make."""
+    require("C/C++ build tools", "c++")
+    require("C/C++ build tools", "make")
 
 
 def qemu_display_args(headless: bool = False) -> list[str]:

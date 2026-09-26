@@ -18,6 +18,8 @@ Supported hosts: macOS on Apple Silicon (tested) and Linux (should work, unteste
 - [QEMU](https://www.qemu.org/) for the Windows 98 VM: `brew install qemu` on macOS; `qemu-system-x86` and `qemu-utils` (Debian/Ubuntu) or `qemu-system-x86` and `qemu-img` (Fedora) on Linux
 - [mtools](https://www.gnu.org/software/mtools/) for editing the setup floppy image: `brew install mtools`, or the `mtools` package on Linux
 - [7-Zip](https://www.7-zip.org/) for reading the Borland C++ CDs: `brew install sevenzip`, or the `7zip` package on Linux
+- JDK 21, for Ghidra: `brew install openjdk@21`, or `openjdk-21-jdk` (Debian/Ubuntu) / `java-21-openjdk-devel` (Fedora)
+- A C/C++ compiler and `make`, to build Ghidra's native decompiler where its release doesn't include one (e.g. Apple Silicon): `xcode-select --install`, or `build-essential` on Linux
 - Wine, to run the Borland compiler: on macOS the tools download a pinned build into `build/wine/` themselves (it needs [Rosetta 2](https://support.apple.com/en-us/102527)); on Linux, install the `wine` package
 
 The tools tell you if anything is missing and how to install it.
@@ -94,6 +96,18 @@ uv run toolchain run 4.5 BCC32 -c foo.c      # run any Borland tool, in the curr
 
 Under Wine, release 4.5 is drive `T:` and 4.52 is drive `U:` (e.g. `T:\BC45\INCLUDE`); host files are on `Z:`.
 
+### Ghidra
+
+```sh
+uv run ghidra setup                  # import and analyse zoombi32.exe (a few minutes)
+uv run ghidra open                   # browse the project in Ghidra's GUI
+uv run ghidra decompile 0x46be2e     # print Ghidra's C for one function
+```
+
+`setup` downloads a pinned Ghidra release into `build/ghidra/` (building its native decompiler first if the release has none for your machine), imports `zoombi32.exe` into a project in `build/ghidra/project/`, runs Ghidra's auto-analysis and writes every function it found to `build/ghidra/functions.json`. Close the project in the GUI before running `decompile`, which opens it headlessly.
+
+Work you do in Ghidra's GUI (names, comments, types) lives in the project, so no default `clean` removes it; `uv run ghidra setup --force` recreates the project from scratch.
+
 ### Matching decompiled functions
 
 Decompiled C lives in `decomp/`. Each function that should reproduce the game's code is preceded by a marker comment with its address in `zoombi32.exe`:
@@ -130,6 +144,8 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `vm` | all of the above | |
 | `toolchain` | the extracted Borland toolchains and the Wine prefix | `uv run toolchain setup` |
 | `wine` | the downloaded Wine build (macOS) and the Wine prefix | `uv run toolchain setup` (downloads ~180 MB) |
+| `ghidra-project` | the Ghidra project, **including any work done in Ghidra's GUI**, and its function list | `uv run ghidra setup` |
+| `ghidra` | all of Ghidra: the download, native build and project | `uv run ghidra setup` (downloads ~540 MB) |
 | `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
 | `all` | all of the above plus anything else in `build/` | |
 
@@ -185,7 +201,8 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Borland C++ 4.5 and 4.52 toolchains running under Wine (`uv run toolchain`)
 - [x] Function matcher (`uv run match`) and the first matching functions
 - [ ] Settle 4.5 vs 4.52 and the compiler flags (needs a function that distinguishes them)
-- [ ] Ghidra project with imports and runtime functions labeled
+- [x] Ghidra project with auto-analysis, function list and decompiler (`uv run ghidra`)
+- [ ] Label the Borland runtime functions in Ghidra (from the toolchain's `.lib` files) and teach it the calling conventions
 
 ## Legal
 

@@ -11,6 +11,7 @@ dependencies = [
     "pillow>=12.3.0",
     "pycdlib>=1.21.0",
     "pydantic>=2.13.5",
+    "pyghidra>=3.1.0",
     "python-dotenv>=1.2.3",
     "qemu-qmp>=0.0.6",
     "typer>=0.27.2",
@@ -23,6 +24,7 @@ extract-game = "zbtools.extract_game:app"
 vm = "zbtools.vm:app"
 toolchain = "zbtools.toolchain:app"
 match = "zbtools.match:app"
+ghidra = "zbtools.ghidra:app"
 unpack-isz = "zbtools.unpack_isz:app"
 
 [build-system]
@@ -31,6 +33,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "ghidra-stubs==12.1.4",
     "mypy>=2.3.1",
     "pre-commit>=4.6.2",
     "ruff>=0.16.9",

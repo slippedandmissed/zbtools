@@ -52,3 +52,7 @@ So the game's runtime code is consistent with either release. The remaining test
 ## First matched functions
 
 `decomp/first.c`: `fn_46be2e` (stores its argument in the global at `0x4a7f58`) and `fn_455e85` (returns 0, ignoring two arguments). Both match byte for byte with BCC32's default options under both 4.5 and 4.52, so they don't distinguish the releases or flags.
+
+## Ghidra's view of zoombi32.exe
+
+Ghidra 12.1.4's auto-analysis finds 2,567 functions: 1,313 in the game's code (below `0x46f7c5`; median 110 bytes, 66 over 1 KB), 1,019 in the runtime library and 235 thunks. It agrees with `uv run match` on the two matched functions (15 and 9 bytes). Its decompiler doesn't yet know the functions clean up their own stack arguments (e.g. `fn_455e85`'s two arguments show as `void`).
