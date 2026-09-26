@@ -5,7 +5,7 @@ Each function in decomp/*.cpp that should match the game is preceded by a
 marker comment giving its address in zoombi32.exe:
 
     /* @zoombi32 0x0046be2e */
-    void __stdcall fn_46be2e(long value)
+    void fn_46be2e(long value)
 
 Methods are marked the same way (`void Widget::set(long v)`). The function is
 found in the compiled object by its demangled, qualified name.
@@ -14,9 +14,11 @@ A function that is written but doesn't match exactly yet is marked
 `/* @zoombi32-nonmatching 0x... */` instead: it's still compiled and compared,
 and reported with how close it is, but doesn't count as a failure.
 
-Each file is compiled with each installed Borland C++ release, and every marked
-function is compared with the original, ignoring the bytes the linker fills in
-(relocated addresses and call targets). Mismatches are shown side by side.
+Each file is compiled with Borland C++ 4.5 using the game's options (-p: the
+Pascal calling convention by default), or those given by a `/* @flags ... */`
+comment in the file, and every marked function is compared with the original,
+ignoring the bytes the linker fills in (relocated addresses and call targets).
+Mismatches are shown side by side.
 """
 
 import difflib
@@ -33,10 +35,12 @@ from zbtools import omf, paths, toolchain
 from zbtools.demangle import qualified_name
 from zbtools.exe import Executable, Instruction, disassemble
 
-# Compiler options used unless --flags is given: BCC32's defaults (no
-# optimisation, register variables on, byte alignment) reproduce the game's code;
-# see docs/findings.md.
-DEFAULT_FLAGS = ""
+# Compiler options used unless a file says otherwise (/* @flags ... */) or --flags
+# is given: the game's code was compiled with -p (Pascal calling convention by
+# default) and BCC32's other defaults (no optimisation, register variables, byte
+# alignment); see docs/findings.md.
+DEFAULT_FLAGS = "-p"
+_FLAGS = re.compile(r"/\*\s*@flags\s+(.*?)\s*\*/")
 # Release used unless --release is given. 4.5 and 4.52 generate identical code
 # unless 4.52's -fp (Pentium FDIV workaround) is used, which the game doesn't.
 DEFAULT_RELEASE = "4.5"
@@ -81,12 +85,15 @@ def find_targets(source: str) -> list[Target]:
 
 def _find_public(obj: omf.ObjectFile, name: str) -> omf.Public:
     """The public symbol for a function name, qualified (`Widget::set`) or not."""
-    candidates = [
-        p
-        for p in obj.publics
-        if name in (qualified_name(p.name), qualified_name(p.name).split("::")[-1])
-        or p.name == name.upper()  # pascal: upper-cased, unmangled
-    ]
+
+    def matches(public: omf.Public) -> bool:
+        qualified = qualified_name(public.name)
+        names = (qualified, qualified.split("::")[-1])
+        if public.name.isupper():  # __pascal: the whole mangled name is upper-cased
+            return name.upper() in names
+        return name in names
+
+    candidates = [p for p in obj.publics if matches(p)]
     if len(candidates) != 1:
         found = [qualified_name(p.name) for p in obj.publics]
         problem = "is ambiguous (qualify it or rename an overload)" if candidates else "not found"
@@ -115,6 +122,14 @@ def compare(target: Target, obj: omf.ObjectFile, exe: Executable) -> Result:
         if any(target.address + i - k in exe.relocations for k in range(4))
     )
     return Result(target, compiled, original, masked, relocated, tuple(sorted(mismatches)))
+
+
+def _flags_for(source: str, override: str | None) -> str:
+    """The BCC32 options for a file: --flags, else its /* @flags ... */, else the default."""
+    if override is not None:
+        return override
+    directive = _FLAGS.search(source)
+    return directive.group(1) if directive else DEFAULT_FLAGS
 
 
 def compile_source(release: str, source: Path, flags: str) -> omf.ObjectFile:
@@ -189,7 +204,12 @@ def main(
             "--release", "-r", help=f"Borland C++ release(s) to use (default: {DEFAULT_RELEASE})"
         ),
     ] = None,
-    flags: Annotated[str, typer.Option(help="BCC32 options, e.g. '-O2 -5'")] = DEFAULT_FLAGS,
+    flags: Annotated[
+        str | None,
+        typer.Option(
+            help=f"BCC32 options for all files (default: each file's @flags, or {DEFAULT_FLAGS})"
+        ),
+    ] = None,
     quiet: Annotated[
         bool, typer.Option("--quiet", "-q", help="Don't show disassembly of mismatches")
     ] = False,
@@ -206,12 +226,13 @@ def main(
 
     failed = 0
     for rel in releases:
-        print(f"Borland C++ {rel}{f' ({flags})' if flags else ''}:")
+        print(f"Borland C++ {rel}:")
         for source in sources:
-            targets = find_targets(source.read_text())
+            text = source.read_text()
+            targets = find_targets(text)
             if not targets:
                 continue
-            obj = compile_source(rel, source.resolve(), flags)
+            obj = compile_source(rel, source.resolve(), _flags_for(text, flags))
             for target in targets:
                 result = compare(target, obj, exe)
                 where = f"{target.name} @ {target.address:#x}"

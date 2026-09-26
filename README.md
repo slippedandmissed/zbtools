@@ -136,7 +136,7 @@ uv run match decomp/first.cpp -r 4.5 --flags "-O2"   # one file, one release, ex
 
 A function that's written but not yet an exact match is marked `/* @zoombi32-nonmatching 0x... */`: it's still compiled and reported with how close it is, but doesn't fail the run.
 
-`match` compiles each file with Borland C++ 4.5 (the game's compiler settings are BCC32's defaults) and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets). Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. It needs `uv run extract-game` and `uv run toolchain setup` first.
+`match` compiles each file with Borland C++ 4.5 and the game's options (`-p`: Pascal calling convention by default; a file can set its own with a `/* @flags ... */` comment) and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets). Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. It needs `uv run extract-game` and `uv run toolchain setup` first.
 
 ### Cleaning up
 

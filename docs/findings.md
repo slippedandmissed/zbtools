@@ -104,9 +104,9 @@ Each vtable, in the data section, is preceded by a pointer to its class's descri
 
 `uv run ghidra label` makes these Ghidra classes (descriptor, vtable, constructors, destructor, and `vfuncN` for virtual methods named after the class that introduces them) and sets `__stdcall` on the 1,365 functions that pop their own arguments.
 
-## Compiler settings: BCC32's defaults
+## Compiler settings: `-p`, otherwise BCC32's defaults
 
-The game's code is reproduced by BCC32 with **no options**: no optimisation (`-Od`), register variables on (`-r`), byte alignment. Evidence, from compiling decompiled game functions (`decomp/`) and comparing:
+The game's code is reproduced by BCC32 with **`-p`** (the Pascal calling convention by default) and otherwise its defaults: no optimisation (`-Od`), register variables on (`-r`), byte alignment. Evidence, from compiling decompiled game functions (`decomp/`) and comparing:
 
 - Four functions match byte for byte with the defaults, including two with loops, register-allocated locals and hoisted addresses (`fn_4572bf`, `fn_437390`); what looks like optimisation in the game (registers for locals, rotated loops, no stack frame for argument-less functions) is BCC32's default code generation.
 - `-O1` and `-O2` break two and three of them respectively; `-r-` (no register variables) breaks two.
@@ -118,4 +118,13 @@ Details that depend on how the source is written, found while matching:
 - A comparison's operand order follows the source (`exclude != i` gives `cmp ax, si`; `i != exclude` gives `cmp si, ax`).
 - Initialising several variables in the `for` header (`for (i = 1, best = 0, ...)`) versus in declarations changes the order of the setup instructions.
 - A search loop written `while (p && !found) p = p->next;` compiles to the game's layout; a `for` with `break` doesn't.
-- Register assignment and the order parameters are loaded in depend on the source in ways not yet understood: `fn_4115f5` and `fn_43a772` are marked non-matching for that reason.
+
+### The Pascal calling convention (`-p`)
+
+Two functions (`fn_4115f5`, `fn_43a772`) at first matched in everything but the order their parameters were loaded and the registers they landed in. Experiments showed BCC32 loads a function's parameters last-declared first, and gives `eax` to the most-used variable (the first parameter on a tie). The originals load the parameter at `[ebp+8]` first, so it must be the *last* declared: parameters pushed left to right, which is the Pascal convention. It also pops its own arguments (`ret N`), so it looks like `__stdcall` from the return alone; with one parameter or none the two produce identical code.
+
+Written as plain functions with their parameters in Pascal order and compiled with `-p`, both match; without `-p` they don't. Across the game's code, 785 functions with parameters pop them (`ret N`) against 49 that don't (probably variadic, like the error reporter at `0x41541a`), which is what a global `-p` looks like. The Mohawk engine is different (416 against 240): it was built separately and declares conventions per function.
+
+Borland upper-cases the whole mangled name of `__pascal` functions (`@FN_4115F5$QSL`); `demangle.py` and `match` handle that.
+
+Ghidra's 32-bit x86 support has no `__pascal` convention, so `ghidra label` marks these functions `__stdcall`: the stack clean-up is right, but **Ghidra numbers their parameters in reverse** (its `param_1` is the source's last parameter).

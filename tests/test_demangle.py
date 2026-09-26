@@ -41,6 +41,9 @@ from zbtools.demangle import demangle, qualified_name
         ("@fstreambase@3$vsn", "vtable for fstreambase"),
         # names that aren't C++-mangled are left alone
         ("@__InitExceptBlock", "__InitExceptBlock"),
+        # __pascal: the whole mangled name is upper-cased
+        ("@FN_4115F5$QSL", "FN_4115F5(short,long)"),
+        ("@FN_43A772$QP4LINKT1", "FN_43A772(LINK*,LINK*)"),
         ("_strcpy", "_strcpy"),
         ("__DestructorCountPtr", "__DestructorCountPtr"),
     ],
@@ -61,6 +64,7 @@ def test_unparseable_names_are_returned_unchanged() -> None:
         ("@string@c_str$xqv", "string::c_str"),
         ("@ios@$bcall$qv", "ios::operator ()"),
         ("@fn_46be2e$ql", "fn_46be2e"),
+        ("@FN_4115F5$QSL", "FN_4115F5"),
         ("_strcpy", "strcpy"),
         ("@__InitExceptBlock", "__InitExceptBlock"),
     ],

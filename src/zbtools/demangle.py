@@ -2,6 +2,9 @@
 
     @xmsg@$bctr$qrx6string  ->  xmsg::xmsg(const string&)
 
+`__pascal` functions have their whole mangled name upper-cased, type codes
+included (@FN$QSL for fn(short, long)), so codes are read case-insensitively.
+
 Hand-written because no Python library knows Borland's scheme (PyPI's
 demanglers handle GCC/Clang's Itanium scheme only), and Ghidra has no Borland
 demangler either. Checked against the names Borland's own TDUMP prints for the
@@ -44,13 +47,15 @@ class _Parser:
         self.args: list[str] = []  # for back-references (t<n>)
 
     def peek(self, n: int = 1) -> str:
-        return self.text[self.pos : self.pos + n]
+        """The next characters, lower-cased: codes are case-insensitive."""
+        return self.text[self.pos : self.pos + n].lower()
 
     def take(self) -> str:
+        """The next character, lower-cased (for codes; names are read directly)."""
         if self.pos >= len(self.text):
             raise _Error("unexpected end")
         self.pos += 1
-        return self.text[self.pos - 1]
+        return self.text[self.pos - 1].lower()
 
     def number(self) -> int:
         start = self.pos
@@ -150,7 +155,7 @@ class _Parser:
             start = self.pos
             while self.peek() and self.peek() not in ("@", "$"):
                 self.pos += 1
-            name = self.text[start : self.pos]
+            name = self.text[start : self.pos]  # as written, not lower-cased
             if self.peek() == "@":
                 self.pos += 1
                 scopes.append(name)
