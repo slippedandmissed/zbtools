@@ -13,6 +13,7 @@ import os
 import shutil
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
@@ -20,12 +21,13 @@ import pyghidra
 import typer
 from pydantic import BaseModel, ConfigDict
 
-from zbtools import download, host, match, paths, quicktime, rtti, runtime_symbols
+from zbtools import declarations, download, host, match, paths, quicktime, rtti, runtime_symbols
 from zbtools.demangle import qualified_name
 from zbtools.exe import Executable
 
 if TYPE_CHECKING:
     from ghidra.program.model.address import Address
+    from ghidra.program.model.data import DataType
     from ghidra.program.model.listing import Function, Instruction, Program
     from ghidra.program.model.symbol import Namespace, SymbolTable
 
@@ -36,6 +38,7 @@ _URL = (
 )
 _SHA256 = "ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db"
 PROGRAM_NAME = "zoombi32.exe"
+TYPES_CATEGORY = "/zoombinis"  # where the types from decomp/zoombinis.h go
 
 
 class FunctionInfo(BaseModel):
@@ -479,6 +482,111 @@ def _recover_switches(program: "Program") -> list[int]:
     return sorted(set(fixed))
 
 
+@dataclass(frozen=True)
+class Declared:
+    """What `_apply_declarations` did."""
+
+    types: int
+    named: int
+    typed: int
+    kept: int  # globals whose name or type was set by hand, left alone
+
+
+def _add_types(program: "Program", c: str) -> int:
+    """Parse decomp/zoombinis.h's structs with Ghidra's C parser and put them in
+    the program's /zoombinis category, replacing earlier versions in place (so
+    data already typed with them follows)."""
+    from ghidra.app.util.cparser.C import CParser  # noqa: PLC0415
+    from ghidra.program.model.data import (  # noqa: PLC0415
+        CategoryPath,
+        DataTypeConflictHandler,
+        StandAloneDataTypeManager,
+    )
+
+    dtm = program.getDataTypeManager()
+    # Parse into a scratch manager: the parser's typedefs stay there.
+    scratch = StandAloneDataTypeManager("zoombinis", dtm.getDataOrganization())
+    transaction = scratch.startTransaction("parse")
+    try:
+        parser = CParser(scratch)
+        parser.parse(c)
+        composites = list(parser.getComposites().values())
+        for composite in composites:
+            composite.setCategoryPath(CategoryPath(TYPES_CATEGORY))
+        for composite in composites:
+            dtm.resolve(composite, DataTypeConflictHandler.REPLACE_HANDLER)
+    finally:
+        scratch.endTransaction(transaction, False)
+        scratch.close()
+    return len(composites)
+
+
+def _ours(data_type: "DataType") -> bool:
+    """Whether a type is one these tools apply: ours, a builtin or undefined."""
+    path = str(data_type.getPathName())
+    return path.startswith(f"{TYPES_CATEGORY}/") or path.count("/") == 1
+
+
+# C builtin type names as Ghidra names them.
+_BUILTINS = {"unsigned long": "ulong", "unsigned short": "ushort", "unsigned char": "uchar"}
+
+
+def _data_type(program: "Program", text: str) -> "DataType":
+    """A type from decomp/zoombinis.h (a builtin or one of our structs, with any
+    number of `*`s) as a Ghidra data type."""
+    from ghidra.program.model.data import BuiltInDataTypeManager  # noqa: PLC0415
+
+    dtm = program.getDataTypeManager()
+    base = text.replace("*", "").strip()
+    found: DataType | None = dtm.getDataType(f"{TYPES_CATEGORY}/{base}")
+    if found is None:
+        builtins = BuiltInDataTypeManager.getDataTypeManager()
+        found = builtins.getDataType(f"/{_BUILTINS.get(base, base)}")
+    if found is None:
+        raise ValueError(f"decomp/zoombinis.h: no Ghidra type for {text!r}")
+    for _ in range(text.count("*")):
+        found = dtm.getPointer(found)
+    return found
+
+
+def _apply_declarations(program: "Program") -> Declared:
+    """Give Ghidra decomp/zoombinis.h's types, and its globals' names and types.
+    Names set by hand in Ghidra are kept, and so are types other than ours,
+    builtins and undefined data."""
+    from ghidra.program.model.data import DataUtilities  # noqa: PLC0415
+    from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
+
+    globals_, c = declarations.load()
+    types = _add_types(program, c)
+    space = program.getAddressFactory().getDefaultAddressSpace()
+    table, listing = program.getSymbolTable(), program.getListing()
+    named = typed = kept = 0
+    for declared in globals_:
+        at = space.getAddress(declared.address)
+        symbol = table.getPrimarySymbol(at)
+        if symbol is None or symbol.getSource() == SourceType.DEFAULT:
+            table.createLabel(at, declared.name, SourceType.IMPORTED)
+            named += 1
+        elif symbol.getSource() == SourceType.IMPORTED:
+            if str(symbol.getName()) != declared.name:
+                symbol.setName(declared.name, SourceType.IMPORTED)
+                named += 1
+        elif str(symbol.getName()) != declared.name:
+            kept += 1
+        data_type = _data_type(program, declared.type)
+        existing = listing.getDataAt(at)
+        if existing is not None and existing.getDataType().isEquivalent(data_type):
+            continue
+        if existing is not None and existing.isDefined() and not _ours(existing.getDataType()):
+            kept += 1
+            continue
+        DataUtilities.createData(
+            program, at, data_type, -1, DataUtilities.ClearDataMode.CLEAR_ALL_CONFLICT_DATA
+        )
+        typed += 1
+    return Declared(types, named, typed, kept)
+
+
 def _set_calling_conventions(program: "Program") -> int:
     """Mark functions that pop their own arguments (`ret N`) as __stdcall, so the
     decompiler shows their parameters. Borland passes `this` on the stack, so
@@ -499,8 +607,8 @@ def label() -> None:
     """Apply everything the tools have recovered to the Ghidra project: Borland
     runtime names (`uv run runtime-symbols`), C++ classes from RTTI (`uv run
     classes`), the names of functions decompiled in decomp/, calling
-    conventions, and the ends of functions Ghidra cut short at a breakpoint or
-    a switch.
+    conventions, the types and globals declared in decomp/zoombinis.h, and
+    the ends of functions Ghidra cut short at a breakpoint or a switch.
     Names you've set by hand are kept."""
     found = runtime_symbols.load()
     classes = rtti.load().classes
@@ -514,6 +622,7 @@ def label() -> None:
             class_named = _label_classes(program, classes)
             quicktime_named = _label_quicktime(program, Executable(paths.GAME32_DIR / PROGRAM_NAME))
             decomp_named, decomp_kept = _label_decompiled(program)
+            declared = _apply_declarations(program)
             breakpoints = _continue_after_breakpoints(program)
             conventions = _set_calling_conventions(program)
             switches = _recover_switches(program)
@@ -525,6 +634,10 @@ def label() -> None:
         f"QuickTime glue functions and {decomp_named} "
         f"decompiled functions (kept {decomp_kept} names set by hand); set __stdcall on "
         f"{conventions} functions. Function list updated: {paths.GHIDRA_FUNCTIONS}"
+    )
+    print(
+        f"From decomp/zoombinis.h: {declared.types} types; named {declared.named} and typed "
+        f"{declared.typed} globals (kept {declared.kept} names or types set by hand)."
     )
     if switches:
         where = ", ".join(f"{a:#x}" for a in switches)
