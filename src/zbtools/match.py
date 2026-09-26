@@ -153,22 +153,26 @@ def _local_calls(
     """Calls the compiler resolved itself, to functions in the same object: they
     have no fixup, and their displacement depends on our file's layout. Returns
     the ones that reach the right function (a marked sibling the original calls
-    too), as the offset of their operand -> the callee's symbol."""
+    too), as the offset of their operand -> the callee's symbol.
+
+    Calls are found by scanning for the opcode at every offset, not by
+    disassembling: a switch's jump table inside a function would throw a
+    linear disassembly out of step. A stray 0xE8 byte doesn't count unless
+    both our code and the original resolve it to the same marked sibling."""
     segment, start = at
     found = {}
-    for ins in disassemble(compiled, 0):
-        after = ins.address + 5
-        if ins.raw[0] != 0xE8 or len(ins.raw) != 5 or ins.address + 1 in masked:
+    for offset in range(len(compiled) - 4):
+        operand = range(offset + 1, offset + 5)
+        if compiled[offset] != 0xE8 or any(i in masked for i in operand):
             continue
-        ours = start + after + int.from_bytes(ins.raw[1:], "little", signed=True)
+        after = offset + 5
+        ours = start + after + int.from_bytes(compiled[offset + 1 : after], "little", signed=True)
         theirs = (
-            address
-            + after
-            + int.from_bytes(original[ins.address + 1 : after], "little", signed=True)
+            address + after + int.from_bytes(original[offset + 1 : after], "little", signed=True)
         )
         callee = siblings.get((segment, ours))
         if callee is not None and callee.address == theirs:
-            found[ins.address + 1] = callee.symbol
+            found[offset + 1] = callee.symbol
     return found
 
 

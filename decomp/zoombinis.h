@@ -87,7 +87,7 @@ struct InputHandlers
     void (*handler1C)(InputItem *item);
     void (*handler20)(InputItem *item);
     void (*handler24)(InputItem *item);
-    short (*handler28)(long value, InputItem *item);
+    short (*hitTest)(Point *where, InputItem *item); /* +0x28 */
     void (*enter)(InputItem *item); /* +0x2c */
     void (*leave)(InputItem *item); /* +0x30 */
 };
@@ -122,7 +122,7 @@ struct InputState
     Point cursorB;
     Point cursorC;
     short search; /* what fn_41391d looks for (0-7) */
-    long unknown1A;
+    Point *point;
     InputItem *unknown1E;
     short unknown22;
     short unknown24;
@@ -327,7 +327,7 @@ extern InputItem *g_4aa498;
 extern Cursor g_4aa49c;
 extern InputItem *enteredItem; /* @data 0x4aa4a8 */
 extern short g_4aa4ac;
-extern long g_4aa4b0;
+extern Point *g_4aa4b0;
 extern InputItem *g_4aa4b4;
 extern short g_4aa4b8;
 extern short g_4aa4ba;
@@ -468,7 +468,7 @@ long qtim_0b();
    declarations produce the calls the game makes. */
 
 void fn_476622(long handle);
-short fn_480b80(InputItem *item, long value);
+short fn_480b80(InputItem *item, Point *where); /* the default hit test */
 /* The engine's graphics follow Mac QuickDraw: a current port, and conversions
    between a port's coordinates and the screen's. */
 long getPort(); /* 0x48b510 */
@@ -522,7 +522,7 @@ void fn_412d47();
 void fn_412d57();
 short fn_41336f();
 short fn_4133a4();
-short fn_41280d(long value);
+short hitTestFocus(Point *where);
 void fn_412b6b();
 void fn_412b8f();
 void fn_412cef();
@@ -541,7 +541,7 @@ short fn_413693(GroupList *list, short first, short start);
 short fn_413755(GroupList *list, short first, short start);
 short fn_41348b(short list, short group, short start);
 short fn_41357a(short list, short group, short start);
-short focusItemByHandler(long value);
+short focusItemAtPoint(Point *where);
 short focusItemByKey(short key);
 short focusItemAt(short x, short y);
 short focusItem(InputItem *item);
@@ -553,14 +553,15 @@ void enterFocusedItem();
 void moveMouseTo(short x, short y);
 void moveMouseToFocus();
 short moveFocus(short direction);
-InputItem *hoverItemByHandler(long value);
+InputItem *hoverItemAtPoint(Point *where);
 void highlightFocus();
 void toggleFocusedItem();
 void switchOffOthers();
 short fn_412722(short on, short value);
 void stepFocus(short direction);
-short fn_412587(InputItem *item, short on);
-short fn_4125d3(short on);
+short fn_412587(InputItem *item, unsigned short button);
+short trackPress(unsigned short button);
+InputItem *highlightItemAt(short x, short y);
 void getItemPosition(InputItem *item, Cursor *where);
 InputItem *itemAt(short x, short y);
 void activateItemAt(short x, short y);

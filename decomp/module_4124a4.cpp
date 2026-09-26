@@ -16,17 +16,17 @@ void setGroupLists(GroupList *lists, short count, unsigned short flags)
     numberAllItems();
 }
 
-/* Hovers over the item a handler accepts `value` for (entering it), or
-   leaves the one entered; the item, if any. */
+/* Hovers over the item at a point (entering it), or leaves the one entered;
+   the item, if any. */
 /* @zoombi32 0x00412537 */
-InputItem *hoverItemByHandler(long value)
+InputItem *hoverItemAtPoint(Point *where)
 {
     InputState saved;
     InputItem *item;
 
     fn_413afd(&saved, 1);
     g_4aa4c0 = 0;
-    if (focusItemByHandler(value)) {
+    if (focusItemAtPoint(where)) {
         enterFocusedItem();
         item = g_4aa498;
     } else {
@@ -37,9 +37,9 @@ InputItem *hoverItemByHandler(long value)
     return item;
 }
 
-/* fn_4125d3 for an item, keeping the state. */
+/* trackPress for an item, keeping the state. */
 /* @zoombi32 0x00412587 */
-short fn_412587(InputItem *item, short on)
+short fn_412587(InputItem *item, unsigned short button)
 {
     InputState saved;
     short result;
@@ -47,11 +47,60 @@ short fn_412587(InputItem *item, short on)
     fn_413afd(&saved, 1);
     g_4aa4c0 = 0;
     if (focusItem(item))
-        result = fn_4125d3(on);
+        result = trackPress(button);
     else
         result = 0;
     fn_413a4e(&saved, 1);
     return result;
+}
+
+/*
+ * Tracks a press of the mouse button on the focused item until it's let go,
+ * following the mouse (the group's hit test) and switching the item as it
+ * goes: the group's kind makes it a push button, one that latches, or a
+ * toggle. Whether anything changed.
+ *
+ * Not exact: at `target = over ^ wasOn` the original loads `over` (ebx) and
+ * XORs in `wasOn` (esi); every form tried (either order, declaration orders,
+ * types) loads `wasOn` first.
+ */
+/* @zoombi32 0x004125d3 */
+short trackPress(unsigned short button)
+{
+    short target, held;
+    Point where;
+    unsigned short wasOn;
+    short over, changed;
+
+    changed = 0;
+    wasOn = (g_4aa498->flags & 4) == 4;
+    target = !wasOn;
+    over = 1;
+    highlightFocus();
+    if (wasOn && !(g_4aa494->flags & 0x10)) {
+        if (fn_4133a4() && !fn_41336f())
+            fn_412bb3(1);
+        return 0;
+    }
+    do {
+        changed |= fn_412722(target, 0);
+        fn_413bad(&where);
+        mainLoopEvents();
+        held = isButtonStillDown(button) && (g_4aa494->flags & 0xe000) != 0x2000;
+        if (held && (g_4aa494->flags & 0xe000) != 0x8000) {
+            over = hitTestFocus(&where);
+            if ((g_4aa494->flags & 0xe000) == 0x4000)
+                held &= over;
+            else
+                target = over ^ wasOn;
+        }
+    } while (held);
+    if (g_4aa494->flags & 0xe000 || over) {
+        changed |= fn_412722(target, 1);
+        if (!(g_4aa494->flags & 4))
+            changed |= fn_412722(wasOn, 1);
+    }
+    return changed;
 }
 
 /*
@@ -84,15 +133,15 @@ short fn_412722(short on, short value)
     return 0;
 }
 
-/* Passes `value` to the current handlers' slot 0x28, or else to the engine;
-   the answer. */
+/* Whether a point is on the focused item: its group's hit test, or the
+   engine's. */
 /* @zoombi32 0x0041280d */
-short fn_41280d(long value)
+short hitTestFocus(Point *where)
 {
-    if (!g_4aa494->handlers->handler28)
-        return fn_480b80(g_4aa498, value);
+    if (!g_4aa494->handlers->hitTest)
+        return fn_480b80(g_4aa498, where);
     else
-        return g_4aa494->handlers->handler28(value, g_4aa498);
+        return g_4aa494->handlers->hitTest(where, g_4aa498);
 }
 
 /* Whether an item is available in the current mode (g_4aa4c0): in mode 0,
@@ -492,6 +541,31 @@ short moveFocus(short direction)
     return 0;
 }
 
+/* Highlights the item at a position (from 1), keeping the state; the item. */
+/* @zoombi32 0x004131a3 */
+InputItem *highlightItemAt(short x, short y)
+{
+    InputState saved;
+    InputItem *item;
+
+    if (x <= 0 || y <= 0)
+        return 0;
+    if (!fn_4133a4())
+        return 0;
+    fn_413afd(&saved, 1);
+    g_4a01b0 = 1;
+    g_4aa4c0 = 0;
+    if (focusItemAt(x, y)) {
+        highlightFocus();
+        if (!fn_41336f())
+            fn_412bb3(g_4aa498->flags & 4);
+        item = g_4aa498;
+    } else
+        item = 0;
+    fn_413a4e(&saved, 1);
+    return item;
+}
+
 /* Calls the handler of the item at a position (from 1), keeping the state. */
 /* @zoombi32 0x00413237 */
 void activateItemAt(short x, short y)
@@ -559,12 +633,12 @@ short fn_4133a4()
     return g_4aa48b & 0x20 && !noMouse || g_4aa48b & 0x10 && noMouse;
 }
 
-/* Moves the focus to the first item whose group's handler accepts `value`. */
+/* Moves the focus to the first item at a point (by its group's hit test). */
 /* @zoombi32 0x004133d9 */
-short focusItemByHandler(long value)
+short focusItemAtPoint(Point *where)
 {
     g_4aa4ac = 0;
-    g_4aa4b0 = value;
+    g_4aa4b0 = where;
     return fn_41348b(0, 0, 0);
 }
 
@@ -773,8 +847,8 @@ short fn_4138a2(Group *group, short start)
 }
 
 /*
- * Whether an item is what's being looked for (g_4aa4ac): 0 whatever the
- * group's handler says, 1 a particular item, 2 the one past the cursor, 3 the
+ * Whether an item is what's being looked for (g_4aa4ac): 0 the one at a
+ * point (by its group's hit test), 1 a particular item, 2 the one past the cursor, 3 the
  * one with a key, 4 one with some flags, 5 any; 6 and 7 visit them (calling
  * their handlers, or giving them their places). Makes it the current item.
  */
@@ -788,7 +862,7 @@ short fn_41391d(InputItem *item)
     g_4aa498 = item;
     switch (g_4aa4ac) {
     case 0:
-        found = fn_41280d(g_4aa4b0);
+        found = hitTestFocus(g_4aa4b0);
         break;
     case 1:
         found = item == g_4aa4b4;
@@ -835,7 +909,7 @@ void fn_413a4e(InputState *state, short all)
     g_4aa49c.c = state->cursorC;
     if (all) {
         g_4aa4ac = state->search;
-        g_4aa4b0 = state->unknown1A;
+        g_4aa4b0 = state->point;
         g_4aa4b4 = state->unknown1E;
         g_4aa4b8 = state->unknown22;
         g_4aa4ba = state->unknown24;
@@ -859,7 +933,7 @@ void fn_413afd(InputState *state, short all)
     state->cursorC = g_4aa49c.c;
     if (all) {
         state->search = g_4aa4ac;
-        state->unknown1A = g_4aa4b0;
+        state->point = g_4aa4b0;
         state->unknown1E = g_4aa4b4;
         state->unknown22 = g_4aa4b8;
         state->unknown24 = g_4aa4ba;
