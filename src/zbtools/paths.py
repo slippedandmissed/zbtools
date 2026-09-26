@@ -18,14 +18,20 @@ VM_DIR = BUILD_DIR / "vm"
 WIN98_BASE = VM_DIR / "win98-base.qcow2"
 # Where `vm install` builds the base; renamed to WIN98_BASE once setup succeeds.
 WIN98_BASE_PARTIAL = VM_DIR / "win98-base.partial.qcow2"
-# Copy-on-write layer on top of the base that the VM actually runs from.
+# QuickTime and the game installed on top of the base by `vm install-game`.
+WIN98_GAME = VM_DIR / "win98-game.qcow2"
+WIN98_GAME_PARTIAL = VM_DIR / "win98-game.partial.qcow2"
+# Copy-on-write layer the VM actually runs from, on top of the game layer (or
+# the base, if the game isn't installed).
 WIN98_OVERLAY = VM_DIR / "win98.qcow2"
+# CD image that `vm install-game` builds to install QuickTime and the game.
+VM_TOOLS_ISO = VM_DIR / "tools.iso"
 WIN98_SETUP_FLOPPY = VM_DIR / "win98-setup.img"
 # QMP sockets: one for the command that started the VM, one for other commands
 # (a QMP socket serves one client at a time).
 VM_QMP = VM_DIR / "qmp.sock"
 VM_QMP_CONTROL = VM_DIR / "qmp-control.sock"
-# Scratch screenshot `vm install` uses to spot the Windows logon prompt.
+# Scratch screenshot the VM commands take to recognise what is on screen.
 VM_SCREEN_CHECK = VM_DIR / "screen-check.png"
 
 # An entry in a clean category: a path (may contain * wildcards, matched from
@@ -40,12 +46,16 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "vm-state": [
         WIN98_OVERLAY,
         WIN98_BASE_PARTIAL,
+        WIN98_GAME_PARTIAL,
         WIN98_SETUP_FLOPPY,
+        VM_TOOLS_ISO,
         VM_QMP,
         VM_QMP_CONTROL,
         VM_SCREEN_CHECK,
     ],
-    "vm-base": [WIN98_BASE],
+    # Each disk layer includes the layers built on top of it.
+    "vm-game": [WIN98_GAME, WIN98_OVERLAY],
+    "vm-base": [WIN98_BASE, "vm-game"],
     "vm": ["vm-base", "vm-state"],
     "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
     # The whole build/ directory, so stray files can't survive a full clean.

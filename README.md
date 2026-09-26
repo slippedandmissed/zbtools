@@ -58,15 +58,23 @@ This installs Windows 98 SE from your ISO using an answer file, with the product
 
 **Depending on your Windows CD, setup may stop on a few wizard pages** (license, product key, user information) with the answers already filled in. OEM and upgrade CDs do this by design; just click Next on each one. At the end, the script answers Windows' logon prompt itself (with a blank password, so it never appears again) and the VM shuts down.
 
-After that:
+Then install QuickTime and the game into it:
+
+```sh
+uv run vm install-game
+```
+
+This takes about a minute and needs no input: the VM boots, runs an installer from a generated CD, and powers itself off. After that:
 
 ```sh
 uv run vm run          # boot Windows 98 with the game disc in drive D:
-uv run vm reset        # discard every change made since the install
+uv run vm reset        # discard every change made since the installs
 uv run vm screenshot   # save a PNG of the running VM's screen
 ```
 
-The install is kept as a read-only base disk (`build/vm/win98-base.qcow2`). The VM runs from a copy-on-write overlay on top of it (`build/vm/win98.qcow2`), so `vm reset` gets you back to a fresh Windows install in seconds. `uv run vm install --force` reinstalls from scratch.
+To play, type `zoombi32` in the Start menu's Run box.
+
+The VM's disk is a stack of read-only layers: the Windows install (`build/vm/win98-base.qcow2`), then QuickTime and the game (`build/vm/win98-game.qcow2`). The VM runs from a throwaway copy-on-write overlay on top (`build/vm/win98.qcow2`), so `vm reset` gets you back to a freshly installed game in seconds. `--force` redoes either install.
 
 ### Cleaning up
 
@@ -80,8 +88,9 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | --- | --- | --- |
 | `extracted` | `build/disc/`, `build/zoombi32/` | `uv run extract-game` |
 | `vm-state` | the VM overlay and install leftovers | automatically on `vm run` |
-| `vm-base` | the Windows 98 install | `uv run vm install` (30-60 min) |
-| `vm` | `vm-base` and `vm-state` | |
+| `vm-game` | the QuickTime and game install (and the overlay on it) | `uv run vm install-game` (1 min) |
+| `vm-base` | the Windows 98 install (and everything layered on it) | `uv run vm install` (30-60 min) |
+| `vm` | all of the above | |
 | `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
 | `all` | all of the above plus anything else in `build/` | |
 
@@ -131,7 +140,8 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 
 - [x] Extract the disc and the Windows 95 build (`uv run extract-game`)
 - [x] Scripted Windows 98 VM (`uv run vm install` / `run` / `reset`)
-- [ ] Scripted QuickTime and game install in the VM; game running
+- [x] Scripted QuickTime and game install in the VM (`uv run vm install-game`); game reaches its title screen
+- [ ] Game verified playable in the VM (sound, music, movies)
 - [ ] Mohawk archive lister / extractor
 - [ ] Ghidra project with imports and runtime functions labeled
 - [ ] Borland C++ toolchain + object diff tool

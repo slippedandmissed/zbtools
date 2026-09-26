@@ -24,7 +24,9 @@ Decompilation of *Logical Journey of the Zoombinis* (Broderbund, 1996, Windows r
 - `src/zbtools/paths.py`: default locations of inputs and outputs, resolved from the repo root. New tools should take their defaults from here and allow overriding them with arguments.
 - `build/`: gitignored output (`build/disc/` = disc contents, `build/zoombi32/` = Windows 95 build, `build/vm/` = VM disks).
 - `src/zbtools/host.py`: the only place that knows about the host OS (binary locations and install hints, QEMU display/audio backends). Route any new host-specific behaviour through it.
-- `src/zbtools/vm.py`: `uv run vm`. `install` builds a read-only base disk (unattended Windows 98 SE setup driven by a customized boot floppy + MSBATCH.INF); `run` boots a qcow2 overlay on top of it; `reset` discards the overlay.
+- `src/zbtools/vm.py`: `uv run vm`. `install` builds a read-only Windows base disk (unattended Windows 98 SE setup driven by a customized boot floppy + MSBATCH.INF); `install-game` layers QuickTime and the game on it; `run` boots a throwaway qcow2 overlay on top; `reset` discards the overlay. VM automation (watching the screen, typing) goes through QMP with `qemu.qmp`.
+- `src/zbtools/game_install.py`: builds the "tools CD" that `install-game` runs inside the VM. `src/zbtools/screen.py`: recognisers for Windows screens (logon prompt, idle desktop).
+- `docs/findings.md`: confirmed facts about the game and its installer, with the evidence (addresses, strings, experiments).
 - **Keep `uv run clean` up to date:** it deletes by category, from `paths.CLEAN_CATEGORIES`. Every path a tool generates must belong to a category (categories may include other categories by name); add new ones there, and to `CLEAN_DEFAULT` if they're cheap to rebuild. Keep the README's cleaning table in sync.
 
 ## Game plan
@@ -50,4 +52,4 @@ Run `uv run lint` (ruff lint, ruff format check, mypy) before finishing any chan
 
 ## Working notes
 
-- Record confirmed findings (formats, compiler flags) in `docs/` as they are established.
+- Record confirmed findings (formats, compiler flags, file meanings) in `docs/findings.md` as they are established, with the evidence.

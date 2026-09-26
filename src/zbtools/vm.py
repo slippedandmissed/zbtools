@@ -1,8 +1,9 @@
 """Windows 98 virtual machine for running the original game under QEMU.
 
-`install` writes a pristine base disk that is never modified afterwards. The VM
-runs from a copy-on-write overlay on top of it, so `reset` (or
-`uv run clean vm-state`) returns to a fresh install in seconds.
+The VM's disk is a stack of copy-on-write layers: `install` writes a pristine
+Windows base, `install-game` adds QuickTime and the game on top, and the VM runs
+from a throwaway overlay above those, so `reset` (or `uv run clean vm-state`)
+returns to a fresh install in seconds. Finished layers are never modified.
 """
 
 import asyncio
@@ -22,7 +23,7 @@ from PIL import Image
 from pydantic import BaseModel, ConfigDict
 from qemu.qmp import ConnectError, Message, QMPClient, QMPError, Runstate
 
-from zbtools import env, host, paths, screen
+from zbtools import env, game_install, host, paths, screen
 
 FLOPPY_SIZE = 1474560
 
@@ -431,6 +432,16 @@ async def when_screen(
             return
 
 
+async def run_in_guest(qmp: QMPClient, command: str) -> None:
+    """Run a command through the Start menu's Run box."""
+    await press(qmp, "ctrl-esc")
+    await asyncio.sleep(1.5)
+    await press(qmp, "r")
+    await asyncio.sleep(2.5)
+    await type_text(qmp, command)
+    await press(qmp, "ret")
+
+
 async def answer_logon_prompt(qmp: QMPClient) -> None:
     """Press Enter at the Windows logon prompt the first time it appears. With a
     blank password, Windows never shows the prompt again."""
@@ -443,12 +454,33 @@ async def answer_logon_prompt(qmp: QMPClient) -> None:
 
 
 def ensure_overlay() -> None:
-    """Create the copy-on-write overlay on top of the base disk if missing."""
+    """Create the copy-on-write overlay if missing, on top of the game layer if
+    the game is installed, otherwise on the Windows base."""
     if not paths.WIN98_BASE.exists():
         sys.exit("error: Windows 98 isn't installed yet; run `uv run vm install` first")
-    if not paths.WIN98_OVERLAY.exists():
+    if paths.WIN98_OVERLAY.exists():
+        return
+    if paths.WIN98_GAME.exists():
+        create_overlay(paths.WIN98_OVERLAY, paths.WIN98_GAME)
+        print("Created a fresh overlay on the game install")
+    else:
         create_overlay(paths.WIN98_OVERLAY, paths.WIN98_BASE)
-        print(f"Created a fresh overlay on the base install: {paths.WIN98_OVERLAY}")
+        print("Created a fresh overlay on the Windows install (no game yet: `vm install-game`)")
+
+
+def _promote(partial: Path, final: Path) -> None:
+    """Make a finished disk layer permanent and read-only. Layers built on the
+    disk it replaces are invalid, so they're deleted."""
+    stale = {paths.WIN98_BASE: [paths.WIN98_GAME, paths.WIN98_OVERLAY],
+             paths.WIN98_GAME: [paths.WIN98_OVERLAY]}  # fmt: skip
+    for layer in stale[final]:
+        if layer.exists():
+            layer.chmod(0o644)
+            layer.unlink()
+    if final.exists():
+        final.chmod(0o644)
+    partial.replace(final)
+    final.chmod(0o444)  # guard against accidental writes
 
 
 app = typer.Typer(help=__doc__, add_completion=False, no_args_is_help=True)
@@ -510,14 +542,69 @@ def install(
             "the partial VM disk was deleted"
         )
 
-    # The old overlay (if any) was layered on the previous base, so it's invalid.
-    paths.WIN98_OVERLAY.unlink(missing_ok=True)
-    if paths.WIN98_BASE.exists():
-        paths.WIN98_BASE.chmod(0o644)
-    disk.replace(paths.WIN98_BASE)
-    paths.WIN98_BASE.chmod(0o444)  # guard the base against accidental writes
+    _promote(disk, paths.WIN98_BASE)
     minutes = (time.monotonic() - started) / 60
     print(f"Windows 98 installed in {minutes:.0f} min: {paths.WIN98_BASE}")
+    print("Next: `uv run vm install-game` installs QuickTime and the game.")
+
+
+@app.command(name="install-game")
+def install_game(
+    game_iso: Annotated[Path, typer.Option(help="Game disc image")] = paths.GAME_ISO,
+    force: Annotated[
+        bool, typer.Option("--force", help="Reinstall even if the game is already installed")
+    ] = False,
+    headless: Annotated[bool, typer.Option("--headless", help="Don't open a VM window")] = False,
+) -> None:
+    """Install QuickTime and the game into the VM (a few minutes, no input needed)."""
+    if vm_running():
+        sys.exit("error: the VM is already running")
+    if not paths.WIN98_BASE.exists():
+        sys.exit("error: Windows 98 isn't installed yet; run `uv run vm install` first")
+    if not game_iso.is_file():
+        sys.exit(f"error: game ISO not found: {game_iso} (see README: Setup)")
+    if paths.WIN98_GAME.exists() and not force:
+        sys.exit(
+            f"error: the game is already installed ({paths.WIN98_GAME}); use --force to reinstall"
+        )
+
+    paths.VM_DIR.mkdir(parents=True, exist_ok=True)
+    game_install.build_tools_iso(game_iso, paths.VM_TOOLS_ISO)
+    disk = paths.WIN98_GAME_PARTIAL
+    disk.unlink(missing_ok=True)
+    create_overlay(disk, paths.WIN98_BASE)
+
+    print(
+        "Installing QuickTime and the game. The VM boots Windows, runs the installer\n"
+        "from a generated CD, and powers off by itself when it's done. Don't touch it."
+    )
+    started = time.monotonic()
+
+    async def start_installer(qmp: QMPClient) -> None:
+        await asyncio.sleep(5)  # let Explorer finish starting up
+        await run_in_guest(qmp, game_install.INSTALL_BAT)
+        print(f"  Started {game_install.INSTALL_BAT} in the VM")
+
+    async def at_desktop(qmp: QMPClient) -> None:
+        await when_screen(qmp, screen.is_idle_desktop, start_installer)
+
+    cmd = qemu_command(disk, cdrom=paths.VM_TOOLS_ISO, headless=headless)
+    try:
+        reason = run_qemu(cmd, tasks=[at_desktop])
+    finally:
+        paths.VM_TOOLS_ISO.unlink(missing_ok=True)
+        paths.VM_SCREEN_CHECK.unlink(missing_ok=True)
+    if reason != "guest-shutdown":
+        disk.unlink(missing_ok=True)
+        sys.exit(
+            f"error: the game install did not finish (QEMU stopped: {reason or 'unknown'}); "
+            "the partial disk was deleted"
+        )
+
+    _promote(disk, paths.WIN98_GAME)
+    minutes = (time.monotonic() - started) / 60
+    print(f"Game installed in {minutes:.0f} min: {paths.WIN98_GAME}")
+    print("Next: `uv run vm run`, then type `zoombi32` in the Start menu's Run box.")
 
 
 @app.command()
@@ -534,7 +621,7 @@ def run(
 
 @app.command()
 def reset() -> None:
-    """Discard all changes made since the install."""
+    """Discard all changes made since the install (keeping the game, if installed)."""
     if vm_running():
         sys.exit("error: the VM is running; shut it down first")
     if paths.WIN98_OVERLAY.exists():
