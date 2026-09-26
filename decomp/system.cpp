@@ -36,3 +36,31 @@ void fn_415514()
     time_t now;
     g_4a07b8 = time(&now);
 }
+
+/* Lower-cases an ASCII letter. */
+/* @zoombi32 0x004159dd */
+unsigned short toLowerAscii(unsigned short c)
+{
+    if (c >= 'A' && c <= 'Z')
+        c |= 0x20;
+    return c;
+}
+
+/* Upper-cases an ASCII letter. */
+/* @zoombi32 0x004159f7 */
+unsigned short toUpperAscii(unsigned short c)
+{
+    if (c >= 'a' && c <= 'z')
+        c &= 0xdf;
+    return c;
+}
+
+/* Frees *block if it's allocated, and clears it. */
+/* @zoombi32 0x00455c43 */
+void freeAndClear(void **block)
+{
+    if (*block) {
+        free(*block);
+        *block = 0;
+    }
+}

@@ -440,6 +440,45 @@ def _continue_after_breakpoints(program: "Program") -> list[int]:
     return fixed
 
 
+def _recover_switches(program: "Program") -> list[int]:
+    """Where a function has a jump through a table Ghidra couldn't follow (a
+    `switch`, whose table Borland puts right after the jump), decompile it
+    again, now its callees' calling conventions are known, let the decompiler
+    recover the table, and recompute the function's body; repeat while that
+    uncovers more. Returns the functions fixed."""
+
+    from ghidra.app.cmd.function import (  # noqa: PLC0415
+        CreateFunctionCmd,
+        DecompilerSwitchAnalysisCmd,
+    )
+    from ghidra.app.decompiler import DecompInterface  # noqa: PLC0415
+
+    monitor = pyghidra.task_monitor()
+    listing, manager = program.getListing(), program.getFunctionManager()
+    decompiler = DecompInterface()
+    decompiler.openProgram(program)
+    fixed: list[int] = []
+    for _ in range(4):
+        found = 0
+        for function in list(manager.getFunctions(True)):
+            if not any(
+                i.getFlowType().isJump() and i.getFlowType().isComputed() and not i.getFlows()
+                for i in listing.getInstructions(function.getBody(), True)
+            ):
+                continue
+            size = function.getBody().getNumAddresses()
+            result = decompiler.decompileFunction(function, 60, monitor)
+            DecompilerSwitchAnalysisCmd(result).applyTo(program, monitor)
+            CreateFunctionCmd.fixupFunctionBody(program, function, monitor)
+            if function.getBody().getNumAddresses() > size:
+                found += 1
+                fixed.append(int(function.getEntryPoint().getOffset()))
+        if not found:
+            break
+    decompiler.dispose()
+    return sorted(set(fixed))
+
+
 def _set_calling_conventions(program: "Program") -> int:
     """Mark functions that pop their own arguments (`ret N`) as __stdcall, so the
     decompiler shows their parameters. Borland passes `this` on the stack, so
@@ -460,7 +499,8 @@ def label() -> None:
     """Apply everything the tools have recovered to the Ghidra project: Borland
     runtime names (`uv run runtime-symbols`), C++ classes from RTTI (`uv run
     classes`), the names of functions decompiled in decomp/, calling
-    conventions, and the ends of functions Ghidra cut short at a breakpoint.
+    conventions, and the ends of functions Ghidra cut short at a breakpoint or
+    a switch.
     Names you've set by hand are kept."""
     found = runtime_symbols.load()
     classes = rtti.load().classes
@@ -476,6 +516,7 @@ def label() -> None:
             decomp_named, decomp_kept = _label_decompiled(program)
             breakpoints = _continue_after_breakpoints(program)
             conventions = _set_calling_conventions(program)
+            switches = _recover_switches(program)
         program.save("Recovered symbols", pyghidra.task_monitor())
         _write_functions(list_functions(program))
     print(
@@ -485,6 +526,9 @@ def label() -> None:
         f"decompiled functions (kept {decomp_kept} names set by hand); set __stdcall on "
         f"{conventions} functions. Function list updated: {paths.GHIDRA_FUNCTIONS}"
     )
+    if switches:
+        where = ", ".join(f"{a:#x}" for a in switches)
+        print(f"Recovered switch tables in {where}.")
     if breakpoints:
         where = ", ".join(f"{a:#x}" for a in breakpoints)
         print(f"Disassembled past a breakpoint (int3) in {where}.")

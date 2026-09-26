@@ -136,3 +136,60 @@ long __cdecl fn_46d827(Counted *object)
 {
     return atomicIncrement(&object->references);
 }
+
+/* @zoombi32 0x0046dfd4 */
+void fn_46dfd4(long, long)
+{
+    fn_46e1e7(0);
+}
+
+/* @zoombi32 0x0046dfe2 */
+void fn_46dfe2(long, long)
+{
+    fn_46e1e7(0);
+}
+
+/* An object whose third virtual function takes a flag. */
+class Releasable
+{
+public:
+    virtual void __cdecl virtual0();
+    virtual void __cdecl virtual1();
+    virtual void __cdecl virtual2(int flag);
+};
+
+/* @zoombi32 0x0046e842 */
+void fn_46e842(Releasable *object)
+{
+    object->virtual2(0);
+}
+
+/* @zoombi32 0x0046eac8 */
+void fn_46eac8(Releasable *object)
+{
+    object->virtual2(1);
+}
+
+/* Something starting with the tag 'ksTI' (bytes in memory order). */
+struct Tagged
+{
+    long tag;
+};
+
+/* The object if it carries the tag, else null. */
+/* @zoombi32 0x0046e202 */
+Tagged *fn_46e202(Tagged *object)
+{
+    if (object && object->tag == 0x4954736bL)
+        return object;
+    return 0;
+}
+
+/* Whether a pointer is non-null and 4-byte aligned. */
+/* @zoombi32 0x0046da46 */
+int isAlignedPointer(void *pointer)
+{
+    if (!pointer || ((unsigned long)pointer & 3))
+        return 0;
+    return 1;
+}

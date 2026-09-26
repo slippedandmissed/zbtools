@@ -193,3 +193,47 @@ short fn_457fbb()
         return g_4b7b38 + 1;
     return 0;
 }
+
+/* Sets g_4b99d4, returning its old value. */
+/* @zoombi32 0x0046bee9 */
+short fn_46bee9(short value)
+{
+    short old = g_4b99d4;
+    g_4b99d4 = value;
+    return old;
+}
+
+extern short g_4b0d52;
+extern short g_4b0d54;
+
+/* @zoombi32 0x0046b747 */
+void fn_46b747(long, short id)
+{
+    if (id == 30)
+        g_4b0d52 = g_4b0d54;
+}
+
+extern short g_4b83e4[];
+
+/* @zoombi32 0x0042e69a */
+void fn_42e69a()
+{
+    g_4b83e4[g_4af35a] = 0;
+    g_4af35a = 0;
+}
+
+/* Something with flags at +0x20. */
+struct Flagged
+{
+    char unknown0[0x20];
+    long flags;
+};
+
+/* @zoombi32 0x00427e1a */
+void fn_427e1a(Flagged *object, short code)
+{
+    switch (code) {
+    case 10:
+        object->flags |= 0x20000L;
+    }
+}

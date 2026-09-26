@@ -113,7 +113,8 @@ uv run runtime-symbols      # find them: matches the toolchain's libraries again
 uv run classes              # recover C++ classes from RTTI: names, hierarchy, vtables, constructors
 uv run ghidra label         # apply both to the Ghidra project, with QuickTime's SDK glue and the
                             # names of functions decompiled in decomp/, and set calling conventions
-                            # (never overwrites names you've set by hand)
+                            # (never overwrites names you've set by hand); also fixes functions
+                            # Ghidra cut short at a switch table or a breakpoint
 ```
 
 Work you do in Ghidra's GUI (names, comments, types) lives in the project, so no default `clean` removes it; `uv run ghidra setup --force` recreates the project from scratch.

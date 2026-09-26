@@ -146,3 +146,16 @@ Nothing maps selectors to API names: `QTIM32.DLL` exports only `_EntryPoint`, a 
 ## A breakpoint compiled into the game (`0x46db83`)
 
 The function at `0x46db83` is `push ebp / mov ebp, esp / movsx eax, word ptr [ebp+8] / int3 / mov ax, word ptr [ebp+8] / pop ebp / ret 4`: it returns its (short) argument after stopping in the debugger. Ghidra models `int3` as never returning, so its analysis ended the function at the breakpoint (8 bytes, no return); `uv run ghidra label` now makes such breakpoints fall through, disassembles the rest and recomputes the function (16 bytes). It's the only function in the program that ended at an `int3`. It hasn't been reproduced in C++ yet: `__emit__(0xcc)` and pseudo-register variants compile differently, so it may have been inline assembly (`asm int 3`), which BCC32 can only compile with TASM32, not part of Borland C++ 4.5.
+
+## Switch tables cut functions short in Ghidra
+
+BCC32 compiles a `switch` to `jmp dword ptr [reg*4 + table]` with the table right after the jump, inside the function. Ghidra's first analysis couldn't follow some of these (before the game's calling conventions were known) and ended the function at the jump, so the worklist listed large functions as tiny ones (`0x420a60` as 29 bytes rather than 518). `uv run ghidra label` now decompiles each function with an unresolved computed jump again, lets the decompiler's switch analysis recover the table, and recomputes the body; this recovered dozens of functions. It also explains some odd instructions in a linear disassembly (`in`, `out`, `cli` in `0x42365a`, `0x431ea0`, `0x436d39`): they're table bytes, not code.
+
+## Functions that need assembly
+
+BCC32 only compiles inline `asm` with TASM32, which isn't part of Borland C++ 4.5, so functions that can't come from C++ are listed here as they turn up. So few have that `__emit__` covers them for now.
+
+- `0x46dabb`, `0x46da9d`, `0x46daac`: `lock inc`, `lock dec`, `xchg` (matched with `__emit__`, in `decomp/support.cpp`).
+- `0x46db83`: an `int3` mid-function (not reproduced; see above).
+- `0x46f6f9`: a `longjmp`-style unwinder that restores `ebp` and `esp` and jumps (support library; may be unidentified runtime code).
+- Not yet checked: `0x46f6c9` and `0x46f70e` (`pushfd`/`popfd`), `0x4697f1` (`pushfd`/`popfd`, `sahf`).

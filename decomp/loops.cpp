@@ -99,3 +99,11 @@ short fn_413dc0()
         count += 32;
     return count;
 }
+
+/* Advances an index into the 32-entry ring buffer, wrapping to 0. */
+/* @zoombi32 0x0041416f */
+void __cdecl nextRingIndex(short *index)
+{
+    if (++*index > 31)
+        *index = 0;
+}
