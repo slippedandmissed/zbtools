@@ -4,6 +4,7 @@
  */
 
 #include <windows.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <dir.h>
 #include <dos.h>
@@ -250,4 +251,41 @@ void fn_4565c8(long a, long b, long c, short d, long e)
         g_4b5d44[g_4b2d42] = e;
         g_4b2d42++;
     }
+}
+
+/*
+ * Writes the queued messages (fn_4565c8) to the first unused msgNNN.txt, then
+ * empties the queue.
+ *
+ * Not exact yet, but only because its literals are addressed from the
+ * module's literal pool, which in the original starts with 0x41 bytes of
+ * literals from earlier functions ("Invalid display mode.", ...) that aren't
+ * decompiled yet; it should match once they are.
+ */
+/* @zoombi32-nonmatching 0x00456638 */
+void dumpMessages()
+{
+    FILE *file;
+    short i = -1;
+
+    do {
+        if (++i >= 1000)
+            return;
+        sprintf(messageLogName, "%s%03d%s", "msg", i, ".txt");
+        file = fopen(messageLogName, "r");
+        if (file)
+            fclose(file);
+    } while (file);
+    file = fopen(messageLogName, "wt");
+    if (!file)
+        return;
+    for (i = 0; i < g_4b2d42; i++) {
+        if (g_4b6d44[i])
+            fprintf(file, "%3d %4x %8lx %8lx %08lx\n", i, g_4b2d44[i], g_4b3d44[i], g_4b4d44[i],
+                    g_4b5d44[i]);
+        else
+            fprintf(file, "%3d %4x %8lx %8lx\n", i, g_4b2d44[i], g_4b3d44[i], g_4b4d44[i]);
+    }
+    fclose(file);
+    g_4b2d42 = 0;
 }

@@ -174,6 +174,7 @@ extern long g_4a4a1c;
 extern long savedDisk; /* @data 0x4a4aa8 */
 extern long buttonKeys[3]; /* @data 0x4a4abc */
 extern UINT buttonUpMessages[3]; /* @data 0x4a4ac8 */
+extern char messageLogName[]; /* @data 0x4a4ad8 */
 extern char *g_4a4ba0;
 extern short g_4a4ce6;
 extern char msgRequiresQuickTime[]; /* @data 0x4a4dc7 */
@@ -393,6 +394,7 @@ void restoreDirectory();
 void brightenPalette(PALETTEENTRY *entries, short first, short count);
 short isInputWaiting(long which);
 void fn_4565c8(long a, long b, long c, short d, long e);
+void dumpMessages();
 long fn_455013(long, long);
 int isMousePresent();
 void freeAndClear(void **block);
