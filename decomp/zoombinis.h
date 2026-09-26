@@ -200,14 +200,33 @@ struct Entry22
     char unknown8[14];
 };
 
-/* List entry: an index at +0, a key at +4 and the next entry at +0xe. */
+/* A loaded sound (wave or MIDI), in the list at g_4a00a0. */
 struct Entry
 {
-    short index;
+    short type; /* 0 a wave, 1 MIDI (see soundTypes) */
     short unknown2;
     short key;
-    char unknown6[8];
+    long handle; /* the engine's */
+    char unknownA[4];
     Entry *next;
+};
+
+/* One of a sound type's 4 channels. */
+struct SoundChannel
+{
+    short unknown0;
+    short playing;
+    short unknown4;
+};
+
+/* What the engine tells a sound's owner (fn_411d2c). */
+struct SoundNotice
+{
+    unsigned short what; /* 0 a value (in data), 1 finished */
+    short unknown2;
+    short unknown4;
+    short unknown6;
+    char *data;
 };
 
 /* Doubly-linked list node: fields at +0 and +4. */
@@ -261,8 +280,11 @@ private:
 
 /* Globals, by address */
 
+extern short soundLevel; /* @data 0x4a0090 */
 extern Entry *g_4a00a0;
-extern long g_4a00dc[];
+extern char currentChannel[2]; /* @data 0x4a00a8 */
+extern SoundChannel soundChannels[2][4]; /* @data 0x4a00aa */
+extern long soundTypes[2]; /* @data 0x4a00dc */
 extern GroupList *g_4a01ac;
 extern short g_4a01b0;
 extern char emptyString[]; /* @data 0x4a01b8 */
@@ -483,6 +505,8 @@ long qtim_0b();
    declarations produce the calls the game makes. */
 
 void fn_476622(long handle);
+void fn_4771a4(long handle);
+void fn_4771e4(long handle);
 short fn_480b80(InputItem *item, Point *where); /* the default hit test */
 /* The engine's graphics follow Mac QuickDraw: a current port, and conversions
    between a port's coordinates and the screen's. */
@@ -525,6 +549,11 @@ void fn_48f660(long handle, long, long);
 /* Decompiled functions, by address */
 
 Entry *fn_4115f5(short key, long tag);
+void fn_411910(Entry *entry, short channel);
+void fn_4119f3(Entry *entry, short channel);
+void fn_411d2c(long, SoundNotice *notice, long cookie);
+void fn_412176(long type);
+short fn_4121a5(short level);
 void fn_4117a8(HasHandle *object);
 short fn_412b4d(void (*callback)(InputItem *item));
 short fn_412844(InputItem *item);

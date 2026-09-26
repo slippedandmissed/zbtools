@@ -3,6 +3,11 @@
 # if one of them stops matching.
 0x004115f5 fn_4115f5
 0x004117a8 fn_4117a8
+0x00411910 fn_411910
+0x004119f3 fn_4119f3
+0x00411d2c fn_411d2c
+0x00412176 fn_412176
+0x004121a5 fn_4121a5
 0x004124a4 setGroupLists
 0x004124cc handleMouse
 0x00412537 hoverItemAtPoint
