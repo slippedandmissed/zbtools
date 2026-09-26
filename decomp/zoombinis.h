@@ -31,10 +31,10 @@ struct Point
 /* The display mode WinMain asks for (640x480, 256 colours). */
 struct DisplayMode
 {
-    short width;
-    short height;
-    long colors;
-    short unknown8;
+    unsigned short width;
+    unsigned short height;
+    unsigned long colors;
+    short unknown8; /* 0: `colors` is a minimum */
     char unknownA[2];
 };
 
@@ -150,6 +150,7 @@ private:
 
 extern Entry *g_4a00a0;
 extern long g_4a00dc[];
+extern char emptyString[]; /* @data 0x4a01b8 */
 extern Callback g_4a07ac;
 extern long g_4a07b0;
 extern long g_4a07b4;
@@ -171,7 +172,14 @@ extern short g_4a4a0c;
 extern Callback g_4a4a14;
 extern long g_4a4a18;
 extern long g_4a4a1c;
+extern char minimumOfText[]; /* @data 0x4a4a20 */
+extern char colors256Text[]; /* @data 0x4a4a2e */
+extern char svgaRequiredFormat[]; /* @data 0x4a4a39 */
+extern char color16Text[]; /* @data 0x4a4a8d */
+extern char color24Text[]; /* @data 0x4a4a9a */
 extern long savedDisk; /* @data 0x4a4aa8 */
+extern unsigned short resolutionWidths[4]; /* @data 0x4a4aac */
+extern unsigned short resolutionHeights[4]; /* @data 0x4a4ab4 */
 extern long buttonKeys[3]; /* @data 0x4a4abc */
 extern UINT buttonUpMessages[3]; /* @data 0x4a4ac8 */
 extern char messageLogName[]; /* @data 0x4a4ad8 */
@@ -205,6 +213,7 @@ extern short g_4aa79c;
 extern long g_4aa7a4;
 extern short g_4aa7cc;
 extern long g_4aafe8;
+extern short bitsPerPixel; /* @data 0x4aafec */
 extern short debugMode; /* @data 0x4ab474 */
 extern short g_4ab482;
 extern short g_4ab49c;
@@ -231,8 +240,12 @@ extern HINSTANCE appInstance; /* @data 0x4b2af0 */
 extern HINSTANCE appPreviousInstance; /* @data 0x4b2af4 */
 extern char *appCommandLine; /* @data 0x4b2af8 */
 extern long appShowCommand; /* @data 0x4b2afc */
+extern short g_4b2b00;
+extern char programPath[0x100]; /* @data 0x4b2b06 */
 extern char savedDirectory[]; /* @data 0x4b2c06 */
-extern short g_4b2d38;
+extern WNDCLASS windowClass; /* @data 0x4b2d06 */
+extern short classRegistered; /* @data 0x4b2d2e */
+extern short windowed; /* @data 0x4b2d38 */
 extern short g_4b2d42;
 extern long g_4b2d44[0x400];
 extern long g_4b3d44[0x400];
@@ -268,6 +281,8 @@ extern long g_4b9d74;
 /* Reports an error, printf-style. */
 void __cdecl fn_41541a(const char *format, ...);
 void fn_4144d0(DisplayMode *mode, long);
+/* Formats into `buffer` (of `size` bytes), printf-style. */
+void __cdecl fn_4150c7(long size, char *buffer, const char *format, ...);
 void fn_415613();
 void fn_415910();
 void fn_41f195(const char *message);
@@ -278,6 +293,9 @@ void fn_44695c();
 void fn_454c8e();
 void fn_454caa();
 void fn_454f61();
+void fn_455f66();
+LRESULT CALLBACK fn_45605e(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
+void fn_456914();
 short fn_4623b8();
 void fn_4625b8();
 void fn_46310c();
@@ -309,6 +327,7 @@ short fn_483732(long); /* initialises the file manager */
 void __cdecl fn_48ac68(DisplayMode *mode, long, long, long, long);
 long fn_48b4a8();
 short fn_48cab4(long, long);
+short fn_48c9e8(DisplayMode *mode, long); /* sets the display mode */
 void fn_48d4c4(long);
 void fn_48da48(long);
 void *fn_48e6b4(long size); /* allocates memory */
@@ -384,12 +403,15 @@ void fn_446962(char *, const char *);
 void findGameData();
 short preferFirstFile(const char *first, const char *fallback);
 void __cdecl fn_454ca4();
+void checkDisplayMode(DisplayMode *mode);
+short createMainWindow(long, long);
 short addModifierKeys(short modifiers);
 void getCursorPosition(Point *where);
 void setCursorPosition(short x, short y);
 short isButtonStillDown(unsigned short button);
 short allocateBlock(void **block, unsigned long size);
 void getClockTime(char *hour, char *minute, char *second);
+void enterProgramDirectory();
 void restoreDirectory();
 void brightenPalette(PALETTEENTRY *entries, short first, short count);
 short isInputWaiting(long which);

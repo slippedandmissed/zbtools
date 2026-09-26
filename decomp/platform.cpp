@@ -6,10 +6,108 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <dir.h>
 #include <dos.h>
 #include <stdlib.h>
 #include "zoombinis.h"
+
+/*
+ * Checks the display mode asked for, and switches to it: the smallest of
+ * 640x480 to 1280x1024 that fits it, at 256 colours (or 16/24-bit), falling
+ * back to 512x384. If that fails, the message says what the game needs.
+ */
+/* @zoombi32 0x00455530 */
+void checkDisplayMode(DisplayMode *mode)
+{
+    char message[0x100];
+    const char *minimum = emptyString;
+    const char *depth;
+    unsigned short width, height;
+    short i, found;
+
+    if (!mode->unknown8) {
+        if (mode->colors <= 0x10000)
+            minimum = minimumOfText;
+    } else if (mode->colors > 0x100)
+        fn_41541a("Invalid display mode.");
+    if (mode->colors <= 0x100) {
+        depth = colors256Text;
+        bitsPerPixel = 8;
+        mode->colors = 0x100;
+    } else if (mode->colors <= 0x10000) {
+        depth = color16Text;
+        bitsPerPixel = 16;
+    } else {
+        depth = color24Text;
+        bitsPerPixel = 24;
+    }
+    for (i = 0, found = 0; i < 4 && !found; i++) {
+        if (resolutionWidths[i] >= mode->width && resolutionHeights[i] >= mode->height) {
+            found = 1;
+            mode->width = resolutionWidths[i];
+            mode->height = resolutionHeights[i];
+            if (g_4aa7cc) {
+                width = 512;
+                height = 384;
+            } else {
+                width = resolutionWidths[i];
+                height = resolutionHeights[i];
+            }
+        }
+    }
+    fn_4150c7(0x100, message, svgaRequiredFormat, minimum, depth, width, height);
+    if (!fn_48c9e8(mode, 1)) {
+        mode->width = 512;
+        mode->height = 384;
+        if (!g_4aa7cc || !fn_48c9e8(mode, 1))
+            fn_41541a(message);
+    }
+}
+
+/*
+ * Creates the main window: a borderless popup covering the screen (its thin
+ * border just off it), of a class named after the program, shown maximised.
+ * Whether the screen's port exists afterwards.
+ */
+/* @zoombi32 0x004556aa */
+short createMainWindow(long, long)
+{
+    int screenWidth, screenHeight, borderWidth, borderHeight;
+
+    if (g_4aa7a4)
+        return 0;
+    if (!appPreviousInstance) {
+        windowClass.style = 0;
+        windowClass.lpfnWndProc = fn_45605e;
+        windowClass.cbClsExtra = 0;
+        windowClass.cbWndExtra = 0;
+        windowClass.hInstance = appInstance;
+        windowClass.hIcon = LoadIcon(appInstance, "AppIcon");
+        windowClass.hCursor = 0;
+        windowClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+        windowClass.lpszMenuName = 0;
+        windowClass.lpszClassName = programPath;
+        if (!RegisterClass(&windowClass))
+            return 0;
+        classRegistered = 1;
+    }
+    screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    borderWidth = GetSystemMetrics(SM_CXBORDER);
+    borderHeight = GetSystemMetrics(SM_CYBORDER);
+    if (!(mainWindow = CreateWindowEx(0, programPath, appName, WS_POPUP | WS_BORDER | WS_SYSMENU,
+                                      -borderWidth, -borderHeight, screenWidth + borderWidth * 2,
+                                      screenHeight + borderHeight * 2, 0, 0, appInstance, 0)))
+        return 0;
+    if (appShowCommand == SW_SHOWNORMAL || appShowCommand == SW_SHOWDEFAULT)
+        appShowCommand = SW_SHOWMAXIMIZED;
+    windowed = appShowCommand != SW_SHOWMAXIMIZED;
+    ShowWindow(mainWindow, appShowCommand);
+    UpdateWindow(mainWindow);
+    fn_456914();
+    return g_4aa7a4 != 0;
+}
 
 /* Whether a mouse is installed. */
 /* @zoombi32 0x00455903 */
@@ -80,7 +178,7 @@ void fn_456a55(long value)
 /* @zoombi32 0x00456bf6 */
 short fn_456bf6()
 {
-    return g_4b2d38;
+    return windowed;
 }
 
 /* Adds the Shift and Ctrl keys' state to `modifiers`. */
@@ -177,6 +275,37 @@ void getClockTime(char *hour, char *minute, char *second)
     *second = now.ti_sec;
 }
 
+/*
+ * Changes to the program's own drive and directory, saving the current ones
+ * (restoreDirectory goes back), and names the program after its file if it
+ * has no name yet.
+ */
+/* @zoombi32 0x00455cb9 */
+void enterProgramDirectory()
+{
+    char directory[0x100];
+    char *first;
+    char *last;
+
+    g_4b2b00 = 0;
+    GetModuleFileName(appInstance, programPath, 0x100);
+    strcpy(directory, programPath);
+    if (!getcwd(savedDirectory, 0x100))
+        fn_41541a("path too long: limit %d characters", 0x100);
+    savedDisk = getdisk();
+    if (appName == emptyString)
+        appName = programPath;
+    setdisk((programPath[0] & ~0x20) - 'A');
+    first = strchr(directory, '\\');
+    last = strrchr(directory, '\\');
+    if (first == last)
+        last[1] = 0;
+    else
+        *last = 0;
+    chdir(directory);
+    fn_455f66();
+}
+
 /* Changes back to the drive and directory saved in savedDisk and
    savedDirectory, if any. */
 /* @zoombi32 0x00455d9a */
@@ -192,7 +321,7 @@ void restoreDirectory()
 /* @zoombi32 0x004568d8 */
 short fn_4568d8()
 {
-    if (!g_4b2d38 && g_4aafe8) {
+    if (!windowed && g_4aafe8) {
         if (fn_48cab4(g_4aafe8, 1))
             InvalidateRect(mainWindow, 0, 0);
         return 1;

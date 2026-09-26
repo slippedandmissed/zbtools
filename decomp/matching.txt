@@ -49,6 +49,8 @@
 0x00446b48 preferFirstFile
 0x00454ca4 fn_454ca4
 0x00455013 fn_455013
+0x00455530 checkDisplayMode
+0x004556aa createMainWindow
 0x00455903 isMousePresent
 0x00455990 addModifierKeys
 0x004559c0 getCursorPosition
@@ -58,12 +60,14 @@
 0x00455c60 getClockTime
 0x00455c8b intToDecimal
 0x00455ca2 unsignedToDecimal
+0x00455cb9 enterProgramDirectory
 0x00455d9a restoreDirectory
 0x00455dc5 brightenPalette
 0x00455e26 fn_455e26
 0x00455e2d fn_455e2d
 0x00455e85 fn_455e85
 0x004565c8 fn_4565c8
+0x00456638 dumpMessages
 0x004568d8 fn_4568d8
 0x00456a2f fn_456a2f
 0x00456a3e fn_456a3e
