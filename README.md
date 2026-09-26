@@ -110,14 +110,15 @@ To name the Borland runtime-library functions in the project (strcpy, memcpy, th
 
 ```sh
 uv run runtime-symbols      # find them: matches the toolchain's libraries against the game
-uv run ghidra label         # apply the names to the Ghidra project (keeps names you set by hand)
+uv run ghidra label         # apply them to the Ghidra project: C++ functions go in their class's
+                            # namespace, with the full signature as a comment (keeps names you set by hand)
 ```
 
 Work you do in Ghidra's GUI (names, comments, types) lives in the project, so no default `clean` removes it; `uv run ghidra setup --force` recreates the project from scratch.
 
 ### Matching decompiled functions
 
-Decompiled C lives in `decomp/`. Each function that should reproduce the game's code is preceded by a marker comment with its address in `zoombi32.exe`:
+Decompiled code lives in `decomp/` and is C++, like the game (it uses C++ objects and exceptions). Each function that should reproduce the game's code is preceded by a marker comment with its address in `zoombi32.exe`; methods are marked the same way (`void Widget::set(long v)`):
 
 ```c
 /* @zoombi32 0x0046be2e */
@@ -129,7 +130,7 @@ void __stdcall fn_46be2e(long value)
 
 ```sh
 uv run match                      # check every marked function in decomp/
-uv run match decomp/first.c -r 4.5 --flags "-O2"   # one file, one release, extra BCC32 options
+uv run match decomp/first.cpp -r 4.5 --flags "-O2"   # one file, one release, extra BCC32 options
 ```
 
 `match` compiles each file with each installed Borland C++ release and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets). Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. It needs `uv run extract-game` and `uv run toolchain setup` first.
@@ -161,7 +162,7 @@ With no arguments it removes `extracted`, `vm-state`, `toolchain` and `python`: 
 ## Development
 
 ```sh
-uv run lint         # ruff lint, ruff format check, and strict mypy
+uv run lint         # ruff lint, ruff format check, strict mypy, and the tests (pytest)
 uv run lint --fix   # apply ruff fixes and formatting, then check
 ```
 
@@ -210,7 +211,7 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [ ] Settle 4.5 vs 4.52 and the compiler flags (needs a function that distinguishes them)
 - [x] Ghidra project with auto-analysis, function list and decompiler (`uv run ghidra`)
 - [x] Label the Borland runtime functions in Ghidra (`uv run runtime-symbols`, `uv run ghidra label`)
-- [ ] Switch `decomp/` to C++; demangle Borland names
+- [x] Switch `decomp/` to C++; demangle Borland names
 - [ ] Harvest class names (RTTI) and vtables; teach Ghidra the calling conventions
 
 ## Legal

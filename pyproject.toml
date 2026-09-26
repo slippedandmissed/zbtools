@@ -37,6 +37,7 @@ dev = [
     "ghidra-stubs==12.1.4",
     "mypy>=2.3.1",
     "pre-commit>=4.6.2",
+    "pytest>=9.1.1",
     "ruff>=0.16.9",
 ]
 
@@ -66,7 +67,7 @@ ignore = [
 [tool.mypy]
 strict = true
 python_version = "3.12"
-files = ["src"]
+files = ["src", "tests"]
 disallow_any_explicit = true
 disallow_any_unimported = true
 disallow_any_decorated = true

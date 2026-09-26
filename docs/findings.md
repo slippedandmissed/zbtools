@@ -66,3 +66,13 @@ Ghidra 12.1.4's auto-analysis finds 2,567 functions: 1,313 in the game's code (b
 `uv run runtime-symbols` matches the code segments of the 32-bit Borland libraries (`CW32.LIB`, `CW32MT.LIB`, `BIDSF.LIB`, `OWLWF.LIB`, `OCFWF.LIB`, the `C0*32.OBJ` startup objects) against the executable, with linker-filled bytes as wildcards. With 4.5's libraries it names 217 addresses (e.g. `_strcpy` at `0x46f8f4`, `_strcat` at `0x46f864`, `@__InitExceptBlock` at `0x4716c0`); 125 segments match in several places (mostly small C++ destructors instantiated in many modules) and are left unnamed. `uv run ghidra label` applies the names to the Ghidra project.
 
 Borland's C++ objects use "virtual segments" (COMDEF entries whose data type is a segment index; references to them set bit `0x4000` in the index) for type descriptors (`@$xt$...`), inline functions and template instances. `omf.py` reads them as extra segments named after their symbol.
+
+## The game is C++
+
+Evidence: the Borland C++ exception-handling and RTTI runtime is linked in; game functions such as `0x446969` call `__InitExceptBlock` (set up by the compiler for any function with local objects that have destructors) and construct and destroy objects. So decompiled code is written as C++: functions like that can't be reproduced in C.
+
+Borland C++ 4.5, 32-bit, as observed by compiling test code:
+
+- Plain functions are mangled with their argument types only (`fn_46be2e(long)` is `@fn_46be2e$ql`, even when declared `__stdcall`); global variables keep C names (`_g_4a7f58`).
+- Methods receive `this` as a hidden first stack argument (`[ebp+8]`), not in a register as with Microsoft's compilers; a `__stdcall` method with one argument returns with `ret 8`.
+- Borland's TDUMP demangler has two quirks our demangler (`src/zbtools/demangle.py`) doesn't copy: it drops the parameter after a nested type (e.g. `streambuf::seekoff(long, ios::seek_dir, int)` loses the `int`), and it appends `const` to class type descriptors. Otherwise ours agrees with it on all 2,227 mangled names in `CW32.LIB`.

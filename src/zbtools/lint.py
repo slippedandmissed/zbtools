@@ -1,4 +1,4 @@
-"""Run the code quality checks: ruff lint, ruff formatting, and mypy.
+"""Run the code quality checks: ruff lint, ruff formatting, mypy, and the tests.
 
 With --fix, applies ruff's safe fixes and formatting before checking.
 """
@@ -19,9 +19,9 @@ def main(
     fix: Annotated[bool, typer.Option("--fix", help="Apply fixes and formatting first")] = False,
 ) -> None:
     if fix:
-        steps = [["ruff", "check", "--fix"], ["ruff", "format"], ["mypy"]]
+        steps = [["ruff", "check", "--fix"], ["ruff", "format"], ["mypy"], ["pytest", "-q"]]
     else:
-        steps = [["ruff", "check"], ["ruff", "format", "--check"], ["mypy"]]
+        steps = [["ruff", "check"], ["ruff", "format", "--check"], ["mypy"], ["pytest", "-q"]]
 
     failed = []
     for step in steps:

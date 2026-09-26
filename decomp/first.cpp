@@ -1,6 +1,7 @@
 /*
  * First functions matched against zoombi32.exe, to validate the toolchain.
  * Functions whose purpose isn't known yet are named after their address.
+ * (Plain functions: they compile identically as C or C++.)
  */
 
 extern long g_4a7f58;
@@ -12,7 +13,7 @@ void __stdcall fn_46be2e(long value)
 }
 
 /* @zoombi32 0x00455e85 */
-long __stdcall fn_455e85(long a, long b)
+long __stdcall fn_455e85(long, long)
 {
     return 0;
 }

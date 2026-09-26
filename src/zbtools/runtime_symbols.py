@@ -14,6 +14,7 @@ import typer
 from pydantic import BaseModel, ConfigDict
 
 from zbtools import omf, paths, toolchain
+from zbtools.demangle import demangle
 from zbtools.exe import Executable
 
 # 32-bit ("flat model") libraries and startup objects, relative to BC45/LIB.
@@ -32,6 +33,7 @@ class RuntimeSymbol(BaseModel):
     model_config = ConfigDict(frozen=True)
     address: int
     name: str  # as in the library: Borland-mangled for C++
+    demangled: str  # e.g. "xmsg::xmsg(const string&)"; the name itself if not C++
     library: str
     module: str
 
@@ -110,6 +112,7 @@ def find_symbols(release: str, exe: Executable) -> RuntimeSymbols:
                                 RuntimeSymbol(
                                     address=address,
                                     name=public.name,
+                                    demangled=demangle(public.name),
                                     library=library,
                                     module=module.name,
                                 ),

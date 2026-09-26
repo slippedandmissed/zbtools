@@ -20,9 +20,12 @@ import typer
 from pydantic import BaseModel, ConfigDict
 
 from zbtools import download, host, paths, runtime_symbols
+from zbtools.demangle import qualified_name
 
 if TYPE_CHECKING:
+    from ghidra.program.model.address import Address
     from ghidra.program.model.listing import Function, Program
+    from ghidra.program.model.symbol import SymbolTable
 
 GHIDRA_VERSION = "12.1.4"
 _URL = (
@@ -187,22 +190,53 @@ def _write_functions(functions: list[FunctionInfo]) -> None:
     paths.GHIDRA_FUNCTIONS.write_text(listing.model_dump_json(indent=1))
 
 
+def ghidra_name(symbol: runtime_symbols.RuntimeSymbol) -> tuple[str, str, str | None]:
+    """How a library symbol is named in Ghidra: (namespace path, name, full
+    signature). C++ classes become namespaces; the argument list moves to the
+    signature, shown as a comment; spaces go, as Ghidra doesn't allow them."""
+    text = symbol.demangled
+    if text == symbol.name:
+        return "", text, None
+    if text.startswith("vtable for "):
+        return text.removeprefix("vtable for "), "vtable", text
+    *scopes, name = qualified_name(symbol.name).split("::")
+    return "::".join(scopes), name.replace(" ", ""), text
+
+
+def _add_secondary_labels(table: "SymbolTable", at: "Address", names: list[str]) -> None:
+    """Add names as extra labels at an address, skipping ones already there, and
+    drop any extra label that just repeats the primary name."""
+    from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
+
+    existing = {str(s.getName()) for s in table.getSymbols(at)}
+    for name in names:
+        if name not in existing:
+            table.createLabel(at, name, SourceType.IMPORTED)
+    primary = table.getPrimarySymbol(at)
+    for extra in table.getSymbols(at):
+        if not extra.isPrimary() and primary and extra.getName() == primary.getName():
+            extra.delete()
+
+
 @app.command()
 def label() -> None:
     """Name the Borland runtime-library code in the project, using the symbols
-    from `uv run runtime-symbols`. Names you've set in Ghidra are kept (the
-    library names are added as extra labels)."""
+    from `uv run runtime-symbols`: C++ functions go in their class's namespace,
+    with the full signature as a comment and the mangled name as an extra
+    label. Names you've set in Ghidra are kept."""
     found = runtime_symbols.load()
-    names_at: dict[int, list[str]] = collections.defaultdict(list)
+    symbols_at: dict[int, list[runtime_symbols.RuntimeSymbol]] = collections.defaultdict(list)
     for symbol in found.symbols:
-        names_at[symbol.address].append(symbol.name)
+        symbols_at[symbol.address].append(symbol)
 
     _start()
     # Ghidra's Java classes can only be imported once the JVM has started.
+    from ghidra.app.util import NamespaceUtils  # noqa: PLC0415
     from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
+    from ghidra.program.model.listing import CommentType  # noqa: PLC0415
     from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
 
-    functions_named = labels_added = kept = 0
+    functions_named = kept = 0
     with (
         pyghidra.open_project(paths.GHIDRA_PROJECT_DIR, paths.GHIDRA_PROJECT_NAME) as project,
         pyghidra.program_context(project, f"/{PROGRAM_NAME}") as program,
@@ -210,39 +244,42 @@ def label() -> None:
         api = FlatProgramAPI(program)
         space = program.getAddressFactory().getDefaultAddressSpace()
         manager, table = program.getFunctionManager(), program.getSymbolTable()
+        listing = program.getListing()
         with pyghidra.transaction(program):
-            for address, names in sorted(names_at.items()):
+            for address, symbols in sorted(symbols_at.items()):
                 at = space.getAddress(address)
-                labels = names
-                # Type descriptors (@$xt$...) are data that Borland puts in the code.
-                if not names[0].startswith("@$xt$"):
-                    # The stubs omit Java's nulls: both return None if there's no function.
-                    function: Function | None = manager.getFunctionAt(at) or api.createFunction(
-                        at, None
+                scope, name, signature = ghidra_name(symbols[0])
+                root = program.getGlobalNamespace()
+                namespace = root
+                if scope:
+                    namespace = NamespaceUtils.createNamespaceHierarchy(
+                        scope, root, program, SourceType.IMPORTED
                     )
-                    if function is not None:
-                        source, current = function.getSymbol().getSource(), function.getName()
-                        # A user-defined name that is one of ours was set by this tool
-                        # (createFunction marks names as user-defined), not by hand.
-                        if source != SourceType.USER_DEFINED or current in names:
-                            function.setName(names[0], SourceType.IMPORTED)
-                            functions_named += 1
-                            labels = names[1:]
-                        else:
-                            kept += 1
-                        # A secondary label repeating the function's own name is redundant.
-                        for symbol in table.getSymbols(at):
-                            if not symbol.isPrimary() and symbol.getName() == function.getName():
-                                symbol.delete()
-                existing = {str(symbol.getName()) for symbol in table.getSymbols(at)}
-                for name in labels:
-                    if name not in existing:
-                        table.createLabel(at, name, SourceType.IMPORTED)
-                        labels_added += 1
+                # Every name this tool may have given the address, to tell them from
+                # names set by hand (createFunction marks names as user-defined).
+                ours = {s.name for s in symbols} | {ghidra_name(s)[1] for s in symbols}
+                # Type descriptors (@$xt$...) and vtables are data in the code.
+                is_data = symbols[0].name.startswith("@$xt$") or name == "vtable"
+                function: Function | None = None
+                if not is_data:
+                    # The stubs omit Java's nulls: both return None if there's no function.
+                    function = manager.getFunctionAt(at) or api.createFunction(at, None)
+                if function is not None:
+                    symbol = function.getSymbol()
+                    if symbol.getSource() != SourceType.USER_DEFINED or function.getName() in ours:
+                        symbol.setNameAndNamespace(name, namespace, SourceType.IMPORTED)
+                        functions_named += 1
+                    else:
+                        kept += 1
+                elif not any(str(s.getName()) == name for s in table.getSymbols(at)):
+                    table.createLabel(at, name, namespace, SourceType.IMPORTED)
+                if signature:
+                    listing.setComment(at, CommentType.PLATE, signature)
+                _add_secondary_labels(table, at, [s.name for s in symbols])
         program.save("Borland runtime symbols", pyghidra.task_monitor())
         _write_functions(list_functions(program))
 
     print(
-        f"Named {functions_named} functions and added {labels_added} labels "
-        f"(kept {kept} names set by hand). Function list updated: {paths.GHIDRA_FUNCTIONS}"
+        f"Named {functions_named} functions (kept {kept} names set by hand). "
+        f"Function list updated: {paths.GHIDRA_FUNCTIONS}"
     )

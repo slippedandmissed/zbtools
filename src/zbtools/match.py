@@ -1,10 +1,14 @@
 """Check whether decompiled functions compile to the original bytes.
 
-Each function in decomp/*.c that should match the game is preceded by a marker
-comment giving its address in zoombi32.exe:
+The decompiled code is C++ (the game is: it uses C++ objects and exceptions).
+Each function in decomp/*.cpp that should match the game is preceded by a
+marker comment giving its address in zoombi32.exe:
 
     /* @zoombi32 0x0046be2e */
     void __stdcall fn_46be2e(long value)
+
+Methods are marked the same way (`void Widget::set(long v)`). The function is
+found in the compiled object by its demangled, qualified name.
 
 Each file is compiled with each installed Borland C++ release, and every marked
 function is compared with the original, ignoring the bytes the linker fills in
@@ -22,13 +26,15 @@ from typing import Annotated
 import typer
 
 from zbtools import omf, paths, toolchain
+from zbtools.demangle import qualified_name
 from zbtools.exe import Executable, Instruction, disassemble
 
 # Compiler flags used unless --flags is given. Not yet confirmed against the game.
 DEFAULT_FLAGS = ""
 
 _MARKER = re.compile(r"/\*\s*@zoombi32\s+(0x[0-9a-fA-F]+)\s*\*/")
-_CALL_OR_DEFINITION = re.compile(r"\b([A-Za-z_]\w*)\s*\(")
+# The (possibly qualified) name of the function defined after a marker.
+_DEFINITION = re.compile(r"([A-Za-z_~][\w:~]*)\s*\(")
 
 
 @dataclass(frozen=True)
@@ -55,7 +61,7 @@ def find_targets(source: str) -> list[Target]:
     """Marked functions: the first `name(` after each @zoombi32 marker."""
     found = []
     for marker in _MARKER.finditer(source):
-        name = _CALL_OR_DEFINITION.search(source, marker.end())
+        name = _DEFINITION.search(source, marker.end())
         if name is None:
             raise ValueError(f"no function after marker {marker.group(0)}")
         found.append(Target(name.group(1), int(marker.group(1), 16)))
@@ -63,11 +69,18 @@ def find_targets(source: str) -> list[Target]:
 
 
 def _find_public(obj: omf.ObjectFile, name: str) -> omf.Public:
-    # C names get a leading underscore (cdecl) or are upper-cased (pascal).
-    for public in obj.publics:
-        if public.name in (name, f"_{name}", name.upper()):
-            return public
-    raise ValueError(f"{name} not found in the object file ({[p.name for p in obj.publics]})")
+    """The public symbol for a function name, qualified (`Widget::set`) or not."""
+    candidates = [
+        p
+        for p in obj.publics
+        if name in (qualified_name(p.name), qualified_name(p.name).split("::")[-1])
+        or p.name == name.upper()  # pascal: upper-cased, unmangled
+    ]
+    if len(candidates) != 1:
+        found = [qualified_name(p.name) for p in obj.publics]
+        problem = "is ambiguous (qualify it or rename an overload)" if candidates else "not found"
+        raise ValueError(f"{name} {problem} in the object file; it has {found}")
+    return candidates[0]
 
 
 def compare(target: Target, obj: omf.ObjectFile, exe: Executable) -> Result:
@@ -151,7 +164,7 @@ app = typer.Typer(add_completion=False)
 def main(
     files: Annotated[
         list[Path] | None,
-        typer.Argument(help="C files to check (default: all of decomp/)", show_default=False),
+        typer.Argument(help="Source files to check (default: all of decomp/)", show_default=False),
     ] = None,
     release: Annotated[
         list[str] | None,
@@ -164,7 +177,7 @@ def main(
         bool, typer.Option("--quiet", "-q", help="Don't show disassembly of mismatches")
     ] = False,
 ) -> None:
-    sources = files or sorted(paths.DECOMP_DIR.rglob("*.c"))
+    sources = files or sorted([*paths.DECOMP_DIR.rglob("*.cpp"), *paths.DECOMP_DIR.rglob("*.c")])
     releases = release or toolchain.installed_releases()
     if not releases:
         raise typer.BadParameter("no toolchain installed; run `uv run toolchain setup` first")

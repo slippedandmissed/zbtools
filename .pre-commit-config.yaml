@@ -3,9 +3,9 @@ repos:
   - repo: local
     hooks:
       - id: lint
-        name: uv run lint (ruff lint, ruff format, mypy)
+        name: uv run lint (ruff lint, ruff format, mypy, pytest)
         entry: uv run lint
         language: system
         pass_filenames: false
         # Run when Python code or its tool configuration changes.
-        files: ^(src/.*\.py|pyproject\.toml|uv\.lock)$
+        files: ^((src|tests)/.*\.py|pyproject\.toml|uv\.lock)$
