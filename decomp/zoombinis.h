@@ -79,6 +79,7 @@ struct InputHandlers
     void (*handler24)(InputItem *item);
     short (*handler28)(long value, InputItem *item);
     long unknown2C;
+    void (*handler30)(InputItem *item);
 };
 
 /* A group of items with its handlers (16 bytes). */
@@ -307,7 +308,7 @@ extern Counted *g_4a8dcc;
 extern short g_4aa428;
 extern short g_4aa42a;
 extern InputItem *g_4aa484;
-extern unsigned char g_4aa48a;
+extern unsigned short g_4aa48a;
 extern unsigned char g_4aa48b;
 extern short g_4aa48c; /* how many lists g_4a01ac has */
 extern GroupList *g_4aa490;
@@ -535,6 +536,11 @@ short focusItemAt(short x, short y);
 short focusItem(InputItem *item);
 void visitAllItems();
 void numberAllItems();
+void setGroupLists(GroupList *lists, short count, unsigned short flags);
+void fn_412d9c();
+void getItemPosition(InputItem *item, Cursor *where);
+InputItem *itemAt(short x, short y);
+void activateItemAt(short x, short y);
 void fn_413bcf(void (*hook)(Point *where));
 void fn_413c6d(void **block);
 short queuedEvents();

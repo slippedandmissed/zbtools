@@ -5,6 +5,17 @@
 #include <string.h>
 #include "zoombinis.h"
 
+/* Installs the lists of groups to move the focus over, and numbers their
+   items. */
+/* @zoombi32 0x004124a4 */
+void setGroupLists(GroupList *lists, short count, unsigned short flags)
+{
+    g_4a01ac = lists;
+    g_4aa48c = count;
+    g_4aa48a = flags;
+    numberAllItems();
+}
+
 /* Passes `value` to the current handlers' slot 0x28, or else to the engine;
    the answer. */
 /* @zoombi32 0x0041280d */
@@ -233,6 +244,70 @@ void fn_412d47()
 void fn_412d57()
 {
     fn_412b4d(g_4aa494->handlers->handler24);
+}
+
+/* If an item is pending (g_4aa4a8), focuses it (in mode 1) and calls its
+   group's handler at 0x30; then it's no longer pending. */
+/* @zoombi32 0x00412d9c */
+void fn_412d9c()
+{
+    InputState saved;
+
+    if (g_4aa4a8) {
+        fn_413afd(&saved, 0);
+        g_4aa4c0 = 1;
+        if (focusItem(g_4aa4a8))
+            fn_412b4d(g_4aa494->handlers->handler30);
+        g_4aa4a8 = 0;
+        fn_413a4e(&saved, 0);
+    }
+}
+
+/* Where an item is, keeping the state. */
+/* @zoombi32 0x00412df4 */
+void getItemPosition(InputItem *item, Cursor *where)
+{
+    InputState saved;
+
+    fn_413afd(&saved, 1);
+    g_4aa4c0 = 2;
+    focusItem(item);
+    *where = g_4aa49c;
+    fn_413a4e(&saved, 1);
+}
+
+/* The item at a position (from 1), if any, keeping the state. */
+/* @zoombi32 0x00412e44 */
+InputItem *itemAt(short x, short y)
+{
+    InputState saved;
+    InputItem *item;
+
+    if (x <= 0 || y <= 0)
+        return 0;
+    fn_413afd(&saved, 1);
+    g_4aa4c0 = 2;
+    if (focusItemAt(x, y))
+        item = g_4aa498;
+    else
+        item = 0;
+    fn_413a4e(&saved, 1);
+    return item;
+}
+
+/* Calls the handler of the item at a position (from 1), keeping the state. */
+/* @zoombi32 0x00413237 */
+void activateItemAt(short x, short y)
+{
+    InputState saved;
+
+    if (x > 0 && y > 0) {
+        fn_413afd(&saved, 1);
+        g_4aa4c0 = 1;
+        if (focusItemAt(x, y))
+            fn_412bb3(g_4aa498->flags & 4);
+        fn_413a4e(&saved, 1);
+    }
 }
 
 /* Calls every item's handlers (search 6, in mode 1), keeping the state. */
