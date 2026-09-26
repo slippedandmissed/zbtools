@@ -33,7 +33,7 @@ No game files or Windows media are committed to this repository; you need your o
 | --- | --- |
 | `data/Logical Journey of the Zoombinis.iso` | The game CD, e.g. from [the Internet Archive](https://archive.org/details/logical-journey-of-the-zoombinis) |
 | `data/Windows 98 Second Edition.iso` | Windows 98 SE install CD, for the emulated PC |
-| `data/Borland C++ 4.5.iso` and/or `data/Borland C++ 4.52.iso` | Borland C++ CDs, for the compiler the game was built with (4.5 or 4.52; see `docs/findings.md`) |
+| `data/Borland C++ 4.5.iso` | Borland C++ 4.5 CD, for the compiler the game was built with. (4.52 generates identical code and also works, as `data/Borland C++ 4.52.iso`; see `docs/findings.md`) |
 
 Then create a gitignored `.env` file in the repo root with your Windows product key:
 
@@ -134,7 +134,9 @@ uv run match                      # check every marked function in decomp/
 uv run match decomp/first.cpp -r 4.5 --flags "-O2"   # one file, one release, extra BCC32 options
 ```
 
-`match` compiles each file with each installed Borland C++ release and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets). Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. It needs `uv run extract-game` and `uv run toolchain setup` first.
+A function that's written but not yet an exact match is marked `/* @zoombi32-nonmatching 0x... */`: it's still compiled and reported with how close it is, but doesn't fail the run.
+
+`match` compiles each file with Borland C++ 4.5 (the game's compiler settings are BCC32's defaults) and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets). Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. It needs `uv run extract-game` and `uv run toolchain setup` first.
 
 ### Cleaning up
 
@@ -213,7 +215,8 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Label the Borland runtime functions in Ghidra (`uv run runtime-symbols`, `uv run ghidra label`)
 - [x] Switch `decomp/` to C++; demangle Borland names
 - [x] Harvest class names (RTTI) and vtables; teach Ghidra the calling conventions
-- [ ] Settle 4.5 vs 4.52 and the compiler flags with mid-sized functions
+- [x] Settle the compiler: Borland C++ 4.5 (4.52 is identical) with default options
+- [ ] Decompile the game, function by function
 
 ## Legal
 

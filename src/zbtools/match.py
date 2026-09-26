@@ -10,6 +10,10 @@ marker comment giving its address in zoombi32.exe:
 Methods are marked the same way (`void Widget::set(long v)`). The function is
 found in the compiled object by its demangled, qualified name.
 
+A function that is written but doesn't match exactly yet is marked
+`/* @zoombi32-nonmatching 0x... */` instead: it's still compiled and compared,
+and reported with how close it is, but doesn't count as a failure.
+
 Each file is compiled with each installed Borland C++ release, and every marked
 function is compared with the original, ignoring the bytes the linker fills in
 (relocated addresses and call targets). Mismatches are shown side by side.
@@ -29,10 +33,15 @@ from zbtools import omf, paths, toolchain
 from zbtools.demangle import qualified_name
 from zbtools.exe import Executable, Instruction, disassemble
 
-# Compiler flags used unless --flags is given. Not yet confirmed against the game.
+# Compiler options used unless --flags is given: BCC32's defaults (no
+# optimisation, register variables on, byte alignment) reproduce the game's code;
+# see docs/findings.md.
 DEFAULT_FLAGS = ""
+# Release used unless --release is given. 4.5 and 4.52 generate identical code
+# unless 4.52's -fp (Pentium FDIV workaround) is used, which the game doesn't.
+DEFAULT_RELEASE = "4.5"
 
-_MARKER = re.compile(r"/\*\s*@zoombi32\s+(0x[0-9a-fA-F]+)\s*\*/")
+_MARKER = re.compile(r"/\*\s*@zoombi32(-nonmatching)?\s+(0x[0-9a-fA-F]+)\s*\*/")
 # The (possibly qualified) name of the function defined after a marker.
 _DEFINITION = re.compile(r"([A-Za-z_~][\w:~]*)\s*\(")
 
@@ -41,6 +50,7 @@ _DEFINITION = re.compile(r"([A-Za-z_~][\w:~]*)\s*\(")
 class Target:
     name: str
     address: int
+    nonmatching: bool = False  # marked as a known near-miss
 
 
 @dataclass(frozen=True)
@@ -64,7 +74,8 @@ def find_targets(source: str) -> list[Target]:
         name = _DEFINITION.search(source, marker.end())
         if name is None:
             raise ValueError(f"no function after marker {marker.group(0)}")
-        found.append(Target(name.group(1), int(marker.group(1), 16)))
+        address = int(marker.group(2), 16)
+        found.append(Target(name.group(1), address, nonmatching=bool(marker.group(1))))
     return found
 
 
@@ -111,7 +122,13 @@ def compile_source(release: str, source: Path, flags: str) -> omf.ObjectFile:
     out_dir.mkdir(parents=True, exist_ok=True)
     obj_path = out_dir / f"{source.stem}.obj"
     obj_path.unlink(missing_ok=True)
-    args = ["-c", *shlex.split(flags), f"-o{toolchain.windows_path(obj_path)}"]
+    # -I: the source's own directory, so it can include headers next to it.
+    args = [
+        "-c",
+        f"-I{toolchain.windows_path(source.parent)}",
+        *shlex.split(flags),
+        f"-o{toolchain.windows_path(obj_path)}",
+    ]
     result = toolchain.run_tool(release, "BCC32", [*args, toolchain.windows_path(source)], out_dir)
     if result.returncode != 0 or not obj_path.exists():
         raise RuntimeError(f"compiling {source.name} failed:\n{result.stdout}{result.stderr}")
@@ -169,7 +186,7 @@ def main(
     release: Annotated[
         list[str] | None,
         typer.Option(
-            "--release", "-r", help="Borland C++ release(s) to use (default: all installed)"
+            "--release", "-r", help=f"Borland C++ release(s) to use (default: {DEFAULT_RELEASE})"
         ),
     ] = None,
     flags: Annotated[str, typer.Option(help="BCC32 options, e.g. '-O2 -5'")] = DEFAULT_FLAGS,
@@ -178,9 +195,10 @@ def main(
     ] = False,
 ) -> None:
     sources = files or sorted([*paths.DECOMP_DIR.rglob("*.cpp"), *paths.DECOMP_DIR.rglob("*.c")])
-    releases = release or toolchain.installed_releases()
-    if not releases:
+    installed = toolchain.installed_releases()
+    if not installed:
         raise typer.BadParameter("no toolchain installed; run `uv run toolchain setup` first")
+    releases = release or [DEFAULT_RELEASE if DEFAULT_RELEASE in installed else installed[0]]
     game = paths.GAME32_DIR / "zoombi32.exe"
     if not game.exists():
         raise typer.BadParameter(f"{game} not found; run `uv run extract-game` first")
@@ -199,7 +217,12 @@ def main(
                 where = f"{target.name} @ {target.address:#x}"
                 size = len(result.compiled)
                 if result.matches:
-                    print(f"  match     {where}: {size} bytes ({len(result.masked)} relocated)")
+                    note = " (marked non-matching: remove the mark)" if target.nonmatching else ""
+                    relocated = len(result.masked)
+                    print(f"  match     {where}: {size} bytes ({relocated} relocated){note}")
+                elif target.nonmatching:
+                    differ = f"{len(result.mismatches)} of {size} bytes differ"
+                    print(f"  nonmatch  {where}: {differ} (marked non-matching)")
                 else:
                     failed += 1
                     print(f"  MISMATCH  {where}: {len(result.mismatches)} of {size} bytes differ")

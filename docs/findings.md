@@ -19,9 +19,9 @@ Evidence (zoombi32.exe): one function, `0x446969` (Ghidra's decompilation, with 
 
 The 32-bit QuickTime for Windows 2.1 installer on the disc (`QTWSET32/QT32B42.EXE`) reads its options from an INI named after itself (`QT32B42.INI`), not the `QT32INST.INI` shipped next to it (which belongs to the older installer in `QTWSET32/OLD32INS.EXT/`). Confirmed in the VM: with the options file named `QT32B42.INI`, `PromptToBegin=0` etc. suppress every dialog; named `QT32INST.INI`, the installer ignored it entirely (it even created a Start-menu group despite `CreateGroups=0`).
 
-## Compiler version: Borland C++ 4.5 or 4.52
+## Compiler version: Borland C++ 4.5 or 4.52 (equivalent)
 
-Both builds were made with **Borland C++ 4.5 or 4.52**; which of the two is still open.
+Both builds were made with **Borland C++ 4.5 or 4.52**. The two generate identical code for this game (see "Compiler settings" below), so which one doesn't matter; the tools use 4.5.
 
 | Evidence | Implies |
 | --- | --- |
@@ -103,3 +103,19 @@ Each vtable, in the data section, is preceded by a pointer to its class's descri
 - the game's own code: only `fileSpec` (no vtable). So the game's logic uses non-polymorphic classes or plain functions; names for it will have to come from elsewhere.
 
 `uv run ghidra label` makes these Ghidra classes (descriptor, vtable, constructors, destructor, and `vfuncN` for virtual methods named after the class that introduces them) and sets `__stdcall` on the 1,365 functions that pop their own arguments.
+
+## Compiler settings: BCC32's defaults
+
+The game's code is reproduced by BCC32 with **no options**: no optimisation (`-Od`), register variables on (`-r`), byte alignment. Evidence, from compiling decompiled game functions (`decomp/`) and comparing:
+
+- Four functions match byte for byte with the defaults, including two with loops, register-allocated locals and hoisted addresses (`fn_4572bf`, `fn_437390`); what looks like optimisation in the game (registers for locals, rotated loops, no stack frame for argument-less functions) is BCC32's default code generation.
+- `-O1` and `-O2` break two and three of them respectively; `-r-` (no register variables) breaks two.
+- The CPU target (`-3`/`-4`/`-5`), `-a4` and `-k-` don't change these functions, so they aren't pinned down; the defaults are assumed. A structure with a pointer at the unaligned offset `0xe` (in `fn_4115f5`) fits the default byte alignment.
+- 4.5 and 4.52 produce identical code, with the same settings, for the game functions and for test code with floating point, division and a `switch`. 4.52's one addition is `-fp` (the Pentium FDIV workaround; 4.5 rejects the option), and the game contains none of its support code.
+
+Details that depend on how the source is written, found while matching:
+
+- A comparison's operand order follows the source (`exclude != i` gives `cmp ax, si`; `i != exclude` gives `cmp si, ax`).
+- Initialising several variables in the `for` header (`for (i = 1, best = 0, ...)`) versus in declarations changes the order of the setup instructions.
+- A search loop written `while (p && !found) p = p->next;` compiles to the game's layout; a `for` with `break` doesn't.
+- Register assignment and the order parameters are loaded in depend on the source in ways not yet understood: `fn_4115f5` and `fn_43a772` are marked non-matching for that reason.
