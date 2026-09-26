@@ -15,10 +15,11 @@ import socket
 import struct
 import subprocess
 import sys
+import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Literal
+from typing import Literal, NamedTuple
 
 import pycdlib
 from pydantic import BaseModel, ConfigDict
@@ -28,13 +29,15 @@ from zbtools.fat12 import Fat12Image
 
 FLOPPY_SIZE = 1474560
 
-# Emulated PC: hardware Windows 98 has inbox drivers for, and no network card
-# (so setup never waits on network configuration).
+# Emulated PC: hardware Windows 98 has inbox drivers for, and no network card.
+# The CPU has no local APIC (Windows 98 doesn't use one): Windows 9x restarts
+# through a BIOS warm-boot path that leaves QEMU's APIC blocking the legacy
+# timer interrupt, which hung setup on the splash screen at its first reboot.
 MACHINE_ARGS = [
     "-machine",
     "pc",
     "-cpu",
-    "pentium2",
+    "pentium2,-apic",
     "-m",
     "256",
     "-vga",
@@ -70,8 +73,11 @@ CD \\WIN98
 SETUP.EXE A:\\MSBATCH.INF /IS /IQ /IE /IM /NF
 """
 
-# Setup answer file. The final RunOnce entry powers the VM off after the first
-# logon, which is how `vm install` knows setup has finished.
+# Setup answer file. The per-user RunOnce entry powers the VM off after the
+# first logon (the machine-wide RunOnce key would run before the logon prompt),
+# which is how `vm install` knows setup has finished. Some Windows CDs
+# (OEM and upgrade) still stop on the pre-filled wizard pages until Next is
+# clicked; that's by design and can't be turned off from here.
 MSBATCH_INF = """\
 [BatchSetup]
 Version=3.0 (32-bit)
@@ -106,10 +112,13 @@ SelectedKeyboard=KEYBOARD_00000409
 
 [NameAndOrg]
 Name="Zoombinis"
-Org=""
+Org="Zoombinis Decompilation"
 Display=0
 
 [Network]
+ComputerName="ZOOMBINIS"
+Workgroup="WORKGROUP"
+Description="Zoombinis VM"
 Display=0
 
 [Install]
@@ -117,7 +126,7 @@ AddReg=ZbAddReg
 DelReg=ZbDelReg
 
 [ZbAddReg]
-HKLM,%KEY_RUNONCE%,ZbPowerOff,,"rundll32.exe shell32.dll,SHExitWindowsEx 5"
+HKCU,%KEY_RUNONCE%,ZbPowerOff,,"rundll32.exe shell32.dll,SHExitWindowsEx 5"
 
 [ZbDelReg]
 HKLM,%KEY_RUN%,Welcome
@@ -310,13 +319,17 @@ def vm_running() -> bool:
         return True
 
 
+class VmNotRunningError(Exception):
+    pass
+
+
 def monitor(command: str) -> str:
     """Send one command to the running VM's QEMU monitor and return its output."""
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
         try:
             s.connect(str(paths.VM_MONITOR))
-        except OSError:
-            sys.exit("error: the VM is not running")
+        except OSError as e:
+            raise VmNotRunningError from e
         s.settimeout(5)
         s.sendall(command.encode() + b"\n")
         out = b""
@@ -328,6 +341,66 @@ def monitor(command: str) -> str:
         except TimeoutError:
             pass
     return out.decode(errors="replace")
+
+
+class Frame(NamedTuple):
+    """A screenshot as raw RGB pixels."""
+
+    width: int
+    height: int
+    rgb: bytes
+
+    def pixel(self, x: int, y: int) -> tuple[int, int, int]:
+        i = (y * self.width + x) * 3
+        return self.rgb[i], self.rgb[i + 1], self.rgb[i + 2]
+
+
+def read_ppm(path: Path) -> Frame:
+    """Read a binary (P6) PPM image, the format of QEMU's default screendump."""
+    data = path.read_bytes()
+    fields = data.split(maxsplit=4)
+    if len(fields) < 5 or fields[0] != b"P6" or fields[3] != b"255":
+        raise ValueError(f"not an 8-bit binary PPM: {path}")
+    width, height = int(fields[1]), int(fields[2])
+    rgb = fields[4]
+    if len(rgb) < width * height * 3:
+        raise ValueError(f"truncated PPM: {path}")
+    return Frame(width, height, rgb)
+
+
+def is_logon_prompt(frame: Frame) -> bool:
+    """Whether the screen shows Windows 98's "Enter Windows Password" dialog, as
+    laid out at 640x480: navy title bar, two white text fields, and the yellow
+    key icon (which setup's own wizard pages don't have)."""
+    if (frame.width, frame.height) != (640, 480):
+        return False
+    navy, white = (0, 0, 128), (255, 255, 255)
+    if frame.pixel(300, 73) != navy:
+        return False
+    if frame.pixel(300, 188) != white or frame.pixel(300, 223) != white:
+        return False
+    yellow = 0
+    for y in range(95, 145):
+        for x in range(110, 150):
+            r, g, b = frame.pixel(x, y)
+            yellow += r > 200 and g > 200 and b < 80
+    return yellow > 100
+
+
+def answer_logon_prompt(stop: threading.Event, interval: float = 5.0) -> None:
+    """Press Enter at the Windows logon prompt the first time it appears. With a
+    blank password, Windows never shows the prompt again."""
+    while not stop.wait(interval):
+        try:
+            monitor(f"screendump {paths.VM_SCREEN_CHECK}")
+            frame = read_ppm(paths.VM_SCREEN_CHECK)
+        except (VmNotRunningError, OSError, ValueError):
+            continue  # not started yet, or between screens
+        if is_logon_prompt(frame):
+            monitor("sendkey ret")
+            print("  Answered the Windows logon prompt (blank password)")
+            paths.VM_SCREEN_CHECK.unlink(missing_ok=True)
+            return
 
 
 def ensure_overlay() -> None:
@@ -382,8 +455,10 @@ def cmd_install(args: _Args) -> None:
     build_disk(disk, args.disk_size)
 
     print(
-        "Installing Windows 98 SE unattended. This takes 30-60 minutes; the VM "
-        "powers off by itself when setup has finished. Don't close its window."
+        "Installing Windows 98 SE from the answer file. This takes 30-60 minutes; the VM\n"
+        "powers off by itself when setup has finished. Don't close its window.\n"
+        "Depending on your Windows CD, setup may stop on a few wizard pages with the\n"
+        "answers already filled in: click Next on each one to continue."
     )
     cmd = qemu_command(
         disk,
@@ -397,8 +472,16 @@ def cmd_install(args: _Args) -> None:
     def on_reset() -> None:
         print(f"  [{(time.monotonic() - started) / 60:4.1f} min] VM rebooted")
 
-    reason = run_qemu(cmd, on_reset=on_reset)
+    stop_watching = threading.Event()
+    watcher = threading.Thread(target=answer_logon_prompt, args=(stop_watching,), daemon=True)
+    watcher.start()
+    try:
+        reason = run_qemu(cmd, on_reset=on_reset)
+    finally:
+        stop_watching.set()
+        watcher.join()
     paths.WIN98_SETUP_FLOPPY.unlink(missing_ok=True)
+    paths.VM_SCREEN_CHECK.unlink(missing_ok=True)
     if reason != "guest-shutdown":
         disk.unlink(missing_ok=True)
         sys.exit(
@@ -435,7 +518,10 @@ def cmd_reset(_args: _Args) -> None:
 
 def cmd_screenshot(args: _Args) -> None:
     out = args.output.resolve()
-    monitor(f"screendump {out} -f png")
+    try:
+        monitor(f"screendump {out} -f png")
+    except VmNotRunningError:
+        sys.exit("error: the VM is not running")
     print(out)
 
 

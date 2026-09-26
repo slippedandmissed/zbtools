@@ -23,6 +23,8 @@ WIN98_OVERLAY = VM_DIR / "win98.qcow2"
 WIN98_SETUP_FLOPPY = VM_DIR / "win98-setup.img"
 VM_MONITOR = VM_DIR / "monitor.sock"
 VM_QMP = VM_DIR / "qmp.sock"
+# Scratch screenshot `vm install` uses to spot the Windows logon prompt.
+VM_SCREEN_CHECK = VM_DIR / "screen-check.ppm"
 
 # An entry in a clean category: a path (may contain * wildcards, matched from
 # the repo root) or the name of another category.
@@ -39,6 +41,7 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
         WIN98_SETUP_FLOPPY,
         VM_MONITOR,
         VM_QMP,
+        VM_SCREEN_CHECK,
     ],
     "vm-base": [WIN98_BASE],
     "vm": ["vm-base", "vm-state"],

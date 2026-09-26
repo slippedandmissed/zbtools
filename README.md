@@ -51,7 +51,9 @@ The original game runs in an emulated Windows 98 PC under QEMU. Install Windows 
 uv run vm install
 ```
 
-This installs Windows 98 SE unattended from your ISO, using the product key in `.env`. It takes 30-60 minutes and opens a QEMU window you can watch; leave it alone until the VM powers itself off. Closing the window or pressing Ctrl-C aborts the install and deletes the partial disk.
+This installs Windows 98 SE from your ISO using an answer file, with the product key from `.env`. It takes 30-60 minutes and opens a QEMU window you can watch; the VM powers itself off when setup has finished. Closing the window or pressing Ctrl-C aborts the install and deletes the partial disk.
+
+**Depending on your Windows CD, setup may stop on a few wizard pages** (license, product key, user information) with the answers already filled in. OEM and upgrade CDs do this by design; just click Next on each one. At the end, the script answers Windows' logon prompt itself (with a blank password, so it never appears again) and the VM shuts down.
 
 After that:
 
@@ -125,7 +127,8 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 ## Roadmap
 
 - [x] Extract the disc and the Windows 95 build (`uv run extract-game`)
-- [ ] Scripted Windows 98 VM (`uv run vm`) running the game
+- [x] Scripted Windows 98 VM (`uv run vm install` / `run` / `reset`)
+- [ ] Scripted QuickTime and game install in the VM; game running
 - [ ] Mohawk archive lister / extractor
 - [ ] Ghidra project with imports and runtime functions labeled
 - [ ] Borland C++ toolchain + object diff tool
