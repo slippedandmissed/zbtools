@@ -5,7 +5,7 @@ Decompilation of *Logical Journey of the Zoombinis* (Broderbund, 1996, Windows r
 ## Key facts about the target
 
 - **Main binary (target):** `zoombi32.exe`, the Windows 95 build, extracted by `uv run extract-game` from the game ISO (via `ZBARCHIV.Z`, an InstallShield 3 archive) into `build/zoombi32/`. PE32, ~634 KB, sections `CODE`/`DATA`/`.idata`/`.edata`/`.reloc`/`.rsrc`.
-- **Compiler:** Borland C++ 4.x, 32-bit (runtime string `Borland C++ - Copyright 1994 Borland Intl.`, `Borland32` marker, linker version 2.25 = TLINK32). The PE timestamp (2013) is junk, as is common for Borland's linker. Exact version (4.0 / 4.02 / 4.5) and flags not yet confirmed.
+- **Compiler:** Borland C++ **4.5 or 4.52** (see `docs/findings.md` for the evidence; the two share a linker, so telling them apart needs their runtime libraries). 32-bit build linked by TLINK32 (PE linker version 2.25). The PE timestamp (2013) is junk, as is common for Borland's linker. Compiler flags not yet confirmed.
 - **Imports:** KERNEL32, USER32, GDI32, ADVAPI32, WINMM, VERSION, DSOUND (DirectSound), QTIM32 + CMGR32 (QuickTime for Windows 2.x, 32-bit).
 - **Assets:** `DATA/*.MHK` on the disc (`build/disc/DATA/` after extraction), Mohawk archives (`MHWK` magic, `RSRC` directory), read from the CD at runtime. ScummVM's `engines/mohawk/` is the reference for the container format; per-game resource types for Zoombinis are undocumented.
 - **Other build:** `ZOOMBINI._EX` on the disc is the Windows 3.1 build (Win16 NE, same compiler family). Useful for cross-reference, not the primary target.

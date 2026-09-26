@@ -18,3 +18,17 @@ Evidence (zoombi32.exe): the two functions at `0x446969` and around `0x446a00` b
 ## QuickTime installer settings file
 
 The 32-bit QuickTime for Windows 2.1 installer on the disc (`QTWSET32/QT32B42.EXE`) reads its options from an INI named after itself (`QT32B42.INI`), not the `QT32INST.INI` shipped next to it (which belongs to the older installer in `QTWSET32/OLD32INS.EXT/`). Confirmed in the VM: with the options file named `QT32B42.INI`, `PromptToBegin=0` etc. suppress every dialog; named `QT32INST.INI`, the installer ignored it entirely (it even created a Start-menu group despite `CreateGroups=0`).
+
+## Compiler version: Borland C++ 4.5 or 4.52
+
+Both builds were made with **Borland C++ 4.5 or 4.52**; which of the two is still open.
+
+| Evidence | Implies |
+| --- | --- |
+| 16-bit `ZOOMBINI._EX`: NE header linker version 6.1 | TLINK 7.0a (Nov 1994), which shipped only with Borland C++ 4.5 and 4.52. BC++ 4.0's TLINK 6.00 writes 5.0; BC++ 5.0's TLINK 7.1 writes 7.1 (per the TLINK version table on [VOGONS](https://www.vogons.org/viewtopic.php?t=110504)) |
+| Both builds: RTL string `Borland C++ - Copyright 1994 Borland Intl.` | a 4.x runtime library; BC++ 5.0's says 1996 |
+| Both builds: C++ exception handling and RTTI (`**BCCxh1`, `Bad_typeid`, `typeinfo`, `xalloc`; `zoombi32.exe` exports `__GetExceptDLLinfo`) | BC++ 4.0 or later |
+| Built January 1996 (disc file dates, README) | earlier than BC++ 5.0 |
+| 32-bit `zoombi32.exe`: PE linker version 2.25, subsystem version 3.10, section names `CODE`/`DATA` | Borland TLINK32; doesn't distinguish 4.5 from 4.52 on its own |
+
+4.5 and 4.52 share the same linker, so telling them apart needs the compilers themselves: compare their runtime library code (e.g. startup code and `CW32.LIB` routines) byte-for-byte with the code linked into `zoombi32.exe`.
