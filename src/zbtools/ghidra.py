@@ -684,16 +684,21 @@ _BUILTINS = {"unsigned long": "ulong", "unsigned short": "ushort", "unsigned cha
 
 
 def _data_type(program: "Program", text: str) -> "DataType":
-    """A type from decomp/zoombinis.h (a builtin or one of our structs, with any
-    number of `*`s) as a Ghidra data type."""
+    """A type from decomp/zoombinis.h (a builtin, one of our structs, or a
+    Windows type such as HWND from the types Ghidra imported with the program,
+    with any number of `*`s) as a Ghidra data type."""
     from ghidra.program.model.data import BuiltInDataTypeManager  # noqa: PLC0415
 
     dtm = program.getDataTypeManager()
     base = text.replace("*", "").strip()
     found: DataType | None = dtm.getDataType(f"{TYPES_CATEGORY}/{base}")
     if found is None:
-        builtins = BuiltInDataTypeManager.getDataTypeManager()
-        found = builtins.getDataType(f"/{_BUILTINS.get(base, base)}")
+        builtin: DataType | None = BuiltInDataTypeManager.getDataTypeManager().getDataType(
+            f"/{_BUILTINS.get(base, base)}"
+        )
+        found = builtin
+    if found is None:
+        found = next((t for t in dtm.getAllDataTypes() if str(t.getName()) == base), None)
     if found is None:
         raise ValueError(f"decomp/zoombinis.h: no Ghidra type for {text!r}")
     for _ in range(text.count("*")):

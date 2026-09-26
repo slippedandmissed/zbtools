@@ -8,6 +8,7 @@
 #ifndef ZOOMBINIS_H
 #define ZOOMBINIS_H
 
+#include <windows.h>
 #include <time.h>
 
 /* Types */
@@ -19,6 +20,13 @@
 
 /* A function registered to be called back later (e.g. by fn_415604). */
 typedef void (*Callback)();
+
+/* A point, as the engine's QuickDraw-like graphics use them. */
+struct Point
+{
+    short x;
+    short y;
+};
 
 /* The display mode WinMain asks for (640x480, 256 colours). */
 struct DisplayMode
@@ -157,11 +165,15 @@ extern char userFileName[]; /* @data 0x4a4900 */
 extern char rosterFileName[]; /* @data 0x4a4920 */
 extern short aboveWindows311; /* @data 0x4a494a */
 extern long g_4a4a00;
+extern HWND mainWindow; /* @data 0x4a4a04 */
 extern char *appName; /* @data 0x4a4a08 */
 extern short g_4a4a0c;
 extern Callback g_4a4a14;
 extern long g_4a4a18;
 extern long g_4a4a1c;
+extern long savedDisk; /* @data 0x4a4aa8 */
+extern long buttonKeys[3]; /* @data 0x4a4abc */
+extern UINT buttonUpMessages[3]; /* @data 0x4a4ac8 */
 extern char *g_4a4ba0;
 extern short g_4a4ce6;
 extern char msgRequiresQuickTime[]; /* @data 0x4a4dc7 */
@@ -185,10 +197,13 @@ extern short g_4aa428;
 extern short g_4aa42a;
 extern long g_4aa498;
 extern long g_4aa4c4;
+extern char allocationFailed; /* @data 0x4aa4c8 */
 extern char g_4aa4c9;
 extern short g_4aa79a;
 extern short g_4aa79c;
+extern long g_4aa7a4;
 extern short g_4aa7cc;
+extern long g_4aafe8;
 extern short debugMode; /* @data 0x4ab474 */
 extern short g_4ab482;
 extern short g_4ab49c;
@@ -211,10 +226,11 @@ extern unsigned short instanceAtom; /* @data 0x4b2ae0 */
 extern short quickTimeReady; /* @data 0x4b2ae8 */
 extern short g_4b2aea;
 extern short g_4b2aec;
-extern void *appInstance; /* @data 0x4b2af0 */
-extern void *appPreviousInstance; /* @data 0x4b2af4 */
+extern HINSTANCE appInstance; /* @data 0x4b2af0 */
+extern HINSTANCE appPreviousInstance; /* @data 0x4b2af4 */
 extern char *appCommandLine; /* @data 0x4b2af8 */
 extern long appShowCommand; /* @data 0x4b2afc */
+extern char savedDirectory[]; /* @data 0x4b2c06 */
 extern short g_4b2d38;
 extern short g_4b754a;
 extern short g_4b7b38;
@@ -255,7 +271,6 @@ void fn_44695c();
 void fn_454c8e();
 void fn_454caa();
 void fn_454f61();
-short fn_455990(long);
 short fn_4623b8();
 void fn_4625b8();
 void fn_46310c();
@@ -266,7 +281,7 @@ void fn_46c4fe(long *handle, long type, short id, long, long);
 /* Creates the font `name` at `size` into *font. */
 void fn_46cb10(long *font, const char *name, long size, long);
 /* Initialises the Mohawk OS layer, with a work buffer. */
-short fn_46ddaf(void *instance, void *buffer, long size);
+short fn_46ddaf(HINSTANCE instance, void *buffer, long size);
 /* QuickTime (see quicktime.py) */
 long __cdecl QTInitialize(long *version);
 long qtim_0b();
@@ -275,12 +290,18 @@ long qtim_0b();
    declarations produce the calls the game makes. */
 
 void fn_476622(long handle);
+/* The engine's graphics follow Mac QuickDraw: a current port, and conversions
+   between a port's coordinates and the screen's. */
+long getPort(); /* 0x48b510 */
+void setPort(long port); /* 0x48d960 */
+void globalToLocal(Point *point); /* 0x48c4cc */
+void localToGlobal(Point *point); /* 0x48c688 */
 short fn_476d0a(); /* initialises sound */
 short fn_480642(); /* initialises the configuration file */
 short fn_483732(long); /* initialises the file manager */
 void __cdecl fn_48ac68(DisplayMode *mode, long, long, long, long);
 long fn_48b4a8();
-void fn_48cab4(long, long);
+short fn_48cab4(long, long);
 void fn_48d4c4(long);
 void fn_48da48(long);
 void *fn_48e6b4(long size); /* allocates memory */
@@ -356,6 +377,13 @@ void fn_446962(char *, const char *);
 void findGameData();
 short preferFirstFile(const char *first, const char *fallback);
 void __cdecl fn_454ca4();
+short addModifierKeys(short modifiers);
+void getCursorPosition(Point *where);
+void setCursorPosition(short x, short y);
+short isButtonStillDown(unsigned short button);
+short allocateBlock(void **block, unsigned long size);
+void getClockTime(char *hour, char *minute, char *second);
+void restoreDirectory();
 long fn_455013(long, long);
 int isMousePresent();
 void freeAndClear(void **block);
@@ -365,6 +393,7 @@ void fn_455e26(long);
 void fn_455e2d(long);
 long fn_455e85(long, long);
 void fn_456a2f(Callback callback);
+short fn_4568d8();
 void fn_456a3e(long first, long second);
 void fn_456a55(long value);
 short fn_456bf6();

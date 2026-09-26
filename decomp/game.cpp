@@ -80,7 +80,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     fn_4153b0(fn_454caa);
     fn_415a11(fn_44695c);
     fn_456a2f(fn_4625b8);
-    g_4b2aec = fn_455990(0) != 0x800;
+    g_4b2aec = addModifierKeys(0) != 0x800;
 
     if (fn_46ddaf(instance, osBuffer, sizeof osBuffer))
         fn_41541a(msgInitOs);

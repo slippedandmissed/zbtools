@@ -5,6 +5,9 @@
 
 #include <windows.h>
 #include <stdlib.h>
+#include <dir.h>
+#include <dos.h>
+#include <stdlib.h>
 #include "zoombinis.h"
 
 /* Whether a mouse is installed. */
@@ -77,4 +80,121 @@ void fn_456a55(long value)
 short fn_456bf6()
 {
     return g_4b2d38;
+}
+
+/* Adds the Shift and Ctrl keys' state to `modifiers`. */
+/* @zoombi32 0x00455990 */
+short addModifierKeys(short modifiers)
+{
+    if (GetKeyState(VK_SHIFT) < 0)
+        modifiers |= 0x800;
+    if (GetKeyState(VK_CONTROL) < 0)
+        modifiers |= 0x400;
+    return modifiers;
+}
+
+/* Where the cursor is, in the coordinates of the port g_4aa7a4. */
+/* @zoombi32 0x004559c0 */
+void getCursorPosition(Point *where)
+{
+    POINT cursor;
+    Point point;
+
+    GetCursorPos(&cursor);
+    point.x = cursor.x;
+    point.y = cursor.y;
+    long saved = getPort();
+    setPort(g_4aa7a4);
+    globalToLocal(&point);
+    setPort(saved);
+    *where = point;
+}
+
+/* QuickDraw's SetPt. */
+inline void setPoint(Point *point, short x, short y)
+{
+    point->x = x;
+    point->y = y;
+}
+
+/*
+ * Moves the cursor to a point in the coordinates of the port g_4aa7a4.
+ * Not exact: the original loads y before x (into ax and dx) when setting the
+ * point; direct stores, an initialiser and this inline helper don't.
+ */
+/* @zoombi32-nonmatching 0x00455a10 */
+void setCursorPosition(short x, short y)
+{
+    Point point;
+
+    setPoint(&point, x, y);
+    long saved = getPort();
+    setPort(g_4aa7a4);
+    localToGlobal(&point);
+    setPort(saved);
+    SetCursorPos(point.x, point.y);
+}
+
+/*
+ * Whether mouse button 1-3 is still held down: pressed, with no button-up
+ * message waiting. Not exact: the original tests `ah` for 0x80, as it would
+ * with GetAsyncKeyState returning int (as in the 16-bit Windows headers);
+ * with the Win32 declaration's SHORT, every form tried is a sign test.
+ */
+/* @zoombi32-nonmatching 0x00455a5b */
+short isButtonStillDown(unsigned short button)
+{
+    MSG message;
+
+    if (!button)
+        return 0;
+    int key = buttonKeys[button - 1];
+    UINT up = buttonUpMessages[button - 1];
+    if (GetAsyncKeyState(key) >= 0)
+        return 0;
+    return !PeekMessage(&message, 0, up, up, PM_NOYIELD);
+}
+
+/* Allocates `size` bytes into *block; whether it could. */
+/* @zoombi32 0x00455c18 */
+short allocateBlock(void **block, unsigned long size)
+{
+    if (!(*block = malloc(size)))
+        allocationFailed = 1;
+    return *block != 0;
+}
+
+/* The time of day. */
+/* @zoombi32 0x00455c60 */
+void getClockTime(char *hour, char *minute, char *second)
+{
+    struct time now;
+
+    gettime(&now);
+    *hour = now.ti_hour;
+    *minute = now.ti_min;
+    *second = now.ti_sec;
+}
+
+/* Changes back to the drive and directory saved in savedDisk and
+   savedDirectory, if any. */
+/* @zoombi32 0x00455d9a */
+void restoreDirectory()
+{
+    if (savedDisk >= 0) {
+        chdir(savedDirectory);
+        setdisk(savedDisk);
+        savedDisk = -1;
+    }
+}
+
+/* @zoombi32 0x004568d8 */
+short fn_4568d8()
+{
+    if (!g_4b2d38 && g_4aafe8) {
+        if (fn_48cab4(g_4aafe8, 1))
+            InvalidateRect(mainWindow, 0, 0);
+        return 1;
+    }
+    return 0;
 }
