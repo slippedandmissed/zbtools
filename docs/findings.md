@@ -177,7 +177,7 @@ Ghidra's auto-analysis only finds functions it reaches by calls from other funct
 - Relocated pointers in the code section aren't always code: switch jump tables (address lists after the `jmp`, byte index tables after those) and the RTTI type descriptors live there too. Only pointers from data, or from an instruction in a function but not inside a memory operand (`[eax*4 + table]`, `[eax + table]`), count; functions an earlier version made from tables or descriptors are removed.
 - `rtti.py` read one entry past the end of each vtable: the next vtable's header starts with a pointer to its class's type descriptor, which is in the code section. 18 classes had a bogus last virtual method; vtables now stop at a descriptor.
 
-About 23 KB of non-zero bytes in the code section still belong to no function, mostly the cases of switches Ghidra can't recover.
+Removing a false function clears the code it decoded, which can include real switch cases inside another function (the window procedure lost its cases this way); switch recovery now also decodes known cases that have lost their code. About 14 KB of non-zero bytes in the code section still belong to no function.
 
 ## WinMain (`0x4546f8`) and what it shows about the source
 

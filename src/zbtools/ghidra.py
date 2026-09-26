@@ -600,15 +600,18 @@ def _recover_switches(program: "Program") -> list[int]:
     `switch`, whose table Borland puts right after the jump), decompile it
     again, now its callees' calling conventions are known, let the decompiler
     recover the table, and recompute the function's body; repeat while that
-    uncovers more. Returns the functions fixed."""
+    uncovers more. Also decode known cases that have lost their code. Returns
+    the functions fixed."""
 
     from ghidra.app.cmd.function import (  # noqa: PLC0415
         CreateFunctionCmd,
         DecompilerSwitchAnalysisCmd,
     )
     from ghidra.app.decompiler import DecompInterface  # noqa: PLC0415
+    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
 
     monitor = pyghidra.task_monitor()
+    api = FlatProgramAPI(program)
     listing, manager = program.getListing(), program.getFunctionManager()
     decompiler = DecompInterface()
     decompiler.openProgram(program)
@@ -616,14 +619,22 @@ def _recover_switches(program: "Program") -> list[int]:
     for _ in range(4):
         found = 0
         for function in list(manager.getFunctions(True)):
-            if not any(
-                i.getFlowType().isJump() and i.getFlowType().isComputed() and not i.getFlows()
+            jumps = [
+                i
                 for i in listing.getInstructions(function.getBody(), True)
-            ):
+                if i.getFlowType().isJump() and i.getFlowType().isComputed()
+            ]
+            # Cases whose code was cleared (with a false function made at one)
+            # still have their flows: decode them again.
+            lost = [t for i in jumps for t in i.getFlows() if listing.getInstructionAt(t) is None]
+            if not lost and all(i.getFlows() for i in jumps):
                 continue
             size = function.getBody().getNumAddresses()
-            result = decompiler.decompileFunction(function, 60, monitor)
-            DecompilerSwitchAnalysisCmd(result).applyTo(program, monitor)
+            for target in lost:
+                api.disassemble(target)
+            if not all(i.getFlows() for i in jumps):
+                result = decompiler.decompileFunction(function, 60, monitor)
+                DecompilerSwitchAnalysisCmd(result).applyTo(program, monitor)
             CreateFunctionCmd.fixupFunctionBody(program, function, monitor)
             if function.getBody().getNumAddresses() > size:
                 found += 1
