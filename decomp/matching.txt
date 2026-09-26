@@ -1,16 +1,20 @@
 # Functions that match zoombi32.exe byte for byte, by address. Written by
 # `uv run match --update` (the pre-commit hook runs it); `uv run match` fails
 # if one of them stops matching.
+0x004115b1 findOrAddSound
 0x004115f5 fn_4115f5
 0x0041162c addSound
 0x0041167a removeSound
 0x004116c1 setSoundType
 0x004117a8 fn_4117a8
 0x00411910 fn_411910
+0x0041193e startSound
 0x004119f3 fn_4119f3
 0x00411a4c reportSoundError
 0x00411c30 findChannel
 0x00411d2c fn_411d2c
+0x00411f21 isSoundPlaying
+0x004120c8 fn_4120c8
 0x00412176 fn_412176
 0x004121a5 fn_4121a5
 0x004124a4 setGroupLists

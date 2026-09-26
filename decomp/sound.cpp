@@ -5,6 +5,20 @@
 #include <string.h>
 #include "zoombinis.h"
 
+/* The sound with a key (of a type), added to the list if it isn't there. */
+/* @zoombi32 0x004115b1 */
+Entry *findOrAddSound(short key, long type)
+{
+    Entry *entry = fn_4115f5(key, type);
+
+    if (!entry) {
+        entry = addSound(key, type);
+        if (!entry && !g_4aa42a)
+            reportSoundError(key, type, 0, 0);
+    }
+    return entry;
+}
+
 /* Finds the sound with a key, of a type ('SND' matches any). */
 /* @zoombi32 0x004115f5 */
 Entry *fn_4115f5(short key, long tag)
@@ -82,6 +96,28 @@ void fn_411910(Entry *entry, short channel)
 {
     fn_4771e4(entry->handle);
     soundChannels[entry->type][channel].id = 0xffff;
+}
+
+/* Starts a sound on a channel (unless sound is off); whether it's playing.
+   The engine reports on it to fn_411d2c, with its type and channel. */
+/* @zoombi32 0x0041193e */
+short startSound(Entry *entry, short channel)
+{
+    short type;
+
+    if (fn_4121a5(4))
+        return 0;
+    type = entry->type;
+    soundChannels[type][channel].playing = 1;
+    currentChannel[type] = 0;
+    if (fn_47712a(entry->handle, fn_411d2c,
+                  ((unsigned long)(unsigned short)type << 16) + (unsigned short)channel)) {
+        if (g_4aa42a)
+            soundChannels[type][channel].playing = 0;
+        else
+            reportSoundError(0, 0, entry, "unable to start");
+    }
+    return soundChannels[type][channel].playing;
 }
 
 /* Stops a sound playing on a channel. */
@@ -175,6 +211,44 @@ void fn_411d2c(long, SoundNotice *notice, long cookie)
         currentChannel[type] = *notice->data;
         break;
     }
+}
+
+/* Whether a sound (0xffff: any) of a type ('SND': any) is playing. */
+/* @zoombi32 0x00411f21 */
+short isSoundPlaying(unsigned short id, long type)
+{
+    short found, t, channel;
+    unsigned short current;
+
+    waitWhilePaused();
+    found = 0;
+    current = id;
+    for (t = 0; t < 2 && !found; t++) {
+        if (type == RESOURCE_TYPE(0, 'S', 'N', 'D') || soundTypes[t] == type) {
+            for (channel = 0; channel < 4 && !found; channel++) {
+                if (id == 0xffff)
+                    current = soundChannels[t][channel].id;
+                found = current == soundChannels[t][channel].id && soundChannels[t][channel].playing;
+            }
+        }
+    }
+    return found;
+}
+
+/* Whether a sound type has no current value, or one at least `value`. */
+/* @zoombi32 0x004120c8 */
+short fn_4120c8(char value, long type)
+{
+    short i;
+
+    waitWhilePaused();
+    if (type == RESOURCE_TYPE('t', 'W', 'A', 'V'))
+        i = 0;
+    else
+        i = 1;
+    if (currentChannel[i] != -1)
+        return currentChannel[i] >= value;
+    return 1;
 }
 
 /* Resets a sound type's current channel, if it has one. */
