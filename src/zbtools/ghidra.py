@@ -26,7 +26,7 @@ from zbtools.exe import Executable
 
 if TYPE_CHECKING:
     from ghidra.program.model.address import Address
-    from ghidra.program.model.listing import Function, Program
+    from ghidra.program.model.listing import Function, Instruction, Program
     from ghidra.program.model.symbol import Namespace, SymbolTable
 
 GHIDRA_VERSION = "12.1.4"
@@ -412,6 +412,34 @@ def _label_quicktime(program: "Program", exe: Executable) -> int:
     return named
 
 
+def _continue_after_breakpoints(program: "Program") -> list[int]:
+    """Ghidra treats `int3` as never returning, so a function with a breakpoint
+    compiled into it (e.g. 0x46db83) is cut short there. Where a function ends
+    at an `int3` and what follows isn't another function, make the breakpoint
+    fall through, disassemble the rest and recompute the function's body.
+    Returns the functions fixed."""
+    from ghidra.app.cmd.function import CreateFunctionCmd  # noqa: PLC0415
+    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
+
+    monitor = pyghidra.task_monitor()
+    listing, manager = program.getListing(), program.getFunctionManager()
+    fixed = []
+    for function in list(manager.getFunctions(True)):
+        last: Instruction | None = listing.getInstructionContaining(
+            function.getBody().getMaxAddress()
+        )
+        if last is None or str(last.getMnemonicString()) != "INT3":
+            continue
+        after: Address | None = last.getMaxAddress().next()
+        if after is None or manager.getFunctionAt(after) is not None:
+            continue
+        last.setFallThrough(after)
+        FlatProgramAPI(program).disassemble(after)
+        CreateFunctionCmd.fixupFunctionBody(program, function, monitor)
+        fixed.append(int(function.getEntryPoint().getOffset()))
+    return fixed
+
+
 def _set_calling_conventions(program: "Program") -> int:
     """Mark functions that pop their own arguments (`ret N`) as __stdcall, so the
     decompiler shows their parameters. Borland passes `this` on the stack, so
@@ -431,8 +459,9 @@ def _set_calling_conventions(program: "Program") -> int:
 def label() -> None:
     """Apply everything the tools have recovered to the Ghidra project: Borland
     runtime names (`uv run runtime-symbols`), C++ classes from RTTI (`uv run
-    classes`), the names of functions decompiled in decomp/, and calling
-    conventions. Names you've set by hand are kept."""
+    classes`), the names of functions decompiled in decomp/, calling
+    conventions, and the ends of functions Ghidra cut short at a breakpoint.
+    Names you've set by hand are kept."""
     found = runtime_symbols.load()
     classes = rtti.load().classes
     _start()
@@ -445,6 +474,7 @@ def label() -> None:
             class_named = _label_classes(program, classes)
             quicktime_named = _label_quicktime(program, Executable(paths.GAME32_DIR / PROGRAM_NAME))
             decomp_named, decomp_kept = _label_decompiled(program)
+            breakpoints = _continue_after_breakpoints(program)
             conventions = _set_calling_conventions(program)
         program.save("Recovered symbols", pyghidra.task_monitor())
         _write_functions(list_functions(program))
@@ -455,3 +485,6 @@ def label() -> None:
         f"decompiled functions (kept {decomp_kept} names set by hand); set __stdcall on "
         f"{conventions} functions. Function list updated: {paths.GHIDRA_FUNCTIONS}"
     )
+    if breakpoints:
+        where = ", ".join(f"{a:#x}" for a in breakpoints)
+        print(f"Disassembled past a breakpoint (int3) in {where}.")
