@@ -1,4 +1,5 @@
 """Default locations of bring-your-own inputs and build outputs."""
+
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -6,14 +7,44 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO_ROOT / "data"
 GAME_ISO = DATA_DIR / "Logical Journey of the Zoombinis.iso"
 WINDOWS_ISO = DATA_DIR / "Windows 98 Second Edition.iso"
+ENV_FILE = REPO_ROOT / ".env"
 
 BUILD_DIR = REPO_ROOT / "build"
 DISC_DIR = BUILD_DIR / "disc"
 GAME32_DIR = BUILD_DIR / "zoombi32"
 
-# Everything the tooling generates, removed by `uv run clean`. Add any new
-# generated path here; bring-your-own inputs in data/ and .env are never listed.
-GENERATED = [
-    BUILD_DIR,
-    REPO_ROOT / ".venv",
-]
+VM_DIR = BUILD_DIR / "vm"
+# Pristine Windows 98 install, written once by `vm install` and never modified.
+WIN98_BASE = VM_DIR / "win98-base.qcow2"
+# Where `vm install` builds the base; renamed to WIN98_BASE once setup succeeds.
+WIN98_BASE_PARTIAL = VM_DIR / "win98-base.partial.qcow2"
+# Copy-on-write layer on top of the base that the VM actually runs from.
+WIN98_OVERLAY = VM_DIR / "win98.qcow2"
+WIN98_SETUP_FLOPPY = VM_DIR / "win98-setup.img"
+VM_MONITOR = VM_DIR / "monitor.sock"
+VM_QMP = VM_DIR / "qmp.sock"
+
+# An entry in a clean category: a path (may contain * wildcards, matched from
+# the repo root) or the name of another category.
+type CleanEntry = Path | str
+
+# Categories of generated files for `uv run clean`. Every path the tooling
+# generates must belong to a category. Bring-your-own inputs (data/, .env) are
+# never listed.
+CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
+    "extracted": [DISC_DIR, GAME32_DIR],
+    "vm-state": [
+        WIN98_OVERLAY,
+        WIN98_BASE_PARTIAL,
+        WIN98_SETUP_FLOPPY,
+        VM_MONITOR,
+        VM_QMP,
+    ],
+    "vm-base": [WIN98_BASE],
+    "vm": ["vm-base", "vm-state"],
+    "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
+    # The whole build/ directory, so stray files can't survive a full clean.
+    "all": [BUILD_DIR, "python"],
+}
+# What `uv run clean` removes with no arguments: everything cheap to rebuild.
+CLEAN_DEFAULT: list[str] = ["extracted", "vm-state", "python"]

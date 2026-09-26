@@ -3,16 +3,21 @@
 Files in these archives are compressed with PKWARE DCL "implode"; the
 decompressor below is a port of zlib's contrib/blast/blast.c.
 """
+
 import argparse
 import os
-import struct
+from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path, PureWindowsPath
+from typing import NamedTuple
 
 MAGIC = 0x8C655D13
 
 
 # --- PKWARE DCL explode -------------------------------------------------------
 
+# Code-length tables from blast.c, in its compact run-length form.
+# fmt: off
 LITLEN = bytes([
     11, 124, 8, 7, 28, 7, 188, 13, 76, 4, 10, 8, 12, 10, 12, 10, 8, 23, 8,
     9, 7, 6, 7, 8, 7, 6, 55, 8, 23, 24, 12, 11, 7, 9, 11, 12, 6, 7, 22, 5,
@@ -24,12 +29,20 @@ LENLEN = bytes([2, 35, 36, 53, 38, 23])
 DISTLEN = bytes([2, 20, 53, 230, 247, 151, 248])
 LEN_BASE = [3, 2, 4, 5, 6, 7, 8, 9, 10, 12, 16, 24, 40, 72, 136, 264]
 LEN_EXTRA = [0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8]
+# fmt: on
 MAXBITS = 13
 
 
-def _huffman(rep):
-    """Build (count, symbol) canonical Huffman tables from blast's compact form."""
-    lengths = []
+class Huffman(NamedTuple):
+    """Canonical Huffman decoding table."""
+
+    counts: list[int]  # number of codes of each bit length
+    symbols: list[int]  # symbols ordered by code
+
+
+def _huffman(rep: bytes) -> Huffman:
+    """Build a decoding table from blast's compact code-length representation."""
+    lengths: list[int] = []
     for b in rep:
         lengths += [b & 15] * ((b >> 4) + 1)
     count = [0] * (MAXBITS + 1)
@@ -43,7 +56,7 @@ def _huffman(rep):
         if n:
             symbol[offs[n]] = sym
             offs[n] += 1
-    return count, symbol
+    return Huffman(count, symbol)
 
 
 LITCODE = _huffman(LITLEN)
@@ -51,14 +64,14 @@ LENCODE = _huffman(LENLEN)
 DISTCODE = _huffman(DISTLEN)
 
 
-class _Bits:
-    def __init__(self, data):
+class _BitReader:
+    def __init__(self, data: bytes) -> None:
         self.data = data
         self.pos = 0
         self.buf = 0
         self.cnt = 0
 
-    def bits(self, need):
+    def bits(self, need: int) -> int:
         while self.cnt < need:
             if self.pos >= len(self.data):
                 raise ValueError("unexpected end of compressed data")
@@ -70,7 +83,7 @@ class _Bits:
         self.cnt -= need
         return val
 
-    def decode(self, table):
+    def decode(self, table: Huffman) -> int:
         count, symbol = table
         code = first = index = 0
         for n in range(1, MAXBITS + 1):
@@ -83,8 +96,9 @@ class _Bits:
         raise ValueError("invalid Huffman code")
 
 
-def explode(data):
-    s = _Bits(data)
+def explode(data: bytes) -> bytes:
+    """Decompress a PKWARE DCL "implode" stream."""
+    s = _BitReader(data)
     lit = s.bits(8)
     dict_bits = s.bits(8)
     if lit > 1 or not 4 <= dict_bits <= 6:
@@ -110,68 +124,102 @@ def explode(data):
 
 # --- InstallShield 3 archive --------------------------------------------------
 
-def _dos_datetime(date, time):
+
+def _dos_datetime(date: int, time: int) -> datetime | None:
     try:
-        return datetime(1980 + (date >> 9), (date >> 5) & 15, date & 31,
-                        time >> 11, (time >> 5) & 63, (time & 31) * 2)
+        return datetime(
+            1980 + (date >> 9),
+            (date >> 5) & 15,
+            date & 31,
+            time >> 11,
+            (time >> 5) & 63,
+            (time & 31) * 2,
+        )
     except ValueError:
         return None
 
 
-def read_archive(data):
-    magic, = struct.unpack_from("<I", data, 0)
-    if magic != MAGIC:
+def _u16(data: bytes, off: int) -> int:
+    return int.from_bytes(data[off : off + 2], "little")
+
+
+def _u32(data: bytes, off: int) -> int:
+    return int.from_bytes(data[off : off + 4], "little")
+
+
+@dataclass(frozen=True)
+class ArchiveEntry:
+    path: str  # relative path with "/" separators
+    size: int
+    compressed_size: int
+    offset: int  # of the compressed data within the archive
+    mtime: datetime | None
+
+
+def read_archive(data: bytes) -> list[ArchiveEntry]:
+    """Parse the archive's table of contents."""
+    if _u32(data, 0) != MAGIC:
         raise ValueError("not an InstallShield 3 archive")
-    file_count, = struct.unpack_from("<H", data, 0x0C)
-    toc, = struct.unpack_from("<I", data, 0x29)
-    dir_count, = struct.unpack_from("<H", data, 0x31)
+    file_count = _u16(data, 0x0C)
+    toc = _u32(data, 0x29)
+    dir_count = _u16(data, 0x31)
 
     pos = toc
-    dirs = []
+    dirs: list[str] = []
     for _ in range(dir_count):
-        _, chunk, name_len = struct.unpack_from("<HHH", data, pos)
-        dirs.append(data[pos + 6:pos + 6 + name_len].decode("latin-1"))
+        chunk, name_len = _u16(data, pos + 2), _u16(data, pos + 4)
+        dirs.append(data[pos + 6 : pos + 6 + name_len].decode("latin-1"))
         pos += chunk
 
-    files = []
+    entries: list[ArchiveEntry] = []
     for _ in range(file_count):
-        dir_index, usize, csize, offset, date, time, _, chunk = \
-            struct.unpack_from("<xHIIIHHIH", data, pos)
         name_len = data[pos + 0x1D]
-        name = data[pos + 0x1E:pos + 0x1E + name_len].decode("latin-1")
-        files.append(dict(dir=dirs[dir_index], name=name, usize=usize,
-                          csize=csize, offset=offset,
-                          mtime=_dos_datetime(date, time)))
-        pos += chunk
-    return files
+        name = data[pos + 0x1E : pos + 0x1E + name_len].decode("latin-1")
+        directory = dirs[_u16(data, pos + 0x01)]
+        entries.append(
+            ArchiveEntry(
+                path=PureWindowsPath(directory, name).as_posix(),
+                size=_u32(data, pos + 0x03),
+                compressed_size=_u32(data, pos + 0x07),
+                offset=_u32(data, pos + 0x0B),
+                mtime=_dos_datetime(_u16(data, pos + 0x0F), _u16(data, pos + 0x11)),
+            )
+        )
+        pos += _u16(data, pos + 0x17)
+    return entries
 
 
-def extract(data, outdir=None):
+def extract(data: bytes, outdir: Path | None = None) -> None:
     """List the archive's files, extracting them into outdir if given."""
-    for f in read_archive(data):
-        path = os.path.join(f["dir"].replace("\\", "/"), f["name"])
-        print(f"{f['usize']:>9} {str(f['mtime'] or '?'):>19}  {path}")
-        if outdir:
-            raw = explode(data[f["offset"]:f["offset"] + f["csize"]])
-            if len(raw) != f["usize"]:
-                raise ValueError(f"{path}: size {len(raw)} != {f['usize']}")
-            dest = os.path.join(outdir, path)
-            os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
-            with open(dest, "wb") as out:
-                out.write(raw)
-            if f["mtime"]:
-                ts = f["mtime"].timestamp()
-                os.utime(dest, (ts, ts))
+    for entry in read_archive(data):
+        print(f"{entry.size:>9} {entry.mtime or '?'!s:>19}  {entry.path}")
+        if outdir is None:
+            continue
+        raw = explode(data[entry.offset : entry.offset + entry.compressed_size])
+        if len(raw) != entry.size:
+            raise ValueError(f"{entry.path}: size {len(raw)} != {entry.size}")
+        dest = outdir / entry.path
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(raw)
+        if entry.mtime:
+            ts = entry.mtime.timestamp()
+            os.utime(dest, (ts, ts))
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("archive", help="InstallShield 3 .Z archive")
-    parser.add_argument("outdir", nargs="?",
-                        help="extract into this directory (list only if omitted)")
-    args = parser.parse_args()
-    with open(args.archive, "rb") as f:
-        extract(f.read(), args.outdir)
+class _Args(argparse.Namespace):
+    archive: Path
+    outdir: Path | None
+
+
+def main() -> None:
+    doc = __doc__ or ""
+    parser = argparse.ArgumentParser(description=doc.splitlines()[0])
+    parser.add_argument("archive", type=Path, help="InstallShield 3 .Z archive")
+    parser.add_argument(
+        "outdir", type=Path, nargs="?", help="extract into this directory (list only if omitted)"
+    )
+    args = parser.parse_args(namespace=_Args())
+    extract(args.archive.read_bytes(), args.outdir)
 
 
 if __name__ == "__main__":

@@ -10,11 +10,12 @@ Early days. Nothing is decompiled yet; see the [roadmap](#roadmap) for what's ne
 
 ## Setup
 
-Supported host: macOS on Apple Silicon (for now).
+Supported hosts: macOS on Apple Silicon (tested) and Linux (should work, untested).
 
 ### Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) for the Python tooling
+- [QEMU](https://www.qemu.org/) for the Windows 98 VM: `brew install qemu` on macOS; `qemu-system-x86` and `qemu-utils` (Debian/Ubuntu) or `qemu-system-x86` and `qemu-img` (Fedora) on Linux. The tools tell you if it's missing.
 - Your own copies of the game and Windows 98 SE (see below)
 
 ### Bring-your-own files
@@ -42,13 +43,59 @@ This copies the disc's contents into `build/disc/` and unpacks the Windows 95 bu
 
 To inspect an InstallShield archive directly, `uv run unpack-isz build/disc/ZBARCHIV.Z` lists its contents (add an output directory to extract them).
 
-### Start over
+### Windows 98 VM
+
+The original game runs in an emulated Windows 98 PC under QEMU. Install Windows once:
 
 ```sh
-uv run clean
+uv run vm install
 ```
 
-Deletes everything the tooling has generated (`build/`, `.venv/`, caches), leaving only `data/` and `.env`. Use `--dry-run` to see what would be removed.
+This installs Windows 98 SE unattended from your ISO, using the product key in `.env`. It takes 30-60 minutes and opens a QEMU window you can watch; leave it alone until the VM powers itself off. Closing the window or pressing Ctrl-C aborts the install and deletes the partial disk.
+
+After that:
+
+```sh
+uv run vm run          # boot Windows 98 with the game disc in drive D:
+uv run vm reset        # discard every change made since the install
+uv run vm screenshot   # save a PNG of the running VM's screen
+```
+
+The install is kept as a read-only base disk (`build/vm/win98-base.qcow2`). The VM runs from a copy-on-write overlay on top of it (`build/vm/win98.qcow2`), so `vm reset` gets you back to a fresh Windows install in seconds. `uv run vm install --force` reinstalls from scratch.
+
+### Cleaning up
+
+```sh
+uv run clean [CATEGORY ...]
+```
+
+Deletes generated files by category, never touching `data/` or `.env`:
+
+| Category | What it removes | Rebuilt by |
+| --- | --- | --- |
+| `extracted` | `build/disc/`, `build/zoombi32/` | `uv run extract-game` |
+| `vm-state` | the VM overlay and install leftovers | automatically on `vm run` |
+| `vm-base` | the Windows 98 install | `uv run vm install` (30-60 min) |
+| `vm` | `vm-base` and `vm-state` | |
+| `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
+| `all` | all of the above plus anything else in `build/` | |
+
+With no arguments it removes `extracted`, `vm-state` and `python`: everything that's cheap to rebuild, keeping the Windows install. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
+
+## Development
+
+```sh
+uv run lint         # ruff lint, ruff format check, and strict mypy
+uv run lint --fix   # apply ruff fixes and formatting, then check
+```
+
+The same checks run as a git pre-commit hook. Install it once after cloning:
+
+```sh
+uv run pre-commit install
+```
+
+All Python code is strictly typed; see `CLAUDE.md` for the conventions.
 
 ## What's on the disc
 
@@ -78,7 +125,7 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 ## Roadmap
 
 - [x] Extract the disc and the Windows 95 build (`uv run extract-game`)
-- [ ] Scripted Windows 98 VM running the game
+- [ ] Scripted Windows 98 VM (`uv run vm`) running the game
 - [ ] Mohawk archive lister / extractor
 - [ ] Ghidra project with imports and runtime functions labeled
 - [ ] Borland C++ toolchain + object diff tool

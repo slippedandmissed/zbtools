@@ -1,0 +1,11 @@
+# Install once after cloning: uv run pre-commit install
+repos:
+  - repo: local
+    hooks:
+      - id: lint
+        name: uv run lint (ruff lint, ruff format, mypy)
+        entry: uv run lint
+        language: system
+        pass_filenames: false
+        # Run when Python code or its tool configuration changes.
+        files: ^(src/.*\.py|pyproject\.toml|uv\.lock)$

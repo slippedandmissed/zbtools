@@ -22,8 +22,10 @@ Decompilation of *Logical Journey of the Zoombinis* (Broderbund, 1996, Windows r
 
 - `src/zbtools/`: Python tooling package. Each tool is a module exposing `main()`, registered under `[project.scripts]` in `pyproject.toml` and run as `uv run <name>`.
 - `src/zbtools/paths.py`: default locations of inputs and outputs, resolved from the repo root. New tools should take their defaults from here and allow overriding them with arguments.
-- `build/`: gitignored output (`build/disc/` = disc contents, `build/zoombi32/` = Windows 95 build; VM disk images later).
-- **Keep `uv run clean` up to date:** it deletes exactly the paths in `paths.GENERATED` (plus `__pycache__`). Whenever a tool starts generating files outside `build/`, add the path to `GENERATED`.
+- `build/`: gitignored output (`build/disc/` = disc contents, `build/zoombi32/` = Windows 95 build, `build/vm/` = VM disks).
+- `src/zbtools/host.py`: the only place that knows about the host OS (binary locations and install hints, QEMU display/audio backends). Route any new host-specific behaviour through it.
+- `src/zbtools/vm.py`: `uv run vm`. `install` builds a read-only base disk (unattended Windows 98 SE setup driven by a customized boot floppy + MSBATCH.INF); `run` boots a qcow2 overlay on top of it; `reset` discards the overlay.
+- **Keep `uv run clean` up to date:** it deletes by category, from `paths.CLEAN_CATEGORIES`. Every path a tool generates must belong to a category (categories may include other categories by name); add new ones there, and to `CLEAN_DEFAULT` if they're cheap to rebuild. Keep the README's cleaning table in sync.
 
 ## Game plan
 
@@ -34,7 +36,17 @@ Decompilation of *Logical Journey of the Zoombinis* (Broderbund, 1996, Windows r
 5. Decompile function by function, starting with small leaf functions. **Functional (non-matching) first**; byte-matching is a goal where practical, not a gate.
 6. Port off QuickTime/DirectSound/256-colour GDI to a modern platform layer.
 
+## Code quality
+
+Run `uv run lint` (ruff lint, ruff format check, mypy) before finishing any change to Python code; `uv run lint --fix` applies ruff's fixes and formatting first. It must pass cleanly. It also runs as a pre-commit hook (`.pre-commit-config.yaml`, installed with `uv run pre-commit install`); never bypass it with `--no-verify`.
+
+- **Strict typing:** mypy runs in strict mode with `disallow_any_explicit`. Annotate every function, and every variable whose type isn't inferred. Never write `Any`, `cast()` or `# type: ignore` to silence mypy; fix the types instead.
+- **Model structured data with types, not dicts:** `@dataclass(frozen=True)` for records built in code, `NamedTuple` for small immutable tuples, `TypedDict` for dict-shaped data that must stay a dict, and **pydantic models** wherever data from outside the program (JSON, protocol messages, files) needs validating at runtime (e.g. the QMP models in `vm.py`).
+- **CLI arguments:** subclass `argparse.Namespace` with annotated attributes and pass an instance to `parse_args(namespace=...)`, so parsed arguments are typed.
+- **Binary parsing:** prefer typed helpers such as `int.from_bytes` over `struct.unpack_from`, which returns untyped tuples. `struct.pack_into` is fine for writing.
+- Use `pathlib` rather than `os.path`. Use `# fmt: off`/`# fmt: on` only around data tables that formatting would make unreadable.
+- Dependencies: add runtime ones with `uv add`, dev tools with `uv add --dev`. Prefer the stdlib, and avoid unmaintained packages (e.g. we dropped `pyfatfs`, whose PyFilesystem2 dependency needs the removed `pkg_resources`, in favour of `fat12.py`).
+
 ## Working notes
 
-- Python tooling: stdlib-only where reasonable; add dependencies to `pyproject.toml` via `uv add` when needed.
 - Record confirmed findings (formats, compiler flags) in `docs/` as they are established.
