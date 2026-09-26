@@ -71,11 +71,16 @@ def _descriptor(exe: Executable, address: int, end: int) -> tuple[str, int, int]
     return (match.group(0)[:-1].decode(), flags, name_offset) if match else None
 
 
-def _code_pointers(exe: Executable, address: int) -> list[int]:
-    """Consecutive relocated pointers into the code section, starting at address."""
+def _code_pointers(exe: Executable, address: int, stop: set[int]) -> list[int]:
+    """Consecutive relocated pointers into the code section, starting at address,
+    up to one that points to an address in `stop`."""
     start, end = exe.code_range
     found = []
-    while address in exe.relocations and start <= exe.pointer(address) < end:
+    while (
+        address in exe.relocations
+        and start <= exe.pointer(address) < end
+        and exe.pointer(address) not in stop
+    ):
         found.append(exe.pointer(address))
         address += 4
     return found
@@ -113,7 +118,9 @@ def find_classes(exe: Executable) -> list[ClassInfo]:
         for site in sorted(referrers.get(address, []) if vptr != -1 else []):
             if data_start <= site < data_end:
                 vtable = site + _VTABLE_AFTER_DESCRIPTOR
-                vtables.append(Vtable(address=vtable, methods=_code_pointers(exe, vtable)))
+                # The next vtable's header (a descriptor pointer) ends this one.
+                methods = _code_pointers(exe, vtable, stop=set(descriptors))
+                vtables.append(Vtable(address=vtable, methods=methods))
         constructors = sorted(
             site
             for vtable in vtables

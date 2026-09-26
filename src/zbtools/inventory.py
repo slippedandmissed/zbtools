@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from zbtools import ghidra, match, modules, quicktime, rtti, runtime_symbols
+from zbtools import ghidra, match, module_map, quicktime, rtti, runtime_symbols
 from zbtools.exe import Executable, disassemble
 
 _DIRECT_CALL = re.compile(r"^call (0x[0-9a-f]+)$")
@@ -122,10 +122,10 @@ def _regions(
     return Regions(game_start, runtime_start, engine_start)
 
 
-def _module(module_map: modules.ModuleMap, address: int, region: Region) -> str | None:
+def _module(sources: module_map.ModuleMap, address: int, region: Region) -> str | None:
     if region not in (Region.GAME, Region.QUICKTIME):
         return None
-    found = module_map.of(address)
+    found = sources.of(address)
     return found.name if found else None
 
 
@@ -147,7 +147,7 @@ def load(exe: Executable) -> list[Function]:
     data = {c.descriptor for c in classes} | {v.address for c in classes for v in c.vtables}
     library = {s.address for s in runtime.symbols}
     decompiled = decompiled_targets()
-    module_map = modules.load()
+    sources = module_map.load()
 
     inventory = []
     for f in sorted(functions, key=lambda f: f.address):
@@ -184,7 +184,7 @@ def load(exe: Executable) -> list[Function]:
                 indirect_calls=indirect,
                 status=status,
                 decompiled=done,
-                module=_module(module_map, f.address, region),
+                module=_module(sources, f.address, region),
             )
         )
     return inventory

@@ -10,6 +10,7 @@ decompiled in decomp/).
 
 import collections
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -21,7 +22,17 @@ import pyghidra
 import typer
 from pydantic import BaseModel, ConfigDict
 
-from zbtools import declarations, download, host, match, paths, quicktime, rtti, runtime_symbols
+from zbtools import (
+    declarations,
+    download,
+    host,
+    match,
+    module_map,
+    paths,
+    quicktime,
+    rtti,
+    runtime_symbols,
+)
 from zbtools.demangle import qualified_name
 from zbtools.exe import Executable
 
@@ -223,17 +234,68 @@ def _add_secondary_labels(table: "SymbolTable", at: "Address", names: list[str])
             extra.delete()
 
 
+def _create_function(program: "Program", at: "Address") -> "Function | None":
+    """Create a function at `at`, disassembling it first: FlatProgramAPI's
+    createFunction doesn't, and on bytes Ghidra hasn't decoded it makes a
+    function whose body is just its first byte. An instruction decoded out of
+    step across `at` is cleared first."""
+    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
+
+    api, listing = FlatProgramAPI(program), program.getListing()
+    if listing.getInstructionAt(at) is None:
+        straddling: Instruction | None = listing.getInstructionContaining(at)
+        if straddling is not None:
+            listing.clearCodeUnits(straddling.getMinAddress(), straddling.getMaxAddress(), False)
+        api.disassemble(at)
+    return api.createFunction(at, None)
+
+
+def _repair_empty_functions(program: "Program") -> list[int]:
+    """Disassemble functions with no instruction at their entry (made by
+    createFunction on undecoded bytes, before `_create_function`) and recompute
+    their bodies. Returns the functions repaired."""
+    from ghidra.app.cmd.function import CreateFunctionCmd  # noqa: PLC0415
+    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
+
+    api, listing = FlatProgramAPI(program), program.getListing()
+    repaired = []
+    for function in list(program.getFunctionManager().getFunctions(True)):
+        entry = function.getEntryPoint()
+        if function.isExternal() or listing.getInstructionAt(entry) is not None:
+            continue
+        api.disassemble(entry)
+        CreateFunctionCmd.fixupFunctionBody(program, function, pyghidra.task_monitor())
+        repaired.append(int(entry.getOffset()))
+    return repaired
+
+
+def _code_pointer(program: "Program", exe: Executable, site: int) -> bool:
+    """Whether the relocated pointer at `site` may point to a function: it's
+    outside the code section, or in an instruction of a function, except in a
+    memory operand (`[eax*0x4 + table]`, `[eax + table]`: code reading data in
+    the code section, such as a switch's tables). The others in the code
+    section are data there, such as jump-table entries."""
+    start, end = exe.code_range
+    if not start <= site < end:
+        return True
+    at = program.getAddressFactory().getDefaultAddressSpace().getAddress(site)
+    instruction: Instruction | None = program.getListing().getInstructionContaining(at)
+    function: Function | None = program.getFunctionManager().getFunctionContaining(at)
+    if instruction is None or function is None:
+        return False
+    operand = re.compile(rf"\[[^\]]*0x0*{exe.pointer(site):x}\]", re.IGNORECASE)
+    return not operand.search(str(instruction))
+
+
 def _label_runtime(program: "Program", found: runtime_symbols.RuntimeSymbols) -> tuple[int, int]:
     """Name the Borland runtime code; returns (functions named, hand-set names kept)."""
     from ghidra.app.util import NamespaceUtils  # noqa: PLC0415
-    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
     from ghidra.program.model.listing import CommentType  # noqa: PLC0415
     from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
 
     symbols_at: dict[int, list[runtime_symbols.RuntimeSymbol]] = collections.defaultdict(list)
     for symbol in found.symbols:
         symbols_at[symbol.address].append(symbol)
-    api = FlatProgramAPI(program)
     space = program.getAddressFactory().getDefaultAddressSpace()
     manager, table, listing = (
         program.getFunctionManager(),
@@ -258,7 +320,7 @@ def _label_runtime(program: "Program", found: runtime_symbols.RuntimeSymbols) ->
         function: Function | None = None
         if not is_data:
             # The stubs omit Java's nulls: both return None if there's no function.
-            function = manager.getFunctionAt(at) or api.createFunction(at, None)
+            function = manager.getFunctionAt(at) or _create_function(program, at)
         if function is not None:
             symbol = function.getSymbol()
             if symbol.getSource() != SourceType.USER_DEFINED or function.getName() in ours:
@@ -292,10 +354,8 @@ def _label_classes(program: "Program", classes: list[rtti.ClassInfo]) -> int:
     """Turn RTTI classes into Ghidra classes; returns how many functions were
     named. Only functions still named automatically (FUN_...) are renamed."""
     from ghidra.app.util import NamespaceUtils  # noqa: PLC0415
-    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
     from ghidra.program.model.symbol import SourceType, SymbolType  # noqa: PLC0415
 
-    api = FlatProgramAPI(program)
     space = program.getAddressFactory().getDefaultAddressSpace()
     manager, table = program.getFunctionManager(), program.getSymbolTable()
     root = program.getGlobalNamespace()
@@ -316,7 +376,7 @@ def _label_classes(program: "Program", classes: list[rtti.ClassInfo]) -> int:
         function: Function | None = (
             manager.getFunctionContaining(at)
             if containing
-            else manager.getFunctionAt(at) or api.createFunction(at, None)
+            else manager.getFunctionAt(at) or _create_function(program, at)
         )
         if function is not None and function.getSymbol().getSource() == SourceType.DEFAULT:
             function.getSymbol().setNameAndNamespace(name, namespace, SourceType.ANALYSIS)
@@ -354,10 +414,8 @@ def _label_decompiled(program: "Program") -> tuple[int, int]:
     Ghidra's view of their callers reads better. Returns (functions named,
     hand-set names kept)."""
     from ghidra.app.util import NamespaceUtils  # noqa: PLC0415
-    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
     from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
 
-    api = FlatProgramAPI(program)
     space = program.getAddressFactory().getDefaultAddressSpace()
     manager, root = program.getFunctionManager(), program.getGlobalNamespace()
     named = kept = 0
@@ -374,7 +432,7 @@ def _label_decompiled(program: "Program") -> tuple[int, int]:
             function: Function | None = manager.getFunctionAt(at)
             created = function is None
             if function is None:
-                new: Function | None = api.createFunction(at, None)
+                new: Function | None = _create_function(program, at)
                 if new is None:
                     continue
                 function = new
@@ -392,10 +450,8 @@ def _label_quicktime(program: "Program", exe: Executable) -> int:
     """Name QuickTime's glue: its loader functions and its dispatch stubs, most of
     which the game never calls, so Ghidra doesn't find them. Returns how many
     functions were named."""
-    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
     from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
 
-    api = FlatProgramAPI(program)
     space = program.getAddressFactory().getDefaultAddressSpace()
     manager, root = program.getFunctionManager(), program.getGlobalNamespace()
     named = 0
@@ -404,7 +460,7 @@ def _label_quicktime(program: "Program", exe: Executable) -> int:
         function: Function | None = manager.getFunctionAt(at)
         created = function is None
         if function is None:
-            new: Function | None = api.createFunction(at, None)
+            new: Function | None = _create_function(program, at)
             if new is None:
                 continue
             function = new
@@ -413,6 +469,102 @@ def _label_quicktime(program: "Program", exe: Executable) -> int:
             symbol.setNameAndNamespace(glue.name, root, SourceType.IMPORTED)
             named += 1
     return named
+
+
+_PROLOGUE = b"\x55\x8b\xec"  # push ebp / mov ebp, esp
+
+
+def _find_missed_functions(
+    program: "Program", exe: Executable, not_code: set[int], module_starts: set[int]
+) -> list[int]:
+    """Create the functions Ghidra's analysis missed (e.g. WinMain, which only
+    the startup code's table points to): code that a relocated pointer points
+    to (see `_code_pointer`; except the addresses in `not_code`, data that
+    lives in the code section); module starts; code that follows a function (after any zero
+    padding) and starts with `push ebp / mov ebp, esp`; and the targets of
+    direct calls that aren't in a function. Repeats until nothing new turns
+    up, as new functions' calls lead to more. Returns the functions created."""
+
+    space = program.getAddressFactory().getDefaultAddressSpace()
+    manager, listing = program.getFunctionManager(), program.getListing()
+    start, end = exe.code_range
+
+    def missing(address: int) -> bool:
+        containing: Function | None = manager.getFunctionContaining(space.getAddress(address))
+        return start <= address < end and containing is None
+
+    created: list[int] = []
+    while True:
+        pointed = {
+            exe.pointer(site)
+            for site in exe.relocations
+            if start <= exe.pointer(site) < end and _code_pointer(program, exe, site)
+        }
+        candidates = {a for a in (pointed - not_code) | module_starts if missing(a)}
+        for function in manager.getFunctions(True):
+            if function.isThunk() or function.isExternal():
+                continue
+            after = int(function.getBody().getMaxAddress().getOffset()) + 1
+            while after < end and exe.read(after, 1) == b"\0":
+                after += 1
+            if exe.read(after, 3) == _PROLOGUE and missing(after):
+                candidates.add(after)
+            for instruction in listing.getInstructions(function.getBody(), True):
+                if instruction.getFlowType().isCall():
+                    candidates.update(
+                        int(flow.getOffset())
+                        for flow in instruction.getFlows()
+                        if missing(int(flow.getOffset()))
+                    )
+        new = []
+        for candidate in sorted(candidates):
+            if not missing(candidate):
+                continue
+            if _create_function(program, space.getAddress(candidate)) is not None:
+                new.append(candidate)
+        if not new:
+            return created
+        created += new
+
+
+def _remove_false_functions(program: "Program", exe: Executable, not_code: set[int]) -> list[int]:
+    """Remove functions made from data: any at the addresses in `not_code`, and
+    ones an earlier version of `_find_missed_functions` created at switch cases
+    (jump-table entries) or tables: still named automatically (or as a case,
+    by Ghidra's switch analysis), not
+    called, and pointed to only by data in the code section (see
+    `_code_pointer`). The code they decoded goes too; `_recover_switches` then
+    gives the cases back to their functions. Returns the functions removed."""
+    from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
+
+    manager, references = program.getFunctionManager(), program.getReferenceManager()
+    listing = program.getListing()
+    sites: dict[int, list[int]] = collections.defaultdict(list)
+    for site in exe.relocations:
+        sites[exe.pointer(site)].append(site)
+    removed = []
+    for function in list(manager.getFunctions(True)):
+        entry = function.getEntryPoint()
+        pointers = sites.get(int(entry.getOffset()), [])
+        if int(entry.getOffset()) in not_code:
+            manager.removeFunction(entry)
+            removed.append(int(entry.getOffset()))
+            continue
+        automatic = function.getSymbol().getSource() == SourceType.DEFAULT or str(
+            function.getName()
+        ).startswith(("caseD_", "switchD_"))
+        # A switch case never starts with a stack frame's prologue.
+        if not pointers or not automatic or exe.read(int(entry.getOffset()), 3) == _PROLOGUE:
+            continue
+        if any(_code_pointer(program, exe, site) for site in pointers):
+            continue
+        if any(r.getReferenceType().isCall() for r in references.getReferencesTo(entry)):
+            continue
+        body = function.getBody()
+        manager.removeFunction(entry)
+        listing.clearCodeUnits(body.getMinAddress(), body.getMaxAddress(), False)
+        removed.append(int(entry.getOffset()))
+    return removed
 
 
 def _continue_after_breakpoints(program: "Program") -> list[int]:
@@ -612,15 +764,25 @@ def label() -> None:
     Names you've set by hand are kept."""
     found = runtime_symbols.load()
     classes = rtti.load().classes
+    exe = Executable(paths.GAME32_DIR / PROGRAM_NAME)
     _start()
     with (
         pyghidra.open_project(paths.GHIDRA_PROJECT_DIR, paths.GHIDRA_PROJECT_NAME) as project,
         pyghidra.program_context(project, f"/{PROGRAM_NAME}") as program,
     ):
         with pyghidra.transaction(program):
+            descriptors = {c.descriptor for c in classes}
+            cases = _remove_false_functions(program, exe, descriptors)
+            repaired = _repair_empty_functions(program)
+            missed = _find_missed_functions(
+                program,
+                exe,
+                not_code=descriptors,
+                module_starts={m.start for m in module_map.load().module},
+            )
             runtime_named, kept = _label_runtime(program, found)
             class_named = _label_classes(program, classes)
-            quicktime_named = _label_quicktime(program, Executable(paths.GAME32_DIR / PROGRAM_NAME))
+            quicktime_named = _label_quicktime(program, exe)
             decomp_named, decomp_kept = _label_decompiled(program)
             declared = _apply_declarations(program)
             breakpoints = _continue_after_breakpoints(program)
@@ -639,6 +801,15 @@ def label() -> None:
         f"From decomp/zoombinis.h: {declared.types} types; named {declared.named} and typed "
         f"{declared.typed} globals (kept {declared.kept} names or types set by hand)."
     )
+    if missed:
+        where = ", ".join(f"{a:#x}" for a in missed)
+        print(f"Created {len(missed)} functions Ghidra's analysis missed: {where}")
+    if cases:
+        where = ", ".join(f"{a:#x}" for a in cases)
+        print(f"Removed {len(cases)} functions made from data: {where}")
+    if repaired:
+        where = ", ".join(f"{a:#x}" for a in repaired)
+        print(f"Disassembled {len(repaired)} functions that had no code: {where}")
     if switches:
         where = ", ".join(f"{a:#x}" for a in switches)
         print(f"Recovered switch tables in {where}.")

@@ -16,7 +16,7 @@ from typing import Annotated
 import jinja2
 import typer
 
-from zbtools import ghidra, inventory, match, modules, paths
+from zbtools import ghidra, inventory, match, module_map, paths
 from zbtools.demangle import qualified_name
 from zbtools.exe import Instruction
 from zbtools.inventory import Region, Status
@@ -192,7 +192,7 @@ def _stats(functions: list[inventory.Function]) -> list[RegionStats]:
 
 def _module_stats(functions: list[inventory.Function]) -> list[ModuleStats]:
     stats = []
-    for module in modules.load().module:
+    for module in module_map.load().module:
         total, done = Tally(), Tally()
         for f in functions:
             if f.module == module.name:
