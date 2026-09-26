@@ -6,7 +6,7 @@
 
 /* Whether a mouse is installed. */
 /* @zoombi32 0x00455903 */
-int fn_455903()
+int isMousePresent()
 {
     return GetSystemMetrics(SM_MOUSEPRESENT);
 }

@@ -57,7 +57,7 @@ class Decompiled:
 @dataclass(frozen=True)
 class Function:
     address: int
-    name: str
+    name: str  # as decompiled if it has been, else Ghidra's
     size: int
     region: Region
     calls: tuple[int, ...]  # direct call targets
@@ -162,7 +162,7 @@ def load(exe: Executable) -> list[Function]:
         inventory.append(
             Function(
                 address=f.address,
-                name=f.name,
+                name=done.target.name if done else f.name,
                 size=f.size,
                 region=region,
                 calls=tuple(dict.fromkeys(calls)),

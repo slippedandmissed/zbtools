@@ -7,6 +7,7 @@ disassembly of the game, so it's for local use: don't publish it.
 """
 
 import datetime
+import re
 import webbrowser
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,7 +16,8 @@ from typing import Annotated
 import jinja2
 import typer
 
-from zbtools import inventory, match, paths
+from zbtools import ghidra, inventory, match, paths
+from zbtools.demangle import qualified_name
 from zbtools.exe import Instruction
 from zbtools.inventory import Region, Status
 
@@ -40,11 +42,16 @@ class RegionStats:
         return 100 * done / self.total.size if self.total.size else 0.0
 
 
+_IDENTIFIER = re.compile(r"[A-Za-z_]\w*")
+_BRANCH = re.compile(r"^(?:call|j\w+) (0x[0-9a-f]+)$")
+
+
 @dataclass(frozen=True)
 class AsmLine:
     offset: str
     raw: str
     text: str
+    note: str | None  # the name of what the instruction refers to, if known
 
 
 @dataclass(frozen=True)
@@ -82,19 +89,67 @@ def function_source(text: str, address: int) -> str:
     return ""
 
 
-def _asm(ins: Instruction | None, base: int) -> AsmLine | None:
+@dataclass(frozen=True)
+class Names:
+    """What the report calls things: functions by address, and a lookup for the
+    symbols the recompiled code refers to."""
+
+    by_address: dict[int, str]
+    by_upper: dict[str, str]  # -p upper-cases functions and globals: map them back
+
+    @staticmethod
+    def of(functions: list[inventory.Function]) -> "Names":
+        by_address = {f.address: f.name for f in ghidra.load_functions().functions}
+        by_address |= {f.address: f.name for f in functions}
+        # Globals are only named in the sources.
+        identifiers = {
+            i for p in match.decomp_sources() for i in _IDENTIFIER.findall(p.read_text())
+        }
+        known = identifiers | set(by_address.values())
+        return Names(by_address, {n.upper(): n for n in sorted(known)})
+
+    def symbol(self, target: str) -> str:
+        """A readable name for an object-file symbol (mangled, `_`-prefixed C, or plain)."""
+        name = qualified_name(target) if target.startswith("@") else target.removeprefix("_")
+        return self.by_upper.get(name.upper(), name) if target.isupper() else name
+
+
+def _original_asm(ins: Instruction | None, base: int, size: int, names: Names) -> AsmLine | None:
+    """An instruction of the original, naming the function it branches to."""
     if ins is None:
         return None
-    return AsmLine(f"{ins.address - base:04x}", ins.raw.hex(" "), ins.text)
+    branch = _BRANCH.match(ins.text)
+    target = int(branch.group(1), 16) if branch else None
+    outside = target is not None and not base <= target < base + size
+    note = names.by_address.get(target) if outside and target is not None else None
+    return AsmLine(f"{ins.address - base:04x}", ins.raw.hex(" "), ins.text, note)
 
 
-def _detail(function: inventory.Function, checked: match.Checked) -> Detail:
+def _compiled_asm(
+    ins: Instruction | None, base: int, result: match.Result, names: Names
+) -> AsmLine | None:
+    """A recompiled instruction, naming the symbols the linker would fill in."""
+    if ins is None:
+        return None
+    start = ins.address - base
+    targets = [
+        t for offset, t in result.references.items() if start <= offset < start + len(ins.raw)
+    ]
+    note = ", ".join(dict.fromkeys(names.symbol(t) for t in targets)) or None
+    return AsmLine(f"{start:04x}", ins.raw.hex(" "), ins.text, note)
+
+
+def _detail(function: inventory.Function, checked: match.Checked, names: Names) -> Detail:
     result = checked.result
     rows, percent = [], None
     if result is not None:
-        base = result.target.address
+        base, size = result.target.address, len(result.original)
         rows = [
-            DetailRow(_asm(row.original, base), _asm(row.compiled, base), row.same)
+            DetailRow(
+                _original_asm(row.original, base, size, names),
+                _compiled_asm(row.compiled, base, result, names),
+                row.same,
+            )
             for row in match.aligned_rows(result)
         ]
         percent = 100 * (1 - len(result.mismatches) / max(1, len(result.compiled)))
@@ -127,10 +182,11 @@ def build(release: str) -> str:
     exe = match.game_executable()
     functions = inventory.load(exe)
     by_address = {f.address: f for f in functions}
+    names = Names.of(functions)
     checked = match.check(match.decomp_sources(), release, exe)
     details = sorted(
         (
-            _detail(by_address[c.target.address], c)
+            _detail(by_address[c.target.address], c, names)
             for c in checked
             if c.target.address in by_address
         ),

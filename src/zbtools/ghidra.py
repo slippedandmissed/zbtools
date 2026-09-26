@@ -3,8 +3,9 @@
 `setup` downloads Ghidra, imports zoombi32.exe into a project in
 build/ghidra/project, runs Ghidra's auto-analysis and exports every function it
 found to build/ghidra/functions.json. `open` opens the project in Ghidra,
-`decompile` prints Ghidra's C for one function, and `label` names the Borland
-runtime-library code found by `uv run runtime-symbols`.
+`decompile` prints Ghidra's C for one function, and `label` applies the names
+the other tools have recovered (runtime library, classes, and the functions
+decompiled in decomp/).
 """
 
 import collections
@@ -19,7 +20,7 @@ import pyghidra
 import typer
 from pydantic import BaseModel, ConfigDict
 
-from zbtools import download, host, paths, rtti, runtime_symbols
+from zbtools import download, host, match, paths, rtti, runtime_symbols
 from zbtools.demangle import qualified_name
 
 if TYPE_CHECKING:
@@ -344,6 +345,45 @@ def _label_classes(program: "Program", classes: list[rtti.ClassInfo]) -> int:
     return named
 
 
+def _label_decompiled(program: "Program") -> tuple[int, int]:
+    """Name functions as they're named in decomp/ (by their @zoombi32 markers), so
+    Ghidra's view of their callers reads better. Returns (functions named,
+    hand-set names kept)."""
+    from ghidra.app.util import NamespaceUtils  # noqa: PLC0415
+    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
+    from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
+
+    api = FlatProgramAPI(program)
+    space = program.getAddressFactory().getDefaultAddressSpace()
+    manager, root = program.getFunctionManager(), program.getGlobalNamespace()
+    named = kept = 0
+    for source in match.decomp_sources():
+        for target in match.find_targets(source.read_text()):
+            at = space.getAddress(target.address)
+            *scopes, name = target.name.split("::")
+            namespace = root
+            if scopes:
+                namespace = NamespaceUtils.createNamespaceHierarchy(
+                    "::".join(scopes), root, program, SourceType.IMPORTED
+                )
+            # The stubs omit Java's nulls: both return None if there's no function.
+            function: Function | None = manager.getFunctionAt(at)
+            created = function is None
+            if function is None:
+                new: Function | None = api.createFunction(at, None)
+                if new is None:
+                    continue
+                function = new
+            symbol = function.getSymbol()
+            # createFunction marks its names user-defined; other names set by hand are kept.
+            if created or symbol.getSource() != SourceType.USER_DEFINED:
+                symbol.setNameAndNamespace(name, namespace, SourceType.IMPORTED)
+                named += 1
+            elif function.getName() != name:
+                kept += 1
+    return named, kept
+
+
 def _set_calling_conventions(program: "Program") -> int:
     """Mark functions that pop their own arguments (`ret N`) as __stdcall, so the
     decompiler shows their parameters. Borland passes `this` on the stack, so
@@ -363,7 +403,8 @@ def _set_calling_conventions(program: "Program") -> int:
 def label() -> None:
     """Apply everything the tools have recovered to the Ghidra project: Borland
     runtime names (`uv run runtime-symbols`), C++ classes from RTTI (`uv run
-    classes`), and calling conventions. Names you've set by hand are kept."""
+    classes`), the names of functions decompiled in decomp/, and calling
+    conventions. Names you've set by hand are kept."""
     found = runtime_symbols.load()
     classes = rtti.load().classes
     _start()
@@ -374,11 +415,13 @@ def label() -> None:
         with pyghidra.transaction(program):
             runtime_named, kept = _label_runtime(program, found)
             class_named = _label_classes(program, classes)
+            decomp_named, decomp_kept = _label_decompiled(program)
             conventions = _set_calling_conventions(program)
         program.save("Recovered symbols", pyghidra.task_monitor())
         _write_functions(list_functions(program))
     print(
         f"Named {runtime_named} runtime functions (kept {kept} names set by hand) and "
-        f"{class_named} class methods from {len(classes)} classes; set __stdcall on "
+        f"{class_named} class methods from {len(classes)} classes; named {decomp_named} "
+        f"decompiled functions (kept {decomp_kept} names set by hand); set __stdcall on "
         f"{conventions} functions. Function list updated: {paths.GHIDRA_FUNCTIONS}"
     )

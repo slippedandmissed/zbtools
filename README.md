@@ -111,8 +111,9 @@ To name what the tools can recover: the Borland runtime-library functions (strcp
 ```sh
 uv run runtime-symbols      # find them: matches the toolchain's libraries against the game
 uv run classes              # recover C++ classes from RTTI: names, hierarchy, vtables, constructors
-uv run ghidra label         # apply both to the Ghidra project, and set calling conventions
-                            # (only renames functions Ghidra named automatically, FUN_...)
+uv run ghidra label         # apply both to the Ghidra project, with the names of functions
+                            # decompiled in decomp/, and set calling conventions
+                            # (never overwrites names you've set by hand)
 ```
 
 Work you do in Ghidra's GUI (names, comments, types) lives in the project, so no default `clean` removes it; `uv run ghidra setup --force` recreates the project from scratch.
@@ -123,7 +124,7 @@ Decompiled code lives in `decomp/` and is C++, like the game (it uses C++ object
 
 ```c
 /* @zoombi32 0x0046be2e */
-void __stdcall fn_46be2e(long value)
+void fn_46be2e(long value)
 {
     g_4a7f58 = value;
 }
@@ -133,6 +134,8 @@ void __stdcall fn_46be2e(long value)
 uv run match                      # check every marked function in decomp/
 uv run match decomp/first.cpp -r 4.5 --flags "-O2"   # one file, one release, extra BCC32 options
 ```
+
+Functions are named for what they do once that's clear (`isMousePresent`), and after their address until then (`fn_46be2e`; globals `g_4a7f58`); the marker keeps the address either way. Rerun `uv run ghidra label` after renaming to carry the names into Ghidra.
 
 A function that's written but not yet an exact match is marked `/* @zoombi32-nonmatching 0x... */`: it's still compiled and reported with how close it is, but doesn't fail the run.
 
@@ -146,7 +149,7 @@ uv run worklist --region engine
 uv run report --open           # progress report in your browser
 ```
 
-A function is *ready* when everything it calls directly is done (matched, identified runtime code, or outside the region you're working on). `report` writes `build/report/index.html`: statistics per region (by function and by bytes), every function with its status, and for each decompiled function its original machine code, C++ and recompiled machine code side by side, with differences highlighted. It contains the game's disassembly, so keep it local.
+A function is *ready* when everything it calls directly is done (matched, identified runtime code, or outside the region you're working on). `report` writes `build/report/index.html`: statistics per region (by function and by bytes), every function with its status and name (as decompiled, else Ghidra's), and for each decompiled function its original machine code, C++ and recompiled machine code side by side, with differences highlighted and calls and globals annotated with their names. It contains the game's disassembly, so keep it local.
 
 Both need `uv run ghidra setup`, `uv run runtime-symbols` and `uv run classes` to have run.
 

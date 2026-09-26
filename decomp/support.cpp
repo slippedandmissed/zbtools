@@ -10,7 +10,7 @@
 
 /* The time in milliseconds since Windows started. */
 /* @zoombi32 0x0046dda5 */
-DWORD fn_46dda5()
+DWORD currentTimeMs()
 {
     return timeGetTime();
 }

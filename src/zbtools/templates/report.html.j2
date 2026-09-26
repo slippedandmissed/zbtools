@@ -43,7 +43,7 @@
   table.cmp td { padding: 0 10px; vertical-align: top; white-space: pre; }
   table.cmp td.src { background: var(--code-bg); border-left: 1px solid var(--border); border-right: 1px solid var(--border); padding: 8px 12px; min-width: 320px; }
   table.cmp tr.diff td.asm { background: var(--diff); color: var(--diff-text); }
-  td.asm .off { color: var(--muted); } td.asm .raw { color: var(--muted); }
+  td.asm .off { color: var(--muted); } td.asm .raw { color: var(--muted); } td.asm .note { color: var(--accent, #2a7ab0); }
   .error { padding: 10px 16px; color: var(--diff-text); background: var(--diff); white-space: pre-wrap; }
   .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
   .filters input, .filters select { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font: inherit; }
@@ -95,9 +95,9 @@
         <tr><th>Original</th><th>C++</th><th>Recompiled</th></tr>
         {% for row in d.rows %}
         <tr class="{{ '' if row.same else 'diff' }}">
-          <td class="asm">{% if row.original %}<span class="off">{{ row.original.offset }}</span>  <span class="raw">{{ '%-21s' % row.original.raw }}</span> {{ row.original.text }}{% endif %}</td>
+          <td class="asm">{% if row.original %}<span class="off">{{ row.original.offset }}</span>  <span class="raw">{{ '%-21s' % row.original.raw }}</span> {{ row.original.text }}{% if row.original.note %}<span class="note">  ; {{ row.original.note }}</span>{% endif %}{% endif %}</td>
           {% if loop.first %}<td class="src" rowspan="{{ d.rows | length }}">{{ d.source }}</td>{% endif %}
-          <td class="asm">{% if row.recompiled %}<span class="off">{{ row.recompiled.offset }}</span>  <span class="raw">{{ '%-21s' % row.recompiled.raw }}</span> {{ row.recompiled.text }}{% endif %}</td>
+          <td class="asm">{% if row.recompiled %}<span class="off">{{ row.recompiled.offset }}</span>  <span class="raw">{{ '%-21s' % row.recompiled.raw }}</span> {{ row.recompiled.text }}{% if row.recompiled.note %}<span class="note">  ; {{ row.recompiled.note }}</span>{% endif %}{% endif %}</td>
         </tr>
         {% else %}
         <tr><td></td><td class="src">{{ d.source }}</td><td></td></tr>

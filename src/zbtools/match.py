@@ -66,6 +66,7 @@ class Result:
     masked: frozenset[int]  # offsets in `compiled` the linker fills in
     original_masked: frozenset[int]  # offsets in `original` the linker filled in
     mismatches: tuple[int, ...]  # offsets that differ
+    references: dict[int, str]  # offset in `compiled` of each fixup -> its target symbol
 
     @property
     def matches(self) -> bool:
@@ -135,7 +136,10 @@ def compare(target: Target, obj: omf.ObjectFile, exe: Executable) -> Result:
         for i in range(len(original))
         if any(target.address + i - k in exe.relocations for k in range(4))
     )
-    return Result(target, compiled, original, masked, relocated, tuple(sorted(mismatches)))
+    references = {f.offset - start: f.target for f in fixups}
+    return Result(
+        target, compiled, original, masked, relocated, tuple(sorted(mismatches)), references
+    )
 
 
 def _flags_for(source: str, override: str | None) -> str:

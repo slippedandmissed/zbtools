@@ -1,7 +1,7 @@
 /*
  * Small call-free functions with loops, used to pin down the compiler
- * release and options (see docs/findings.md). Names are by address until
- * their purpose is known; structures are guessed from their field offsets.
+ * release and options (see docs/findings.md). Functions are named by address
+ * until their purpose is known; structures are guessed from their field offsets.
  *
  * The game uses the Pascal calling convention (-p): arguments are pushed left
  * to right, so the first parameter is the one furthest from the stack frame.
@@ -23,7 +23,7 @@ extern short g_4aff9a[];
 
 /* The index (1-20) of the largest value, ignoring `exclude`. */
 /* @zoombi32 0x00437390 */
-short fn_437390(short exclude)
+short indexOfLargestExcept(short exclude)
 {
     short best, bestValue, i;
     for (i = 1, best = 0, bestValue = 0; i < 0x15; i++) {
@@ -67,7 +67,7 @@ struct Link
 
 /* Splices a list in after another. */
 /* @zoombi32 0x0043a772 */
-void fn_43a772(Link *other, Link *list)
+void spliceList(Link *other, Link *list)
 {
     if (other && list) {
         Link *last = list;
