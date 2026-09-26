@@ -147,7 +147,7 @@ Nothing maps selectors to API names: `QTIM32.DLL` exports only `_EntryPoint`, a 
 
 ## A breakpoint compiled into the game (`0x46db83`)
 
-The function at `0x46db83` is `push ebp / mov ebp, esp / movsx eax, word ptr [ebp+8] / int3 / mov ax, word ptr [ebp+8] / pop ebp / ret 4`: it returns its (short) argument after stopping in the debugger. Ghidra models `int3` as never returning, so its analysis ended the function at the breakpoint (8 bytes, no return); `uv run ghidra label` now makes such breakpoints fall through, disassembles the rest and recomputes the function (16 bytes). It's the only function in the program that ended at an `int3`. It hasn't been reproduced in C++ yet: `__emit__(0xcc)` and pseudo-register variants compile differently, so it may have been inline assembly (`asm int 3`), which BCC32 can only compile with TASM32, not part of Borland C++ 4.5.
+The function at `0x46db83` is `push ebp / mov ebp, esp / movsx eax, word ptr [ebp+8] / int3 / mov ax, word ptr [ebp+8] / pop ebp / ret 4`: it returns its (short) argument after stopping in the debugger. Ghidra models `int3` as never returning, so its analysis ended the function at the breakpoint (8 bytes, no return); `uv run ghidra label` now makes such breakpoints fall through, disassembles the rest and recomputes the function (16 bytes). It's the only function in the program that ended at an `int3`. `__emit__(0xcc)` and pseudo-register variants compile differently, so it was probably inline assembly (`asm int 3`), which BCC32 can only compile with TASM32, not part of Borland C++ 4.5; it's decompiled as `debugBreak`, calling `DebugBreak()` (functional).
 
 ## Switch tables cut functions short in Ghidra
 
@@ -160,7 +160,7 @@ BCC32 only compiles inline `asm` with TASM32, which isn't part of Borland C++ 4.
 - `0x46dabb`, `0x46da9d`, `0x46daac` (`atomicIncrement`, `atomicDecrement`, `atomicExchange`): `lock inc`, `lock dec`, `xchg`, probably because Windows 95's `InterlockedIncrement`/`Decrement` only return the sign of the result. Written with the `Interlocked*` functions (functional). (They could be matched exactly with `__emit__` and pseudo-registers, as could `0x46f771`, which is how they were first matched.)
 - `0x46f771`: walks `depth` stack frames up with a hand-written loop and records the return address there; no portable equivalent (a stub).
 - `0x46f6f9`, `0x46f74f`: switch stacks (`mov esp, [eax+0x50]`, `jmp edx`). With `0x46f771`, the Mohawk OS layer's stack switching, which a port would replace (e.g. with Windows fibers).
-- `0x46db83`: an `int3` mid-function (not decompiled yet).
+- `0x46db83` (`debugBreak`): an `int3` mid-function; written with `DebugBreak()` (functional).
 - Not yet checked: `0x46f6c9` and `0x46f70e` (`pushfd`/`popfd`), `0x4697f1` (`pushfd`/`popfd`, `sahf`).
 
 ## The game's source modules

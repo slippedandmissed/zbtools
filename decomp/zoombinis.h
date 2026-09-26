@@ -273,6 +273,7 @@ int isAlignedPointer(void *pointer);
 long atomicDecrement(long *value);
 long atomicExchange(long *target, long value);
 long atomicIncrement(long *value);
+short debugBreak(short value);
 void fn_46dc45();
 long fn_46dd21();
 long fn_46dd27();

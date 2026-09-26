@@ -37,6 +37,17 @@ long atomicIncrement(long *value)
     return InterlockedIncrement(value);
 }
 
+/*
+ * Stops in the debugger, then returns `value`. The original has an `int3`
+ * (probably inline assembly); DebugBreak does the same (functional).
+ */
+/* @zoombi32-functional 0x0046db83 */
+short debugBreak(short value)
+{
+    DebugBreak();
+    return value;
+}
+
 /* Adds a reference to everything in the list at g_4a8dcc. */
 /* @zoombi32 0x0046dc45 */
 void fn_46dc45()
