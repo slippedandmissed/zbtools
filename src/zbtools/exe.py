@@ -9,6 +9,7 @@ import capstone
 import pefile
 
 _IMAGE_REL_BASED_HIGHLOW = 3  # a 32-bit absolute address the loader relocates
+_IMAGE_SCN_MEM_EXECUTE = 0x20000000
 
 
 @dataclass(frozen=True)
@@ -37,6 +38,9 @@ class Executable:
             for entry in block.entries
             if int(entry.type) == _IMAGE_REL_BASED_HIGHLOW
         )
+        code = next(s for s in pe.sections if int(s.Characteristics) & _IMAGE_SCN_MEM_EXECUTE)
+        start = self.base + int(code.VirtualAddress)
+        self.code_range = (start, start + int(code.Misc_VirtualSize))
 
     def read(self, address: int, size: int) -> bytes:
         offset = address - self.base

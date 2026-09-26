@@ -2,10 +2,12 @@
 
 `setup` downloads Ghidra, imports zoombi32.exe into a project in
 build/ghidra/project, runs Ghidra's auto-analysis and exports every function it
-found to build/ghidra/functions.json. `open` opens the project in Ghidra, and
-`decompile` prints Ghidra's C for one function.
+found to build/ghidra/functions.json. `open` opens the project in Ghidra,
+`decompile` prints Ghidra's C for one function, and `label` names the Borland
+runtime-library code found by `uv run runtime-symbols`.
 """
 
+import collections
 import os
 import shutil
 import subprocess
@@ -17,10 +19,10 @@ import pyghidra
 import typer
 from pydantic import BaseModel, ConfigDict
 
-from zbtools import download, host, paths
+from zbtools import download, host, paths, runtime_symbols
 
 if TYPE_CHECKING:
-    from ghidra.program.model.listing import Program
+    from ghidra.program.model.listing import Function, Program
 
 GHIDRA_VERSION = "12.1.4"
 _URL = (
@@ -139,8 +141,7 @@ def setup(
             program.save("Auto-analysis", pyghidra.task_monitor())
             functions = list_functions(program)
 
-    listing = FunctionList(program=PROGRAM_NAME, ghidra_version=GHIDRA_VERSION, functions=functions)
-    paths.GHIDRA_FUNCTIONS.write_text(listing.model_dump_json(indent=1))
+    _write_functions(functions)
     print(f"Found {len(functions)} functions; list written to {paths.GHIDRA_FUNCTIONS}")
     print("Next: `uv run ghidra open` to browse the project in Ghidra.")
 
@@ -179,3 +180,69 @@ def decompile(
         if not result.decompileCompleted():
             sys.exit(f"error: decompiling failed: {result.getErrorMessage()}")
         print(result.getDecompiledFunction().getC())
+
+
+def _write_functions(functions: list[FunctionInfo]) -> None:
+    listing = FunctionList(program=PROGRAM_NAME, ghidra_version=GHIDRA_VERSION, functions=functions)
+    paths.GHIDRA_FUNCTIONS.write_text(listing.model_dump_json(indent=1))
+
+
+@app.command()
+def label() -> None:
+    """Name the Borland runtime-library code in the project, using the symbols
+    from `uv run runtime-symbols`. Names you've set in Ghidra are kept (the
+    library names are added as extra labels)."""
+    found = runtime_symbols.load()
+    names_at: dict[int, list[str]] = collections.defaultdict(list)
+    for symbol in found.symbols:
+        names_at[symbol.address].append(symbol.name)
+
+    _start()
+    # Ghidra's Java classes can only be imported once the JVM has started.
+    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
+    from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
+
+    functions_named = labels_added = kept = 0
+    with (
+        pyghidra.open_project(paths.GHIDRA_PROJECT_DIR, paths.GHIDRA_PROJECT_NAME) as project,
+        pyghidra.program_context(project, f"/{PROGRAM_NAME}") as program,
+    ):
+        api = FlatProgramAPI(program)
+        space = program.getAddressFactory().getDefaultAddressSpace()
+        manager, table = program.getFunctionManager(), program.getSymbolTable()
+        with pyghidra.transaction(program):
+            for address, names in sorted(names_at.items()):
+                at = space.getAddress(address)
+                labels = names
+                # Type descriptors (@$xt$...) are data that Borland puts in the code.
+                if not names[0].startswith("@$xt$"):
+                    # The stubs omit Java's nulls: both return None if there's no function.
+                    function: Function | None = manager.getFunctionAt(at) or api.createFunction(
+                        at, None
+                    )
+                    if function is not None:
+                        source, current = function.getSymbol().getSource(), function.getName()
+                        # A user-defined name that is one of ours was set by this tool
+                        # (createFunction marks names as user-defined), not by hand.
+                        if source != SourceType.USER_DEFINED or current in names:
+                            function.setName(names[0], SourceType.IMPORTED)
+                            functions_named += 1
+                            labels = names[1:]
+                        else:
+                            kept += 1
+                        # A secondary label repeating the function's own name is redundant.
+                        for symbol in table.getSymbols(at):
+                            if not symbol.isPrimary() and symbol.getName() == function.getName():
+                                symbol.delete()
+                existing = {str(symbol.getName()) for symbol in table.getSymbols(at)}
+                for name in labels:
+                    if name not in existing:
+                        table.createLabel(at, name, SourceType.IMPORTED)
+                        labels_added += 1
+        program.save("Borland runtime symbols", pyghidra.task_monitor())
+        _write_functions(list_functions(program))
+
+    print(
+        f"Named {functions_named} functions and added {labels_added} labels "
+        f"(kept {kept} names set by hand). Function list updated: {paths.GHIDRA_FUNCTIONS}"
+    )

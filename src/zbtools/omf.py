@@ -2,9 +2,11 @@
 
 Reads just what comparing compiled functions needs: each segment's bytes, its
 fixups (relocations) with the symbol or segment they refer to, and the public
-and external symbol names. It's hand-written because no Python library reads
-OMF (PyPI's `omf` is the unrelated Open Mining Format). Reference: the Tool
-Interface Standard "Relocatable Object Module Format (OMF) Specification" 1.1.
+and external symbol names, from single objects or libraries (.LIB) of them.
+It's hand-written because no Python library reads OMF (PyPI's `omf` is the
+unrelated Open Mining Format). Reference: the Tool Interface Standard
+"Relocatable Object Module Format (OMF) Specification" 1.1, plus Borland's
+virtual segments (see _VIRTUAL).
 """
 
 from collections.abc import Callable
@@ -13,6 +15,11 @@ from dataclasses import dataclass, field
 # Bytes patched by each fixup location type.
 _LOCATION_SIZES = {0: 1, 1: 2, 2: 2, 3: 4, 4: 1, 5: 2, 9: 4, 11: 6, 13: 4}
 _COMMUNAL_LENGTH_SIZES = {0x81: 2, 0x84: 3, 0x88: 4}
+# Borland: an index with this bit set refers to a "virtual segment", declared by
+# the COMDEF entry with the remaining bits as its external number. Virtual
+# segments hold C++ code and data the linker includes once (inline functions,
+# template instances, RTTI type descriptors).
+_VIRTUAL = 0x4000
 
 
 class OmfError(ValueError):
@@ -45,6 +52,7 @@ class Public:
 
 @dataclass
 class ObjectFile:
+    name: str  # the module name (THEADR), usually its source file
     segments: dict[str, Segment]
     publics: list[Public]
     externals: list[str]
@@ -102,14 +110,17 @@ class _Record:
 
 class _Parser:
     def __init__(self) -> None:
+        self.name = ""
         self.lnames = [""]
         self.segments: list[Segment] = []
         self.groups: list[str] = []
         self.externals: list[str] = []
         self.publics: list[Public] = []
+        self.virtual_segments: dict[int, Segment] = {}  # by external number
         self.last_data: tuple[Segment, int] | None = None
         self.target_threads = [(0, 0)] * 4
         self.handlers: dict[int, Callable[[_Record, int], None]] = {
+            0x80: self.theadr,
             0x96: self.lnames_record,
             0x98: self.segdef,
             0x9A: self.grpdef,
@@ -117,12 +128,16 @@ class _Parser:
             0xB4: self.extdef,
             0xBC: self.cextdef,
             0xB0: self.comdef,
+            0xB8: self.comdef,  # LCOMDEF
             0x90: self.pubdef,
             0xB6: self.pubdef,
             0xA0: self.ledata,
             0xA2: self.lidata,
             0x9C: self.fixupp,
         }
+
+    def theadr(self, r: _Record, _: int) -> None:
+        self.name = r.name()
 
     def lnames_record(self, r: _Record, _: int) -> None:
         while r.more():
@@ -149,13 +164,26 @@ class _Parser:
             r.index()  # type
 
     def comdef(self, r: _Record, _: int) -> None:
-        """Uninitialised globals, numbered along with the externals."""
+        """Uninitialised globals, numbered along with the externals; in Borland's
+        objects, also virtual segments (a data type naming the segment, e.g. _TEXT)."""
         while r.more():
-            self.externals.append(r.name())
+            name = r.name()
+            self.externals.append(name)
             r.index()  # type
-            if r.byte() == 0x61:  # far: element count, then element size
+            data_type = r.byte()
+            if data_type == 0x61:  # far: element count, then element size
                 r.communal_length()
-            r.communal_length()
+            length = r.communal_length()
+            if 0 < data_type < 0x60:  # Borland virtual segment, based on segment data_type
+                base = self.segments[data_type - 1]
+                segment = Segment(name, base.class_name, bytearray(length))
+                self.virtual_segments[len(self.externals)] = segment
+                self.publics.append(Public(name, name, 0, local=False))
+
+    def segment(self, index: int) -> Segment:
+        if index & _VIRTUAL:
+            return self.virtual_segments[index & ~_VIRTUAL]
+        return self.segments[index - 1]
 
     def pubdef(self, r: _Record, kind: int) -> None:
         r.index()  # group
@@ -169,7 +197,7 @@ class _Parser:
             self.publics.append(Public(name, segment, offset, local=kind == 0xB6))
 
     def ledata(self, r: _Record, _: int) -> None:
-        segment = self.segments[r.index() - 1]
+        segment = self.segment(r.index())
         offset = r.offset()
         chunk = r.rest()
         segment.data[offset : offset + len(chunk)] = chunk
@@ -177,7 +205,7 @@ class _Parser:
 
     def lidata(self, r: _Record, _: int) -> None:
         """Iterated data: nested repeat blocks, e.g. a run of zero bytes."""
-        segment = self.segments[r.index() - 1]
+        segment = self.segment(r.index())
         offset = r.offset()
         chunk = bytearray()
         while r.more():
@@ -207,13 +235,13 @@ class _Parser:
     def thread(self, r: _Record, first: int) -> None:
         """A THREAD subrecord: a frame or target remembered for later fixups."""
         is_frame, method, thread = first & 0x40, (first >> 2) & 7, first & 3
-        index = 0
-        if method < 3:
-            index = r.index()
-        elif is_frame and method == 3:
-            r.uint(2)
-        if not is_frame:
-            self.target_threads[thread] = (method & 3, index)
+        if is_frame:  # F0-F2 have an index, F3 a frame number, F4-F6 nothing
+            if method < 3:
+                r.index()
+            elif method == 3:
+                r.uint(2)
+        else:  # T0-T2 and T4-T6 (the same, without displacement) have an index
+            self.target_threads[thread] = (method & 3, r.index())
 
     def fixup(self, r: _Record, first: int) -> None:
         if self.last_data is None:
@@ -232,6 +260,8 @@ class _Parser:
             method, index = fixdat & 3, r.index()
         if not fixdat & 0x04:  # target displacement present
             r.offset()
+        if method == 0 and index & _VIRTUAL:  # a virtual segment, named by its COMDEF
+            method, index = 2, index & ~_VIRTUAL
         names = {0: [s.name for s in self.segments], 1: self.groups, 2: self.externals}.get(method)
         if names is None:
             raise OmfError(f"unsupported fixup target method {method}")
@@ -245,8 +275,8 @@ class _Parser:
             )
         )
 
-    def parse(self, data: bytes) -> ObjectFile:
-        pos = 0
+    def parse(self, data: bytes, pos: int = 0) -> tuple[ObjectFile, int]:
+        """Parse one module starting at pos; returns it and the offset after it."""
         while pos + 3 <= len(data):
             rtype = data[pos]
             length = int.from_bytes(data[pos + 1 : pos + 3], "little")
@@ -259,9 +289,44 @@ class _Parser:
                 raise OmfError(f"unsupported OMF record {rtype:#04x}")
             handler = self.handlers.get(kind)
             if handler:
-                handler(_Record(body, bool(rtype & 1)), kind)
-        return ObjectFile({s.name: s for s in self.segments}, self.publics, self.externals)
+                try:
+                    handler(_Record(body, bool(rtype & 1)), kind)
+                except IndexError as e:
+                    raise OmfError(f"malformed record {rtype:#04x} in {self.name!r}") from e
+        segments = {s.name: s for s in [*self.segments, *self.virtual_segments.values()]}
+        return ObjectFile(self.name, segments, self.publics, self.externals), pos
 
 
 def read(data: bytes) -> ObjectFile:
-    return _Parser().parse(data)
+    return _Parser().parse(data)[0]
+
+
+def read_library(data: bytes) -> tuple[list[ObjectFile], list[str]]:
+    """Read every module of a library (.LIB). Returns the modules read, and a
+    description of each module skipped because it uses unsupported records."""
+    if not data or data[0] != 0xF0:
+        raise OmfError("not an OMF library")
+    page_size = int.from_bytes(data[1:3], "little") + 3
+    modules: list[ObjectFile] = []
+    skipped: list[str] = []
+    pos = page_size
+    while pos < len(data) and data[pos] == 0x80:  # THEADR; the dictionary (0xF1) ends the modules
+        start = pos
+        try:
+            module, pos = _Parser().parse(data, pos)
+            modules.append(module)
+        except OmfError as e:
+            skipped.append(f"module at {start:#x}: {e}")
+            pos = _skip_module(data, start)
+        pos = -(-pos // page_size) * page_size  # modules start on page boundaries
+    return modules, skipped
+
+
+def _skip_module(data: bytes, pos: int) -> int:
+    """Offset just past the MODEND record of the module starting at pos."""
+    while pos + 3 <= len(data):
+        rtype = data[pos]
+        pos += 3 + int.from_bytes(data[pos + 1 : pos + 3], "little")
+        if rtype & ~1 == 0x8A:
+            break
+    return pos

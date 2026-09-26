@@ -20,6 +20,9 @@ GAME32_DIR = BUILD_DIR / "zoombi32"
 
 # Decompiled C source, checked against the game by `uv run match`.
 DECOMP_DIR = REPO_ROOT / "decomp"
+# Names `uv run runtime-symbols` found for the Borland runtime code in the game.
+SYMBOLS_DIR = BUILD_DIR / "symbols"
+RUNTIME_SYMBOLS = SYMBOLS_DIR / "runtime.json"
 # Objects `uv run match` compiles, one directory per release.
 MATCH_DIR = BUILD_DIR / "match"
 
@@ -69,7 +72,7 @@ type CleanEntry = Path | str
 # generates must belong to a category. Bring-your-own inputs (data/, .env) are
 # never listed.
 CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
-    "extracted": [DISC_DIR, GAME32_DIR],
+    "extracted": [DISC_DIR, GAME32_DIR, SYMBOLS_DIR],
     "vm-state": [
         WIN98_OVERLAY,
         WIN98_BASE_PARTIAL,

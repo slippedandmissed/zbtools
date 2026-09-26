@@ -9,11 +9,11 @@ Confirmed facts about the game and its installer, with where they came from.
 | Key | Meaning | Example |
 | --- | --- | --- |
 | `INSTALLFROMDIR` | Root of the game CD. The game appends `Data\` to find the `.MHK` archives, so it needs a trailing backslash. | `D:\` |
-| `INSTALLTODIR` | Install directory. The game appends `Zoombini.mhk`, presumably to look for a hard-disk copy of the data. | `C:\Program Files\Zoombi32\` |
+| `INSTALLTODIR` | Install directory. | `C:\Program Files\Zoombi32\` |
 
 The original InstallShield script (`SETUP.INS`, which references `InstallFromDir` and `InstallToDir`) writes these values. `vm install-game` ships a filled-in copy instead (`src/zbtools/game_install.py`).
 
-Evidence (zoombi32.exe): the two functions at `0x446969` and around `0x446a00` build the name `Zoombi32.CFG` and call the game's INI reader at `0x480790` with section `INSTALL` (`0x4a5254`) and keys `INSTALLFROMDIR` (`0x4a3f06`) / `INSTALLTODIR` (`0x4a3f1b`); on failure they report the string at `0x4a520c`. The first then appends `Data\` (`0x4a3f15`) to the value; the second appends `Zoombini.mhk` (`0x4a526b`).
+Evidence (zoombi32.exe): one function, `0x446969` (Ghidra's decompilation, with the runtime functions named), reads both keys through the engine's INI reader at `0x480790` (section `INSTALL` at `0x4a5254`; keys at `0x4a3f06` / `0x4a3f1b`), reporting the string at `0x4a520c` on failure. It builds `<INSTALLFROMDIR>Data\Zoombini.mhk` (`strcpy`, `strcat` with `0x4a3f15`, a path helper at `0x46c990`, `strcat` with `0x4a526b`), passes it to `0x483420`, and depending on the result either sets the flag at `0x4a3e5c` or reads `INSTALLTODIR`. (An earlier version of this entry wrongly split this into two functions.) It sets up C++ exception handling (`__InitExceptBlock`) and constructs and destroys a string object via `0x4850f8` / `0x48533e`, which are in the Mohawk engine's code, not Borland's.
 
 ## QuickTime installer settings file
 
@@ -45,7 +45,11 @@ So the game's runtime code is consistent with either release. The remaining test
 
 ## Code layout and conventions (zoombi32.exe)
 
-- `CODE` runs from `0x410000` (also the entry point) to `0x494000`. The Borland runtime library starts at about `0x46f7c5`: every window of runtime-library code found in the executable lies above it. Below it (~390 KB) is the game's own code.
+- `CODE` runs from `0x410000` to `0x494000`:
+  - `0x410000`: Borland's Win32 startup code (`C0W32.OBJ`), the entry point.
+  - up to about `0x46f7a4`: the game's own code (~390 KB).
+  - about `0x46f7a4`-`0x478000`: the Borland C++ runtime library (`CW32.LIB`), identified module by module (`uv run runtime-symbols`).
+  - about `0x478000`-`0x494000`: Broderbund's Mohawk engine (platform layer: graphics "ports", audio, WaveMix, an async file API). Almost no Borland library code; its C++ class names survive as RTTI type descriptors in the code (`displayPort`, `windowPort`, `memoryPort`, `DIB8Port`, `audioObj`, `wavestreamObj`, `wmxMixer`, ...).
 - Game functions seen so far clean up their own arguments (`ret N`): `__stdcall` or `__pascal`, either declared explicitly or set as the default with a compiler flag.
 - Functions always get a standard stack frame (`push ebp` / `mov ebp, esp`), even trivial ones. BCC32's default settings reproduce this.
 
@@ -56,3 +60,9 @@ So the game's runtime code is consistent with either release. The remaining test
 ## Ghidra's view of zoombi32.exe
 
 Ghidra 12.1.4's auto-analysis finds 2,567 functions: 1,313 in the game's code (below `0x46f7c5`; median 110 bytes, 66 over 1 KB), 1,019 in the runtime library and 235 thunks. It agrees with `uv run match` on the two matched functions (15 and 9 bytes). Its decompiler doesn't yet know the functions clean up their own stack arguments (e.g. `fn_455e85`'s two arguments show as `void`).
+
+## Borland runtime functions identified
+
+`uv run runtime-symbols` matches the code segments of the 32-bit Borland libraries (`CW32.LIB`, `CW32MT.LIB`, `BIDSF.LIB`, `OWLWF.LIB`, `OCFWF.LIB`, the `C0*32.OBJ` startup objects) against the executable, with linker-filled bytes as wildcards. With 4.5's libraries it names 217 addresses (e.g. `_strcpy` at `0x46f8f4`, `_strcat` at `0x46f864`, `@__InitExceptBlock` at `0x4716c0`); 125 segments match in several places (mostly small C++ destructors instantiated in many modules) and are left unnamed. `uv run ghidra label` applies the names to the Ghidra project.
+
+Borland's C++ objects use "virtual segments" (COMDEF entries whose data type is a segment index; references to them set bit `0x4000` in the index) for type descriptors (`@$xt$...`), inline functions and template instances. `omf.py` reads them as extra segments named after their symbol.

@@ -25,6 +25,7 @@ vm = "zbtools.vm:app"
 toolchain = "zbtools.toolchain:app"
 match = "zbtools.match:app"
 ghidra = "zbtools.ghidra:app"
+runtime-symbols = "zbtools.runtime_symbols:app"
 unpack-isz = "zbtools.unpack_isz:app"
 
 [build-system]
