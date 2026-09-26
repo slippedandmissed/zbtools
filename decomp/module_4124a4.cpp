@@ -4,14 +4,15 @@
 
 #include "zoombinis.h"
 
-/* Passes `value` to the current handlers' slot 0x28, or else to the engine. */
+/* Passes `value` to the current handlers' slot 0x28, or else to the engine;
+   the answer. */
 /* @zoombi32 0x0041280d */
-void fn_41280d(long value)
+short fn_41280d(long value)
 {
     if (!g_4aa494->handlers->handler28)
-        fn_480b80(g_4aa498, value);
+        return fn_480b80(g_4aa498, value);
     else
-        g_4aa494->handlers->handler28(value, g_4aa498);
+        return g_4aa494->handlers->handler28(value, g_4aa498);
 }
 
 /* Whether an item is available in the current mode (g_4aa4c0): in mode 0,
@@ -54,9 +55,9 @@ short fn_412884()
 }
 
 /* In mode 0 a list with flag 1 or 2, in mode 1 one with flag 1, is counted
-   (its entries' sizes and its length) instead of taken. */
+   (its groups' sizes and its length) instead of taken. */
 /* @zoombi32 0x004128c6 */
-short fn_4128c6(ItemList *list)
+short fn_4128c6(GroupList *list)
 {
     short i;
 
@@ -66,16 +67,16 @@ short fn_4128c6(ItemList *list)
     case 0:
         if (list->flags & 1 || list->flags & 2) {
             for (i = 0; i < list->count; i++)
-                g_4aa4a0.x += list->entries[i].size;
-            g_4aa49c.y += list->count;
+                g_4aa49c.b.x += list->groups[i].count;
+            g_4aa49c.a.y += list->count;
             return 0;
         }
         break;
     case 1:
         if (list->flags & 1) {
             for (i = 0; i < list->count; i++)
-                g_4aa4a0.x += list->entries[i].size;
-            g_4aa49c.y += list->count;
+                g_4aa49c.b.x += list->groups[i].count;
+            g_4aa49c.a.y += list->count;
             return 0;
         }
         break;
@@ -83,26 +84,26 @@ short fn_4128c6(ItemList *list)
     return 1;
 }
 
-/* The same test as fn_4128c6, for one entry. */
+/* The same test as fn_4128c6, for one group. */
 /* @zoombi32 0x0041295f */
-short fn_41295f(ListEntry *entry)
+short fn_41295f(Group *group)
 {
-    if (!entry)
+    if (!group)
         return 0;
-    if (g_4aa4c2 && !entry->owner->unknown2c)
+    if (g_4aa4c2 && !group->handlers->unknown2C)
         return 0;
     switch (g_4aa4c0) {
     case 0:
-        if (entry->flags & 1 || entry->flags & 2) {
-            g_4aa4a0.x += entry->size;
-            g_4aa4a4.x += entry->size;
+        if (group->flags & 1 || group->flags & 2) {
+            g_4aa49c.b.x += group->count;
+            g_4aa49c.c.x += group->count;
             return 0;
         }
         break;
     case 1:
-        if (entry->flags & 1) {
-            g_4aa4a0.x += entry->size;
-            g_4aa4a4.x += entry->size;
+        if (group->flags & 1) {
+            g_4aa49c.b.x += group->count;
+            g_4aa49c.c.x += group->count;
             return 0;
         }
         break;
@@ -249,18 +250,119 @@ short fn_4133a4()
     return g_4aa48b & 0x20 && !noMouse || g_4aa48b & 0x10 && noMouse;
 }
 
+/* Searches a group's items from `start` onwards with fn_41391d, moving the
+   cursor along; whether one was found (the cursor's index is then its). */
+/* @zoombi32 0x0041382a */
+short fn_41382a(Group *group, short start)
+{
+    short found;
+    InputItem *item;
+
+    g_4aa49c.c.y = 0;
+    if (!fn_41295f(group))
+        return 0;
+    g_4aa494 = group;
+    g_4aa49c.c.y = start;
+    found = 0;
+    for (item = &group->items[start]; g_4aa49c.c.y < group->count && !found; item++) {
+        found = fn_41391d(item);
+        g_4aa49c.c.y++;
+        g_4aa49c.c.x++;
+        g_4aa49c.b.x++;
+    }
+    if (!found)
+        g_4aa49c.c.y = 0;
+    return found;
+}
+
+/* The same as fn_41382a, backwards from `start`. */
+/* @zoombi32 0x004138a2 */
+short fn_4138a2(Group *group, short start)
+{
+    short found;
+    InputItem *item;
+
+    g_4aa49c.c.y = 0;
+    if (!fn_41295f(group))
+        return 0;
+    g_4aa494 = group;
+    g_4aa49c.c.y = start;
+    found = 0;
+    for (item = group->items + start; g_4aa49c.c.y >= 0 && !found; item--) {
+        found = fn_41391d(item);
+        g_4aa49c.c.y--;
+        g_4aa49c.c.x--;
+        g_4aa49c.b.x--;
+    }
+    g_4aa49c.c.y++;
+    if (!found)
+        g_4aa49c.c.y = 0;
+    return found;
+}
+
+/*
+ * Whether an item is what's being looked for (g_4aa4ac): 0 whatever the
+ * group's handler says, 1 a particular item, 2 the one past the cursor, 3 the
+ * one with a key, 4 one with some flags, 5 any; 6 and 7 visit them (calling
+ * their handlers, or giving them their places). Makes it the current item.
+ */
+/* @zoombi32 0x0041391d */
+short fn_41391d(InputItem *item)
+{
+    short found;
+
+    if (!fn_412844(item))
+        return 0;
+    g_4aa498 = item;
+    switch (g_4aa4ac) {
+    case 0:
+        found = fn_41280d(g_4aa4b0);
+        break;
+    case 1:
+        found = item == g_4aa4b4;
+        break;
+    case 2:
+        found = g_4aa4b8 == g_4aa49c.a.x + 1 && g_4aa4ba == g_4aa49c.c.x + 1;
+        break;
+    case 3:
+        found = toUpperAscii(item->key) == g_4aa4bc;
+        break;
+    case 4:
+        found = (item->flags & g_4aa4be) != 0;
+        break;
+    case 5:
+        found = 1;
+        break;
+    case 6:
+        fn_412c3d();
+        found = 0;
+        break;
+    case 7:
+        item->cursor = g_4aa49c;
+        item->cursor.a.x++;
+        item->cursor.a.y++;
+        item->cursor.b.x++;
+        item->cursor.c.x++;
+        item->cursor.b.y++;
+        item->cursor.c.y++;
+        found = 0;
+        break;
+    }
+    return found;
+}
+
 /* Loads the input state (the part from +0x18 only with `all`). */
 /* @zoombi32 0x00413a4e */
 void fn_413a4e(InputState *state, short all)
 {
     g_4aa490 = state->list;
-    g_4aa494 = state->handlers;
+    g_4aa494 = state->group;
     g_4aa498 = state->item;
-    g_4aa49c = state->unknownC;
-    g_4aa4a0 = state->unknown10;
-    g_4aa4a4 = state->unknown14;
+    g_4aa49c.a = state->cursorA;
+    g_4aa49c.b = state->cursorB;
+    g_4aa49c.c = state->cursorC;
     if (all) {
-        g_4aa4ac = state->unknown18;
+        g_4aa4ac = state->search;
         g_4aa4b0 = state->unknown1A;
         g_4aa4b4 = state->unknown1E;
         g_4aa4b8 = state->unknown22;
@@ -278,13 +380,13 @@ void fn_413a4e(InputState *state, short all)
 void fn_413afd(InputState *state, short all)
 {
     state->list = g_4aa490;
-    state->handlers = g_4aa494;
+    state->group = g_4aa494;
     state->item = g_4aa498;
-    state->unknownC = g_4aa49c;
-    state->unknown10 = g_4aa4a0;
-    state->unknown14 = g_4aa4a4;
+    state->cursorA = g_4aa49c.a;
+    state->cursorB = g_4aa49c.b;
+    state->cursorC = g_4aa49c.c;
     if (all) {
-        state->unknown18 = g_4aa4ac;
+        state->search = g_4aa4ac;
         state->unknown1A = g_4aa4b0;
         state->unknown1E = g_4aa4b4;
         state->unknown22 = g_4aa4b8;

@@ -38,15 +38,33 @@ struct Event
     short unknownC;
 };
 
-/* An item the input module keeps (only its flags at +0x12 are known). */
-struct InputItem
+/*
+ * The input module (module_4124a4) moves a focus over on-screen items,
+ * arranged in groups (each with its own handlers) and lists of groups, by
+ * keyboard or mouse. Its state lives in globals from 0x4aa490 (see
+ * InputState).
+ */
+
+/* Where the focus is; the last field is the item's index in its group. */
+struct Cursor
 {
-    char unknown0[0x12];
-    unsigned char flags;
+    Point a;
+    Point b;
+    Point c; /* c.y: the item's index */
 };
 
-/* Callbacks the input module (module_4124a4) calls through fn_412b4d, with
-   its current item; slots named by offset. */
+/* An item (0x24 bytes). */
+struct InputItem
+{
+    char unknown0[0xc];
+    short key; /* the key that selects it */
+    char unknownE[4];
+    unsigned short flags;
+    char unknown14[4];
+    Cursor cursor; /* where it is */
+};
+
+/* Callbacks, called through fn_412b4d with the current item; named by offset. */
 struct InputHandlers
 {
     void (*handler0)(InputItem *item);
@@ -59,59 +77,45 @@ struct InputHandlers
     void (*handler1C)(InputItem *item);
     void (*handler20)(InputItem *item);
     void (*handler24)(InputItem *item);
-    void (*handler28)(long value, InputItem *item);
+    short (*handler28)(long value, InputItem *item);
+    long unknown2C;
 };
 
-/* The block the input module's current handlers are in: the table, and
-   flags at +0xa. */
-struct HandlerSet
+/* A group of items with its handlers (16 bytes). */
+struct Group
 {
     InputHandlers *handlers;
-    char unknown4[6];
-    unsigned char flags;
-};
-
-/* A 16-byte entry of an ItemList. */
-struct EntryOwner
-{
-    char unknown0[0x2c];
-    long unknown2c;
-};
-
-struct ListEntry
-{
-    EntryOwner *owner;
-    char unknown4[4];
-    short size;
+    InputItem *items;
+    short count;
     unsigned char flags;
     char unknownB[5];
 };
 
-struct ItemList
+/* A list of groups. */
+struct GroupList
 {
-    ListEntry *entries;
+    Group *groups;
     short count;
     unsigned char flags;
 };
 
-/* The input module's state, which it loads into and saves from its globals
-   (g_4aa490 on) with fn_413a4e and fn_413afd; the part from +0x18 only if
-   asked. */
+/* The state (0x30 bytes) fn_413a4e loads into the globals and fn_413afd
+   saves from them; the part from +0x18 only if asked. */
 struct InputState
 {
-    ItemList *list;
-    HandlerSet *handlers;
+    GroupList *list;
+    Group *group;
     InputItem *item;
-    Point unknownC;
-    Point unknown10;
-    Point unknown14;
-    short unknown18;
+    Point cursorA;
+    Point cursorB;
+    Point cursorC;
+    short search; /* what fn_41391d looks for (0-7) */
     long unknown1A;
-    long unknown1E;
+    InputItem *unknown1E;
     short unknown22;
     short unknown24;
     short unknown26;
-    short unknown28;
+    unsigned short unknown28;
     short mode;
     short unknown2C;
     short unknown2E;
@@ -304,20 +308,18 @@ extern short g_4aa42a;
 extern InputItem *g_4aa484;
 extern unsigned char g_4aa48a;
 extern unsigned char g_4aa48b;
-extern ItemList *g_4aa490;
-extern HandlerSet *g_4aa494;
+extern GroupList *g_4aa490;
+extern Group *g_4aa494;
 extern InputItem *g_4aa498;
-extern Point g_4aa49c;
-extern Point g_4aa4a0;
-extern Point g_4aa4a4;
+extern Cursor g_4aa49c;
 extern InputItem *g_4aa4a8;
 extern short g_4aa4ac;
 extern long g_4aa4b0;
-extern long g_4aa4b4;
+extern InputItem *g_4aa4b4;
 extern short g_4aa4b8;
 extern short g_4aa4ba;
 extern short g_4aa4bc;
-extern short g_4aa4be;
+extern unsigned short g_4aa4be;
 extern short g_4aa4c0;
 extern short g_4aa4c2;
 extern void (*g_4aa4c4)(Point *where);
@@ -452,7 +454,7 @@ long qtim_0b();
    declarations produce the calls the game makes. */
 
 void fn_476622(long handle);
-void fn_480b80(InputItem *item, long value);
+short fn_480b80(InputItem *item, long value);
 /* The engine's graphics follow Mac QuickDraw: a current port, and conversions
    between a port's coordinates and the screen's. */
 long getPort(); /* 0x48b510 */
@@ -506,18 +508,21 @@ void fn_412d47();
 void fn_412d57();
 short fn_41336f();
 short fn_4133a4();
-void fn_41280d(long value);
+short fn_41280d(long value);
 void fn_412b6b();
 void fn_412b8f();
 void fn_412cef();
 void fn_412d13();
 void fn_412bb3(short alternative);
 void fn_412c3d();
-short fn_4128c6(ItemList *list);
-short fn_41295f(ListEntry *entry);
+short fn_4128c6(GroupList *list);
+short fn_41295f(Group *group);
 void fn_413a4e(InputState *state, short all);
 void fn_413afd(InputState *state, short all);
 void fn_413bad(Point *where);
+short fn_41382a(Group *group, short start);
+short fn_4138a2(Group *group, short start);
+short fn_41391d(InputItem *item);
 void fn_413bcf(void (*hook)(Point *where));
 void fn_413c6d(void **block);
 short queuedEvents();
