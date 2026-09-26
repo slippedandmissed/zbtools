@@ -237,3 +237,122 @@ void fn_427e1a(Flagged *object, short code)
         object->flags |= 0x20000L;
     }
 }
+
+extern long g_4aa498;
+
+/* Calls callback with g_4aa498 if there is one; returns whether it did. */
+/* @zoombi32 0x00412b4d */
+short fn_412b4d(void (*callback)(long))
+{
+    if (!callback)
+        return 0;
+    callback(g_4aa498);
+    return 1;
+}
+
+extern short g_4ab49c;
+
+/* Returns whether either flag was set, and clears both. */
+/* @zoombi32 0x004157f3 */
+short fn_4157f3()
+{
+    short either = g_4ab49c | g_4ab49e;
+    g_4ab49c = g_4ab49e = 0;
+    return either;
+}
+
+extern short g_4afb90;
+
+/* @zoombi32 0x004334f0 */
+void fn_4334f0(long, short value)
+{
+    if (value == -1 && g_4afb90 < 0)
+        g_4afb90 = -g_4afb90;
+}
+
+struct Triple
+{
+    short a;
+    short b;
+    short c;
+};
+
+/* Something with a mode at +0x28 and three counters at +0x30. */
+struct Counters
+{
+    char unknown0[0x28];
+    long mode;
+    char unknown2c[4];
+    Triple counters;
+};
+
+/* @zoombi32 0x0042fc89 */
+void fn_42fc89(Counters *object)
+{
+    Triple *counters = &object->counters;
+    if (object->mode == 2) {
+        counters->a--;
+        counters->b++;
+        counters->c += 2;
+    }
+}
+
+/* Engine and runtime functions whose conventions aren't known yet: these
+   declarations produce the calls the game makes. */
+void fn_476622(long handle);
+void fn_4812bc(short handle);
+void fn_48f660(long handle, long, long);
+
+/* Something with a handle at +6. */
+struct HasHandle
+{
+    char unknown0[6];
+    long handle;
+};
+
+/* @zoombi32 0x004117a8 */
+void fn_4117a8(HasHandle *object)
+{
+    if (object->handle) {
+        fn_476622(object->handle);
+        object->handle = 0;
+    }
+}
+
+/* @zoombi32 0x00414ce7 */
+void fn_414ce7(short *handle)
+{
+    if (*handle) {
+        fn_4812bc(*handle);
+        *handle = 0;
+    }
+}
+
+/* @zoombi32 0x0046ca9c */
+void fn_46ca9c(long *handle)
+{
+    if (*handle) {
+        fn_48f660(*handle, 0, 0);
+        *handle = 0;
+    }
+}
+
+/* A 22-byte entry with a value at +4. */
+struct Entry22
+{
+    long unknown0;
+    long value;
+    char unknown8[14];
+};
+
+extern Entry22 *g_4ab64c;
+
+/* The index of the last of 625 entries with a value, or 0. */
+/* @zoombi32 0x00419f1a */
+short fn_419f1a()
+{
+    for (short i = 0x270; i >= 0; i--)
+        if (g_4ab64c[i].value)
+            return i;
+    return 0;
+}

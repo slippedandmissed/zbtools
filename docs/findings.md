@@ -158,4 +158,6 @@ BCC32 only compiles inline `asm` with TASM32, which isn't part of Borland C++ 4.
 - `0x46dabb`, `0x46da9d`, `0x46daac`: `lock inc`, `lock dec`, `xchg` (matched with `__emit__`, in `decomp/support.cpp`).
 - `0x46db83`: an `int3` mid-function (not reproduced; see above).
 - `0x46f6f9`: a `longjmp`-style unwinder that restores `ebp` and `esp` and jumps (support library; may be unidentified runtime code).
+- `0x46f771`: walks `depth` stack frames up with a hand-written loop (matched: the loop is emitted with `__emit__`, the rest is C).
+- `0x46f74f`: switches stacks (`mov esp, [eax+0x50]`, `jmp edx`), like `0x46f6f9`.
 - Not yet checked: `0x46f6c9` and `0x46f70e` (`pushfd`/`popfd`), `0x4697f1` (`pushfd`/`popfd`, `sahf`).

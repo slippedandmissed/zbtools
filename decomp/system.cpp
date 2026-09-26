@@ -64,3 +64,15 @@ void freeAndClear(void **block)
         *block = 0;
     }
 }
+
+/* @zoombi32 0x00413c6d */
+void fn_413c6d(void **block)
+{
+    freeAndClear(block);
+}
+
+/* @zoombi32 0x00414358 */
+void fn_414358(void **block)
+{
+    freeAndClear(block);
+}

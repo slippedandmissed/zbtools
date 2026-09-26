@@ -107,3 +107,14 @@ void __cdecl nextRingIndex(short *index)
     if (++*index > 31)
         *index = 0;
 }
+
+/* How many of g_4aff9a[1..20] are non-zero. */
+/* @zoombi32 0x004381bb */
+short fn_4381bb()
+{
+    short i, count;
+    for (i = 1, count = 0; i < 0x15; i++)
+        if (g_4aff9a[i])
+            count++;
+    return count;
+}

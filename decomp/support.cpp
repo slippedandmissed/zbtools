@@ -127,7 +127,7 @@ short fn_46dff7()
 struct Counted
 {
     long unknown0;
-    long unknown4;
+    Counted *next;
     long references;
 };
 
@@ -192,4 +192,40 @@ int isAlignedPointer(void *pointer)
     if (!pointer || ((unsigned long)pointer & 3))
         return 0;
     return 1;
+}
+
+extern Counted *g_4a8dcc;
+
+/* Adds a reference to everything in the list at g_4a8dcc. */
+/* @zoombi32 0x0046dc45 */
+void fn_46dc45()
+{
+    Counted *object = g_4a8dcc;
+    while (object) {
+        fn_46d827(object);
+        object = object->next;
+    }
+}
+
+/* Something that records a return address at +0x28. */
+struct Resume
+{
+    char unknown0[0x28];
+    long address;
+};
+
+/*
+ * Records in `resume` the return address `depth` frames up the stack. The
+ * frame walk was hand-written (`sub 1` / `jb` on the parameter in memory, a
+ * loop BCC32 doesn't generate), so it's emitted as bytes.
+ */
+/* @zoombi32 0x0046f771 */
+void fn_46f771(Resume *resume, unsigned short depth)
+{
+    _EAX = _EBP;
+    /* up: sub word ptr [depth], 1 / jb done / mov eax, [eax] / jmp up / done: */
+    __emit__(0x66, (unsigned char)0x83, 0x6d, 0x08, 0x01, 0x72, 0x04, (unsigned char)0x8b, 0x00,
+             (unsigned char)0xeb, (unsigned char)0xf5);
+    _EDX = ((long *)_EAX)[1];
+    resume->address = _EDX;
 }
