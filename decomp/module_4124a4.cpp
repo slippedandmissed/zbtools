@@ -16,6 +16,27 @@ void setGroupLists(GroupList *lists, short count, unsigned short flags)
     numberAllItems();
 }
 
+/* Hovers over the item a handler accepts `value` for (entering it), or
+   leaves the one entered; the item, if any. */
+/* @zoombi32 0x00412537 */
+InputItem *hoverItemByHandler(long value)
+{
+    InputState saved;
+    InputItem *item;
+
+    fn_413afd(&saved, 1);
+    g_4aa4c0 = 0;
+    if (focusItemByHandler(value)) {
+        enterFocusedItem();
+        item = g_4aa498;
+    } else {
+        leaveEnteredItem();
+        item = 0;
+    }
+    fn_413a4e(&saved, 1);
+    return item;
+}
+
 /* Passes `value` to the current handlers' slot 0x28, or else to the engine;
    the answer. */
 /* @zoombi32 0x0041280d */
@@ -123,6 +144,63 @@ short fn_41295f(Group *group)
     return 1;
 }
 
+/* Moves the highlight to the focused item (redrawing the one highlighted
+   before), and the mouse with it if the lists ask for that. */
+/* @zoombi32 0x004129e1 */
+void highlightFocus()
+{
+    InputState saved;
+
+    if (fn_4133a4()) {
+        if (g_4aa498 != highlightedItem) {
+            fn_413afd(&saved, 0);
+            g_4aa4c0 = 1;
+            if (focusItem(highlightedItem)) {
+                highlightedItem = 0;
+                if (!fn_41336f())
+                    fn_412bb3(g_4aa498->flags & 4);
+            }
+            fn_413a4e(&saved, 0);
+        }
+        highlightedItem = g_4aa498;
+        if (g_4a01b0)
+            moveMouseToFocus();
+    }
+}
+
+/* Switches the focused item on or off (flag 4), with its sound. */
+/* @zoombi32 0x00412a6e */
+void toggleFocusedItem()
+{
+    short off = (g_4aa498->flags & 4) != 4;
+
+    fn_412bb3(off);
+    g_4aa498->flags ^= 4;
+    if (g_4aa494->sounds)
+        fn_41200c(g_4aa494->sounds[g_4aa49c.c.y * 2 - off - 1], RESOURCE_TYPE(0, 'S', 'N', 'D'), 0,
+                  0, 1);
+}
+
+/* In a list whose items are exclusive (flag 4), switches off every item that's
+   on apart from the focused one. */
+/* @zoombi32 0x00412ace */
+void switchOffOthers()
+{
+    InputState saved;
+
+    if (g_4aa490->flags & 4) {
+        fn_413afd(&saved, 0);
+        g_4aa4ac = 4;
+        g_4aa4be = 4;
+        g_4aa49c.b.y = 1;
+        g_4aa49c.c.y = 0;
+        while (fn_413693(g_4aa490, g_4aa49c.b.y - 1, g_4aa49c.c.y))
+            if (g_4aa498 != saved.item)
+                toggleFocusedItem();
+        fn_413a4e(&saved, 0);
+    }
+}
+
 /* Calls callback with g_4aa498 if there is one; returns whether it did. */
 /* @zoombi32 0x00412b4d */
 short fn_412b4d(void (*callback)(InputItem *item))
@@ -150,7 +228,7 @@ void fn_412b8f()
 }
 
 /* Calls the handler for the current item: the default (fn_412cdf) if
-   something is switched off (flag 2), else one of a pair, for g_4aa484 or
+   something is switched off (flag 2), else one of a pair, for highlightedItem or
    another item, and `alternative` or not. */
 /* @zoombi32 0x00412bb3 */
 void fn_412bb3(short alternative)
@@ -161,7 +239,7 @@ void fn_412bb3(short alternative)
         fn_412cdf();
         return;
     }
-    if (g_4aa498 == g_4aa484) {
+    if (g_4aa498 == highlightedItem) {
         if (alternative)
             fn_412b6b();
         else
@@ -183,7 +261,7 @@ void fn_412c3d()
         fn_412d57();
         return;
     }
-    if (g_4aa498 == g_4aa484) {
+    if (g_4aa498 == highlightedItem) {
         if (g_4aa498->flags & 4)
             fn_412cef();
         else

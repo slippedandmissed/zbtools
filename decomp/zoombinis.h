@@ -99,7 +99,8 @@ struct Group
     InputItem *items;
     short count;
     unsigned char flags;
-    char unknownB[5];
+    char unknownB;
+    short *sounds; /* per item, the sounds for switching it off and on */
 };
 
 /* A list of groups (12 bytes); g_4a01ac is an array of them. */
@@ -317,7 +318,7 @@ extern long g_4a7f58;
 extern Counted *g_4a8dcc;
 extern short g_4aa428;
 extern short g_4aa42a;
-extern InputItem *g_4aa484;
+extern InputItem *highlightedItem; /* @data 0x4aa484 */
 extern unsigned short g_4aa48a;
 extern unsigned char g_4aa48b;
 extern short g_4aa48c; /* how many lists g_4a01ac has */
@@ -430,6 +431,7 @@ void fn_4124cc(Point *where, long);
 unsigned long fn_41571f(); /* a tick count */
 void fn_415880();
 void fn_43ac20();
+void fn_41200c(short id, long type, long, long, long); /* plays a sound */
 short fn_45590b();
 void fn_455ab0(short type);
 void fn_46293a(short key);
@@ -552,6 +554,10 @@ void enterFocusedItem();
 void moveMouseTo(short x, short y);
 void moveMouseToFocus();
 short moveFocus(short direction);
+InputItem *hoverItemByHandler(long value);
+void highlightFocus();
+void toggleFocusedItem();
+void switchOffOthers();
 void getItemPosition(InputItem *item, Cursor *where);
 InputItem *itemAt(short x, short y);
 void activateItemAt(short x, short y);
