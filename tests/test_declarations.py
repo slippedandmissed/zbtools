@@ -17,6 +17,8 @@ extern short cursorShown;
 extern long unplaced;
 extern long g_4a0010; /* @data 0x4a0020 */
 extern long g_4a0014;
+typedef void (*Callback)();
+extern Callback g_4a0018;
 """
 
 
@@ -30,6 +32,7 @@ def test_globals_by_name_and_marker() -> None:
         Global(0x4AA004, "cursorShown", "short", array=False),
         Global(0x4A0020, "g_4a0010", "long", array=False),
         Global(0x4A0014, "g_4a0014", "long", array=False),
+        Global(0x4A0018, "g_4a0018", "void *", array=False),
     ]
 
 

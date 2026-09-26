@@ -55,9 +55,9 @@ long fn_455e85(long, long)
 }
 
 /* @zoombi32 0x00456a2f */
-void fn_456a2f(long value)
+void fn_456a2f(Callback callback)
 {
-    g_4a4a14 = value;
+    g_4a4a14 = callback;
 }
 
 /* @zoombi32 0x00456a3e */

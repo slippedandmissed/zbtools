@@ -5,9 +5,9 @@
 #include "zoombinis.h"
 
 /* @zoombi32 0x00415604 */
-void fn_415604(long value)
+void fn_415604(Callback callback)
 {
-    g_4a07c4 = value;
+    g_4a07c4 = callback;
 }
 
 /* Returns whether either flag was set, and clears both. */
@@ -51,9 +51,9 @@ unsigned short toUpperAscii(unsigned short c)
 }
 
 /* @zoombi32 0x00415a11 */
-void fn_415a11(long value)
+void fn_415a11(Callback callback)
 {
-    g_4a07e8 = value;
+    g_4a07e8 = callback;
 }
 
 /* @zoombi32 0x00415a20 */

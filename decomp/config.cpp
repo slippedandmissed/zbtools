@@ -10,7 +10,7 @@ char dataDirName[] = "Data\\";
 char installToDirKey[] = "INSTALLTODIR";
 
 /* @zoombi32 0x00446962 */
-void fn_446962(long, long)
+void fn_446962(char *, const char *)
 {
 }
 

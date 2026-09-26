@@ -12,6 +12,35 @@
 
 /* Types */
 
+/* A Mohawk resource type, built Mac-style from its four characters (so
+   RESOURCE_TYPE('C','U','R','S') is 0x43555253; C++'s multi-character
+   constants put the bytes the other way round in Borland C++). */
+#define RESOURCE_TYPE(a, b, c, d) (((long)(a) << 24) | ((long)(b) << 16) | ((long)(c) << 8) | (d))
+
+/* A function registered to be called back later (e.g. by fn_415604). */
+typedef void (*Callback)();
+
+/* The display mode WinMain asks for (640x480, 256 colours). */
+struct DisplayMode
+{
+    short width;
+    short height;
+    long colors;
+    short unknown8;
+    char unknownA[2];
+};
+
+/* What fn_48e928 reports about memory; +0xc is free physical memory. */
+struct MemoryInfo
+{
+    long unknown0;
+    long unknown4;
+    long unknown8;
+    unsigned long freePhysical;
+    long unknown10;
+    long unknown14;
+};
+
 /* Something with flags at +0x20. */
 struct Flagged
 {
@@ -113,32 +142,55 @@ private:
 
 extern Entry *g_4a00a0;
 extern long g_4a00dc[];
-extern long g_4a07ac;
+extern Callback g_4a07ac;
 extern long g_4a07b0;
 extern long g_4a07b4;
 extern time_t g_4a07b8;
-extern long g_4a07c4;
-extern long g_4a07e8;
+extern Callback g_4a07c4;
+extern Callback g_4a07e8;
 extern long g_4a07ec;
 extern short g_4a3e5c; /* set when the game data is found in INSTALLFROMDIR */
 extern char installFromDirKey[]; /* @data 0x4a3f06 */
 extern char dataDirName[]; /* @data 0x4a3f15 */
 extern char installToDirKey[]; /* @data 0x4a3f1b */
+extern char userFileName[]; /* @data 0x4a4900 */
+extern char rosterFileName[]; /* @data 0x4a4920 */
+extern short aboveWindows311; /* @data 0x4a494a */
 extern long g_4a4a00;
-extern long g_4a4a14;
+extern char *appName; /* @data 0x4a4a08 */
+extern short g_4a4a0c;
+extern Callback g_4a4a14;
 extern long g_4a4a18;
 extern long g_4a4a1c;
 extern char *g_4a4ba0;
 extern short g_4a4ce6;
+extern char msgRequiresQuickTime[]; /* @data 0x4a4dc7 */
+extern char msgInitOs[]; /* @data 0x4a4e28 */
+extern char msgInitTimer[]; /* @data 0x4a4e40 */
+extern char msgInitHeap[]; /* @data 0x4a4e5b */
+extern char msgNotEnoughMemory[]; /* @data 0x4a4e75 */
+extern char msgNotEnoughPhysicalMemory[]; /* @data 0x4a4e8c */
+extern char msgInitFileManager[]; /* @data 0x4a4eac */
+extern char msgInitResourceManager[]; /* @data 0x4a4ece */
+extern char msgInitConfiguration[]; /* @data 0x4a4ef4 */
+extern char msgInitSound[]; /* @data 0x4a4f24 */
+extern char msgNoWaveDevices[]; /* @data 0x4a4f3f */
+extern char msgNoMidiDevices[]; /* @data 0x4a4f5e */
+extern char msgOutOfMemory[]; /* @data 0x4a5063 */
 extern char configFileName[]; /* @data 0x4a5149 */
 extern short g_4a7b94;
 extern long g_4a7f58;
 extern Counted *g_4a8dcc;
+extern short g_4aa428;
+extern short g_4aa42a;
 extern long g_4aa498;
 extern long g_4aa4c4;
 extern char g_4aa4c9;
 extern short g_4aa79a;
 extern short g_4aa79c;
+extern short g_4aa7cc;
+extern short debugMode; /* @data 0x4ab474 */
+extern short g_4ab482;
 extern short g_4ab49c;
 extern short g_4ab49e;
 extern Entry22 *g_4ab64c;
@@ -146,13 +198,31 @@ extern short g_4af350;
 extern short g_4af35a;
 extern short g_4afb90;
 extern short g_4aff9a[];
+extern short g_4b0d4e;
+extern short g_4b0d50;
 extern short g_4b0d52;
 extern short g_4b0d54;
+extern short g_4b0d56;
 extern char installDir[256]; /* @data 0x4b1828 */
+extern long fonts[3]; /* @data 0x4b28c8 */
+extern char moduleFileName[256]; /* @data 0x4b28d4 */
+extern char g_4b29d4[];
+extern unsigned short instanceAtom; /* @data 0x4b2ae0 */
+extern short quickTimeReady; /* @data 0x4b2ae8 */
+extern short g_4b2aea;
+extern short g_4b2aec;
+extern void *appInstance; /* @data 0x4b2af0 */
+extern void *appPreviousInstance; /* @data 0x4b2af4 */
+extern char *appCommandLine; /* @data 0x4b2af8 */
+extern long appShowCommand; /* @data 0x4b2afc */
 extern short g_4b2d38;
+extern short g_4b754a;
 extern short g_4b7b38;
 extern short g_4b7b3a;
 extern long g_4b7b68;
+extern long cursors[6]; /* @data 0x4b80ac */
+extern short g_4b80c4[6];
+extern short g_4b80e0; /* ends the main loop when set */
 extern short g_4b83e4[];
 extern short g_4b99d4;
 extern char dataPath[256]; /* @data 0x4b99d6 */
@@ -174,9 +244,53 @@ extern long g_4b9d74;
 
 /* Reports an error, printf-style. */
 void __cdecl fn_41541a(const char *format, ...);
+void fn_4144d0(DisplayMode *mode, long);
+void fn_415613();
+void fn_415910();
+void fn_41f195(const char *message);
+void fn_41f2c8(long, long);
+void fn_41f668();
+void fn_41f6fc(long);
+void fn_44695c();
+void fn_454c8e();
+void fn_454caa();
+void fn_454f61();
+short fn_455990(long);
+short fn_4623b8();
+void fn_4625b8();
+void fn_46310c();
+void fn_456c67(long);
+short fn_46beac(long);
+/* Loads resource `id` of type `type` (e.g. 'CURS') into *handle. */
+void fn_46c4fe(long *handle, long type, short id, long, long);
+/* Creates the font `name` at `size` into *font. */
+void fn_46cb10(long *font, const char *name, long size, long);
+/* Initialises the Mohawk OS layer, with a work buffer. */
+short fn_46ddaf(void *instance, void *buffer, long size);
+/* QuickTime (see quicktime.py) */
+long __cdecl QTInitialize(long *version);
+long qtim_0b();
 
 /* Engine functions whose calling conventions aren't known yet: these
    declarations produce the calls the game makes. */
+
+void fn_476622(long handle);
+short fn_476d0a(); /* initialises sound */
+short fn_480642(); /* initialises the configuration file */
+short fn_483732(long); /* initialises the file manager */
+void __cdecl fn_48ac68(DisplayMode *mode, long, long, long, long);
+long fn_48b4a8();
+void fn_48cab4(long, long);
+void fn_48d4c4(long);
+void fn_48da48(long);
+void *fn_48e6b4(long size); /* allocates memory */
+unsigned long fn_48e7ec(); /* free memory */
+void fn_48e928(MemoryInfo *info);
+void fn_48ea00(short);
+short fn_48ec85(long, long); /* initialises the heap */
+void fn_48f2b0(long (*callback)(long, long));
+short fn_4922c6(); /* initialises the resource manager */
+short fn_493096(); /* initialises the timer */
 
 /* Reads `key` from `section` of the INI file `file` into buffer; non-zero if
    it couldn't. */
@@ -189,7 +303,6 @@ long fn_484b50(const fileSpec &file, long mode);
 /* Closes a file opened by fn_484b50. */
 void fn_48266c(long file, long);
 
-void fn_476622(long handle);
 void fn_4812bc(short handle);
 void fn_48f660(long handle, long, long);
 
@@ -204,17 +317,17 @@ short fn_413dc0();
 void __cdecl nextRingIndex(short *index);
 void fn_414358(void **block);
 void fn_414ce7(short *handle);
-void fn_4153b0(long value);
+void fn_4153b0(Callback callback);
 void fn_4153bf(long value);
 void fn_4153ce(long value);
 void fn_415514();
-void fn_415604(long value);
+void fn_415604(Callback callback);
 short fn_4157f3();
 void fn_415811();
 void fn_41581b(short flag);
 unsigned short toLowerAscii(unsigned short c);
 unsigned short toUpperAscii(unsigned short c);
-void fn_415a11(long value);
+void fn_415a11(Callback callback);
 void fn_415a20(long value);
 long fn_417906(long);
 long fn_4196a8(long);
@@ -239,9 +352,10 @@ short fn_437acb(short i);
 short fn_4381bb();
 void spliceList(Link *other, Link *list);
 short fn_44027b(long, long);
-void fn_446962(long, long);
+void fn_446962(char *, const char *);
 void findGameData();
 short preferFirstFile(const char *first, const char *fallback);
+void __cdecl fn_454ca4();
 long fn_455013(long, long);
 int isMousePresent();
 void freeAndClear(void **block);
@@ -250,7 +364,7 @@ char *unsignedToDecimal(unsigned long value, char *buffer);
 void fn_455e26(long);
 void fn_455e2d(long);
 long fn_455e85(long, long);
-void fn_456a2f(long value);
+void fn_456a2f(Callback callback);
 void fn_456a3e(long first, long second);
 void fn_456a55(long value);
 short fn_456bf6();
