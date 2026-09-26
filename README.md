@@ -112,8 +112,9 @@ To name what the tools can recover: the Borland runtime-library functions (strcp
 uv run runtime-symbols      # find them: matches the toolchain's libraries against the game
 uv run classes              # recover C++ classes from RTTI: names, hierarchy, vtables, constructors
 uv run ghidra label         # apply both to the Ghidra project, with QuickTime's SDK glue and the
-                            # names of functions decompiled in decomp/, and set calling conventions
-                            # (never overwrites names you've set by hand); also fixes functions
+                            # names of functions decompiled in decomp/, the types and globals in
+                            # decomp/zoombinis.h, and set calling conventions (never overwrites
+                            # names or types you've set by hand); also fixes functions
                             # Ghidra cut short at a switch table or a breakpoint
 ```
 
