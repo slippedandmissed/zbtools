@@ -198,3 +198,56 @@ short fn_4568d8()
     }
     return 0;
 }
+
+/*
+ * Brightens `count` palette entries from `first`: each component c becomes
+ * c + 31 - c/8 (black stays black). Presumably adjusting colours made for the
+ * Mac's lighter display gamma.
+ */
+/* @zoombi32 0x00455dc5 */
+void brightenPalette(PALETTEENTRY *entries, short first, short count)
+{
+    for (short i = 0; i < count; i++) {
+        unsigned char *color = (unsigned char *)&entries[first + i];
+        for (short c = 0; c < 3; c++)
+            if (color[c])
+                color[c] = color[c] + 31 - color[c] / 8;
+    }
+}
+
+/* Whether input is waiting (without taking it): keys if `which` has bit 0,
+   mouse clicks if it has bit 1. */
+/* @zoombi32 0x00455b1b */
+short isInputWaiting(long which)
+{
+    MSG message;
+
+    if (which & 1) {
+        if (PeekMessage(&message, 0, WM_KEYDOWN, WM_KEYDOWN, PM_NOYIELD)
+            || PeekMessage(&message, 0, WM_CHAR, WM_SYSKEYDOWN, PM_NOYIELD)
+            || PeekMessage(&message, 0, WM_SYSCHAR, WM_SYSDEADCHAR, PM_NOYIELD))
+            return 1;
+    }
+    if (which & 2) {
+        if (PeekMessage(&message, 0, WM_LBUTTONDOWN, WM_LBUTTONDOWN, PM_NOYIELD)
+            || PeekMessage(&message, 0, WM_RBUTTONDOWN, WM_RBUTTONDOWN, PM_NOYIELD)
+            || PeekMessage(&message, 0, WM_MBUTTONDOWN, WM_MBUTTONDOWN, PM_NOYIELD))
+            return 1;
+    }
+    return 0;
+}
+
+/* Appends a record to a queue of up to 1024 (in five parallel arrays; the
+   window procedure fills it). */
+/* @zoombi32 0x004565c8 */
+void fn_4565c8(long a, long b, long c, short d, long e)
+{
+    if (g_4b2d42 != 0x400) {
+        g_4b2d44[g_4b2d42] = a;
+        g_4b3d44[g_4b2d42] = b;
+        g_4b4d44[g_4b2d42] = c;
+        g_4b6d44[g_4b2d42] = d;
+        g_4b5d44[g_4b2d42] = e;
+        g_4b2d42++;
+    }
+}

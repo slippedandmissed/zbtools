@@ -232,6 +232,12 @@ extern char *appCommandLine; /* @data 0x4b2af8 */
 extern long appShowCommand; /* @data 0x4b2afc */
 extern char savedDirectory[]; /* @data 0x4b2c06 */
 extern short g_4b2d38;
+extern short g_4b2d42;
+extern long g_4b2d44[0x400];
+extern long g_4b3d44[0x400];
+extern long g_4b4d44[0x400];
+extern long g_4b5d44[0x400];
+extern short g_4b6d44[0x400];
 extern short g_4b754a;
 extern short g_4b7b38;
 extern short g_4b7b3a;
@@ -384,6 +390,9 @@ short isButtonStillDown(unsigned short button);
 short allocateBlock(void **block, unsigned long size);
 void getClockTime(char *hour, char *minute, char *second);
 void restoreDirectory();
+void brightenPalette(PALETTEENTRY *entries, short first, short count);
+short isInputWaiting(long which);
+void fn_4565c8(long a, long b, long c, short d, long e);
 long fn_455013(long, long);
 int isMousePresent();
 void freeAndClear(void **block);
