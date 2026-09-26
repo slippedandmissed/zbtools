@@ -20,8 +20,9 @@ import pyghidra
 import typer
 from pydantic import BaseModel, ConfigDict
 
-from zbtools import download, host, match, paths, rtti, runtime_symbols
+from zbtools import download, host, match, paths, quicktime, rtti, runtime_symbols
 from zbtools.demangle import qualified_name
+from zbtools.exe import Executable
 
 if TYPE_CHECKING:
     from ghidra.program.model.address import Address
@@ -384,6 +385,33 @@ def _label_decompiled(program: "Program") -> tuple[int, int]:
     return named, kept
 
 
+def _label_quicktime(program: "Program", exe: Executable) -> int:
+    """Name QuickTime's glue: its loader functions and its dispatch stubs, most of
+    which the game never calls, so Ghidra doesn't find them. Returns how many
+    functions were named."""
+    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
+    from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
+
+    api = FlatProgramAPI(program)
+    space = program.getAddressFactory().getDefaultAddressSpace()
+    manager, root = program.getFunctionManager(), program.getGlobalNamespace()
+    named = 0
+    for glue in quicktime.functions(exe):
+        at = space.getAddress(glue.address)
+        function: Function | None = manager.getFunctionAt(at)
+        created = function is None
+        if function is None:
+            new: Function | None = api.createFunction(at, None)
+            if new is None:
+                continue
+            function = new
+        symbol = function.getSymbol()
+        if created or symbol.getSource() != SourceType.USER_DEFINED:
+            symbol.setNameAndNamespace(glue.name, root, SourceType.IMPORTED)
+            named += 1
+    return named
+
+
 def _set_calling_conventions(program: "Program") -> int:
     """Mark functions that pop their own arguments (`ret N`) as __stdcall, so the
     decompiler shows their parameters. Borland passes `this` on the stack, so
@@ -415,13 +443,15 @@ def label() -> None:
         with pyghidra.transaction(program):
             runtime_named, kept = _label_runtime(program, found)
             class_named = _label_classes(program, classes)
+            quicktime_named = _label_quicktime(program, Executable(paths.GAME32_DIR / PROGRAM_NAME))
             decomp_named, decomp_kept = _label_decompiled(program)
             conventions = _set_calling_conventions(program)
         program.save("Recovered symbols", pyghidra.task_monitor())
         _write_functions(list_functions(program))
     print(
         f"Named {runtime_named} runtime functions (kept {kept} names set by hand) and "
-        f"{class_named} class methods from {len(classes)} classes; named {decomp_named} "
+        f"{class_named} class methods from {len(classes)} classes, {quicktime_named} "
+        f"QuickTime glue functions and {decomp_named} "
         f"decompiled functions (kept {decomp_kept} names set by hand); set __stdcall on "
         f"{conventions} functions. Function list updated: {paths.GHIDRA_FUNCTIONS}"
     )

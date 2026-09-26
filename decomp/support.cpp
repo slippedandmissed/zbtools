@@ -1,5 +1,5 @@
 /*
- * The support library linked just below the Borland runtime (0x46ce80 to
+ * The support library linked just below the Borland runtime (0x46d754 to
  * 0x46f7a4, with the fileSpec and threading classes). Unlike the rest of the
  * game it was compiled with standard stack frames (no -k-).
  */

@@ -5,6 +5,7 @@ Regions, derived from the recovered symbols (see docs/findings.md):
 
     startup  Borland's Win32 startup code (C0W32.OBJ), at the entry point
     game     the game's own code
+    quicktime  QuickTime for Windows' glue, linked from Apple's SDK (quicktime.py)
     runtime  the Borland C++ runtime library: from its first identified function
              to the engine, including functions it couldn't name
     engine   Broderbund's Mohawk engine, from the first engine class code after
@@ -21,7 +22,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from zbtools import ghidra, match, rtti, runtime_symbols
+from zbtools import ghidra, match, quicktime, rtti, runtime_symbols
 from zbtools.exe import Executable, disassemble
 
 _DIRECT_CALL = re.compile(r"^call (0x[0-9a-f]+)$")
@@ -35,6 +36,7 @@ _LIBRARY_CLASSES = {
 class Region(StrEnum):
     STARTUP = "startup"
     GAME = "game"
+    QUICKTIME = "quicktime"
     RUNTIME = "runtime"
     ENGINE = "engine"
 
@@ -42,7 +44,7 @@ class Region(StrEnum):
 class Status(StrEnum):
     MATCHED = "matched"  # decompiled and marked @zoombi32
     NONMATCHING = "nonmatching"  # decompiled, marked @zoombi32-nonmatching
-    LIBRARY = "library"  # identified Borland runtime code: nothing to decompile
+    LIBRARY = "library"  # identified library code (runtime, QuickTime glue): nothing to decompile
     TODO = "todo"
 
 
@@ -152,10 +154,12 @@ def load(exe: Executable) -> list[Function]:
         # Engine class methods below the runtime (the threading classes) are engine code.
         if f.address in engine_methods and region == Region.GAME:
             region = Region.ENGINE
+        if quicktime.in_glue(f.address):
+            region = Region.QUICKTIME
         done = decompiled.get(f.address)
         if done is not None:
             status = Status.NONMATCHING if done.target.nonmatching else Status.MATCHED
-        elif f.address in library:
+        elif f.address in library or region == Region.QUICKTIME:
             status = Status.LIBRARY
         else:
             status = Status.TODO
