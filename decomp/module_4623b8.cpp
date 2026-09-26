@@ -8,7 +8,7 @@
  * One pass of the main loop (WinMain runs it and mainLoopEvents until it's
  * told to quit); always carries on. While g_4a4a10 is set it runs the game's
  * timed work, and if g_4b80d2 is 1 that's all; otherwise it handles a pending
- * event (handleNextEvent/discardEvents), or passes on where the cursor is (fn_4124cc).
+ * event (handleNextEvent/discardEvents), or passes on where the cursor is (handleMouse).
  */
 /* @zoombi32 0x004623b8 */
 short mainLoopUpdate()
@@ -41,7 +41,7 @@ short mainLoopUpdate()
         getCursorPosition(&cursor);
         g_4a79c8 = fn_41571f() - g_4a79c4;
         g_4a79c4 = fn_41571f();
-        fn_4124cc(&cursor, 0);
+        handleMouse(&cursor, 0);
     }
     return 1;
 }

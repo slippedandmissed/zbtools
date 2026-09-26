@@ -1,5 +1,9 @@
 /*
- * module_4124a4 (0x4124a4-0x413c24): no strings; uses isMousePresent and toUpperAscii (input?)
+ * focus (0x4124a4-0x413c24): keyboard and mouse focus for on-screen controls.
+ * Items (with bounds, a hotspot and a key) are arranged in groups, each with
+ * its handlers (enter, leave, press, hit test, ...), and groups in lists; the
+ * focus moves by Tab, keys, or the mouse, and presses are tracked like the
+ * Mac's TrackControl. Its state is in the globals from 0x4aa490 (InputState).
  */
 
 #include <string.h>
@@ -14,6 +18,30 @@ void setGroupLists(GroupList *lists, short count, unsigned short flags)
     g_4aa48c = count;
     g_4aa48a = flags;
     numberAllItems();
+}
+
+/* The mouse is at a point (with `button` pressed, if not 0): hovers over the
+   item there and tracks the press; whether there was an item. */
+/* @zoombi32 0x004124cc */
+short handleMouse(Point *where, unsigned short button)
+{
+    InputState saved;
+    short handled;
+
+    fn_413afd(&saved, 1);
+    g_4aa4c0 = 0;
+    g_4aa4c2 = button == 0;
+    if (focusItemAtPoint(where)) {
+        enterFocusedItem();
+        if (button)
+            trackPress(button);
+        handled = 1;
+    } else {
+        leaveEnteredItem();
+        handled = 0;
+    }
+    fn_413a4e(&saved, 1);
+    return handled;
 }
 
 /* Hovers over the item at a point (entering it), or leaves the one entered;
@@ -482,6 +510,61 @@ InputItem *itemAt(short x, short y)
     return item;
 }
 
+/*
+ * A key was pressed: Return presses the highlighted item (or the one under
+ * the mouse, if the mouse follows the focus), Tab and Shift+Tab (0x800 is
+ * Shift, see addModifierKeys) move the focus, and other keys press the item
+ * they select. The item pressed, if any; Tab keys are used up (*key = 0).
+ */
+/* @zoombi32 0x00412e9f */
+InputItem *handleKey(unsigned short *key)
+{
+    InputState saved;
+    Point where;
+    short highlighted, direction;
+    InputItem *item;
+
+    if (!fn_4133a4())
+        return 0;
+    fn_413afd(&saved, 1);
+    g_4a01b0 = 1;
+    g_4aa4c0 = 0;
+    highlighted = focusItem(highlightedItem);
+    if (*key == '\r') {
+        if (fn_41336f()) {
+            fn_413bad(&where);
+            if (focusItemAtPoint(&where)) {
+                pressFocusedItem();
+                fn_413a4e(&saved, 1);
+                return highlightedItem;
+            }
+        } else if (highlighted) {
+            pressFocusedItem();
+            fn_413a4e(&saved, 1);
+            return highlightedItem;
+        }
+    }
+    direction = 1;
+    switch (*key) {
+    case 0x809:
+        direction = -direction;
+    case 9:
+        if (highlighted)
+            stepFocus(direction);
+        *key = 0;
+        fn_413a4e(&saved, 1);
+        return 0;
+    }
+    if (focusItemByKey(*key)) {
+        pressFocusedItem();
+        item = g_4aa498;
+        fn_413a4e(&saved, 1);
+        return item;
+    }
+    fn_413a4e(&saved, 1);
+    return 0;
+}
+
 /* Moves the focus to the next or previous item and highlights it. */
 /* @zoombi32 0x00412fb5 */
 void stepFocus(short direction)
@@ -539,6 +622,29 @@ short moveFocus(short direction)
         tries--;
     } while (tries);
     return 0;
+}
+
+/* Presses the focused item from the keyboard: shows it pressed for 30 ticks
+   (running the main loop), then switches it as a click would. */
+/* @zoombi32 0x00413129 */
+void pressFocusedItem()
+{
+    unsigned short wasOn;
+    short target;
+    unsigned long start;
+
+    wasOn = (g_4aa498->flags & 4) == 4;
+    target = !wasOn;
+    highlightFocus();
+    if (wasOn && !(g_4aa494->flags & 0x10))
+        return;
+    start = fn_415772();
+    fn_412722(target, 0);
+    while (fn_415772() <= start + 30)
+        mainLoopEvents();
+    fn_412722(target, 1);
+    if (!(g_4aa494->flags & 4))
+        fn_412722(wasOn, 1);
 }
 
 /* Highlights the item at a position (from 1), keeping the state; the item. */

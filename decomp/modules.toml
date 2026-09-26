@@ -27,8 +27,8 @@ note = "'too many graphic button groups:'"
 
 [[module]]
 start = 0x4124a4
-name = "module_4124a4"
-note = "no strings; uses isMousePresent and toUpperAscii (input?)"
+name = "focus"
+note = "keyboard and mouse focus for on-screen controls: groups of items with handlers, hover, highlight, press tracking, on/off and exclusive items, Tab/Shift+Tab"
 
 [[module]]
 start = 0x413c24

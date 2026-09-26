@@ -4,6 +4,7 @@
 0x004115f5 fn_4115f5
 0x004117a8 fn_4117a8
 0x004124a4 setGroupLists
+0x004124cc handleMouse
 0x00412537 hoverItemAtPoint
 0x00412587 fn_412587
 0x00412722 fn_412722
@@ -32,8 +33,10 @@
 0x00412d9c leaveEnteredItem
 0x00412df4 getItemPosition
 0x00412e44 itemAt
+0x00412e9f handleKey
 0x00412fb5 stepFocus
 0x00412ff6 moveFocus
+0x00413129 pressFocusedItem
 0x004131a3 highlightItemAt
 0x00413237 activateItemAt
 0x00413295 visitAllItems

@@ -39,7 +39,7 @@ struct Event
 };
 
 /*
- * The input module (module_4124a4) moves a focus over on-screen items,
+ * The focus module (focus.cpp) moves a focus over on-screen items,
  * arranged in groups (each with its own handlers) and lists of groups, by
  * keyboard or mouse. Its state lives in globals from 0x4aa490 (see
  * InputState).
@@ -426,8 +426,8 @@ void fn_4144d0(DisplayMode *mode, long);
 /* Formats into `buffer` (of `size` bytes), printf-style. */
 void __cdecl fn_4150c7(long size, char *buffer, const char *format, ...);
 void fn_415910();
-void fn_4124cc(Point *where, long);
 unsigned long fn_41571f(); /* a tick count */
+unsigned long fn_415772(); /* a tick count */
 void fn_415880();
 void fn_43ac20();
 void fn_41200c(short id, long type, long, long, long); /* plays a sound */
@@ -562,6 +562,9 @@ void stepFocus(short direction);
 short fn_412587(InputItem *item, unsigned short button);
 short trackPress(unsigned short button);
 InputItem *highlightItemAt(short x, short y);
+short handleMouse(Point *where, unsigned short button);
+InputItem *handleKey(unsigned short *key);
+void pressFocusedItem();
 void getItemPosition(InputItem *item, Cursor *where);
 InputItem *itemAt(short x, short y);
 void activateItemAt(short x, short y);
