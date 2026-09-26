@@ -694,10 +694,10 @@ def _ours(data_type: "DataType") -> bool:
 _BUILTINS = {"unsigned long": "ulong", "unsigned short": "ushort", "unsigned char": "uchar"}
 
 
-def _data_type(program: "Program", text: str) -> "DataType":
+def _data_type(program: "Program", text: str) -> "DataType | None":
     """A type from decomp/zoombinis.h (a builtin, one of our structs, or a
     Windows type such as HWND from the types Ghidra imported with the program,
-    with any number of `*`s) as a Ghidra data type."""
+    with any number of `*`s) as a Ghidra data type; None if Ghidra has none."""
     from ghidra.program.model.data import BuiltInDataTypeManager  # noqa: PLC0415
 
     dtm = program.getDataTypeManager()
@@ -709,9 +709,11 @@ def _data_type(program: "Program", text: str) -> "DataType":
         )
         found = builtin
     if found is None:
-        found = next((t for t in dtm.getAllDataTypes() if str(t.getName()) == base), None)
+        # Windows' ANSI types are macros for their A forms (WNDCLASS is WNDCLASSA).
+        names = {base, f"{base}A"}
+        found = next((t for t in dtm.getAllDataTypes() if str(t.getName()) in names), None)
     if found is None:
-        raise ValueError(f"decomp/zoombinis.h: no Ghidra type for {text!r}")
+        return None
     for _ in range(text.count("*")):
         found = dtm.getPointer(found)
     return found
@@ -742,6 +744,9 @@ def _apply_declarations(program: "Program") -> Declared:
         elif str(symbol.getName()) != declared.name:
             kept += 1
         data_type = _data_type(program, declared.type)
+        if data_type is None:
+            print(f"No Ghidra type {declared.type!r} for {declared.name}: left untyped.")
+            continue
         existing = listing.getDataAt(at)
         if existing is not None and existing.getDataType().isEquivalent(data_type):
             continue
