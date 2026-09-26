@@ -44,8 +44,10 @@ class Region(StrEnum):
 
 
 class Status(StrEnum):
-    MATCHED = "matched"  # decompiled and marked @zoombi32
-    NONMATCHING = "nonmatching"  # decompiled, marked @zoombi32-nonmatching
+    # As recorded: decomp/matching.txt says which functions match (`uv run
+    # match` measures it; `uv run report` shows where the two disagree).
+    MATCHED = "matched"  # decompiled, recorded as matching
+    NONMATCHING = "nonmatching"  # decompiled, not (yet) matching
     FUNCTIONAL = "functional"  # decompiled, equivalent but not exact by design
     LIBRARY = "library"  # library code (runtime, QuickTime glue): nothing to decompile
     TODO = "todo"
@@ -130,6 +132,18 @@ def _module(sources: module_map.ModuleMap, address: int, region: Region) -> str 
     return found.name if found else None
 
 
+def _status(
+    done: Decompiled | None, recorded_matching: bool, in_library: bool, region: Region
+) -> Status:
+    if done is not None:
+        if done.target.marker == match.Marker.FUNCTIONAL:
+            return Status.FUNCTIONAL
+        return Status.MATCHED if recorded_matching else Status.NONMATCHING
+    if in_library or region in (Region.RUNTIME, Region.QUICKTIME):
+        return Status.LIBRARY
+    return Status.TODO
+
+
 def decompiled_targets(sources: Iterable[Path] | None = None) -> dict[int, Decompiled]:
     """Functions marked in decomp/ (or the given sources), by address."""
     found = {}
@@ -149,6 +163,7 @@ def load(exe: Executable) -> list[Function]:
     library = {s.address for s in runtime.symbols}
     decompiled = decompiled_targets()
     sources = module_map.load()
+    matching = match.load_baseline()
 
     inventory = []
     for f in sorted(functions, key=lambda f: f.address):
@@ -169,16 +184,7 @@ def load(exe: Executable) -> list[Function]:
         if quicktime.in_glue(f.address):
             region = Region.QUICKTIME
         done = decompiled.get(f.address)
-        if done is not None:
-            status = {
-                match.Marker.EXACT: Status.MATCHED,
-                match.Marker.NONMATCHING: Status.NONMATCHING,
-                match.Marker.FUNCTIONAL: Status.FUNCTIONAL,
-            }[done.target.marker]
-        elif f.address in library or region in (Region.RUNTIME, Region.QUICKTIME):
-            status = Status.LIBRARY
-        else:
-            status = Status.TODO
+        status = _status(done, f.address in matching, f.address in library, region)
         inventory.append(
             Function(
                 address=f.address,

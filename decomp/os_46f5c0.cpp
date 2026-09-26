@@ -15,7 +15,7 @@
  * layer's stack switching (with 0x46f6f9 and 0x46f74f), which a port replaces
  * (e.g. with Windows fibers). Left unimplemented.
  */
-/* @zoombi32-nonmatching 0x0046f771 */
+/* @zoombi32 0x0046f771 */
 void fn_46f771(Resume *resume, unsigned short depth)
 {
 }

@@ -1,13 +1,19 @@
 from pathlib import Path
 
 from zbtools.match import (
+    Checked,
     Marker,
+    Outcome,
+    Result,
     Sibling,
     Target,
     _local_calls,
     cache_key,
     find_targets,
+    load_baseline,
     local_headers,
+    outcome,
+    write_baseline,
 )
 
 
@@ -66,16 +72,48 @@ def test_markers() -> None:
     source = """
 /* @zoombi32 0x00401000 */
 void exact(long) {}
-/* @zoombi32-nonmatching 0x00401010 */
-void close(long) {}
 /* @zoombi32-functional 0x00401020 */
 long portable(long *value) { return 0; }
 """
     assert find_targets(source) == [
-        Target("exact", 0x401000, Marker.EXACT),
-        Target("close", 0x401010, Marker.NONMATCHING),
+        Target("exact", 0x401000, Marker.DECOMPILED),
         Target("portable", 0x401020, Marker.FUNCTIONAL),
     ]
+
+
+def _checked(marker: Marker, *, exact: bool | None) -> Checked:
+    """A checked function at 0x401000: exact, differing, or not compiled (None)."""
+    target = Target("f", 0x401000, marker)
+    if exact is None:
+        return Checked(Path("f.cpp"), target, None, "failed")
+    mismatches = () if exact else (0,)
+    result = Result(target, b"\xc3", b"\xc3", frozenset(), frozenset(), mismatches, {})
+    return Checked(Path("f.cpp"), target, result)
+
+
+def test_outcomes() -> None:
+    recorded, fresh = {0x401000}, set[int]()
+    decompiled, functional = Marker.DECOMPILED, Marker.FUNCTIONAL
+    assert outcome(_checked(decompiled, exact=True), recorded) == Outcome.MATCH
+    assert outcome(_checked(decompiled, exact=True), fresh) == Outcome.NEW_MATCH
+    assert outcome(_checked(decompiled, exact=False), recorded) == Outcome.REGRESSED
+    assert outcome(_checked(decompiled, exact=False), fresh) == Outcome.NONMATCHING
+    assert outcome(_checked(functional, exact=False), fresh) == Outcome.FUNCTIONAL
+    assert outcome(_checked(functional, exact=True), fresh) == Outcome.FUNCTIONAL_EXACT
+    assert outcome(_checked(decompiled, exact=None), fresh) == Outcome.ERROR
+    assert Outcome.REGRESSED.failure
+    assert Outcome.ERROR.failure
+    assert not Outcome.NEW_MATCH.failure
+    assert Outcome.NEW_MATCH.discrepancy
+    assert not Outcome.NONMATCHING.discrepancy
+
+
+def test_baseline_round_trip(tmp_path: Path) -> None:
+    path = tmp_path / "matching.txt"
+    assert load_baseline(path) == {}
+    write_baseline({0x402000: "second", 0x401000: "first"}, path)
+    assert path.read_text().splitlines()[-2:] == ["0x00401000 first", "0x00402000 second"]
+    assert load_baseline(path) == {0x401000: "first", 0x402000: "second"}
 
 
 def test_cache_key_follows_the_source_and_its_headers(tmp_path: Path) -> None:

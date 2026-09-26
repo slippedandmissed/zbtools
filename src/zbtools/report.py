@@ -78,7 +78,8 @@ class Detail:
     name: str
     address: int
     size: int
-    status: Status
+    status: Status  # as recorded (decomp/matching.txt and the markers)
+    outcome: match.Outcome  # as measured now
     source_file: str
     source: str
     rows: list[DetailRow]
@@ -151,7 +152,9 @@ def _compiled_asm(
     return AsmLine(f"{start:04x}", ins.raw.hex(" "), ins.text, note)
 
 
-def _detail(function: inventory.Function, checked: match.Checked, names: Names) -> Detail:
+def _detail(
+    function: inventory.Function, checked: match.Checked, found: match.Outcome, names: Names
+) -> Detail:
     result = checked.result
     rows, percent = [], None
     if result is not None:
@@ -170,6 +173,7 @@ def _detail(function: inventory.Function, checked: match.Checked, names: Names) 
         address=function.address,
         size=function.size,
         status=function.status,
+        outcome=found,
         source_file=str(checked.source.relative_to(paths.REPO_ROOT)),
         source=function_source(checked.source.read_text(), function.address),
         rows=rows,
@@ -209,14 +213,18 @@ def build(release: str) -> str:
     by_address = {f.address: f for f in functions}
     names = Names.of(functions)
     checked = match.check(match.decomp_sources(), release, exe)
+    baseline = match.load_baseline() if release == match.DEFAULT_RELEASE else {}
     details = sorted(
         (
-            _detail(by_address[c.target.address], c, names)
+            _detail(by_address[c.target.address], c, match.outcome(c, baseline), names)
             for c in checked
             if c.target.address in by_address
         ),
         key=lambda d: d.address,
     )
+    # Recorded as matching but no longer marked: the report's other way to regress.
+    marked = {c.target.address for c in checked}
+    unmarked = {a: n for a, n in baseline.items() if a not in marked}
     environment = jinja2.Environment(
         loader=jinja2.PackageLoader("zbtools", "templates"),
         autoescape=True,
@@ -229,6 +237,8 @@ def build(release: str) -> str:
         module_stats=_module_stats(functions),
         functions=functions,
         details=details,
+        outcomes={d.address: d.outcome for d in details},
+        unmarked=unmarked,
         Status=Status,
     )
 

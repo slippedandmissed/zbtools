@@ -28,7 +28,7 @@ long fn_455013(long, long)
  * `register`, block scope, and inline byte-swap helpers (which give the
  * xor/mov form but fold the pointer into [ebp-1]).
  */
-/* @zoombi32-nonmatching 0x004546f8 */
+/* @zoombi32 0x004546f8 */
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, int showCommand)
 {
     WORD version;

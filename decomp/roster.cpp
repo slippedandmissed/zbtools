@@ -9,7 +9,7 @@
  * it tried so far (+ 1, - -1, enums, consts, unsigned, compound assignment,
  * locals, other -O options, and Borland C++ 4.52 as well as 4.5) into `inc eax`.
  */
-/* @zoombi32-nonmatching 0x0041d3e6 */
+/* @zoombi32 0x0041d3e6 */
 int fn_41d3e6(long, short value)
 {
     return value + 1;

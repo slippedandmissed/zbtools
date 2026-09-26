@@ -31,6 +31,8 @@
   .bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--todo); margin: 10px 0 8px; }
   .bar span { display: block; height: 100%; }
   .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 11px; font-weight: 600; color: #fff; background: #b54a3c; }
+  .badge.new { background: #2f8f5b; } .badge.info { background: #6b665e; }
   .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
   .s-matched { background: var(--matched); } .s-functional { background: var(--functional); } .s-nonmatching { background: var(--nonmatching); }
   .s-library { background: var(--library); } .s-todo { background: var(--todo); border: 1px solid var(--muted); }
@@ -98,12 +100,25 @@
   </div>
 
   <h2>Decompiled functions ({{ details | length }})</h2>
+  {% set flagged = details | selectattr('outcome.discrepancy') | list %}
+  {% if flagged or unmarked %}
+  <div class="card" style="margin-bottom: 16px">
+    <h3>Recorded and measured disagree</h3>
+    <div class="muted">Run <span class="mono">uv run match --update</span> to record new matches (the pre-commit hook does); regressions need fixing.</div>
+    <ul>
+      {% for d in flagged %}<li><a class="mono" href="#fn-{{ '%x' % d.address }}">{{ d.name }}</a> <span class="badge {{ 'new' if d.outcome == 'new match' else ('info' if d.outcome == 'exact but marked functional' else '') }}">{{ d.outcome }}</span></li>{% endfor %}
+      {% for address, name in unmarked | dictsort %}<li><span class="mono">{{ name }}</span> <span class="badge">regressed</span> <span class="muted">recorded as matching, but no longer marked</span></li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
   {% for d in details %}
   <section class="fn" id="fn-{{ '%x' % d.address }}">
     <header>
       <strong class="mono">{{ d.name }}</strong>
       <span class="mono muted">{{ '0x%08x' % d.address }}</span>
-      <span><span class="dot s-{{ d.status }}"></span>{{ d.status }}</span>
+      <span title="recorded"><span class="dot s-{{ d.status }}"></span>{{ d.status }}</span>
+      {% if d.outcome.discrepancy %}<span class="badge {{ 'new' if d.outcome == 'new match' else ('info' if d.outcome == 'exact but marked functional' else '') }}" title="measured now, unlike what's recorded">{{ d.outcome }}</span>{% endif %}
+      {% if d.outcome == 'error' %}<span class="badge">error</span>{% endif %}
       <span class="muted">{{ d.size }} bytes</span>
       {% if d.matching_percent is not none %}<span class="muted">{{ d.matching_percent | round(1) }}% of bytes match</span>{% endif %}
       <span class="muted mono">{{ d.source_file }}</span>
@@ -142,7 +157,7 @@
           <td class="mono">{{ f.name }}</td>
           <td class="mono">{{ f.module or '' }}</td>
           <td>{{ f.region }}</td>
-          <td><span class="dot s-{{ f.status }}"></span>{{ f.status }}</td>
+          <td><span class="dot s-{{ f.status }}"></span>{{ f.status }}{% set o = outcomes.get(f.address) %}{% if o and o.discrepancy %} <span class="badge {{ 'new' if o == 'new match' else ('info' if o == 'exact but marked functional' else '') }}">{{ o }}</span>{% endif %}</td>
           <td class="num">{{ f.size }}</td>
           <td class="num">{{ f.calls | length }}{% if f.indirect_calls %} + {{ f.indirect_calls }}{% endif %}</td>
         </tr>

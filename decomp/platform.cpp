@@ -123,7 +123,7 @@ inline void setPoint(Point *point, short x, short y)
  * Not exact: the original loads y before x (into ax and dx) when setting the
  * point; direct stores, an initialiser and this inline helper don't.
  */
-/* @zoombi32-nonmatching 0x00455a10 */
+/* @zoombi32 0x00455a10 */
 void setCursorPosition(short x, short y)
 {
     Point point;
@@ -142,7 +142,7 @@ void setCursorPosition(short x, short y)
  * with GetAsyncKeyState returning int (as in the 16-bit Windows headers);
  * with the Win32 declaration's SHORT, every form tried is a sign test.
  */
-/* @zoombi32-nonmatching 0x00455a5b */
+/* @zoombi32 0x00455a5b */
 short isButtonStillDown(unsigned short button)
 {
     MSG message;
@@ -262,7 +262,7 @@ void fn_4565c8(long a, long b, long c, short d, long e)
  * literals from earlier functions ("Invalid display mode.", ...) that aren't
  * decompiled yet; it should match once they are.
  */
-/* @zoombi32-nonmatching 0x00456638 */
+/* @zoombi32 0x00456638 */
 void dumpMessages()
 {
     FILE *file;

@@ -10,13 +10,14 @@ marker comment giving its address in zoombi32.exe:
 Methods are marked the same way (`void Widget::set(long v)`). The function is
 found in the compiled object by its demangled, qualified name.
 
-A function that is written but doesn't match exactly yet is marked
-`/* @zoombi32-nonmatching 0x... */` instead: it's still compiled and compared,
-and reported with how close it is, but doesn't count as a failure. One that is
-complete but deliberately not byte-exact is marked `/* @zoombi32-functional
-0x... */`: decompiled code must be portable C++, so where only machine code
-(inline assembly, emitted bytes, pseudo-registers) would reproduce the
-original, the function does the same thing portably instead.
+Whether a function matches is measured, not declared. decomp/matching.txt,
+written by `--update` (the pre-commit hook runs it), records which functions
+match; `match` fails if one of them stops matching (a regression), and
+reports new matches. A function that is complete but deliberately not
+byte-exact is marked `/* @zoombi32-functional 0x... */`: decompiled code must
+be portable C++, so where only machine code (inline assembly, emitted bytes,
+pseudo-registers) would reproduce the original, the function does the same
+thing portably instead.
 
 Each file is compiled with Borland C++ 4.5 using the game's usual options
 (`-p -k-`), or those given by a `/* @flags ... */` comment in the file, and
@@ -31,6 +32,7 @@ import hashlib
 import itertools
 import re
 import shlex
+from collections.abc import Collection
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -53,16 +55,15 @@ _FLAGS = re.compile(r"/\*\s*@flags\s+(.*?)\s*\*/")
 # unless 4.52's -fp (Pentium FDIV workaround) is used, which the game doesn't.
 DEFAULT_RELEASE = "4.5"
 
-_MARKER = re.compile(r"/\*\s*@zoombi32(?:-(nonmatching|functional))?\s+(0x[0-9a-fA-F]+)\s*\*/")
+_MARKER = re.compile(r"/\*\s*@zoombi32(?:-(functional))?\s+(0x[0-9a-fA-F]+)\s*\*/")
 # The (possibly qualified) name of the function defined after a marker.
 _DEFINITION = re.compile(r"([A-Za-z_~][\w:~]*)\s*\(")
 
 
 class Marker(StrEnum):
-    """How a decompiled function is meant to compare with the original."""
+    """What a decompiled function's marker says about it."""
 
-    EXACT = "exact"  # @zoombi32: must match byte for byte
-    NONMATCHING = "nonmatching"  # @zoombi32-nonmatching: not exact yet
+    DECOMPILED = "decompiled"  # @zoombi32: whether it matches is measured
     FUNCTIONAL = "functional"  # @zoombi32-functional: equivalent, not exact by design
 
 
@@ -70,7 +71,7 @@ class Marker(StrEnum):
 class Target:
     name: str
     address: int
-    marker: Marker = Marker.EXACT
+    marker: Marker = Marker.DECOMPILED
 
 
 @dataclass(frozen=True)
@@ -109,7 +110,7 @@ def find_targets(source: str) -> list[Target]:
         if name is None:
             raise ValueError(f"no function after marker {marker.group(0)}")
         address = int(marker.group(2), 16)
-        kind = Marker(marker.group(1)) if marker.group(1) else Marker.EXACT
+        kind = Marker(marker.group(1)) if marker.group(1) else Marker.DECOMPILED
         found.append(Target(name.group(1), address, kind))
     return found
 
@@ -418,6 +419,65 @@ def check(
     return checked
 
 
+BASELINE = paths.DECOMP_DIR / "matching.txt"
+_BASELINE_HEADER = """\
+# Functions that match zoombi32.exe byte for byte, by address. Written by
+# `uv run match --update` (the pre-commit hook runs it); `uv run match` fails
+# if one of them stops matching.
+"""
+
+
+def load_baseline(path: Path = BASELINE) -> dict[int, str]:
+    """The functions recorded as matching: address -> name."""
+    if not path.exists():
+        return {}
+    found = {}
+    for line in path.read_text().splitlines():
+        entry = line.split("#")[0].split()
+        if entry:
+            found[int(entry[0], 16)] = entry[1]
+    return found
+
+
+def write_baseline(matching: dict[int, str], path: Path = BASELINE) -> None:
+    lines = [f"{address:#010x} {name}" for address, name in sorted(matching.items())]
+    path.write_text(_BASELINE_HEADER + "".join(f"{line}\n" for line in lines))
+
+
+class Outcome(StrEnum):
+    """How a checked function compares with its expected state."""
+
+    MATCH = "match"  # exact, and recorded as matching
+    NEW_MATCH = "new match"  # exact, not recorded yet
+    NONMATCHING = "nonmatching"  # differs (not recorded as matching)
+    FUNCTIONAL = "functional"  # differs, marked functional
+    FUNCTIONAL_EXACT = "exact but marked functional"
+    REGRESSED = "regressed"  # recorded as matching, but differs
+    ERROR = "error"  # couldn't be compiled or found
+
+    @property
+    def failure(self) -> bool:
+        return self in (Outcome.REGRESSED, Outcome.ERROR)
+
+    @property
+    def discrepancy(self) -> bool:
+        """Whether the measured state disagrees with the recorded one."""
+        return self in (Outcome.NEW_MATCH, Outcome.FUNCTIONAL_EXACT, Outcome.REGRESSED)
+
+
+def outcome(item: Checked, baseline: Collection[int]) -> Outcome:
+    result, target = item.result, item.target
+    if result is None:
+        return Outcome.ERROR
+    if result.matches:
+        if target.marker == Marker.FUNCTIONAL:
+            return Outcome.FUNCTIONAL_EXACT
+        return Outcome.MATCH if target.address in baseline else Outcome.NEW_MATCH
+    if target.address in baseline:
+        return Outcome.REGRESSED
+    return Outcome.FUNCTIONAL if target.marker == Marker.FUNCTIONAL else Outcome.NONMATCHING
+
+
 app = typer.Typer(add_completion=False)
 
 
@@ -427,6 +487,7 @@ def main(
         list[Path] | None,
         typer.Argument(help="Source files to check (default: all of decomp/)", show_default=False),
     ] = None,
+    *,
     release: Annotated[
         list[str] | None,
         typer.Option(
@@ -439,48 +500,96 @@ def main(
             help=f"BCC32 options for all files (default: each file's @flags, or {DEFAULT_FLAGS})"
         ),
     ] = None,
-    quiet: Annotated[
-        bool, typer.Option("--quiet", "-q", help="Don't show disassembly of mismatches")
-    ] = False,
+    quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Don't show disassembly")] = False,
     no_cache: Annotated[
         bool, typer.Option("--no-cache", help="Recompile everything, ignoring build/match-cache")
     ] = False,
+    update: Annotated[
+        bool, typer.Option("--update", help=f"Record what matches in {BASELINE.name}")
+    ] = False,
+    allow_regressions: Annotated[
+        bool,
+        typer.Option(help="With --update, drop functions that no longer match from the record"),
+    ] = False,
 ) -> None:
+    if update and (files or release or flags):
+        raise typer.BadParameter("--update checks everything with the default options")
     sources = files or decomp_sources()
     releases = release or [default_release()]
     exe = game_executable()
+    recorded = load_baseline()
 
-    failed = 0
+    failures = 0
     for rel in releases:
         print(f"Borland C++ {rel}:")
+        # The record is of the default release; others are just compared.
+        baseline = recorded if rel == DEFAULT_RELEASE else {}
         results = check(sources, rel, exe, flags, use_cache=not no_cache)
-        for item in results:
-            target, result = item.target, item.result
-            where = f"{target.name} @ {target.address:#x}"
-            if result is None:
-                failed += 1
-                print(f"  ERROR     {where}: {item.error}")
-                continue
-            size = len(result.compiled)
-            if result.matches:
-                note = (
-                    f" (marked {target.marker}: remove the mark)"
-                    if target.marker != Marker.EXACT
-                    else ""
-                )
-                relocated = len(result.masked)
-                print(f"  match     {where}: {size} bytes ({relocated} relocated){note}")
-            elif target.marker != Marker.EXACT:
-                differ = f"{len(result.mismatches)} of {size} bytes differ"
-                label = "nonmatch " if target.marker == Marker.NONMATCHING else "functional"
-                print(f"  {label:9} {where}: {differ} (marked {target.marker})")
-            else:
-                failed += 1
-                print(f"  MISMATCH  {where}: {len(result.mismatches)} of {size} bytes differ")
-                if not quiet:
-                    print("\n".join(_side_by_side(result)))
+        outcomes = [(item, outcome(item, baseline)) for item in results]
+        for item, found in outcomes:
+            failures += found.failure
+            _print_outcome(item, found, show=not quiet and (found.failure or bool(files)))
+        checked = {item.target.address for item in results}
+        missing = {a: n for a, n in baseline.items() if a not in checked} if not files else {}
+        for address, name in sorted(missing.items()):
+            failures += 1
+            print(f"  REGRESSED  {name} @ {address:#x}: recorded as matching, but no longer marked")
         by_source = {item.source: item.cached for item in results}
         reused = sum(by_source.values())
         print(f"  ({len(by_source) - reused} files compiled, {reused} from the cache)")
-    if failed:
+        new = [item for item, found in outcomes if found == Outcome.NEW_MATCH]
+        if update:
+            _update(outcomes, recorded, failures, allow_regressions=allow_regressions)
+            return
+        if new:
+            print(f"{len(new)} new matches: record them with `uv run match --update`.")
+    if failures:
         raise typer.Exit(1)
+
+
+def _print_outcome(item: Checked, found: Outcome, *, show: bool) -> None:
+    target, result = item.target, item.result
+    where = f"{target.name} @ {target.address:#x}"
+    if result is None:
+        print(f"  ERROR      {where}: {item.error}")
+        return
+    size = len(result.compiled)
+    if result.matches:
+        notes = {
+            Outcome.NEW_MATCH: " (new)",
+            Outcome.FUNCTIONAL_EXACT: " (marked functional: remove the mark)",
+        }
+        detail = f"{size} bytes ({len(result.masked)} relocated){notes.get(found, '')}"
+        print(f"  match      {where}: {detail}")
+        return
+    label = {Outcome.REGRESSED: "REGRESSED", Outcome.FUNCTIONAL: "functional"}.get(
+        found, "nonmatch"
+    )
+    print(f"  {label:10} {where}: {len(result.mismatches)} of {size} bytes differ")
+    if show:
+        print("\n".join(_side_by_side(result)))
+
+
+def _update(
+    outcomes: list[tuple[Checked, Outcome]],
+    recorded: dict[int, str],
+    failures: int,
+    *,
+    allow_regressions: bool,
+) -> None:
+    """Write the record of what matches; refuse to drop regressions unless allowed."""
+    if failures and not allow_regressions:
+        print(f"Not updating {BASELINE.name}: fix the regressions, or use --allow-regressions.")
+        raise typer.Exit(1)
+    matching = {
+        item.target.address: item.target.name
+        for item, found in outcomes
+        if found in (Outcome.MATCH, Outcome.NEW_MATCH)
+    }
+    added = sorted(set(matching) - set(recorded))
+    removed = sorted(set(recorded) - set(matching))
+    if matching != recorded:
+        write_baseline(matching)
+    print(
+        f"{BASELINE.name}: {len(matching)} matching ({len(added)} added, {len(removed)} removed)."
+    )

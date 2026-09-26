@@ -155,7 +155,7 @@ BCC32 compiles a `switch` to `jmp dword ptr [reg*4 + table]` with the table righ
 
 ## Functions written in assembly
 
-BCC32 only compiles inline `asm` with TASM32, which isn't part of Borland C++ 4.5. These functions can't come from C++ at all, and as the decompiled code is kept portable (no emitted bytes or pseudo-registers), they're written as portable equivalents (`@zoombi32-functional`) or left as documented stubs (`@zoombi32-nonmatching`):
+BCC32 only compiles inline `asm` with TASM32, which isn't part of Borland C++ 4.5. These functions can't come from C++ at all, and as the decompiled code is kept portable (no emitted bytes or pseudo-registers), they're written as portable equivalents (`@zoombi32-functional`) or left as documented stubs (which don't match):
 
 - `0x46dabb`, `0x46da9d`, `0x46daac` (`atomicIncrement`, `atomicDecrement`, `atomicExchange`): `lock inc`, `lock dec`, `xchg`, probably because Windows 95's `InterlockedIncrement`/`Decrement` only return the sign of the result. Written with the `Interlocked*` functions (functional). (They could be matched exactly with `__emit__` and pseudo-registers, as could `0x46f771`, which is how they were first matched.)
 - `0x46f771`: walks `depth` stack frames up with a hand-written loop and records the return address there; no portable equivalent (a stub).

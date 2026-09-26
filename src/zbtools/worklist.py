@@ -64,7 +64,7 @@ def main(
     )
     print(f"\nReady, smallest first ({min(limit, len(ready))} of {len(ready)}):")
     for f in ready[:limit]:
-        note = " (in progress: marked non-matching)" if f.status == Status.NONMATCHING else ""
+        note = " (in progress: decompiled, not matching)" if f.status == Status.NONMATCHING else ""
         calls = f"{len(f.calls)} direct calls" + (
             f", {f.indirect_calls} indirect" if f.indirect_calls else ""
         )
