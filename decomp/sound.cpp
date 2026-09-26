@@ -82,6 +82,25 @@ void setSoundType(Entry **entry, short key, long type)
     (*entry)->type = kind;
 }
 
+/* Loads a sound into the engine if it isn't loaded; whether it is. */
+/* @zoombi32 0x00411728 */
+short loadSound(Entry *entry)
+{
+    if (fn_4121a5(2))
+        return 0;
+    if (!entry->handle) {
+        if (entry->unknown2) {
+            fn_41585f();
+            entry->handle = fn_477848(entry->unknownA, g_4a0098);
+            mainLoopEvents();
+        } else
+            entry->handle = fn_477794(fn_46beac(entry->unknownA));
+        if (!entry->handle && !g_4aa42a)
+            reportSoundError(0, 0, entry, "unable to create");
+    }
+    return entry->handle != 0;
+}
+
 /* @zoombi32 0x004117a8 */
 void fn_4117a8(Entry *entry)
 {
@@ -294,6 +313,12 @@ short waitForSound(unsigned short id, long type, short eventType, short discard)
     return !interrupted;
 }
 
+/* @zoombi32 0x00412084 */
+short fn_412084(unsigned short id, long type, short eventType, short discard)
+{
+    return waitForSound(id, type, eventType, discard);
+}
+
 /* With `stop`, stops the sound (and answers 0); else whether it's playing. */
 /* @zoombi32 0x004120a2 */
 short fn_4120a2(unsigned short id, long type, short stop)
@@ -319,6 +344,29 @@ short fn_4120c8(char value, long type)
     if (currentChannel[i] != -1)
         return currentChannel[i] >= value;
     return 1;
+}
+
+/* Waits until a sound type's value reaches `value` (fn_4120c8), running the
+   main loop; an input event cuts it short (thrown away with `discard`).
+   Whether it wasn't cut short. */
+/* @zoombi32 0x0041210a */
+short waitForSoundValue(char value, long type, short eventType, short discard)
+{
+    unsigned short interrupted;
+
+    do {
+        mainLoopEvents();
+        interrupted = isEventWaiting(eventType, 0);
+    } while (!interrupted && !fn_4120c8(value, type));
+    if (interrupted && discard)
+        discardEvents(eventType);
+    return !interrupted;
+}
+
+/* @zoombi32 0x00412159 */
+short fn_412159(char value, long type, short eventType, short discard)
+{
+    return waitForSoundValue(value, type, eventType, discard);
 }
 
 /* Resets a sound type's current channel, if it has one. */

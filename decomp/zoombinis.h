@@ -197,10 +197,10 @@ struct Entry22
 struct Entry
 {
     short type; /* 0 a wave, 1 MIDI (see soundTypes) */
-    short unknown2;
+    short unknown2; /* which way loadSound loads it */
     short key;
     long handle; /* the engine's */
-    long unknownA;
+    long unknownA; /* its resource, for loadSound */
     Entry *next;
 };
 
@@ -274,6 +274,7 @@ private:
 /* Globals, by address */
 
 extern short soundLevel; /* @data 0x4a0090 */
+extern long g_4a0098;
 extern Entry *g_4a00a0;
 extern short channelCounts[2]; /* @data 0x4a00a4 */
 extern char currentChannel[2]; /* @data 0x4a00a8 */
@@ -505,6 +506,9 @@ void fn_476622(long handle);
 void fn_4771a4(long handle);
 short fn_476bb4(); /* the last sound error */
 void fn_476f50(long handle);
+long fn_477794(short resource);
+long fn_477848(long resource, long);
+void fn_41585f();
 /* Starts a sound; its owner hears about it through `notify`. Non-zero on failure. */
 short fn_47712a(long handle, void (*notify)(long, SoundNotice *, long cookie), long cookie);
 void fn_46c602(long *);
@@ -568,6 +572,10 @@ void stopSounds(unsigned short id, long type);
 void fn_411e4c(unsigned short id, long type);
 short fn_4120a2(unsigned short id, long type, short stop);
 short waitForSound(unsigned short id, long type, short eventType, short discard);
+short fn_412084(unsigned short id, long type, short eventType, short discard);
+short waitForSoundValue(char value, long type, short eventType, short discard);
+short fn_412159(char value, long type, short eventType, short discard);
+short loadSound(Entry *entry);
 void fn_4119f3(Entry *entry, short channel);
 void fn_411d2c(long, SoundNotice *notice, long cookie);
 void fn_412176(long type);
