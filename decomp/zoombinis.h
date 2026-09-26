@@ -13,6 +13,20 @@
 
 /* Types */
 
+/* Big-endian values (the Mac's byte order, as in the game's data) and back. */
+inline unsigned short swapShort(unsigned short value)
+{
+    unsigned char *bytes = (unsigned char *)&value;
+    return (unsigned short)(bytes[1] | bytes[0] << 8);
+}
+
+inline unsigned long swapLong(unsigned long value)
+{
+    unsigned char *bytes = (unsigned char *)&value;
+    return (bytes[3] | (unsigned short)bytes[2] << 8)
+           | (unsigned long)(bytes[1] | (unsigned short)bytes[0] << 8) << 16;
+}
+
 /* A Mohawk resource type, built Mac-style from its four characters (so
    RESOURCE_TYPE('C','U','R','S') is 0x43555253; C++'s multi-character
    constants put the bytes the other way round in Borland C++). */
@@ -286,7 +300,7 @@ extern char emptyString[]; /* @data 0x4a01b8 */
 extern short breakpointKey; /* @data 0x4a0708 */
 extern Callback g_4a07ac;
 extern long g_4a07b0;
-extern long g_4a07b4;
+extern const char *g_4a07b4; /* the message for a fatal error */
 extern time_t g_4a07b8;
 extern Callback g_4a07c4;
 extern Callback g_4a07e8;
@@ -345,9 +359,11 @@ extern long g_4a7f58;
 extern Counted *g_4a8dcc;
 extern short g_4aa428;
 extern short g_4aa42a;
+extern short g_4aa42c;
 extern char *g_4aa430;
 extern char *g_4aa434;
 extern char *g_4aa438;
+extern short soundErrorsIgnored; /* @data 0x4aa43c */
 extern InputItem *highlightedItem; /* @data 0x4aa484 */
 extern unsigned short g_4aa48a;
 extern unsigned char g_4aa48b;
@@ -490,7 +506,7 @@ void fn_46310c();
 void fn_456c67(long);
 short fn_46beac(long);
 /* Loads resource `id` of type `type` (e.g. 'CURS') into *handle. */
-void fn_46c4fe(long *handle, long type, short id, long, long);
+void fn_46c4fe(long *handle, long type, short id, const char *what, short);
 /* Creates the font `name` at `size` into *font. */
 void fn_46cb10(long *font, const char *name, long size, long);
 /* Initialises the Mohawk OS layer, with a work buffer. */
@@ -506,6 +522,8 @@ void fn_476622(long handle);
 void fn_4771a4(long handle);
 short fn_476bb4(); /* the last sound error */
 void fn_476f50(long handle);
+short fn_476e72(long handle, long); /* prepares a sound */
+char *fn_46cafb(long resource); /* a resource's data */
 long fn_477794(short resource);
 long fn_477848(long resource, long);
 void fn_41585f();
@@ -576,6 +594,8 @@ short fn_412084(unsigned short id, long type, short eventType, short discard);
 short waitForSoundValue(char value, long type, short eventType, short discard);
 short fn_412159(char value, long type, short eventType, short discard);
 short loadSound(Entry *entry);
+Entry *getSound(short key, long type);
+short prepareSound(Entry *entry, short channel);
 void fn_4119f3(Entry *entry, short channel);
 void fn_411d2c(long, SoundNotice *notice, long cookie);
 void fn_412176(long type);
@@ -657,7 +677,7 @@ void fn_414358(void **block);
 void fn_414ce7(short *handle);
 void fn_4153b0(Callback callback);
 void fn_4153bf(long value);
-void fn_4153ce(long value);
+void fn_4153ce(const char *message);
 void fn_415514();
 void fn_415604(Callback callback);
 short fn_4157f3();

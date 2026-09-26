@@ -2,8 +2,30 @@
  * sound (0x411350-0x4121cc): 'waveform', 'midi', 'unknown chunk type:', 'unable to prepare'
  */
 
+#include <stdio.h>
 #include <string.h>
 #include "zoombinis.h"
+
+/* The sound with a key (of a type), loading its resource and type (a
+   big-endian tag, as on the Mac) if it isn't loaded. */
+/* @zoombi32 0x00411478 */
+Entry *getSound(short key, long type)
+{
+    Entry *entry;
+
+    if (fn_4121a5(1))
+        return 0;
+    if (!(entry = findOrAddSound(key, type)))
+        return 0;
+    if (entry->handle)
+        return entry;
+    fn_46c4fe(&entry->unknownA, type, key, "sound", g_4aa42c);
+    if (!entry->unknownA)
+        removeSound(&entry);
+    else
+        setSoundType(&entry, key, swapLong(*(long *)(fn_46cafb(entry->unknownA) + 8)));
+    return entry;
+}
 
 /* The sound with a key (of a type), added to the list if it isn't there. */
 /* @zoombi32 0x004115b1 */
@@ -108,6 +130,46 @@ void fn_4117a8(Entry *entry)
         fn_476622(entry->handle);
         entry->handle = 0;
     }
+}
+
+/*
+ * Prepares a sound on a channel. If the device fails, asks whether to retry
+ * (Abort is fatal, Ignore stops asking); then the channel is the sound's,
+ * newest (the others age by one). Whether it's prepared.
+ */
+/* @zoombi32 0x004117c7 */
+short prepareSound(Entry *entry, short channel)
+{
+    char message[0x100];
+    int answer;
+    short type, i;
+
+    if (fn_4121a5(3))
+        return 0;
+    do {
+        answer = IDOK;
+        if (fn_476e72(entry->handle, 0xffff)) {
+            if (!g_4aa42a)
+                reportSoundError(0, 0, entry, "unable to prepare");
+            if (soundErrorsIgnored)
+                return 0;
+            sprintf(message, "%s%s", !entry->type ? "waveform" : "midi",
+                    " sound device or driver has failed to respond.");
+            answer = MessageBox(mainWindow, message, appName, MB_ABORTRETRYIGNORE);
+        }
+    } while (answer == IDRETRY);
+    if (answer == IDABORT)
+        fn_41541a(g_4a07b4);
+    else if (answer == IDIGNORE) {
+        soundErrorsIgnored = 1;
+        return 0;
+    }
+    type = entry->type;
+    soundChannels[type][channel].id = entry->key;
+    soundChannels[type][channel].started = 0xffff;
+    for (i = 0; i < channelCounts[type]; i++)
+        soundChannels[type][i].started--;
+    return 1;
 }
 
 /* @zoombi32 0x00411910 */

@@ -52,22 +52,15 @@ long fn_455013(long, long)
  * finds the game data, opens the 640x480, 256-colour display, loads fonts,
  * cursors and QuickTime, then runs the main loop until it's told to quit.
  * Its messages come from a table of named strings (msg...), not literals.
- *
- * Not exact: only the Windows version check differs (12 bytes). The original
- * keeps the pointer to the version's bytes in ebx and zero-extends with
- * xor/mov; tried so far: MAKEWORD and shift/or forms in both orders, casts,
- * `register`, block scope, and inline byte-swap helpers (which give the
- * xor/mov form but fold the pointer into [ebp-1]).
+ * The version check swaps the version's bytes with swapShort (the original
+ * evidently had Mac-style byte-swapping helpers; see zoombinis.h).
  */
 /* @zoombi32 0x004546f8 */
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, int showCommand)
 {
-    WORD version;
-    long quickTimeVersion;
     char osBuffer[0x5f50];
     MemoryInfo memory;
     DisplayMode mode;
-    unsigned char *bytes;
     HWND window;
     short i;
 
@@ -75,9 +68,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     appPreviousInstance = previous;
     appCommandLine = commandLine;
     appShowCommand = showCommand;
-    version = (WORD)GetVersion();
-    bytes = (unsigned char *)&version;
-    aboveWindows311 = MAKEWORD(bytes[1], bytes[0]) > 0x30b;
+    aboveWindows311 = swapShort((WORD)GetVersion()) > 0x30b;
     atexit(fn_454ca4);
 
     /* The window class is named after the program's file: if a window of
@@ -191,7 +182,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     }
     fn_46be2e(0);
 
-    quickTimeVersion = 0;
+    long quickTimeVersion = 0;
     if (QTInitialize(&quickTimeVersion) || quickTimeVersion < 0x2300)
         fn_41541a(msgRequiresQuickTime);
     if (qtim_0b())

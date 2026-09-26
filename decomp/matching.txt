@@ -1,6 +1,7 @@
 # Functions that match zoombi32.exe byte for byte, by address. Written by
 # `uv run match --update` (the pre-commit hook runs it); `uv run match` fails
 # if one of them stops matching.
+0x00411478 getSound
 0x004115b1 findOrAddSound
 0x004115f5 fn_4115f5
 0x0041162c addSound
@@ -136,6 +137,7 @@
 0x00446962 fn_446962
 0x00446969 findGameData
 0x00446b48 preferFirstFile
+0x004546f8 WinMain
 0x00454ca4 fn_454ca4
 0x00454f61 gameFrame
 0x00455013 fn_455013

@@ -17,7 +17,7 @@ void fn_4153bf(long value)
 }
 
 /* @zoombi32 0x004153ce */
-void fn_4153ce(long value)
+void fn_4153ce(const char *message)
 {
-    g_4a07b4 = value;
+    g_4a07b4 = message;
 }
