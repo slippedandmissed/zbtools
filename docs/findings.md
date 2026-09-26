@@ -104,9 +104,9 @@ Each vtable, in the data section, is preceded by a pointer to its class's descri
 
 `uv run ghidra label` makes these Ghidra classes (descriptor, vtable, constructors, destructor, and `vfuncN` for virtual methods named after the class that introduces them) and sets `__stdcall` on the 1,365 functions that pop their own arguments.
 
-## Compiler settings: `-p`, otherwise BCC32's defaults
+## Compiler settings: `-p -k-`, otherwise BCC32's defaults
 
-The game's code is reproduced by BCC32 with **`-p`** (the Pascal calling convention by default) and otherwise its defaults: no optimisation (`-Od`), register variables on (`-r`), byte alignment. Evidence, from compiling decompiled game functions (`decomp/`) and comparing:
+The game's code is reproduced by BCC32 with **`-p`** (the Pascal calling convention by default) and **`-k-`** (no standard stack frame unless needed), and otherwise its defaults: no optimisation (`-Od`), register variables on (`-r`), byte alignment. The support library just below the runtime (`0x46ce80`-`0x46f7a4`) was compiled without `-k-`. Evidence, from compiling decompiled game functions (`decomp/`) and comparing:
 
 - Four functions match byte for byte with the defaults, including two with loops, register-allocated locals and hoisted addresses (`fn_4572bf`, `fn_437390`); what looks like optimisation in the game (registers for locals, rotated loops, no stack frame for argument-less functions) is BCC32's default code generation.
 - `-O1` and `-O2` break two and three of them respectively; `-r-` (no register variables) breaks two.
@@ -128,3 +128,11 @@ Written as plain functions with their parameters in Pascal order and compiled wi
 Borland upper-cases the whole mangled name of `__pascal` functions (`@FN_4115F5$QSL`); `demangle.py` and `match` handle that.
 
 Ghidra's 32-bit x86 support has no `__pascal` convention, so `ghidra label` marks these functions `__stdcall`: the stack clean-up is right, but **Ghidra numbers their parameters in reverse** (its `param_1` is the source's last parameter).
+
+### Stack frames (`-k-`) and a separately compiled support library
+
+`-k-` only shows in functions that make calls but have no parameters and no stack locals: without it they get a `push ebp` / `mov ebp, esp` frame; with it they don't. Functions with parameters (used or not) or stack locals get a frame either way, which is why it didn't show in the earlier tests.
+
+`fn_455903` (wraps `GetSystemMetrics(SM_MOUSEPRESENT)`) has no frame and matches only with `-k-`; `fn_46dda5` (wraps `timeGetTime()`) has one and matches only without. Across the game there are 210 functions with calls but no parameter or local references: 168 have no frame, in runs across the whole game code up to about `0x46ce80`; of the 42 with one, 24 turned out to take an unused parameter (callbacks), and the other 18 are all in `0x46ce80`-`0x46f7a4`, the stretch holding the `fileSpec` and threading classes. So that support library was compiled with frames and the rest of the game with `-k-`. Decompiled functions from that range go in `decomp/support.cpp`, which sets `/* @flags -p */`.
+
+The game was evidently built with per-module options (as an IDE project allows), so other modules may turn out to differ too.

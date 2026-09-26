@@ -14,11 +14,11 @@ A function that is written but doesn't match exactly yet is marked
 `/* @zoombi32-nonmatching 0x... */` instead: it's still compiled and compared,
 and reported with how close it is, but doesn't count as a failure.
 
-Each file is compiled with Borland C++ 4.5 using the game's options (-p: the
-Pascal calling convention by default), or those given by a `/* @flags ... */`
-comment in the file, and every marked function is compared with the original,
-ignoring the bytes the linker fills in (relocated addresses and call targets).
-Mismatches are shown side by side.
+Each file is compiled with Borland C++ 4.5 using the game's usual options
+(`-p -k-`), or those given by a `/* @flags ... */` comment in the file, and
+every marked function is compared with the original, ignoring the bytes the
+linker fills in (relocated addresses and call targets). Mismatches are shown
+side by side.
 """
 
 import difflib
@@ -36,10 +36,11 @@ from zbtools.demangle import qualified_name
 from zbtools.exe import Executable, Instruction, disassemble
 
 # Compiler options used unless a file says otherwise (/* @flags ... */) or --flags
-# is given: the game's code was compiled with -p (Pascal calling convention by
-# default) and BCC32's other defaults (no optimisation, register variables, byte
-# alignment); see docs/findings.md.
-DEFAULT_FLAGS = "-p"
+# is given: most of the game's code was compiled with -p (Pascal calling
+# convention by default) and -k- (no stack frame unless needed), otherwise BCC32's
+# defaults (no optimisation, register variables, byte alignment). The support
+# library just below the runtime used -p alone. See docs/findings.md.
+DEFAULT_FLAGS = "-p -k-"
 _FLAGS = re.compile(r"/\*\s*@flags\s+(.*?)\s*\*/")
 # Release used unless --release is given. 4.5 and 4.52 generate identical code
 # unless 4.52's -fp (Pentium FDIV workaround) is used, which the game doesn't.
