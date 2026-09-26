@@ -14,6 +14,17 @@ extern short g_4b9cf8;
 extern short g_4b9d4c;
 extern short g_4ab49e;
 extern short g_4a7b94;
+extern long g_4aa4c4;
+extern long g_4a07ac;
+extern long g_4a07b0;
+extern long g_4a07b4;
+extern long g_4a07c4;
+extern long g_4a07e8;
+extern long g_4a07ec;
+extern long g_4a4a14;
+extern long g_4a4a00;
+extern long g_4b7b68;
+extern short g_4af350;
 
 /* @zoombi32 0x0046dd21 */
 long fn_46dd21()
@@ -79,4 +90,70 @@ void fn_415811()
 void fn_465175()
 {
     g_4a7b94 = 1;
+}
+
+/* @zoombi32 0x00413bcf */
+void fn_413bcf(long value)
+{
+    g_4aa4c4 = value;
+}
+
+/* @zoombi32 0x004153b0 */
+void fn_4153b0(long value)
+{
+    g_4a07ac = value;
+}
+
+/* @zoombi32 0x004153bf */
+void fn_4153bf(long value)
+{
+    g_4a07b0 = value;
+}
+
+/* @zoombi32 0x004153ce */
+void fn_4153ce(long value)
+{
+    g_4a07b4 = value;
+}
+
+/* @zoombi32 0x00415604 */
+void fn_415604(long value)
+{
+    g_4a07c4 = value;
+}
+
+/* @zoombi32 0x00415a11 */
+void fn_415a11(long value)
+{
+    g_4a07e8 = value;
+}
+
+/* @zoombi32 0x00415a20 */
+void fn_415a20(long value)
+{
+    g_4a07ec = value;
+}
+
+/* @zoombi32 0x00456a2f */
+void fn_456a2f(long value)
+{
+    g_4a4a14 = value;
+}
+
+/* @zoombi32 0x00456a55 */
+void fn_456a55(long value)
+{
+    g_4a4a00 = value;
+}
+
+/* @zoombi32 0x0045bfc0 */
+void fn_45bfc0(long value)
+{
+    g_4b7b68 = value;
+}
+
+/* @zoombi32 0x0042c6cb */
+void fn_42c6cb(short value)
+{
+    g_4af350 = value;
 }

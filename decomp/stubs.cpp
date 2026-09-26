@@ -91,3 +91,40 @@ long __cdecl fn_46f43a(long value)
 {
     return value;
 }
+
+/* @zoombi32 0x0044027b */
+short fn_44027b(long, long)
+{
+    return 1;
+}
+
+extern char g_4aa4c9;
+
+/* @zoombi32 0x00455013 */
+long fn_455013(long, long)
+{
+    g_4aa4c9 = 1;
+    return 0;
+}
+
+/*
+ * The original adds one with `sub eax, -1`; BCC32 turns every way of writing
+ * it tried so far (+ 1, - -1, enums, consts, unsigned, compound assignment,
+ * locals, other -O options) into `inc eax`.
+ */
+/* @zoombi32-nonmatching 0x0041d3e6 */
+int fn_41d3e6(long, short value)
+{
+    return value + 1;
+}
+
+/*
+ * Only an unsigned constant (or `-=` on a local) gives the original's
+ * `sub eax, 50`; a signed one becomes `add eax, -50`. Perhaps a sizeof or an
+ * unsigned #define.
+ */
+/* @zoombi32 0x0043691d */
+int fn_43691d(long, short value)
+{
+    return value - 50u;
+}
