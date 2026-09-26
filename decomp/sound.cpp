@@ -6,6 +6,22 @@
 #include <string.h>
 #include "zoombinis.h"
 
+/* The module's messages (named, not literals: the original addresses each
+   directly). */
+char msgUnableToCreate[] = "unable to create";
+char textSound[] = "sound";
+char textMidi[] = "midi";
+char textWaveform[] = "waveform";
+char msgUnknownChunk[] = "unknown chunk type:";
+char msgUnableToPrepare[] = "unable to prepare";
+char msgSeekError[] = "seek error:";
+char msgUnableToStart[] = "unable to start";
+char msgPrematureExit[] = "premature exit:";
+char formatJoin[] = "%s%s";
+char formatErrorNumber[] = ":error #%d";
+char formatSoundId[] = "%s id #%u";
+char msgDeviceFailed[] = " sound device or driver has failed to respond.";
+
 /* The sound with a key (of a type), loading its resource and type (a
    big-endian tag, as on the Mac) if it isn't loaded. */
 /* @zoombi32 0x00411478 */
@@ -19,7 +35,7 @@ Entry *getSound(short key, long type)
         return 0;
     if (entry->handle)
         return entry;
-    fn_46c4fe(&entry->unknownA, type, key, "sound", g_4aa42c);
+    fn_46c4fe(&entry->unknownA, type, key, textSound, g_4aa42c);
     if (!entry->unknownA)
         removeSound(&entry);
     else
@@ -98,7 +114,7 @@ void setSoundType(Entry **entry, short key, long type)
     else if (type == RESOURCE_TYPE('M', 'I', 'D', 'I') || type == RESOURCE_TYPE('t', 'M', 'I', 'D'))
         kind = 1;
     else if (!g_4aa42a)
-        reportSoundError(key, type, 0, "unknown chunk type:");
+        reportSoundError(key, type, 0, msgUnknownChunk);
     else
         removeSound(entry);
     (*entry)->type = kind;
@@ -118,7 +134,7 @@ short loadSound(Entry *entry)
         } else
             entry->handle = fn_477794(fn_46beac(entry->unknownA));
         if (!entry->handle && !g_4aa42a)
-            reportSoundError(0, 0, entry, "unable to create");
+            reportSoundError(0, 0, entry, msgUnableToCreate);
     }
     return entry->handle != 0;
 }
@@ -134,8 +150,10 @@ void fn_4117a8(Entry *entry)
 
 /*
  * Prepares a sound on a channel. If the device fails, asks whether to retry
- * (Abort is fatal, Ignore stops asking); then the channel is the sound's,
- * newest (the others age by one). Whether it's prepared.
+ * (Abort is fatal, Ignore stops asking); then the channel is the sound's, and
+ * newest. Whether it's prepared. (The ageing loop was presumably meant to age
+ * every other channel by one, but it takes the new channel's `started` down
+ * by the channel count instead.)
  */
 /* @zoombi32 0x004117c7 */
 short prepareSound(Entry *entry, short channel)
@@ -143,6 +161,7 @@ short prepareSound(Entry *entry, short channel)
     char message[0x100];
     int answer;
     short type, i;
+    char *kind;
 
     if (fn_4121a5(3))
         return 0;
@@ -150,11 +169,11 @@ short prepareSound(Entry *entry, short channel)
         answer = IDOK;
         if (fn_476e72(entry->handle, 0xffff)) {
             if (!g_4aa42a)
-                reportSoundError(0, 0, entry, "unable to prepare");
+                reportSoundError(0, 0, entry, msgUnableToPrepare);
             if (soundErrorsIgnored)
                 return 0;
-            sprintf(message, "%s%s", !entry->type ? "waveform" : "midi",
-                    " sound device or driver has failed to respond.");
+            kind = !entry->type ? textWaveform : textMidi;
+            sprintf(message, formatJoin, kind, msgDeviceFailed);
             answer = MessageBox(mainWindow, message, appName, MB_ABORTRETRYIGNORE);
         }
     } while (answer == IDRETRY);
@@ -168,7 +187,7 @@ short prepareSound(Entry *entry, short channel)
     soundChannels[type][channel].id = entry->key;
     soundChannels[type][channel].started = 0xffff;
     for (i = 0; i < channelCounts[type]; i++)
-        soundChannels[type][i].started--;
+        soundChannels[type][channel].started--;
     return 1;
 }
 
@@ -196,7 +215,7 @@ short startSound(Entry *entry, short channel)
         if (g_4aa42a)
             soundChannels[type][channel].playing = 0;
         else
-            reportSoundError(0, 0, entry, "unable to start");
+            reportSoundError(0, 0, entry, msgUnableToStart);
     }
     return soundChannels[type][channel].playing;
 }
@@ -227,18 +246,18 @@ void reportSoundError(short id, long type, Entry *entry, const char *message)
     if (entry) {
         id = entry->key;
         if (!entry->type)
-            kind = "waveform";
+            kind = textWaveform;
         else
-            kind = "midi";
+            kind = textMidi;
     } else if (type == RESOURCE_TYPE('t', 'W', 'A', 'V'))
-        kind = "waveform";
+        kind = textWaveform;
     else if (type == RESOURCE_TYPE('t', 'M', 'I', 'D'))
-        kind = "midi";
+        kind = textMidi;
     if ((code = fn_476bb4()) != 0) {
-        fn_4150c7(0xe, error, ":error #%d", code);
+        fn_4150c7(0xe, error, formatErrorNumber, code);
         errorText = error;
     }
-    fn_4150c7(0x14, name, "%s id #%u", "sound", (unsigned short)id);
+    fn_4150c7(0x14, name, formatSoundId, textSound, (unsigned short)id);
     fn_413c24(&g_4aa438, name, errorText);
     fn_413c24(&g_4aa434, kind, g_4aa438);
     fn_413c24(&g_4aa430, message, g_4aa434);

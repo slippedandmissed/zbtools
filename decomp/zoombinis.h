@@ -297,6 +297,19 @@ extern long soundTypes[2]; /* @data 0x4a00dc */
 extern GroupList *g_4a01ac;
 extern short g_4a01b0;
 extern char emptyString[]; /* @data 0x4a01b8 */
+extern char msgUnableToCreate[]; /* @data 0x4a0206 */
+extern char textSound[]; /* @data 0x4a0217 */
+extern char textMidi[]; /* @data 0x4a021d */
+extern char textWaveform[]; /* @data 0x4a0222 */
+extern char msgUnknownChunk[]; /* @data 0x4a022b */
+extern char msgUnableToPrepare[]; /* @data 0x4a023f */
+extern char msgSeekError[]; /* @data 0x4a0251 */
+extern char msgUnableToStart[]; /* @data 0x4a025d */
+extern char msgPrematureExit[]; /* @data 0x4a026d */
+extern char formatJoin[]; /* @data 0x4a027d */
+extern char formatErrorNumber[]; /* @data 0x4a0282 */
+extern char formatSoundId[]; /* @data 0x4a028d */
+extern char msgDeviceFailed[]; /* @data 0x4a0297 */
 extern short breakpointKey; /* @data 0x4a0708 */
 extern Callback g_4a07ac;
 extern long g_4a07b0;

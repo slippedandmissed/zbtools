@@ -9,6 +9,7 @@
 0x004116c1 setSoundType
 0x00411728 loadSound
 0x004117a8 fn_4117a8
+0x004117c7 prepareSound
 0x00411910 fn_411910
 0x0041193e startSound
 0x004119f3 fn_4119f3
