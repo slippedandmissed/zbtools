@@ -42,10 +42,11 @@ Run `uv run lint` (ruff lint, ruff format check, mypy) before finishing any chan
 
 - **Strict typing:** mypy runs in strict mode with `disallow_any_explicit`. Annotate every function, and every variable whose type isn't inferred. Never write `Any`, `cast()` or `# type: ignore` to silence mypy; fix the types instead.
 - **Model structured data with types, not dicts:** `@dataclass(frozen=True)` for records built in code, `NamedTuple` for small immutable tuples, `TypedDict` for dict-shaped data that must stay a dict, and **pydantic models** wherever data from outside the program (JSON, protocol messages, files) needs validating at runtime (e.g. the QMP models in `vm.py`).
-- **CLI arguments:** subclass `argparse.Namespace` with annotated attributes and pass an instance to `parse_args(namespace=...)`, so parsed arguments are typed.
+- **CLIs use Typer:** each tool module defines `app = typer.Typer(...)` with typed command functions (`Annotated[..., typer.Option(...)]`), registered in `[project.scripts]` as `zbtools.<module>:app`.
 - **Binary parsing:** prefer typed helpers such as `int.from_bytes` over `struct.unpack_from`, which returns untyped tuples. `struct.pack_into` is fine for writing.
 - Use `pathlib` rather than `os.path`. Use `# fmt: off`/`# fmt: on` only around data tables that formatting would make unreadable.
-- Dependencies: add runtime ones with `uv add`, dev tools with `uv add --dev`. Prefer the stdlib, and avoid unmaintained packages (e.g. we dropped `pyfatfs`, whose PyFilesystem2 dependency needs the removed `pkg_resources`, in favour of `fat12.py`).
+- **Don't reinvent wheels.** Before hand-writing a parser, file-format reader, protocol client or similar, check PyPI for a maintained library that ships wheels for our Python version (and type information, or add a narrow mypy override as for `fontTools`). Current choices: pycdlib (ISO 9660), fontTools (fonts), Pillow (images), python-dotenv (`.env`), `qemu.qmp` (QEMU control), Typer (CLIs), pydantic (validation). Where no good Python library exists, prefer a standard host tool routed through `host.py` (e.g. mtools for FAT floppy images; `pyfatfs` and `fatfs` are unmaintained or lack wheels). Only hand-write code when neither exists, and say why in its docstring (e.g. the DCL decompressor in `unpack_isz.py`).
+- Dependencies: add runtime ones with `uv add`, dev tools with `uv add --dev`.
 
 ## Working notes
 

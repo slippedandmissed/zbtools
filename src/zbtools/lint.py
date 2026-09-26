@@ -3,24 +3,22 @@
 With --fix, applies ruff's safe fixes and formatting before checking.
 """
 
-import argparse
 import subprocess
 import sys
+from typing import Annotated
+
+import typer
 
 from zbtools import paths
 
-
-class _Args(argparse.Namespace):
-    fix: bool
+app = typer.Typer(add_completion=False)
 
 
-def main() -> None:
-    doc = __doc__ or ""
-    parser = argparse.ArgumentParser(description=doc.splitlines()[0])
-    parser.add_argument("--fix", action="store_true", help="apply fixes and formatting first")
-    args = parser.parse_args(namespace=_Args())
-
-    if args.fix:
+@app.command(help=__doc__)
+def main(
+    fix: Annotated[bool, typer.Option("--fix", help="Apply fixes and formatting first")] = False,
+) -> None:
+    if fix:
         steps = [["ruff", "check", "--fix"], ["ruff", "format"], ["mypy"]]
     else:
         steps = [["ruff", "check"], ["ruff", "format", "--check"], ["mypy"]]
@@ -34,7 +32,3 @@ def main() -> None:
             failed.append(" ".join(step))
     if failed:
         sys.exit(f"failed: {', '.join(failed)}")
-
-
-if __name__ == "__main__":
-    main()

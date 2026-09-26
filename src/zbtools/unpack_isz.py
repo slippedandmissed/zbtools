@@ -1,15 +1,19 @@
 """Extract an InstallShield 3 ".Z" archive (e.g. ZBARCHIV.Z on the game disc).
 
 Files in these archives are compressed with PKWARE DCL "implode"; the
-decompressor below is a port of zlib's contrib/blast/blast.c.
+decompressor below is a port of zlib's contrib/blast/blast.c. It's hand-written
+because no maintained Python package provides it: `dclimplode` has no wheels
+for current Python versions and `pwexplode` isn't on PyPI. No library reads the
+InstallShield 3 archive format itself either.
 """
 
-import argparse
 import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path, PureWindowsPath
-from typing import NamedTuple
+from typing import Annotated, NamedTuple
+
+import typer
 
 MAGIC = 0x8C655D13
 
@@ -206,21 +210,17 @@ def extract(data: bytes, outdir: Path | None = None) -> None:
             os.utime(dest, (ts, ts))
 
 
-class _Args(argparse.Namespace):
-    archive: Path
-    outdir: Path | None
+app = typer.Typer(add_completion=False)
 
 
-def main() -> None:
-    doc = __doc__ or ""
-    parser = argparse.ArgumentParser(description=doc.splitlines()[0])
-    parser.add_argument("archive", type=Path, help="InstallShield 3 .Z archive")
-    parser.add_argument(
-        "outdir", type=Path, nargs="?", help="extract into this directory (list only if omitted)"
-    )
-    args = parser.parse_args(namespace=_Args())
-    extract(args.archive.read_bytes(), args.outdir)
-
-
-if __name__ == "__main__":
-    main()
+@app.command(help=__doc__)
+def main(
+    archive: Annotated[Path, typer.Argument(help="InstallShield 3 .Z archive")],
+    outdir: Annotated[
+        Path | None,
+        typer.Argument(
+            help="Extract into this directory (list only if omitted)", show_default=False
+        ),
+    ] = None,
+) -> None:
+    extract(archive.read_bytes(), outdir)

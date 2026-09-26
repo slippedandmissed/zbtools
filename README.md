@@ -15,7 +15,10 @@ Supported hosts: macOS on Apple Silicon (tested) and Linux (should work, unteste
 ### Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) for the Python tooling
-- [QEMU](https://www.qemu.org/) for the Windows 98 VM: `brew install qemu` on macOS; `qemu-system-x86` and `qemu-utils` (Debian/Ubuntu) or `qemu-system-x86` and `qemu-img` (Fedora) on Linux. The tools tell you if it's missing.
+- [QEMU](https://www.qemu.org/) for the Windows 98 VM: `brew install qemu` on macOS; `qemu-system-x86` and `qemu-utils` (Debian/Ubuntu) or `qemu-system-x86` and `qemu-img` (Fedora) on Linux
+- [mtools](https://www.gnu.org/software/mtools/) for editing the setup floppy image: `brew install mtools`, or the `mtools` package on Linux
+
+The tools tell you if QEMU or mtools is missing and how to install it.
 - Your own copies of the game and Windows 98 SE (see below)
 
 ### Bring-your-own files

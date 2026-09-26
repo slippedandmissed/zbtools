@@ -4,9 +4,11 @@ With no categories, removes the default set (everything cheap to rebuild);
 `uv run clean all` removes everything. See --list for the categories.
 """
 
-import argparse
 import shutil
 from pathlib import Path
+from typing import Annotated
+
+import typer
 
 from zbtools import paths
 
@@ -35,56 +37,47 @@ def _describe(entry: paths.CleanEntry) -> str:
     return entry if isinstance(entry, str) else str(entry.relative_to(paths.REPO_ROOT))
 
 
-class _Args(argparse.Namespace):
-    categories: list[str]
-    dry_run: bool
-    list: bool
+app = typer.Typer(add_completion=False)
 
 
-def main() -> None:
-    doc = __doc__ or ""
-    parser = argparse.ArgumentParser(
-        description=doc.splitlines()[0], epilog="\n".join(doc.splitlines()[2:])
-    )
-    parser.add_argument(
-        "categories",
-        nargs="*",
-        metavar="CATEGORY",
-        help=f"what to remove (default: {' '.join(paths.CLEAN_DEFAULT)})",
-    )
-    parser.add_argument(
-        "-n",
-        "--dry-run",
-        action="store_true",
-        help="list what would be deleted without deleting it",
-    )
-    parser.add_argument("-l", "--list", action="store_true", help="list the categories and exit")
-    args = parser.parse_args(namespace=_Args())
-
-    if args.list:
+@app.command(help=__doc__)
+def main(
+    categories: Annotated[
+        list[str] | None,
+        typer.Argument(
+            metavar="CATEGORY...",
+            help=f"What to remove (default: {' '.join(paths.CLEAN_DEFAULT)})",
+            show_default=False,
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", "-n", help="List what would be deleted without deleting it")
+    ] = False,
+    list_categories: Annotated[
+        bool, typer.Option("--list", "-l", help="List the categories and exit")
+    ] = False,
+) -> None:
+    if list_categories:
         for name, entries in paths.CLEAN_CATEGORIES.items():
             default = " (default)" if name in paths.CLEAN_DEFAULT else ""
             print(f"{name}{default}: {', '.join(_describe(e) for e in entries)}")
         return
 
-    unknown = [c for c in args.categories if c not in paths.CLEAN_CATEGORIES]
+    unknown = [c for c in categories or [] if c not in paths.CLEAN_CATEGORIES]
     if unknown:
-        parser.error(
+        raise typer.BadParameter(
             f"unknown category: {', '.join(unknown)} "
-            f"(choose from {', '.join(paths.CLEAN_CATEGORIES)})"
+            f"(choose from {', '.join(paths.CLEAN_CATEGORIES)})",
+            param_hint="CATEGORY",
         )
 
-    targets = expand(args.categories or paths.CLEAN_DEFAULT)
+    targets = expand(categories or paths.CLEAN_DEFAULT)
     if not targets:
         print("nothing to remove")
     for p in targets:
-        print(f"{'would remove' if args.dry_run else 'removing'} {_describe(p)}")
-        if not args.dry_run:
+        print(f"{'would remove' if dry_run else 'removing'} {_describe(p)}")
+        if not dry_run:
             if p.is_dir() and not p.is_symlink():
                 shutil.rmtree(p)
             else:
                 p.unlink()
-
-
-if __name__ == "__main__":
-    main()

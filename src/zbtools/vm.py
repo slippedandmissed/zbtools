@@ -1,31 +1,28 @@
 """Windows 98 virtual machine for running the original game under QEMU.
 
-  uv run vm install     unattended Windows 98 SE install (once; 30-60 minutes)
-  uv run vm run         boot the VM with the game disc in the CD drive
-  uv run vm reset       discard all changes made since the install
-  uv run vm screenshot  save a PNG of the running VM's screen
-
 `install` writes a pristine base disk that is never modified afterwards. The VM
 runs from a copy-on-write overlay on top of it, so `reset` (or
 `uv run clean vm-state`) returns to a fresh install in seconds.
 """
 
-import argparse
-import socket
-import struct
+import asyncio
+import contextlib
+import os
 import subprocess
 import sys
-import threading
+import tempfile
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable, Iterable
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import Annotated, Literal
 
 import pycdlib
+import typer
+from PIL import Image
 from pydantic import BaseModel, ConfigDict
+from qemu.qmp import ConnectError, Message, QMPClient, QMPError, Runstate
 
-from zbtools import env, host, paths
-from zbtools.fat12 import Fat12Image
+from zbtools import env, host, paths, screen
 
 FLOPPY_SIZE = 1474560
 
@@ -157,6 +154,18 @@ def _dos_text(text: str) -> bytes:
     return text.replace("\n", "\r\n").encode("ascii")
 
 
+def _mtools(tool: str, image: Path, *args: str) -> str:
+    """Run an mtools program (mdir, mdel, mcopy, ...) on a floppy image."""
+    result = subprocess.run(
+        [host.mtools(tool), "-i", str(image), *args],
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "MTOOLS_SKIP_CHECK": "1"},
+    )
+    return result.stdout
+
+
 def build_setup_floppy(windows_iso: Path, product_key: str, out: Path) -> None:
     """Customize the Windows 98 CD's El Torito boot floppy for unattended setup."""
     iso = pycdlib.PyCdlib()
@@ -173,15 +182,24 @@ def build_setup_floppy(windows_iso: Path, product_key: str, out: Path) -> None:
         iso.close()
     with windows_iso.open("rb") as f:
         f.seek(lba * 2048)
-        floppy = Fat12Image(f.read(FLOPPY_SIZE))
+        out.write_bytes(f.read(FLOPPY_SIZE))
 
-    for name in UNUSED_FLOPPY_FILES:
-        if name in floppy.listdir():
-            floppy.remove(name)
-    floppy.write("CONFIG.SYS", _dos_text(CONFIG_SYS))
-    floppy.write("AUTOEXEC.BAT", _dos_text(AUTOEXEC_BAT))
-    floppy.write("MSBATCH.INF", _dos_text(MSBATCH_INF.format(product_key=product_key)))
-    out.write_bytes(floppy.img)
+    present = {
+        line.rsplit("/", 1)[-1].upper() for line in _mtools("mdir", out, "-b", "::/").split()
+    }
+    unused = [f"::/{name}" for name in UNUSED_FLOPPY_FILES if name in present]
+    if unused:
+        _mtools("mdel", out, *unused)
+    files = {
+        "CONFIG.SYS": CONFIG_SYS,
+        "AUTOEXEC.BAT": AUTOEXEC_BAT,
+        "MSBATCH.INF": MSBATCH_INF.format(product_key=product_key),
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, text in files.items():
+            src = Path(tmp) / name
+            src.write_bytes(_dos_text(text))
+            _mtools("mcopy", out, "-o", str(src), f"::/{name}")
 
 
 def build_disk(out: Path, size_gib: int) -> None:
@@ -190,16 +208,10 @@ def build_disk(out: Path, size_gib: int) -> None:
     start = 63
     mbr = bytearray(512)
     # status, CHS start (head 1, sector 1, cyl 0), type 0x0C, CHS end (max), LBA start, length
-    struct.pack_into(
-        "<B3sB3sII",
-        mbr,
-        446,
-        0x80,
-        bytes([1, 1, 0]),
-        0x0C,
-        bytes([0xFE, 0xFF, 0xFF]),
-        start,
-        sectors - start,
+    mbr[446:462] = (
+        bytes([0x80, 1, 1, 0, 0x0C, 0xFE, 0xFF, 0xFF])
+        + start.to_bytes(4, "little")
+        + (sectors - start).to_bytes(4, "little")
     )
     mbr[510:512] = b"\x55\xaa"
     raw = out.with_suffix(".raw")
@@ -215,6 +227,18 @@ def build_disk(out: Path, size_gib: int) -> None:
         raw.unlink()
 
 
+def create_overlay(path: Path, backing: Path) -> None:
+    """Create a copy-on-write qcow2 disk on top of backing (in the same directory;
+    the relative backing path keeps the pair valid if the repo moves)."""
+    subprocess.run(
+        [
+            host.qemu_img(), "create", "-q", "-f", "qcow2",
+            "-b", backing.name, "-F", "qcow2", str(path),
+        ],
+        check=True,
+    )  # fmt: skip
+
+
 type BootDevice = Literal["a", "c", "d"]
 
 
@@ -228,18 +252,13 @@ def qemu_command(
     cmd = [
         host.qemu_system(),
         *MACHINE_ARGS,
-        "-audiodev",
-        host.qemu_audiodev("snd"),
-        "-device",
-        "sb16,audiodev=snd",
+        "-audiodev", host.qemu_audiodev("snd"),
+        "-device", "sb16,audiodev=snd",
         *host.qemu_display_args(headless),
-        "-monitor",
-        f"unix:{paths.VM_MONITOR},server,nowait",
-        "-qmp",
-        f"unix:{paths.VM_QMP},server,nowait",
-        "-drive",
-        f"file={disk},format=qcow2,if=ide,index=0",
-    ]
+        "-qmp", f"unix:{paths.VM_QMP},server=on,wait=off",
+        "-qmp", f"unix:{paths.VM_QMP_CONTROL},server=on,wait=off",
+        "-drive", f"file={disk},format=qcow2,if=ide,index=0",
+    ]  # fmt: skip
     if cdrom:
         cmd += ["-drive", f"file={cdrom},format=raw,if=ide,index=2,media=cdrom,readonly=on"]
     if floppy:
@@ -248,11 +267,10 @@ def qemu_command(
     return cmd
 
 
-# QMP (QEMU Machine Protocol) messages. Only the fields we use are modelled;
-# QEMU sends many more, which are ignored.
-class _QmpMessage(BaseModel):
+# QMP events. Only the fields we use are modelled; the rest are ignored.
+class _QmpEvent(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
-    event: str | None = None
+    event: str
 
 
 class _ShutdownData(BaseModel):
@@ -267,140 +285,161 @@ class _ShutdownEvent(BaseModel):
     data: _ShutdownData
 
 
-def run_qemu(cmd: list[str], on_reset: Callable[[], None] | None = None) -> str | None:
-    """Run QEMU until it exits. Returns the reason from QEMU's SHUTDOWN event
-    ("guest-shutdown" when the guest powered itself off), or None if unknown."""
-    for sock in (paths.VM_MONITOR, paths.VM_QMP):
+# Something to do with the running VM, e.g. watch its screen and type into it.
+type GuestTask = Callable[[QMPClient], Awaitable[None]]
+
+
+async def _disconnect(qmp: QMPClient) -> None:
+    """Disconnect, ignoring how the connection ended: disconnect() re-raises the
+    error that closed it, which is EOFError whenever QEMU has exited."""
+    with contextlib.suppress(QMPError, EOFError, OSError):
+        await qmp.disconnect()
+
+
+async def _connect(qmp: QMPClient, address: Path, timeout: float = 10) -> None:
+    """Connect to a QMP socket, waiting for QEMU to create it."""
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            await qmp.connect(str(address))
+        except ConnectError:
+            if time.monotonic() > deadline:
+                raise
+            await asyncio.sleep(0.1)
+        else:
+            return
+
+
+async def _supervise(
+    cmd: list[str], on_reset: Callable[[], None] | None, tasks: Iterable[GuestTask]
+) -> str | None:
+    for sock in (paths.VM_QMP, paths.VM_QMP_CONTROL):
         sock.unlink(missing_ok=True)
-    proc = subprocess.Popen(cmd)
-    reason = None
+    proc = await asyncio.create_subprocess_exec(*cmd)
+    qmp = QMPClient("zbtools")
+    reason: str | None = None
+
+    def handle(event: Message) -> None:
+        nonlocal reason
+        name = _QmpEvent.model_validate(dict(event)).event
+        if name == "SHUTDOWN":
+            reason = _ShutdownEvent.model_validate(dict(event)).data.reason
+        elif name == "RESET" and on_reset:
+            on_reset()
+
+    async def watch_events() -> None:
+        async for event in qmp.events:
+            handle(event)
+
     try:
-        qmp = _qmp_connect(proc)
-        if qmp:
-            with qmp, qmp.makefile("rb") as events:
-                qmp.sendall(b'{"execute": "qmp_capabilities"}\n')
-                for line in events:
-                    event = _QmpMessage.model_validate_json(line).event
-                    if event == "SHUTDOWN":
-                        reason = _ShutdownEvent.model_validate_json(line).data.reason
-                    elif event == "RESET" and on_reset:
-                        on_reset()
-        proc.wait()
-    except KeyboardInterrupt:
-        proc.terminate()
-        proc.wait()
-        raise
+        await _connect(qmp, paths.VM_QMP)
+        workers = [asyncio.ensure_future(watch_events())]
+        workers += [asyncio.ensure_future(task(qmp)) for task in tasks]
+        await proc.wait()
+        # QEMU sends SHUTDOWN just before exiting; let the reader catch up.
+        with contextlib.suppress(TimeoutError):
+            async with asyncio.timeout(5):
+                while qmp.runstate == Runstate.RUNNING:
+                    await qmp.runstate_changed()
+        for worker in workers:
+            worker.cancel()
+        await asyncio.gather(*workers, return_exceptions=True)
+        while not qmp.events.empty():
+            handle(await qmp.events.get())
     finally:
-        for sock in (paths.VM_MONITOR, paths.VM_QMP):
+        await _disconnect(qmp)
+        if proc.returncode is None:
+            proc.terminate()
+            await proc.wait()
+        for sock in (paths.VM_QMP, paths.VM_QMP_CONTROL):
             sock.unlink(missing_ok=True)
     return reason
 
 
-def _qmp_connect(proc: subprocess.Popen[bytes], timeout: float = 10) -> socket.socket | None:
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline and proc.poll() is None:
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        try:
-            s.connect(str(paths.VM_QMP))
-        except OSError:
-            s.close()
-            time.sleep(0.1)
-        else:
-            return s
-    return None
+def run_qemu(
+    cmd: list[str],
+    on_reset: Callable[[], None] | None = None,
+    tasks: Iterable[GuestTask] = (),
+) -> str | None:
+    """Run QEMU until it exits, running tasks against the VM meanwhile. Returns
+    the reason from QEMU's SHUTDOWN event ("guest-shutdown" when the guest
+    powered itself off), or None if unknown."""
+    return asyncio.run(_supervise(cmd, on_reset, tasks))
+
+
+async def _control[T](action: Callable[[QMPClient], Awaitable[T]]) -> T:
+    """Run action against the running VM through its second QMP socket."""
+    qmp = QMPClient("zbtools-cli")
+    await qmp.connect(str(paths.VM_QMP_CONTROL))
+    try:
+        return await action(qmp)
+    finally:
+        await _disconnect(qmp)
 
 
 def vm_running() -> bool:
-    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-        try:
-            s.connect(str(paths.VM_MONITOR))
-        except OSError:
-            return False
-        return True
+    async def nothing(_: QMPClient) -> None:
+        return None
 
-
-class VmNotRunningError(Exception):
-    pass
-
-
-def monitor(command: str) -> str:
-    """Send one command to the running VM's QEMU monitor and return its output."""
-    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-        try:
-            s.connect(str(paths.VM_MONITOR))
-        except OSError as e:
-            raise VmNotRunningError from e
-        s.settimeout(5)
-        s.sendall(command.encode() + b"\n")
-        out = b""
-        try:
-            while chunk := s.recv(4096):
-                out += chunk
-                if out.rstrip().endswith(b"(qemu)") and out.count(b"(qemu)") >= 2:
-                    break
-        except TimeoutError:
-            pass
-    return out.decode(errors="replace")
-
-
-class Frame(NamedTuple):
-    """A screenshot as raw RGB pixels."""
-
-    width: int
-    height: int
-    rgb: bytes
-
-    def pixel(self, x: int, y: int) -> tuple[int, int, int]:
-        i = (y * self.width + x) * 3
-        return self.rgb[i], self.rgb[i + 1], self.rgb[i + 2]
-
-
-def read_ppm(path: Path) -> Frame:
-    """Read a binary (P6) PPM image, the format of QEMU's default screendump."""
-    data = path.read_bytes()
-    fields = data.split(maxsplit=4)
-    if len(fields) < 5 or fields[0] != b"P6" or fields[3] != b"255":
-        raise ValueError(f"not an 8-bit binary PPM: {path}")
-    width, height = int(fields[1]), int(fields[2])
-    rgb = fields[4]
-    if len(rgb) < width * height * 3:
-        raise ValueError(f"truncated PPM: {path}")
-    return Frame(width, height, rgb)
-
-
-def is_logon_prompt(frame: Frame) -> bool:
-    """Whether the screen shows Windows 98's "Enter Windows Password" dialog, as
-    laid out at 640x480: navy title bar, two white text fields, and the yellow
-    key icon (which setup's own wizard pages don't have)."""
-    if (frame.width, frame.height) != (640, 480):
+    try:
+        asyncio.run(_control(nothing))
+    except (ConnectError, OSError):
         return False
-    navy, white = (0, 0, 128), (255, 255, 255)
-    if frame.pixel(300, 73) != navy:
-        return False
-    if frame.pixel(300, 188) != white or frame.pixel(300, 223) != white:
-        return False
-    yellow = 0
-    for y in range(95, 145):
-        for x in range(110, 150):
-            r, g, b = frame.pixel(x, y)
-            yellow += r > 200 and g > 200 and b < 80
-    return yellow > 100
+    return True
 
 
-def answer_logon_prompt(stop: threading.Event, interval: float = 5.0) -> None:
+async def screenshot(qmp: QMPClient, path: Path) -> Image.Image:
+    await qmp.execute("screendump", {"filename": str(path), "format": "png"})
+    with Image.open(path) as img:
+        return img.convert("RGB")
+
+
+# QEMU key names for characters that aren't themselves key names.
+_KEYS = {
+    " ": "spc", "\\": "backslash", ".": "dot", ":": "shift-semicolon", "/": "slash",
+    ",": "comma", "-": "minus", "_": "shift-minus", "=": "equal",
+}  # fmt: skip
+
+
+async def press(qmp: QMPClient, *combos: str) -> None:
+    """Press key combinations such as "ret", "a" or "ctrl-esc"."""
+    for combo in combos:
+        keys = [{"type": "qcode", "data": key} for key in combo.split("-")]
+        await qmp.execute("send-key", {"keys": keys})
+        await asyncio.sleep(0.15)
+
+
+async def type_text(qmp: QMPClient, text: str) -> None:
+    await press(qmp, *(_KEYS.get(c) or (f"shift-{c.lower()}" if c.isupper() else c) for c in text))
+
+
+async def when_screen(
+    qmp: QMPClient,
+    test: Callable[[Image.Image], bool],
+    action: GuestTask,
+    interval: float = 5.0,
+) -> None:
+    """Poll the screen until test matches, then run action once."""
+    while True:
+        await asyncio.sleep(interval)
+        try:
+            img = await screenshot(qmp, paths.VM_SCREEN_CHECK)
+        except (QMPError, OSError):
+            continue  # not ready, or between screens
+        if test(img):
+            await action(qmp)
+            return
+
+
+async def answer_logon_prompt(qmp: QMPClient) -> None:
     """Press Enter at the Windows logon prompt the first time it appears. With a
     blank password, Windows never shows the prompt again."""
-    while not stop.wait(interval):
-        try:
-            monitor(f"screendump {paths.VM_SCREEN_CHECK}")
-            frame = read_ppm(paths.VM_SCREEN_CHECK)
-        except (VmNotRunningError, OSError, ValueError):
-            continue  # not started yet, or between screens
-        if is_logon_prompt(frame):
-            monitor("sendkey ret")
-            print("  Answered the Windows logon prompt (blank password)")
-            paths.VM_SCREEN_CHECK.unlink(missing_ok=True)
-            return
+
+    async def enter(qmp: QMPClient) -> None:
+        await press(qmp, "ret")
+        print("  Answered the Windows logon prompt (blank password)")
+
+    await when_screen(qmp, screen.is_logon_prompt, enter)
 
 
 def ensure_overlay() -> None:
@@ -408,42 +447,33 @@ def ensure_overlay() -> None:
     if not paths.WIN98_BASE.exists():
         sys.exit("error: Windows 98 isn't installed yet; run `uv run vm install` first")
     if not paths.WIN98_OVERLAY.exists():
-        # A relative backing path keeps the pair valid if the repo moves.
-        subprocess.run(
-            [
-                host.qemu_img(),
-                "create",
-                "-q",
-                "-f",
-                "qcow2",
-                "-b",
-                paths.WIN98_BASE.name,
-                "-F",
-                "qcow2",
-                str(paths.WIN98_OVERLAY),
-            ],
-            check=True,
-        )
+        create_overlay(paths.WIN98_OVERLAY, paths.WIN98_BASE)
         print(f"Created a fresh overlay on the base install: {paths.WIN98_OVERLAY}")
 
 
-class _Args(argparse.Namespace):
-    func: Callable[["_Args"], None]
-    windows_iso: Path
-    disk_size: int
-    force: bool
-    headless: bool
-    cdrom: Path
-    output: Path
+app = typer.Typer(help=__doc__, add_completion=False, no_args_is_help=True)
 
 
-def cmd_install(args: _Args) -> None:
+@app.command()
+def install(
+    windows_iso: Annotated[
+        Path, typer.Option(help="Windows 98 SE install CD image")
+    ] = paths.WINDOWS_ISO,
+    disk_size: Annotated[
+        int, typer.Option(metavar="GIB", help="Virtual hard disk size in GiB")
+    ] = 2,
+    force: Annotated[
+        bool, typer.Option("--force", help="Reinstall even if Windows is already installed")
+    ] = False,
+    headless: Annotated[bool, typer.Option("--headless", help="Don't open a VM window")] = False,
+) -> None:
+    """Install Windows 98 SE from the answer file (once; 30-60 minutes)."""
     if vm_running():
         sys.exit("error: the VM is already running")
-    if not args.windows_iso.is_file():
-        sys.exit(f"error: Windows ISO not found: {args.windows_iso} (see README: Setup)")
+    if not windows_iso.is_file():
+        sys.exit(f"error: Windows ISO not found: {windows_iso} (see README: Setup)")
     product_key = env.get("WINDOWS_PRODUCT_KEY")
-    if paths.WIN98_BASE.exists() and not args.force:
+    if paths.WIN98_BASE.exists() and not force:
         sys.exit(
             f"error: Windows 98 is already installed ({paths.WIN98_BASE}); use --force to reinstall"
         )
@@ -451,8 +481,8 @@ def cmd_install(args: _Args) -> None:
     paths.VM_DIR.mkdir(parents=True, exist_ok=True)
     disk = paths.WIN98_BASE_PARTIAL
     disk.unlink(missing_ok=True)
-    build_setup_floppy(args.windows_iso, product_key, paths.WIN98_SETUP_FLOPPY)
-    build_disk(disk, args.disk_size)
+    build_setup_floppy(windows_iso, product_key, paths.WIN98_SETUP_FLOPPY)
+    build_disk(disk, disk_size)
 
     print(
         "Installing Windows 98 SE from the answer file. This takes 30-60 minutes; the VM\n"
@@ -461,27 +491,18 @@ def cmd_install(args: _Args) -> None:
         "answers already filled in: click Next on each one to continue."
     )
     cmd = qemu_command(
-        disk,
-        cdrom=args.windows_iso,
-        floppy=paths.WIN98_SETUP_FLOPPY,
-        boot_once="a",
-        headless=args.headless,
+        disk, cdrom=windows_iso, floppy=paths.WIN98_SETUP_FLOPPY, boot_once="a", headless=headless
     )
     started = time.monotonic()
 
     def on_reset() -> None:
         print(f"  [{(time.monotonic() - started) / 60:4.1f} min] VM rebooted")
 
-    stop_watching = threading.Event()
-    watcher = threading.Thread(target=answer_logon_prompt, args=(stop_watching,), daemon=True)
-    watcher.start()
     try:
-        reason = run_qemu(cmd, on_reset=on_reset)
+        reason = run_qemu(cmd, on_reset=on_reset, tasks=[answer_logon_prompt])
     finally:
-        stop_watching.set()
-        watcher.join()
-    paths.WIN98_SETUP_FLOPPY.unlink(missing_ok=True)
-    paths.VM_SCREEN_CHECK.unlink(missing_ok=True)
+        paths.WIN98_SETUP_FLOPPY.unlink(missing_ok=True)
+        paths.VM_SCREEN_CHECK.unlink(missing_ok=True)
     if reason != "guest-shutdown":
         disk.unlink(missing_ok=True)
         sys.exit(
@@ -499,14 +520,21 @@ def cmd_install(args: _Args) -> None:
     print(f"Windows 98 installed in {minutes:.0f} min: {paths.WIN98_BASE}")
 
 
-def cmd_run(args: _Args) -> None:
+@app.command()
+def run(
+    cdrom: Annotated[Path, typer.Option(help="Disc image in the CD drive")] = paths.GAME_ISO,
+    headless: Annotated[bool, typer.Option("--headless", help="Don't open a VM window")] = False,
+) -> None:
+    """Boot the VM with the game disc in the CD drive."""
     if vm_running():
         sys.exit("error: the VM is already running")
     ensure_overlay()
-    run_qemu(qemu_command(paths.WIN98_OVERLAY, cdrom=args.cdrom, headless=args.headless))
+    run_qemu(qemu_command(paths.WIN98_OVERLAY, cdrom=cdrom, headless=headless))
 
 
-def cmd_reset(_args: _Args) -> None:
+@app.command()
+def reset() -> None:
+    """Discard all changes made since the install."""
     if vm_running():
         sys.exit("error: the VM is running; shut it down first")
     if paths.WIN98_OVERLAY.exists():
@@ -516,64 +544,18 @@ def cmd_reset(_args: _Args) -> None:
         print("Nothing to reset.")
 
 
-def cmd_screenshot(args: _Args) -> None:
-    out = args.output.resolve()
+@app.command(name="screenshot")
+def screenshot_command(
+    output: Annotated[Path, typer.Argument(help="PNG file to write")] = paths.VM_DIR / "screen.png",
+) -> None:
+    """Save a PNG of the running VM's screen."""
+    out = output.resolve()
+
+    async def dump(qmp: QMPClient) -> None:
+        await qmp.execute("screendump", {"filename": str(out), "format": "png"})
+
     try:
-        monitor(f"screendump {out} -f png")
-    except VmNotRunningError:
+        asyncio.run(_control(dump))
+    except (ConnectError, OSError):
         sys.exit("error: the VM is not running")
     print(out)
-
-
-def main() -> None:
-    doc = __doc__ or ""
-    parser = argparse.ArgumentParser(
-        description=doc.splitlines()[0],
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="\n".join(doc.splitlines()[2:]),
-    )
-    sub = parser.add_subparsers(dest="command", required=True)
-
-    p = sub.add_parser("install", help="unattended Windows 98 SE install")
-    p.add_argument(
-        "--windows-iso",
-        type=Path,
-        default=paths.WINDOWS_ISO,
-        help="Windows 98 SE install CD image (default: %(default)s)",
-    )
-    p.add_argument(
-        "--disk-size",
-        type=int,
-        default=2,
-        metavar="GIB",
-        help="virtual hard disk size in GiB (default: %(default)s)",
-    )
-    p.add_argument(
-        "--force", action="store_true", help="reinstall even if Windows is already installed"
-    )
-    p.add_argument("--headless", action="store_true", help="don't open a VM window")
-    p.set_defaults(func=cmd_install)
-
-    p = sub.add_parser("run", help="boot the VM")
-    p.add_argument(
-        "--cdrom",
-        type=Path,
-        default=paths.GAME_ISO,
-        help="disc image in the CD drive (default: %(default)s)",
-    )
-    p.add_argument("--headless", action="store_true", help="don't open a VM window")
-    p.set_defaults(func=cmd_run)
-
-    p = sub.add_parser("reset", help="discard all changes made since the install")
-    p.set_defaults(func=cmd_reset)
-
-    p = sub.add_parser("screenshot", help="save a PNG of the running VM's screen")
-    p.add_argument("output", type=Path, nargs="?", default=paths.VM_DIR / "screen.png")
-    p.set_defaults(func=cmd_screenshot)
-
-    args = parser.parse_args(namespace=_Args())
-    args.func(args)
-
-
-if __name__ == "__main__":
-    main()

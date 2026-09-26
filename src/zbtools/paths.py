@@ -21,10 +21,12 @@ WIN98_BASE_PARTIAL = VM_DIR / "win98-base.partial.qcow2"
 # Copy-on-write layer on top of the base that the VM actually runs from.
 WIN98_OVERLAY = VM_DIR / "win98.qcow2"
 WIN98_SETUP_FLOPPY = VM_DIR / "win98-setup.img"
-VM_MONITOR = VM_DIR / "monitor.sock"
+# QMP sockets: one for the command that started the VM, one for other commands
+# (a QMP socket serves one client at a time).
 VM_QMP = VM_DIR / "qmp.sock"
+VM_QMP_CONTROL = VM_DIR / "qmp-control.sock"
 # Scratch screenshot `vm install` uses to spot the Windows logon prompt.
-VM_SCREEN_CHECK = VM_DIR / "screen-check.ppm"
+VM_SCREEN_CHECK = VM_DIR / "screen-check.png"
 
 # An entry in a clean category: a path (may contain * wildcards, matched from
 # the repo root) or the name of another category.
@@ -39,8 +41,8 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
         WIN98_OVERLAY,
         WIN98_BASE_PARTIAL,
         WIN98_SETUP_FLOPPY,
-        VM_MONITOR,
         VM_QMP,
+        VM_QMP_CONTROL,
         VM_SCREEN_CHECK,
     ],
     "vm-base": [WIN98_BASE],

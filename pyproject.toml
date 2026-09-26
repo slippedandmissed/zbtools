@@ -5,16 +5,21 @@ description = "Tooling for the Logical Journey of the Zoombinis decompilation"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "fonttools>=4.66.0",
+    "pillow>=12.3.0",
     "pycdlib>=1.21.0",
     "pydantic>=2.13.5",
+    "python-dotenv>=1.2.3",
+    "qemu-qmp>=0.0.6",
+    "typer>=0.27.2",
 ]
 
 [project.scripts]
-clean = "zbtools.clean:main"
-lint = "zbtools.lint:main"
-extract-game = "zbtools.extract_game:main"
-vm = "zbtools.vm:main"
-unpack-isz = "zbtools.unpack_isz:main"
+clean = "zbtools.clean:app"
+lint = "zbtools.lint:app"
+extract-game = "zbtools.extract_game:app"
+vm = "zbtools.vm:app"
+unpack-isz = "zbtools.unpack_isz:app"
 
 [build-system]
 requires = ["uv_build>=0.11,<0.12"]
@@ -63,3 +68,8 @@ plugins = ["pydantic.mypy"]
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
+
+[[tool.mypy.overrides]]
+# fontTools ships no type information.
+module = ["fontTools", "fontTools.*"]
+ignore_missing_imports = true

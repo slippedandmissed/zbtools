@@ -4,13 +4,14 @@ Copies every file on the ISO into build/disc/, then unpacks the InstallShield
 archive ZBARCHIV.Z (which holds zoombi32.exe) into build/zoombi32/.
 """
 
-import argparse
 import os
 import shutil
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
+from typing import Annotated
 
 import pycdlib
+import typer
 from pycdlib.dr import DirectoryRecord
 
 from zbtools import paths, unpack_isz
@@ -55,48 +56,30 @@ def extract_iso(iso_path: Path, outdir: Path) -> int:
     return count
 
 
-class _Args(argparse.Namespace):
-    iso: Path
-    disc_dir: Path
-    game_dir: Path
+app = typer.Typer(add_completion=False)
 
 
-def main() -> None:
-    doc = __doc__ or ""
-    parser = argparse.ArgumentParser(description=doc.splitlines()[0])
-    parser.add_argument(
-        "--iso",
-        type=Path,
-        default=paths.GAME_ISO,
-        help="game disc image (default: %(default)s)",
-    )
-    parser.add_argument(
-        "--disc-dir",
-        type=Path,
-        default=paths.DISC_DIR,
-        help="where to copy the disc contents (default: %(default)s)",
-    )
-    parser.add_argument(
-        "--game-dir",
-        type=Path,
-        default=paths.GAME32_DIR,
-        help="where to unpack the Windows 95 build (default: %(default)s)",
-    )
-    args = parser.parse_args(namespace=_Args())
+@app.command(help=__doc__)
+def main(
+    iso: Annotated[Path, typer.Option(help="Game disc image")] = paths.GAME_ISO,
+    disc_dir: Annotated[
+        Path, typer.Option(help="Where to copy the disc contents")
+    ] = paths.DISC_DIR,
+    game_dir: Annotated[
+        Path, typer.Option(help="Where to unpack the Windows 95 build")
+    ] = paths.GAME32_DIR,
+) -> None:
+    if not iso.is_file():
+        raise typer.BadParameter(
+            f"game ISO not found: {iso} (see README: Setup)", param_hint="--iso"
+        )
 
-    if not args.iso.is_file():
-        parser.error(f"game ISO not found: {args.iso} (see README: Setup)")
-
-    for d in (args.disc_dir, args.game_dir):
+    for d in (disc_dir, game_dir):
         shutil.rmtree(d, ignore_errors=True)
 
-    count = extract_iso(args.iso, args.disc_dir)
-    print(f"Extracted {count} files from {args.iso.name} into {args.disc_dir}")
+    count = extract_iso(iso, disc_dir)
+    print(f"Extracted {count} files from {iso.name} into {disc_dir}")
 
-    archive = args.disc_dir / "ZBARCHIV.Z"
-    print(f"Unpacking {archive.name} into {args.game_dir}")
-    unpack_isz.extract(archive.read_bytes(), args.game_dir)
-
-
-if __name__ == "__main__":
-    main()
+    archive = disc_dir / "ZBARCHIV.Z"
+    print(f"Unpacking {archive.name} into {game_dir}")
+    unpack_isz.extract(archive.read_bytes(), game_dir)

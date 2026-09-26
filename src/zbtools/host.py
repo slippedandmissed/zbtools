@@ -16,6 +16,11 @@ _INSTALL_HINTS: dict[str, dict[str, str]] = {
         "Linux": "sudo apt install qemu-system-x86 qemu-utils   # Debian/Ubuntu\n"
         "  sudo dnf install qemu-system-x86 qemu-img     # Fedora",
     },
+    "mtools": {
+        "Darwin": "brew install mtools",
+        "Linux": "sudo apt install mtools   # Debian/Ubuntu\n"
+        "  sudo dnf install mtools     # Fedora",
+    },
 }
 
 
@@ -37,6 +42,11 @@ def qemu_system() -> str:
 
 def qemu_img() -> str:
     return require("qemu", "qemu-img")
+
+
+def mtools(tool: str) -> str:
+    """Path to one of the mtools programs (mcopy, mdel, mdir, ...)."""
+    return require("mtools", tool)
 
 
 def qemu_display_args(headless: bool = False) -> list[str]:
