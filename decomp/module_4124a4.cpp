@@ -37,6 +37,53 @@ InputItem *hoverItemByHandler(long value)
     return item;
 }
 
+/* fn_4125d3 for an item, keeping the state. */
+/* @zoombi32 0x00412587 */
+short fn_412587(InputItem *item, short on)
+{
+    InputState saved;
+    short result;
+
+    fn_413afd(&saved, 1);
+    g_4aa4c0 = 0;
+    if (focusItem(item))
+        result = fn_4125d3(on);
+    else
+        result = 0;
+    fn_413a4e(&saved, 1);
+    return result;
+}
+
+/*
+ * Sets the focused item on or off, following its group's rules: flag 8 of
+ * the group gives the on-state and flag 0x20 the value that make the list
+ * exclusive here (switchOffOthers, before or after depending on the group's
+ * kind); the list's `changed` callback hears of it. Whether it did.
+ */
+/* @zoombi32 0x00412722 */
+short fn_412722(short on, short value)
+{
+    short wasOn, onState, notValue, early;
+
+    wasOn = (g_4aa498->flags & 4) == 4;
+    notValue = (g_4aa494->flags & 0x20) != 0x20;
+    onState = (g_4aa494->flags & 8) == 8;
+    early = (g_4aa494->flags & 0xe000) == 0x2000 || (g_4aa494->flags & 0xe000) == 0x8000;
+
+    if (on == onState && notValue == value && early)
+        switchOffOthers();
+    if (on != wasOn)
+        toggleFocusedItem();
+    if (on == onState && notValue == value) {
+        if (!early)
+            switchOffOthers();
+        if (g_4aa490->changed)
+            g_4aa490->changed(g_4aa49c.c.x);
+        return 1;
+    }
+    return 0;
+}
+
 /* Passes `value` to the current handlers' slot 0x28, or else to the engine;
    the answer. */
 /* @zoombi32 0x0041280d */
@@ -384,6 +431,18 @@ InputItem *itemAt(short x, short y)
         item = 0;
     fn_413a4e(&saved, 1);
     return item;
+}
+
+/* Moves the focus to the next or previous item and highlights it. */
+/* @zoombi32 0x00412fb5 */
+void stepFocus(short direction)
+{
+    g_4aa4ac = 5;
+    if (moveFocus(direction)) {
+        highlightFocus();
+        if (!fn_41336f())
+            fn_412bb3(g_4aa498->flags & 4);
+    }
 }
 
 /*

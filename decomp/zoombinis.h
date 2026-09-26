@@ -98,8 +98,7 @@ struct Group
     InputHandlers *handlers;
     InputItem *items;
     short count;
-    unsigned char flags;
-    char unknownB;
+    short flags; /* the top three bits are its kind */
     short *sounds; /* per item, the sounds for switching it off and on */
 };
 
@@ -108,8 +107,8 @@ struct GroupList
 {
     Group *groups;
     short count;
-    unsigned char flags;
-    char unknown7[5];
+    short flags;
+    void (*changed)(short value);
 };
 
 /* The state (0x30 bytes) fn_413a4e loads into the globals and fn_413afd
@@ -558,6 +557,10 @@ InputItem *hoverItemByHandler(long value);
 void highlightFocus();
 void toggleFocusedItem();
 void switchOffOthers();
+short fn_412722(short on, short value);
+void stepFocus(short direction);
+short fn_412587(InputItem *item, short on);
+short fn_4125d3(short on);
 void getItemPosition(InputItem *item, Cursor *where);
 InputItem *itemAt(short x, short y);
 void activateItemAt(short x, short y);
