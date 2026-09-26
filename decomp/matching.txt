@@ -13,7 +13,11 @@
 0x00411a4c reportSoundError
 0x00411c30 findChannel
 0x00411d2c fn_411d2c
+0x00411d8f stopSounds
+0x00411e4c fn_411e4c
 0x00411f21 isSoundPlaying
+0x00412048 waitForSound
+0x004120a2 fn_4120a2
 0x004120c8 fn_4120c8
 0x00412176 fn_412176
 0x004121a5 fn_4121a5

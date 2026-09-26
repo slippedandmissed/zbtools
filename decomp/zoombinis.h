@@ -504,6 +504,7 @@ long qtim_0b();
 void fn_476622(long handle);
 void fn_4771a4(long handle);
 short fn_476bb4(); /* the last sound error */
+void fn_476f50(long handle);
 /* Starts a sound; its owner hears about it through `notify`. Non-zero on failure. */
 short fn_47712a(long handle, void (*notify)(long, SoundNotice *, long cookie), long cookie);
 void fn_46c602(long *);
@@ -563,6 +564,10 @@ short fn_4120c8(char value, long type);
 Entry *findOrAddSound(short key, long type);
 short isSoundPlaying(unsigned short id, long type);
 short startSound(Entry *entry, short channel);
+void stopSounds(unsigned short id, long type);
+void fn_411e4c(unsigned short id, long type);
+short fn_4120a2(unsigned short id, long type, short stop);
+short waitForSound(unsigned short id, long type, short eventType, short discard);
 void fn_4119f3(Entry *entry, short channel);
 void fn_411d2c(long, SoundNotice *notice, long cookie);
 void fn_412176(long type);

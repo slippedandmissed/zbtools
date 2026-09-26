@@ -213,6 +213,51 @@ void fn_411d2c(long, SoundNotice *notice, long cookie)
     }
 }
 
+/* Stops a sound (0xffff: all) of a type ('SND': any), freeing its channel. */
+/* @zoombi32 0x00411d8f */
+void stopSounds(unsigned short id, long type)
+{
+    Entry *entry;
+    short t, channel;
+    unsigned short current = id;
+
+    for (t = 0; t < 2; t++) {
+        if (type == RESOURCE_TYPE(0, 'S', 'N', 'D') || soundTypes[t] == type) {
+            for (channel = 0; channel < 4; channel++) {
+                if (id == 0xffff)
+                    current = soundChannels[t][channel].id;
+                if (soundChannels[t][channel].id != 0xffff && current == soundChannels[t][channel].id) {
+                    entry = fn_4115f5(current, soundTypes[t]);
+                    fn_4119f3(entry, channel);
+                    fn_411910(entry, channel);
+                }
+            }
+        }
+    }
+}
+
+/* Passes each matching sound that's playing to the engine (fn_476f50). */
+/* @zoombi32 0x00411e4c */
+void fn_411e4c(unsigned short id, long type)
+{
+    short t, channel;
+    unsigned short current;
+
+    waitWhilePaused();
+    current = id;
+    for (t = 0; t < 2; t++) {
+        if (type == RESOURCE_TYPE(0, 'S', 'N', 'D') || soundTypes[t] == type) {
+            for (channel = 0; channel < 4; channel++) {
+                if (id == 0xffff)
+                    current = soundChannels[t][channel].id;
+                if (soundChannels[t][channel].id != 0xffff && current == soundChannels[t][channel].id
+                    && soundChannels[t][channel].playing)
+                    fn_476f50(fn_4115f5(id, soundTypes[t])->handle);
+            }
+        }
+    }
+}
+
 /* Whether a sound (0xffff: any) of a type ('SND': any) is playing. */
 /* @zoombi32 0x00411f21 */
 short isSoundPlaying(unsigned short id, long type)
@@ -233,6 +278,31 @@ short isSoundPlaying(unsigned short id, long type)
         }
     }
     return found;
+}
+
+/* Waits for a sound to finish, running the main loop; an input event (of
+   eventType) cuts it short. Whether it finished uninterrupted. */
+/* @zoombi32 0x00412048 */
+short waitForSound(unsigned short id, long type, short eventType, short discard)
+{
+    unsigned short interrupted;
+
+    do {
+        mainLoopEvents();
+        interrupted = isEventWaiting(eventType, discard);
+    } while (fn_4120a2(id, type, interrupted));
+    return !interrupted;
+}
+
+/* With `stop`, stops the sound (and answers 0); else whether it's playing. */
+/* @zoombi32 0x004120a2 */
+short fn_4120a2(unsigned short id, long type, short stop)
+{
+    if (stop) {
+        stopSounds(id, type);
+        return 0;
+    }
+    return isSoundPlaying(id, type);
 }
 
 /* Whether a sound type has no current value, or one at least `value`. */
