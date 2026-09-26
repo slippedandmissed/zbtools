@@ -235,6 +235,19 @@ void fn_412d57()
     fn_412b4d(g_4aa494->handlers->handler24);
 }
 
+/* Calls every item's handlers (search 6, in mode 1), keeping the state. */
+/* @zoombi32 0x00413295 */
+void visitAllItems()
+{
+    InputState saved;
+
+    fn_413afd(&saved, 1);
+    g_4aa4ac = 6;
+    g_4aa4c0 = 1;
+    fn_41348b(0, 0, 0);
+    fn_413a4e(&saved, 1);
+}
+
 /* Flag 0x80 of g_4aa48b applies with a mouse, 0x40 without one. */
 /* @zoombi32 0x0041336f */
 short fn_41336f()
@@ -249,6 +262,45 @@ short fn_4133a4()
 {
     short noMouse = !(unsigned short)isMousePresent();
     return g_4aa48b & 0x20 && !noMouse || g_4aa48b & 0x10 && noMouse;
+}
+
+/* Moves the focus to the first item whose group's handler accepts `value`. */
+/* @zoombi32 0x004133d9 */
+short focusItemByHandler(long value)
+{
+    g_4aa4ac = 0;
+    g_4aa4b0 = value;
+    return fn_41348b(0, 0, 0);
+}
+
+/* Moves the focus to the first item with a key (either case). */
+/* @zoombi32 0x004133fc */
+short focusItemByKey(short key)
+{
+    g_4aa4ac = 3;
+    g_4aa4bc = toUpperAscii(key);
+    return fn_41348b(0, 0, 0);
+}
+
+/* Moves the focus to the item at a position. */
+/* @zoombi32 0x00413427 */
+short focusItemAt(short x, short y)
+{
+    g_4aa4ac = 2;
+    g_4aa4b8 = x;
+    g_4aa4ba = y;
+    return fn_41348b(0, 0, 0);
+}
+
+/* Moves the focus to an item. */
+/* @zoombi32 0x00413456 */
+short focusItem(InputItem *item)
+{
+    if (!fn_412844(item))
+        return 0;
+    g_4aa4ac = 1;
+    g_4aa4b4 = item;
+    return fn_41348b(0, 0, 0);
 }
 
 /* Searches all lists (g_4a01ac) from list `list`, group `group`, item `start`,
@@ -537,4 +589,17 @@ void fn_413bad(Point *where)
 void fn_413bcf(void (*hook)(Point *where))
 {
     g_4aa4c4 = hook;
+}
+
+/* Gives every item its position (search 7, in mode 2), keeping the state. */
+/* @zoombi32 0x00413be4 */
+void numberAllItems()
+{
+    InputState saved;
+
+    fn_413afd(&saved, 1);
+    g_4aa4ac = 7;
+    g_4aa4c0 = 2;
+    fn_41348b(0, 0, 0);
+    fn_413a4e(&saved, 1);
 }
