@@ -139,7 +139,7 @@ Functions are named for what they do once that's clear (`isMousePresent`), and a
 
 A function that's written but not yet an exact match is marked `/* @zoombi32-nonmatching 0x... */`: it's still compiled and reported with how close it is, but doesn't fail the run.
 
-`match` compiles each file with Borland C++ 4.5 and the game's usual options (`-p -k-`; a file can set its own with a `/* @flags ... */` comment, as some modules were built differently) and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets). Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. It needs `uv run extract-game` and `uv run toolchain setup` first.
+`match` compiles each file with Borland C++ 4.5 and the game's usual options (`-p -k-`; a file can set its own with a `/* @flags ... */` comment, as some modules were built differently) and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets); a call to another marked function in the same file must go to that function's address in the game. Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. It needs `uv run extract-game` and `uv run toolchain setup` first.
 
 ### Choosing what to decompile, and tracking progress
 

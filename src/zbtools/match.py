@@ -17,8 +17,9 @@ and reported with how close it is, but doesn't count as a failure.
 Each file is compiled with Borland C++ 4.5 using the game's usual options
 (`-p -k-`), or those given by a `/* @flags ... */` comment in the file, and
 every marked function is compared with the original, ignoring the bytes the
-linker fills in (relocated addresses and call targets). Mismatches are shown
-side by side.
+linker fills in (relocated addresses and call targets). Calls the compiler
+resolves itself, to other marked functions in the same file, must reach the
+function at the callee's marker address. Mismatches are shown side by side.
 """
 
 import difflib
@@ -63,7 +64,7 @@ class Result:
     target: Target
     compiled: bytes
     original: bytes
-    masked: frozenset[int]  # offsets in `compiled` the linker fills in
+    masked: frozenset[int]  # offsets in `compiled` the linker fills in, or that call siblings
     original_masked: frozenset[int]  # offsets in `original` the linker filled in
     mismatches: tuple[int, ...]  # offsets that differ
     references: dict[int, str]  # offset in `compiled` of each fixup -> its target symbol
@@ -116,7 +117,54 @@ def _find_public(obj: omf.ObjectFile, name: str) -> omf.Public:
     return candidates[0]
 
 
-def compare(target: Target, obj: omf.ObjectFile, exe: Executable) -> Result:
+@dataclass(frozen=True)
+class Sibling:
+    """Another marked function in the same object file."""
+
+    address: int  # in the original
+    symbol: str  # in the object file
+
+
+def _local_calls(
+    compiled: bytes,
+    original: bytes,
+    *,
+    address: int,
+    at: tuple[str, int],
+    masked: frozenset[int],
+    siblings: dict[tuple[str, int], Sibling],
+) -> dict[int, str]:
+    """Calls the compiler resolved itself, to functions in the same object: they
+    have no fixup, and their displacement depends on our file's layout. Returns
+    the ones that reach the right function (a marked sibling the original calls
+    too), as the offset of their operand -> the callee's symbol."""
+    segment, start = at
+    found = {}
+    for ins in disassemble(compiled, 0):
+        after = ins.address + 5
+        if ins.raw[0] != 0xE8 or len(ins.raw) != 5 or ins.address + 1 in masked:
+            continue
+        ours = start + after + int.from_bytes(ins.raw[1:], "little", signed=True)
+        theirs = (
+            address
+            + after
+            + int.from_bytes(original[ins.address + 1 : after], "little", signed=True)
+        )
+        callee = siblings.get((segment, ours))
+        if callee is not None and callee.address == theirs:
+            found[ins.address + 1] = callee.symbol
+    return found
+
+
+def compare(
+    target: Target,
+    obj: omf.ObjectFile,
+    exe: Executable,
+    siblings: dict[tuple[str, int], Sibling] | None = None,
+) -> Result:
+    """Compare a compiled function with the original. `siblings` gives the
+    original addresses of the object's other marked functions, by (segment,
+    offset), to check calls the compiler resolved itself."""
     public = _find_public(obj, target.name)
     start, end = obj.extent(public)
     segment = obj.segments[public.segment]
@@ -124,6 +172,15 @@ def compare(target: Target, obj: omf.ObjectFile, exe: Executable) -> Result:
     original = exe.read(target.address, len(compiled))
     fixups = [f for f in segment.fixups if start <= f.offset < end]
     masked = frozenset(f.offset - start + k for f in fixups for k in range(f.size))
+    local = _local_calls(
+        compiled,
+        original,
+        address=target.address,
+        at=(public.segment, start),
+        masked=masked,
+        siblings=siblings or {},
+    )
+    masked |= {offset + k for offset in local for k in range(4)}
     mismatches = {i for i in range(len(compiled)) if i not in masked and compiled[i] != original[i]}
     # An absolute address in the compiled code must be relocated in the original too.
     for f in fixups:
@@ -136,7 +193,7 @@ def compare(target: Target, obj: omf.ObjectFile, exe: Executable) -> Result:
         for i in range(len(original))
         if any(target.address + i - k in exe.relocations for k in range(4))
     )
-    references = {f.offset - start: f.target for f in fixups}
+    references = {f.offset - start: f.target for f in fixups} | local
     return Result(
         target, compiled, original, masked, relocated, tuple(sorted(mismatches)), references
     )
@@ -267,9 +324,16 @@ def check(
         except RuntimeError as e:
             checked += [Checked(source, t, None, str(e)) for t in targets]
             continue
+        siblings = {}
         for target in targets:
             try:
-                checked.append(Checked(source, target, compare(target, obj, exe)))
+                public = _find_public(obj, target.name)
+            except ValueError:
+                continue
+            siblings[public.segment, public.offset] = Sibling(target.address, public.name)
+        for target in targets:
+            try:
+                checked.append(Checked(source, target, compare(target, obj, exe, siblings)))
             except ValueError as e:
                 checked.append(Checked(source, target, None, str(e)))
     return checked
