@@ -185,13 +185,6 @@ struct Counters
     Triple counters;
 };
 
-/* Something with a handle at +6. */
-struct HasHandle
-{
-    char unknown0[6];
-    long handle;
-};
-
 /* A 22-byte entry with a value at +4. */
 struct Entry22
 {
@@ -207,16 +200,16 @@ struct Entry
     short unknown2;
     short key;
     long handle; /* the engine's */
-    char unknownA[4];
+    long unknownA;
     Entry *next;
 };
 
 /* One of a sound type's 4 channels. */
 struct SoundChannel
 {
-    short unknown0;
+    unsigned short id; /* 0xffff: free */
     short playing;
-    short unknown4;
+    unsigned short started;
 };
 
 /* What the engine tells a sound's owner (fn_411d2c). */
@@ -282,6 +275,7 @@ private:
 
 extern short soundLevel; /* @data 0x4a0090 */
 extern Entry *g_4a00a0;
+extern short channelCounts[2]; /* @data 0x4a00a4 */
 extern char currentChannel[2]; /* @data 0x4a00a8 */
 extern SoundChannel soundChannels[2][4]; /* @data 0x4a00aa */
 extern long soundTypes[2]; /* @data 0x4a00dc */
@@ -350,6 +344,9 @@ extern long g_4a7f58;
 extern Counted *g_4a8dcc;
 extern short g_4aa428;
 extern short g_4aa42a;
+extern char *g_4aa430;
+extern char *g_4aa434;
+extern char *g_4aa438;
 extern InputItem *highlightedItem; /* @data 0x4aa484 */
 extern unsigned short g_4aa48a;
 extern unsigned char g_4aa48b;
@@ -506,6 +503,11 @@ long qtim_0b();
 
 void fn_476622(long handle);
 void fn_4771a4(long handle);
+short fn_476bb4(); /* the last sound error */
+void fn_46c602(long *);
+/* Joins two strings into a new block at *joined. */
+void fn_413c24(char **joined, const char *first, const char *second);
+void fn_413d33(char *message);
 void fn_4771e4(long handle);
 short fn_480b80(InputItem *item, Point *where); /* the default hit test */
 /* The engine's graphics follow Mac QuickDraw: a current port, and conversions
@@ -550,11 +552,16 @@ void fn_48f660(long handle, long, long);
 
 Entry *fn_4115f5(short key, long tag);
 void fn_411910(Entry *entry, short channel);
+Entry *addSound(short key, long type);
+void removeSound(Entry **entry);
+void setSoundType(Entry **entry, short key, long type);
+void reportSoundError(short id, long type, Entry *entry, const char *message);
+short findChannel(short type);
 void fn_4119f3(Entry *entry, short channel);
 void fn_411d2c(long, SoundNotice *notice, long cookie);
 void fn_412176(long type);
 short fn_4121a5(short level);
-void fn_4117a8(HasHandle *object);
+void fn_4117a8(Entry *entry);
 short fn_412b4d(void (*callback)(InputItem *item));
 short fn_412844(InputItem *item);
 short fn_412884();
