@@ -5,7 +5,9 @@ description = "Tooling for the Logical Journey of the Zoombinis decompilation"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "capstone>=5.0.9",
     "fonttools>=4.66.0",
+    "pefile>=2024.8.26",
     "pillow>=12.3.0",
     "pycdlib>=1.21.0",
     "pydantic>=2.13.5",
@@ -20,6 +22,7 @@ lint = "zbtools.lint:app"
 extract-game = "zbtools.extract_game:app"
 vm = "zbtools.vm:app"
 toolchain = "zbtools.toolchain:app"
+match = "zbtools.match:app"
 unpack-isz = "zbtools.unpack_isz:app"
 
 [build-system]
@@ -71,6 +74,6 @@ init_forbid_extra = true
 init_typed = true
 
 [[tool.mypy.overrides]]
-# fontTools ships no type information.
-module = ["fontTools", "fontTools.*"]
+# These ship no type information; keep their objects inside typed wrappers.
+module = ["fontTools", "fontTools.*", "pefile", "capstone"]
 ignore_missing_imports = true

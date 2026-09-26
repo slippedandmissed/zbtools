@@ -40,6 +40,11 @@ def bc45_dir(release: str) -> Path:
     return paths.TOOLCHAIN_DIR / release / "BC45"
 
 
+def windows_path(path: Path) -> str:
+    """A host path as Wine sees it: Wine maps the host's root directory to Z:."""
+    return "Z:" + str(path.resolve()).replace("/", "\\")
+
+
 def installed_releases() -> list[str]:
     return [r for r in paths.BORLAND_ISOS if (bc45_dir(r) / "BIN" / "BCC32.EXE").exists()]
 

@@ -18,6 +18,11 @@ BUILD_DIR = REPO_ROOT / "build"
 DISC_DIR = BUILD_DIR / "disc"
 GAME32_DIR = BUILD_DIR / "zoombi32"
 
+# Decompiled C source, checked against the game by `uv run match`.
+DECOMP_DIR = REPO_ROOT / "decomp"
+# Objects `uv run match` compiles, one directory per release.
+MATCH_DIR = BUILD_DIR / "match"
+
 # Borland C++ BIN, LIB and INCLUDE, one directory per release.
 TOOLCHAIN_DIR = BUILD_DIR / "toolchain"
 # Wine: the downloaded build (macOS only) and the prefix the compilers run in.
@@ -69,7 +74,7 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "vm-game": [WIN98_GAME, WIN98_OVERLAY],
     "vm-base": [WIN98_BASE, "vm-game"],
     "vm": ["vm-base", "vm-state"],
-    "toolchain": [TOOLCHAIN_DIR, WINE_PREFIX],
+    "toolchain": [TOOLCHAIN_DIR, WINE_PREFIX, MATCH_DIR],
     "wine": [WINE_DIR],
     "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
     # The whole build/ directory, so stray files can't survive a full clean.

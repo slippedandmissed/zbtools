@@ -42,3 +42,13 @@ Both CDs ship the full toolchain uncompressed under `BC45/` (the run-from-CD tre
 - 13,236 of the 24-byte code windows shared by both libraries occur in `zoombi32.exe`, confirming the linked runtime is Borland C++ 4.5x.
 
 So the game's runtime code is consistent with either release. The remaining test is code generation: compile the same decompiled game function with each release's `BCC32.EXE` and see which reproduces the original bytes.
+
+## Code layout and conventions (zoombi32.exe)
+
+- `CODE` runs from `0x410000` (also the entry point) to `0x494000`. The Borland runtime library starts at about `0x46f7c5`: every window of runtime-library code found in the executable lies above it. Below it (~390 KB) is the game's own code.
+- Game functions seen so far clean up their own arguments (`ret N`): `__stdcall` or `__pascal`, either declared explicitly or set as the default with a compiler flag.
+- Functions always get a standard stack frame (`push ebp` / `mov ebp, esp`), even trivial ones. BCC32's default settings reproduce this.
+
+## First matched functions
+
+`decomp/first.c`: `fn_46be2e` (stores its argument in the global at `0x4a7f58`) and `fn_455e85` (returns 0, ignoring two arguments). Both match byte for byte with BCC32's default options under both 4.5 and 4.52, so they don't distinguish the releases or flags.

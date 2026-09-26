@@ -94,6 +94,25 @@ uv run toolchain run 4.5 BCC32 -c foo.c      # run any Borland tool, in the curr
 
 Under Wine, release 4.5 is drive `T:` and 4.52 is drive `U:` (e.g. `T:\BC45\INCLUDE`); host files are on `Z:`.
 
+### Matching decompiled functions
+
+Decompiled C lives in `decomp/`. Each function that should reproduce the game's code is preceded by a marker comment with its address in `zoombi32.exe`:
+
+```c
+/* @zoombi32 0x0046be2e */
+void __stdcall fn_46be2e(long value)
+{
+    g_4a7f58 = value;
+}
+```
+
+```sh
+uv run match                      # check every marked function in decomp/
+uv run match decomp/first.c -r 4.5 --flags "-O2"   # one file, one release, extra BCC32 options
+```
+
+`match` compiles each file with each installed Borland C++ release and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets). Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. It needs `uv run extract-game` and `uv run toolchain setup` first.
+
 ### Cleaning up
 
 ```sh
@@ -163,10 +182,10 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Scripted QuickTime and game install in the VM (`uv run vm install-game`); game reaches its title screen
 - [ ] Game verified playable in the VM (sound, music, movies)
 - [ ] Mohawk archive lister / extractor
-- [ ] Ghidra project with imports and runtime functions labeled
 - [x] Borland C++ 4.5 and 4.52 toolchains running under Wine (`uv run toolchain`)
-- [ ] Object diff tool; settle 4.5 vs 4.52 and the compiler flags
-- [ ] First decompiled function
+- [x] Function matcher (`uv run match`) and the first matching functions
+- [ ] Settle 4.5 vs 4.52 and the compiler flags (needs a function that distinguishes them)
+- [ ] Ghidra project with imports and runtime functions labeled
 
 ## Legal
 
