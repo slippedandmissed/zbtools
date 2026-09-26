@@ -1,0 +1,23 @@
+version = 1
+revision = 3
+requires-python = ">=3.12"
+
+[[package]]
+name = "pycdlib"
+version = "1.21.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/34/35/5bf537a4d81f53f9fbe8031a81a67a858f639ab5c4c48058d85b84ca2631/pycdlib-1.21.0.tar.gz", hash = "sha256:a5758ad00f0e1bbd60dc5a579a50259bff2e267e8e925d485351bf2bc683a329", size = 361012, upload-time = "2026-09-25T14:15:15.745Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d9/1d/04c8489b2ffc95c213b42314bc05186436a5f44872f1a97a946ab3ba913e/pycdlib-1.21.0-py3-none-any.whl", hash = "sha256:1a82cd735542921d0dd7bc40381e7b7b9cbc70bd4c03e4f67a0531d59d2f518e", size = 237343, upload-time = "2026-09-25T14:15:14.48Z" },
+]
+
+[[package]]
+name = "zbtools"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "pycdlib" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pycdlib", specifier = ">=1.21.0" }]

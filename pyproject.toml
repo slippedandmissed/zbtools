@@ -1,0 +1,18 @@
+[project]
+name = "zbtools"
+version = "0.1.0"
+description = "Tooling for the Logical Journey of the Zoombinis decompilation"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pycdlib>=1.21.0",
+]
+
+[project.scripts]
+clean = "zbtools.clean:main"
+extract-game = "zbtools.extract_game:main"
+unpack-isz = "zbtools.unpack_isz:main"
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"

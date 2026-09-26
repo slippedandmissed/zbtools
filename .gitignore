@@ -1,1 +1,6 @@
 data/
+build/
+.venv/
+__pycache__/
+
+.env
