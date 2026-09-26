@@ -44,7 +44,10 @@ def globals_in(text: str) -> list[Global]:
             continue
         type_, name, array, rest = declaration.groups()
         named = _ADDRESS_NAME.match(name)
-        marker = _DATA_MARKER.search(rest) or (_DATA_MARKER.search(lines[i - 1]) if i else None)
+        above = lines[i - 1].strip() if i else ""
+        marker = _DATA_MARKER.search(rest) or (
+            _DATA_MARKER.fullmatch(above) if above.startswith("/*") else None
+        )
         if marker:
             address = int(marker.group(1), 16)
         elif named:

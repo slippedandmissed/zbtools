@@ -97,6 +97,18 @@ struct Resume
     long address;
 };
 
+/* The engine's file name class (4 bytes, no virtual functions). The engine
+   wasn't compiled with -p, so its methods use the C convention. */
+class fileSpec
+{
+public:
+    __cdecl fileSpec(const char *path);
+    __cdecl ~fileSpec();
+
+private:
+    long unknown0;
+};
+
 /* Globals, by address */
 
 extern Entry *g_4a00a0;
@@ -108,12 +120,17 @@ extern time_t g_4a07b8;
 extern long g_4a07c4;
 extern long g_4a07e8;
 extern long g_4a07ec;
+extern short g_4a3e5c; /* set when the game data is found in INSTALLFROMDIR */
+extern char installFromDirKey[]; /* @data 0x4a3f06 */
+extern char dataDirName[]; /* @data 0x4a3f15 */
+extern char installToDirKey[]; /* @data 0x4a3f1b */
 extern long g_4a4a00;
 extern long g_4a4a14;
 extern long g_4a4a18;
 extern long g_4a4a1c;
 extern char *g_4a4ba0;
 extern short g_4a4ce6;
+extern char configFileName[]; /* @data 0x4a5149 */
 extern short g_4a7b94;
 extern long g_4a7f58;
 extern Counted *g_4a8dcc;
@@ -131,12 +148,16 @@ extern short g_4afb90;
 extern short g_4aff9a[];
 extern short g_4b0d52;
 extern short g_4b0d54;
+extern char installDir[256]; /* @data 0x4b1828 */
 extern short g_4b2d38;
 extern short g_4b7b38;
 extern short g_4b7b3a;
 extern long g_4b7b68;
 extern short g_4b83e4[];
 extern short g_4b99d4;
+extern char dataPath[256]; /* @data 0x4b99d6 */
+extern short dataPathLength; /* @data 0x4b9ad6 */
+extern char dataDrive; /* @data 0x4b9ad8 */
 extern short g_4b9cf0;
 extern short g_4b9cf4;
 extern short g_4b9cf6;
@@ -149,8 +170,24 @@ extern short g_4b9d4c;
 extern long g_4b9d70;
 extern long g_4b9d74;
 
+/* Game functions not decompiled yet */
+
+/* Reports an error, printf-style. */
+void __cdecl fn_41541a(const char *format, ...);
+
 /* Engine functions whose calling conventions aren't known yet: these
    declarations produce the calls the game makes. */
+
+/* Reads `key` from `section` of the INI file `file` into buffer; non-zero if
+   it couldn't. */
+short fn_480790(const fileSpec &file, const char *section, const char *key, char *buffer,
+                long size);
+/* Zero if `file` exists (as the game uses it). */
+short fn_483420(const fileSpec &file);
+/* Opens `file` (mode 1 as the game uses it), returning a handle or 0. */
+long fn_484b50(const fileSpec &file, long mode);
+/* Closes a file opened by fn_484b50. */
+void fn_48266c(long file, long);
 
 void fn_476622(long handle);
 void fn_4812bc(short handle);
@@ -203,6 +240,8 @@ short fn_4381bb();
 void spliceList(Link *other, Link *list);
 short fn_44027b(long, long);
 void fn_446962(long, long);
+void findGameData();
+short preferFirstFile(const char *first, const char *fallback);
 long fn_455013(long, long);
 int isMousePresent();
 void freeAndClear(void **block);
@@ -225,6 +264,7 @@ void fn_46b747(long, short id);
 void fn_46be2e(long value);
 short fn_46bee2();
 short fn_46bee9(short value);
+void setDataPath(const char *path);
 void fn_46ca9c(long *handle);
 long __cdecl fn_46d827(Counted *object);
 short fn_46d9c8();

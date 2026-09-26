@@ -2,6 +2,7 @@
  * e2memory (0x46be28-0x46cca0): 'e2AllocHandle error: memHandle already in use', 'e2GetShapes error'
  */
 
+#include <string.h>
 #include "zoombinis.h"
 
 /* @zoombi32 0x0046be2e */
@@ -32,4 +33,13 @@ void fn_46ca9c(long *handle)
         fn_48f660(*handle, 0, 0);
         *handle = 0;
     }
+}
+
+/* Sets the directory the game's data files are read from. */
+/* @zoombi32 0x0046c990 */
+void setDataPath(const char *path)
+{
+    strcpy(dataPath, path);
+    dataDrive = dataPath[0];
+    dataPathLength = strlen(dataPath);
 }
