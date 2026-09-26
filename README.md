@@ -106,12 +106,13 @@ uv run ghidra decompile 0x46be2e     # print Ghidra's C for one function
 
 `setup` downloads a pinned Ghidra release into `build/ghidra/` (building its native decompiler first if the release has none for your machine), imports `zoombi32.exe` into a project in `build/ghidra/project/`, runs Ghidra's auto-analysis and writes every function it found to `build/ghidra/functions.json`. Close the project in the GUI before running `decompile`, which opens it headlessly.
 
-To name the Borland runtime-library functions in the project (strcpy, memcpy, the C++ support code, ...):
+To name what the tools can recover: the Borland runtime-library functions (strcpy, memcpy, the C++ support code, ...), and the game's C++ classes, whose names, base classes, vtables, constructors and destructors survive in its RTTI:
 
 ```sh
 uv run runtime-symbols      # find them: matches the toolchain's libraries against the game
-uv run ghidra label         # apply them to the Ghidra project: C++ functions go in their class's
-                            # namespace, with the full signature as a comment (keeps names you set by hand)
+uv run classes              # recover C++ classes from RTTI: names, hierarchy, vtables, constructors
+uv run ghidra label         # apply both to the Ghidra project, and set calling conventions
+                            # (only renames functions Ghidra named automatically, FUN_...)
 ```
 
 Work you do in Ghidra's GUI (names, comments, types) lives in the project, so no default `clean` removes it; `uv run ghidra setup --force` recreates the project from scratch.
@@ -145,7 +146,7 @@ Deletes generated files by category, never touching `data/` or `.env`:
 
 | Category | What it removes | Rebuilt by |
 | --- | --- | --- |
-| `extracted` | `build/disc/`, `build/zoombi32/`, `build/symbols/` | `uv run extract-game`, `uv run runtime-symbols` |
+| `extracted` | `build/disc/`, `build/zoombi32/`, `build/symbols/` | `uv run extract-game`, `uv run runtime-symbols`, `uv run classes` |
 | `vm-state` | the VM overlay and install leftovers | automatically on `vm run` |
 | `vm-game` | the QuickTime and game install (and the overlay on it) | `uv run vm install-game` (1 min) |
 | `vm-base` | the Windows 98 install (and everything layered on it) | `uv run vm install` (30-60 min) |
@@ -208,11 +209,11 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [ ] Mohawk archive lister / extractor
 - [x] Borland C++ 4.5 and 4.52 toolchains running under Wine (`uv run toolchain`)
 - [x] Function matcher (`uv run match`) and the first matching functions
-- [ ] Settle 4.5 vs 4.52 and the compiler flags (needs a function that distinguishes them)
 - [x] Ghidra project with auto-analysis, function list and decompiler (`uv run ghidra`)
 - [x] Label the Borland runtime functions in Ghidra (`uv run runtime-symbols`, `uv run ghidra label`)
 - [x] Switch `decomp/` to C++; demangle Borland names
-- [ ] Harvest class names (RTTI) and vtables; teach Ghidra the calling conventions
+- [x] Harvest class names (RTTI) and vtables; teach Ghidra the calling conventions
+- [ ] Settle 4.5 vs 4.52 and the compiler flags with mid-sized functions
 
 ## Legal
 

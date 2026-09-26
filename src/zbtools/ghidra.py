@@ -19,13 +19,13 @@ import pyghidra
 import typer
 from pydantic import BaseModel, ConfigDict
 
-from zbtools import download, host, paths, runtime_symbols
+from zbtools import download, host, paths, rtti, runtime_symbols
 from zbtools.demangle import qualified_name
 
 if TYPE_CHECKING:
     from ghidra.program.model.address import Address
     from ghidra.program.model.listing import Function, Program
-    from ghidra.program.model.symbol import SymbolTable
+    from ghidra.program.model.symbol import Namespace, SymbolTable
 
 GHIDRA_VERSION = "12.1.4"
 _URL = (
@@ -218,68 +218,167 @@ def _add_secondary_labels(table: "SymbolTable", at: "Address", names: list[str])
             extra.delete()
 
 
-@app.command()
-def label() -> None:
-    """Name the Borland runtime-library code in the project, using the symbols
-    from `uv run runtime-symbols`: C++ functions go in their class's namespace,
-    with the full signature as a comment and the mangled name as an extra
-    label. Names you've set in Ghidra are kept."""
-    found = runtime_symbols.load()
-    symbols_at: dict[int, list[runtime_symbols.RuntimeSymbol]] = collections.defaultdict(list)
-    for symbol in found.symbols:
-        symbols_at[symbol.address].append(symbol)
-
-    _start()
-    # Ghidra's Java classes can only be imported once the JVM has started.
+def _label_runtime(program: "Program", found: runtime_symbols.RuntimeSymbols) -> tuple[int, int]:
+    """Name the Borland runtime code; returns (functions named, hand-set names kept)."""
     from ghidra.app.util import NamespaceUtils  # noqa: PLC0415
     from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
     from ghidra.program.model.listing import CommentType  # noqa: PLC0415
     from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
 
-    functions_named = kept = 0
+    symbols_at: dict[int, list[runtime_symbols.RuntimeSymbol]] = collections.defaultdict(list)
+    for symbol in found.symbols:
+        symbols_at[symbol.address].append(symbol)
+    api = FlatProgramAPI(program)
+    space = program.getAddressFactory().getDefaultAddressSpace()
+    manager, table, listing = (
+        program.getFunctionManager(),
+        program.getSymbolTable(),
+        program.getListing(),
+    )
+    root = program.getGlobalNamespace()
+    named = kept = 0
+    for address, symbols in sorted(symbols_at.items()):
+        at = space.getAddress(address)
+        scope, name, signature = ghidra_name(symbols[0])
+        namespace = root
+        if scope:
+            namespace = NamespaceUtils.createNamespaceHierarchy(
+                scope, root, program, SourceType.IMPORTED
+            )
+        # Every name this tool may have given the address, to tell them from
+        # names set by hand (createFunction marks names as user-defined).
+        ours = {s.name for s in symbols} | {ghidra_name(s)[1] for s in symbols}
+        # Type descriptors (@$xt$...) and vtables are data in the code.
+        is_data = symbols[0].name.startswith("@$xt$") or name == "vtable"
+        function: Function | None = None
+        if not is_data:
+            # The stubs omit Java's nulls: both return None if there's no function.
+            function = manager.getFunctionAt(at) or api.createFunction(at, None)
+        if function is not None:
+            symbol = function.getSymbol()
+            if symbol.getSource() != SourceType.USER_DEFINED or function.getName() in ours:
+                symbol.setNameAndNamespace(name, namespace, SourceType.IMPORTED)
+                named += 1
+            else:
+                kept += 1
+        elif not any(str(s.getName()) == name for s in table.getSymbols(at)):
+            table.createLabel(at, name, namespace, SourceType.IMPORTED)
+        if signature:
+            listing.setComment(at, CommentType.PLATE, signature)
+        _add_secondary_labels(table, at, [s.name for s in symbols])
+    return named, kept
+
+
+def _depths(classes: list[rtti.ClassInfo]) -> dict[str, int]:
+    """Each class's depth in the hierarchy (0 for classes without bases)."""
+    by_name = {c.name: c for c in classes}
+    depth: dict[str, int] = {}
+
+    def of(name: str) -> int:
+        if name not in depth:
+            bases = by_name[name].bases if name in by_name else []
+            depth[name] = 1 + max((of(b) for b in bases), default=-1)
+        return depth[name]
+
+    return {c.name: of(c.name) for c in classes}
+
+
+def _label_classes(program: "Program", classes: list[rtti.ClassInfo]) -> int:
+    """Turn RTTI classes into Ghidra classes; returns how many functions were
+    named. Only functions still named automatically (FUN_...) are renamed."""
+    from ghidra.app.util import NamespaceUtils  # noqa: PLC0415
+    from ghidra.program.flatapi import FlatProgramAPI  # noqa: PLC0415
+    from ghidra.program.model.symbol import SourceType, SymbolType  # noqa: PLC0415
+
+    api = FlatProgramAPI(program)
+    space = program.getAddressFactory().getDefaultAddressSpace()
+    manager, table = program.getFunctionManager(), program.getSymbolTable()
+    root = program.getGlobalNamespace()
+    named = 0
+
+    def ghidra_class(name: str) -> "Namespace":
+        namespace = NamespaceUtils.createNamespaceHierarchy(
+            name, root, program, SourceType.ANALYSIS
+        )
+        if namespace.getSymbol().getSymbolType() != SymbolType.CLASS:
+            return NamespaceUtils.convertNamespaceToClass(namespace)
+        return namespace
+
+    def name_function(address: int, name: str, namespace: "Namespace", containing: bool) -> None:
+        nonlocal named
+        at = space.getAddress(address)
+        # The stubs omit Java's nulls: these return None if there's no function.
+        function: Function | None = (
+            manager.getFunctionContaining(at)
+            if containing
+            else manager.getFunctionAt(at) or api.createFunction(at, None)
+        )
+        if function is not None and function.getSymbol().getSource() == SourceType.DEFAULT:
+            function.getSymbol().setNameAndNamespace(name, namespace, SourceType.ANALYSIS)
+            named += 1
+
+    def label(address: int, name: str, namespace: "Namespace") -> None:
+        at = space.getAddress(address)
+        if not any(str(s.getName()) == name for s in table.getSymbols(at)):
+            table.createLabel(at, name, namespace, SourceType.ANALYSIS)
+
+    depth = _depths(classes)
+    # Constructors and destructors most-derived first: a derived constructor also
+    # stores its bases' vtables, so it must be claimed by its own class first.
+    for cls in sorted(classes, key=lambda c: -depth[c.name]):
+        namespace = ghidra_class(cls.name)
+        short = cls.name.split("::")[-1]
+        label(cls.descriptor, "__tpdsc__", namespace)
+        for i, vtable in enumerate(cls.vtables):
+            label(vtable.address, "vtable" if i == 0 else f"vtable{i}", namespace)
+        if cls.destructor is not None:
+            name_function(cls.destructor, f"~{short}", namespace, containing=False)
+        for site in cls.constructors:
+            name_function(site, short, namespace, containing=True)
+    # Virtual methods base first, so each is named after the class introducing it.
+    for cls in sorted(classes, key=lambda c: depth[c.name]):
+        namespace = ghidra_class(cls.name)
+        for vtable in cls.vtables:
+            for slot, method in enumerate(vtable.methods):
+                name_function(method, f"vfunc{slot}", namespace, containing=False)
+    return named
+
+
+def _set_calling_conventions(program: "Program") -> int:
+    """Mark functions that pop their own arguments (`ret N`) as __stdcall, so the
+    decompiler shows their parameters. Borland passes `this` on the stack, so
+    this covers methods too. Returns how many functions changed."""
+    changed = 0
+    for function in program.getFunctionManager().getFunctions(True):
+        if function.isThunk() or function.isExternal():
+            continue
+        purge = function.getStackPurgeSize()
+        if 0 < purge < 0x10000 and function.getCallingConventionName() in ("unknown", "default"):
+            function.setCallingConvention("__stdcall")
+            changed += 1
+    return changed
+
+
+@app.command()
+def label() -> None:
+    """Apply everything the tools have recovered to the Ghidra project: Borland
+    runtime names (`uv run runtime-symbols`), C++ classes from RTTI (`uv run
+    classes`), and calling conventions. Names you've set by hand are kept."""
+    found = runtime_symbols.load()
+    classes = rtti.load().classes
+    _start()
     with (
         pyghidra.open_project(paths.GHIDRA_PROJECT_DIR, paths.GHIDRA_PROJECT_NAME) as project,
         pyghidra.program_context(project, f"/{PROGRAM_NAME}") as program,
     ):
-        api = FlatProgramAPI(program)
-        space = program.getAddressFactory().getDefaultAddressSpace()
-        manager, table = program.getFunctionManager(), program.getSymbolTable()
-        listing = program.getListing()
         with pyghidra.transaction(program):
-            for address, symbols in sorted(symbols_at.items()):
-                at = space.getAddress(address)
-                scope, name, signature = ghidra_name(symbols[0])
-                root = program.getGlobalNamespace()
-                namespace = root
-                if scope:
-                    namespace = NamespaceUtils.createNamespaceHierarchy(
-                        scope, root, program, SourceType.IMPORTED
-                    )
-                # Every name this tool may have given the address, to tell them from
-                # names set by hand (createFunction marks names as user-defined).
-                ours = {s.name for s in symbols} | {ghidra_name(s)[1] for s in symbols}
-                # Type descriptors (@$xt$...) and vtables are data in the code.
-                is_data = symbols[0].name.startswith("@$xt$") or name == "vtable"
-                function: Function | None = None
-                if not is_data:
-                    # The stubs omit Java's nulls: both return None if there's no function.
-                    function = manager.getFunctionAt(at) or api.createFunction(at, None)
-                if function is not None:
-                    symbol = function.getSymbol()
-                    if symbol.getSource() != SourceType.USER_DEFINED or function.getName() in ours:
-                        symbol.setNameAndNamespace(name, namespace, SourceType.IMPORTED)
-                        functions_named += 1
-                    else:
-                        kept += 1
-                elif not any(str(s.getName()) == name for s in table.getSymbols(at)):
-                    table.createLabel(at, name, namespace, SourceType.IMPORTED)
-                if signature:
-                    listing.setComment(at, CommentType.PLATE, signature)
-                _add_secondary_labels(table, at, [s.name for s in symbols])
-        program.save("Borland runtime symbols", pyghidra.task_monitor())
+            runtime_named, kept = _label_runtime(program, found)
+            class_named = _label_classes(program, classes)
+            conventions = _set_calling_conventions(program)
+        program.save("Recovered symbols", pyghidra.task_monitor())
         _write_functions(list_functions(program))
-
     print(
-        f"Named {functions_named} functions (kept {kept} names set by hand). "
-        f"Function list updated: {paths.GHIDRA_FUNCTIONS}"
+        f"Named {runtime_named} runtime functions (kept {kept} names set by hand) and "
+        f"{class_named} class methods from {len(classes)} classes; set __stdcall on "
+        f"{conventions} functions. Function list updated: {paths.GHIDRA_FUNCTIONS}"
     )

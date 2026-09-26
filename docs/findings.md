@@ -76,3 +76,30 @@ Borland C++ 4.5, 32-bit, as observed by compiling test code:
 - Plain functions are mangled with their argument types only (`fn_46be2e(long)` is `@fn_46be2e$ql`, even when declared `__stdcall`); global variables keep C names (`_g_4a7f58`).
 - Methods receive `this` as a hidden first stack argument (`[ebp+8]`), not in a register as with Microsoft's compilers; a `__stdcall` method with one argument returns with `ret 8`.
 - Borland's TDUMP demangler has two quirks our demangler (`src/zbtools/demangle.py`) doesn't copy: it drops the parameter after a nested type (e.g. `streambuf::seekoff(long, ios::seek_dir, int)` loses the `int`), and it appends `const` to class type descriptors. Otherwise ours agrees with it on all 2,227 mangled names in `CW32.LIB`.
+
+## C++ classes (RTTI)
+
+Borland C++ emits a type descriptor for each polymorphic class, and for types used in exceptions, in the code section (they are virtual segments, `@$xt$...`). `uv run classes` (`src/zbtools/rtti.py`) finds them by their layout, worked out from the runtime library's own descriptors and confirmed against the game:
+
+| Offset | Meaning |
+| --- | --- |
+| `+0x00` | object size |
+| `+0x04` | flags: `0x0001` class, `0x0002` has a destructor and the fields below; `0x0010` pointer type |
+| `+0x06` | offset of the name in the descriptor (`0x30`; `0x10` for classes without a destructor; `0x0c` for pointer types) |
+| `+0x08` | offset of the vtable pointer in objects, `-1` if none (pointer types: the pointed-to type's descriptor) |
+| `+0x10` | offset of the base-class list: `(descriptor, offset, flags)` entries, 12 bytes each, ended by a null descriptor |
+| `+0x14` | probably the class's deallocation function (`0x4870d1` for the port classes, which their destructors call to free the object) |
+| `+0x28` | the destructor |
+
+Each vtable, in the data section, is preceded by a pointer to its class's descriptor and two zero words: the vtable starts 12 bytes after that pointer, and slot 0 is the virtual destructor. Constructors (and destructors) store the vtable's address into the object (`mov dword ptr [reg], vtable`). Destructors take a hidden second argument whose bit 0 means "also free the memory" (e.g. `displayPort::~displayPort` calls `basePort::~basePort(this, 0)`, then the deallocation function if the bit is set).
+
+39 classes, nearly all in Broderbund's Mohawk engine:
+
+- graphics: `basePort` -> `displayPort` -> `windowPort` / `memoryPort`, and `basePort` -> `DIBPort` -> `DIB8Port` (37-39 virtual methods each)
+- audio: `wavebuf` -> `wavebufWO` (WaveOut) / `wavebufDS` (DirectSound); WaveMix: `wmxObject` -> `wmxMixer` / `wmxWaveOut`
+- files: `asyncAPI` -> twelve `async*` operation classes (`asyncCreateFile`, `asyncReadFile`, `asyncFindFirstFile`, ...)
+- threading: `sync` -> `event` / `mutex` / `thread`
+- Borland's own: `xmsg` -> `xalloc` / `string::lengtherror` / `string::outofrange`, `typeinfo`, `Bad_cast`, `Bad_typeid`, `string`, `TStringRef`
+- the game's own code: only `fileSpec` (no vtable). So the game's logic uses non-polymorphic classes or plain functions; names for it will have to come from elsewhere.
+
+`uv run ghidra label` makes these Ghidra classes (descriptor, vtable, constructors, destructor, and `vfuncN` for virtual methods named after the class that introduces them) and sets `__stdcall` on the 1,365 functions that pop their own arguments.

@@ -23,6 +23,8 @@ DECOMP_DIR = REPO_ROOT / "decomp"
 # Names `uv run runtime-symbols` found for the Borland runtime code in the game.
 SYMBOLS_DIR = BUILD_DIR / "symbols"
 RUNTIME_SYMBOLS = SYMBOLS_DIR / "runtime.json"
+# Classes `uv run classes` recovered from the game's RTTI.
+CLASSES = SYMBOLS_DIR / "classes.json"
 # Objects `uv run match` compiles, one directory per release.
 MATCH_DIR = BUILD_DIR / "match"
 

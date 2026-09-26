@@ -38,9 +38,20 @@ class Executable:
             for entry in block.entries
             if int(entry.type) == _IMAGE_REL_BASED_HIGHLOW
         )
+        self.sections = {
+            section.Name.rstrip(b"\0").decode(): (
+                self.base + int(section.VirtualAddress),
+                self.base + int(section.VirtualAddress) + int(section.Misc_VirtualSize),
+            )
+            for section in pe.sections
+        }
         code = next(s for s in pe.sections if int(s.Characteristics) & _IMAGE_SCN_MEM_EXECUTE)
         start = self.base + int(code.VirtualAddress)
         self.code_range = (start, start + int(code.Misc_VirtualSize))
+
+    def pointer(self, address: int) -> int:
+        """The 32-bit value stored at an address."""
+        return int.from_bytes(self.read(address, 4), "little")
 
     def read(self, address: int, size: int) -> bytes:
         offset = address - self.base
