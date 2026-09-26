@@ -32,3 +32,13 @@ Both builds were made with **Borland C++ 4.5 or 4.52**; which of the two is stil
 | 32-bit `zoombi32.exe`: PE linker version 2.25, subsystem version 3.10, section names `CODE`/`DATA` | Borland TLINK32; doesn't distinguish 4.5 from 4.52 on its own |
 
 4.5 and 4.52 share the same linker, so telling them apart needs the compilers themselves: compare their runtime library code (e.g. startup code and `CW32.LIB` routines) byte-for-byte with the code linked into `zoombi32.exe`.
+
+### 4.5 vs 4.52: the runtime libraries don't decide it
+
+Both CDs ship the full toolchain uncompressed under `BC45/` (the run-from-CD tree), so files can be compared directly:
+
+- `TLINK32.EXE` and `C0W32.OBJ` (32-bit startup code) are byte-identical in 4.5 and 4.52.
+- `CW32.LIB` (32-bit runtime library): 725 of 726 modules are the same code in both. `fsbskoff.cpp` differs, but neither version's copy is linked into `zoombi32.exe`. 4.52 adds `fdiv32.ASM`, and its compiler (`BCC32.EXE`, which still calls itself "Borland C++ 4.5") references `__fdiv`/`__fdivflag`: 4.52 adds the Pentium FDIV bug workaround. `zoombi32.exe` contains none of that code.
+- 13,236 of the 24-byte code windows shared by both libraries occur in `zoombi32.exe`, confirming the linked runtime is Borland C++ 4.5x.
+
+So the game's runtime code is consistent with either release. The remaining test is code generation: compile the same decompiled game function with each release's `BCC32.EXE` and see which reproduces the original bytes.
