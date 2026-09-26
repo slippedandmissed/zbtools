@@ -1,4 +1,4 @@
-from zbtools.match import Sibling, _local_calls
+from zbtools.match import Marker, Sibling, Target, _local_calls, find_targets
 
 
 def _call(source: int, destination: int) -> bytes:
@@ -50,3 +50,19 @@ def test_calls_with_fixups_are_left_to_the_linker() -> None:
         siblings=siblings,
     )
     assert found == {}
+
+
+def test_markers() -> None:
+    source = """
+/* @zoombi32 0x00401000 */
+void exact(long) {}
+/* @zoombi32-nonmatching 0x00401010 */
+void close(long) {}
+/* @zoombi32-functional 0x00401020 */
+long portable(long *value) { return 0; }
+"""
+    assert find_targets(source) == [
+        Target("exact", 0x401000, Marker.EXACT),
+        Target("close", 0x401010, Marker.NONMATCHING),
+        Target("portable", 0x401020, Marker.FUNCTIONAL),
+    ]

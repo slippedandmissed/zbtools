@@ -8,19 +8,16 @@
 #include "zoombinis.h"
 
 /*
- * Records in `resume` the return address `depth` frames up the stack. The
- * frame walk was hand-written (`sub 1` / `jb` on the parameter in memory, a
- * loop BCC32 doesn't generate), so it's emitted as bytes.
+ * Records in `resume` the return address `depth` frames up the stack: a
+ * hand-written loop follows the saved frame pointers (`mov eax, [eax]`), then
+ * reads the return address above the frame reached. That depends on the x86
+ * stack layout, so it has no portable equivalent; it's part of the Mohawk OS
+ * layer's stack switching (with 0x46f6f9 and 0x46f74f), which a port replaces
+ * (e.g. with Windows fibers). Left unimplemented.
  */
-/* @zoombi32 0x0046f771 */
+/* @zoombi32-nonmatching 0x0046f771 */
 void fn_46f771(Resume *resume, unsigned short depth)
 {
-    _EAX = _EBP;
-    /* up: sub word ptr [depth], 1 / jb done / mov eax, [eax] / jmp up / done: */
-    __emit__(0x66, (unsigned char)0x83, 0x6d, 0x08, 0x01, 0x72, 0x04, (unsigned char)0x8b, 0x00,
-             (unsigned char)0xeb, (unsigned char)0xf5);
-    _EDX = ((long *)_EAX)[1];
-    resume->address = _EDX;
 }
 
 /* @zoombi32 0x0046f78e */

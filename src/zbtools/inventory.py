@@ -46,6 +46,7 @@ class Region(StrEnum):
 class Status(StrEnum):
     MATCHED = "matched"  # decompiled and marked @zoombi32
     NONMATCHING = "nonmatching"  # decompiled, marked @zoombi32-nonmatching
+    FUNCTIONAL = "functional"  # decompiled, equivalent but not exact by design
     LIBRARY = "library"  # library code (runtime, QuickTime glue): nothing to decompile
     TODO = "todo"
 
@@ -169,7 +170,11 @@ def load(exe: Executable) -> list[Function]:
             region = Region.QUICKTIME
         done = decompiled.get(f.address)
         if done is not None:
-            status = Status.NONMATCHING if done.target.nonmatching else Status.MATCHED
+            status = {
+                match.Marker.EXACT: Status.MATCHED,
+                match.Marker.NONMATCHING: Status.NONMATCHING,
+                match.Marker.FUNCTIONAL: Status.FUNCTIONAL,
+            }[done.target.marker]
         elif f.address in library or region in (Region.RUNTIME, Region.QUICKTIME):
             status = Status.LIBRARY
         else:

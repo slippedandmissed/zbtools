@@ -153,15 +153,14 @@ The function at `0x46db83` is `push ebp / mov ebp, esp / movsx eax, word ptr [eb
 
 BCC32 compiles a `switch` to `jmp dword ptr [reg*4 + table]` with the table right after the jump, inside the function. Ghidra's first analysis couldn't follow some of these (before the game's calling conventions were known) and ended the function at the jump, so the worklist listed large functions as tiny ones (`0x420a60` as 29 bytes rather than 518). `uv run ghidra label` now decompiles each function with an unresolved computed jump again, lets the decompiler's switch analysis recover the table, and recomputes the body; this recovered dozens of functions. It also explains some odd instructions in a linear disassembly (`in`, `out`, `cli` in `0x42365a`, `0x431ea0`, `0x436d39`): they're table bytes, not code.
 
-## Functions that need assembly
+## Functions written in assembly
 
-BCC32 only compiles inline `asm` with TASM32, which isn't part of Borland C++ 4.5, so functions that can't come from C++ are listed here as they turn up. So few have that `__emit__` covers them for now.
+BCC32 only compiles inline `asm` with TASM32, which isn't part of Borland C++ 4.5. These functions can't come from C++ at all, and as the decompiled code is kept portable (no emitted bytes or pseudo-registers), they're written as portable equivalents (`@zoombi32-functional`) or left as documented stubs (`@zoombi32-nonmatching`):
 
-- `0x46dabb`, `0x46da9d`, `0x46daac`: `lock inc`, `lock dec`, `xchg` (matched with `__emit__`, in `decomp/os_manager.cpp`).
-- `0x46db83`: an `int3` mid-function (not reproduced; see above).
-- `0x46f6f9`: a `longjmp`-style unwinder that restores `ebp` and `esp` and jumps (support library; may be unidentified runtime code).
-- `0x46f771`: walks `depth` stack frames up with a hand-written loop (matched: the loop is emitted with `__emit__`, the rest is C).
-- `0x46f74f`: switches stacks (`mov esp, [eax+0x50]`, `jmp edx`), like `0x46f6f9`.
+- `0x46dabb`, `0x46da9d`, `0x46daac` (`atomicIncrement`, `atomicDecrement`, `atomicExchange`): `lock inc`, `lock dec`, `xchg`, probably because Windows 95's `InterlockedIncrement`/`Decrement` only return the sign of the result. Written with the `Interlocked*` functions (functional). (They could be matched exactly with `__emit__` and pseudo-registers, as could `0x46f771`, which is how they were first matched.)
+- `0x46f771`: walks `depth` stack frames up with a hand-written loop and records the return address there; no portable equivalent (a stub).
+- `0x46f6f9`, `0x46f74f`: switch stacks (`mov esp, [eax+0x50]`, `jmp edx`). With `0x46f771`, the Mohawk OS layer's stack switching, which a port would replace (e.g. with Windows fibers).
+- `0x46db83`: an `int3` mid-function (not decompiled yet).
 - Not yet checked: `0x46f6c9` and `0x46f70e` (`pushfd`/`popfd`), `0x4697f1` (`pushfd`/`popfd`, `sahf`).
 
 ## The game's source modules

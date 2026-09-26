@@ -12,7 +12,11 @@ found in the compiled object by its demangled, qualified name.
 
 A function that is written but doesn't match exactly yet is marked
 `/* @zoombi32-nonmatching 0x... */` instead: it's still compiled and compared,
-and reported with how close it is, but doesn't count as a failure.
+and reported with how close it is, but doesn't count as a failure. One that is
+complete but deliberately not byte-exact is marked `/* @zoombi32-functional
+0x... */`: decompiled code must be portable C++, so where only machine code
+(inline assembly, emitted bytes, pseudo-registers) would reproduce the
+original, the function does the same thing portably instead.
 
 Each file is compiled with Borland C++ 4.5 using the game's usual options
 (`-p -k-`), or those given by a `/* @flags ... */` comment in the file, and
@@ -27,6 +31,7 @@ import itertools
 import re
 import shlex
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 
@@ -47,16 +52,24 @@ _FLAGS = re.compile(r"/\*\s*@flags\s+(.*?)\s*\*/")
 # unless 4.52's -fp (Pentium FDIV workaround) is used, which the game doesn't.
 DEFAULT_RELEASE = "4.5"
 
-_MARKER = re.compile(r"/\*\s*@zoombi32(-nonmatching)?\s+(0x[0-9a-fA-F]+)\s*\*/")
+_MARKER = re.compile(r"/\*\s*@zoombi32(?:-(nonmatching|functional))?\s+(0x[0-9a-fA-F]+)\s*\*/")
 # The (possibly qualified) name of the function defined after a marker.
 _DEFINITION = re.compile(r"([A-Za-z_~][\w:~]*)\s*\(")
+
+
+class Marker(StrEnum):
+    """How a decompiled function is meant to compare with the original."""
+
+    EXACT = "exact"  # @zoombi32: must match byte for byte
+    NONMATCHING = "nonmatching"  # @zoombi32-nonmatching: not exact yet
+    FUNCTIONAL = "functional"  # @zoombi32-functional: equivalent, not exact by design
 
 
 @dataclass(frozen=True)
 class Target:
     name: str
     address: int
-    nonmatching: bool = False  # marked as a known near-miss
+    marker: Marker = Marker.EXACT
 
 
 @dataclass(frozen=True)
@@ -95,7 +108,8 @@ def find_targets(source: str) -> list[Target]:
         if name is None:
             raise ValueError(f"no function after marker {marker.group(0)}")
         address = int(marker.group(2), 16)
-        found.append(Target(name.group(1), address, nonmatching=bool(marker.group(1))))
+        kind = Marker(marker.group(1)) if marker.group(1) else Marker.EXACT
+        found.append(Target(name.group(1), address, kind))
     return found
 
 
@@ -380,12 +394,17 @@ def main(
                 continue
             size = len(result.compiled)
             if result.matches:
-                note = " (marked non-matching: remove the mark)" if target.nonmatching else ""
+                note = (
+                    f" (marked {target.marker}: remove the mark)"
+                    if target.marker != Marker.EXACT
+                    else ""
+                )
                 relocated = len(result.masked)
                 print(f"  match     {where}: {size} bytes ({relocated} relocated){note}")
-            elif target.nonmatching:
+            elif target.marker != Marker.EXACT:
                 differ = f"{len(result.mismatches)} of {size} bytes differ"
-                print(f"  nonmatch  {where}: {differ} (marked non-matching)")
+                label = "nonmatch " if target.marker == Marker.NONMATCHING else "functional"
+                print(f"  {label:9} {where}: {differ} (marked {target.marker})")
             else:
                 failed += 1
                 print(f"  MISMATCH  {where}: {len(result.mismatches)} of {size} bytes differ")

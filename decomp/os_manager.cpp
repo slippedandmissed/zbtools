@@ -10,38 +10,31 @@
 #include "zoombinis.h"
 
 /*
- * Atomic operations on a shared counter, as the threading classes need.
- * Windows 95's InterlockedIncrement/Decrement only return the sign of the
- * result, so these do it themselves; BCC32 can't assemble inline without
- * TASM32, so the locked instructions are emitted as bytes (0xff needs a cast
- * to unsigned char, or BCC32 emits it as two bytes).
+ * Atomic operations on a shared counter, as the threading classes need. The
+ * originals are hand-written (`lock inc`, `lock dec`, `xchg`), presumably
+ * because Windows 95's InterlockedIncrement/Decrement only return the sign of
+ * the result; on the Windows versions that run the game today they return the
+ * value, so these use them (functional, not byte-exact: see CLAUDE.md).
  */
 /* Subtracts one from *value and returns the result. */
-/* @zoombi32 0x0046da9d */
+/* @zoombi32-functional 0x0046da9d */
 long atomicDecrement(long *value)
 {
-    _EAX = (long)value;
-    __emit__(0xf0, (unsigned char)0xff, 0x08); /* lock dec dword ptr [eax] */
-    return *(long *)_EAX;
+    return InterlockedDecrement(value);
 }
 
 /* Stores value in *target and returns what was there. */
-/* @zoombi32 0x0046daac */
+/* @zoombi32-functional 0x0046daac */
 long atomicExchange(long *target, long value)
 {
-    _EAX = value;
-    _EDX = (long)target;
-    __emit__(0x87, 0x02); /* xchg dword ptr [edx], eax */
-    return _EAX;
+    return InterlockedExchange(target, value);
 }
 
 /* Adds one to *value and returns the result. */
-/* @zoombi32 0x0046dabb */
+/* @zoombi32-functional 0x0046dabb */
 long atomicIncrement(long *value)
 {
-    _EAX = (long)value;
-    __emit__(0xf0, (unsigned char)0xff, 0x00); /* lock inc dword ptr [eax] */
-    return *(long *)_EAX;
+    return InterlockedIncrement(value);
 }
 
 /* Adds a reference to everything in the list at g_4a8dcc. */

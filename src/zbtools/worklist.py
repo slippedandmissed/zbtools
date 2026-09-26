@@ -13,7 +13,7 @@ import typer
 from zbtools import inventory, match
 from zbtools.inventory import Region, Status
 
-_DONE = {Status.MATCHED, Status.LIBRARY}
+_DONE = {Status.MATCHED, Status.FUNCTIONAL, Status.LIBRARY}
 
 
 def ready_and_blocked(

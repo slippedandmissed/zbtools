@@ -51,7 +51,7 @@ class ModuleStats:
     name: str
     start: int
     total: Tally
-    done: Tally  # matched or library
+    done: Tally  # matched, functional or library
 
     @property
     def percent(self) -> float:
@@ -197,7 +197,7 @@ def _module_stats(functions: list[inventory.Function]) -> list[ModuleStats]:
         for f in functions:
             if f.module == module.name:
                 total = total.add(f.size)
-                if f.status in (Status.MATCHED, Status.LIBRARY):
+                if f.status in (Status.MATCHED, Status.FUNCTIONAL, Status.LIBRARY):
                     done = done.add(f.size)
         stats.append(ModuleStats(module.name, module.start, total, done))
     return stats

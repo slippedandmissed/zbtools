@@ -7,13 +7,13 @@
 <style>
   :root {
     --bg: #fbfaf8; --panel: #ffffff; --text: #1f1d1a; --muted: #6b665e; --border: #e4e0d8;
-    --matched: #2f8f5b; --nonmatching: #d49a2a; --library: #7a8aa6; --todo: #e4e0d8;
+    --matched: #2f8f5b; --functional: #3f7fbf; --nonmatching: #d49a2a; --library: #7a8aa6; --todo: #e4e0d8;
     --diff: #fdeee0; --diff-text: #8a3b12; --code-bg: #f5f3ef;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #161513; --panel: #1f1e1b; --text: #ece8e1; --muted: #a39e95; --border: #34322e;
-      --matched: #4fb57f; --nonmatching: #e0b14f; --library: #8e9dba; --todo: #34322e;
+      --matched: #4fb57f; --functional: #6fa3db; --nonmatching: #e0b14f; --library: #8e9dba; --todo: #34322e;
       --diff: #3a2a1c; --diff-text: #f0b88c; --code-bg: #1a1917;
     }
   }
@@ -32,7 +32,7 @@
   .bar span { display: block; height: 100%; }
   .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
   .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
-  .s-matched { background: var(--matched); } .s-nonmatching { background: var(--nonmatching); }
+  .s-matched { background: var(--matched); } .s-functional { background: var(--functional); } .s-nonmatching { background: var(--nonmatching); }
   .s-library { background: var(--library); } .s-todo { background: var(--todo); border: 1px solid var(--muted); }
   .fn { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; margin: 16px 0; overflow: hidden; }
   .fn header { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; }
@@ -65,7 +65,7 @@
       <h3>{{ s.region }}</h3>
       <div class="muted">{{ s.total.functions }} functions &middot; {{ (s.total.size / 1024) | round(1) }} KB</div>
       <div class="bar" title="matched {{ s.percent(Status.MATCHED) | round(1) }}%">
-        {% for status in [Status.MATCHED, Status.NONMATCHING, Status.LIBRARY] %}
+        {% for status in [Status.MATCHED, Status.FUNCTIONAL, Status.NONMATCHING, Status.LIBRARY] %}
         <span class="s-{{ status }}" style="width: {{ s.percent(status) }}%"></span>
         {% endfor %}
       </div>
