@@ -7,10 +7,12 @@ Regions, derived from the recovered symbols (see docs/findings.md):
     game     the game's own code
     quicktime  QuickTime for Windows' glue, linked from Apple's SDK (quicktime.py)
     runtime  the Borland C++ runtime library: from its first identified function
-             to the engine, including functions it couldn't name
-    engine   Broderbund's Mohawk engine, from the first engine class code after
-             the last identified runtime function; also the methods of its
-             classes below the runtime (the threading classes)
+             to the end of the last library segment found in the game (the
+             linker puts the libraries together, so all of it is library code,
+             including static functions with no public name)
+    engine   Broderbund's Mohawk engine: everything after the runtime (its C
+             code, then its classes); also the methods of its classes below
+             the runtime (the threading classes)
 
 Type descriptors and vtables, which Ghidra sometimes mistakes for code, are left
 out.
@@ -44,7 +46,7 @@ class Region(StrEnum):
 class Status(StrEnum):
     MATCHED = "matched"  # decompiled and marked @zoombi32
     NONMATCHING = "nonmatching"  # decompiled, marked @zoombi32-nonmatching
-    LIBRARY = "library"  # identified library code (runtime, QuickTime glue): nothing to decompile
+    LIBRARY = "library"  # library code (runtime, QuickTime glue): nothing to decompile
     TODO = "todo"
 
 
@@ -114,8 +116,8 @@ def _regions(
     named = {s.address for s in runtime.symbols}
     game_start = next(f.address for f in ordered[1:] if f.address not in named)
     runtime_start = min(s.address for s in runtime.symbols if s.address > game_start)
-    last_runtime = max(s.address for s in runtime.symbols)
-    engine_start = min(a for a in _engine_methods(classes, runtime) if a > last_runtime)
+    runtime_end = max(s.address + s.size for s in runtime.segments)
+    engine_start = min(f.address for f in ordered if f.address >= runtime_end)
     return Regions(game_start, runtime_start, engine_start)
 
 
@@ -159,7 +161,7 @@ def load(exe: Executable) -> list[Function]:
         done = decompiled.get(f.address)
         if done is not None:
             status = Status.NONMATCHING if done.target.nonmatching else Status.MATCHED
-        elif f.address in library or region == Region.QUICKTIME:
+        elif f.address in library or region in (Region.RUNTIME, Region.QUICKTIME):
             status = Status.LIBRARY
         else:
             status = Status.TODO

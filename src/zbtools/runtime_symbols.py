@@ -4,7 +4,9 @@ The game shipped without symbols, but its runtime code was copied unchanged
 from the Borland C++ libraries, apart from the addresses the linker filled in.
 For each code segment of each library module, this searches the executable for
 the segment's bytes, treating linker-filled bytes as wildcards. Where a segment
-matches in exactly one place, each of its public symbols is named there.
+matches in exactly one place, each of its public symbols is named there, and
+the segment's extent is recorded: everything in it is library code, including
+static functions that have no public name.
 """
 
 from pathlib import Path
@@ -38,9 +40,20 @@ class RuntimeSymbol(BaseModel):
     module: str
 
 
+class RuntimeSegment(BaseModel):
+    """A library code segment found in the executable."""
+
+    model_config = ConfigDict(frozen=True)
+    address: int
+    size: int
+    library: str
+    module: str
+
+
 class RuntimeSymbols(BaseModel):
     release: str
     symbols: list[RuntimeSymbol]
+    segments: list[RuntimeSegment]
     ambiguous: list[str]  # segments that matched in more than one place
 
 
@@ -90,6 +103,7 @@ def _modules(path: Path) -> list[omf.ObjectFile]:
 def find_symbols(release: str, exe: Executable) -> RuntimeSymbols:
     lib_dir = toolchain.bc45_dir(release) / "LIB"
     symbols: dict[tuple[int, str], RuntimeSymbol] = {}
+    segments: dict[int, RuntimeSegment] = {}
     ambiguous: set[str] = set()
     for pattern in LIBRARIES:
         for path in sorted(lib_dir.glob(pattern)):
@@ -99,12 +113,21 @@ def find_symbols(release: str, exe: Executable) -> RuntimeSymbols:
                     publics = [p for p in module.publics if p.segment == name]
                     masked = {f.offset + k for f in segment.fixups for k in range(f.size)}
                     fixed = len(segment.data) - len(masked)
-                    if segment.class_name != "CODE" or not publics or fixed < MIN_FIXED_BYTES:
+                    if segment.class_name != "CODE" or fixed < MIN_FIXED_BYTES:
                         continue
                     places = locate(segment, exe)
                     if len(places) > 1:
                         ambiguous.add(f"{module.name} {name}: {len(places)} places")
                     elif places:
+                        segments.setdefault(
+                            places[0],
+                            RuntimeSegment(
+                                address=places[0],
+                                size=len(segment.data),
+                                library=library,
+                                module=module.name,
+                            ),
+                        )
                         for public in publics:
                             address = places[0] + public.offset
                             symbols.setdefault(
@@ -120,6 +143,7 @@ def find_symbols(release: str, exe: Executable) -> RuntimeSymbols:
     return RuntimeSymbols(
         release=release,
         symbols=sorted(symbols.values(), key=lambda s: (s.address, s.name)),
+        segments=sorted(segments.values(), key=lambda s: s.address),
         ambiguous=sorted(ambiguous),
     )
 
@@ -155,6 +179,8 @@ def main(
     addresses = {s.address for s in found.symbols}
     print(
         f"Named {len(addresses)} addresses ({len(found.symbols)} symbols) from Borland C++ "
-        f"{chosen}'s libraries; {len(found.ambiguous)} segments matched in several places."
+        f"{chosen}'s libraries, in {len(found.segments)} code segments "
+        f"({sum(s.size for s in found.segments)} bytes); "
+        f"{len(found.ambiguous)} segments matched in several places."
     )
     print(f"Written to {paths.RUNTIME_SYMBOLS}")

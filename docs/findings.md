@@ -65,6 +65,8 @@ Ghidra 12.1.4's auto-analysis finds 2,567 functions: 1,313 in the game's code (b
 
 `uv run runtime-symbols` matches the code segments of the 32-bit Borland libraries (`CW32.LIB`, `CW32MT.LIB`, `BIDSF.LIB`, `OWLWF.LIB`, `OCFWF.LIB`, the `C0*32.OBJ` startup objects) against the executable, with linker-filled bytes as wildcards. With 4.5's libraries it names 217 addresses (e.g. `_strcpy` at `0x46f8f4`, `_strcat` at `0x46f864`, `@__InitExceptBlock` at `0x4716c0`); 125 segments match in several places (mostly small C++ destructors instantiated in many modules) and are left unnamed. `uv run ghidra label` applies the names to the Ghidra project.
 
+It also records the extent of each of the 116 segments it matches uniquely (27.6 KB). The linker put the libraries together, from the first runtime function (`0x46f7a4`) to the end of the last segment (`0x4764bc`), so everything in between is library code, including static helpers with no public name (e.g. the exception-handling internals in `xx.cpp`). What follows, up to the first engine class method (`0x47af1c`), isn't Borland's: 125 functions (18.7 KB) handling MIDI and wave-device mapping (`MidiMap`, `DefaultWaveDevice`, `Software\Microsoft\Multimedia\Sound Mapper`) and calling into the engine throughout. That's the Mohawk engine's C code, before its classes, so the engine starts at `0x4764bc`.
+
 Borland's C++ objects use "virtual segments" (COMDEF entries whose data type is a segment index; references to them set bit `0x4000` in the index) for type descriptors (`@$xt$...`), inline functions and template instances. `omf.py` reads them as extra segments named after their symbol.
 
 ## The game is C++

@@ -297,7 +297,7 @@ void fn_42fc89(Counters *object)
     }
 }
 
-/* Engine and runtime functions whose conventions aren't known yet: these
+/* Engine functions whose conventions aren't known yet: these
    declarations produce the calls the game makes. */
 void fn_476622(long handle);
 void fn_4812bc(short handle);
