@@ -38,6 +38,76 @@ struct Event
     short unknownC;
 };
 
+/* Callbacks the input module (module_4124a4) calls through fn_412b4d; only
+   the slots used so far are named, by offset. */
+struct InputHandlers
+{
+    void (*handler0)(long);
+    void (*handler4)(long);
+    long unknown8;
+    long unknownC;
+    void (*handler10)(long);
+    void (*handler14)(long);
+    void (*handler18)(long);
+    long unknown1C;
+    long unknown20;
+    void (*handler24)(long);
+    void (*handler28)(long value, long context);
+};
+
+/* A 16-byte entry of an ItemList. */
+struct EntryOwner
+{
+    char unknown0[0x2c];
+    long unknown2c;
+};
+
+struct ListEntry
+{
+    EntryOwner *owner;
+    char unknown4[4];
+    short size;
+    unsigned char flags;
+    char unknownB[5];
+};
+
+struct ItemList
+{
+    ListEntry *entries;
+    short count;
+    unsigned char flags;
+};
+
+/* The input module's state, which it loads into and saves from its globals
+   (g_4aa490 on) with fn_413a4e and fn_413afd; the part from +0x18 only if
+   asked. */
+struct InputState
+{
+    long unknown0;
+    InputHandlers **handlers;
+    long context;
+    Point unknownC;
+    Point unknown10;
+    Point unknown14;
+    short unknown18;
+    long unknown1A;
+    long unknown1E;
+    short unknown22;
+    short unknown24;
+    short unknown26;
+    short unknown28;
+    short mode;
+    short unknown2C;
+    short unknown2E;
+};
+
+/* An item the input module keeps (only its flags at +0x12 are known). */
+struct InputItem
+{
+    char unknown0[0x12];
+    unsigned char flags;
+};
+
 /* The display mode WinMain asks for (640x480, 256 colours). */
 struct DisplayMode
 {
@@ -160,6 +230,8 @@ private:
 
 extern Entry *g_4a00a0;
 extern long g_4a00dc[];
+extern long g_4a01ac;
+extern short g_4a01b0;
 extern char emptyString[]; /* @data 0x4a01b8 */
 extern short breakpointKey; /* @data 0x4a0708 */
 extern Callback g_4a07ac;
@@ -220,8 +292,24 @@ extern long g_4a7f58;
 extern Counted *g_4a8dcc;
 extern short g_4aa428;
 extern short g_4aa42a;
+extern unsigned char g_4aa48a;
+extern unsigned char g_4aa48b;
+extern long g_4aa490;
+extern InputHandlers **g_4aa494;
 extern long g_4aa498;
-extern long g_4aa4c4;
+extern Point g_4aa49c;
+extern Point g_4aa4a0;
+extern Point g_4aa4a4;
+extern short g_4aa4ac;
+extern long g_4aa4b0;
+extern long g_4aa4b4;
+extern short g_4aa4b8;
+extern short g_4aa4ba;
+extern short g_4aa4bc;
+extern short g_4aa4be;
+extern short g_4aa4c0;
+extern short g_4aa4c2;
+extern void (*g_4aa4c4)(Point *where);
 extern char allocationFailed; /* @data 0x4aa4c8 */
 extern char g_4aa4c9;
 extern short breakpointKeyEnabled; /* @data 0x4aa5d4 */
@@ -353,6 +441,7 @@ long qtim_0b();
    declarations produce the calls the game makes. */
 
 void fn_476622(long handle);
+void fn_480b80(long context, long value);
 /* The engine's graphics follow Mac QuickDraw: a current port, and conversions
    between a port's coordinates and the screen's. */
 long getPort(); /* 0x48b510 */
@@ -396,7 +485,23 @@ void fn_48f660(long handle, long, long);
 Entry *fn_4115f5(short key, long tag);
 void fn_4117a8(HasHandle *object);
 short fn_412b4d(void (*callback)(long));
-void fn_413bcf(long value);
+short fn_412844(InputItem *item);
+short fn_412884();
+void fn_412cc0();
+void fn_412cd0();
+void fn_412cdf();
+void fn_412d37();
+void fn_412d47();
+void fn_412d57();
+long fn_41336f();
+long fn_4133a4();
+void fn_41280d(long value);
+short fn_4128c6(ItemList *list);
+short fn_41295f(ListEntry *entry);
+void fn_413a4e(InputState *state, short all);
+void fn_413afd(InputState *state, short all);
+void fn_413bad(Point *where);
+void fn_413bcf(void (*hook)(Point *where));
 void fn_413c6d(void **block);
 short queuedEvents();
 void postEvent(Event *event);
