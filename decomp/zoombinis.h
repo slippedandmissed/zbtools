@@ -2194,8 +2194,9 @@ struct DSBUFFERDESC
 #define DSERR_BADFORMAT 0x88780064L
 #define DSERR_OUTOFMEMORY 0x8007000eL
 
-struct IDirectSoundBuffer
+class IDirectSoundBuffer
 {
+public:
     virtual long __stdcall QueryInterface(const GUID &iid, void **object) = 0;
     virtual unsigned long __stdcall AddRef() = 0;
     virtual unsigned long __stdcall Release() = 0;
@@ -2222,8 +2223,9 @@ struct IDirectSoundBuffer
 
 #define DSBPLAY_LOOPING 1
 
-struct IDirectSound
+class IDirectSound
 {
+public:
     virtual long __stdcall QueryInterface(const GUID &iid, void **object) = 0;
     virtual unsigned long __stdcall AddRef() = 0;
     virtual unsigned long __stdcall Release() = 0;
@@ -2403,7 +2405,7 @@ extern long(WINAPI *directSoundEnumerate)(DSENUMCALLBACK callback, void *context
    wmxDevice (one per wave device, owning its wavebuf); objects opened with
    bit 31 of the flags set are plain wmxObjects; when WaveMix is disabled
    they're wmxWaveOuts, which pass everything to waveOut. */
-struct wmxDevice;
+class wmxDevice;
 
 class wmxObject
 {
@@ -2467,8 +2469,9 @@ public:
 };
 
 /* A wave device WaveMix mixes for. */
-struct wmxDevice
+class wmxDevice
 {
+public:
     __cdecl wmxDevice(); /* 0x47e0ec */
     __cdecl ~wmxDevice(); /* 0x47e0f9 */
     static void *__cdecl operator new(size_t size);
