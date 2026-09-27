@@ -787,13 +787,13 @@ unsigned short wavebufClose(long handle)
 }
 
 /* @zoombi32 0x0047c40d */
-unsigned short wavebufV5(long handle, long value)
+unsigned short wavebufGetLevels(long handle, unsigned long *levels)
 {
     wmxObject *object = wmxObjectOf(handle);
 
     if (!object)
         return MMSYSERR_INVALHANDLE;
-    return object->v5(value);
+    return object->getLevels(levels);
 }
 
 /* waveOutGetDevCaps; asked for sizeof(WmxCaps), also the rates and formats
@@ -1048,13 +1048,13 @@ unsigned short wavebufRestart(long handle)
 }
 
 /* @zoombi32 0x0047ca08 */
-unsigned short wavebufV15(long handle, long value)
+unsigned short wavebufSetLevels(long handle, unsigned long levels)
 {
     wmxObject *object = wmxObjectOf(handle);
 
     if (!object)
         return MMSYSERR_INVALHANDLE;
-    return object->v15(value);
+    return object->setLevels(levels);
 }
 
 /* @zoombi32 0x0047ca2d */

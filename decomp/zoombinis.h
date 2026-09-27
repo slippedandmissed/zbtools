@@ -2413,11 +2413,13 @@ public:
     __cdecl wmxObject(wmxDevice *device, PCMWAVEFORMAT *format, long callback, long instance,
               unsigned long flags);
     virtual __cdecl ~wmxObject();
-    virtual short __cdecl v1();
-    virtual void __cdecl v2();
+    /* Mixes (or with `first`, copies) `count` samples from `at` into `out`;
+       0 if it has nothing there. */
+    virtual short __cdecl mix(unsigned long at, void *out, unsigned long count, short first);
+    virtual void __cdecl played(unsigned long at); /* the device has played to `at` */
     virtual unsigned short __cdecl breakLoop();
     virtual unsigned short __cdecl close();
-    virtual unsigned short __cdecl v5(long);
+    virtual unsigned short __cdecl getLevels(unsigned long *levels);
     virtual unsigned short __cdecl getID(unsigned short *id);
     virtual unsigned short __cdecl getPitch(unsigned long *pitch);
     virtual unsigned short __cdecl getPlaybackRate(unsigned long *rate);
@@ -2427,7 +2429,8 @@ public:
     virtual unsigned short __cdecl prepareHeader(WAVEHDR *header, unsigned short size);
     virtual unsigned short __cdecl reset();
     virtual unsigned short __cdecl restart();
-    virtual unsigned short __cdecl v15(long);
+    /* The left and right levels (low and high words), as waveOutSetVolume's. */
+    virtual unsigned short __cdecl setLevels(unsigned long levels);
     virtual unsigned short __cdecl setPitch(unsigned long pitch);
     virtual unsigned short __cdecl setPlaybackRate(unsigned long rate);
     virtual unsigned short __cdecl setVolume(unsigned long volume);
@@ -2435,6 +2438,7 @@ public:
     virtual unsigned short __cdecl write(WAVEHDR *header, unsigned short size);
 
     static void *__cdecl operator new(size_t size);
+    static void __cdecl operator delete(void *block);
     void notify(unsigned short message, long param1, long param2); /* 0x47f9f6 */
 
     unsigned long tag; /* 'WMix' */
@@ -2449,13 +2453,93 @@ public:
     wmxObject *devicePrev;
 };
 
-/* A mixed channel. */
+/* A block queued on a wmxMixer (made by prepareHeader, found through the
+   header's `reserved`). Positions and lengths are in the mix's samples. */
+struct WmxBlock
+{
+    WAVEHDR *header;
+    WmxBlock *next;
+    WmxBlock *prev;
+    unsigned long samples; /* in the object's format */
+    unsigned long length; /* once through */
+    unsigned long start;
+    unsigned long end; /* after its loops */
+    unsigned long loops; /* more times round the loop it's in */
+    unsigned long loopSamples;
+    unsigned long loopLength;
+    unsigned long loopStart;
+    unsigned long loopTotal;
+    unsigned long loopsDone;
+};
+
+/* A mixing loop (module_47fae8): see there. */
+typedef void (*WmxMixProc)(unsigned char *out, const unsigned char *in, unsigned long count,
+                           long outStride, long inStride, unsigned long step, long volume,
+                           short identity, const unsigned char *table);
+
+/* One output channel of a wmxMixer. */
+struct WmxChannel
+{
+    long volume; /* fixed-point */
+    WmxMixProc mix; /* adds into the output */
+    WmxMixProc copy; /* for the first object mixed */
+    long mixOffset; /* bytes into an output sample */
+    long copyOffset;
+    long inOffset; /* bytes into an input sample */
+    unsigned char table[0x100]; /* 8-bit samples at the volume */
+    short identity; /* the table changes nothing */
+    short unknown11A;
+};
+
+/* A WaveMix object whose blocks are mixed in software into its device's
+   output. */
 class wmxMixer : public wmxObject
 {
 public:
     __cdecl wmxMixer(wmxDevice *device, PCMWAVEFORMAT *format, long callback, long instance,
-             unsigned long flags);
-    char unknown38[0x29c - 0x38];
+                     unsigned long flags);
+    virtual __cdecl ~wmxMixer();
+    virtual short __cdecl mix(unsigned long at, void *out, unsigned long count, short first);
+    virtual void __cdecl played(unsigned long at);
+    virtual unsigned short __cdecl breakLoop();
+    virtual unsigned short __cdecl close();
+    virtual unsigned short __cdecl getLevels(unsigned long *levels);
+    virtual unsigned short __cdecl getID(unsigned short *id);
+    virtual unsigned short __cdecl getPitch(unsigned long *pitch);
+    virtual unsigned short __cdecl getPlaybackRate(unsigned long *rate);
+    virtual unsigned short __cdecl getPosition(MMTIME *time, unsigned short size);
+    virtual unsigned short __cdecl getVolume(unsigned long *volume);
+    virtual unsigned short __cdecl pause();
+    virtual unsigned short __cdecl prepareHeader(WAVEHDR *header, unsigned short size);
+    virtual unsigned short __cdecl reset();
+    virtual unsigned short __cdecl restart();
+    virtual unsigned short __cdecl setLevels(unsigned long levels);
+    virtual unsigned short __cdecl setPitch(unsigned long pitch);
+    virtual unsigned short __cdecl setPlaybackRate(unsigned long rate);
+    virtual unsigned short __cdecl setVolume(unsigned long volume);
+    virtual unsigned short __cdecl unprepareHeader(WAVEHDR *header, unsigned short size);
+    virtual unsigned short __cdecl write(WAVEHDR *header, unsigned short size);
+
+    short buildTable(long volume, unsigned char *table); /* 0x47e6d9 */
+    void retire(WmxBlock *block); /* 0x47e794 */
+    void findBlock(unsigned long at, WmxBlock **block, unsigned long *start); /* 0x47e7ed */
+    void retime(unsigned long at); /* 0x47ea78 */
+    void chooseMixers(); /* 0x47ec2c */
+
+    unsigned long donePosition; /* samples of the blocks played out */
+    unsigned long position; /* in samples */
+    WmxBlock *queue;
+    WmxBlock *queueTail;
+    unsigned long levels;
+    unsigned long volume; /* fixed-point */
+    long step; /* output samples per input sample, fixed-point */
+    unsigned long rate; /* fixed-point */
+    short paused;
+    short unknown5A;
+    unsigned long pauseOffset;
+    unsigned short channels;
+    short unknown62;
+    WmxChannel channel[2];
 };
 
 /* Straight through to waveOut. */
@@ -2463,7 +2547,26 @@ class wmxWaveOut : public wmxObject
 {
 public:
     __cdecl wmxWaveOut(PCMWAVEFORMAT *format, long callback, long instance, unsigned long flags);
+    virtual __cdecl ~wmxWaveOut();
+    virtual unsigned short __cdecl breakLoop();
+    virtual unsigned short __cdecl close();
+    virtual unsigned short __cdecl getID(unsigned short *id);
+    virtual unsigned short __cdecl getPitch(unsigned long *pitch);
+    virtual unsigned short __cdecl getPlaybackRate(unsigned long *rate);
+    virtual unsigned short __cdecl getPosition(MMTIME *time, unsigned short size);
+    virtual unsigned short __cdecl getVolume(unsigned long *volume);
+    virtual unsigned short __cdecl pause();
+    virtual unsigned short __cdecl prepareHeader(WAVEHDR *header, unsigned short size);
+    virtual unsigned short __cdecl reset();
+    virtual unsigned short __cdecl restart();
+    virtual unsigned short __cdecl setPitch(unsigned long pitch);
+    virtual unsigned short __cdecl setPlaybackRate(unsigned long rate);
+    virtual unsigned short __cdecl setVolume(unsigned long volume);
+    virtual unsigned short __cdecl unprepareHeader(WAVEHDR *header, unsigned short size);
+    virtual unsigned short __cdecl write(WAVEHDR *header, unsigned short size);
+
     unsigned short open(unsigned short device, unsigned long flags); /* 0x47fddc */
+
     HWAVEOUT wave;
     WAVEOUTCAPS caps;
 };
@@ -2475,7 +2578,11 @@ public:
     __cdecl wmxDevice(); /* 0x47e0ec */
     __cdecl ~wmxDevice(); /* 0x47e0f9 */
     static void *__cdecl operator new(size_t size);
+    static void __cdecl operator delete(void *block);
     unsigned short open(unsigned short device); /* 0x47e1a0 */
+    void mix(unsigned long at); /* 0x47e45e */
+    void mixInto(unsigned long at, void *out, unsigned long count); /* 0x47e4d2 */
+    void silence(void *out, unsigned long count); /* 0x47e5b8 */
 
     short isOpen;
     unsigned short device;
@@ -2483,8 +2590,8 @@ public:
     wmxDevice *prev;
     PCMWAVEFORMAT format; /* the mix's */
     wavebuf *buffer;
-    unsigned long unknown20;
-    short objectCount;
+    unsigned long written; /* how far the buffer is mixed */
+    unsigned short objectCount;
     short unknown26;
     wmxObject *objects;
 };
@@ -2512,6 +2619,34 @@ struct WmxState
 extern WmxState wmx; /* @data 0x4b9b40 */
 
 void wmxDeviceFormats(wavebuf *buffer, unsigned long *rate, unsigned long *formats); /* 0x47e52b */
+void wmxDeviceNotify(long data, unsigned long played, unsigned long written); /* 0x47e163 */
+void CALLBACK wmxWaveOutCallback(HWAVEOUT wave, UINT message, DWORD instance, DWORD param1,
+                                 DWORD param2); /* 0x47fdc2 */
+/* An object's callback (CALLBACK_FUNCTION), with a word or a 32-bit message. */
+typedef void(CALLBACK *WmxShortCallback)(long handle, unsigned short message, long instance,
+                                         long param1, long param2);
+typedef void(CALLBACK *WmxCallback)(long handle, UINT message, long instance, long param1,
+                                    long param2);
+void mixByteIntoByte(unsigned char *out, const unsigned char *in, unsigned long count,
+                     long outStride, long inStride, unsigned long step, long volume,
+                     short identity, const unsigned char *table); /* 0x47fae8 */
+void mixByteIntoWord(unsigned char *out, const unsigned char *in, unsigned long count,
+                     long outStride, long inStride, unsigned long step, long volume,
+                     short identity, const unsigned char *table); /* 0x47fb3b */
+void mixWordIntoWord(unsigned char *out, const unsigned char *in, unsigned long count,
+                     long outStride, long inStride, unsigned long step, long volume,
+                     short identity, const unsigned char *table); /* 0x47fb8a */
+void copyByteToByte(unsigned char *out, const unsigned char *in, unsigned long count,
+                    long outStride, long inStride, unsigned long step, long volume,
+                    short identity, const unsigned char *table); /* 0x47fbdc */
+void copyByteToWord(unsigned char *out, const unsigned char *in, unsigned long count,
+                    long outStride, long inStride, unsigned long step, long volume,
+                    short identity, const unsigned char *table); /* 0x47fc45 */
+void copyWordToWord(unsigned char *out, const unsigned char *in, unsigned long count,
+                    long outStride, long inStride, unsigned long step, long volume,
+                    short identity, const unsigned char *table); /* 0x47fcad */
+void fillBytes(void *out, unsigned char value, unsigned long count); /* 0x47fd11 */
+void fillWords(void *out, unsigned short value, unsigned long count); /* 0x47fd3b */
 wmxObject *wmxObjectOf(long handle); /* 0x47caf0 */
 short __cdecl initWaveMix(); /* 0x47c62c */
 void __cdecl closeWaveMix(); /* 0x47c995 */
@@ -2521,7 +2656,7 @@ unsigned short wavebufGetDevCaps(unsigned short device, WmxCaps *caps, unsigned 
 
 unsigned short wavebufBreakLoop(long handle); /* 0x47c3b4 */
 unsigned short wavebufClose(long handle); /* 0x47c3d4 */
-unsigned short wavebufV5(long handle, long value); /* 0x47c40d */
+unsigned short wavebufGetLevels(long handle, unsigned long *levels); /* 0x47c40d */
 unsigned short wavebufGetID(long handle, unsigned short *id); /* 0x47c56e */
 unsigned short wavebufGetPitch(long handle, unsigned long *pitch); /* 0x47c593 */
 unsigned short wavebufGetPlaybackRate(long handle, unsigned long *rate); /* 0x47c5b8 */
@@ -2531,7 +2666,7 @@ unsigned short wavebufPause(long handle); /* 0x47c94b */
 unsigned short wavebufPrepareHeader(long handle, WAVEHDR *header, unsigned short size); /* 0x47c96b */
 unsigned short wavebufReset(long handle); /* 0x47c9c8 */
 unsigned short wavebufRestart(long handle); /* 0x47c9e8 */
-unsigned short wavebufV15(long handle, long value); /* 0x47ca08 */
+unsigned short wavebufSetLevels(long handle, unsigned long levels); /* 0x47ca08 */
 unsigned short wavebufSetPitch(long handle, unsigned long pitch); /* 0x47ca2d */
 unsigned short wavebufSetPlaybackRate(long handle, unsigned long rate); /* 0x47ca52 */
 unsigned short wavebufSetVolume(long handle, unsigned long volume); /* 0x47ca77 */
