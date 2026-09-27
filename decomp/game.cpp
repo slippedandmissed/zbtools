@@ -40,7 +40,7 @@ void gameFrame()
 }
 
 /* @zoombi32 0x00455013 */
-long fn_455013(long, long)
+short noteOutOfMemory(unsigned long, short)
 {
     outOfMemory = 1;
     return 0;
@@ -108,15 +108,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         fatalError(msgInitOs);
     if (fn_493096())
         fatalError(msgInitTimer);
-    if (fn_48ec85(0, 0))
+    if (initMemory(0, 0))
         fatalError(msgInitHeap);
-    fn_48f2b0(fn_455013);
-    unsigned long free = fn_48e7ec();
+    setGrowProc(noteOutOfMemory);
+    unsigned long free = availableVirtualMemory();
     if (free < 0x189c40 || aboveWindows311 && free < 0x389c40)
         fatalError(msgNotEnoughMemory);
     if (aboveWindows311) {
-        fn_48e928(&memory);
-        if (memory.freePhysical < 0x600000)
+        getMemoryInfo(&memory);
+        if (memory.totalPhysical < 0x600000)
             fatalError(msgNotEnoughPhysicalMemory);
     }
     if (fn_483732(0))
@@ -158,7 +158,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     setFont(fonts[1]);
 
     g_4b754a = 0;
-    g_4a4ba0 = (char *)fn_48e6b4(0xae05);
+    g_4a4ba0 = (char *)newPtr(0xae05);
     if (!g_4a4ba0)
         fn_41f195(msgOutOfMemory);
     fn_41f6fc(1);

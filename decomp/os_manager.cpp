@@ -85,15 +85,15 @@ DWORD currentTimeMs()
 }
 
 /* @zoombi32 0x0046dfd4 */
-void fn_46dfd4(long, long)
+short osLockMemory(void *, unsigned long)
 {
-    fn_46e1e7(0);
+    return setOsError(0);
 }
 
 /* @zoombi32 0x0046dfe2 */
-void fn_46dfe2(long, long)
+short osUnlockMemory(void *, unsigned long)
 {
-    fn_46e1e7(0);
+    return setOsError(0);
 }
 
 /* @zoombi32 0x0046dff0 */
@@ -125,9 +125,9 @@ HINSTANCE fn_46e0ec(long)
 }
 
 /* @zoombi32 0x0046e1e7 */
-void fn_46e1e7(short value)
+short setOsError(short error)
 {
-    g_4b9cf4 = value;
+    return osError = error;
 }
 
 /* @zoombi32 0x0046e1f8 */

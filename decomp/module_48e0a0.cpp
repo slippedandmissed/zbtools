@@ -74,7 +74,7 @@ short decompressImage(short handle)
             memcpy(out, header, 8);
             out->flags &= ~fn_492730(0xf00);
             lzDecompress((unsigned char *)(out + 1), lz->data, size, ring, bits);
-            error = fn_48f4bc(handle, newHandle_);
+            error = swapHandleData(handle, newHandle_);
             disposeHandle(newHandle_);
             if (error)
                 return setPortError(error);
@@ -117,7 +117,7 @@ short decompressImage(short handle)
             unlockHandle(newHandle_);
             unlockHandle(handle);
             if (!error)
-                error = fn_48f4bc(handle, newHandle_);
+                error = swapHandleData(handle, newHandle_);
             disposeHandle(newHandle_);
             if (error)
                 return setPortError(error);

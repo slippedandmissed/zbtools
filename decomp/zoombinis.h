@@ -400,15 +400,15 @@ struct DisplayMode
     char unknownA[2];
 };
 
-/* What fn_48e928 reports about memory; +0xc is free physical memory. */
+/* What getMemoryInfo reports (from GlobalMemoryStatus). */
 struct MemoryInfo
 {
-    long unknown0;
-    long unknown4;
-    long unknown8;
-    unsigned long freePhysical;
-    long unknown10;
-    long unknown14;
+    unsigned long availableVirtual;
+    unsigned long totalVirtual;
+    unsigned long availablePhysical;
+    unsigned long totalPhysical;
+    unsigned long availablePageFile;
+    unsigned long totalPageFile;
 };
 
 /* Something with flags at +0x20. */
@@ -781,7 +781,7 @@ extern short dataPathLength; /* @data 0x4b9ad6 */
 extern char dataDrive; /* @data 0x4b9ad8 */
 extern short regionErrorCode; /* @data 0x4b9b64 */
 extern short g_4b9cf0;
-extern short g_4b9cf4;
+extern short osError; /* @data 0x4b9cf4 */
 extern short g_4b9cf6;
 extern short engineActive; /* @data 0x4b9cf8 */
 extern ActivateHook activateHook; /* @data 0x4b9cfc */
@@ -1015,12 +1015,6 @@ short fn_4764bc(short open); /* opens (1) or closes the sound driver; non-zero o
 void runClock(short running);
 void fn_48b2d8(DisplayMode *mode);
 void fn_48d480(DisplayMode *mode);
-void *fn_48e6b4(long size); /* allocates memory */
-unsigned long fn_48e7ec(); /* free memory */
-void fn_48e928(MemoryInfo *info);
-void fn_48ea00(short);
-short fn_48ec85(long, long); /* initialises the heap */
-void fn_48f2b0(long (*callback)(long, long));
 short fn_4922c6(); /* initialises the resource manager */
 short fn_493096(); /* initialises the timer */
 
@@ -1081,8 +1075,6 @@ void fn_484994(fileSpec *directory); /* the directory at 0x4b9b9c, where .FOT fi
 short deleteFile(const fileSpec &file);
 /* Calls `callback` for each file in the current directory. */
 short forEachFile(FileCallback callback, void *data);
-unsigned long handleSize(short handle);
-void fn_48f464(short handle, short);
 
 /*
  * Ports (QuickDraw's GrafPorts): C++ objects, handed around as their
@@ -1402,12 +1394,111 @@ Font *getFont();
 unsigned short nearestPaletteIndex(Palette *palette, RGBColor color);
 unsigned short textWidth(const char *text, unsigned short length); /* length 0xffff: NUL-terminated */
 
-/* Memory: relocatable blocks by handle (a short), as on the Mac. */
-short newHandle(long size); /* 0x48e5ec */
+/*
+ * Memory, as on the Mac: relocatable blocks by handle (a short: an index
+ * into a table of entries), and fixed ones by pointer. Each block starts
+ * with a Chunk header, and is reached through a "master pointer" (a Block):
+ * a moveable Windows global handle, whose first word points at the memory,
+ * or a fixed block holding a pointer to just after itself. Handles' blocks
+ * can be purged when memory runs short, unless locked.
+ */
+struct Chunk
+{
+    unsigned short magic; /* 'BM' */
+    unsigned short handle; /* its handle, for a handle's block */
+    unsigned long size : 31; /* of the data after this header */
+    unsigned short moveable : 1; /* a handle's block */
+};
+typedef Chunk **Block;
+
+struct HandleEntry
+{
+    unsigned short locks : 7;
+    unsigned short age : 4; /* 15 when used, counted down by purges */
+    unsigned short state : 2;
+    unsigned short used : 1;
+    unsigned short keep : 1; /* never purge */
+    unsigned short purgeable : 1;
+    union {
+        Block block; /* 0 if empty or purged */
+        unsigned short nextFree; /* unused entries form a list */
+    };
+    short unknown6;
+};
+
+struct HandleTable
+{
+    unsigned short freeList;
+    unsigned short count;
+    HandleEntry entries[1];
+};
+
+/* Asked before purging a handle's block (0: don't). */
+typedef short (*PurgeProc)(short handle, short purpose);
+/* Asked for memory when an allocation fails (non-zero: try again). */
+typedef short (*GrowProc)(unsigned long size, short error);
+
+struct MemoryState
+{
+    short error; /* of the last call */
+    short ready;
+    unsigned short unknown4; /* fn_48f260 counts it up to 3 */
+    short purgeEnabled;
+    PurgeProc purgeProc; /* +8 */
+    GrowProc growProc; /* +0xc */
+    HandleTable *table; /* +0x10 */
+};
+
+extern MemoryState heap; /* @data 0x4b9cdc */
+
+short newHandle(unsigned long size); /* 0x48e5ec */
+void *newPtr(unsigned long size);
+unsigned long availableMemory(unsigned long size);
+short disposePtr(void *pointer);
+unsigned long availableVirtualMemory();
+unsigned long handleSize(short handle);
+unsigned short handleLocks(short handle);
+unsigned short handleState(short handle);
+unsigned long ptrSize(void *pointer);
+void getMemoryInfo(MemoryInfo *info);
+void *fn_48ea00(short handle);
+short recoverMemory(short error, unsigned long size);
+Block allocBlock(unsigned long size, unsigned short moveable);
+short freeBlock(Block block);
+Block resizeBlock(Block block, unsigned long size);
+short resizeFixedBlock(Chunk *chunk, unsigned long size);
+Block blockOf(Chunk *chunk);
+short initMemory(unsigned long size, unsigned short handles);
+short growHandleTable(unsigned short count);
+short canPurge(HandleEntry *entry, short purpose);
+short memoryBufferSize();
+void closeMemory();
+short growZone(unsigned long size, short error);
+unsigned short entryIndex(HandleEntry *entry);
+void fn_48ef15(Block block);
+void fn_48ef1c(Block block);
+void moveMemory(void *to, const void *from, unsigned long size);
+short lockPtr(void *pointer);
+short unlockPtr(void *pointer);
+unsigned long purgeMemory(unsigned long needed, short purpose);
+short setPurgeEnabled(short enabled);
+void *resizePtr(void *pointer, unsigned long size);
+short isPointer(void *pointer);
+short fn_48f260();
+void fillMemory(void *to, unsigned char value, unsigned long size);
+GrowProc setGrowProc(GrowProc proc);
+unsigned short setHandleLocks(short handle, unsigned short locks);
+short setHandleState(short handle, unsigned short state);
+PurgeProc setPurgeProc(PurgeProc proc);
+unsigned short setPurgeable(short handle, short purgeable);
+short swapHandleData(short a, short b);
+short setMemError(short error);
+HandleEntry *handleEntry(unsigned short handle);
+short validHandle(unsigned short handle, short);
 void *handleData(short handle); /* 0x48f5bc */
 void *lockHandle(short handle); /* 0x48e96c */
-void unlockHandle(short handle); /* 0x48f550 */
-short setHandleSize(short handle, long size); /* an error code */
+short unlockHandle(short handle); /* 0x48f550 */
+short setHandleSize(short handle, unsigned long size); /* an error code */
 short disposeHandle(short handle); /* 0x48e71c */
 short memError(); /* 0x48e80c */
 
@@ -1431,7 +1522,6 @@ void compactRgn(short region);
 void regionToHrgn(HRGN target, short region, short dx, short dy);
 short sectRgnWithRect(short region, ShortRect *rect);
 short sectRgnRects(short region, long count, ShortRect *rects);
-short fn_48f4bc(short to, short from);
 void diffRgnRect(short region, ShortRect *rect);
 void diffRgnRects(short region, long count, ShortRect *rects);
 void unionRgnRect(short region, ShortRect *rect);
@@ -1691,7 +1781,7 @@ void brightenPalette(PALETTEENTRY *entries, short first, short count);
 short isInputWaiting(short which);
 void logMessage(long message, long wParam, long lParam, short after, long result);
 void dumpMessages();
-long fn_455013(long, long);
+short noteOutOfMemory(unsigned long size, short error);
 int isMousePresent();
 void freeAndClear(void **block);
 char *intToDecimal(int value, char *buffer);
@@ -1733,13 +1823,13 @@ HINSTANCE engineInstanceHandle();
 unsigned long appThreadId();
 HWND appWindowHandle();
 unsigned long currentTimeMs();
-void fn_46dfd4(long, long);
-void fn_46dfe2(long, long);
+short osLockMemory(void *address, unsigned long size);
+short osUnlockMemory(void *address, unsigned long size);
 short isAppActive();
 short fn_46dff7();
 ActivateHook setActivateHook(ActivateHook hook);
 HINSTANCE fn_46e0ec(long);
-void fn_46e1e7(short value);
+short setOsError(short error);
 long fn_46e1f8(long value);
 Tagged *fn_46e202(Tagged *object);
 char __cdecl fn_46e28e(char value);

@@ -67,7 +67,7 @@ short sectRgnRects(short handle, long count, ShortRect *rects)
     tidyRgn(out);
     shrinkRgn(result, &out);
     unlockHandle(handle);
-    setRegionError(fn_48f4bc(handle, result));
+    setRegionError(swapHandleData(handle, result));
     disposeHandle(result);
     return regionErrorCode;
 }

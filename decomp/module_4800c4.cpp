@@ -116,7 +116,7 @@ short openIni(fileSpec *path)
     iniState.files = handle;
     ini->path = *name;
     unlockHandle(ini->text);
-    fn_48f464(ini->text, 1);
+    setPurgeable(ini->text, 1);
     unlockHandle(handle);
     setIniError(0);
     return handle;
