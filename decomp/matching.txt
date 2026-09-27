@@ -281,12 +281,16 @@
 0x00416650 drawOutlinedText
 0x00416707 nudgeRect
 0x00416754 fn_416754
+0x00416ede leaveCamp
+0x00417000 campIdle
 0x00417906 fn_417906
+0x0041790f drawCampButtons
 0x00417ac4 drawCampButtons1
 0x00417ad8 drawCampButtons2
 0x00417aec fn_417aec
 0x00417b56 findCampSlot
 0x00417cf1 scrollCamp
+0x00417ed2 drawCamp
 0x004180db noteCampSlot
 0x004181ac campSlotsUsed
 0x004181ce insertCampRow

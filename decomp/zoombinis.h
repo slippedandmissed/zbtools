@@ -305,6 +305,40 @@ struct CampButton
     char unknown8[0x1c];
 };
 
+/* Images in one block: each one's offset from the start (from index 1). */
+struct ImageBank
+{
+    long unknown0;
+    long offsets[1];
+};
+
+/* A Zoombini on screen (the snoids module), 0x104 bytes (by the frame drawCamp gives it). Partly known. */
+struct Snoid
+{
+    char unknown0[0x98];
+    short unknown98;
+    long unknown9a;
+    ShortRect bounds; /* +0x9e: where it was drawn */
+    short x; /* +0xa6 */
+    short y;
+    char unknownAa[8];
+    short unknownB2;
+    char unknownB4[8];
+    long zoombini; /* +0xbc */
+    short unknownC0;
+    char unknownC2[0x42];
+};
+
+/* The Zoombinis setting out (0x266 bytes, at 0xa92e in the game's state;
+   saved at 0xa462). */
+struct Party
+{
+    short unknown0;
+    short unknown2;
+    short unknown4;
+    Traveller travellers[32];
+};
+
 /* A wipe in progress (basecamp's runWipe). */
 struct Wipe
 {
@@ -890,6 +924,14 @@ extern unsigned short appActive; /* @data 0x4a4ae4 */
 extern ShortRect g_4a4ae6;
 extern short g_4a4b98;
 extern char *g_4a4ba0;
+inline Party *party()
+{
+    return (Party *)(g_4a4ba0 + 0xa92e);
+}
+inline Party *savedParty()
+{
+    return (Party *)(g_4a4ba0 + 0xa462);
+}
 /* The Zoombinis on the journey. */
 inline Traveller *travellers()
 {
@@ -1030,6 +1072,19 @@ extern short g_4ab52a;
 extern short g_4ab52c;
 extern short g_4ab52e;
 extern CampButton campButtons[7]; /* @data 0x4a0824 */
+extern ImageBank *campButtonImages; /* @data 0x4a0970 */
+extern long campButtonsResource; /* @data 0x4a0968: holding campButtonImages */
+extern long campFrameResource; /* @data 0x4a096c: holding g_4a0974 */
+extern long campMap; /* @data 0x4ab520: BaseCamp.MHK */
+extern short campActive; /* @data 0x4ab528 */
+extern short campBusy; /* @data 0x4a0a9c: in campIdle */
+extern short g_4b80ee;
+extern short g_4a48e6;
+extern short g_4b755a;
+extern short g_4b755c;
+extern short g_4b9684;
+extern ImageBank *g_4a0974; /* the camp's frame */
+extern ShortRect campButtonsBounds; /* @data 0x4a0a9e */
 extern ShortRect campArrival; /* @data 0x4a0aa6: where Zoombinis back from the journey stand */
 extern short g_4a080c;
 extern short g_4a080e; /* the camp is scrolled half a row */
@@ -3983,13 +4038,28 @@ void drawOutlinedText(unsigned short outline, unsigned short color, ShortRect re
 void nudgeRect(ShortRect *rect, short direction);
 void fn_416754();
 long fn_417906(long);
+void leaveCamp();
+void campIdle();
+void fn_463359();
+void fn_46560b();
+void fn_4624fc();
+void fn_46356c();
+void fn_463e9e(short);
+void fn_43af6b();
 void drawCampButtons(short button, short pressed, short group, short show); /* 0x41790f */
 void drawCampButtons1(View *);
+long fn_4640d1(short);
+void fn_4640a6(long);
 void drawCampButtons2(View *);
 void fn_417aec(View *, short region);
 short findCampSlot(short start, ShortRect rect, short occupied);
 void scrollCamp(View *view, long);
+void drawCamp(View *);
 void noteCampSlot(short slot);
+void initSnoid(Snoid *snoid); /* 0x45bf41 */
+void fn_45b06a(Snoid *snoid, short);
+void fn_45ab97(Snoid *snoid, short);
+void fn_4571d8(Snoid *snoid);
 short campSlotsUsed();
 void insertCampRow();
 void compactCamp();

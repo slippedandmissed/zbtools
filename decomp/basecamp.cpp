@@ -571,6 +571,167 @@ long fn_417906(long)
     return 0;
 }
 
+/* Leaves the camp: the party that set out (or, if it was the journey's
+   end or g_4a48e6 is set, none) saved, and everything the camp loaded
+   freed. */
+/* @zoombi32 0x00416ede */
+void leaveCamp()
+{
+    if (campActive) {
+        campActive = 0;
+        short saved = fn_46bee9(1);
+
+        fn_463359();
+        if (!g_4b80ee) {
+            if (g_4a48e6 || g_4b0d50 == 1) {
+                party()->unknown2 = 0;
+                party()->unknown4 = 0;
+                *savedParty() = *party();
+                party()->unknown0 = 0;
+            } else {
+                party()->unknown2 = 1;
+                party()->unknown4 = 0;
+                *savedParty() = *party();
+                party()->unknown2 = 0;
+                party()->unknown4 = 1;
+                *(short *)(g_4a4ba0 + 0x4a) -= fn_4572bf();
+            }
+            compactCamp();
+            noteCampSlot(-1);
+        }
+        unloadSounds();
+        fn_46c602(&campButtonsResource);
+        fn_46c602(&campFrameResource);
+        fn_46bee9(saved);
+        fn_46ca9c(&campMap);
+        fn_46560b();
+        fn_4624fc();
+    }
+}
+
+/* The camp's idle work: leaving once asked to (g_4b0d52) and sound 996 is
+   done, else noting which of buttons 3-6 the cursor is over. */
+/* @zoombi32 0x00417000 */
+void campIdle()
+{
+    Point where;
+
+    if (!campBusy && campActive) {
+        campBusy = 1;
+        fn_46356c();
+        if (g_4b0d52) {
+            if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+                campBusy = 0;
+                return;
+            }
+            if (g_4b80ee || !g_4b755a || g_4b755c >= 1) {
+                g_4b0d50 = g_4b0d52;
+                g_4b0d52 = 0;
+                fn_46be2e(0);
+                leaveCamp();
+            }
+        } else {
+            short over = 0;
+
+            if (!g_4ab52c && !g_4b9684) {
+                getCursorPosition(&where);
+                for (short i = 3; !over && i < 7; i++)
+                    if (ptInRect(&campButtons[i].rect, where))
+                        over = i - 2;
+            }
+            fn_463e9e(over);
+        }
+        fn_43af6b();
+        campBusy = 0;
+    }
+}
+
+/*
+ * Draws the camp's buttons: `button` (1-7), else group 1 (0-2), 2 (3-6)
+ * or all, `pressed` or not (buttons 3-6 show pressed if g_4ab512 names
+ * them; 0 and 1 are greyed out without g_4ab524). With `show`, shows them.
+ */
+/* @zoombi32 0x0041790f */
+void drawCampButtons(short button, short pressed, short group, short show)
+{
+    short y;
+    ShortRect bounds = campButtonsBounds;
+    Color color;
+    short toggles;
+    short first;
+    short last;
+
+    toggles = 0;
+    if (!button) {
+        switch (group) {
+        case 1:
+            first = 0;
+            last = 3;
+            break;
+        case 2:
+            first = 3;
+            last = 7;
+            break;
+        default:
+            first = 0;
+            last = 7;
+            break;
+        }
+        bounds = campButtons[first].rect;
+        unionRect(&bounds, &campButtons[last - 1].rect);
+    } else {
+        first = button - 1;
+        last = first + 1;
+        bounds = campButtons[button - 1].rect;
+    }
+    for (; first < last; first++) {
+        short x = campButtons[first].rect.left;
+
+        y = campButtons[first].rect.top;
+        short image = 0;
+        switch (first) {
+        case 0:
+            image = 1;
+            if (!g_4ab524) {
+                pressed = 0;
+                image = 15;
+            }
+            break;
+        case 1:
+            image = 3;
+            if (!g_4ab524) {
+                pressed = 0;
+                image = 16;
+            }
+            break;
+        case 2:
+            image = 5;
+            break;
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+            toggles = 1;
+            image = (first - 3) * 2 + 7;
+            pressed = 0;
+            if (g_4ab512 - 1 == first)
+                pressed = 1;
+            break;
+        }
+        if (image) {
+            if (pressed)
+                image++;
+            drawImageData((unsigned short *)(campButtonImages->offsets[image] + (char *)campButtonImages),
+                          x, y, 8);
+        }
+    }
+    if (show) {
+        if (toggles)
+            fn_4640a6(fn_4640d1(0));
+        showRect(&bounds);
+    }
+}
+
 /* The camp view's drawing: its buttons, the first group (0-2) and the
    second (3-6). */
 /* @zoombi32 0x00417ac4 */
@@ -728,6 +889,71 @@ void scrollCamp(View *view, long)
     }
     if (!g_4a080e)
         g_4a080c = 0;
+}
+
+/* The camp view's drawing: the Zoombinis in the five rows shown (six while
+   scrolled half a row), noting where each is, in its frame. */
+/* @zoombi32 0x00417ed2 */
+void drawCamp(View *)
+{
+    short layout;
+    short count;
+    short y;
+    short bottom;
+    short i;
+    short slot;
+    Snoid snoid;
+    short row;
+    short column;
+
+    initSnoid(&snoid);
+    campRow %= campRows;
+    count = 25;
+    slot = campRow * 5;
+    column = row = 0;
+    if (g_4a080e) {
+        layout = 1;
+        count += 5;
+        bottom = 9;
+    } else {
+        layout = 3;
+        bottom = 12;
+    }
+    drawImageData((unsigned short *)(g_4a0974->offsets[layout] + (char *)g_4a0974), 0x35, 6, 0);
+    for (i = 0; i < count; i++, slot++) {
+        short index = slot % campShown;
+
+        if (camp->slots[index].zoombini) {
+            short x;
+
+            if (g_4a080e) {
+                x = campX[row * 2];
+                y = campY[row * 2][column];
+            } else {
+                x = campX[row * 2 + 1];
+                y = campY[row * 2 + 1][column];
+            }
+            snoid.unknownB2 = 0;
+            snoid.unknownC0 = -1;
+            snoid.unknown98 = 0;
+            snoid.unknown9a = 2;
+            snoid.zoombini = camp->slots[index].zoombini;
+            snoid.x = x;
+            snoid.y = y;
+            fn_45b06a(&snoid, 0);
+            fn_45ab97(&snoid, 0);
+            camp->slots[index].rect = snoid.bounds;
+            fn_4571d8(&snoid);
+        }
+        column++;
+        if (column >= 5) {
+            column = 0;
+            row++;
+        }
+    }
+    drawImageData((unsigned short *)(g_4a0974->offsets[layout + 1] + (char *)g_4a0974), 0x35, bottom,
+                  8);
+    drawImageData((unsigned short *)(g_4a0974->offsets[5] + (char *)g_4a0974), 0x1f, 0, 8);
 }
 
 /*
