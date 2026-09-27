@@ -1299,3 +1299,159 @@ void placeDialogButton(View *view)
             cel += 3;
     }
 }
+
+/*
+ * A key while a dialog shows: typing a saved game's name (letters, space,
+ * backspace, left and right), else the shortcuts: ^N ^L ^S ^Q (new, load,
+ * save, quit), ^D ^B ^J ^T (the toggles), Enter, Escape, up and down.
+ */
+/* @zoombi32 0x004682f9 */
+void dialogKey(unsigned short key)
+{
+    short done = 0;
+
+    if (g_4b97fc)
+        return;
+    if (g_4b9684 & 0x10) {
+        g_4b9686 = 5;
+        return;
+    }
+    if (!done && !(g_4b9684 & 8)
+        && ((key >= 0x20 && key <= 0x7a) || key == 8 || key == 0x124 || key == 0x126)) {
+        short length;
+
+        if (g_4b98c8) {
+            g_4b98c8 = 0;
+            g_4b9666 = 0;
+            {
+                View *view = findView(g_4b9806);
+
+                if (view)
+                    view->changed = 1;
+                view = findView(g_4b980a);
+                if (view)
+                    view->changed = 1;
+            }
+        }
+        length = strlen(saveName);
+        if (saveNameLength > length)
+            saveNameLength = length;
+        switch (key) {
+        case 8:
+            if (length && saveNameLength) {
+                for (short i = saveNameLength - 1; i < 21; i++)
+                    saveName[i] = saveName[i + 1];
+                saveNameLength--;
+                length--;
+                saveName[length] = 0;
+            } else {
+                saveName[0] = 0;
+                length = saveNameLength = 0;
+            }
+            break;
+        case 0x124:
+            if (saveNameLength)
+                saveNameLength--;
+            break;
+        case 0x126:
+            if (saveNameLength < length)
+                saveNameLength++;
+            break;
+        default:
+            if (length + 4 < 22) {
+                for (short i = 21; i > saveNameLength; i--)
+                    saveName[i] = saveName[i - 1];
+                saveName[saveNameLength] = key;
+                saveNameLength++;
+                saveName[length + 1] = 0;
+                length++;
+            }
+            break;
+        }
+        while (length && saveName[0] == ' ') {
+            for (short i = 0; i < length; i++)
+                saveName[i] = saveName[i + 1];
+            saveName[length] = 0;
+        }
+        length = strlen(saveName);
+        if (saveNameLength > length)
+            saveNameLength = length;
+        return;
+    }
+    switch (key) {
+    case 17:
+        if (g_4b9684 == 1) {
+            g_4b97fc = 4;
+        } else {
+            if (g_4b9684 & 8) {
+                g_4b9686 = 4;
+                updateViews();
+            }
+            if (g_4b9684 & 2) {
+                g_4b9686 = 2;
+                updateViews();
+            }
+            if (g_4b9684 & 4) {
+                g_4b9686 = 3;
+                updateViews();
+                g_4b98d2++;
+                if (g_4b98d2 > 1)
+                    g_4b754a = 1;
+            }
+            fn_46293a(key);
+        }
+        break;
+    case 0x125:
+        if ((g_4b9684 & 6) && !(g_4b9684 & 8))
+            g_4b97fc = 11;
+        break;
+    case 0x127:
+        if ((g_4b9684 & 6) && !(g_4b9684 & 8))
+            g_4b97fc = 12;
+        break;
+    case 14:
+        if (g_4b9684 == 1)
+            g_4b97fc = 1;
+        break;
+    case 12:
+        if (g_4b9684 == 1)
+            g_4b97fc = 2;
+        break;
+    case 19:
+        if (g_4b9684 == 1)
+            g_4b97fc = 3;
+        break;
+    case 4:
+        if (g_4b9684 == 1)
+            g_4b97fc = 5;
+        break;
+    case 2:
+        if (g_4b9684 == 1)
+            g_4b97fc = 6;
+        break;
+    case 10:
+        if (g_4b9684 == 1)
+            g_4b97fc = 7;
+        break;
+    case 20:
+        if (g_4b9684 == 1)
+            g_4b97fc = 8;
+        break;
+    case 27:
+        if (g_4b9684 & 8) {
+            if (dialogButton1Text)
+                g_4b97fc = 16;
+        } else if (g_4b9684 & 6) {
+            g_4b97fc = 14;
+        }
+        break;
+    case 13:
+        if (g_4b9684 & 8)
+            g_4b97fc = 15;
+        else if (g_4b9684 & 6)
+            g_4b97fc = 13;
+        else if (g_4b9684 & 1)
+            g_4b97fc = 9;
+        break;
+    }
+}

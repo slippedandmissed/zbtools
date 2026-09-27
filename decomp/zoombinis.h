@@ -1296,7 +1296,7 @@ void fn_43ac20();
 short playSound(short key, long type, short channel, short eventType, short discard);
 short fn_45590b();
 void fn_455ab0(short type);
-void fn_46293a(short key);
+
 void fn_4624bd(Point *where, short button);
 void fn_4624f4();
 void fn_464d7d();
@@ -4239,6 +4239,8 @@ void loadDialogs();
 void freeDialogs();
 void askKeepParty();
 void dialogClick(Point where);
+void dialogKey(unsigned short key); /* 0x4682f9 */
+void fn_46293a(unsigned short key);
 void startNewGame();
 void askNewGame();
 void askLoadGame();
@@ -4290,6 +4292,7 @@ extern char userFile[]; /* @data 0x4a4900 */
 extern short g_4b80e2;
 extern Point dialogWhere; /* @data 0x4b97f8 */
 extern ShortRect dialogSpots[17]; /* @data 0x4b982a */
+extern short g_4b98d2;
 extern char buttonPressed[17]; /* @data 0x4b98b2: dialog hot spots shown pressed */
 extern char g_4b8800;
 extern unsigned short g_4b0d4a;
@@ -4319,7 +4322,7 @@ extern long g_4b98c4;
 extern short g_4b98c8;
 extern short g_4b98ca;
 extern char saveName[]; /* @data 0x4b9810 */
-extern short saveNameLength; /* @data 0x4b9826 */
+extern unsigned short saveNameLength; /* @data 0x4b9826 */
 extern long groupBankResources[8]; /* @data 0x4b95a4 */
 extern ImageBank *groupBanks[8]; /* @data 0x4b95c4 */
 extern long groupHotXResources[8]; /* @data 0x4b95e4 */

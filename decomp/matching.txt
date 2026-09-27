@@ -445,6 +445,7 @@
 0x00466d7e showDialog
 0x004674af tickView
 0x004674cf closeDialog
+0x004682f9 dialogKey
 0x0046879e dialogClick
 0x004688a5 placeDialogButton
 0x00469490 startNewGame
