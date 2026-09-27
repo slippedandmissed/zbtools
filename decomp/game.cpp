@@ -42,7 +42,7 @@ void gameFrame()
 /* @zoombi32 0x00455013 */
 long fn_455013(long, long)
 {
-    g_4aa4c9 = 1;
+    outOfMemory = 1;
     return 0;
 }
 

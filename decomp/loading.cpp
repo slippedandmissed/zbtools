@@ -183,7 +183,7 @@ char *formatString(long size, char *text, const char *format)
  * Formats the conversion at *format into *text, moving both on: %s a string,
  * %d an int, %u an unsigned long; %L locks a resource (%L0) or takes a
  * character's text from the nth one locked so far (%L1 to %L9, via
- * fn_4155d0). Other characters go through formatCharacter.
+ * nthString). Other characters go through formatCharacter.
  */
 /* @zoombi32 0x0041522a */
 void formatArgument(long size, char **text, const char **format)
@@ -222,7 +222,7 @@ void formatArgument(long size, char **text, const char **format)
                 }
             } else if (index < lockedCount) {
                 which = va_arg(formatArgs, char);
-                from = fn_4155d0(lockedData[index], which);
+                from = nthString(lockedData[index], which);
             }
             break;
         default:

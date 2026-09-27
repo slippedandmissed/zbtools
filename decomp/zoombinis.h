@@ -86,6 +86,31 @@ struct ResourceList
     long resources[1];
 };
 
+/* Text joined from two texts (joinText); a text is either a string or one of
+   these, told apart by the first byte. */
+struct JoinNode
+{
+    char tag; /* 0xff (negative), where a string's first character isn't */
+    const char *first;
+    const char *second;
+};
+
+/* A palette fade in progress (0xc16 bytes). */
+struct Fade
+{
+    long step; /* 16.16 levels (of 256) per ms */
+    long progress; /* 16.16 */
+    short level; /* the last level shown */
+    short steps; /* steps shown, when not by time */
+    unsigned long lastTime;
+    short byTime; /* levels follow the time taken; else 4 levels a step */
+    short first;
+    unsigned short count;
+    PALETTEENTRY target[256];
+    PALETTEENTRY current[256];
+    PALETTEENTRY start[256];
+};
+
 /* A saved area of a port (e2MapSave), 0xe bytes. */
 struct MapSave
 {
@@ -374,7 +399,8 @@ extern Callback g_4a07ac; /* called before a fatal error is reported */
 /* reports an error (showError, as the game sets it up) */
 extern void (*errorReporter)(const char *prefix, const char *format, va_list args); /* @data 0x4a07b0 */
 extern const char *g_4a07b4; /* the message for a fatal error */
-extern time_t g_4a07b8;
+extern unsigned long randomSeed; /* @data 0x4a07b8 */
+extern short seedPending; /* @data 0x4a07bc: seed from the time first */
 extern unsigned long starvationLimit; /* @data 0x4a07c8: longest gap between main loop passes */
 extern char msgStarvation[]; /* @data 0x4a07cc */
 extern Callback g_4a07c4;
@@ -461,15 +487,20 @@ extern unsigned short g_4aa4be;
 extern short g_4aa4c0;
 extern short g_4aa4c2;
 extern void (*g_4aa4c4)(Point *where);
-extern char allocationFailed; /* @data 0x4aa4c8 */
-extern char g_4aa4c9;
-extern char g_4aa4cb;
+/* Which error reportJoinedError reports */
+extern char allocationFailed; /* @data 0x4aa4c8: "Not enough near memory for" */
+extern char outOfMemory; /* @data 0x4aa4c9: "Not enough memory for" */
+extern char portFailed; /* @data 0x4aa4ca: "Unable to allocate port for" */
+extern char loadFailed; /* @data 0x4aa4cb: "Unable to load" */
+extern char joinedText[0x100]; /* @data 0x4aa4cc */
+extern short reportingJoinedError; /* @data 0x4aa5cc */
 extern short breakpointKeyEnabled; /* @data 0x4aa5d4 */
 extern short dispatchingEvents; /* @data 0x4aa5d6 */
 extern short breakpointRequested; /* @data 0x4aa5d8 */
 extern Event eventQueue[32]; /* @data 0x4aa5da */
 extern short eventHead; /* @data 0x4aa79a */
 extern short eventTail; /* @data 0x4aa79c */
+extern Fade *defaultFade; /* @data 0x4aa7a0 */
 extern long screenPort; /* @data 0x4aa7a4: the window's port */
 extern ShortRect gameRect; /* @data 0x4aa7a8: the game's area */
 extern ShortRect screenRect; /* @data 0x4aa7b0 */
@@ -487,7 +518,7 @@ extern PALETTEENTRY colors[256]; /* @data 0x4aafee: the palette's colours */
 extern va_list formatArgs; /* @data 0x4ab40c: formatString's arguments */
 extern short lockedCount; /* @data 0x4ab410 */
 extern long lockedResources[10]; /* @data 0x4ab414: resources %L locked */
-extern long lockedData[10]; /* @data 0x4ab43c */
+extern char *lockedData[10]; /* @data 0x4ab43c */
 /* extra conversions for formatString: whether a character starts one, and its text */
 extern short (*isFormatCharacter)(char c); /* @data 0x4ab464 */
 extern char *(*formatCharacter)(char c); /* @data 0x4ab468 */
@@ -676,8 +707,8 @@ void fn_46c5b7(long *resource); /* releases a resource */
 unsigned long fn_48ff28(long resource); /* a resource's size */
 short fn_490140(long resource);
 /* Joins two strings into a new block at *joined. */
-void fn_413c24(char **joined, const char *first, const char *second);
-void fn_413d33(char *message);
+void joinText(char **joined, const char *first, const char *second);
+void reportJoinedError(char *message);
 void fn_4771e4(long handle);
 short fn_480b80(InputItem *item, Point *where); /* the default hit test */
 /* The engine's graphics follow Mac QuickDraw: a current port, and conversions
@@ -728,9 +759,13 @@ void __cdecl notEnoughMemory(const char *format, ...);
 void __cdecl notEnoughNearMemory(const char *format, ...);
 void __cdecl unableToAllocatePort(const char *format, ...);
 void reportFatalError(const char *prefix, const char *format, va_list args);
-long fn_46cabc(long resource); /* locks a resource */
+char *fn_46cabc(long resource); /* locks a resource */
 void fn_46cad1(long resource); /* unlocks it */
-char *fn_4155d0(long data, char which);
+char *nthString(char *table, unsigned char n);
+char *skipStrings(char *text, short count);
+short randomUpTo(unsigned short limit);
+void __cdecl formatJoined(const char *text);
+short collectParts(short count, const char **parts, const char *text);
 /* graphics */
 void initGraphics(DisplayMode *mode, short depth);
 void closeGraphics();
@@ -926,7 +961,7 @@ void getItemPosition(InputItem *item, Cursor *where);
 InputItem *itemAt(short x, short y);
 void activateItemAt(short x, short y);
 void fn_413bcf(void (*hook)(Point *where));
-void fn_413c6d(void **block);
+void freeText(void **block);
 short queuedEvents();
 void postEvent(Event *event);
 short getEvent(Event *event);
@@ -940,7 +975,15 @@ short handleNextEvent();
 void getMousePosition(Point *where);
 void waitForEvent(short type, short discard);
 void __cdecl nextEventIndex(short *index);
-void fn_414358(void **block);
+void freeFade(Fade **fade);
+void fadeTo(PALETTEENTRY *to);
+void fadePalette(PALETTEENTRY *to, unsigned short first, unsigned short count, short duration,
+                 short byTime, Fade **fade);
+void startFade(Fade **fade, PALETTEENTRY *to, unsigned short first, unsigned short count,
+               short duration, short byTime);
+void runFade(Fade **fade);
+short stepFade(Fade *fade);
+long fn_46d754(long numerator, long denominator); /* 16.16 fixed-point division */
 void fn_4153b0(Callback callback);
 void setErrorReporter(void (*reporter)(const char *prefix, const char *format, va_list args));
 void fn_4153ce(const char *message);

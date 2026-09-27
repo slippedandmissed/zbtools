@@ -55,10 +55,10 @@ void initGraphics(DisplayMode *mode, short depth)
 /* @zoombi32 0x00414653 */
 void closeGraphics()
 {
-    fn_413c6d((void **)&g_4ab3f4);
-    fn_413c6d((void **)&g_4ab3f8);
-    fn_413c6d((void **)&g_4ab3fc);
-    fn_413c6d((void **)&g_4ab400);
+    freeText((void **)&g_4ab3f4);
+    freeText((void **)&g_4ab3f8);
+    freeText((void **)&g_4ab3fc);
+    freeText((void **)&g_4ab400);
     destroyPort(&workPort, 1);
     if (palette) {
         setPort(screenPort);
@@ -169,15 +169,15 @@ void createPort(long *port, ShortRect *bounds, short keep, const char *name)
     long saved;
     long current;
 
-    fn_413c24(&g_4ab3f4, name, "back port");
+    joinText(&g_4ab3f4, name, "back port");
     if (*port) {
-        fn_413c24(&g_4ab3f8, "e2GetBackPort error:", g_4ab3f4);
-        fn_413d33(g_4ab3f8);
+        joinText(&g_4ab3f8, "e2GetBackPort error:", g_4ab3f4);
+        reportJoinedError(g_4ab3f8);
     }
     width = bounds->right - bounds->left;
     height = bounds->bottom - bounds->top;
     if ((*port = fn_488ba8(width, height, bitsPerPixel, 0)) == 0)
-        fn_413d33(g_4ab3f4);
+        reportJoinedError(g_4ab3f4);
     saved = getPort();
     current = fn_48b4a8();
     lockPort(*port);
@@ -187,7 +187,7 @@ void createPort(long *port, ShortRect *bounds, short keep, const char *name)
     if (!keep)
         fn_48db08(*port);
     setPort(saved);
-    fn_413c6d((void **)&g_4ab3f4);
+    freeText((void **)&g_4ab3f4);
 }
 
 /* Destroys a port (releasing it first, if asked), leaving no current port if
@@ -195,8 +195,8 @@ void createPort(long *port, ShortRect *bounds, short keep, const char *name)
 /* @zoombi32 0x004149e0 */
 void destroyPort(long *port, short release)
 {
-    fn_413c6d((void **)&g_4ab3f4);
-    fn_413c6d((void **)&g_4ab3f8);
+    freeText((void **)&g_4ab3f4);
+    freeText((void **)&g_4ab3f8);
     if (*port) {
         if (getPort() == *port)
             setPort(0);
@@ -227,12 +227,12 @@ void fn_414a2e(long port, ShortRect *bounds)
 void saveRect(MapSave **save, ShortRect *rect, short locked, const char *name)
 {
     if (*save) {
-        fn_413c24(&g_4ab400, "e2SaveRect error:", name);
-        fn_413d33(g_4ab400);
+        joinText(&g_4ab400, "e2SaveRect error:", name);
+        reportJoinedError(g_4ab400);
     }
     if (!allocateBlock((void **)save, sizeof(MapSave))) {
-        fn_413c24(&g_4ab3fc, name, "e2MapSave structure");
-        fn_413d33(g_4ab3fc);
+        joinText(&g_4ab3fc, name, "e2MapSave structure");
+        reportJoinedError(g_4ab3fc);
     }
     (*save)->rect = *rect;
     (*save)->port = 0;
@@ -262,8 +262,8 @@ void restoreRect(MapSave **save, short free)
 /* @zoombi32 0x00414b76 */
 void freeSave(MapSave **save)
 {
-    fn_413c6d((void **)&g_4ab3fc);
-    fn_413c6d((void **)&g_4ab400);
+    freeText((void **)&g_4ab3fc);
+    freeText((void **)&g_4ab400);
     if (*save) {
         while ((*save)->locks)
             unlockSave(*save);

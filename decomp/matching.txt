@@ -91,7 +91,10 @@
 0x00413bad fn_413bad
 0x00413bcf fn_413bcf
 0x00413be4 numberAllItems
-0x00413c6d fn_413c6d
+0x00413c24 joinText
+0x00413c6d freeText
+0x00413c7c formatJoined
+0x00413d33 reportJoinedError
 0x00413dc0 queuedEvents
 0x00413dd7 postEvent
 0x00413e1b getEvent
@@ -105,7 +108,12 @@
 0x00414140 getMousePosition
 0x0041414f waitForEvent
 0x0041416f nextEventIndex
-0x00414358 fn_414358
+0x0041419d fadeTo
+0x004141b9 fadePalette
+0x004141f7 startFade
+0x00414310 runFade
+0x00414358 freeFade
+0x00414367 stepFade
 0x004144d0 initGraphics
 0x00414653 closeGraphics
 0x004146df drawImage
@@ -165,6 +173,9 @@
 0x0041548d unableToAllocatePort
 0x004154a3 reportFatalError
 0x00415514 fn_415514
+0x0041552a randomUpTo
+0x00415584 randomBelow
+0x0041559c skipStrings
 0x00415604 fn_415604
 0x00415613 mainLoopEvents
 0x00415666 waitForEventOrTimer

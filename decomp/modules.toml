@@ -32,8 +32,8 @@ note = "keyboard and mouse focus for on-screen controls: groups of items with ha
 
 [[module]]
 start = 0x413c24
-name = "module_413c24"
-note = "no strings"
+name = "jointext"
+note = "error messages joined from parts (joinText, reportJoinedError); no strings of its own"
 
 [[module]]
 start = 0x413dc0
@@ -52,18 +52,18 @@ note = "'Unable to load ', 'Not enough memory for ', 'Unable to allocate port fo
 
 [[module]]
 start = 0x415514
-name = "module_415514"
-note = "no strings; calls time()"
+name = "random"
+note = "the random number generator (an LCG seeded from time())"
 
 [[module]]
 start = 0x41559c
-name = "module_41559c"
-note = "one function"
+name = "skipstrings"
+note = "one function: skipping NUL-terminated strings"
 
 [[module]]
 start = 0x4155d0
-name = "module_4155d0"
-note = "one function"
+name = "nthstring"
+note = "one function: a string from a counted string table"
 
 [[module]]
 start = 0x415604

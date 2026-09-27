@@ -57,7 +57,7 @@ unsigned short fn_411382(short key, long type)
             if (g_4aa42c)
                 reportSoundError(key, type, 0, 0);
             removeSound(&entry);
-            g_4aa4cb = 0;
+            loadFailed = 0;
         } else {
             entry->type = 0;
             if (fn_48ff28(entry->unknownA) <= g_4a009c)
@@ -332,10 +332,10 @@ void reportSoundError(short id, long type, Entry *entry, const char *message)
         errorText = error;
     }
     fn_4150c7(0x14, name, formatSoundId, textSound, (unsigned short)id);
-    fn_413c24(&g_4aa438, name, errorText);
-    fn_413c24(&g_4aa434, kind, g_4aa438);
-    fn_413c24(&g_4aa430, message, g_4aa434);
-    fn_413d33(g_4aa430);
+    joinText(&g_4aa438, name, errorText);
+    joinText(&g_4aa434, kind, g_4aa438);
+    joinText(&g_4aa430, message, g_4aa434);
+    reportJoinedError(g_4aa430);
 }
 
 /*
@@ -508,9 +508,9 @@ void unloadSounds()
 {
     Entry *entry;
 
-    fn_413c6d((void **)&g_4aa430);
-    fn_413c6d((void **)&g_4aa434);
-    fn_413c6d((void **)&g_4aa438);
+    freeText((void **)&g_4aa430);
+    freeText((void **)&g_4aa434);
+    freeText((void **)&g_4aa438);
     while ((entry = g_4a00a0) != 0)
         fn_41158c(entry->key, RESOURCE_TYPE(0, 'S', 'N', 'D'));
 }

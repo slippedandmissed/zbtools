@@ -2,6 +2,7 @@
  * module_413dc0 (0x413dc0-0x4144d0): no strings; a 32-entry ring buffer (an event queue?): queuedEvents, nextEventIndex
  */
 
+#include <string.h>
 #include "zoombinis.h"
 
 /* How many events are queued (eventHead is where reading starts, eventTail
@@ -194,8 +195,114 @@ void __cdecl nextEventIndex(short *index)
         *index = 0;
 }
 
-/* @zoombi32 0x00414358 */
-void fn_414358(void **block)
+/* Fades the whole palette to `to` (black without it) over half a second. */
+/* @zoombi32 0x0041419d */
+void fadeTo(PALETTEENTRY *to)
 {
-    freeAndClear(block);
+    fadePalette(to, 0, 0x100, 0, 0, 0);
+}
+
+/* Fades `count` colours from `first` to `to`, running the main loop until
+   it's done (see startFade); `fade` defaults to defaultFade. */
+/* @zoombi32 0x004141b9 */
+void fadePalette(PALETTEENTRY *to, unsigned short first, unsigned short count, short duration,
+                 short byTime, Fade **fade)
+{
+    if (!fade)
+        fade = &defaultFade;
+    startFade(fade, to, first, count, duration, byTime);
+    runFade(fade);
+    freeFade(fade);
+}
+
+/*
+ * Starts fading `count` colours from `first` from what they are to `to`
+ * (black without it) over `duration` ms (ticks, with clockInTicks; 500 ms
+ * when 0).
+ */
+/* @zoombi32 0x004141f7 */
+void startFade(Fade **fade, PALETTEENTRY *to, unsigned short first, unsigned short count,
+               short duration, short byTime)
+{
+    if (*fade)
+        freeFade(fade);
+    if (allocateBlock((void **)fade, sizeof(Fade))) {
+        getColors((*fade)->start, first, count);
+        memcpy((*fade)->current, (*fade)->start, count * sizeof(PALETTEENTRY));
+        if (to)
+            memcpy((*fade)->target, &to[first], count * sizeof(PALETTEENTRY));
+        else
+            memset((*fade)->target, 0, count * sizeof(PALETTEENTRY));
+        if (!duration)
+            duration = 500;
+        else if (clockInTicks)
+            duration = duration * 50 / 3;
+        (*fade)->step = fn_46d754(0x1000000, (long)duration << 16);
+        (*fade)->first = first;
+        (*fade)->count = count;
+        (*fade)->byTime = byTime;
+        (*fade)->progress = 0;
+        (*fade)->level = (*fade)->steps = 0;
+        (*fade)->lastTime = clockMs();
+    }
+}
+
+/* Runs the main loop until a fade is done (if it changes anything). */
+/* @zoombi32 0x00414310 */
+void runFade(Fade **fade)
+{
+    if (*fade && memcmp((*fade)->start, (*fade)->target, sizeof((*fade)->start)))
+        while (*fade && !stepFade(*fade))
+            mainLoopEvents();
+}
+
+/* Advances a fade by the time since the last step and shows the new colours
+   if the level changed. Whether it's finished. */
+/* @zoombi32 0x00414367 */
+short stepFade(Fade *fade)
+{
+    unsigned long elapsed;
+    unsigned short level;
+    PALETTEENTRY *target;
+    PALETTEENTRY *current;
+    PALETTEENTRY *start;
+    short i;
+
+    unsigned long now = clockMs();
+    elapsed = now - fade->lastTime;
+    fade->lastTime = now;
+    for (i = 0; elapsed > i; i++)
+        fade->progress += fade->step;
+    level = fade->progress >> 16;
+    if (fade->byTime) {
+        if (level == fade->level)
+            return 0;
+        if (level >= 0x100)
+            level = 0x100;
+    } else {
+        if (level < (fade->steps + 1) * 4)
+            return 0;
+        fade->steps++;
+        level = fade->steps << 2;
+    }
+    fade->level = level;
+    start = fade->start;
+    target = fade->target;
+    current = fade->current;
+    for (i = 0; i < fade->count; i++) {
+        current[i].peRed =
+            ((unsigned)((target[i].peRed - start[i].peRed) * level) >> 8) + start[i].peRed;
+        current[i].peGreen =
+            ((unsigned)((target[i].peGreen - start[i].peGreen) * level) >> 8) + start[i].peGreen;
+        current[i].peBlue =
+            ((unsigned)((target[i].peBlue - start[i].peBlue) * level) >> 8) + start[i].peBlue;
+    }
+    setColors(fade->current, fade->first, fade->count);
+    return level == 0x100;
+}
+
+/* @zoombi32 0x00414358 */
+void freeFade(Fade **fade)
+{
+    freeAndClear((void **)fade);
 }
