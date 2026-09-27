@@ -380,8 +380,10 @@
 0x004632af closeViews
 0x00463359 clearViews
 0x00463500 removeDeadViews
+0x0046356c updateViews
 0x004639ec initView
 0x00463ac3 drawBackdropList
+0x00463afe addView
 0x00463cec viewAt
 0x00463d81 nextActorView
 0x00463dce setViewPlaces
@@ -403,6 +405,7 @@
 0x00464474 freeScripts
 0x0046450c loadTerrain
 0x004645ab freeTerrain
+0x004645bd drawViewLabels
 0x0046483e startView
 0x00464876 setViewScript
 0x00464a7d freeViewGroup
@@ -413,6 +416,9 @@
 0x00464d64 viewClock
 0x00464d7d markViewTime
 0x00464d88 viewTimeSinceMark
+0x00464da1 sortViews
+0x00464ee9 sortViewList
+0x00464fc7 mergeViewList
 0x00465146 setViewsLocked
 0x00465175 fn_465175
 0x0046517f moveView

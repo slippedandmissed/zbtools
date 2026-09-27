@@ -285,8 +285,7 @@ struct Traveller
     char name[10];
 };
 
-/* A Zoombini on screen (the snoids module), 0x104 bytes (by the frame
-   drawCamp gives it). Partly known. */
+/* A Zoombini on screen (the snoids module), 0x103 bytes. Partly known. */
 struct Snoid
 {
     short unknown0;
@@ -317,7 +316,6 @@ struct Snoid
     char unknownF7;
     char unknownF8;
     char name[10]; /* +0xf9 */
-    char unknown103;
 };
 
 /* The sounds views ask to play in an update (0x82 bytes). */
@@ -327,6 +325,12 @@ struct SoundChannels
     short sounds[32];
     char unknown42[32];
     char state[32];
+};
+
+/* A larger view body (flag 2), 0x22a bytes. */
+struct LargeViewBody
+{
+    char unknown[0x22a];
 };
 
 struct View;
@@ -1959,7 +1963,7 @@ basePort *portObject(short kind);
 short setPortError(short error);
 short getPortError();
 short eraseRect(const Rect &rect);
-short frameRect(const ShortRect &rect);
+short frameRect(const Rect &rect);
 Font *getFont();
 unsigned short nearestPaletteIndex(Palette *palette, RGBColor color);
 unsigned short textWidth(const char *text, unsigned short length); /* length 0xffff: NUL-terminated */
@@ -4040,6 +4044,8 @@ void fn_415a11(Callback callback);
 void fn_415a20(Callback callback);
 /* view */
 void initViews(); /* 0x46310c */
+void fn_4674cf(short);
+void fn_469669();
 short fn_45b8b0(Snoid *snoid, short which);
 void fn_4589ce(const char *text, short, short);
 void fn_459c84(short, short);
@@ -4056,8 +4062,8 @@ void removeDeadViews();
 void updateViews();
 void initView(View *view, View *prev, View *next, short id);
 void drawBackdropList(ResourceList *images);
-short addView(long flags, ViewDraw draw, ViewUpdate update, short kind, short interval, void *data,
-              long, long);
+short addView(unsigned long flags, ViewDraw draw, ViewUpdate update, short kind, long interval,
+              void *data, short after, short target);
 View *viewAt(Point where, unsigned long mask, short backwards);
 View *nextActorView(short again);
 void setViewPlaces(short count, Point *places, short apply);
@@ -4092,7 +4098,7 @@ void markViewTime();
 unsigned long viewTimeSinceMark();
 void sortViews();
 View *sortViewList(View *list);
-View *mergeViewList(View *list, View *into);
+View *mergeViewList(View *into, View *list);
 void setViewsLocked(short locked);
 void moveView(short moving, short after, short anchor);
 ImageBank *loadImageBank(short id, long *resource);
@@ -4106,6 +4112,7 @@ void addSoundRange(short low, short high, short value);
 void pickViewSounds(SoundChannels *channels);
 void loadViewSounds(short id, short now);
 void noteSoundTest(short sound, short kind);
+void drawViewLabels(short only);
 extern View *views; /* @data 0x4a7ba8: viewHead, once set up */
 extern short viewsReady; /* @data 0x4a7b86 */
 extern short removedRgn; /* @data 0x4a7b88: gRemovedFeatureBounds */
@@ -4166,6 +4173,23 @@ extern short *g_4b78b4[]; /* scripts for Zoombinis */
 extern short *g_4b7980[];
 extern long g_4b7b50; /* the MIDI map */
 extern char g_4b8803;
+extern short fillViews; /* @data 0x4a7b78: debugging: fill the game area first */
+extern short labelActorsOnly; /* @data 0x4a7b7a: drawViewLabels only labels Zoombinis */
+extern short labelIds; /* @data 0x4a7b7c: drawViewLabels shows ids */
+extern short showFps; /* @data 0x4a7b7e: debugging: show the frame rate */
+extern short viewsPaused; /* @data 0x4a7b82 */
+extern short viewsStep; /* @data 0x4a7b84: one update while paused */
+extern ShortRect fpsRect; /* @data 0x4a7bba */
+extern short lastViewSound; /* @data 0x4b80ea */
+extern char g_4b87ff;
+extern unsigned long updateTime; /* @data 0x4b8b54 */
+extern char fpsText[]; /* @data 0x4b957a */
+extern unsigned long fpsTime; /* @data 0x4b9590 */
+extern unsigned long fpsFrames; /* @data 0x4b9594 */
+extern unsigned long fpsMin; /* @data 0x4b9598 */
+extern unsigned long fpsMax; /* @data 0x4b959c */
+extern short g_4b966c;
+extern short g_4b9686;
 extern short soundTests; /* @data 0x4a7b80: report the sounds started */
 extern short soundRangeLow[32]; /* @data 0x4b94ba */
 extern short soundRangeHigh[32]; /* @data 0x4b94fa */

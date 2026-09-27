@@ -6,6 +6,7 @@
  * viewTail, drawn back to front. updateViews redraws what changed.
  */
 
+#include <stdio.h>
 #include "zoombinis.h"
 
 /* Sets up the views: the view port, the list's ends (the tail draws the
@@ -169,6 +170,118 @@ void removeDeadViews()
                 view = view->next;
             }
         }
+    }
+}
+
+/*
+ * Redraws what changed: every view's update adds what it changes to the
+ * current region; then (clipped to that) the backdrop and the views that
+ * changed are drawn back to front in the work port, the sounds they ask
+ * for started, and the region shown on screen.
+ */
+/* @zoombi32 0x0046356c */
+void updateViews()
+{
+    basePort *saved;
+    View *view;
+
+    if (!viewsBusy) {
+        viewsBusy = 1;
+        saved = getPort();
+        setPort(workPort);
+        if (viewsPaused) {
+            if (!viewsStep) {
+                viewsBusy = 0;
+                setPort(saved);
+                return;
+            }
+            viewsStep = 0;
+        }
+        if (fillViews)
+            fillPortRect(gameRect, Color(14), 0);
+        if (showFps) {
+            Color color;
+
+            fpsFrames++;
+            updateTime = clockTime();
+            unsigned long elapsed = updateTime - fpsTime;
+
+            if (elapsed && fpsFrames > 8) {
+                unsigned long rate = fpsFrames * 600 / elapsed;
+
+                fpsFrames = 0;
+                fpsTime = updateTime;
+                if (rate < fpsMin)
+                    fpsMin = rate;
+                if (rate > fpsMax)
+                    fpsMax = rate;
+                sprintf(fpsText, "%d-%d-%d", (short)fpsMin, (short)rate, (short)fpsMax);
+                fillPortRect(fpsRect, Color(0xff), 0);
+                color = setForeColor(Color(0));
+                drawText(fpsRect, 0x22, fpsText, 0xffff);
+                copyPortBits(screenPort, workPort, fpsRect, fpsRect, 0);
+                setForeColor(color);
+            }
+        }
+        unionRgn(currentViewRgn, removedRgn);
+        setEmptyRgn(removedRgn);
+        updateTime = clockTime();
+        for (view = views; view; view = view->next)
+            if (view->update)
+                view->update(view, currentViewRgn);
+        if (viewsSorted && !g_4b9684)
+            sortViews();
+        sectRgnWithRect(currentViewRgn, &gameRect);
+        compactRgn(currentViewRgn);
+        setClip(currentViewRgn);
+        copyPortBits(workPort, viewPort, gameRect, gameRect, 0);
+        for (view = views; view; view = view->next) {
+            if (view->changed) {
+                if (view->snoid.unknownB2)
+                    unionRgnRect(currentViewRgn, &view->snoid.unknownB4);
+                else if (view->region)
+                    unionRgn(currentViewRgn, view->region);
+                else
+                    unionRgnRect(currentViewRgn, &view->snoid.bounds);
+                sectRgnWithRect(currentViewRgn, &gameRect);
+                setClip(currentViewRgn);
+            }
+            if (view->draw)
+                view->draw(view);
+            view->changed = 0;
+        }
+        {
+            short sound = playViewSounds(&viewSounds, g_4b87fe, 1);
+
+            if (sound)
+                lastViewSound = sound;
+        }
+        playViewSounds(&viewSounds2, g_4b87ff, 0);
+        if (fillViews)
+            unionRgnRect(currentViewRgn, &gameRect);
+        compactRgn(currentViewRgn);
+        copyRegion(screenPort, workPort, currentViewRgn);
+        setEmptyRgn(currentViewRgn);
+        setClipRect(gameRect);
+        setPort(saved);
+        if (g_4b9686) {
+            if (g_4b9686 > 0)
+                fn_4674cf(g_4b9686);
+            g_4b9686 = 0;
+            if (g_4b966c == 4) {
+                g_4b966c = 0;
+                fn_469669();
+            }
+            if (g_4b966c == 3) {
+                g_4b966c++;
+                g_4b9686 = -1;
+            }
+            if (g_4b966c == 2) {
+                g_4b9686 = 1;
+                g_4b966c++;
+            }
+        }
+        viewsBusy = 0;
     }
 }
 
@@ -1303,4 +1416,361 @@ short playViewSounds(SoundChannels *channels, short played, short pick)
     }
     channels->active = 0;
     return last;
+}
+
+/*
+ * Re-sorts the views: those with flag 0x8000 stay first in their order,
+ * then those with 0x4000000; the rest (0x4000000 set on them unless they
+ * have 0x1000) and then the Zoombinis (kinds 1 and 2) are sorted by where
+ * they stand and merged in.
+ */
+/* @zoombi32 0x00464da1 */
+void sortViews()
+{
+    View *otherTail;
+    View *actors;
+    View *others;
+    View *top;
+    View *topTail;
+    View *actorTail;
+
+    {
+        View *end = viewListEnd(1);
+        View *next = end->next;
+
+        end->next = 0;
+        actors = others = top = 0;
+        actorTail = otherTail = topTail = 0;
+        while (next) {
+            View *view = next;
+
+            next = next->next;
+            if (view->flags & 0x8000) {
+                end->next = view;
+                view->prev = end;
+                view->next = 0;
+                end = end->next;
+            } else if (view->flags & 0x4000000) {
+                if (!top) {
+                    top = topTail = view;
+                    topTail->prev = 0;
+                    topTail->next = 0;
+                } else {
+                    topTail->next = view;
+                    view->prev = topTail;
+                    view->next = 0;
+                    topTail = view;
+                }
+            } else if (view->flags != 1 && view->flags != 2) {
+                if (!(view->flags & 0x1000))
+                    view->flags |= 0x4000000;
+                if (!others) {
+                    others = otherTail = view;
+                    otherTail->prev = 0;
+                    otherTail->next = 0;
+                } else {
+                    otherTail->next = view;
+                    view->prev = otherTail;
+                    view->next = 0;
+                    otherTail = view;
+                }
+            } else {
+                if (!actors) {
+                    actors = actorTail = view;
+                    actorTail->prev = 0;
+                    actorTail->next = 0;
+                } else {
+                    actorTail->next = view;
+                    view->prev = actorTail;
+                    view->next = 0;
+                    actorTail = view;
+                }
+            }
+        }
+        next = top;
+        while (next) {
+            View *view = next;
+
+            next = next->next;
+            end->next = view;
+            view->prev = end;
+            end = end->next;
+            end->next = 0;
+        }
+    }
+    views = mergeViewList(views, sortViewList(others));
+    views = mergeViewList(views, sortViewList(actors));
+}
+
+/* Sorts a list of views (by insertion) by where they stand: their bounds'
+   bottom, then left; those with flag 0x1000 go last. */
+/* @zoombi32 0x00464ee9 */
+View *sortViewList(View *list)
+{
+    ShortRect other;
+    ShortRect rect;
+    View *sorted;
+
+    {
+        View *view;
+        View *at;
+
+        view = at = 0;
+        if (list) {
+            sorted = at = list;
+            list = list->next;
+            sorted->prev = 0;
+            sorted->next = 0;
+        } else {
+            return 0;
+        }
+        while (list) {
+            view = list;
+            list = list->next;
+            rect = view->snoid.bounds;
+            at = sorted;
+            while (at) {
+                other = at->snoid.bounds;
+                if (!(view->flags & 0x1000)
+                    && (rect.bottom < other.bottom
+                        || (rect.bottom == other.bottom && rect.left < other.left))) {
+                    view->prev = at->prev;
+                    view->next = at;
+                    at->prev = view;
+                    if (view->prev)
+                        view->prev->next = view;
+                    else
+                        sorted = view;
+                    at = 0;
+                } else if (!at->next) {
+                    at->next = view;
+                    view->prev = at;
+                    view->next = 0;
+                    at = 0;
+                } else {
+                    at = at->next;
+                }
+            }
+        }
+    }
+    return sorted;
+}
+
+/*
+ * Merges a sorted list of views into the view list, after the views with
+ * flag 0x8000: before the first view it stands in front of, unless that
+ * view's flags 0x40000000, 0x10000000 or 0x20000000 keep it behind.
+ */
+/* @zoombi32 0x00464fc7 */
+View *mergeViewList(View *into, View *list)
+{
+    View *after;
+    View *head;
+    ShortRect other;
+    ShortRect rect;
+    ShortRect span;
+
+    {
+        View *at;
+
+        head = into;
+        for (at = into; at->next && (at->flags & 0x8000); at = at->next)
+            ;
+        after = at;
+        while (list) {
+            View *view = list;
+
+            list = list->next;
+            rect = view->snoid.bounds;
+            span.left = 0;
+            span.right = 0x27f;
+            span.top = rect.top;
+            span.bottom = rect.bottom;
+            at = after;
+            if (view->flags & 0x1000) {
+                for (; at && at->next; at = at->next)
+                    ;
+                at->next = view;
+                view->prev = at;
+                view->next = 0;
+            } else {
+                while (at) {
+                    if (at->flags & 0x1000) {
+                        view->prev = at->prev;
+                        view->next = at;
+                        at->prev = view;
+                        view->prev->next = view;
+                        at = 0;
+                    } else if (!at->next) {
+                        at->next = view;
+                        view->prev = at;
+                        view->next = 0;
+                        after = view;
+                        at = 0;
+                    } else {
+                        other = at->snoid.bounds;
+                        if (rect.bottom < other.bottom
+                            || (rect.bottom == other.bottom && rect.left < other.left)) {
+                            unsigned long flags = at->flags;
+
+                            if (rect.bottom < other.top
+                                || (!((flags & 0x40000000) && rect.left < other.left)
+                                    && !((flags & 0x10000000) && rect.right > other.right)
+                                    && !((flags & 0x20000000) && rect.top < other.top))) {
+                                view->prev = at->prev;
+                                view->next = at;
+                                at->prev = view;
+                                if (view->prev)
+                                    view->prev->next = view;
+                                else
+                                    head = view;
+                                after = view->next;
+                                at = 0;
+                            }
+                        }
+                    }
+                    if (at)
+                        at = at->next;
+                }
+            }
+        }
+    }
+    return head;
+}
+
+/*
+ * Adds a view with a new id (one more than the highest): at the end, or
+ * with `target` -3 after view g_4b8a0a, or with an id after that view (with
+ * `after`) or before it. Flag 1 copies a Zoombini's body from `data`, flag
+ * 2 a larger one; 0x800000 takes its place from `data`; 0x2000 records it
+ * as placed there; 0x8000 makes it g_4b8a0a.
+ */
+/* @zoombi32 0x00463afe */
+short addView(unsigned long flags, ViewDraw draw, ViewUpdate update, short kind, long interval,
+              void *data, short after, short target)
+{
+    short id;
+    View *at;
+    View *view;
+
+    for (at = views, id = 0; at; at = at->next)
+        if (at->id > id)
+            id = at->id;
+    id++;
+    {
+        short found = 0;
+
+        for (at = views; !found && at; at = at->next) {
+            if (at->next && at->next->id == -1) {
+                found = 1;
+            } else if (target == -3 && at->id == g_4b8a0a) {
+                found = 1;
+            } else if (target && at->id == target) {
+                if (after) {
+                    found = 1;
+                } else if (at->id != 1) {
+                    at = at->prev;
+                    found = 1;
+                }
+            }
+            if (found) {
+                if (flags & 0x8000)
+                    g_4b8a0a = id;
+                {
+                    unsigned long size = 0xec;
+
+                    if (flags & 1)
+                        size += 0x47;
+                    else if (flags & 2)
+                        size += 0x16e;
+                    view = (View *)newPtr(size);
+                }
+                if (flags & 1)
+                    view->snoid = *(Snoid *)data;
+                else if (flags & 2)
+                    *(LargeViewBody *)&view->snoid = *(LargeViewBody *)data;
+                initView(view, at, at->next, id);
+                at->next = view;
+                view->next->prev = view;
+                if (flags & 0x800000) {
+                    *(Point *)&view->snoid.x = *(Point *)data;
+                    *(Point *)&view->snoid.unknownAa = *(Point *)&view->snoid.x;
+                }
+                view->draw = draw;
+                view->update = update;
+                view->kind = kind;
+                view->flags = flags;
+                view->interval = interval;
+                found = 1;
+            }
+        }
+    }
+    if ((flags & 0x2000) && placedViewCount < 125) {
+        fn_465e59(view, removedRgn);
+        placedViews[placedViewCount] = id;
+        placedViewPoints[placedViewCount] = *(Point *)data;
+        g_4b83e4[placedViewCount] = 0;
+        placedViewCount++;
+    }
+    return id;
+}
+
+/* Debugging: outlines and labels the views (or only the `only`th): with
+   its number and whether it runs, or its id. */
+/* @zoombi32 0x004645bd */
+void drawViewLabels(short only)
+{
+    Color saved;
+    View *view = viewListEnd(1);
+    int n = 1;
+
+    saved = setForeColor(Color(11));
+    for (; view; view = view->next, n++) {
+        short labelled = 0;
+
+        if (!only || n == only) {
+            if (!emptyRect(&view->snoid.bounds)) {
+                char text[16];
+
+                if (labelActorsOnly) {
+                    if ((view->flags & 0xf) == 1) {
+                        fillPortRect(view->snoid.bounds, Color(14), 0);
+                        frameRect(view->snoid.bounds);
+                        if (view->snoid.unknownF7)
+                            text[0] = '+';
+                        else
+                            text[0] = '-';
+                        text[1] = 0;
+                        if (labelIds)
+                            intToDecimal(view->id, text + 1);
+                        labelled = 1;
+                    }
+                } else {
+                    fillPortRect(view->snoid.bounds, Color(14), 0);
+                    frameRect(view->snoid.bounds);
+                    if (labelIds) {
+                        intToDecimal(view->id, text);
+                    } else {
+                        if (view->snoid.running)
+                            text[0] = '+';
+                        else
+                            text[0] = '-';
+                        intToDecimal(n, text + 1);
+                    }
+                    if (view->id == -1) {
+                        short length = strlen(text);
+
+                        text[length++] = ':';
+                        intToDecimal((short)countViews(), text + length);
+                    }
+                    labelled = 1;
+                }
+                if (labelled) {
+                    drawText(view->snoid.bounds, 0x22, text, 0xffff);
+                    copyPortBits(screenPort, workPort, view->snoid.bounds, view->snoid.bounds, 0);
+                }
+            }
+        }
+    }
+    setForeColor(saved);
 }

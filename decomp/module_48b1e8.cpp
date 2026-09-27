@@ -27,7 +27,7 @@ short eraseRect(const Rect &rect)
 
 /* Outlines a rectangle with the current port's pen. */
 /* @zoombi32 0x0048b244 */
-short frameRect(const ShortRect &rect)
+short frameRect(const Rect &rect)
 {
     basePort *port;
     HGDIOBJ old;
