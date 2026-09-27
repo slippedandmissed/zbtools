@@ -4290,7 +4290,9 @@ extern char userFile[]; /* @data 0x4a4900 */
 extern short g_4b80e2;
 extern Point dialogWhere; /* @data 0x4b97f8 */
 extern ShortRect dialogSpots[17]; /* @data 0x4b982a */
-extern char g_4b98b2[17];
+extern char buttonPressed[17]; /* @data 0x4b98b2: dialog hot spots shown pressed */
+extern char g_4b8800;
+extern unsigned short g_4b0d4a;
 extern short g_4a74dc;
 extern short savedGames; /* @data 0x4b95a0 */
 extern short g_4a7d3c;

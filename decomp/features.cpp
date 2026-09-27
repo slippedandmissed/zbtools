@@ -658,7 +658,7 @@ void dialogClick(Point where)
         return;
     }
     for (i = 0; i < 17; i++)
-        g_4b98b2[i] = 0;
+        buttonPressed[i] = 0;
     dialogWhere = where;
     hit = 0;
     for (i = 0; !hit && i < 17; i++)
@@ -1080,5 +1080,222 @@ void drawCredits(View *view)
             break;
         }
         }
+    }
+}
+
+/*
+ * A dialog part's update: lays out its script's first frame (from the
+ * dialog scripts, by its kind) like runViewCels, and the first time notes
+ * where its cels are as dialog hot spots, from spot `interval`.
+ */
+/* Not exact: register allocation (the original keeps the image bank in a
+   frame slot and the count in ecx; BCC here gives the bank edi). */
+/* @zoombi32 0x00468033 */
+void updateDialogPart(View *view, short region)
+{
+    ShortRect rect;
+    short *cels;
+    ImageBank *bank;
+    short *cel;
+    short *at;
+    short word;
+    short left;
+
+    if (view->body.running) {
+        if (view->reset)
+            view->changed = 1;
+        else if (view->placed)
+            view->placed(view);
+        if (view->changed) {
+            unionRgnRect(region, &view->body.bounds);
+            at = dialogScripts[view->kind - 1] + 1;
+            bank = dialogImages;
+            cels = cel = (short *)view->body.cels;
+            left = 24;
+            do {
+                left--;
+                word = *at++;
+                if (!word) {
+                    at += 2;
+                    *cel++ = 0;
+                    *cel++ = 0;
+                    *cel++ = 0;
+                } else if (word > 0) {
+                    *cel++ = word;
+                    *cel++ = *at++;
+                    *cel++ = *at++;
+                } else {
+                    if (word < -0x100)
+                        at++;
+                    if (left)
+                        *cel = left = 0;
+                }
+            } while (left);
+            if (view->placed)
+                view->placed(view);
+            cel = cels;
+            if (*cel) {
+                unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
+
+                cel++;
+                view->body.bounds.left = *cel++;
+                view->body.bounds.right = swapShort(image[0]) + view->body.bounds.left;
+                view->body.bounds.top = *cel++;
+                view->body.bounds.bottom = swapShort(image[1]) + view->body.bounds.top;
+            }
+            while (*cel) {
+                unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
+
+                cel++;
+                rect.left = *cel++;
+                rect.right = swapShort(image[0]) + rect.left;
+                rect.top = *cel++;
+                rect.bottom = swapShort(image[1]) + rect.top;
+                unionRect(&view->body.bounds, &rect);
+            }
+            if (view->reset) {
+                view->reset = 0;
+                {
+                    unsigned long spot = view->interval;
+
+                    if (spot) {
+                        spot--;
+                        for (cel = cels; *cel; spot++) {
+                            unsigned short *image =
+                                (unsigned short *)(bank->offsets[*cel] + (char *)bank);
+
+                            cel++;
+                            dialogSpots[spot].left = *cel++;
+                            dialogSpots[spot].right = swapShort(image[0]) + dialogSpots[spot].left;
+                            dialogSpots[spot].top = *cel++;
+                            dialogSpots[spot].bottom = swapShort(image[1]) + dialogSpots[spot].top;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/*
+ * The menu's buttons (dialog 1): shows the toggles (sound, music, ... ) and
+ * pressed buttons, and a moment after a press does what it asks.
+ */
+/* @zoombi32 0x004688a5 */
+void placeDialogButton(View *view)
+{
+    short *cel = (short *)view->body.cels;
+    short first = view->id == dialogButton1;
+    short pressedFirst = first && g_4b97fc >= 1 && g_4b97fc <= 8;
+    short pressedSecond = !first && (g_4b97fc == 9 || g_4b97fc == 10);
+
+    if (view->changed) {
+        if (first) {
+            short i;
+            short button;
+
+            for (i = 0, button = 0; i <= 21; i += 3, button++) {
+                short off = 0;
+
+                switch (i) {
+                case 12:
+                    if (!g_4b87fe)
+                        off = 1;
+                    break;
+                case 15:
+                    if (!g_4b87ff)
+                        off = 1;
+                    break;
+                case 18:
+                    if (!g_4b8800)
+                        off = 1;
+                    break;
+                case 21:
+                    if (g_4b0d4a)
+                        off = 1;
+                    break;
+                }
+                if (off) {
+                    cel[i]++;
+                    cel[i + 24]++;
+                }
+                if (buttonPressed[button])
+                    cel[i] = -1;
+                else
+                    cel[i + 24] = -1;
+            }
+        } else {
+            if (buttonPressed[8])
+                cel[0] = -1;
+            else
+                cel[6] = -1;
+            if (buttonPressed[9]) {
+                creditsShowing = 0;
+                cel[3] = -1;
+            } else {
+                creditsShowing = 1;
+                cel[9] = -1;
+            }
+        }
+    } else if (pressedFirst || pressedSecond) {
+        if (g_4b97fc != 17) {
+            queueViewSound(999, 0);
+            waitForEventFor(0, 2, 0, 1);
+        }
+        view->unknown1e = g_4b97fc;
+        buttonPressed[g_4b97fc - 1] = 1;
+        view->changed = 1;
+        g_4b97fc = -1;
+        view->nextUpdate = clockTime() + 2;
+    } else if (view->unknown1e && view->nextUpdate) {
+        if (clockTime() > view->nextUpdate || clockTime() < view->nextUpdate - 2) {
+            buttonPressed[view->unknown1e - 1] = 0;
+            view->nextUpdate = 0;
+            view->changed = 1;
+            switch (view->unknown1e) {
+            case 1:
+                askNewGame();
+                break;
+            case 2:
+                askLoadGame();
+                break;
+            case 3:
+                askSaveGame();
+                break;
+            case 4:
+                askQuit();
+                break;
+            case 5:
+                g_4b87fe = !g_4b87fe;
+                break;
+            case 6:
+                g_4b87ff = !g_4b87ff;
+                if (g_4b87ff)
+                    queueViewSound(0, 0);
+                else
+                    stopSounds(g_4a7d42, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                break;
+            case 7:
+                g_4b8800 = !g_4b8800;
+                break;
+            case 8:
+                g_4b0d4a = !g_4b0d4a;
+                break;
+            case 9:
+                if (!g_4b9686)
+                    g_4b9686 = 1;
+                break;
+            case 10:
+                showDialog(5, 0, 0, 0);
+                break;
+            }
+            g_4b97fc = view->unknown1e = 0;
+        }
+    }
+    while (*cel) {
+        if (*cel == -1)
+            removeFirstCel((ViewCel *)cel);
+        else
+            cel += 3;
     }
 }
