@@ -434,7 +434,7 @@ void fn_46c6db(long *info, short id, short *count, const char *name)
     fn_46c4fe(info, RESOURCE_TYPE('t', 'C', 'N', 'T'), id, shapeListText, 0);
     if (!*info) {
         fn_46c4fe(info, RESOURCE_TYPE('S', 'H', 'P', 'L'), id, shapeListText, 1);
-        setPaletteColors((unsigned short *)(fn_46cafb(*info) + 4));
+        applyPaletteResource((unsigned short *)(fn_46cafb(*info) + 4));
     }
     *count = swapShort(((unsigned short *)fn_46cafb(*info))[1]);
     freeText((void **)&shapeListText);
@@ -458,7 +458,7 @@ void fn_46c77c(long *resource)
 /* Colours from a palette resource (big-endian first colour and count, then
    the entries), into g_4aa7e8. */
 /* @zoombi32 0x0046c79c */
-void setPaletteColors(unsigned short *data)
+void applyPaletteResource(unsigned short *data)
 {
     unsigned short first = swapShort(data[0]);
     unsigned short count = swapShort(data[1]);
@@ -474,7 +474,7 @@ void fn_46c808(long *resource, short id, const char *name, short required)
     fn_46c4fe(resource, RESOURCE_TYPE('t', 'P', 'A', 'L'), id, paletteText, required);
     freeText((void **)&paletteText);
     if (*resource)
-        setPaletteColors((unsigned short *)fn_46cafb(*resource));
+        applyPaletteResource((unsigned short *)fn_46cafb(*resource));
 }
 
 /* @zoombi32 0x0046c85d */

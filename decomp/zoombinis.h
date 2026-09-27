@@ -261,6 +261,36 @@ public:
 };
 
 
+/* A wipe in progress (basecamp's runWipe). */
+struct Wipe
+{
+    short steps; /* lines to copy */
+    short done; /* lines copied */
+    unsigned long time; /* of the last step */
+    long position; /* lines due (16.16) */
+    long step; /* lines per tick (16.16) */
+    basePort *from;
+    basePort *to;
+    ShortRect fromRect;
+    ShortRect toRect;
+    unsigned short direction; /* 0 from the top, 1 bottom, 2 left, 3 right */
+};
+
+/* Venetian blinds in progress (basecamp's runBlinds). */
+struct Blinds
+{
+    short stripe; /* each stripe's height: the lines to copy in each */
+    short done;
+    unsigned long time;
+    long position;
+    long step;
+    basePort *from; /* none: erase */
+    basePort *to;
+    ShortRect fromRect;
+    ShortRect toRect;
+    short stripes;
+};
+
 class WinPoint;
 
 /* A point as the engine passes it by value. */
@@ -927,6 +957,16 @@ extern short g_4ab49c;
 extern short g_4ab49e;
 extern unsigned long lastCheck; /* @data 0x4ab4a0 */
 extern unsigned long thisCheck; /* @data 0x4ab4a4 */
+extern short preloaded; /* @data 0x4ab4a8: a handle of the resources preloaded */
+extern short preloadedCount; /* @data 0x4ab4aa */
+extern Wipe wipe; /* @data 0x4ab4ac */
+extern long cheatCode; /* @data 0x4ab4d8: the last keys typed, 7 bits each */
+extern Blinds blinds; /* @data 0x4ab4dc */
+extern long shapeListKind; /* @data 0x4a07f0: 'SHPL' */
+extern long soundListKind; /* @data 0x4a07f4: 'SNDL' */
+extern long noPreloadKind; /* @data 0x4a07f8 */
+extern long cheatHash; /* @data 0x4a07fc */
+extern short primes[5]; /* @data 0x4a0800 */
 extern Entry22 *g_4ab64c;
 extern short g_4af350;
 extern short g_4af35a;
@@ -3792,7 +3832,7 @@ short findAndLoad(long *resource, long type, short id); /* 0x46c4b5 */
 void readGameResource(void *buffer, unsigned long size, long type, unsigned short id,
                       short exact, const char *what); /* 0x46c622 */
 void releaseShapeListInfo(long *info); /* 0x46c76d */
-void setPaletteColors(unsigned short *data); /* 0x46c79c */
+void applyPaletteResource(unsigned short *data); /* 0x46c79c */
 void releasePalette(long *resource); /* 0x46c85d */
 void freeSoundList(long *resource); /* 0x46c910 */
 void getDataPath(char *path); /* 0x46c9c2 */
@@ -3821,6 +3861,50 @@ unsigned short toLowerAscii(unsigned short c);
 unsigned short toUpperAscii(unsigned short c);
 void fn_415a11(Callback callback);
 void fn_415a20(Callback callback);
+/* basecamp */
+unsigned short loadWave(short key);
+unsigned short fn_415a46(short key);
+void unloadWave(short key);
+void fn_415a72(short key);
+short playWaveOn(short key, short channel);
+short fn_415aa3(short key, short channel);
+void stopWaves(unsigned short id);
+void fn_415ad4(unsigned short id);
+short isWavePlaying(unsigned short id);
+short playWave(short key, short channel, short eventType, short discard);
+short loadAndPlayWave(short key, short channel, short eventType, short discard);
+short waitForWave(unsigned short id, short eventType, short discard);
+short fn_415b76(unsigned short id, short eventType, short discard);
+short fn_415b96(unsigned short id, short stop);
+short fn_415bb1(char value);
+short waitForWaveValue(char value, short eventType, short discard);
+short fn_415be5(char value, short eventType, short discard);
+short runWipe(basePort *to, basePort *from, const ShortRect *toRect, const ShortRect *fromRect,
+              short duration, unsigned short direction, short eventType, short discard);
+void startWipe(basePort *to, basePort *from, const ShortRect *toRect, const ShortRect *fromRect,
+               short duration, unsigned short direction);
+short stepWipe();
+void drawWipe(short upTo);
+short wipeScreen(const ShortRect *rect, short duration, unsigned short direction, short eventType,
+                 short discard);
+void startScreenWipe(const ShortRect *rect, short duration, unsigned short direction);
+void noteCheatKey(unsigned short key);
+int isCheat(long hash, long code);
+void getShapeSize(ResourceList *list, unsigned short index, short *height, short *width);
+short randomBetween(short low, short high);
+void reduceFraction(short *numerator, short *denominator, unsigned short largest);
+short runBlinds(basePort *to, basePort *from, const ShortRect *toRect, const ShortRect *fromRect,
+                short duration, short stripe, short eventType, short discard);
+void startBlinds(basePort *to, basePort *from, const ShortRect *toRect, const ShortRect *fromRect,
+                 short duration, short stripe);
+short stepBlinds();
+void drawBlinds(short upTo);
+short blindsScreen(const ShortRect *rect, short duration, short stripe, short eventType,
+                   short discard);
+void startScreenBlinds(const ShortRect *rect, short duration, short stripe);
+void preloadResource(long type, short id, long *kind);
+void *preloadDone(long event, long id, void *kind);
+void freePreloaded(short release);
 long fn_417906(long);
 long fn_4196a8(long);
 short fn_419f1a();
