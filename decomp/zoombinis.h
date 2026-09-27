@@ -1038,6 +1038,7 @@ short copyPortBits(basePort *to, basePort *from, const Rect &toRect, const Rect 
 short lockPort(basePort *port); /* locks a port; non-zero on failure */
 short invertRect(const Rect &rect);
 short lineTo(short x, short y);
+short moveTo(short x, short y); /* 0x48c974 */
 basePort *newWindowPort(const Rect &bounds, HWND window, Palette *palette);
 Palette *setPortPalette(Palette *palette); /* the previous one */
 short setClipRect(const Rect &rect);
@@ -1288,19 +1289,31 @@ public:
     TEXTMETRIC metrics; /* +0x88 */
 };
 
+/* A port on the display, through a display DC (displayport). */
 class displayPort : public basePort
 {
 public:
-    virtual short lock(); /* 25: 0x48ad80 */
+    __cdecl displayPort(const Rect &bounds); /* 0x48ac90 */
+    virtual void depthChanged(); /* 6 */
+    virtual void prepare(); /* 8 */
+    virtual void realizePalette(); /* 9 */
+    virtual int stretchDIBits(int toX, int toY, int toWidth, int toHeight, int fromX, int fromY,
+                              int fromWidth, int fromHeight, const void *bits,
+                              BITMAPINFO *info, UINT usage, DWORD rop); /* 20 */
+    virtual short lock(); /* 25 */
 };
 
-/* A port in memory, in the display's format. */
+/* A port in memory, in the display's format: a compatible bitmap
+   (memoryport). */
 class memoryPort : public displayPort
 {
 public:
-    virtual short lock(); /* 25 */
     __cdecl memoryPort(short width, short height); /* 0x48c774 */
-    char unknownC0[4];
+    virtual short init(); /* 24 */
+    virtual short lock(); /* 25 */
+    virtual void release(); /* 31 */
+
+    HBITMAP bitmap; /* +0xc0 */
 };
 
 /* A device-independent bitmap of any depth. */

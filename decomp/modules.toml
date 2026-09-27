@@ -514,7 +514,8 @@ name = "module_48ac68"
 
 [[module]]
 start = 0x48ac90
-name = "module_48ac90"
+name = "displayport"
+note = "RTTI class displayPort; 'DISPLAY'"
 
 [[module]]
 start = 0x48adf0
@@ -586,7 +587,8 @@ name = "module_48c750"
 
 [[module]]
 start = 0x48c774
-name = "module_48c774"
+name = "memoryport"
+note = "RTTI class memoryPort; 'DISPLAY'; Rect(left, top, right, bottom) and moveTo"
 
 [[module]]
 start = 0x48c9ac

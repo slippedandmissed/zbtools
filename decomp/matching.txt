@@ -865,6 +865,12 @@
 0x0048ac29 Rect::operator =
 0x0048ac52 DIB::operator new
 0x0048ac68 initDisplayMode
+0x0048ac90 displayPort::displayPort
+0x0048acbc displayPort::depthChanged
+0x0048ad10 displayPort::prepare
+0x0048ad28 displayPort::realizePalette
+0x0048ad42 displayPort::stretchDIBits
+0x0048ad80 displayPort::lock
 0x0048adf0 drawImageData
 0x0048ae53 drawPixelData
 0x0048b244 frameRect
@@ -888,6 +894,11 @@
 0x0048c648 lineTo
 0x0048c6f3 Pt::Pt
 0x0048c736 Pt::Pt
+0x0048c774 memoryPort::memoryPort
+0x0048c7bd memoryPort::init
+0x0048c844 memoryPort::lock
+0x0048c8b7 memoryPort::release
+0x0048c8d4 Rect::Rect
 0x0048c9e8 canUseDisplayMode
 0x0048d194 setClipRect
 0x0048d1e0 setClip
