@@ -1941,7 +1941,7 @@ void __cdecl notifySound(AudioObject *object, SoundNotice *notice); /* 0x47e0d3 
 AudioObject *__cdecl newMidiSound(short data); /* 0x478f0b */
 void *__cdecl operator new(size_t size, void *where); /* 0x47dea7: zeroed */
 AudioObject *__cdecl newWaveSound(short data); /* 0x47a28d */
-AudioObject *__cdecl newStreamedWave(long resource, long file, long); /* 0x47cd5c */
+AudioObject *__cdecl newStreamedWave(long resource, long file, long preloadMs); /* 0x47cd5c */
 
 /*
  * The MIDI mapper: midiOut-style calls on "maps", which share a device
@@ -2060,10 +2060,113 @@ public:
     WaveBlock blocks[1];
 };
 
+/* A buffer a streamed wave sound reads into and queues (in a ring). */
+class StreamedWave;
+struct StreamBuffer
+{
+    Deferred call; /* runs streamBufferDone */
+    StreamBuffer *next;
+    StreamBuffer *prev;
+    StreamedWave *sound;
+    unsigned long start; /* in samples */
+    unsigned long length;
+    unsigned char *cue; /* the cue point it ends at */
+    unsigned long capacity; /* in samples */
+    unsigned long size; /* in bytes */
+    short prepared;
+    short queued;
+    short done;
+    short unknown3A;
+    long keep; /* the loop's first buffer, kept */
+    WAVEHDR header;
+    unsigned char data[1];
+};
+
+/* A wave sound played from its resource's file (or a file of its own) as it
+   goes: a thread reads ahead into buffers, up to three seconds' worth, after
+   an optional preloaded start. */
+class StreamedWave : public AudioObject
+{
+public:
+    virtual void __cdecl release();
+    virtual short __cdecl openDevice();
+    virtual short __cdecl setDeviceRate(long rate);
+    virtual short __cdecl setDeviceVolume(long volume);
+    virtual short __cdecl startDevice(short paused);
+    virtual void __cdecl haltDevice();
+    virtual void __cdecl closeDevice();
+    virtual long __cdecl deviceHandle();
+    virtual long __cdecl position();
+    virtual void __cdecl pause();
+    virtual void __cdecl endLoop();
+    virtual void __cdecl resetLoop();
+    virtual void __cdecl resume();
+    virtual short __cdecl seek(long position);
+    virtual short __cdecl setText(const char *text, unsigned short length);
+    virtual short __cdecl play(SoundNotify notify, long cookie);
+
+    StreamBuffer *__cdecl newBuffer(unsigned long samples);
+    void __cdecl freeBuffer(StreamBuffer *buffer);
+    short __cdecl prepareBuffer(StreamBuffer *buffer);
+    short __cdecl readBuffer(StreamBuffer *buffer);
+    short __cdecl queueBuffer(StreamBuffer *buffer);
+    void __cdecl unprepareBuffer(StreamBuffer *buffer);
+    short __cdecl stream();
+    unsigned long __cdecl positionAt(unsigned long sample);
+
+    long wave;
+    long file;
+    long resource; /* 0: the file is its own */
+    unsigned char *cues; /* Cue#, byte-swapped */
+    short streaming;
+    short unknown5A;
+    long thread;
+    long event; /* wakes the thread */
+    unsigned short queued;
+    short unknown66;
+    unsigned long queuedSamples;
+    StreamBuffer *ring;
+    unsigned long bufferSamples;
+    unsigned long maxQueued; /* in samples */
+    unsigned long readPosition;
+    short atEnd;
+    unsigned short blockAlign;
+    unsigned long dataOffset; /* of the samples, in the file */
+    unsigned long start; /* in samples */
+    long samplesPerMs; /* fixed-point */
+    long msPerSample;
+    unsigned long base; /* the device's position 0, in samples */
+    short resetting;
+    short loopDone;
+    unsigned short loopsPlayed;
+    unsigned short loopsRead;
+    unsigned long loopAdjust;
+    StreamBuffer *loopBuffer;
+    StreamBuffer *loopEndBuffer;
+    unsigned short sampleRate;
+    short unknownAA;
+    unsigned long sampleCount;
+    unsigned char bitsPerSample;
+    unsigned char channels;
+    unsigned short encoding;
+    unsigned short loops;
+    short unknownB6;
+    unsigned long loopStart;
+    unsigned long loopEnd;
+    unsigned char *preload;
+    unsigned long preloadSamples;
+};
+
+void streamThread(long wave); /* 0x47db85 */
+short __cdecl readStream(long resource, long file, void *buffer, unsigned long *size,
+                         unsigned long offset); /* 0x47dc02 */
+void CALLBACK streamCallback(long wave, unsigned short message, DWORD instance, DWORD header,
+                             DWORD); /* 0x47df34 */
+void streamBufferDone(void *buffer); /* 0x47df7a */
 void waveBlockDone(void *block); /* 0x47ae62 */
 void CALLBACK waveCallback(long wave, UINT message, DWORD instance, DWORD, DWORD); /* 0x47ae14 */
 short wavebufPause(long wave); /* 0x47c94b */
-short wavebufPrepareHeader(long wave, WAVEHDR *header, unsigned short size); /* 0x47c96b */
+unsigned short wavebufPrepareHeader(long wave, WAVEHDR *header, unsigned short size); /* 0x47c96b */
 short wavebufReset(long wave); /* 0x47c9c8 */
 short wavebufRestart(long wave); /* 0x47c9e8 */
 short wavebufSetPlaybackRate(long wave, long rate); /* 0x47ca52 */
@@ -2231,6 +2334,11 @@ void fn_46eadd(long thread, short state);
 short fn_46e605(long thread);
 void fn_46e410();
 void fn_46e43a();
+void suspendThread(long thread); /* 0x46ebca */
+long newEvent(short); /* 0x46e380 */
+void setEvent(long event); /* 0x46ea83 */
+void resetEvent(long event); /* 0x46e7fd */
+short waitEvent(long event, long timeout); /* 0x46ecb2: 0 when set */
 
 /* Rectangles (QuickDraw's) */
 short emptyRect(ShortRect *rect);

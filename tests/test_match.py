@@ -77,10 +77,13 @@ def test_markers() -> None:
 void exact(long) {}
 /* @zoombi32-functional 0x00401020 */
 long portable(long *value) { return 0; }
+/* @zoombi32 0x00401040 */
+void *__cdecl operator new(size_t size, void *where) { return where; }
 """
     assert find_targets(source) == [
         Target("exact", 0x401000, Marker.DECOMPILED, "long"),
         Target("portable", 0x401020, Marker.FUNCTIONAL, "long*"),
+        Target("operator new", 0x401040, Marker.DECOMPILED, "size_t,void*"),
     ]
 
 

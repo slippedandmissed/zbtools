@@ -423,6 +423,7 @@ def _label_decompiled(program: "Program") -> tuple[int, int]:
         for target in match.find_targets(source.read_text()):
             at = space.getAddress(target.address)
             *scopes, name = target.name.split("::")
+            name = name.replace(" ", "")  # Ghidra's names have no spaces: `operatornew`
             namespace = root
             if scopes:
                 namespace = NamespaceUtils.createNamespaceHierarchy(

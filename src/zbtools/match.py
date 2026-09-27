@@ -62,7 +62,9 @@ _RELEASE = re.compile(r"/\*\s*@release\s+(\S+)\s*\*/")
 
 _MARKER = re.compile(r"/\*\s*@zoombi32(?:-(functional))?\s+(0x[0-9a-fA-F]+)\s*\*/")
 # The (possibly qualified) name of the function defined after a marker.
-_DEFINITION = re.compile(r"([A-Za-z_~][\w:~]*)\s*\(")
+_DEFINITION = re.compile(
+    r"((?:[A-Za-z_][\w:]*::)?operator (?:new|delete)(?:\[\])?|[A-Za-z_~][\w:~]*)\s*\("
+)
 
 
 class Marker(StrEnum):
