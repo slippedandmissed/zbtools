@@ -348,11 +348,20 @@ struct LargeViewBody
     char unknown[0x22a];
 };
 
-/* The saved games' names, as the load and save dialogs list them. */
+/* A saved game: its name and its file's name (without ".txt"). */
+struct SavedGame
+{
+    char name[23];
+    char file[9];
+};
+
+/* The saved games, as the load and save dialogs list them. */
 struct SavedGameList
 {
-    short unknown0[3];
-    char names[50][32];
+    short unknown0;
+    short nextId;
+    short count;
+    SavedGame games[50];
 };
 
 struct View;
@@ -4247,6 +4256,9 @@ void freeDialogs();
 void askKeepParty();
 void dialogClick(Point where);
 void dialogKey(unsigned short key); /* 0x4682f9 */
+void fn_41f514(const char *name, char *file, short *nextId);
+void fn_41f5d0();
+void fn_43151e();
 void fn_46293a(unsigned short key);
 void startNewGame();
 void askNewGame();
@@ -4308,6 +4320,7 @@ enum DialogText
     textNo = 34,
     textPracticeNoSave = 35,
     textSureNewGame = 36,
+    textTooManyGames = 37,
     textPracticeNoLoad = 38,
     textPracticeNoNew = 39,
     text40 = 40,
@@ -4343,6 +4356,8 @@ extern char g_4b8800;
 extern unsigned short g_4b0d4a;
 extern short g_4a74dc;
 extern short savedGames; /* @data 0x4b95a0 */
+extern short nextSaveId; /* @data 0x4b95a2 */
+extern char confirmText[]; /* @data 0x4b9698 */
 extern short g_4a7d3c;
 extern short g_4a7d3e;
 extern short g_4b9664;

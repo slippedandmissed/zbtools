@@ -1516,7 +1516,7 @@ void drawDialogPart(View *view)
 
                     for (short game = g_4b9664; game < savedGames && shown < 8; game++, shown++) {
                         rect.bottom = rect.top + 20;
-                        drawText(rect, 1, savedGameList->names[game], 0xffff);
+                        drawText(rect, 1, savedGameList->games[game].name, 0xffff);
                         rect.top += 20;
                     }
                 }
@@ -1569,10 +1569,10 @@ void drawDialogPart(View *view)
                 for (short shown = 0; game < savedGames && shown < 8; shown++) {
                     rect.bottom = rect.top + 20;
                     if (game == g_4b9666 - 1) {
-                        drawOutlinedText(0x2d, 0x22, rect, 1, savedGameList->names[game]);
+                        drawOutlinedText(0x2d, 0x22, rect, 1, savedGameList->games[game].name);
                         setForeColor(saved);
                     } else {
-                        drawText(rect, 1, savedGameList->names[game], 0xffff);
+                        drawText(rect, 1, savedGameList->games[game].name, 0xffff);
                     }
                     rect.top += 20;
                     game++;
@@ -1617,5 +1617,272 @@ void drawDialogPart(View *view)
             }
             setFont(fonts[1]);
         }
+    }
+}
+
+/*
+ * The load, save and message dialogs' buttons and list: shows them pressed,
+ * and a moment after a press does what they ask: scroll the list, load or
+ * save the game (asking before replacing one), pick a game (twice quickly
+ * loads it), or close the dialog.
+ */
+/* @zoombi32 0x00468bde */
+void placeDialogList(View *view)
+{
+    short first;
+    short found;
+    short length;
+    short otherLength;
+    unsigned long now;
+    char file[32];
+    short i;
+    short hit = 0;
+    short *cel = (short *)view->body.cels;
+
+    if (view->id == g_4b9808) {
+        first = 11;
+        if (g_4b97fc >= 11 && g_4b97fc <= 12)
+            hit = 1;
+    } else if (view->id == g_4b980a) {
+        first = 13;
+        if ((g_4b97fc >= 13 && g_4b97fc <= 14) || g_4b97fc == 17)
+            hit = 1;
+    } else if (view->id == g_4b980e) {
+        if (!dialogButton1Text) {
+            cel[3] = -1;
+            cel[9] = -1;
+            cel[1] -= 90;
+            cel[7] -= 90;
+        }
+        first = 15;
+        if (g_4b97fc >= 15 && g_4b97fc <= 16)
+            hit = 1;
+    } else {
+        return;
+    }
+    if (view->changed) {
+        i = 0;
+        for (short spot = first; spot <= first + 1; spot++) {
+            if (buttonPressed[spot - 1])
+                cel[i] = -1;
+            else
+                cel[i + 6] = -1;
+            i += 3;
+        }
+    } else if (hit) {
+        if ((g_4b97fc != 13 || !g_4b98c8) && g_4b97fc != 17) {
+            queueViewSound(999, 0);
+            waitForEventFor(0, 2, 0, 1);
+        }
+        view->unknown1e = g_4b97fc;
+        buttonPressed[g_4b97fc - 1] = 1;
+        view->changed = 1;
+        g_4b97fc = -1;
+        view->nextUpdate = clockTime() + 2;
+    } else if (view->unknown1e && view->nextUpdate) {
+        if (clockTime() > view->nextUpdate || clockTime() < view->nextUpdate - 2) {
+            buttonPressed[view->unknown1e - 1] = 0;
+            view->nextUpdate = 0;
+            view->changed = 1;
+            switch (view->unknown1e) {
+            case 11:
+                if (g_4b9664 > 0) {
+                    g_4b9664 -= 8;
+                    if (g_4b9664 < 0)
+                        g_4b9664 = 0;
+                    {
+                        View *other = findView(g_4b9806);
+
+                        if (other)
+                            other->changed = 1;
+                        other = findView(g_4b980a);
+                        if (other)
+                            other->changed = 1;
+                    }
+                }
+                break;
+            case 12:
+                if (g_4b9664 < savedGames - 8) {
+                    g_4b9664 += 8;
+                    if (g_4b9664 > savedGames - 8)
+                        g_4b9664 = savedGames - 8;
+                    if (g_4b9664 < 0)
+                        g_4b9664 = 0;
+                    {
+                        View *other = findView(g_4b9806);
+
+                        if (other)
+                            other->changed = 1;
+                        other = findView(g_4b980a);
+                        if (other)
+                            other->changed = 1;
+                    }
+                }
+                break;
+            case 13:
+                if (!g_4b9686) {
+                    if (g_4b9684 & 2) {
+                        if (g_4b9666 > 0) {
+                            strcpy(gameName, savedGameList->games[g_4b9666 - 1].name);
+                            strcpy(userFile, savedGameList->games[g_4b9666 - 1].file);
+                            strcat(userFile, ".txt");
+                            fn_41f6fc(1);
+                            fn_41f5d0();
+                            viewsLocked = 1;
+                            g_4afb32 = 0;
+                            if (!g_4b0d52)
+                                g_4b0d52 = 3;
+                            g_4b7562 = 1;
+                            g_4b9686 = 2;
+                        }
+                    } else {
+                        found = 0;
+                        g_4b98ca = 0;
+                        length = strlen(saveName);
+                        while (length > 0 && saveName[length - 1] == ' ') {
+                            saveName[length - 1] = 0;
+                            length--;
+                        }
+                        if (length) {
+                            for (i = 0; !found && i < savedGames; i++) {
+                                otherLength = strlen(savedGameList->games[i].name);
+                                if (length == otherLength
+                                    && !strncmp(savedGameList->games[i].name, saveName, length)) {
+                                    found = i + 1;
+                                    g_4b9666 = found;
+                                    g_4b9668 = clockTime();
+                                    if (!g_4b98c8) {
+                                        g_4b98c8 = 1;
+                                        strcpy(confirmText, dialogTexts[textSureReplace]);
+                                        strcat(confirmText, saveName);
+                                        strcat(confirmText, " \" ?");
+                                        showDialog(4, confirmText, dialogTexts[textReplace],
+                                                   dialogTexts[textCancel]);
+                                    } else {
+                                        g_4b98c8 = 0;
+                                    }
+                                }
+                            }
+                            if (g_4b9688 == 3) {
+                                g_4b9688 = 0;
+                                g_4b98c8 = 0;
+                            }
+                            if (!g_4b98c8) {
+                                i = 0;
+                                if (found) {
+                                    i = 1;
+                                } else if (savedGames >= 50) {
+                                    showDialog(4, dialogTexts[textTooManyGames], dialogTexts[textOk2], 0);
+                                    g_4b98ca = 1;
+                                } else {
+                                    i = 2;
+                                }
+                                g_4afb32 = i;
+                                switch (i) {
+                                case 1:
+                                    strcpy(userFile, savedGameList->games[found - 1].file);
+                                    strcat(userFile, ".txt");
+                                    strcpy(gameName, savedGameList->games[found - 1].name);
+                                    viewsLocked = 0;
+                                    strandParty();
+                                    break;
+                                case 2:
+                                    fn_41f514(saveName, file, &nextSaveId);
+                                    strcpy(gameName, saveName);
+                                    strcpy(userFile, file);
+                                    strcpy(savedGameList->games[savedGames].name, gameName);
+                                    strcpy(savedGameList->games[savedGames].file, userFile);
+                                    savedGames++;
+                                    savedGameList->count = savedGames;
+                                    savedGameList->nextId = nextSaveId;
+                                    strcat(userFile, ".txt");
+                                    viewsLocked = 0;
+                                    g_4b2aea = 0;
+                                    strandParty();
+                                    g_4b2aea = 1;
+                                    fn_41f2c8((long)savedGameList, 3);
+                                    break;
+                                }
+                                if (i) {
+                                    g_4b9686 = 3;
+                                    if (currentScene == 1)
+                                        fn_43151e();
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+            case 14:
+                if (!g_4b9686) {
+                    if (g_4b9684 & 2)
+                        g_4b9686 = 2;
+                    else
+                        g_4b9686 = 3;
+                }
+                break;
+            case 17:
+                if (!g_4b9686) {
+                    now = clockTime();
+                    i = dialogWhere.y - dialogFrame.top;
+                    if (i)
+                        i /= 20;
+                    if (i > 19)
+                        i = 19;
+                    i = i + g_4b9664 + 1;
+                    if (i == g_4b9666 && now - g_4b9668 <= 30 && g_4b9666) {
+                        g_4b9686 = 0x1000;
+                        g_4b98cc = 13;
+                    }
+                    {
+                        View *other = findView(g_4b9806);
+
+                        if (other)
+                            other->changed = 1;
+                    }
+                    if (i <= savedGames)
+                        g_4b9666 = i;
+                    else
+                        g_4b9666 = 0;
+                    g_4b9668 = now;
+                }
+                break;
+            case 15:
+                if (!g_4b9686) {
+                    g_4b9686 = 4;
+                    g_4b9688 = 3;
+                    if (g_4b80e2) {
+                        startNewGame();
+                    } else {
+                        if (g_4b80e0 == 2)
+                            g_4b80e0 = 3;
+                        else if ((g_4b9684 & 4) && !g_4b98ca)
+                            g_4b98cc = 13;
+                        if (g_4b966c == 1)
+                            g_4b966c++;
+                    }
+                }
+                break;
+            case 16:
+                if (!g_4b9686) {
+                    g_4b966c = 0;
+                    g_4b80e2 = 0;
+                    g_4b9686 = 4;
+                    g_4b9688 = 2;
+                    if (g_4b80e0 == 2)
+                        g_4b80e0 = -1;
+                    else
+                        g_4b98c8 = 0;
+                }
+                break;
+            }
+            g_4b97fc = view->unknown1e = 0;
+        }
+    }
+    while (*cel) {
+        if (*cel == -1)
+            removeFirstCel((ViewCel *)cel);
+        else
+            cel += 3;
     }
 }
