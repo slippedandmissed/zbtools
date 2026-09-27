@@ -12,6 +12,8 @@
 
 #include "zoombinis.h"
 
+FileState files;
+
 /* The application was activated or deactivated. */
 /* @zoombi32 0x00483464 */
 void filesActivated(short active)
@@ -395,6 +397,10 @@ short FileRecord::close()
     deleteSync(mutex);
     return setFileError(0);
 }
+
+/* files' constructor and destructor calls (for its fileSpecs). */
+/* @zoombi32-implicit 0x00484191 <startup> */
+/* @zoombi32-implicit 0x004841c2 <exit> */
 
 /* @zoombi32 0x00484203 */
 __cdecl asyncCreateFile::asyncCreateFile(const char *path, DWORD access, DWORD share,

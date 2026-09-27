@@ -636,6 +636,8 @@
 0x004806ff iniBufferSize
 0x00480713 closeAllIni
 0x00480738 skipSpaces
+0x00480763 <startup>
+0x00480773 <exit>
 0x00480788 iniError
 0x004809d3 isSpace
 0x00480b0c getIniLong
@@ -718,6 +720,8 @@
 0x00483ebb FileRecord::open
 0x0048409b FileRecord::lock
 0x004840ed FileRecord::close
+0x00484191 <startup>
+0x004841c2 <exit>
 0x00484203 asyncCreateFile::asyncCreateFile
 0x00484246 asyncCloseHandle::asyncCloseHandle
 0x00484319 asyncCreateFile::~asyncCreateFile

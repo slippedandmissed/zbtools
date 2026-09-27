@@ -303,3 +303,7 @@ unsigned short skipSpaces(IniFile *ini, char *text)
         p++;
     return p - text;
 }
+
+/* iniState's constructor and destructor calls (for its fileSpec). */
+/* @zoombi32-implicit 0x00480763 <startup> */
+/* @zoombi32-implicit 0x00480773 <exit> */

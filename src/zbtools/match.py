@@ -20,7 +20,10 @@ pseudo-registers) would reproduce the original, the function does the same
 thing portably instead. A function the compiler generates by itself (an
 implicit destructor, say) has no definition to mark; a marker naming it,
 `/* @zoombi32-implicit 0x0048a6f9 DIB8Port::~DIB8Port */`, has it measured
-from the object of the file the marker is in.
+from the object of the file the marker is in. A global object's constructor
+and destructor calls are compiled into unnamed functions, which the object's
+_INIT_ and _EXIT_ segments list: `<startup>` and `<exit>` name them (`<startup
+2>` the second, and so on).
 
 Each file is compiled (in parallel, one Wine process per file) with
 Borland C++ 4.5, or the release a `/* @release 5.02 */` comment in the file
@@ -70,7 +73,8 @@ _RELEASE = re.compile(r"/\*\s*@release\s+(\S+)\s*\*/")
 _MARKER = re.compile(r"/\*\s*@zoombi32(?:-(functional))?\s+(0x[0-9a-fA-F]+)\s*\*/")
 # A compiler-generated function, named in the marker: `@zoombi32-implicit 0x... A::~A`.
 _IMPLICIT = re.compile(
-    r"/\*\s*@zoombi32-implicit\s+(0x[0-9a-fA-F]+)\s+((?:[A-Za-z_]\w*::)*~?[A-Za-z_]\w*)\s*\*/"
+    r"/\*\s*@zoombi32-implicit\s+(0x[0-9a-fA-F]+)\s+"
+    r"((?:[A-Za-z_]\w*::)*~?[A-Za-z_]\w*|<(?:startup|exit)(?: \d+)?>)\s*\*/"
 )
 # The (possibly qualified) name of the function defined after a marker.
 _DEFINITION = re.compile(
@@ -200,6 +204,46 @@ def _find_public(obj: omf.ObjectFile, name: str, parameters: str | None = None) 
     return candidates[0]
 
 
+# A global object's constructor or destructor calls: `<startup>`, `<exit 2>`.
+_STARTUP = re.compile(r"<(startup|exit)(?: (\d+))?>")
+
+
+def _startup_functions(obj: omf.ObjectFile) -> dict[str, list[tuple[str, int]]]:
+    """The functions an object's _INIT_ and _EXIT_ segments list, as (segment,
+    offset) in order: their 6-byte entries are a calling convention byte, a
+    priority byte and the function's address."""
+    return {
+        name: sorted(
+            (f.target, int.from_bytes(obj.segments[name].data[f.offset : f.offset + 4], "little"))
+            for f in obj.segments[name].fixups
+        )
+        for name in ("_INIT_", "_EXIT_")
+        if name in obj.segments
+    }
+
+
+def locate(obj: omf.ObjectFile, target: Target) -> tuple[omf.Public, int, int]:
+    """Where a target is in an object: its symbol, and its (start, end) in the
+    symbol's segment. A function runs to the next symbol or startup or exit
+    function. Those have no symbol: they're found through the _INIT_ and
+    _EXIT_ segments."""
+    listed = _startup_functions(obj)
+    startup = _STARTUP.fullmatch(target.name)
+    if startup is None:
+        public = _find_public(obj, target.name, target.parameters)
+        segment, start = public.segment, public.offset
+    else:
+        entries = listed.get("_INIT_" if startup.group(1) == "startup" else "_EXIT_", [])
+        number = int(startup.group(2) or 1)
+        if not 0 < number <= len(entries):
+            raise ValueError(f"{target.name} not found: the object lists {len(entries)}")
+        segment, start = entries[number - 1]
+        public = omf.Public(target.name, segment, start, local=True)
+    others = [o for ts in listed.values() for t, o in ts if t == segment and o > start]
+    _, end = obj.extent(omf.Public(target.name, segment, start, local=True))
+    return public, start, min([*others, end])
+
+
 def _demangled_parameters(symbol: str) -> str:
     signature = demangle(symbol)
     return signature[signature.find("(") + 1 : signature.rfind(")")].replace(" ", "")
@@ -257,8 +301,7 @@ def compare(
     """Compare a compiled function with the original. `siblings` gives the
     original addresses of the object's other marked functions, by (segment,
     offset), to check calls the compiler resolved itself."""
-    public = _find_public(obj, target.name, target.parameters)
-    start, end = obj.extent(public)
+    public, start, end = locate(obj, target)
     segment = obj.segments[public.segment]
     compiled = bytes(segment.data[start:end])
     original = exe.read(target.address, len(compiled))
@@ -517,7 +560,7 @@ def check(
         siblings = {}
         for target in targets:
             try:
-                public = _find_public(obj, target.name, target.parameters)
+                public, _, _ = locate(obj, target)
             except ValueError:
                 continue
             siblings[public.segment, public.offset] = Sibling(target.address, public.name)

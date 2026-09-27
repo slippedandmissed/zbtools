@@ -428,6 +428,8 @@ def _label_decompiled(program: "Program") -> tuple[int, int]:
     named = kept = 0
     for source in match.decomp_sources():
         for target in match.find_targets(source.read_text()):
+            if target.name.startswith("<"):  # <startup>, <exit>: unnamed
+                continue
             at = space.getAddress(target.address)
             *scopes, name = target.name.split("::")
             name = name.replace(" ", "")  # Ghidra's names have no spaces: `operatornew`

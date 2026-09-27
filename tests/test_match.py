@@ -82,6 +82,7 @@ void *__cdecl operator new(size_t size, void *where) { return where; }
 /* @zoombi32 0x00401060 */
 Spec &__cdecl Spec::operator=(const Spec &from) { return *this; }
 /* @zoombi32-implicit 0x00401080 Spec::~Spec */
+/* @zoombi32-implicit 0x004010a0 <startup 2> */
 """
     assert find_targets(source) == [
         Target("exact", 0x401000, Marker.DECOMPILED, "long"),
@@ -89,6 +90,7 @@ Spec &__cdecl Spec::operator=(const Spec &from) { return *this; }
         Target("operator new", 0x401040, Marker.DECOMPILED, "size_t,void*"),
         Target("Spec::operator =", 0x401060, Marker.DECOMPILED, "constSpec&"),
         Target("Spec::~Spec", 0x401080),
+        Target("<startup 2>", 0x4010A0),
     ]
 
 
