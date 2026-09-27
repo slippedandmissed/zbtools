@@ -85,12 +85,14 @@ struct ShortRect
     short bottom;
 };
 
-/* Resources (images) by index, from 1. */
+/* A list of shapes (images), loaded together (e2memory). */
 struct ResourceList
 {
-    long unknown0;
-    long unknown4;
-    long resources[1];
+    short id; /* of the 'tCNT'/'SHPL' resource listing them */
+    long list; /* that resource */
+    long palette; /* its 'tPAL' resource, if any */
+    unsigned short count;
+    long resources[1]; /* the shapes' resources */
 };
 
 /* Text joined from two texts (joinText); a text is either a string or one of
@@ -985,7 +987,23 @@ extern unsigned long g_4b80d8;
 extern unsigned long g_4b80dc;
 extern short g_4b80e0; /* ends the main loop when set */
 extern short g_4b83e4[];
-extern short g_4b99d4;
+extern short g_4b99d4; /* 1: e2memory's frees free at once, else mark purgeable */
+extern unsigned long memoryPeak; /* @data 0x4b99c4: e2memory's use, most and now */
+extern unsigned long memoryInUse; /* @data 0x4b99c8 */
+extern unsigned long memoryPeak2; /* @data 0x4b99cc */
+extern unsigned long memoryInUse2; /* @data 0x4b99d0 */
+/* e2memory's messages, joined texts kept until freed */
+extern char *shapeText; /* @data 0x4b9adc */
+extern char *arrayText; /* @data 0x4b9ae0 */
+extern char *arrayErrorText; /* @data 0x4b9ae4 */
+extern char *singleShapeText; /* @data 0x4b9ae8 */
+extern char *resourceText; /* @data 0x4b9aec */
+extern char *resourceErrorText; /* @data 0x4b9af0 */
+extern char *readErrorText; /* @data 0x4b9af4 */
+extern char *shapeListText; /* @data 0x4b9af8 */
+extern char *soundListText; /* @data 0x4b9afc */
+extern char *paletteText; /* @data 0x4b9b00 */
+extern long pendingShapeList; /* @data 0x4b9b04 */
 extern char dataPath[256]; /* @data 0x4b99d6 */
 extern short dataPathLength; /* @data 0x4b9ad6 */
 extern char dataDrive; /* @data 0x4b9ad8 */
@@ -1055,7 +1073,7 @@ short fn_46beac(long);
 /* Loads resource `id` of type `type` (e.g. 'CURS') into *handle. */
 void fn_46c4fe(long *handle, long type, short id, const char *what, short);
 /* Creates the font `name` at `size` into *font. */
-void fn_46cb10(Font **font, const char *name, long size, long);
+void fn_46cb10(Font **font, const char *name, unsigned short size, unsigned short style);
 /* Initialises the Mohawk OS layer, with a work buffer. */
 short osStartup(HINSTANCE instance, void *stacks, long size); /* 0x46ddaf */
 /* QuickTime (see quicktime.py) */
@@ -1070,7 +1088,7 @@ char *fn_46cafb(long resource); /* a resource's data */
 void fn_41585f();
 void fn_46c602(long *);
 /* Finds resource `id` of type `type`; 0 if there's none. */
-long fn_46c402(long type, short id, short);
+long fn_46c402(long type, short id, short note);
 void fn_46c5b7(long *resource); /* releases a resource */
 /* Joins two strings into a new block at *joined. */
 void joinText(char **joined, const char *first, const char *second);
@@ -3730,7 +3748,7 @@ void spritesBounds(Anim *anim, ShortRect *into);
 short *fn_46cae6(long resource);
 void fn_46c6db(long *info, short id, short *count, const char *name);
 void fn_46c77c(long *resource);
-void fn_46c148(long *resource, short first, short member, const char *name);
+void fn_46c148(long *resource, unsigned short first, unsigned short member, const char *name);
 void fn_46c808(long *resource, short id, const char *name, short);
 void fn_46c86c(long *resource);
 void fn_46c88c(long *resource, short id, const char *name);
@@ -3754,6 +3772,35 @@ void freeButtonGroup(ResourceList **images);
 void fn_412482(ResourceList **images);
 void fn_46c011(ResourceList **list, short id, const char *what, short); /* loads a resource list */
 void fn_46c2db(ResourceList **list);
+/* e2memory */
+long currentMap(); /* 0x46be28 */
+void e2AllocHandle(short *handle, unsigned long size, char *what); /* 0x46bf01 */
+void e2FreeHandle(short *handle); /* 0x46bf43 */
+void e2DisposeHandle(short *handle); /* 0x46bf85 */
+void e2AllocPtr(void **pointer, unsigned long size, char *what); /* 0x46bfa5 */
+void e2FreePtr(void **pointer); /* 0x46bfe6 */
+long loadListedShape(long list, short member, const char *what); /* 0x46c0ff */
+void loadShape(long *resource, short id, char *what); /* 0x46c1a3 */
+void allocShapeList(ResourceList **list, short id, short count, const char *what); /* 0x46c23d */
+void disposeShapeList(ResourceList **list); /* 0x46c341 */
+void keepShapeList(ResourceList **list, short id); /* 0x46c361 */
+void loadSingleShape(ResourceList *list, short id, const char *what); /* 0x46c381 */
+void freeSingleShape(ResourceList *list); /* 0x46c3cf */
+void disposeSingleShape(ResourceList *list); /* 0x46c3e2 */
+short loadGameResource(long resource); /* 0x46c434 */
+short findAndLoad(long *resource, long type, short id); /* 0x46c4b5 */
+void readGameResource(void *buffer, unsigned long size, long type, unsigned short id,
+                      short exact, const char *what); /* 0x46c622 */
+void releaseShapeListInfo(long *info); /* 0x46c76d */
+void setPaletteColors(unsigned short *data); /* 0x46c79c */
+void releasePalette(long *resource); /* 0x46c85d */
+void freeSoundList(long *resource); /* 0x46c910 */
+void getDataPath(char *path); /* 0x46c9c2 */
+void openGameFile(long *map, const char *name); /* 0x46c9e7 */
+void freeFont(Font **font); /* 0x46cb61 */
+unsigned short trackResource(long resource, short purgeable, short force); /* 0x46cb8d */
+unsigned short trackHandle(short handle, short purgeable, short force); /* 0x46cbc6 */
+void trackMemory(unsigned long size, short freed); /* 0x46cbff */
 void fadeTo(PALETTEENTRY *to);
 void fadePalette(PALETTEENTRY *to, unsigned short first, unsigned short count, short duration,
                  short byTime, Fade **fade);

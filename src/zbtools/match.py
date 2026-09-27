@@ -523,7 +523,18 @@ def _compile_all(
             return e
 
     with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as pool:
-        return list(pool.map(one, jobs))
+        results = list(pool.map(one, jobs))
+    # Now and then a compile under Wine dies without a word (no errors, no
+    # object) when many run at once; those are compiled again, one at a time.
+    return [
+        one(job) if isinstance(result, RuntimeError) and _silent(result) else result
+        for job, result in zip(jobs, results, strict=True)
+    ]
+
+
+def _silent(error: RuntimeError) -> bool:
+    """Whether a failed compile reported no errors or warnings."""
+    return not re.search(r"^(Error|Warning|Fatal)\b", str(error), re.MULTILINE)
 
 
 def check(

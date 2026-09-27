@@ -9,6 +9,7 @@ from zbtools.match import (
     Sibling,
     Target,
     _local_calls,
+    _silent,
     cache_key,
     find_targets,
     load_baseline,
@@ -158,3 +159,11 @@ def test_release_by_directive_or_override() -> None:
     assert release_for("int f();") == DEFAULT_RELEASE
     assert release_for("/* @release 5.02 */\nint f();") == "5.02"
     assert release_for("/* @release 5.02 */", override="4.52") == "4.52"
+
+
+def test_silent_compile_failures_are_told_apart() -> None:
+    banner = (
+        "Borland C++ 4.5 for Win32 Copyright (c) 1993, 1994 Borland International\nR:\\a.cpp:\n"
+    )
+    assert _silent(RuntimeError("compiling a.cpp failed:\n" + banner))
+    assert not _silent(RuntimeError(banner + "Error R:\\a.cpp 3: Undefined symbol 'x'\n"))
