@@ -13,6 +13,7 @@ from zbtools.match import (
     load_baseline,
     local_headers,
     outcome,
+    parameter_types,
     write_baseline,
 )
 
@@ -76,8 +77,8 @@ void exact(long) {}
 long portable(long *value) { return 0; }
 """
     assert find_targets(source) == [
-        Target("exact", 0x401000, Marker.DECOMPILED),
-        Target("portable", 0x401020, Marker.FUNCTIONAL),
+        Target("exact", 0x401000, Marker.DECOMPILED, "long"),
+        Target("portable", 0x401020, Marker.FUNCTIONAL, "long*"),
     ]
 
 
@@ -130,3 +131,12 @@ def test_cache_key_follows_the_source_and_its_headers(tmp_path: Path) -> None:
     assert cache_key("4.5", source, "-p") != key
     (tmp_path / "types.h").write_text("typedef long LONG; /* changed */\n")
     assert cache_key("4.5", source, "-p -k-") != key
+
+
+def test_parameter_types_drop_names() -> None:
+    assert parameter_types("short index") == "short"
+    assert parameter_types("const Color &color, unsigned char kind") == "constColor&,unsignedchar"
+    assert parameter_types("unsigned short") == "unsignedshort"
+    assert parameter_types("void") == ""
+    assert parameter_types("") == ""
+    assert parameter_types("fileSpec *path, short") == "fileSpec*,short"

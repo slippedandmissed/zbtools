@@ -387,3 +387,10 @@
 0x0048206c regionError
 0x00482073 insertRgnRect
 0x00482129 setRegionError
+0x00488874 Color::Color
+0x0048889d Color::Color
+0x004888d9 Color::setRgb
+0x004888f2 Color::paletteIndex
+0x004889a4 Color::rgb
+0x00488a39 Color::kind
+0x00488a64 RGBColor::RGBColor

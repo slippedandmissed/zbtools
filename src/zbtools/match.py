@@ -41,7 +41,7 @@ from typing import Annotated
 import typer
 
 from zbtools import omf, paths, toolchain
-from zbtools.demangle import qualified_name
+from zbtools.demangle import demangle, qualified_name
 from zbtools.exe import Executable, Instruction, disassemble
 
 # Compiler options used unless a file says otherwise (/* @flags ... */) or --flags
@@ -72,6 +72,8 @@ class Target:
     name: str
     address: int
     marker: Marker = Marker.DECOMPILED
+    # The parameters' types, to tell overloads apart (see `parameter_types`).
+    parameters: str | None = None
 
 
 @dataclass(frozen=True)
@@ -102,6 +104,36 @@ def marker_positions(source: str) -> list[MarkerPosition]:
     ]
 
 
+# Words that can end a parameter's type; any other last word is its name.
+_TYPE_WORDS = frozenset(
+    [
+        "void",
+        "char",
+        "short",
+        "int",
+        "long",
+        "unsigned",
+        "signed",
+        "float",
+        "double",
+        "const",
+        "volatile",
+    ]
+)
+
+
+def parameter_types(parameters: str) -> str:
+    """A parameter list's types, as the demangler writes them without spaces
+    (`const Color &color, short n` gives `constColor&,short`)."""
+    types = []
+    for parameter in parameters.split(","):
+        tokens = re.findall(r"[A-Za-z_]\w*|[*&]", parameter)
+        if len(tokens) > 1 and tokens[-1][0].isalpha() and tokens[-1] not in _TYPE_WORDS:
+            tokens = tokens[:-1]
+        types.append("".join(tokens))
+    return "" if types == ["void"] else ",".join(t for t in types if t)
+
+
 def find_targets(source: str) -> list[Target]:
     """Marked functions: the first `name(` after each @zoombi32 marker."""
     found = []
@@ -111,12 +143,15 @@ def find_targets(source: str) -> list[Target]:
             raise ValueError(f"no function after marker {marker.group(0)}")
         address = int(marker.group(2), 16)
         kind = Marker(marker.group(1)) if marker.group(1) else Marker.DECOMPILED
-        found.append(Target(name.group(1), address, kind))
+        close = source.find(")", name.end())
+        parameters = parameter_types(source[name.end() : close]) if close >= 0 else None
+        found.append(Target(name.group(1), address, kind, parameters))
     return found
 
 
-def _find_public(obj: omf.ObjectFile, name: str) -> omf.Public:
-    """The public symbol for a function name, qualified (`Widget::set`) or not."""
+def _find_public(obj: omf.ObjectFile, name: str, parameters: str | None = None) -> omf.Public:
+    """The public symbol for a function name, qualified (`Widget::set`) or not;
+    overloads are told apart by their parameters' types."""
 
     def matches(public: omf.Public) -> bool:
         qualified = qualified_name(public.name)
@@ -126,11 +161,18 @@ def _find_public(obj: omf.ObjectFile, name: str) -> omf.Public:
         return name in names
 
     candidates = [p for p in obj.publics if matches(p)]
+    if len(candidates) > 1 and parameters is not None:
+        candidates = [p for p in candidates if _demangled_parameters(p.name) == parameters]
     if len(candidates) != 1:
         found = [qualified_name(p.name) for p in obj.publics]
         problem = "is ambiguous (qualify it or rename an overload)" if candidates else "not found"
         raise ValueError(f"{name} {problem} in the object file; it has {found}")
     return candidates[0]
+
+
+def _demangled_parameters(symbol: str) -> str:
+    signature = demangle(symbol)
+    return signature[signature.find("(") + 1 : signature.rfind(")")].replace(" ", "")
 
 
 @dataclass(frozen=True)
@@ -185,7 +227,7 @@ def compare(
     """Compare a compiled function with the original. `siblings` gives the
     original addresses of the object's other marked functions, by (segment,
     offset), to check calls the compiler resolved itself."""
-    public = _find_public(obj, target.name)
+    public = _find_public(obj, target.name, target.parameters)
     start, end = obj.extent(public)
     segment = obj.segments[public.segment]
     compiled = bytes(segment.data[start:end])
@@ -410,7 +452,7 @@ def check(
         siblings = {}
         for target in targets:
             try:
-                public = _find_public(obj, target.name)
+                public = _find_public(obj, target.name, target.parameters)
             except ValueError:
                 continue
             siblings[public.segment, public.offset] = Sibling(target.address, public.name)

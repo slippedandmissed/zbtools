@@ -236,23 +236,47 @@ public:
     Rect(const ShortRect &rect) { memcpy(this, &rect, sizeof(Rect)); }
 };
 
-/* Color: a colour value or palette index. Constructed out of line by the
-   engine, returned through a hidden pointer, and copied whole and then by
-   index (hence the union). */
+/* The four bytes of a Color. */
+struct ColorBytes
+{
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+    unsigned char kind; /* 0xff none, 0x80 a palette index (in `index`), else RGB (0x10: ...) */
+};
+
+/* Color: an RGB colour or a palette index. Copied whole and then by index
+   (hence the union). */
+class RGBColor;
 class Color
 {
 public:
     union {
         long value;
-        short index;
+        unsigned short index;
+        ColorBytes bytes;
     };
-    __cdecl Color(); /* 0x488874 */
-    __cdecl Color(short index); /* 0x48889d */
+    __cdecl Color(); /* 0x488874: none */
+    __cdecl Color(unsigned short index); /* 0x48889d: a palette index (0xffff: none) */
     Color(const Color &color)
     {
         value = color.value;
         index = color.index;
     }
+    Color &__cdecl setRgb(const Color &color); /* 0x4888d9 */
+    unsigned short __cdecl paletteIndex() const; /* 0x4888f2 */
+    RGBColor __cdecl rgb() const; /* 0x4889a4 */
+    long __cdecl kind() const; /* 0x488a39 */
+};
+
+/* A Color's bytes as a value of their own. */
+class RGBColor
+{
+public:
+    ColorBytes bytes;
+    __cdecl RGBColor(unsigned char red, unsigned char green, unsigned char blue,
+                     unsigned char kind); /* 0x48c4ac */
+    __cdecl RGBColor(const Color &color); /* 0x488a64 */
 };
 
 /* An item (0x24 bytes). */
@@ -1020,6 +1044,103 @@ void closeFile(long file, short);
 short fileMissing(fileSpec &file);
 unsigned long handleSize(short handle);
 void fn_48f464(short handle, short);
+
+/*
+ * Ports (QuickDraw's GrafPorts): C++ objects, handed around as their
+ * addresses ("handles"; 0 and -1 are never valid), tagged 'Port'. The
+ * virtual methods are Pascal like the rest of the engine, the destructor
+ * __cdecl. Slots are named by index until their meaning is known.
+ */
+class basePort;
+
+/* A palette the engine manages, shared by ports. */
+class Palette
+{
+public:
+    char unknown0[0xc];
+    basePort *ports; /* +0xc: the ports using it */
+    short unknown10;
+    short unknown12;
+    short unknown14;
+    unsigned short first; /* +0x16: the first colour the game may set */
+    HPALETTE hpal; /* +0x18 */
+    PALETTEENTRY entries[256]; /* +0x1c */
+};
+
+class basePort
+{
+public:
+    virtual __cdecl ~basePort(); /* 0 */
+    virtual short v1(basePort *to, const Rect *fromRect, const Rect *toRect, short mode, long);
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void prepare(); /* 8: before GDI calls on dc */
+    virtual void v9();
+    virtual void v10();
+    virtual void v11();
+    virtual void v12();
+    virtual void v13();
+    virtual short setColor(short which, Color color); /* 14 */
+    virtual void v15();
+    virtual void v16();
+    virtual void v17();
+    virtual void v18();
+    virtual void v19();
+    virtual void v20();
+    virtual unsigned short nearestIndex(RGBColor color); /* 21 */
+    virtual void v22();
+    virtual RGBColor paletteColor(unsigned short index); /* 23 */
+    virtual void v24();
+    virtual short lock(); /* 25 */
+    virtual short fillRect(short, Color color, const Rect *rect); /* 26 */
+    virtual void v27();
+    virtual void v28();
+    virtual void v29();
+    virtual void v30();
+    virtual void release(); /* 31: before deleting */
+    virtual void v32();
+    virtual void v33();
+    virtual void unlock(); /* 34 */
+    virtual void v35();
+    virtual void v36();
+
+    long unknown4; /* 'Port' */
+    char unknown8[0xc];
+    long kind; /* +0x14: 5 a window */
+    char unknown18[0x24];
+    Palette *palette; /* +0x3c */
+    char unknown40[0x18];
+    Color foreColor; /* +0x58 */
+    char unknown5c[2];
+    short mode; /* +0x5e */
+    short clip; /* +0x60: a region */
+    short clipChanged; /* +0x62 */
+    short locks; /* +0x64 */
+    char unknown66[6];
+    HDC dc; /* +0x6c */
+    char unknown70[0x50];
+};
+
+/* A window's port: two more slots. */
+class windowPort : public basePort
+{
+public:
+    virtual void v37();
+    virtual short v38();
+};
+
+extern short portError; /* @data 0x4b9ba0 */
+extern unsigned short paletteReserved; /* @data 0x4b9c0c: system colours kept (half at each end) */
+extern basePort *currentPort; /* @data 0x4b9c70 */
+basePort *checkPort(basePort *port, short kind);
+basePort *portObject(short kind);
+short setPortError(short error);
+short getPortError();
+long portHandle(basePort *port);
 
 /* Memory: relocatable blocks by handle (a short), as on the Mac. */
 short newHandle(long size);
