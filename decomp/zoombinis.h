@@ -840,7 +840,7 @@ extern char dataPath[256]; /* @data 0x4b99d6 */
 extern short dataPathLength; /* @data 0x4b9ad6 */
 extern char dataDrive; /* @data 0x4b9ad8 */
 extern short regionErrorCode; /* @data 0x4b9b64 */
-extern short g_4b9cf0;
+extern short localMemErrorCode; /* @data 0x4b9cf0 */
 extern short osError; /* @data 0x4b9cf4 */
 extern short g_4b9cf6;
 extern short engineActive; /* @data 0x4b9cf8 */
@@ -3695,11 +3695,12 @@ void __cdecl leaveLock(DeferLock *lock); /* 0x46d838 */
 void __cdecl initLock(DeferLock *lock, short listed); /* 0x46d8af */
 void __cdecl removeLock(DeferLock *lock); /* 0x46d8e8 */
 void __cdecl deferCall(DeferLock *lock, Deferred *call); /* 0x46d91c */
-short fn_46d9c8();
+short localMemError();
 void *localAlloc(unsigned short size); /* 0x46d95c */
 void localFree(void *block); /* 0x46d998 */
+void *localReAlloc(void *block, unsigned short size); /* 0x46d9cf */
 short fn_46e00b(unsigned long thread); /* whether a thread belongs to the game */
-void fn_46da35(short value);
+void setLocalMemError(short value);
 int isAlignedPointer(void *pointer);
 long atomicDecrement(long *value);
 void *atomicExchange(void **target, void *value);

@@ -307,7 +307,7 @@ short openGraphicsEngine(const DisplayMode *mode, short change)
         } else {
             ReleaseDC(0, dc);
             setDisplayMode(&saved);
-            return setPortError(fn_46d9c8());
+            return setPortError(localMemError());
         }
     }
     ReleaseDC(0, dc);

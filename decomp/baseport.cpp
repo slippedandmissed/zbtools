@@ -803,7 +803,7 @@ void *basePort::operator new(size_t size)
     void *block;
 
     if ((block = localAlloc(size)) == 0) {
-        setPortError(fn_46d9c8());
+        setPortError(localMemError());
         return 0;
     }
     setPortError(0);

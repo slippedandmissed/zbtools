@@ -22,7 +22,7 @@ long newTimer(unsigned long delay, unsigned long period, TimerProc proc, long da
         memset(event, 0, sizeof(TimerEvent));
     else {
         leaveLock(&timerState.lock);
-        setTimerError(fn_46d9c8());
+        setTimerError(localMemError());
         return 0;
     }
     event->tag = 0x54457674;

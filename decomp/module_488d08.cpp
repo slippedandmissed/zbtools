@@ -23,7 +23,7 @@ Palette *newPalette(unsigned short count, ColorBytes *colors)
         return 0;
     }
     if ((palette = (Palette *)localAlloc(sizeof(Palette))) == 0) {
-        setPortError(fn_46d9c8());
+        setPortError(localMemError());
         return 0;
     }
     memset(palette, 0, sizeof(Palette));

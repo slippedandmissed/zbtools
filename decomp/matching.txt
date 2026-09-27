@@ -328,8 +328,11 @@
 0x0046d8af initLock
 0x0046d8e8 removeLock
 0x0046d91c deferCall
-0x0046d9c8 fn_46d9c8
-0x0046da35 fn_46da35
+0x0046d95c localAlloc
+0x0046d998 localFree
+0x0046d9c8 localMemError
+0x0046d9cf localReAlloc
+0x0046da35 setLocalMemError
 0x0046da46 isAlignedPointer
 0x0046dc45 fn_46dc45
 0x0046dd21 engineInstanceHandle
