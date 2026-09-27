@@ -148,7 +148,7 @@ short __cdecl wavebufWO::close()
         unlockHandle(wavebufCache);
     else
         disposePtr(buffer);
-    deleteThread(thread);
+    deleteSync(thread);
     isOpen = 0;
     return 0;
 }
@@ -306,7 +306,7 @@ short __cdecl wavebufWO::open(PCMWAVEFORMAT *format, WavebufNotify notify, long 
     if (!headers) {
         error = MMSYSERR_NOMEM;
     killThread:
-        deleteThread(thread);
+        deleteSync(thread);
         goto closeWave;
     }
     totalSamples = blockCount * blockSamples;

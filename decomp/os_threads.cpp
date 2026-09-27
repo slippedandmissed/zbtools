@@ -14,7 +14,7 @@ long fn_46e5dc()
 }
 
 /* @zoombi32 0x0046e5ed */
-short fn_46e5ed()
+short threadError()
 {
     return g_4b9d4c;
 }

@@ -284,7 +284,7 @@ short disposePreload(PreloadRequest *request)
     if (!map->async)
         resources.syncPreloads--;
     else if (!--resources.asyncPreloads && fn_46e5dc() != resources.preloadThread) {
-        deleteThread(resources.preloadThread);
+        deleteSync(resources.preloadThread);
         resources.preloadThread = 0;
     }
     if (--map->preloads) {
@@ -530,7 +530,7 @@ PreloadRequest *newPreloadRequest(long id, PreloadProc proc, long data, unsigned
                 }
                 setResourceError(0);
             } else {
-                short error = fn_46e5ed();
+                short error = threadError();
                 disposePreload(request);
                 setResourceError(error);
                 request = 0;
@@ -604,7 +604,7 @@ void preloadThread(long)
     }
     long thread = resources.preloadThread;
     resources.preloadThread = 0;
-    deleteThread(thread);
+    deleteSync(thread);
 }
 
 /* @zoombi32 0x00491461 */

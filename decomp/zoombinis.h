@@ -537,6 +537,8 @@ public:
     fileSpec &__cdecl operator=(const fileSpec &from); /* 0x4853a2 */
     short __cdecl compare(const fileSpec &with) const; /* 0x4853f3: 0 if the same, else 0x2844 or an error */
     void __cdecl getPath(char *path) const; /* 0x4854c5 */
+    /* The volume and full path, checking the volume is there. */
+    short __cdecl locate(long *volume, char *path) const; /* 0x4855c0 */
     short __cdecl volume(long *volume) const; /* 0x485596 */
 
 private:
@@ -1028,9 +1030,6 @@ short fn_480790(const fileSpec &file, const char *section, const char *key, char
 short fn_483420(const fileSpec &file);
 /* Opens `file` (mode 1 as the game uses it), returning a handle or 0. */
 long fn_484b50(const fileSpec &file, long mode);
-/* Closes a file opened by fn_484b50. */
-void fn_48266c(long file, long);
-
 short closeResourceFile(long map, short compact, short force);
 
 /*
@@ -1069,7 +1068,7 @@ short fileError();
 void programDirectory(fileSpec *directory);
 long openFile(fileSpec *file, short mode); /* 0 on error */
 short readFile(long file, void *buffer, long *size);
-short closeFile(long file, short);
+short closeFile(long file, short force); /* 0x48266c: even if closing fails, with force */
 short fileMissing(const fileSpec &file); /* 0 if it exists, else an error (0x2845 not found) */
 void currentDirectory(fileSpec *directory);
 short setCurrentDirectory(fileSpec *directory);
@@ -1734,6 +1733,344 @@ short writeResourceMap(long handle);
 short writeMapHeader(ResourceMap *map); /* 0x492483 */
 short writeResourceData(long id, const void *buffer, unsigned long length, unsigned long offset);
 short copyFileBytes(ResourceMap *map, unsigned long to, unsigned long from, unsigned long length);
+
+class Volume;
+class FileRecord;
+
+/* The file layer: files are opened by path on volumes (disks found in
+   drives, or network shares), and every Win32 call that could block on a
+   slow or missing disk runs on a worker thread (the async API), so the
+   game can ask the user to insert the disk and try again. */
+
+/* A worker thread for async calls; idle ones are kept in `asyncWorkers`. */
+class AsyncWorker
+{
+public:
+    __cdecl AsyncWorker(); /* 0x48213c */
+    __cdecl ~AsyncWorker(); /* 0x482164 */
+    short run(void (*proc)(void *data), void *data); /* 0x4821ec: waits for it */
+
+    AsyncWorker *next;
+    AsyncWorker *prev;
+    HANDLE thread;
+    DWORD threadId;
+    HANDLE wake;
+    long done; /* an OS-layer event */
+    long caller; /* the waiting thread */
+    void (*proc)(void *data);
+    void *data;
+};
+
+/* An async call (RTTI class asyncAPI): a Win32 call to make on a worker
+   thread, with its arguments and results. */
+class asyncAPI
+{
+public:
+    __cdecl asyncAPI(); /* 0x482308 */
+    __cdecl ~asyncAPI(); /* 0x48231b */
+    virtual void run() = 0;
+    short call(); /* 0x482371 */
+    /* Calls, asking to insert the disk and retrying for `path`'s errors. */
+    short callFor(const char *path); /* 0x4823db */
+
+    AsyncWorker *worker;
+    long unknown8;
+    DWORD error; /* the call's GetLastError, 0 if it worked */
+};
+
+class asyncCloseHandle : public asyncAPI
+{
+public:
+    __cdecl asyncCloseHandle(HANDLE handle);
+    virtual void run();
+    HANDLE handle;
+};
+
+class asyncCreateDirectory : public asyncAPI
+{
+public:
+    __cdecl asyncCreateDirectory(const char *path, SECURITY_ATTRIBUTES *security);
+    virtual void run();
+    const char *path;
+    SECURITY_ATTRIBUTES *security;
+};
+
+class asyncCreateFile : public asyncAPI
+{
+public:
+    __cdecl asyncCreateFile(const char *path, DWORD access, DWORD share,
+                            SECURITY_ATTRIBUTES *security, DWORD creation, DWORD flags,
+                            HANDLE templateFile);
+    virtual void run();
+    const char *path;
+    DWORD access;
+    DWORD share;
+    SECURITY_ATTRIBUTES *security;
+    DWORD creation;
+    DWORD flags;
+    HANDLE templateFile;
+    HANDLE file; /* the result */
+};
+
+class asyncDeleteFile : public asyncAPI
+{
+public:
+    __cdecl asyncDeleteFile(const char *path);
+    virtual void run();
+    const char *path;
+};
+
+class asyncFindFirstFile : public asyncAPI
+{
+public:
+    __cdecl asyncFindFirstFile(const char *pattern, WIN32_FIND_DATA *found);
+    virtual void run();
+    const char *pattern;
+    WIN32_FIND_DATA *found;
+    HANDLE find; /* the result */
+};
+
+class asyncGetFileAttributes : public asyncAPI
+{
+public:
+    __cdecl asyncGetFileAttributes(const char *path);
+    virtual void run();
+    const char *path;
+    DWORD attributes; /* the result */
+};
+
+class asyncGetVolumeInformation : public asyncAPI
+{
+public:
+    __cdecl asyncGetVolumeInformation(const char *root, char *name, DWORD nameSize,
+                                      DWORD *serial, DWORD *maxComponent, DWORD *flags,
+                                      char *fileSystem, DWORD fileSystemSize);
+    virtual void run();
+    const char *root;
+    char *name;
+    DWORD nameSize;
+    DWORD *serial;
+    DWORD *maxComponent;
+    DWORD *flags;
+    char *fileSystem;
+    DWORD fileSystemSize;
+};
+
+class asyncReadFile : public asyncAPI
+{
+public:
+    __cdecl asyncReadFile(HANDLE file, void *buffer, DWORD size, DWORD *read,
+                          OVERLAPPED *overlapped);
+    virtual void run();
+    HANDLE file;
+    void *buffer;
+    DWORD size;
+    DWORD *read;
+    OVERLAPPED *overlapped;
+};
+
+class asyncRemoveDirectory : public asyncAPI
+{
+public:
+    __cdecl asyncRemoveDirectory(const char *path);
+    virtual void run();
+    const char *path;
+};
+
+class asyncSetEndOfFile : public asyncAPI
+{
+public:
+    __cdecl asyncSetEndOfFile(HANDLE file);
+    virtual void run();
+    HANDLE file;
+};
+
+class asyncSetFileAttributes : public asyncAPI
+{
+public:
+    __cdecl asyncSetFileAttributes(const char *path, DWORD attributes);
+    virtual void run();
+    const char *path;
+    DWORD attributes;
+};
+
+class asyncWriteFile : public asyncAPI
+{
+public:
+    __cdecl asyncWriteFile(HANDLE file, const void *buffer, DWORD size, DWORD *written,
+                           OVERLAPPED *overlapped);
+    virtual void run();
+    HANDLE file;
+    const void *buffer;
+    DWORD size;
+    DWORD *written;
+    OVERLAPPED *overlapped;
+};
+
+void asyncRun(void *call); /* 0x482362: a worker's procedure for an asyncAPI */
+DWORD WINAPI asyncThread(void *worker); /* 0x4822c4 */
+
+extern AsyncWorker *asyncWorkers; /* @data 0x4a865c */
+
+/* What GetVolumeInformation says about a volume. */
+struct DiskInfo
+{
+    char name[0x24];
+    DWORD serial;
+    unsigned short maxPath;
+    unsigned short maxName;
+    short casePreserved;
+    short caseSensitive;
+    char fileSystem[0x40];
+};
+
+/* VWIN32's DeviceIoControl registers (for its DOS IOCTL call, 1). */
+struct DiocRegisters
+{
+    DWORD ebx;
+    DWORD edx;
+    DWORD ecx;
+    DWORD eax;
+    DWORD edi;
+    DWORD esi;
+    DWORD flags; /* bit 0: carry, failed */
+};
+
+/* A request to the user (FileState.askUser): 3 insert a volume. */
+struct FileRequest
+{
+    long kind;
+    short canAsk;
+    short unknown6;
+    long drive;
+    long volume;
+    long unknown10;
+};
+
+/* A drive letter's state. */
+class Drive
+{
+public:
+    __cdecl ~Drive(); /* 0x482b50 */
+    void activate(short active); /* 0x482b80 */
+    void eject(); /* 0x482bbc */
+    short init(long index); /* 0x482cb3: 1 if there's no drive, or on error */
+    short use(long volume); /* 0x482f2c: makes sure the volume is in the drive */
+    void setLocked(short on); /* 0x483028: locks the media in (Windows 95) */
+    void lock(short on); /* 0x483102: holds its mutex */
+    short readInfo(DiskInfo *info); /* 0x483127 */
+
+    long number; /* 1-based; 0 if there's no drive */
+    unsigned short drive; /* 1-based */
+    unsigned short letter;
+    short type : 8; /* 0 removable, 1 CD-ROM, 2 fixed, 3 floppy, 4 network, 5 RAM disk */
+    unsigned short valid : 1;
+    unsigned short cdrom : 1;
+    unsigned short remote : 1;
+    unsigned short removable : 1;
+    short locked; /* the media is locked in */
+    long volume; /* the volume in it, 0 if not known */
+    long mutex;
+};
+
+/* The drives, 'A' on. */
+struct DriveTable
+{
+    unsigned short count;
+    short unknown2;
+    Drive drives[1];
+};
+
+/* A volume the file layer knows ('Volm'): a disk seen in a drive, or a
+   network share. Handles to it are its address. */
+class Volume
+{
+public:
+    __cdecl Volume(long drive, DiskInfo *info); /* 0x485e08: a disk */
+    __cdecl Volume(const char *share, DiskInfo *info); /* 0x485e62: a share */
+    __cdecl ~Volume(); /* 0x485ebb */
+    static void *__cdecl operator new(size_t size); /* 0x485ddd: zeroed */
+    static void __cdecl operator delete(void *block); /* 0x4860bc */
+    void touch(unsigned long time); /* 0x485f17 */
+    void rootPath(char *path); /* 0x486007 */
+    short mount(); /* 0x486050: makes sure it's in its drive */
+
+    unsigned long tag;
+    Volume *prev;
+    Volume *next;
+    long id;
+    DiskInfo info;
+    char unknown80[4];
+    unsigned long lastUsed;
+    Drive *drive; /* 0 for a share */
+    char *share;
+};
+
+/* An open file ('File'). Handles to it are its address. */
+class FileRecord
+{
+public:
+    __cdecl FileRecord(); /* 0x483e4c */
+    __cdecl ~FileRecord(); /* 0x483e75 */
+    static void *__cdecl operator new(size_t size); /* 0x484bdc: zeroed */
+    static void __cdecl operator delete(void *block); /* 0x484440 */
+    short open(const fileSpec &spec, unsigned short mode); /* 0x483ebb */
+    short lock(short on); /* 0x48409b */
+    short close(); /* 0x4840ed */
+
+    unsigned long tag;
+    FileRecord *next;
+    FileRecord *prev;
+    Volume *volume;
+    long mutex;
+    unsigned short mode;
+    short kind;
+    HANDLE handle;
+    char path[0x100]; /* shortened to fit once open */
+};
+
+Volume *volumeOf(long id); /* 0x485dc5: 0 if it isn't a volume */
+
+/* The file layer's state. */
+struct FileState
+{
+    short error; /* of the last call */
+    short ready;
+    short active; /* the application is active */
+    short unknown6;
+    ActivateHook previousHook;
+    Volume *volumes;
+    FileRecord *files;
+    AsyncWorker *spareWorker;
+    DriveTable *drives;
+    short (*askUser)(void *request); /* to insert a disk, retry, ... */
+    short canAsk;
+    short unknown22;
+    fileSpec currentDirectory;
+    fileSpec programDirectory;
+    fileSpec unknown2C;
+    fileSpec tempDirectory;
+};
+
+extern FileState files; /* @data 0x4b9b6c */
+extern short windowsNT; /* @data 0x4b9d48 */
+
+short setFileError(short error); /* 0x4861e7 */
+long driveNumber(char letter); /* 0x485d70: 0 if there's no such drive */
+Drive *driveAt(long number, short check); /* 0x48607c */
+/* Asks the user what to do about a Win32 error on `path` (insert the disk,
+   retry); 0 to give up. */
+short askAboutError(const char *path, DWORD error); /* 0x4835d8 */
+short readDiskInfo(const char *root, DiskInfo *info); /* 0x4834aa */
+short askFileUser(FileRequest *request); /* 0x484365: 0 to give up */
+short getAttributes(const char *path, DWORD *attributes); /* 0x483557 */
+short setAttributes(const char *path, DWORD attributes); /* 0x483ad5 */
+/* Whether a directory is one of the engine's or holds an open file, or a
+   file is open. */
+short fileInUse(long volume, const char *path, DWORD attributes); /* 0x483b2e */
+/* Creates a file (mode 1) or directory (mode 2), hidden (4), read-only (8). */
+short createPath(const fileSpec &spec, unsigned short mode); /* 0x4826b4 */
+FileRecord *fileOf(long handle, short kind); /* 0x486240: 0 if it isn't an open file */
 
 /* The files resources come from (the async file API) */
 struct VolumeInfo
@@ -2824,7 +3161,9 @@ short fixedRound(long value); /* 0x4898b6 */
 
 /* Threads (the OS layer) */
 long createThread(void (*proc)(long), long, long stackSize, short); /* 0x46e302 */
-void deleteThread(long thread); /* 0x46e463 */
+/* Threads, events and mutexes are OS-layer sync objects, deleted, waited
+   for (an event set, a mutex acquired) the same way. */
+void deleteSync(long sync); /* 0x46e463 */
 void resumeThread(long thread); /* 0x46e857 */
 void yieldThread(long); /* 0x46eb9f */
 void fn_46eadd(long thread, short state);
@@ -2835,7 +3174,9 @@ void suspendThread(long thread); /* 0x46ebca */
 long newEvent(short); /* 0x46e380 */
 void setEvent(long event); /* 0x46ea83 */
 void resetEvent(long event); /* 0x46e7fd */
-short waitEvent(long event, long timeout); /* 0x46ecb2: 0 when set */
+short waitSync(long sync, long timeout); /* 0x46ecb2: 0 when set (or acquired); 0x12e timed out */
+long newMutex(short); /* 0x46e3c8 */
+void releaseMutex(long mutex); /* 0x46e78c */
 
 /* Rectangles (QuickDraw's) */
 short emptyRect(ShortRect *rect);
@@ -3175,7 +3516,7 @@ Tagged *fn_46e202(Tagged *object);
 char __cdecl fn_46e28e(char value);
 int __cdecl highByte(unsigned short value);
 long fn_46e5dc();
-short fn_46e5ed();
+short threadError(); /* the OS layer's last error */
 long fn_46e5f4();
 void fn_46e842(Releasable *object);
 void fn_46eac8(Releasable *object);

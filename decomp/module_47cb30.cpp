@@ -269,7 +269,7 @@ void __cdecl wavestreamObj::release()
     if (cues)
         disposePtr(cues);
     if (!resource)
-        fn_48266c(file, 0);
+        closeFile(file, 0);
 }
 
 /* Opens the wave device for the sound's format, and starts the thread that
@@ -305,15 +305,15 @@ short __cdecl wavestreamObj::openDevice()
         }
         event = newEvent(0);
         if (!event) {
-            setSoundError(fn_46e5ed());
+            setSoundError(threadError());
         unlock:
             unlockPtr(cues);
             goto fail;
         }
         thread = createThread(streamThread, (long)this, 0x1000, 1);
         if (!thread) {
-            setSoundError(fn_46e5ed());
-            deleteThread(event);
+            setSoundError(threadError());
+            deleteSync(event);
             goto unlock;
         }
         initLock(&lock, 1);
@@ -411,8 +411,8 @@ void __cdecl wavestreamObj::haltDevice()
 void __cdecl wavestreamObj::closeDevice()
 {
     haltDevice();
-    deleteThread(thread);
-    deleteThread(event);
+    deleteSync(thread);
+    deleteSync(event);
     wavebufReset(wave);
     if (cues)
         unlockPtr(cues);
@@ -606,7 +606,7 @@ void streamThread(long data)
 {
     wavestreamObj *wave = (wavestreamObj *)data;
 
-    while (!waitEvent(wave->event, -1)) {
+    while (!waitSync(wave->event, -1)) {
         resetEvent(wave->event);
         if (wave->started && !wave->stream())
             continue;
