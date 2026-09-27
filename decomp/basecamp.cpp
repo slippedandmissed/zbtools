@@ -615,8 +615,8 @@ void enterCamp()
     loadDragCursors(9000);
     loadTerrain(100);
     drawBackdrop(1000);
-    fn_465bd0(0x44c, 0, 0);
-    fn_465bd0(0x4b0, 1, 0);
+    loadFeatureGroup(0x44c, 0, 0);
+    loadFeatureGroup(0x4b0, 1, 0);
     loadScripts(0x44c, 0x10);
     addScripts(0x4b0, 0x10, 0);
     g_4a0974 = loadImageBank(2000, &campFrameResource);
@@ -626,30 +626,30 @@ void enterCamp()
     addView(0x9000, drawCampButtons2, 0, 0, 0, 0, 0, 0);
     addView(0x1000, drawCampButtons1, fn_417aec, 0, 0, 0, 0, 0);
     for (short i = 0; i < 16; i++)
-        placedViews[i] = addView(0x108a000, fn_465ce7, fn_465e59, i + 0x4b0, 7, &places[i], 0, 0);
-    g_4ab530[0] = addView(0x1180000, fn_465ce7, fn_465e59, 0x452, 6, 0, 0, 0);
-    g_4ab530[1] = addView(0x1180000, fn_465ce7, fn_465e59, 0x454, 6, 0, 0, 0);
-    g_4ab530[2] = addView(0x180000, fn_465ce7, fn_465e59, 0x455, 6, 0, 0, 0);
-    g_4ab530[3] = addView(0x50180000, fn_465ce7, fn_465e59, 0x456, 6, 0, 0, 0);
-    g_4ab530[4] = addView(0x1101000, fn_465ce7, fn_465e59, 0x453, 6, 0, 0, 0);
+        placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 0x4b0, 7, &places[i], 0, 0);
+    g_4ab530[0] = addView(0x1180000, drawCels, runViewScript, 0x452, 6, 0, 0, 0);
+    g_4ab530[1] = addView(0x1180000, drawCels, runViewScript, 0x454, 6, 0, 0, 0);
+    g_4ab530[2] = addView(0x180000, drawCels, runViewScript, 0x455, 6, 0, 0, 0);
+    g_4ab530[3] = addView(0x50180000, drawCels, runViewScript, 0x456, 6, 0, 0, 0);
+    g_4ab530[4] = addView(0x1101000, drawCels, runViewScript, 0x453, 6, 0, 0, 0);
     for (short k = 0x457; k <= 0x45b; k++) {
-        View *view = findView(addView(0x20000, fn_465ce7, fn_465e59, k, 0, 0, 0, 0));
+        View *view = findView(addView(0x20000, drawCels, runViewScript, k, 0, 0, 0, 0));
         if (view) {
-            fn_465e59(view, removedRgn);
+            runViewScript(view, removedRgn);
             value = ((short *)(g_4a4ba0 + 0x14))[k - 0x457];
             view->body.frameOffset = scriptFrameOffset(scripts[view->body.script], &value, 0);
             view->body.frame = value;
             view->nextUpdate = 0;
             view->body.running = 1;
             view->body.lastFrame++;
-            fn_465e59(view, removedRgn);
+            runViewScript(view, removedRgn);
             view->body.lastFrame--;
             view->body.frame = value;
         }
     }
-    addView(0x2040000, fn_465ce7, fn_465e59, 0x450, 6, 0, 0, 0);
+    addView(0x2040000, drawCels, runViewScript, 0x450, 6, 0, 0, 0);
     for (short j = 0x44c; j <= 0x44f; j++)
-        addView(0, fn_465ce7, fn_465e59, j, 0, 0, 0, 0);
+        addView(0, drawCels, runViewScript, j, 0, 0, 0, 0);
     setViewPlaces(16, places, 1);
     if (party()->count)
         fn_4572f0(0);
@@ -764,7 +764,7 @@ void enterCamp()
     resetViewClock();
     g_4b87fe = saved;
     if (sound)
-        fn_4666b7(sound, 0);
+        queueViewSound(sound, 0);
 }
 
 /* Leaves the camp: the party that set out (or, if it was the journey's
@@ -863,7 +863,7 @@ void campButtonClicked(short button)
         switch (button) {
         case 1:
             if (g_4ab524) {
-                fn_4666b7(996, 0);
+                queueViewSound(996, 0);
                 drawCampButtons(button, 1, 0, 1);
                 waitForEventFor(0, 2, 0, 1);
                 drawCampButtons(button, 0, 0, 1);
@@ -886,12 +886,12 @@ void campButtonClicked(short button)
                 } else {
                     sound = 0x4e51;
                 }
-                fn_4666b7(sound, 0);
+                queueViewSound(sound, 0);
             }
             break;
         case 2:
             if (g_4ab524) {
-                fn_4666b7(996, 0);
+                queueViewSound(996, 0);
                 drawCampButtons(button, 1, 0, 1);
                 waitForEventFor(0, 2, 0, 1);
                 drawCampButtons(button, 0, 0, 1);
@@ -914,11 +914,11 @@ void campButtonClicked(short button)
                 } else {
                     sound = 0x4e51;
                 }
-                fn_4666b7(sound, 0);
+                queueViewSound(sound, 0);
             }
             break;
         case 3:
-            fn_4666b7(999, 0);
+            queueViewSound(999, 0);
             drawCampButtons(button, 1, 0, 1);
             waitForEventFor(0, 2, 0, 1);
             drawCampButtons(button, 0, 0, 1);
@@ -1090,7 +1090,7 @@ void campMouse(short action)
                 ((short *)(g_4a4ba0 + 0x14))[i] = view->body.frame + 1;
                 ((short *)(g_4a4ba0 + 0x14))[i] %= view->body.lastFrame + 1;
                 if (sound)
-                    fn_4666b7(sound, 0);
+                    queueViewSound(sound, 0);
             } else if ((view = viewAt(where, 0x40000, 1)) != 0) {
                 setViewScript(view, 0x451, 1);
                 loadViewSounds(view->id, 1);
@@ -1564,7 +1564,7 @@ void updateCampScroll(short stop)
         if (sound) {
             if (sound == 2001)
                 stopSounds(2000, RESOURCE_TYPE(0, 'S', 'N', 'D'));
-            fn_4666b7(sound, 0);
+            queueViewSound(sound, 0);
         }
     }
 }

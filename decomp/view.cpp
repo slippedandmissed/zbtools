@@ -292,8 +292,8 @@ void initView(View *view, View *prev, View *next, short id)
     view->next = next;
     view->draw = 0;
     view->update = 0;
-    view->unknown10 = 0;
-    view->unknown14 = 0;
+    view->notify = 0;
+    view->placed = 0;
     view->body.bounds = noRect;
     view->body.clip = noRect;
     view->body.clipped = 0;
@@ -312,7 +312,7 @@ void initView(View *view, View *prev, View *next, short id)
     view->reset = 1;
     view->unknown2e = 0;
     view->changed = 1;
-    view->unknown2f = 0;
+    view->notifyEnd = 0;
     view->nextUpdate = 0;
     view->interval = 0;
 }
@@ -651,7 +651,7 @@ void freeScripts()
     short i;
 
     disposeShapeList(&backdropImages);
-    fn_465c81();
+    freeFeatureGroups();
     for (i = 0; i < 8; i++) {
         scriptGroupFirst[i] = 0;
         scriptGroupCount[i] = 0;
@@ -688,16 +688,16 @@ void freeTerrain()
     terrain = 0;
 }
 
-/* Starts a view's script (running) by id, with its unknown10 and 2f. */
+/* Starts a view's script (running) by id, with whom to tell of its events. */
 /* @zoombi32 0x0046483e */
-View *startView(short id, short script, long unknown10, char unknown2f)
+View *startView(short id, short script, ViewNotify notify, char notifyEnd)
 {
     View *view = findView(id);
 
     if (view) {
         setViewScript(view, script, 1);
-        view->unknown10 = unknown10;
-        view->unknown2f = unknown2f;
+        view->notify = notify;
+        view->notifyEnd = notifyEnd;
         return view;
     }
     return 0;
@@ -1706,7 +1706,7 @@ short addView(unsigned long flags, ViewDraw draw, ViewUpdate update, short kind,
         }
     }
     if ((flags & 0x2000) && placedViewCount < 125) {
-        fn_465e59(view, removedRgn);
+        runViewScript(view, removedRgn);
         placedViews[placedViewCount] = id;
         placedViewPoints[placedViewCount] = *(Point *)data;
         g_4b83e4[placedViewCount] = 0;

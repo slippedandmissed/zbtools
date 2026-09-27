@@ -432,6 +432,12 @@
 0x0046583a viewSoundList
 0x00465a5e loadViewSounds
 0x00465b19 noteSoundTest
+0x00465bd0 loadFeatureGroup
+0x00465c81 freeFeatureGroups
+0x00465e59 runViewScript
+0x004666b7 queueViewSound
+0x0046675d removeFirstCel
+0x004674af tickView
 0x0046b07b fn_46b07b
 0x0046b747 fn_46b747
 0x0046be28 currentMap

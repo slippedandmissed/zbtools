@@ -351,6 +351,7 @@ struct LargeViewBody
 struct View;
 typedef void (*ViewDraw)(View *view);
 typedef void (*ViewUpdate)(View *view, short region);
+typedef void (*ViewNotify)(View *view, short event);
 
 /* A view (the view module): part of the screen, with callbacks to update
    and draw it. Partly known. */
@@ -360,8 +361,8 @@ struct View
     View *next; /* toward viewTail */
     ViewDraw draw;
     ViewUpdate update;
-    long unknown10;
-    long unknown14;
+    ViewNotify notify; /* +0x10: told of its script's events (-1: it ended) */
+    ViewDraw placed; /* +0x14: after its script places its cels */
     short region; /* +0x18: its shape, if not its bounds */
     short id; /* +0x1a */
     short kind; /* +0x1c: its script's id */
@@ -372,7 +373,7 @@ struct View
     char changed; /* +0x2c */
     char reset; /* +0x2d */
     char unknown2e;
-    char unknown2f;
+    char notifyEnd; /* +0x2f: tell notify when the script ends */
     ViewBody body; /* +0x30; a Zoombini's view has a Snoid here (flag 1) */
 };
 
@@ -4072,7 +4073,6 @@ void fn_4589ce(const char *text, short, short);
 void fn_459c84(short, short);
 void fn_4591cc();
 void fn_4571a8();
-void fn_465c81();
 void fn_462749(short value, const char *after, short *number, const char *before, short level);
 void fn_456c00();
 void fn_466c95();
@@ -4106,7 +4106,7 @@ void findScript(short id, short *group, short *index);
 void freeScripts();
 void loadTerrain(short id);
 void freeTerrain();
-View *startView(short id, short script, long unknown10, char unknown2f);
+View *startView(short id, short script, ViewNotify notify, char notifyEnd);
 void setViewScript(View *view, short script, short running);
 short freeViewGroup();
 short groupViews(short a, short b, short c, short d, short e, short f);
@@ -4219,6 +4219,21 @@ extern View viewHead; /* @data 0x4b880c: the list's ends (plain views) */
 extern View viewTail; /* @data 0x4b88f8 */
 extern short *scripts[300]; /* @data 0x4b9008: the 'SCRB' scripts loaded */
 extern long scriptResources[300]; /* @data 0x4b8b58 */
+/* features */
+void loadFeatureGroup(short id, short group, short hotspots);
+void freeFeatureGroups();
+void drawCels(View *view);
+void drawCelsOpaque(View *view);
+void queueViewSound(short sound, char streamed);
+void removeFirstCel(ViewCel *cels);
+void tickView(View *view, short);
+void runViewScript(View *view, short region);
+extern long groupBankResources[8]; /* @data 0x4b95a4 */
+extern ImageBank *groupBanks[8]; /* @data 0x4b95c4 */
+extern long groupHotXResources[8]; /* @data 0x4b95e4 */
+extern long groupHotYResources[8]; /* @data 0x4b9604 */
+extern short *groupHotX[8]; /* @data 0x4b9624 */
+extern short *groupHotY[8]; /* @data 0x4b9644 */
 /* basecamp */
 unsigned short loadWave(short key);
 unsigned short fn_415a46(short key);
@@ -4274,9 +4289,6 @@ long fn_417906(long);
 void enterCamp();
 void leaveCamp();
 void fn_45915d(short);
-void fn_465bd0(short, short, short);
-void fn_465ce7(View *view);
-void fn_465e59(View *view, short region);
 void fn_4572f0(short);
 void fn_458cc1(short);
 void fn_458f07(short, short);
@@ -4312,7 +4324,6 @@ void compactCamp();
 void updateCampScroll(short stop);
 void fn_4184b7();
 short returnToCamp();
-void fn_4666b7(short sound, short);
 long fn_4196a8(long);
 short fn_419f1a();
 int fn_41d3e6(long, short value);
