@@ -388,7 +388,7 @@ short openGraphicsEngine(const DisplayMode *mode, short change)
 /*
  * forEachFile's callback for openGraphicsEngine: adds a .FON or .TTF file (in
  * `directory`) as a font resource, a .TTF by way of a .FOT file made for it
- * in the fn_484994 directory.
+ * in the tempDirectory directory.
  *
  * Not exact: the original keeps `extension` in a register (sharing it with
  * `length`) and passes the fileSpec temporaries' addresses from their slots.
@@ -411,7 +411,7 @@ short addFont(const char *name, void *directory)
         created = 0;
         if ((trueType = !stricmp(extension, ".TTF")) != 0) {
             fileSpec fotDirectory;
-            fn_484994(&fotDirectory);
+            tempDirectory(&fotDirectory);
             fotDirectory.getPath(fot);
             end = fot + strlen(fot);
             if (end[-1] != '\\')

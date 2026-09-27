@@ -538,14 +538,32 @@ public:
     __cdecl ~fileSpec(); /* 0x48533e */
     fileSpec &__cdecl operator=(const fileSpec &from); /* 0x4853a2 */
     short __cdecl compare(const fileSpec &with) const; /* 0x4853f3: 0 if the same, else 0x2844 or an error */
-    void __cdecl getPath(char *path) const; /* 0x4854c5 */
+    short __cdecl getPath(char *path) const; /* 0x4854c5 */
     /* The volume and full path, checking the volume is there. */
     short __cdecl locate(long *volume, char *path) const; /* 0x4855c0 */
     short __cdecl volume(long *volume) const; /* 0x485596 */
+    short __cdecl fileName(char *name) const; /* 0x485485: the last part */
+    /* The directory part, with forward slashes. */
+    short __cdecl directory(char *path) const; /* 0x48550c */
+    /* Checks the name and makes it a full path on its volume. */
+    short __cdecl canonicalize(); /* 0x485604 */
 
-private:
-    long unknown0;
+    struct FileName *name; /* shared, counted */
 };
+
+/* A fileSpec's name. */
+struct FileName
+{
+    short references;
+    short unknown2;
+    long volume;
+    char path[0x100]; /* from the root (or share), shortened to fit */
+};
+
+/* Whether a name fits the volume's file system: long names on NTFS and
+   HPFS; else 8.3, with more characters allowed on long-name FAT. -1 if
+   the volume isn't known. */
+unsigned short __cdecl validName(const char *name, unsigned short length, long volume); /* 0x485a63 */
 
 /* Globals, by address */
 
@@ -1028,8 +1046,6 @@ short fn_493096(); /* initialises the timer */
    it couldn't. */
 short fn_480790(const fileSpec &file, const char *section, const char *key, char *buffer,
                 long size);
-/* Opens `file` (mode 1 as the game uses it), returning a handle or 0. */
-long fn_484b50(const fileSpec &file, long mode);
 short closeResourceFile(long map, short compact, short force);
 
 /*
@@ -1063,16 +1079,16 @@ public:
 extern IniState iniState; /* @data 0x4b9b58 */
 
 /* Files */
-long fileSize(fileSpec *file); /* -1 on error */
-short fileError();
-void programDirectory(fileSpec *directory);
-long openFile(fileSpec *file, short mode); /* 0 on error */
-short readFile(long file, void *buffer, long *size);
+long fileSize(const fileSpec &file); /* 0x484690: a directory's is its files' total; -1 on error */
+short fileError(); /* 0x484670 */
+void programDirectory(fileSpec *directory); /* 0x484678 */
+long openFile(fileSpec *file, short mode); /* 0x484b50: a handle, 0 on error (modes: FileRecord::open) */
+short readFile(long file, void *buffer, long *size); /* 0x484c08 */
 short closeFile(long file, short force); /* 0x48266c: even if closing fails, with force */
 short fileMissing(const fileSpec &file); /* 0x483420: 0 if it exists, else an error (0x2845 not found) */
 void currentDirectory(fileSpec *directory); /* 0x4845e4 */
-short setCurrentDirectory(fileSpec *directory);
-void fn_484994(fileSpec *directory); /* the directory at 0x4b9b9c, where .FOT files go */
+short setCurrentDirectory(const fileSpec *directory); /* 0x484e9c */
+void tempDirectory(fileSpec *directory); /* 0x484994: Windows' temporary directory (where .FOT files go) */
 short deleteFile(const fileSpec &file);
 /* Calls `callback` for each file (or subdirectory) in the current
    directory, until it returns nonzero. */
@@ -2053,7 +2069,7 @@ struct FileState
     short unknown22;
     fileSpec currentDirectory;
     fileSpec programDirectory;
-    fileSpec unknown2C;
+    fileSpec appDirectory; /* programDirectory's answer */
     fileSpec tempDirectory;
 };
 
@@ -2086,22 +2102,27 @@ FileRecord *fileOf(long handle, short kind); /* 0x486240: 0 if it isn't an open 
 /* The files resources come from (the async file API) */
 struct VolumeInfo
 {
-    char unknown0[0x26];
-    short async; /* reads can go on in the background */
-    char unknown28[4];
-    short readOnly;
-    char unknown2E[10];
+    char name[0x22];
+    unsigned short maxPath;
+    unsigned short maxName;
+    short async; /* reads can go on in the background (always) */
+    short casePreserved;
+    short caseSensitive;
+    short readOnly; /* a CD-ROM */
+    short unknown2E;
+    long drive; /* its number, 0 for a share */
+    char *share;
 };
 
-short lockFile(long file, long timeout); /* 0x4860cc: 0, or 300 if it timed out */
+short lockFile(long file, long timeout); /* 0x4860cc: 0, or 0x283d if it timed out */
 void unlockFile(long file); /* 0x484d98 */
-unsigned long seekFile(long file, unsigned long offset, short whence); /* 0x484dc4: -1 on error */
+unsigned long seekFile(long file, unsigned long offset, long whence); /* 0x484dc4: -1 on error */
 short writeFile(long file, const void *buffer, long *size); /* 0x48610c */
-short setFileSize(long file, long size); /* 0x484f3c */
+short setFileSize(long file, unsigned long size); /* 0x484f3c */
 unsigned long fileLength(long file); /* 0x4845fc */
 short fileSpecOf(long file, fileSpec *spec); /* 0x484934 */
 short volumeInfo(long volume, VolumeInfo *info); /* 0x4849ac */
-long fn_4850d4(long value); /* 0x4850d4: the previous value */
+long setAskUser(long handler); /* 0x4850d4: sets FileState.askUser, returning the previous one */
 
 /*
  * Timers: multimedia timer events ('TEvt'), whose procedures run under the

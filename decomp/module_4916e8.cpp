@@ -447,7 +447,7 @@ short writeMapHeader(ResourceMap *map)
         unlockFile(map->file);
         return fileError();
     }
-    saved = fn_4850d4(0);
+    saved = setAskUser(0);
     directory = (Directory *)lockHandle(map->directory);
     byteSwapDirectory(directory, 0);
     byteSwapFileTable(&map->fileTable, 0);
@@ -465,7 +465,7 @@ short writeMapHeader(ResourceMap *map)
     byteSwapFileTable(&map->fileTable, 1);
     byteSwapDirectory(directory, 1);
     unlockHandle(map->directory);
-    fn_4850d4(saved);
+    setAskUser(saved);
     unlockFile(map->file);
     return setResourceError(error);
 }

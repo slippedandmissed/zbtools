@@ -65,12 +65,12 @@ short preferFirstFile(const char *first, const char *fallback)
     short useFirst = 0;
     fileSpec firstSpec(first);
     fileSpec fallbackSpec(fallback);
-    long file = fn_484b50(firstSpec, 1);
+    long file = openFile(&firstSpec, 1);
     if (file) {
         useFirst = 1;
         closeFile(file, 0);
     } else {
-        file = fn_484b50(fallbackSpec, 1);
+        file = openFile(&fallbackSpec, 1);
         if (!file)
             fatalError("Zoombini CD must be inserted in drive.");
         closeFile(file, 0);

@@ -163,7 +163,7 @@ short initFiles(long)
     files.tempDirectory = fileSpec(path);
     if (files.error)
         goto fail;
-    files.unknown2C = fileSpec(files.programDirectory);
+    files.appDirectory = fileSpec(files.programDirectory);
     files.canAsk = 1;
     files.ready = 1;
     if (isAppActive())
@@ -225,7 +225,7 @@ short fileInUse(long volume, const char *path, DWORD attributes)
         unsigned short length;
         FileRecord *file;
         if (!strcmp(path + 2, "\\") || !directory.compare(files.currentDirectory)
-            || !directory.compare(files.programDirectory) || !directory.compare(files.unknown2C)
+            || !directory.compare(files.programDirectory) || !directory.compare(files.appDirectory)
             || !directory.compare(files.tempDirectory))
             return 1;
         length = strlen(path);

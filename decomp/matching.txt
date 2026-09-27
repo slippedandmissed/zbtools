@@ -723,6 +723,53 @@
 0x0048441b asyncSetFileAttributes::asyncSetFileAttributes
 0x00484440 FileRecord::operator delete
 0x004845e4 currentDirectory
+0x004845fc fileLength
+0x00484670 fileError
+0x00484678 programDirectory
+0x00484690 fileSize
+0x00484816 directorySizeCallback
+0x00484874 asyncFindFirstFile::asyncFindFirstFile
+0x00484899 DirectorySize::DirectorySize
+0x00484934 fileSpecOf
+0x00484994 tempDirectory
+0x004849ac volumeInfo
+0x00484a4c mountDrive
+0x00484b50 openFile
+0x00484bdc FileRecord::operator new
+0x00484c08 readFile
+0x00484ce3 asyncReadFile::asyncReadFile
+0x00484d98 unlockFile
+0x00484e9c setCurrentDirectory
+0x00484f3c setFileSize
+0x00485030 asyncSetEndOfFile::asyncSetEndOfFile
+0x004850d4 setAskUser
+0x004850ec fileSpec::fileSpec
+0x004850f8 fileSpec::fileSpec
+0x0048518c fileSpec::fileSpec
+0x00485291 fileSpec::fileSpec
+0x0048533e fileSpec::~fileSpec
+0x00485373 fileSpec::fileSpec
+0x004853a2 fileSpec::operator =
+0x00485485 fileSpec::fileName
+0x004854c5 fileSpec::getPath
+0x00485596 fileSpec::volume
+0x004855c0 fileSpec::locate
+0x00485604 fileSpec::canonicalize
+0x00485d70 driveNumber
+0x00485dc5 volumeOf
+0x00485ddd Volume::operator new
+0x00485e08 Volume::Volume
+0x00485e62 Volume::Volume
+0x00485ebb Volume::~Volume
+0x00485f17 Volume::touch
+0x00486007 Volume::rootPath
+0x0048607c driveAt
+0x004860bc Volume::operator delete
+0x004860cc lockFile
+0x0048610c writeFile
+0x004861e7 setFileError
+0x00486240 fileOf
+0x00486262 asyncWriteFile::asyncWriteFile
 0x00488828 clipPortToRect
 0x00488874 Color::Color
 0x0048889d Color::Color

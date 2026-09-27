@@ -66,8 +66,11 @@ _RELEASE = re.compile(r"/\*\s*@release\s+(\S+)\s*\*/")
 _MARKER = re.compile(r"/\*\s*@zoombi32(?:-(functional))?\s+(0x[0-9a-fA-F]+)\s*\*/")
 # The (possibly qualified) name of the function defined after a marker.
 _DEFINITION = re.compile(
-    r"((?:[A-Za-z_][\w:]*::)?operator (?:new|delete)(?:\[\])?|[A-Za-z_~][\w:~]*)\s*\("
+    r"((?:[A-Za-z_][\w:]*::)?operator\s*(?:new|delete|\[\]|\(\)|[-+*/%^&|~!=<>]+)(?:\[\])?"
+    r"|[A-Za-z_~][\w:~]*)\s*\("
 )
+# How the demangler writes an operator's name: `operator =`, `operator new`.
+_OPERATOR = re.compile(r"operator\s*")
 
 
 class Marker(StrEnum):
@@ -155,7 +158,7 @@ def find_targets(source: str) -> list[Target]:
         kind = Marker(marker.group(1)) if marker.group(1) else Marker.DECOMPILED
         close = source.find(")", name.end())
         parameters = parameter_types(source[name.end() : close]) if close >= 0 else None
-        found.append(Target(name.group(1), address, kind, parameters))
+        found.append(Target(_OPERATOR.sub("operator ", name.group(1)), address, kind, parameters))
     return found
 
 

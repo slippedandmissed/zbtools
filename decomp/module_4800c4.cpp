@@ -51,7 +51,7 @@ short openIni(fileSpec *path)
         }
         unlockHandle(handle);
     }
-    size = fileSize(name);
+    size = fileSize(*name);
     if (size == -1) {
         error = fileError();
         if (error == 0x2845)
