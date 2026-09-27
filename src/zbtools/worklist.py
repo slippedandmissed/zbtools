@@ -50,10 +50,14 @@ def main(
     region: Annotated[Region, typer.Option(help="Which code to work on")] = Region.GAME,
     limit: Annotated[int, typer.Option(help="How many ready functions to list")] = 25,
     module: Annotated[
-        str | None, typer.Option(help="Only this source module (see `uv run modules`)")
+        str | None,
+        typer.Option(help="Only this source module (see `uv run modules`); implies its region"),
     ] = None,
 ) -> None:
     functions = inventory.load(match.game_executable())
+    if module:
+        # A module is in one region: work on that one.
+        region = next((f.region for f in functions if f.module == module), region)
     ready, blocked = ready_and_blocked(functions, region, module)
     in_region = [f for f in functions if f.region == region and (not module or f.module == module)]
     done = [f for f in in_region if f.status in _DONE]

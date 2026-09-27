@@ -322,7 +322,7 @@ void drawAnim(Anim *anim)
         getClipRegion(&region, 1);
         for (which = 0; which < anim->counts[0]; which++) {
             clip = anim->rects[0][which];
-            fn_480c24(&clip, &anim->bounds);
+            sectRect(&clip, &anim->bounds);
             fn_488828(clip);
             for (i = 0; i < 32; i++)
                 drawSprite(anim, &anim->sprites[i]);
@@ -366,11 +366,11 @@ void markSprite(Anim *anim, short index, short which)
         rect.right = swapShort(image[0]) + rect.left;
         rect.top = sprite->y;
         rect.bottom = swapShort(image[1]) + rect.top;
-        fn_480c04(&rect, anim->bounds.left, anim->bounds.top);
-        if (fn_480c24(&rect, &anim->bounds)) {
+        offsetRect(&rect, anim->bounds.left, anim->bounds.top);
+        if (sectRect(&rect, &anim->bounds)) {
             if (animDrawing) {
                 if (which) {
-                    if (fn_480bdc(&anim->rects[1][index]))
+                    if (emptyRect(&anim->rects[1][index]))
                         anim->rects[1][index] = rect;
                 } else
                     anim->rects[0][index] = rect;
@@ -406,11 +406,11 @@ void addRect(Anim *anim, ShortRect *rect, short which)
             return;
     }
     copy = *rect;
-    if (!fn_480bdc(&copy)) {
+    if (!emptyRect(&copy)) {
         for (i = 0; i < anim->counts[which]; i++) {
             overlap = copy;
-            if (fn_480c24(&overlap, &anim->rects[which][i])) {
-                fn_480ca0(&copy, &anim->rects[which][i]);
+            if (sectRect(&overlap, &anim->rects[which][i])) {
+                unionRect(&copy, &anim->rects[which][i]);
                 anim->counts[which]--;
                 if (i < anim->counts[which])
                     memcpy(&anim->rects[which][i], &anim->rects[which][i + 1],
@@ -419,7 +419,7 @@ void addRect(Anim *anim, ShortRect *rect, short which)
             }
         }
         if (anim->counts[which] >= 32)
-            fn_480ca0(&anim->rects[which][31], &copy);
+            unionRect(&anim->rects[which][31], &copy);
         else {
             anim->rects[which][anim->counts[which]] = copy;
             anim->counts[which]++;
@@ -689,12 +689,12 @@ void spritesBounds(Anim *anim, ShortRect *into)
             rect.top = sprite->y;
             rect.right = swapShort(image[0]) + rect.left;
             rect.bottom = swapShort(image[1]) + rect.top;
-            fn_480c04(&rect, anim->bounds.left, anim->bounds.top);
-            if (fn_480c24(&rect, &anim->bounds)) {
-                if (fn_480bdc(into))
+            offsetRect(&rect, anim->bounds.left, anim->bounds.top);
+            if (sectRect(&rect, &anim->bounds)) {
+                if (emptyRect(into))
                     *into = rect;
                 else
-                    fn_480ca0(into, &rect);
+                    unionRect(into, &rect);
             }
         }
     }

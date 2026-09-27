@@ -71,7 +71,7 @@ class Function:
     indirect_calls: int  # calls through registers or memory (vtables, pointers)
     status: Status
     decompiled: Decompiled | None
-    module: str | None  # for the game's own code: its source module (decomp/modules.toml)
+    module: str | None  # for the game's and engine's code: its source module (decomp/modules.toml)
 
 
 @dataclass(frozen=True)
@@ -109,7 +109,7 @@ def _engine_methods(
     }
 
 
-def _regions(
+def regions(
     functions: list[ghidra.FunctionInfo],
     runtime: runtime_symbols.RuntimeSymbols,
     classes: list[rtti.ClassInfo],
@@ -126,7 +126,7 @@ def _regions(
 
 
 def _module(sources: module_map.ModuleMap, address: int, region: Region) -> str | None:
-    if region not in (Region.GAME, Region.QUICKTIME):
+    if region not in (Region.GAME, Region.QUICKTIME, Region.ENGINE):
         return None
     found = sources.of(address)
     return found.name if found else None
@@ -157,7 +157,7 @@ def load(exe: Executable) -> list[Function]:
     functions = ghidra.load_functions().functions
     runtime = runtime_symbols.load()
     classes = rtti.load().classes
-    regions = _regions(functions, runtime, classes)
+    code_regions = regions(functions, runtime, classes)
     engine_methods = _engine_methods(classes, runtime)
     data = {c.descriptor for c in classes} | {v.address for c in classes for v in c.vtables}
     library = {s.address for s in runtime.symbols}
@@ -177,7 +177,7 @@ def load(exe: Executable) -> list[Function]:
                     calls.append(int(direct.group(1), 16))
                 else:
                     indirect += 1
-        region = regions.of(f.address)
+        region = code_regions.of(f.address)
         # Engine class methods below the runtime (the threading classes) are engine code.
         if f.address in engine_methods and region == Region.GAME:
             region = Region.ENGINE

@@ -903,7 +903,7 @@ void fn_414f01(InputItem *item);
 void fn_414f17(InputItem *item);
 void fn_456a64();
 /* Mohawk engine */
-void fn_480c04(ShortRect *rect, short dx, short dy); /* offsets a rectangle */
+void offsetRect(ShortRect *rect, short dx, short dy);
 short fn_48ba5a(DisplayMode *mode, short); /* non-zero on failure */
 void fn_48d798(short);
 long fn_488d08(short count, PALETTEENTRY *entries); /* creates a palette */
@@ -928,9 +928,9 @@ short fn_481274(); /* creates a region */
 void fn_488a88(long to, long from, const Rect &fromRect, const Rect &toRect, short mode);
 short fn_48c750(long port); /* locks a port; non-zero on failure */
 void fn_48c5fc(const Rect &rect);
-short fn_480c24(ShortRect *rect, ShortRect *by); /* intersects rect with by; whether they overlap */
-short fn_480bdc(ShortRect *rect); /* whether it's empty */
-void fn_480ca0(ShortRect *into, ShortRect *add); /* the union, into `into` */
+short sectRect(ShortRect *rect, ShortRect *with);
+short emptyRect(ShortRect *rect);
+void unionRect(ShortRect *into, ShortRect *add); /* the union, into `into` */
 long fn_488f34(const Rect &bounds, HWND window, long); /* creates a window port */
 void fn_48d574(long);
 void fn_48d194(const Rect &rect);

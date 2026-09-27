@@ -850,8 +850,8 @@ void placeGamePort()
     centred = g_4aa7b8 = gameRect;
     alignRect(&centred, (screen->right + screen->left) >> 1, (screen->bottom + screen->top) >> 1,
               0x22);
-    fn_480c04(screen, -centred.left, -centred.top);
-    fn_480c24(&g_4aa7b8, screen);
+    offsetRect(screen, -centred.left, -centred.top);
+    sectRect(&g_4aa7b8, screen);
     if (!screenPort) {
         screenPort = fn_488f34(centred, mainWindow, 0);
         if (screenPort)

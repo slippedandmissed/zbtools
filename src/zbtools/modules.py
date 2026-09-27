@@ -1,5 +1,6 @@
-"""The source modules of the game's own code: the curated map in
-decomp/modules.toml, checked against the evidence in the executable.
+"""The source modules of the game's own code and the Mohawk engine's: the
+curated map in decomp/modules.toml, checked against the evidence in the
+executable.
 
 TLINK32 lays each object file's code out contiguously and pads it with zeros to
 a 4-byte boundary, so where a function is followed by 1-3 zero bytes up to an
@@ -15,7 +16,7 @@ from dataclasses import dataclass
 
 import typer
 
-from zbtools import ghidra, match, paths, runtime_symbols
+from zbtools import ghidra, inventory, match, paths, rtti, runtime_symbols
 from zbtools.exe import Executable, disassemble
 from zbtools.module_map import MODULES, ModuleMap, load
 
@@ -83,6 +84,24 @@ def evidence(
     )
 
 
+def code_ranges(
+    exe: Executable,
+    functions: list[ghidra.FunctionInfo],
+    runtime: runtime_symbols.RuntimeSymbols,
+) -> list[tuple[int, int]]:
+    """The code the map covers: the game's (from its first module up to the
+    runtime library) and the engine's (after the runtime, up to the import
+    thunks at the end of CODE)."""
+    regions = inventory.regions(functions, runtime, rtti.load().classes)
+    modules = load().module
+    code_end = exe.sections["CODE"][1]
+    thunks = [f.address for f in functions if f.thunk and f.address > regions.engine_start]
+    return [
+        (modules[0].start, regions.runtime_start),
+        (regions.engine_start, min(thunks, default=code_end)),
+    ]
+
+
 app = typer.Typer(add_completion=False)
 
 
@@ -95,10 +114,11 @@ def main() -> None:
     exe = Executable(game)
     functions = ghidra.load_functions().functions
     runtime = runtime_symbols.load()
-    end = min(s.address for s in runtime.symbols if s.address > modules[0].start)
-    padding = padding_ends(exe, functions, modules[0].start, end)
+    ranges = code_ranges(exe, functions, runtime)
+    padding = set().union(*(padding_ends(exe, functions, start, end) for start, end in ranges))
     for module, following in zip(modules, [*modules[1:], None], strict=True):
-        stop = following.start if following else end
+        end = next(end for start, end in ranges if start <= module.start < end)
+        stop = min(following.start, end) if following else end
         found = evidence(exe, functions, module.start, stop)
         confirmed = "padded" if module.start in padding else "      "
         print(

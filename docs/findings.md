@@ -205,3 +205,7 @@ Borland C++ puts a module's string literals together in its data, in the order t
 ## Byte-swapping helpers
 
 The game has inline helpers for big-endian (Mac) values, whose inlined code has a recognisable shape: the value is copied into a stack temporary, a register points at it, and its bytes are reassembled in reverse (`xor eax, eax / mov al, [ebx+1] / ...`). `WinMain`'s Windows version check (`swapShort((WORD)GetVersion()) > 0x30b`) and `getSound`'s reading of a resource's type tag (`swapLong`) both use them; they're in `decomp/zoombinis.h`. Writing the swap inline, or with a helper taking a pointer, doesn't give the same code: the temporary comes from the helper's parameter being passed by value.
+
+## The Mohawk engine's modules and options
+
+TLINK32's zero padding splits the engine (`0x4764bc` to the import thunks at the end of `CODE`) into 149 object files, many holding a single function: QuickDraw-style rectangle helpers such as `emptyRect` (`0x480bdc`), `offsetRect` (`0x480c04`) and `sectRect` (`0x480c24`) each sit alone, as in a library built for smart linking. `decomp/modules.toml` names them by address (`module_480bdc`) until their contents are known. Those three match with the game's own options (`-p -k-`): Pascal order, arguments popped, like the Mac Toolbox calls they imitate (`OffsetRect(rect, dh, dv)`). The engine's C++ classes' methods (about 240 functions) don't pop their arguments, so they're `__cdecl`, declared so or compiled without `-p`; that's settled module by module.

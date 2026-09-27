@@ -33,7 +33,7 @@ void initGraphics(DisplayMode *mode, short depth)
     if (!createMainWindow(width, height))
         fatalError(msgNoScreenPort);
     g_4aa7b8 = gameRect;
-    fn_480c24(&g_4aa7b8, &screenRect);
+    sectRect(&g_4aa7b8, &screenRect);
     if (!allocateBlock((void **)&g_4ab3f0, 0x400))
         notEnoughNearMemory("initial RGB's");
     memset(g_4ab3f0, 0, 4);
@@ -388,7 +388,7 @@ void alignRect(ShortRect *rect, short x, short y, short how)
         x -= width;
         y -= height;
     }
-    fn_480c04(rect, x - rect->left, y - rect->top);
+    offsetRect(rect, x - rect->left, y - rect->top);
 }
 
 /* @zoombi32 0x00414e7d */

@@ -222,3 +222,602 @@ note = "the threading classes; timeGetTime"
 start = 0x46f5c0
 name = "os_46f5c0"
 note = "follows the threading classes (after event::~event)"
+
+# The Mohawk engine (after the runtime library), compiled separately. Its
+# modules are small (often one function each), named by address until known.
+
+[[module]]
+start = 0x4764bc
+name = "module_4764bc"
+
+[[module]]
+start = 0x477794
+name = "module_477794"
+
+[[module]]
+start = 0x477848
+name = "module_477848"
+
+[[module]]
+start = 0x4778b0
+name = "module_4778b0"
+
+[[module]]
+start = 0x478814
+name = "module_478814"
+
+[[module]]
+start = 0x47a0ec
+name = "module_47a0ec"
+
+[[module]]
+start = 0x47adf8
+name = "module_47adf8"
+
+[[module]]
+start = 0x47cb30
+name = "module_47cb30"
+
+[[module]]
+start = 0x47e0ec
+name = "module_47e0ec"
+
+[[module]]
+start = 0x47fae8
+name = "module_47fae8"
+
+[[module]]
+start = 0x47fd60
+name = "module_47fd60"
+
+[[module]]
+start = 0x480788
+name = "module_480788"
+
+[[module]]
+start = 0x480790
+name = "module_480790"
+
+[[module]]
+start = 0x4809f8
+name = "module_4809f8"
+
+[[module]]
+start = 0x480bbc
+name = "module_480bbc"
+
+[[module]]
+start = 0x480bdc
+name = "module_480bdc"
+
+[[module]]
+start = 0x480c04
+name = "module_480c04"
+
+[[module]]
+start = 0x480c24
+name = "module_480c24"
+
+[[module]]
+start = 0x480ca0
+name = "module_480ca0"
+
+[[module]]
+start = 0x480d64
+name = "module_480d64"
+
+[[module]]
+start = 0x480f90
+name = "module_480f90"
+
+[[module]]
+start = 0x480fc0
+name = "module_480fc0"
+
+[[module]]
+start = 0x481200
+name = "module_481200"
+
+[[module]]
+start = 0x481274
+name = "module_481274"
+
+[[module]]
+start = 0x4812bc
+name = "module_4812bc"
+
+[[module]]
+start = 0x48130c
+name = "module_48130c"
+
+[[module]]
+start = 0x481640
+name = "module_481640"
+
+[[module]]
+start = 0x481670
+name = "module_481670"
+
+[[module]]
+start = 0x4816d4
+name = "module_4816d4"
+
+[[module]]
+start = 0x481710
+name = "module_481710"
+
+[[module]]
+start = 0x481820
+name = "module_481820"
+
+[[module]]
+start = 0x48187c
+name = "module_48187c"
+
+[[module]]
+start = 0x48203c
+name = "module_48203c"
+
+[[module]]
+start = 0x48206c
+name = "module_48206c"
+
+[[module]]
+start = 0x48213c
+name = "module_48213c"
+
+[[module]]
+start = 0x48266c
+name = "module_48266c"
+
+[[module]]
+start = 0x482b50
+name = "module_482b50"
+
+[[module]]
+start = 0x4831bc
+name = "module_4831bc"
+
+[[module]]
+start = 0x483464
+name = "module_483464"
+
+[[module]]
+start = 0x4845fc
+name = "module_4845fc"
+
+[[module]]
+start = 0x484678
+name = "module_484678"
+
+[[module]]
+start = 0x484690
+name = "module_484690"
+
+[[module]]
+start = 0x484934
+name = "module_484934"
+
+[[module]]
+start = 0x484994
+name = "module_484994"
+
+[[module]]
+start = 0x4849ac
+name = "module_4849ac"
+
+[[module]]
+start = 0x484b50
+name = "module_484b50"
+
+[[module]]
+start = 0x484c08
+name = "module_484c08"
+
+[[module]]
+start = 0x484dc4
+name = "module_484dc4"
+
+[[module]]
+start = 0x484e9c
+name = "module_484e9c"
+
+[[module]]
+start = 0x4850d4
+name = "module_4850d4"
+
+[[module]]
+start = 0x4850ec
+name = "module_4850ec"
+
+[[module]]
+start = 0x485e08
+name = "module_485e08"
+
+[[module]]
+start = 0x4860cc
+name = "module_4860cc"
+
+[[module]]
+start = 0x486318
+name = "module_486318"
+
+[[module]]
+start = 0x4887f4
+name = "module_4887f4"
+
+[[module]]
+start = 0x488828
+name = "module_488828"
+
+[[module]]
+start = 0x488874
+name = "module_488874"
+
+[[module]]
+start = 0x488a88
+name = "module_488a88"
+
+[[module]]
+start = 0x488ad0
+name = "module_488ad0"
+
+[[module]]
+start = 0x488ba8
+name = "module_488ba8"
+
+[[module]]
+start = 0x488d08
+name = "module_488d08"
+
+[[module]]
+start = 0x488f34
+name = "module_488f34"
+
+[[module]]
+start = 0x488ff4
+name = "module_488ff4"
+
+[[module]]
+start = 0x48906c
+name = "module_48906c"
+
+[[module]]
+start = 0x4890f8
+name = "module_4890f8"
+
+[[module]]
+start = 0x489148
+name = "module_489148"
+
+[[module]]
+start = 0x48990c
+name = "module_48990c"
+
+[[module]]
+start = 0x48a720
+name = "module_48a720"
+
+[[module]]
+start = 0x48ac68
+name = "module_48ac68"
+
+[[module]]
+start = 0x48ac90
+name = "module_48ac90"
+
+[[module]]
+start = 0x48adf0
+name = "module_48adf0"
+
+[[module]]
+start = 0x48aed8
+name = "module_48aed8"
+
+[[module]]
+start = 0x48b1b4
+name = "module_48b1b4"
+
+[[module]]
+start = 0x48b1e8
+name = "module_48b1e8"
+
+[[module]]
+start = 0x48b2d8
+name = "module_48b2d8"
+
+[[module]]
+start = 0x48b358
+name = "module_48b358"
+
+[[module]]
+start = 0x48b360
+name = "module_48b360"
+
+[[module]]
+start = 0x48b4a8
+name = "module_48b4a8"
+
+[[module]]
+start = 0x48b4d8
+name = "module_48b4d8"
+
+[[module]]
+start = 0x48b530
+name = "module_48b530"
+
+[[module]]
+start = 0x48b594
+name = "module_48b594"
+
+[[module]]
+start = 0x48c4cc
+name = "module_48c4cc"
+
+[[module]]
+start = 0x48c538
+name = "module_48c538"
+
+[[module]]
+start = 0x48c5fc
+name = "module_48c5fc"
+
+[[module]]
+start = 0x48c648
+name = "module_48c648"
+
+[[module]]
+start = 0x48c688
+name = "module_48c688"
+
+[[module]]
+start = 0x48c750
+name = "module_48c750"
+
+[[module]]
+start = 0x48c774
+name = "module_48c774"
+
+[[module]]
+start = 0x48c9ac
+name = "module_48c9ac"
+
+[[module]]
+start = 0x48c9e8
+name = "module_48c9e8"
+
+[[module]]
+start = 0x48cab4
+name = "module_48cab4"
+
+[[module]]
+start = 0x48d194
+name = "module_48d194"
+
+[[module]]
+start = 0x48d1e0
+name = "module_48d1e0"
+
+[[module]]
+start = 0x48d278
+name = "module_48d278"
+
+[[module]]
+start = 0x48d480
+name = "module_48d480"
+
+[[module]]
+start = 0x48d574
+name = "module_48d574"
+
+[[module]]
+start = 0x48d5ec
+name = "module_48d5ec"
+
+[[module]]
+start = 0x48d798
+name = "module_48d798"
+
+[[module]]
+start = 0x48d884
+name = "module_48d884"
+
+[[module]]
+start = 0x48d90c
+name = "module_48d90c"
+
+[[module]]
+start = 0x48d960
+name = "module_48d960"
+
+[[module]]
+start = 0x48d9c8
+name = "module_48d9c8"
+
+[[module]]
+start = 0x48da48
+name = "module_48da48"
+
+[[module]]
+start = 0x48daa8
+name = "module_48daa8"
+
+[[module]]
+start = 0x48db08
+name = "module_48db08"
+
+[[module]]
+start = 0x48db64
+name = "module_48db64"
+
+[[module]]
+start = 0x48e0a0
+name = "module_48e0a0"
+
+[[module]]
+start = 0x48e5ec
+name = "module_48e5ec"
+
+[[module]]
+start = 0x48e6f0
+name = "module_48e6f0"
+
+[[module]]
+start = 0x48e71c
+name = "module_48e71c"
+
+[[module]]
+start = 0x48e7b8
+name = "module_48e7b8"
+
+[[module]]
+start = 0x48e7ec
+name = "module_48e7ec"
+
+[[module]]
+start = 0x48e80c
+name = "module_48e80c"
+
+[[module]]
+start = 0x48e814
+name = "module_48e814"
+
+[[module]]
+start = 0x48e8b4
+name = "module_48e8b4"
+
+[[module]]
+start = 0x48e8f4
+name = "module_48e8f4"
+
+[[module]]
+start = 0x48ea00
+name = "module_48ea00"
+
+[[module]]
+start = 0x48ea14
+name = "module_48ea14"
+
+[[module]]
+start = 0x48ef24
+name = "module_48ef24"
+
+[[module]]
+start = 0x48ef7c
+name = "module_48ef7c"
+
+[[module]]
+start = 0x48efbc
+name = "module_48efbc"
+
+[[module]]
+start = 0x48f1c0
+name = "module_48f1c0"
+
+[[module]]
+start = 0x48f294
+name = "module_48f294"
+
+[[module]]
+start = 0x48f2b0
+name = "module_48f2b0"
+
+[[module]]
+start = 0x48f2c8
+name = "module_48f2c8"
+
+[[module]]
+start = 0x48f360
+name = "module_48f360"
+
+[[module]]
+start = 0x48f44c
+name = "module_48f44c"
+
+[[module]]
+start = 0x48f464
+name = "module_48f464"
+
+[[module]]
+start = 0x48f4bc
+name = "module_48f4bc"
+
+[[module]]
+start = 0x48f5bc
+name = "module_48f5bc"
+
+[[module]]
+start = 0x48f660
+name = "module_48f660"
+
+[[module]]
+start = 0x48fd68
+name = "module_48fd68"
+
+[[module]]
+start = 0x48fdd8
+name = "module_48fdd8"
+
+[[module]]
+start = 0x48feb8
+name = "module_48feb8"
+
+[[module]]
+start = 0x48fec0
+name = "module_48fec0"
+
+[[module]]
+start = 0x48ff28
+name = "module_48ff28"
+
+[[module]]
+start = 0x48ff90
+name = "module_48ff90"
+
+[[module]]
+start = 0x490140
+name = "module_490140"
+
+[[module]]
+start = 0x490570
+name = "module_490570"
+
+[[module]]
+start = 0x49060c
+name = "module_49060c"
+
+[[module]]
+start = 0x491598
+name = "module_491598"
+
+[[module]]
+start = 0x4916e8
+name = "module_4916e8"
+
+[[module]]
+start = 0x4927dc
+name = "module_4927dc"
+
+[[module]]
+start = 0x4928e4
+name = "module_4928e4"
+
+[[module]]
+start = 0x492a3c
+name = "module_492a3c"
+
+[[module]]
+start = 0x492dc4
+name = "module_492dc4"
+
+[[module]]
+start = 0x492ec0
+name = "module_492ec0"
+
+[[module]]
+start = 0x492f9c
+name = "module_492f9c"
+
+[[module]]
+start = 0x492fc8
+name = "module_492fc8"

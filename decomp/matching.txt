@@ -350,3 +350,6 @@
 0x0046eac8 fn_46eac8
 0x0046f43a fn_46f43a
 0x0046f78e fn_46f78e
+0x00480bdc emptyRect
+0x00480c04 offsetRect
+0x00480c24 sectRect
