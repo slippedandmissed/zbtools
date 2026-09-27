@@ -23,10 +23,10 @@ void initViews()
     views = &viewHead;
     initView(&viewHead, 0, &viewTail, 1);
     viewHead.flags = 0x1008000;
-    viewHead.snoid.unknownB2 = 0;
+    viewHead.body.clipped = 0;
     initView(&viewTail, &viewHead, 0, -1);
     viewTail.flags = 0x1000;
-    viewTail.snoid.running = 0;
+    viewTail.body.running = 0;
     viewTail.draw = drawDragCursor;
     viewTail.update = trackDragCursor;
     if (!currentViewRgn) {
@@ -41,7 +41,7 @@ void initViews()
         if ((featureClipRgn = newRgn()) == 0)
             notEnoughNearMemory("gFeatureClipRgn");
     }
-    viewTail.snoid.bounds = g_4a7bb2;
+    viewTail.body.bounds = g_4a7bb2;
     for (short i = 0; i < 17; i++) {
         groupLeader[i] = 0;
         g_4b8b32[i] = 0;
@@ -237,12 +237,12 @@ void updateViews()
         copyPortBits(workPort, viewPort, gameRect, gameRect, 0);
         for (view = views; view; view = view->next) {
             if (view->changed) {
-                if (view->snoid.unknownB2)
-                    unionRgnRect(currentViewRgn, &view->snoid.unknownB4);
+                if (view->body.clipped)
+                    unionRgnRect(currentViewRgn, &view->body.clip);
                 else if (view->region)
                     unionRgn(currentViewRgn, view->region);
                 else
-                    unionRgnRect(currentViewRgn, &view->snoid.bounds);
+                    unionRgnRect(currentViewRgn, &view->body.bounds);
                 sectRgnWithRect(currentViewRgn, &gameRect);
                 setClip(currentViewRgn);
             }
@@ -294,20 +294,20 @@ void initView(View *view, View *prev, View *next, short id)
     view->update = 0;
     view->unknown10 = 0;
     view->unknown14 = 0;
-    view->snoid.bounds = noRect;
-    view->snoid.unknownB4 = noRect;
-    view->snoid.unknownB2 = 0;
+    view->body.bounds = noRect;
+    view->body.clip = noRect;
+    view->body.clipped = 0;
     view->region = 0;
     view->id = id;
     view->kind = 0;
     view->unknown1e = 0;
-    view->snoid.script = 0;
-    view->snoid.scriptGroup = 0;
-    view->snoid.unknown0 = 0;
-    view->snoid.unknown90 = 0;
-    view->snoid.frame = 0;
-    view->snoid.group = 0;
-    view->snoid.running = 1;
+    view->body.script = 0;
+    view->body.scriptGroup = 0;
+    view->body.cels[0].image = 0;
+    view->body.celsEnd = 0;
+    view->body.frame = 0;
+    view->body.group = 0;
+    view->body.running = 1;
     view->flags = 0;
     view->reset = 1;
     view->unknown2e = 0;
@@ -337,12 +337,12 @@ View *viewAt(Point where, unsigned long mask, short backwards)
     if (backwards) {
         view = viewListEnd(0);
         for (view = view->prev; view; view = view->prev)
-            if (mask == (view->flags & 0x7fffffL) && ptInRect(&view->snoid.bounds, where))
+            if (mask == (view->flags & 0x7fffffL) && ptInRect(&view->body.bounds, where))
                 return view;
     } else {
         view = viewListEnd(1);
         for (view = view->next; view; view = view->next)
-            if (mask == (view->flags & 0x7fffffL) && ptInRect(&view->snoid.bounds, where))
+            if (mask == (view->flags & 0x7fffffL) && ptInRect(&view->body.bounds, where))
                 return view;
     }
     return 0;
@@ -388,8 +388,8 @@ void setViewPlaces(short count, Point *places, short apply)
             View *view = nextActorView(0);
 
             if (view) {
-                *(Point *)&view->snoid.x = viewPlaces[i];
-                view->snoid.unknownF4 = 0;
+                *(Point *)&view->body.x = viewPlaces[i];
+                viewSnoid(view)->unknownF4 = 0;
             }
         }
     }
@@ -501,7 +501,7 @@ View *removeView(short id, short dispose)
         return 0;
     view = findView(id);
     if (view) {
-        unionRgnRect(removedRgn, &view->snoid.bounds);
+        unionRgnRect(removedRgn, &view->body.bounds);
         view->prev->next = view->next;
         view->next->prev = view->prev;
         view->next = 0;
@@ -725,45 +725,45 @@ void setViewScript(View *view, short script, short running)
     }
     if (script != view->kind || view->reset) {
         if (view->reset)
-            view->snoid.bounds = noRect;
+            view->body.bounds = noRect;
         view->kind = script;
-        findScript(script, &view->snoid.scriptGroup, &view->snoid.script);
+        findScript(script, &view->body.scriptGroup, &view->body.script);
     }
-    if (view->snoid.script >= 0) {
+    if (view->body.script >= 0) {
         short *data;
 
-        if (!scripts[view->snoid.script])
-            scripts[view->snoid.script] = loadSwappedResource(&scriptResources[view->snoid.script],
+        if (!scripts[view->body.script])
+            scripts[view->body.script] = loadSwappedResource(&scriptResources[view->body.script],
                                                               script, RESOURCE_TYPE('S', 'C', 'R', 'B'));
-        data = scripts[view->snoid.script];
-        view->snoid.lastFrame = *data++ - 1;
-        view->snoid.frame = 0;
-        view->snoid.frameOffset = 1;
+        data = scripts[view->body.script];
+        view->body.lastFrame = *data++ - 1;
+        view->body.frame = 0;
+        view->body.frameOffset = 1;
         view->nextUpdate = 0;
-        view->snoid.running = running;
+        view->body.running = running;
         view->changed = 1;
-        view->reset = view->snoid.lastFrame < 1;
+        view->reset = view->body.lastFrame < 1;
         view->reset = 0;
         view->unknown2e = 1;
         if (view->flags & 0x800000) {
-            view->snoid.unknownAa = data[1];
-            view->snoid.unknownAc = data[2];
+            view->body.unknownAa = data[1];
+            view->body.unknownAc = data[2];
         }
         if (removedRgn) {
             if (view->region) {
                 unionRgn(removedRgn, view->region);
                 setEmptyRgn(view->region);
             } else {
-                unionRgnRect(removedRgn, &view->snoid.bounds);
+                unionRgnRect(removedRgn, &view->body.bounds);
             }
         }
     } else {
-        view->snoid.running = 0;
-        view->snoid.unknown0 = 0;
-        view->snoid.script = 0;
-        view->snoid.scriptGroup = 0;
-        view->snoid.frame = 0;
-        view->snoid.frameOffset = 1;
+        view->body.running = 0;
+        view->body.cels[0].image = 0;
+        view->body.script = 0;
+        view->body.scriptGroup = 0;
+        view->body.frame = 0;
+        view->body.frameOffset = 1;
         fn_462749(script, "with bogus script ", &view->id, "Set Ftr id ", 1);
     }
 }
@@ -780,10 +780,10 @@ short freeViewGroup()
     }
     {
         for (View *view = viewListEnd(1); view; view = view->next) {
-            if (view->snoid.group > 0 && view->snoid.group < 17)
-                used[view->snoid.group] = 1;
+            if (view->body.group > 0 && view->body.group < 17)
+                used[view->body.group] = 1;
             else
-                view->snoid.group = 0;
+                view->body.group = 0;
         }
     }
     {
@@ -829,12 +829,12 @@ short groupViews(short a, short b, short c, short d, short e, short f)
                 View *view = findView(ids[i]);
 
                 if (view) {
-                    if (view->snoid.group && groupLeader[view->snoid.group] == view->id) {
-                        groupLeader[view->snoid.group] = 0;
-                        g_4b8b32[view->snoid.group] = 0;
-                        g_4b8b43[view->snoid.group] = 0;
+                    if (view->body.group && groupLeader[view->body.group] == view->id) {
+                        groupLeader[view->body.group] = 0;
+                        g_4b8b32[view->body.group] = 0;
+                        g_4b8b43[view->body.group] = 0;
                     }
-                    view->snoid.group = group;
+                    view->body.group = group;
                 }
             } else {
                 return group;
@@ -854,8 +854,8 @@ void pairViews(short a, short b)
         short group = freeViewGroup();
 
         if (group) {
-            first->snoid.group = group;
-            second->snoid.group = group;
+            first->body.group = group;
+            second->body.group = group;
             g_4b8b43[group] = 1;
         }
     }
@@ -868,12 +868,12 @@ void deleteView(short id)
     View *view = removeView(id, 0);
 
     if (view) {
-        groupLeader[view->snoid.group] = 0;
+        groupLeader[view->body.group] = 0;
         if (view->region) {
             unionRgn(removedRgn, view->region);
             disposeRgn(view->region);
         } else {
-            unionRgnRect(removedRgn, &view->snoid.bounds);
+            unionRgnRect(removedRgn, &view->body.bounds);
         }
         disposePtr(view);
     }
@@ -1196,21 +1196,21 @@ void viewSoundList(View *view, short *count, short *sounds)
 
     if (view) {
         if (view->flags & 1) {
-            snoid = &view->snoid;
+            snoid = viewSnoid(view);
             switch (snoid->unknownF4) {
             default:
-                at = g_4b78b4[snoid->script];
+                at = g_4b78b4[snoid->body.script];
                 break;
             case 8:
             case 9:
-                at = g_4b7980[snoid->script];
+                at = g_4b7980[snoid->body.script];
                 break;
             }
             frames = *at++;
             at++;
         } else {
             snoid = 0;
-            at = scripts[view->snoid.script];
+            at = scripts[view->body.script];
             frames = *at++;
         }
         max = *count;
@@ -1527,10 +1527,10 @@ View *sortViewList(View *list)
         while (list) {
             view = list;
             list = list->next;
-            rect = view->snoid.bounds;
+            rect = view->body.bounds;
             at = sorted;
             while (at) {
-                other = at->snoid.bounds;
+                other = at->body.bounds;
                 if (!(view->flags & 0x1000)
                     && (rect.bottom < other.bottom
                         || (rect.bottom == other.bottom && rect.left < other.left))) {
@@ -1581,7 +1581,7 @@ View *mergeViewList(View *into, View *list)
             View *view = list;
 
             list = list->next;
-            rect = view->snoid.bounds;
+            rect = view->body.bounds;
             span.left = 0;
             span.right = 0x27f;
             span.top = rect.top;
@@ -1608,7 +1608,7 @@ View *mergeViewList(View *into, View *list)
                         after = view;
                         at = 0;
                     } else {
-                        other = at->snoid.bounds;
+                        other = at->body.bounds;
                         if (rect.bottom < other.bottom
                             || (rect.bottom == other.bottom && rect.left < other.left)) {
                             unsigned long flags = at->flags;
@@ -1686,15 +1686,15 @@ short addView(unsigned long flags, ViewDraw draw, ViewUpdate update, short kind,
                     view = (View *)newPtr(size);
                 }
                 if (flags & 1)
-                    view->snoid = *(Snoid *)data;
+                    *viewSnoid(view) = *(Snoid *)data;
                 else if (flags & 2)
-                    *(LargeViewBody *)&view->snoid = *(LargeViewBody *)data;
+                    *(LargeViewBody *)&view->body = *(LargeViewBody *)data;
                 initView(view, at, at->next, id);
                 at->next = view;
                 view->next->prev = view;
                 if (flags & 0x800000) {
-                    *(Point *)&view->snoid.x = *(Point *)data;
-                    *(Point *)&view->snoid.unknownAa = *(Point *)&view->snoid.x;
+                    *(Point *)&view->body.x = *(Point *)data;
+                    *(Point *)&view->body.unknownAa = *(Point *)&view->body.x;
                 }
                 view->draw = draw;
                 view->update = update;
@@ -1729,14 +1729,14 @@ void drawViewLabels(short only)
         short labelled = 0;
 
         if (!only || n == only) {
-            if (!emptyRect(&view->snoid.bounds)) {
+            if (!emptyRect(&view->body.bounds)) {
                 char text[16];
 
                 if (labelActorsOnly) {
                     if ((view->flags & 0xf) == 1) {
-                        fillPortRect(view->snoid.bounds, Color(14), 0);
-                        frameRect(view->snoid.bounds);
-                        if (view->snoid.unknownF7)
+                        fillPortRect(view->body.bounds, Color(14), 0);
+                        frameRect(view->body.bounds);
+                        if (viewSnoid(view)->unknownF7)
                             text[0] = '+';
                         else
                             text[0] = '-';
@@ -1746,12 +1746,12 @@ void drawViewLabels(short only)
                         labelled = 1;
                     }
                 } else {
-                    fillPortRect(view->snoid.bounds, Color(14), 0);
-                    frameRect(view->snoid.bounds);
+                    fillPortRect(view->body.bounds, Color(14), 0);
+                    frameRect(view->body.bounds);
                     if (labelIds) {
                         intToDecimal(view->id, text);
                     } else {
-                        if (view->snoid.running)
+                        if (view->body.running)
                             text[0] = '+';
                         else
                             text[0] = '-';
@@ -1766,8 +1766,8 @@ void drawViewLabels(short only)
                     labelled = 1;
                 }
                 if (labelled) {
-                    drawText(view->snoid.bounds, 0x22, text, 0xffff);
-                    copyPortBits(screenPort, workPort, view->snoid.bounds, view->snoid.bounds, 0);
+                    drawText(view->body.bounds, 0x22, text, 0xffff);
+                    copyPortBits(screenPort, workPort, view->body.bounds, view->body.bounds, 0);
                 }
             }
         }

@@ -637,14 +637,14 @@ void enterCamp()
         if (view) {
             fn_465e59(view, removedRgn);
             value = ((short *)(g_4a4ba0 + 0x14))[k - 0x457];
-            view->snoid.frameOffset = scriptFrameOffset(scripts[view->snoid.script], &value, 0);
-            view->snoid.frame = value;
+            view->body.frameOffset = scriptFrameOffset(scripts[view->body.script], &value, 0);
+            view->body.frame = value;
             view->nextUpdate = 0;
-            view->snoid.running = 1;
-            view->snoid.lastFrame++;
+            view->body.running = 1;
+            view->body.lastFrame++;
             fn_465e59(view, removedRgn);
-            view->snoid.lastFrame--;
-            view->snoid.frame = value;
+            view->body.lastFrame--;
+            view->body.frame = value;
         }
     }
     addView(0x2040000, fn_465ce7, fn_465e59, 0x450, 6, 0, 0, 0);
@@ -986,8 +986,8 @@ void campMouse(short action)
                     draggedSnoid.zoombini = camp->slots[slot].zoombini;
                     for (i = 0; i < 10; i++)
                         draggedSnoid.name[i] = camp->slots[slot].name[i];
-                    draggedSnoid.x = where.x;
-                    draggedSnoid.y = where.y;
+                    draggedSnoid.body.x = where.x;
+                    draggedSnoid.body.y = where.y;
                     camp->slots[slot].zoombini = 0;
                     fn_4184b7();
                     dragged = fn_4574ae(&draggedSnoid, 0);
@@ -1016,20 +1016,20 @@ void campMouse(short action)
                 result = fn_458059(view, where, 0, 0);
                 g_4ab52c = 0;
                 count = fn_457fbb();
-                snoid = &view->snoid;
-                moved = snoid->targetX != snoid->x || snoid->targetY != snoid->y;
+                snoid = viewSnoid(view);
+                moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
                 snoid->unknownF7 = count > 0;
                 if (snoid->unknownF7)
                     snoid->unknownF8 = 1;
-                spot = view->snoid.bounds;
+                spot = view->body.bounds;
                 if (sectRect(&spot, &campArea)) {
-                    spot = view->snoid.bounds;
+                    spot = view->body.bounds;
                     drop = findCampSlot(campRow, spot, 0);
                     if (drop >= 0) {
                         noteCampSlot(drop);
-                        camp->slots[drop].zoombini = view->snoid.zoombini;
+                        camp->slots[drop].zoombini = viewSnoid(view)->zoombini;
                         for (i = 0; i < 10; i++)
-                            camp->slots[drop].name[i] = view->snoid.name[i];
+                            camp->slots[drop].name[i] = viewSnoid(view)->name[i];
                         deleteView(view->id);
                         fn_4184b7();
                         g_4a080c = -1;
@@ -1064,7 +1064,7 @@ void campMouse(short action)
             } else if ((view = viewAt(where, 0x20000, 1)) != 0) {
                 short sound = 0;
 
-                view->snoid.running = 1;
+                view->body.running = 1;
                 switch (view->kind) {
                 case 0x457:
                     i = 0;
@@ -1087,8 +1087,8 @@ void campMouse(short action)
                     sound = 0x462;
                     break;
                 }
-                ((short *)(g_4a4ba0 + 0x14))[i] = view->snoid.frame + 1;
-                ((short *)(g_4a4ba0 + 0x14))[i] %= view->snoid.lastFrame + 1;
+                ((short *)(g_4a4ba0 + 0x14))[i] = view->body.frame + 1;
+                ((short *)(g_4a4ba0 + 0x14))[i] %= view->body.lastFrame + 1;
                 if (sound)
                     fn_4666b7(sound, 0);
             } else if ((view = viewAt(where, 0x40000, 1)) != 0) {
@@ -1097,7 +1097,7 @@ void campMouse(short action)
             } else {
                 for (i = 0; i < 5; i++)
                     if (ptInRect(&g_4a0a34[i], where) && (view = findView(g_4ab530[i])) != 0
-                        && !view->snoid.running) {
+                        && !view->body.running) {
                         setViewScript(view, 0, 1);
                         loadViewSounds(view->id, 1);
                         i = 5;
@@ -1299,7 +1299,7 @@ void scrollCamp(View *view, short)
     view->nextUpdate = clockTime() + view->interval;
     if (view->reset) {
         view->reset = 0;
-        view->snoid.bounds = campArea;
+        view->body.bounds = campArea;
         return;
     }
     if (!g_4a080c)
@@ -1395,16 +1395,16 @@ void drawCamp(View *)
                 x = campX[row * 2 + 1];
                 y = campY[row * 2 + 1][column];
             }
-            snoid.unknownB2 = 0;
+            snoid.body.clipped = 0;
             snoid.unknownC0 = -1;
-            snoid.frame = 0;
-            snoid.frameOffset = 2;
+            snoid.body.frame = 0;
+            snoid.body.frameOffset = 2;
             snoid.zoombini = camp->slots[index].zoombini;
-            snoid.x = x;
-            snoid.y = y;
+            snoid.body.x = x;
+            snoid.body.y = y;
             fn_45b06a(&snoid, 0);
             fn_45ab97(&snoid, 0);
-            camp->slots[index].rect = snoid.bounds;
+            camp->slots[index].rect = snoid.body.bounds;
             fn_4571d8(&snoid);
         }
         column++;

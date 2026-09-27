@@ -285,27 +285,42 @@ struct Traveller
     char name[10];
 };
 
-/* A Zoombini on screen (the snoids module), 0x103 bytes. Partly known. */
-struct Snoid
+/* An image a view draws: its number in the view's bank and where. */
+struct ViewCel
 {
-    short unknown0;
-    char unknown2[0x8e];
-    short unknown90;
-    short script; /* +0x92: its script's index in scripts */
-    short scriptGroup; /* +0x94 */
+    short image; /* 0 ends the list */
+    short x;
+    short y;
+};
+
+/* What every view has after its links and callbacks (0xbc bytes, at +0x30
+   in the view): what it draws and its script's state. */
+struct ViewBody
+{
+    ViewCel cels[24];
+    short celsEnd;
+    short script; /* +0x92 (view +0xc2): its script's index in scripts */
+    short scriptGroup; /* +0x94: and the group, whose image bank it uses */
     short lastFrame; /* +0x96 */
     short frame; /* +0x98 */
     long frameOffset; /* +0x9a: in the script, in shorts */
     ShortRect bounds; /* +0x9e: where it was drawn */
-    short x; /* +0xa6 */
+    short x; /* +0xa6: where it stands */
     short y;
     short unknownAa;
     short unknownAc;
     short group; /* +0xae: views moving together (1-16) */
     short running; /* +0xb0: its script runs */
-    short unknownB2; /* use unknownB4 as the bounds */
-    ShortRect unknownB4;
-    long zoombini; /* +0xbc: the rest is a Zoombini's only */
+    short clipped; /* +0xb2: drawn clipped to clip */
+    ShortRect clip; /* +0xb4 */
+};
+
+/* A Zoombini on screen (the snoids module), 0x103 bytes: a view's body
+   and more. Partly known. */
+struct Snoid
+{
+    ViewBody body;
+    long zoombini; /* +0xbc */
     short unknownC0;
     char unknownC2[0x24];
     short targetX; /* +0xe6 */
@@ -358,8 +373,14 @@ struct View
     char reset; /* +0x2d */
     char unknown2e;
     char unknown2f;
-    Snoid snoid; /* +0x30: a plain view has only its first 0xbc bytes */
+    ViewBody body; /* +0x30; a Zoombini's view has a Snoid here (flag 1) */
 };
+
+/* A Zoombini view's Snoid. */
+inline Snoid *viewSnoid(View *view)
+{
+    return (Snoid *)&view->body;
+}
 
 
 /* A button in the camp (0x24 bytes). */
