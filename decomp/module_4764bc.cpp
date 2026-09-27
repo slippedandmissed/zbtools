@@ -38,7 +38,7 @@ short setSoundsActive(short active)
         for (object = sound.objects; object; object = object->next)
             object->activate(0);
         if (sound.cacheMidiDevice && sound.midiCache) {
-            closeMidiOut(sound.midiCache);
+            midiMapClose((long)sound.midiCache);
             sound.midiCache = 0;
         }
         if (sound.cacheWaveDevice && sound.waveCache) {
@@ -54,7 +54,7 @@ short setSoundsActive(short active)
             sound.driverOpen = 1;
         }
         if (sound.cacheMidiDevice)
-            openMidiOut(&sound.midiCache, sound.midiDevice, 0, 0, 0x80000000);
+            midiMapOpen(&sound.midiCache, sound.midiDevice, 0, 0, 0x80000000);
         if (sound.cacheWaveDevice) {
             format.wf.wFormatTag = WAVE_FORMAT_PCM;
             format.wf.nChannels = 1;
@@ -204,7 +204,7 @@ void chooseWaveDevice()
    `version` unless that's 0. */
 /* @zoombi32 0x0047690f */
 short findIniEntry(fileSpec *file, const char *section, char *entry, unsigned short size,
-                   const char *name, unsigned short version, long, long)
+                   const char *name, unsigned short version, unsigned short, unsigned short)
 {
     unsigned short nameLength;
     unsigned short length;
@@ -280,7 +280,7 @@ unsigned short soundDevice(long handle)
 }
 
 /* @zoombi32 0x00476b27 */
-long soundLength(long handle)
+long soundDeviceHandle(long handle)
 {
     AudioObject *object;
 
@@ -297,7 +297,7 @@ long soundLength(long handle)
         return 0;
     }
     setSoundError(0);
-    return object->length();
+    return object->deviceHandle();
 }
 
 /* @zoombi32 0x00476b84 */
@@ -320,7 +320,7 @@ short soundError()
 }
 
 /* @zoombi32 0x00476bc2 */
-long soundVolume(long handle)
+long soundRate(long handle)
 {
     AudioObject *object;
 
@@ -329,7 +329,7 @@ long soundVolume(long handle)
         return 0;
     }
     setSoundError(0);
-    return object->volume;
+    return object->rate;
 }
 
 /* @zoombi32 0x00476bf1 */
@@ -357,7 +357,7 @@ unsigned short soundFlags(long handle)
     }
     setSoundError(0);
     return (object->isOpen ? 1 : 0) | (object->playing ? 2 : 0) | (object->started ? 4 : 0)
-           | (object->unknown22 ? 8 : 0) | (object->unknown20 ? 0x10 : 0);
+           | (object->endingLoop ? 8 : 0) | (object->unknown20 ? 0x10 : 0);
 }
 
 /* @zoombi32 0x00476ca3 */
@@ -374,7 +374,7 @@ long soundKind(long handle)
 }
 
 /* @zoombi32 0x00476cd3 */
-long soundPan(long handle)
+long soundVolume(long handle)
 {
     AudioObject *object;
 
@@ -383,7 +383,7 @@ long soundPan(long handle)
         return -1;
     }
     setSoundError(0);
-    return object->pan;
+    return object->volume;
 }
 
 /* Starts sound: reads [Audio]'s settings, picks the default devices and
@@ -393,7 +393,7 @@ short initSound()
 {
     PCMWAVEFORMAT format;
 
-    switch (fn_47a07f()) {
+    switch (initMidi()) {
     case 4:
         return setSoundError(0x29cd);
     default:
@@ -407,7 +407,7 @@ short initSound()
     getIniBool(0, audio, translateKey, &sound.translateWaveRate);
     chooseMidiDevice();
     if (sound.cacheMidiDevice)
-        openMidiOut(&sound.midiCache, sound.midiDevice, 0, 0, 0x80000000);
+        midiMapOpen(&sound.midiCache, sound.midiDevice, 0, 0, 0x80000000);
     chooseWaveDevice();
     if (sound.cacheWaveDevice) {
         format.wf.wFormatTag = WAVE_FORMAT_PCM;
@@ -481,16 +481,16 @@ void closeSounds()
         disposeSound((long)object);
     }
     if (sound.midiCache)
-        closeMidiOut(sound.midiCache);
+        midiMapClose((long)sound.midiCache);
     if (sound.waveCache)
         closeWaveOut(sound.waveCache);
     sound.ready = 0;
-    fn_47a0c0();
+    closeMidi();
 }
 
 /* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x00476f50 */
-short updateSound(long handle)
+short endSoundLoop(long handle)
 {
     AudioObject *object;
 
@@ -500,7 +500,7 @@ short updateSound(long handle)
         return setSoundError(0x2a00);
     if (!object->isOpen)
         return setSoundError(0x2a03);
-    object->update();
+    object->endLoop();
     return setSoundError(0);
 }
 
@@ -534,7 +534,7 @@ short seekSound(long handle, long position)
         return setSoundError(0x2a05);
     error = object->seek(position);
     if (!error && !position)
-        object->rewound();
+        object->resetLoop();
     return error;
 }
 
@@ -555,6 +555,17 @@ short setSoundText(long handle, const char *text, unsigned short length)
 
 /* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x004770d4 */
+short setSoundRate(long handle, long rate)
+{
+    AudioObject *object;
+
+    if ((object = audioObject(handle)) == 0)
+        return setSoundError(0x29ff);
+    return object->setRate(rate);
+}
+
+/* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
+/* @zoombi32 0x004770ff */
 short setSoundVolume(long handle, long volume)
 {
     AudioObject *object;
@@ -562,17 +573,6 @@ short setSoundVolume(long handle, long volume)
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
     return object->setVolume(volume);
-}
-
-/* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
-/* @zoombi32 0x004770ff */
-short setSoundPan(long handle, long pan)
-{
-    AudioObject *object;
-
-    if ((object = audioObject(handle)) == 0)
-        return setSoundError(0x29ff);
-    return object->setPan(pan);
 }
 
 /* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
@@ -640,11 +640,11 @@ unsigned short setMidiDevice(unsigned short device)
     sound.midiDevice = device;
     if (sound.cacheMidiDevice && previous != device) {
         if (sound.midiCache) {
-            closeMidiOut(sound.midiCache);
+            midiMapClose((long)sound.midiCache);
             sound.midiCache = 0;
         }
         if (sound.active)
-            openMidiOut(&sound.midiCache, device, 0, 0, 0x80000000);
+            midiMapOpen(&sound.midiCache, device, 0, 0, 0x80000000);
     }
     setSoundError(0);
     return previous;
@@ -735,7 +735,7 @@ short __cdecl AudioObject::activate(short on)
     } else if (!active && on && isOpen) {
         if ((error = openDevice()) != 0)
             return error;
-        if ((error = setDeviceVolume(volume)) != 0 || (error = setDevicePan(pan)) != 0) {
+        if ((error = setDeviceRate(rate)) != 0 || (error = setDeviceVolume(volume)) != 0) {
             closeDevice();
             return sound.error = error;
         }
@@ -757,7 +757,7 @@ short __cdecl AudioObject::open(unsigned short on)
     device = on;
     if ((error = openDevice()) != 0)
         return error;
-    if ((error = setDeviceVolume(volume)) != 0 || (error = setDevicePan(pan)) != 0) {
+    if ((error = setDeviceRate(rate)) != 0 || (error = setDeviceVolume(volume)) != 0) {
         closeDevice();
         return sound.error = error;
     }
@@ -770,20 +770,20 @@ short __cdecl AudioObject::open(unsigned short on)
 }
 
 /* @zoombi32 0x00477605 */
+short __cdecl AudioObject::setRate(long level)
+{
+    if (isOpen && setDeviceRate(level))
+        return sound.error;
+    rate = level;
+    return setSoundError(0);
+}
+
+/* @zoombi32 0x0047763c */
 short __cdecl AudioObject::setVolume(long level)
 {
     if (isOpen && setDeviceVolume(level))
         return sound.error;
     volume = level;
-    return setSoundError(0);
-}
-
-/* @zoombi32 0x0047763c */
-short __cdecl AudioObject::setPan(long level)
-{
-    if (isOpen && setDevicePan(level))
-        return sound.error;
-    pan = level;
     return setSoundError(0);
 }
 

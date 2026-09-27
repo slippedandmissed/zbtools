@@ -459,7 +459,7 @@ void stopSounds(unsigned short id, long type)
     }
 }
 
-/* Updates each matching sound that's playing (updateSound). */
+/* Ends the looping of each matching sound that's playing. */
 /* @zoombi32 0x00411e4c */
 void fn_411e4c(unsigned short id, long type)
 {
@@ -475,7 +475,7 @@ void fn_411e4c(unsigned short id, long type)
                     current = soundChannels[t][channel].id;
                 if (soundChannels[t][channel].id != 0xffff && current == soundChannels[t][channel].id
                     && soundChannels[t][channel].playing)
-                    updateSound(fn_4115f5(id, soundTypes[t])->handle);
+                    endSoundLoop(fn_4115f5(id, soundTypes[t])->handle);
             }
         }
     }

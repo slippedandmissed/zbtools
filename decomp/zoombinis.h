@@ -467,7 +467,7 @@ struct SoundNotice
 {
     unsigned short what; /* 0 a value (in data), 1 finished */
     short unknown2;
-    short unknown4;
+    unsigned short unknown4; /* the value's length; an error */
     short unknown6;
     char *data;
 };
@@ -1826,22 +1826,22 @@ public:
     virtual void __cdecl release() = 0; /* before it's freed */
     virtual short __cdecl activate(short active);
     virtual short __cdecl openDevice() = 0;
+    virtual short __cdecl setDeviceRate(long rate) = 0;
     virtual short __cdecl setDeviceVolume(long volume) = 0;
-    virtual short __cdecl setDevicePan(long pan) = 0;
     virtual short __cdecl startDevice(short playing) = 0;
     virtual void __cdecl haltDevice() = 0;
     virtual void __cdecl closeDevice() = 0;
-    virtual long __cdecl length() = 0;
+    virtual long __cdecl deviceHandle() = 0; /* its map or wave device */
     virtual long __cdecl position() = 0;
     virtual void __cdecl pause() = 0;
     virtual short __cdecl open(unsigned short device);
-    virtual void __cdecl update() = 0;
-    virtual void __cdecl rewound() = 0;
+    virtual void __cdecl endLoop() = 0;
+    virtual void __cdecl resetLoop() = 0;
     virtual void __cdecl resume() = 0;
     virtual short __cdecl seek(long position) = 0;
     virtual short __cdecl setText(const char *text, unsigned short length) = 0;
+    virtual short __cdecl setRate(long rate);
     virtual short __cdecl setVolume(long volume);
-    virtual short __cdecl setPan(long pan);
     virtual short __cdecl play(SoundNotify notify, long cookie);
     virtual void __cdecl stop();
     virtual void __cdecl close();
@@ -1850,11 +1850,11 @@ public:
     long kind; /* 0 MIDI, 1 wave */
     AudioObject *next;
     AudioObject *prev;
-    long volume;
-    long pan;
+    long rate; /* speed (MIDI: tempo scale) */
+    long volume; /* MIDI: the velocity curve */
     long unknown1C;
     short unknown20;
-    short unknown22;
+    short endingLoop;
     short active; /* sounds are on (the application is active) */
     short playing;
     short started; /* play() has started it */
@@ -1875,7 +1875,7 @@ struct SoundState
     AudioObject *objects;
     unsigned short midiDevice;
     short cacheMidiDevice; /* keep the default MIDI device open */
-    long midiCache;
+    struct MidiMap *midiCache;
     unsigned short waveDevice;
     short cacheWaveDevice;
     long waveCache;
@@ -1892,27 +1892,27 @@ short forEachSound(long kind, unsigned short device, short (*proc)(AudioObject *
 void chooseMidiDevice();
 void chooseWaveDevice();
 short findIniEntry(fileSpec *file, const char *section, char *entry, unsigned short size,
-                   const char *name, unsigned short version, long, long);
+                   const char *name, unsigned short version, unsigned short, unsigned short);
 unsigned short soundDevice(long sound);
-long soundLength(long sound);
+long soundDeviceHandle(long sound);
 long soundField1C(long sound);
 short soundError(); /* 0x476bb4 */
-long soundVolume(long sound);
+long soundRate(long sound);
 long soundPosition(long sound);
 unsigned short soundFlags(long sound);
 long soundKind(long sound);
-long soundPan(long sound);
+long soundVolume(long sound);
 short initSound(); /* 0x476d0a */
 short pauseSound(long sound);
 short openSound(long sound, unsigned short device); /* 0xffff: the default device */
 short soundBufferSize();
 void closeSounds();
-short updateSound(long sound);
+short endSoundLoop(long sound);
 short resumeSound(long sound);
 short seekSound(long sound, long position);
 short setSoundText(long sound, const char *text, unsigned short length);
+short setSoundRate(long sound, long rate);
 short setSoundVolume(long sound, long volume);
-short setSoundPan(long sound, long pan);
 /* Starts a sound; its owner hears about it through `notify`. Non-zero on failure. */
 short playSound(long sound, SoundNotify notify, long cookie);
 short stopSound(long sound);
@@ -1926,21 +1926,215 @@ unsigned short __cdecl makeWord(unsigned char low, unsigned char high);
 long newSound(short data); /* from a Mohawk MIDI or WAVE in a handle */
 long newStreamedSound(long resource, long);
 /* Called but not decompiled yet */
-short openMidiOut(long *out, unsigned short device, long, long, long flags); /* 0x47818b */
-short closeMidiOut(long midi); /* 0x477b91 */
 short openWaveOut(long *out, unsigned short device, PCMWAVEFORMAT *format, long, long,
                   long flags); /* 0x47c712 */
 short closeWaveOut(long wave); /* 0x47c3d4 */
 short getWaveCaps(unsigned short device, void *caps, long size); /* 0x47c432 */
-short fn_47a074(short open);
-unsigned short fn_47a07f();
-void fn_47a0c0();
-unsigned short __cdecl parseNumber(const char *text); /* 0x47a066 */
+short fn_47a074(short open); /* MMSYSERR_NOTSUPPORTED */
+unsigned short initMidi(); /* 0x47a07f */
+void closeMidi(); /* 0x47a0c0 */
+short fn_47c62c();
+void fn_47c995();
+long __cdecl parseNumber(const char *text); /* 0x47a066 */
 short setSoundError(short error); /* 0x47de96 */
 void __cdecl notifySound(AudioObject *object, SoundNotice *notice); /* 0x47e0d3 */
 AudioObject *__cdecl newMidiSound(short data); /* 0x478f0b */
+void *__cdecl operator new(size_t size, void *where); /* 0x47dea7: zeroed */
 AudioObject *__cdecl newWaveSound(short data); /* 0x47a28d */
 AudioObject *__cdecl newStreamedWave(long resource, long file, long); /* 0x47cd5c */
+
+/*
+ * The MIDI mapper: midiOut-style calls on "maps", which share a device
+ * (opened once) and each remap channels, scale velocities and track what
+ * they've cached, as [MidiMap.TargetDevices] and [MidiMap.TargetDeviceInfo]
+ * describe the device. Results are MMSYSERR codes.
+ */
+struct MidiMap;
+
+struct MidiDevice
+{
+    MidiDevice *next;
+    unsigned short id;
+    short unknown6;
+    MIDIOUTCAPS caps;
+    short target; /* its entry in [MidiMap.TargetDeviceInfo] */
+    unsigned short drumChannel;
+    unsigned short channels[16]; /* where each channel goes */
+    short muted[16];
+    long resetSysex; /* SYSX resources sent on opening and closing */
+    long closeSysex;
+    unsigned short users;
+    short unknown8A;
+    HMIDIOUT out;
+    unsigned short unknown90;
+    short unknown92;
+    MidiMap *maps; /* a ring */
+};
+
+struct MidiMap
+{
+    unsigned long tag; /* 'MMap' */
+    MidiDevice *device;
+    MidiMap *next;
+    MidiMap *prev;
+    short minimal; /* opened without the mapping state (only short messages) */
+    short unknown12;
+    long table; /* the velocity curve's */
+    unsigned char velocities[128];
+    short channelMuted[16]; /* by the sounds' own sysex */
+    unsigned char notes[16][128]; /* notes on, by channel and key */
+    WORD drumCache[128];
+    WORD patchCache[128];
+};
+
+/* The engine uses Windows 95's MIDIHDR (0x40 bytes, with the streaming
+   fields); Borland C++ 4.5's headers have the older one (0x1c). */
+#ifndef MHDR_ISSTRM
+struct MidiHeader : MIDIHDR
+{
+    DWORD dwOffset;
+    DWORD dwReserved[8];
+};
+#else
+typedef MIDIHDR MidiHeader;
+#endif
+
+/* A Mohawk MIDI file's track, as the sequencer plays it. */
+struct MidiTrack
+{
+    unsigned char *start;
+    unsigned char *cursor;
+    long delta; /* ticks to its next event */
+    short done;
+    unsigned char status; /* running status */
+    char unknownF;
+};
+
+/* A MIDI sound: a Mohawk MIDI file (an MThd header, MTrk tracks, and Key#
+   and Prg# lists of the drum keys and patches to cache) played through a
+   MIDI map by a timer. Markers "setup end", "loop start" and "loop end#n"
+   control looping; cue points are passed to the owner. */
+class MidiSound : public AudioObject
+{
+public:
+    virtual void __cdecl release();
+    virtual short __cdecl openDevice();
+    virtual short __cdecl setDeviceRate(long rate);
+    virtual short __cdecl setDeviceVolume(long volume);
+    virtual short __cdecl startDevice(short playing);
+    virtual void __cdecl haltDevice();
+    virtual void __cdecl closeDevice();
+    virtual long __cdecl deviceHandle();
+    virtual long __cdecl position();
+    virtual void __cdecl pause();
+    virtual void __cdecl endLoop();
+    virtual void __cdecl resetLoop();
+    virtual void __cdecl resume();
+    virtual short __cdecl seek(long position);
+    virtual short __cdecl setText(const char *text, unsigned short length);
+    virtual short __cdecl play(SoundNotify notify, long cookie);
+
+    short __cdecl cachePatches(short cache);
+    void __cdecl advance(unsigned short ticks, short play, short notify);
+    void __cdecl setTempo(unsigned long tempo);
+    unsigned short __cdecl nextStep();
+    short __cdecl seekTo(unsigned long position, short play);
+    long __cdecl dispatch(MidiTrack *track, short play, short notify);
+
+    MidiMap *map;
+    MIDIOUTCAPS caps;
+    short data; /* the file's handle */
+    short unknown82;
+    unsigned long *file;
+    unsigned long fileSize;
+    unsigned char *keys; /* Key# */
+    unsigned char *patches; /* Prg# */
+    MidiHeader header; /* the whole file, prepared */
+    MidiHeader sysex; /* for sending sysex */
+    long timer;
+    unsigned long startTime;
+    unsigned short step; /* ticks to the timer's next call */
+    short unknown11E;
+    long interval; /* the timer's, in fixed-point ms */
+    long tempoScale; /* fixed-point, 1 / rate */
+    unsigned long tempo; /* microseconds per quarter note */
+    long msPerTick; /* fixed-point */
+    long ticksPerMs;
+    unsigned short maxMs; /* the longest step, in ms */
+    unsigned short maxTicks;
+    unsigned long nextEvent; /* ticks to the next event */
+    unsigned long ticks; /* the position */
+    unsigned long time; /* ms */
+    unsigned short fraction; /* of a ms */
+    unsigned short finishedTracks;
+    short setupDone;
+    short unknown14A;
+    unsigned long setupEnd; /* ticks at "setup end" */
+    Deferred call; /* the timer's, to run midiStep */
+    short looping; /* "loop end" wants a jump back */
+    short lastLoop;
+    unsigned short loopCount; /* left to play (0xffff: forever) */
+    short unknown16A;
+    unsigned long loopStart;
+    unsigned long loopEnd;
+    const char *findText; /* a cue point setText looks for */
+    unsigned short findLength;
+    short found;
+    unsigned short format;
+    unsigned short division;
+    unsigned short trackCount;
+    short unknown182;
+    MidiTrack tracks[1];
+};
+
+struct MidiMapState
+{
+    short ready;
+    short hardReset; /* [MidiMap] fEnableHardReset */
+    MidiDevice *devices;
+};
+
+extern MidiMapState midiMapState; /* @data 0x4b9b28 */
+
+short midiMapCacheDrumPatches(long map, unsigned short patch, WORD *keys, unsigned short flags);
+short midiMapCachePatches(long map, unsigned short bank, WORD *patches, unsigned short flags);
+void fillVelocities(MidiMap *map, long table);
+short midiMapClose(long map);
+short getChannelMap(unsigned short device, unsigned short *channels);
+short getMutedChannels(unsigned short device, short *muted);
+short getMidiDevCaps(unsigned short device, MIDIOUTCAPS *caps, unsigned short size);
+short findMidiDevice(unsigned short id, MidiDevice **device);
+short getDrumChannel(unsigned short device, unsigned short *channel);
+short midiMapDevice(long map, unsigned short *device);
+short midiMapTarget(long map, short *target);
+short midiMapTable(long map, long *table);
+short initMidiMap();
+short setChannelMuted(unsigned short device, unsigned short channel, short muted);
+short midiMapOpen(MidiMap **map, unsigned short device, long callback, long instance, long flags);
+short midiMapPrepareHeader(long map, MidiHeader *header, unsigned short size);
+void closeMidiMaps();
+short setChannelMap(unsigned short device, unsigned short channel, unsigned short to);
+short midiMapReset(long map);
+short loadTargetDevice(MidiDevice *device, short target);
+short setChannelMaps(unsigned short device, unsigned short *channels);
+short setMutedChannels(unsigned short device, short *muted);
+short setMidiMapTable(long map, long table);
+short midiMapUnprepareHeader(long map, MidiHeader *header, unsigned short size);
+MidiMap *midiMap(long map); /* 0x478d38: 0 if it isn't one */
+void resetChannel(MidiMap *map, int channel); /* 0x478b09 */
+short midiMapLongMsg(long map, MidiHeader *header, unsigned short size);
+short mapShortMsg(MidiMap *map, unsigned long message);
+short midiMapShortMsg(long map, unsigned long message);
+unsigned long __cdecl readVarLen(unsigned char **p);
+void midiStep(void *sound);
+void midiTimer(long timer, long sound);
+/* Fixed-point (16.16) arithmetic */
+long fixedDiv(long a, long b); /* 0x46d754 */
+long fixedMul(long a, long b); /* 0x46d7aa */
+long makeFixed(short whole, unsigned short fraction); /* 0x48988a */
+short fixedToInt(long value); /* 0x48989e */
+unsigned short fixedFraction(long value); /* 0x4898ab */
+short fixedRound(long value); /* 0x4898b6 */
 
 /* Threads (the OS layer) */
 long createThread(void (*proc)(long), long, long stackSize, short); /* 0x46e302 */
