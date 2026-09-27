@@ -653,6 +653,43 @@ def _recover_switches(program: "Program") -> list[int]:
     return sorted(set(fixed))
 
 
+def _merge_fragments(program: "Program") -> list[int]:
+    """Ghidra sometimes starts a function after another's first instructions:
+    0x478572 is a 6-byte prologue that falls through into a "function" at
+    0x478578. Where a function nothing refers to is entered only by falling
+    through from the function before it (from an instruction other than a
+    call, which might not return), merge it into that function. Names set by
+    hand are left alone. Returns the fragments merged."""
+    from ghidra.program.model.address import AddressSet  # noqa: PLC0415
+    from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
+
+    manager, listing = program.getFunctionManager(), program.getListing()
+    references = program.getReferenceManager()
+    merged = []
+    for function in list(manager.getFunctions(True)):
+        if function.isThunk() or function.isExternal():
+            continue
+        if function.getSymbol().getSource() == SourceType.USER_DEFINED:
+            continue
+        entry = function.getEntryPoint()
+        if references.hasReferencesTo(entry):
+            continue
+        previous: Instruction | None = listing.getInstructionBefore(entry)
+        if previous is None or previous.getFallThrough() != entry:
+            continue
+        if previous.getFlowType().isCall():
+            continue
+        owner: Function | None = manager.getFunctionContaining(previous.getMinAddress())
+        if owner is None:
+            continue
+        body = AddressSet(owner.getBody())
+        body.add(function.getBody())
+        manager.removeFunction(entry)
+        owner.setBody(body)
+        merged.append(int(entry.getOffset()))
+    return merged
+
+
 @dataclass(frozen=True)
 class Declared:
     """What `_apply_declarations` did."""
@@ -797,8 +834,9 @@ def label() -> None:
     """Apply everything the tools have recovered to the Ghidra project: Borland
     runtime names (`uv run runtime-symbols`), C++ classes from RTTI (`uv run
     classes`), the names of functions decompiled in decomp/, calling
-    conventions, the types and globals declared in decomp/zoombinis.h, and
-    the ends of functions Ghidra cut short at a breakpoint or a switch.
+    conventions, the types and globals declared in decomp/zoombinis.h, the
+    ends of functions Ghidra cut short at a breakpoint or a switch, and the
+    fragments it split off functions.
     Names you've set by hand are kept."""
     found = runtime_symbols.load()
     classes = rtti.load().classes
@@ -826,6 +864,7 @@ def label() -> None:
             breakpoints = _continue_after_breakpoints(program)
             conventions = _set_calling_conventions(program)
             switches = _recover_switches(program)
+            fragments = _merge_fragments(program)
         program.save("Recovered symbols", pyghidra.task_monitor())
         _write_functions(list_functions(program))
     print(
@@ -854,3 +893,6 @@ def label() -> None:
     if breakpoints:
         where = ", ".join(f"{a:#x}" for a in breakpoints)
         print(f"Disassembled past a breakpoint (int3) in {where}.")
+    if fragments:
+        where = ", ".join(f"{a:#x}" for a in fragments)
+        print(f"Merged {len(fragments)} fragments into the functions before them: {where}.")
