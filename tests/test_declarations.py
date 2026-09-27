@@ -61,3 +61,15 @@ def test_classes_are_declared_not_defined() -> None:
     assert "typedef struct basePort basePort;\n" in c
     assert "typedef struct Palette Palette;\n" in c
     assert "virtual" not in c
+
+
+def test_typedefs_and_anonymous_unions() -> None:
+    c = structs_as_c(
+        "struct Chunk\n{\n    short magic;\n};\n"
+        "typedef Chunk **Block;\n"
+        "struct Entry\n{\n    short bits;\n    union {\n        Block block;\n"
+        "        short next;\n    };\n};\n"
+    )
+    assert "typedef Chunk **Block;\n" in c
+    assert "    } u1;\n" in c
+    assert c.index("typedef Chunk **Block;") < c.index("struct Entry\n{")
