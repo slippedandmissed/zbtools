@@ -658,20 +658,23 @@ class Declared:
 def _add_types(program: "Program", c: str) -> int:
     """Parse decomp/zoombinis.h's structs with Ghidra's C parser and put them in
     the program's /zoombinis category, replacing earlier versions in place (so
-    data already typed with them follows)."""
+    data already typed with them follows). Windows types they use (such as
+    PALETTEENTRY) come from Ghidra's own Windows type archive."""
     from ghidra.app.util.cparser.C import CParser  # noqa: PLC0415
     from ghidra.program.model.data import (  # noqa: PLC0415
         CategoryPath,
         DataTypeConflictHandler,
+        FileDataTypeManager,
         StandAloneDataTypeManager,
     )
 
     dtm = program.getDataTypeManager()
+    windows = FileDataTypeManager.openFileArchive(_windows_archive(), False)
     # Parse into a scratch manager: the parser's typedefs stay there.
     scratch = StandAloneDataTypeManager("zoombinis", dtm.getDataOrganization())
     transaction = scratch.startTransaction("parse")
     try:
-        parser = CParser(scratch)
+        parser = CParser(scratch, False, [windows])
         parser.parse(c)
         composites = list(parser.getComposites().values())
         for composite in composites:
@@ -681,7 +684,13 @@ def _add_types(program: "Program", c: str) -> int:
     finally:
         scratch.endTransaction(transaction, False)
         scratch.close()
+        windows.close()
     return len(composites)
+
+
+def _windows_archive() -> Path:
+    """Ghidra's archive of 32-bit Windows types."""
+    return install_dir() / "Ghidra/Features/Base/data/typeinfo/win32/windows_vs12_32.gdt"
 
 
 def _ours(data_type: "DataType") -> bool:
