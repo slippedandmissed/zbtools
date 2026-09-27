@@ -13,8 +13,8 @@ short drawImageData(unsigned short *image, short x, short y, short mode)
 {
     if (!image)
         return setPortError(0x2a63);
-    return drawPixelData(fn_492730(image[0]), fn_492730(image[1]), fn_492730(image[2]),
-                         fn_492730(image[3]), image + 4, x, y, mode);
+    return drawPixelData(byteSwapShort(image[0]), byteSwapShort(image[1]), byteSwapShort(image[2]),
+                         byteSwapShort(image[3]), image + 4, x, y, mode);
 }
 
 /* @zoombi32 0x0048ae53 */

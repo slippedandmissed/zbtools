@@ -520,6 +520,7 @@ public:
     fileSpec &__cdecl operator=(const fileSpec &from); /* 0x4853a2 */
     short __cdecl compare(const fileSpec &with) const; /* 0x4853f3: 0 if the same, else 0x2844 or an error */
     void __cdecl getPath(char *path) const; /* 0x4854c5 */
+    short __cdecl volume(long *volume) const; /* 0x485596 */
 
 private:
     long unknown0;
@@ -879,8 +880,6 @@ void fn_46c602(long *);
 /* Finds resource `id` of type `type`; 0 if there's none. */
 long fn_46c402(long type, short id, short);
 void fn_46c5b7(long *resource); /* releases a resource */
-unsigned long fn_48ff28(long resource); /* a resource's size */
-short fn_490140(long resource);
 /* Joins two strings into a new block at *joined. */
 void joinText(char **joined, const char *first, const char *second);
 void reportJoinedError(char *message);
@@ -979,7 +978,6 @@ short setMinimalReserve(short minimal);
 short drawImageData(unsigned short *image, short x, short y, short mode);
 short drawPixelData(short width, short height, short unknown, unsigned short flags, void *pixels,
                     short x, short y, short mode);
-unsigned short __cdecl fn_492730(unsigned short value); /* an image header field, as stored */
 Palette *getPortPalette(); /* the current palette */
 short setPaletteColors(Palette *palette, unsigned short first, unsigned short count, ColorBytes *colors);
 basePort *newPort(short width, short height, short depth, Palette *palette);
@@ -1015,7 +1013,7 @@ short fn_4764bc(short open); /* opens (1) or closes the sound driver; non-zero o
 void runClock(short running);
 void fn_48b2d8(DisplayMode *mode);
 void fn_48d480(DisplayMode *mode);
-short fn_4922c6(); /* initialises the resource manager */
+short initResources();
 short fn_493096(); /* initialises the timer */
 
 /* Reads `key` from `section` of the INI file `file` into buffer; non-zero if
@@ -1029,7 +1027,7 @@ long fn_484b50(const fileSpec &file, long mode);
 /* Closes a file opened by fn_484b50. */
 void fn_48266c(long file, long);
 
-void fn_48f660(long handle, long, long);
+short closeResourceFile(long map, short compact, short force);
 
 /*
  * The Mohawk engine
@@ -1067,7 +1065,7 @@ short fileError();
 void programDirectory(fileSpec *directory);
 long openFile(fileSpec *file, short mode); /* 0 on error */
 short readFile(long file, void *buffer, long *size);
-void closeFile(long file, short);
+short closeFile(long file, short);
 short fileMissing(const fileSpec &file); /* 0 if it exists, else an error (0x2845 not found) */
 void currentDirectory(fileSpec *directory);
 short setCurrentDirectory(fileSpec *directory);
@@ -1374,7 +1372,6 @@ typedef short (*DecompressProc)(void *out, unsigned long size, short width, shor
                                 short depth, long rowBytes, void *params,
                                 unsigned long paramSize, unsigned short);
 
-unsigned long __cdecl fn_4926ff(unsigned long value); /* a long as stored (big-endian) */
 short decompressImage(short handle);
 void swapWords(void *data, unsigned long count);
 void lzDecompress(unsigned char *dest, const unsigned char *source, unsigned long size,
@@ -1501,6 +1498,268 @@ short unlockHandle(short handle); /* 0x48f550 */
 short setHandleSize(short handle, unsigned long size); /* an error code */
 short disposeHandle(short handle); /* 0x48e71c */
 short memError(); /* 0x48e80c */
+
+/*
+ * Resources: Mohawk archives (ScummVM's name; `MHWK` files), read through
+ * resource maps. Everything in a file is big-endian. A resource's ID is a
+ * long: its file-table index (from 1) in the high word, its map's handle in
+ * the low word. Errors of the last call are in resources.error.
+ */
+
+/* An archive's header, as stored (byteSwapHeader converts it). */
+struct MohawkHeader
+{
+    unsigned long tag; /* 'MHWK' */
+    unsigned long size; /* of the rest of the file */
+    unsigned long type; /* 'RSRC' */
+    unsigned short version; /* 0x100 */
+    unsigned short compacted; /* 0 if the file has no unused space */
+    unsigned long fileSize;
+    unsigned long directoryOffset;
+    unsigned short fileTableOffset; /* from the directory: its size */
+    unsigned short fileTableSize;
+};
+
+/* The directory: a type table, then each type's resource and name tables
+   (offsets from the directory's start), then the names. */
+struct TypeEntry
+{
+    unsigned long type;
+    unsigned short resources; /* ResourceTable */
+    unsigned short names; /* NameTable */
+};
+
+struct Directory
+{
+    unsigned short names; /* where the names start */
+    unsigned short count;
+    TypeEntry types[1];
+};
+
+struct ResourceRef
+{
+    unsigned short id;
+    unsigned short index; /* into the file table, from 1 */
+};
+
+struct ResourceTable
+{
+    unsigned short count;
+    ResourceRef entries[1]; /* by id */
+};
+
+struct NameRef
+{
+    unsigned short name; /* from the names' start */
+    unsigned short index;
+};
+
+struct NameTable
+{
+    unsigned short count;
+    NameRef entries[1]; /* by name */
+};
+
+/* FileTableEntry flags */
+#define RESOURCE_MODIFIED 0x01
+#define RESOURCE_LOADED 0x02
+#define RESOURCE_PURGED 0x04 /* its handle's block has been purged */
+#define RESOURCE_08 0x08 /* can't be written */
+#define RESOURCE_DELETED 0x10
+#define RESOURCE_PRELOAD 0x20
+#define RESOURCE_LOCKED 0x40
+#define RESOURCE_PURGEABLE 0x80
+
+struct FileTableEntry
+{
+    unsigned long offset;
+    unsigned short sizeLow;
+    unsigned char sizeHigh;
+    unsigned char flags;
+    short handle; /* stored as 0; the data's handle once loaded */
+};
+
+struct FileTable
+{
+    unsigned short countHigh;
+    unsigned short count;
+    FileTableEntry entries[1];
+};
+
+struct PreloadRequest;
+
+/* An open archive, in a handle (maps form a list, and those with preloads
+   pending a ring). */
+struct ResourceMap
+{
+    unsigned long tag; /* 'RMap' */
+    short next; /* the map list */
+    short prev;
+    short nextPreload; /* the ring of maps with preloads */
+    short prevPreload;
+    unsigned short users;
+    short unknownE;
+    long file;
+    short async; /* reads can go on in the background */
+    short readOnly;
+    short directory; /* a Directory, in a handle */
+    short counters; /* per entry: loaded and preload counts (2 bytes) */
+    unsigned short preloads;
+    short unknown1E;
+    PreloadRequest *preload; /* the next to run */
+    PreloadRequest *lastPreload;
+    unsigned long fileSize;
+    unsigned long directoryOffset;
+    unsigned long directorySize; /* with the file table */
+    unsigned short compacted;
+    short dirty;
+    unsigned short modified; /* resources modified */
+    unsigned short unknown3A;
+    FileTable fileTable;
+};
+
+/* A preload request's provider, told of `event` for resource `id`. */
+typedef void *(*PreloadProc)(long event, long id, void *data);
+
+/* PreloadProc events */
+#define PRELOAD_GET_BUFFER 0
+#define PRELOAD_RELEASE_BUFFER 1
+#define PRELOAD_CANCELLED 2
+#define PRELOAD_DONE 3
+#define PRELOAD_FAILED 4
+
+/* A resource being read ahead of its use, in a ring per map ordered by
+   position in the file. */
+struct PreloadRequest
+{
+    unsigned long tag; /* 'RQRq' */
+    PreloadRequest *next;
+    PreloadRequest *prev;
+    long id;
+    PreloadProc proc;
+    long data; /* the provider's; the default one keeps a handle here */
+    char *buffer;
+    unsigned long offset; /* in the resource */
+    unsigned long length;
+    unsigned long done;
+    unsigned long position; /* of the resource in the file */
+    short finished;
+    unsigned short busy;
+    PreloadProc callback; /* the default provider's caller's */
+    long callbackData;
+};
+
+struct ResourceState
+{
+    short error; /* of the last call */
+    short ready;
+    short shareReadOnly; /* [Resource] fShareReadOnly */
+    short unknown6;
+    PurgeProc previousPurgeProc;
+    unsigned short handleState; /* resources' handles get it */
+    short buffer; /* for copying within files */
+    short currentMap;
+    short maps; /* the list */
+    unsigned short preloads;
+    unsigned short syncPreloads;
+    unsigned short asyncPreloads;
+    short preloadMap; /* the ring */
+    long preloadThread;
+    long systemMap; /* SYSTEM.W32 or SYSTEM.MHK */
+};
+
+extern ResourceState resources; /* @data 0x4b9d8c */
+
+/* Resource IDs */
+long makeResourceId(short map, unsigned short index); /* 0x492a25 */
+unsigned long resourceIndex(long id);
+long resourceMapHandle(long id); /* the low word */
+ResourceMap *resourceMap(long handle);
+short findEntry(long id, ResourceMap **map, FileTableEntry **entry);
+unsigned short __cdecl lowWord(unsigned long value);
+unsigned short __cdecl highWord(unsigned long value);
+unsigned long __cdecl makeLong(unsigned short low, unsigned short high);
+short setResourceError(short error);
+unsigned long __cdecl byteSwapLong(unsigned long value); /* big-endian to native and back */
+unsigned short __cdecl byteSwapShort(unsigned short value);
+short writeResource(long id);
+long findResourceByHandle(short handle);
+short releaseResource(long id, short release);
+short resourceError();
+short getResourceInfo(long id, long *file, unsigned long *offset, unsigned long *size);
+unsigned long resourceSize(long id);
+short loadResource(long id, short use);
+unsigned short resourceHandle(long id); /* 0 if not loaded, 0xffff on error */
+/* A resource's use counts: loads, then preloads. */
+unsigned char *resourceCounts(ResourceMap *map, unsigned short index);
+short disposeResourceHandle(short handle);
+void attachHandle(FileTableEntry *entry, short handle);
+short readResourceBytes(long id, void *buffer, unsigned long *size, unsigned long offset);
+short finishPreloads(long id);
+short purgeResource(short handle, short purpose);
+long openResourceFile(const fileSpec &file, short readOnly);
+void byteSwapHeader(MohawkHeader *header);
+void byteSwapDirectory(Directory *directory, short fromFile);
+void byteSwapFileTable(FileTable *table, short fromFile);
+/* Runs a map's preloads for up to `time` ms (0xffffffff: all of them). */
+unsigned short runMapPreloads(long map, unsigned long time);
+PreloadRequest *startPreload(long id, PreloadProc callback, long data);
+short disposePreload(PreloadRequest *request);
+short cancelPreloads(long id);
+unsigned short servicePreloads(unsigned long time);
+unsigned short stepPreload(PreloadRequest *request, unsigned long time); /* 0xffff on error */
+PreloadRequest *findPreload(ResourceMap *map, long id, short idle);
+void insertPreload(ResourceMap *map, PreloadRequest *request);
+void *defaultPreloadProc(long event, long id, short *handle);
+PreloadRequest *newPreloadRequest(long id, PreloadProc proc, long data, unsigned long length,
+                                  unsigned long offset);
+void seekPreloads(ResourceMap *map, unsigned long position);
+void preloadThread(long);
+PreloadRequest *checkRequest(PreloadRequest *request);
+void *callProvider(PreloadRequest *request, long event);
+long comparePreloads(PreloadRequest *a, PreloadRequest *b);
+short removeFromDirectory(short directory, unsigned short index);
+short addToDirectory(short directory, unsigned short index, unsigned long type, unsigned short id,
+                     const char *name);
+short resourceBufferSize();
+void closeResources();
+unsigned short setResourcePurgeable(long id, short purgeable);
+int __cdecl compareEntries(const void *a, const void *b); /* file-table entries, for qsort */
+long findResource(unsigned long type, unsigned short id, long map);
+short writeResourceMap(long handle);
+short writeMapHeader(ResourceMap *map); /* 0x492483 */
+short writeResourceData(long id, const void *buffer, unsigned long length, unsigned long offset);
+short copyFileBytes(ResourceMap *map, unsigned long to, unsigned long from, unsigned long length);
+
+/* The files resources come from (the async file API) */
+struct VolumeInfo
+{
+    char unknown0[0x26];
+    short async; /* reads can go on in the background */
+    char unknown28[4];
+    short readOnly;
+    char unknown2E[10];
+};
+
+short lockFile(long file, long timeout); /* 0x4860cc: 0, or 300 if it timed out */
+void unlockFile(long file); /* 0x484d98 */
+unsigned long seekFile(long file, unsigned long offset, short whence); /* 0x484dc4: -1 on error */
+short writeFile(long file, const void *buffer, long *size); /* 0x48610c */
+short setFileSize(long file, long size); /* 0x484f3c */
+unsigned long fileLength(long file); /* 0x4845fc */
+short fileSpecOf(long file, fileSpec *spec); /* 0x484934 */
+short volumeInfo(long volume, VolumeInfo *info); /* 0x4849ac */
+long fn_4850d4(long value); /* 0x4850d4: the previous value */
+
+/* Threads (the OS layer) */
+long createThread(void (*proc)(long), long, long stackSize, short); /* 0x46e302 */
+void deleteThread(long thread); /* 0x46e463 */
+void resumeThread(long thread); /* 0x46e857 */
+void yieldThread(long); /* 0x46eb9f */
+void fn_46eadd(long thread, short state);
+short fn_46e605(long thread);
+void fn_46e410();
+void fn_46e43a();
 
 /* Rectangles (QuickDraw's) */
 short emptyRect(ShortRect *rect);

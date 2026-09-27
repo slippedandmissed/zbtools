@@ -38,12 +38,12 @@ short decompressImage(short handle)
 
     if ((header = (ImageHeader *)handleData(handle)) == 0)
         return setPortError(memError());
-    flags = fn_492730(header->flags);
+    flags = byteSwapShort(header->flags);
     if (flags & 0xf00) {
-        switch (fn_492730(header->flags) & 0xf00) {
+        switch (byteSwapShort(header->flags) & 0xf00) {
         case 0x100:
             lz = (LzImage *)(header + 1);
-            switch (window = fn_492730(lz->window)) {
+            switch (window = byteSwapShort(lz->window)) {
             case 0x100:
                 bits = 8;
                 break;
@@ -65,14 +65,14 @@ short decompressImage(short handle)
             if ((ring = (unsigned char *)alloca(window)) == 0)
                 return setPortError(0x2a37);
             lockHandle(handle);
-            size = fn_4926ff(lz->size);
+            size = byteSwapLong(lz->size);
             newHandle_ = newHandle(size + 8);
             unlockHandle(handle);
             if (!newHandle_)
                 return setPortError(memError());
             out = (ImageHeader *)handleData(newHandle_);
             memcpy(out, header, 8);
-            out->flags &= ~fn_492730(0xf00);
+            out->flags &= ~byteSwapShort(0xf00);
             lzDecompress((unsigned char *)(out + 1), lz->data, size, ring, bits);
             error = swapHandleData(handle, newHandle_);
             disposeHandle(newHandle_);
@@ -89,7 +89,7 @@ short decompressImage(short handle)
                     break;
             }
             lockHandle(handle);
-            size = fn_4926ff(external->size);
+            size = byteSwapLong(external->size);
             newHandle_ = newHandle(size + 8);
             if (!newHandle_) {
                 setPortError(memError());
@@ -98,8 +98,8 @@ short decompressImage(short handle)
             }
             out = (ImageHeader *)lockHandle(newHandle_);
             memcpy(out, header, 8);
-            out->flags &= ~fn_492730(0xf00);
-            kind = fn_492730(header->flags) & 0xf;
+            out->flags &= ~byteSwapShort(0xf00);
+            kind = byteSwapShort(header->flags) & 0xf;
             depth = !kind        ? 1
                     : kind == 1 ? 4
                     : kind == 2 ? 8
@@ -108,9 +108,9 @@ short decompressImage(short handle)
                                 : 0;
             if (!depth
                 || ((DecompressProc)decompressor->proc)(
-                    out + 1, size, fn_492730(header->width), fn_492730(header->height), depth,
-                    (unsigned short)fn_492730(header->rowBytes), external->params,
-                    fn_4926ff(external->paramSize), 0xffff))
+                    out + 1, size, byteSwapShort(header->width), byteSwapShort(header->height), depth,
+                    (unsigned short)byteSwapShort(header->rowBytes), external->params,
+                    byteSwapLong(external->paramSize), 0xffff))
                 error = 0x2a63;
             else
                 error = 0;
@@ -127,14 +127,14 @@ short decompressImage(short handle)
             return setPortError(0x2a63);
         }
         flags &= 0xf0ff;
-        header->flags = fn_492730(flags);
+        header->flags = byteSwapShort(flags);
     }
     if ((flags & 0xf) == 3 && !(flags & 0xf0) && !(flags & 0x1000)) {
-        count = (unsigned short)fn_492730(header->height)
-                * ((short)fn_492730(header->rowBytes) >= 0 ? (short)fn_492730(header->rowBytes)
-                                                          : -(short)fn_492730(header->rowBytes));
+        count = (unsigned short)byteSwapShort(header->height)
+                * ((short)byteSwapShort(header->rowBytes) >= 0 ? (short)byteSwapShort(header->rowBytes)
+                                                          : -(short)byteSwapShort(header->rowBytes));
         swapWords(header + 1, count / 2);
-        header->flags = fn_492730(flags | 0x1000);
+        header->flags = byteSwapShort(flags | 0x1000);
     }
     return setPortError(0);
 }

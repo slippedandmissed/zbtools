@@ -123,7 +123,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         fatalError(msgInitFileManager);
     if (fn_480642())
         fatalError(msgInitConfiguration);
-    if (fn_4922c6())
+    if (initResources())
         fatalError(msgInitResourceManager);
     if (fn_476d0a())
         fatalError(msgInitSound);

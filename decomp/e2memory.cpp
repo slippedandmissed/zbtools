@@ -30,7 +30,7 @@ short fn_46bee9(short value)
 void fn_46ca9c(long *handle)
 {
     if (*handle) {
-        fn_48f660(*handle, 0, 0);
+        closeResourceFile(*handle, 0, 0);
         *handle = 0;
     }
 }

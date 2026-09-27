@@ -60,9 +60,9 @@ unsigned short fn_411382(short key, long type)
             loadFailed = 0;
         } else {
             entry->type = 0;
-            if (fn_48ff28(entry->unknownA) <= g_4a009c)
+            if (resourceSize(entry->unknownA) <= g_4a009c)
                 return loadSoundByKey(key, type);
-            if (!entry->unknown2 && !fn_490140(entry->unknownA))
+            if (!entry->unknown2 && !resourceHandle(entry->unknownA))
                 entry->unknown2 = 1;
             if (loadSound(entry))
                 result = key;

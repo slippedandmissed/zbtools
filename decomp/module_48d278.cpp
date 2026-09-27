@@ -40,7 +40,7 @@ short setCursorShape(const MacCursor *cursor)
         if (!graphics.standardCursor && !memcmp(graphics.cursorData, cursor, sizeof(MacCursor)))
             handle = graphics.cursor;
         else {
-            if ((hotH = fn_492730(cursor->hotH)) > 16 || (hotV = fn_492730(cursor->hotV)) > 16)
+            if ((hotH = byteSwapShort(cursor->hotH)) > 16 || (hotV = byteSwapShort(cursor->hotV)) > 16)
                 return setPortError(0x2a65);
             memset(xorMask, 0, sizeof(xorMask));
             memset(andMask, 0xff, sizeof(andMask));
