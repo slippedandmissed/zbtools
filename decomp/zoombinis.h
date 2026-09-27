@@ -1928,7 +1928,6 @@ long newStreamedSound(long resource, long);
 /* Called but not decompiled yet */
 short openWaveOut(long *out, unsigned short device, PCMWAVEFORMAT *format, long, long,
                   long flags); /* 0x47c712 */
-short closeWaveOut(long wave); /* 0x47c3d4 */
 short getWaveCaps(unsigned short device, void *caps, long size); /* 0x47c432 */
 short fn_47a074(short open); /* MMSYSERR_NOTSUPPORTED */
 unsigned short initMidi(); /* 0x47a07f */
@@ -2165,16 +2164,376 @@ void CALLBACK streamCallback(long wave, unsigned short message, DWORD instance, 
 void streamBufferDone(void *buffer); /* 0x47df7a */
 void waveBlockDone(void *block); /* 0x47ae62 */
 void CALLBACK waveCallback(long wave, unsigned short message, DWORD instance, DWORD header, DWORD); /* 0x47ae14 */
-short wavebufPause(long wave); /* 0x47c94b */
-unsigned short wavebufPrepareHeader(long wave, WAVEHDR *header, unsigned short size); /* 0x47c96b */
-short wavebufReset(long wave); /* 0x47c9c8 */
-short wavebufRestart(long wave); /* 0x47c9e8 */
-short wavebufSetPlaybackRate(long wave, long rate); /* 0x47ca52 */
-short wavebufSetVolume(long wave, long volume); /* 0x47ca77 */
-short wavebufUnprepareHeader(long wave, WAVEHDR *header, unsigned short size); /* 0x47ca9c */
-short wavebufWrite(long wave, WAVEHDR *header, unsigned short size); /* 0x47cac6 */
-short wavebufGetPosition(long wave, MMTIME *time, unsigned short size); /* 0x47c5dd */
-short wavebufBreakLoop(long wave); /* 0x47c3b4 */
+/* DirectSound (loaded at run time from DSOUND.DLL, when [WaveMix]
+   fEnableDirectSound is set): the parts WaveMix uses. BCC32 4.5 predates
+   dsound.h. */
+struct DSCAPS
+{
+    DWORD dwSize;
+    DWORD dwFlags;
+    DWORD dwMinSecondarySampleRate;
+    DWORD dwMaxSecondarySampleRate;
+    DWORD unknown10[20];
+};
+
+#define DSCAPS_SECONDARYMONO 0x100
+#define DSCAPS_SECONDARYSTEREO 0x200
+#define DSCAPS_SECONDARY8BIT 0x400
+#define DSCAPS_SECONDARY16BIT 0x800
+
+struct DSBUFFERDESC
+{
+    DWORD dwSize;
+    DWORD dwFlags;
+    DWORD dwBufferBytes;
+    DWORD dwReserved;
+    WAVEFORMATEX *lpwfxFormat;
+};
+
+#define DSERR_ALLOCATED 0x8878000aL
+#define DSERR_BADFORMAT 0x88780064L
+#define DSERR_OUTOFMEMORY 0x8007000eL
+
+struct IDirectSoundBuffer
+{
+    virtual long __stdcall QueryInterface(const GUID &iid, void **object) = 0;
+    virtual unsigned long __stdcall AddRef() = 0;
+    virtual unsigned long __stdcall Release() = 0;
+    virtual long __stdcall GetCaps(void *caps) = 0;
+    virtual long __stdcall GetCurrentPosition(DWORD *play, DWORD *write) = 0;
+    virtual long __stdcall GetFormat(WAVEFORMATEX *format, DWORD size, DWORD *written) = 0;
+    virtual long __stdcall GetVolume(long *volume) = 0;
+    virtual long __stdcall GetPan(long *pan) = 0;
+    virtual long __stdcall GetFrequency(DWORD *frequency) = 0;
+    virtual long __stdcall GetStatus(DWORD *status) = 0;
+    virtual long __stdcall Initialize(void *sound, const DSBUFFERDESC *desc) = 0;
+    virtual long __stdcall Lock(DWORD offset, DWORD bytes, void **first, DWORD *firstBytes,
+                                void **second, DWORD *secondBytes, DWORD flags) = 0;
+    virtual long __stdcall Play(DWORD reserved1, DWORD reserved2, DWORD flags) = 0;
+    virtual long __stdcall SetCurrentPosition(DWORD position) = 0;
+    virtual long __stdcall SetFormat(const WAVEFORMATEX *format) = 0;
+    virtual long __stdcall SetVolume(long volume) = 0;
+    virtual long __stdcall SetPan(long pan) = 0;
+    virtual long __stdcall SetFrequency(DWORD frequency) = 0;
+    virtual long __stdcall Stop() = 0;
+    virtual long __stdcall Unlock(void *first, DWORD firstBytes, void *second, DWORD secondBytes) = 0;
+    virtual long __stdcall Restore() = 0;
+};
+
+#define DSBPLAY_LOOPING 1
+
+struct IDirectSound
+{
+    virtual long __stdcall QueryInterface(const GUID &iid, void **object) = 0;
+    virtual unsigned long __stdcall AddRef() = 0;
+    virtual unsigned long __stdcall Release() = 0;
+    virtual long __stdcall CreateSoundBuffer(const DSBUFFERDESC *desc, IDirectSoundBuffer **buffer,
+                                             void *outer) = 0;
+    virtual long __stdcall GetCaps(DSCAPS *caps) = 0;
+    virtual long __stdcall DuplicateSoundBuffer(IDirectSoundBuffer *original,
+                                                IDirectSoundBuffer **duplicate) = 0;
+    virtual long __stdcall SetCooperativeLevel(HWND window, DWORD level) = 0;
+};
+
+#define DSSCL_NORMAL 1
+
+typedef BOOL(CALLBACK *DSENUMCALLBACK)(GUID *guid, const char *description, const char *module,
+                                       void *context);
+
+/* WaveMix's output buffer (RTTI class wavebuf): a ring of samples the mixer
+   writes ahead into while the device plays them, through waveOut
+   (wavebufWO) or a looping DirectSound buffer (wavebufDS). Positions count
+   samples since opening. The owner is told (through a deferred call) when
+   more can be written. */
+typedef void (*WavebufNotify)(long data, unsigned long played, unsigned long written);
+
+class wavebuf
+{
+public:
+    virtual __cdecl ~wavebuf();
+    virtual short __cdecl close() = 0;
+    virtual void __cdecl lock() = 0;
+    virtual void __cdecl unlock() = 0;
+    virtual short __cdecl position(unsigned long *played, unsigned long *written) = 0;
+    /* The space from `at` (at least the written position) to write in, in
+       one or two pieces (the ring wraps). */
+    virtual short __cdecl lockBuffer(unsigned long at, void **first, unsigned long *firstLength,
+                                     void **second, unsigned long *secondLength) = 0;
+    virtual short __cdecl open(PCMWAVEFORMAT *format, WavebufNotify notify, long data) = 0;
+    virtual void __cdecl formats(unsigned long *rate, unsigned long *formats) = 0;
+    virtual short __cdecl start() = 0;
+    virtual short __cdecl unlockBuffer() = 0;
+
+    char name[32]; /* the device's */
+};
+
+/* Through waveOut: a ring of blocks, written ahead by a thread polling the
+   device's position. */
+class wavebufWO : public wavebuf
+{
+public:
+    __cdecl wavebufWO(unsigned short device);
+    virtual __cdecl ~wavebufWO();
+    virtual short __cdecl close();
+    virtual void __cdecl lock();
+    virtual void __cdecl unlock();
+    virtual short __cdecl position(unsigned long *played, unsigned long *written);
+    virtual short __cdecl lockBuffer(unsigned long at, void **first, unsigned long *firstLength,
+                                     void **second, unsigned long *secondLength);
+    virtual short __cdecl open(PCMWAVEFORMAT *format, WavebufNotify notify, long data);
+    virtual void __cdecl formats(unsigned long *rate, unsigned long *formats);
+    virtual short __cdecl start();
+    virtual short __cdecl unlockBuffer();
+
+    static void *__cdecl operator new(size_t size);
+    static void __cdecl operator delete(void *block);
+    short __cdecl readDeviceInfo(const char *key);
+    unsigned long __cdecl devicePosition();
+    short __cdecl fill(unsigned long minimum);
+
+    unsigned short device;
+    short unknown26;
+    WAVEOUTCAPS caps;
+    DeferLock lockState;
+    Deferred call; /* runs wavebufWONotify */
+    short supported; /* not "not supported" in [WaveMix.DeviceInfo] */
+    short unknown82;
+    unsigned long blockCount; /* from [WaveMix.DeviceInfo] */
+    unsigned long blockSamples;
+    unsigned long ahead; /* samples to keep written ahead */
+    unsigned long prime; /* samples to write before starting */
+    short isOpen;
+    short unknown96;
+    PCMWAVEFORMAT format;
+    WavebufNotify notify;
+    long data;
+    HWAVEOUT wave;
+    WAVEHDR *headers;
+    unsigned char *buffer;
+    long thread;
+    unsigned long locked;
+    unsigned long totalSamples;
+    short started;
+    short unknownCA;
+    unsigned long done; /* the furthest block end the device has finished */
+    unsigned long played;
+    unsigned long written;
+};
+
+/* Through DirectSound: a looping buffer of one second. */
+class wavebufDS : public wavebuf
+{
+public:
+    __cdecl wavebufDS(unsigned short device);
+    virtual __cdecl ~wavebufDS();
+    virtual short __cdecl close();
+    virtual void __cdecl lock();
+    virtual void __cdecl unlock();
+    virtual short __cdecl position(unsigned long *played, unsigned long *written);
+    virtual short __cdecl lockBuffer(unsigned long at, void **first, unsigned long *firstLength,
+                                     void **second, unsigned long *secondLength);
+    virtual short __cdecl open(PCMWAVEFORMAT *format, WavebufNotify notify, long data);
+    virtual void __cdecl formats(unsigned long *rate, unsigned long *formats);
+    virtual short __cdecl start();
+    virtual short __cdecl unlockBuffer();
+
+    static void *__cdecl operator new(size_t size);
+    static void __cdecl operator delete(void *block);
+
+    unsigned short device;
+    unsigned short enumerated; /* devices seen while enumerating */
+    short available;
+    short unknown2A;
+    GUID guid;
+    CRITICAL_SECTION section;
+    DeferLock lockState;
+    Deferred call; /* runs wavebufDSNotify */
+    IDirectSound *directSound;
+    DSCAPS caps;
+    short isOpen;
+    short unknownDE;
+    WAVEFORMATEX format;
+    short unknownF2;
+    WavebufNotify notify;
+    long data;
+    IDirectSoundBuffer *buffer;
+    unsigned long bufferSamples;
+    HANDLE thread;
+    DWORD playCursor; /* in bytes */
+    unsigned long played;
+    unsigned long playWraps;
+    DWORD writeCursor;
+    unsigned long written;
+    unsigned long writeWraps;
+    short locked;
+    short unknown122;
+    void *lockFirst;
+    DWORD lockFirstBytes;
+    void *lockSecond;
+    DWORD lockSecondBytes;
+    short started;
+    short unknown136;
+};
+
+short __cdecl newWavebuf(unsigned short device, wavebuf **buffer); /* 0x47af3b */
+short __cdecl initWavebuf(); /* 0x47b000 */
+void __cdecl closeWavebuf(); /* 0x47b015 */
+void wavebufWONotify(void *data); /* 0x47b1d5 */
+void CALLBACK wavebufWOCallback(HWAVEOUT wave, UINT message, DWORD instance, DWORD header,
+                                DWORD); /* 0x47b360 */
+void __fastcall forgetWavebufCache(); /* 0x47b46f */
+void __cdecl freeWavebufCache(); /* 0x47b7c2 */
+void wavebufWOThread(long data); /* 0x47b856 */
+BOOL CALLBACK enumerateDirectSound(GUID *guid, const char *description, const char *module,
+                                   void *context); /* 0x47b9d0 */
+void wavebufDSNotify(void *data); /* 0x47bb80 */
+short __cdecl loadDirectSound(); /* 0x47bd45 */
+void __cdecl freeDirectSound(); /* 0x47c1a7 */
+DWORD WINAPI wavebufDSThread(void *data); /* 0x47c229 */
+
+extern short useDirectSound; /* @data 0x4a82d0 */
+extern short wavebufCache; /* @data 0x4a82d4: a handle kept for waveOut buffers */
+extern HINSTANCE directSoundLibrary; /* @data 0x4a8358 */
+extern long(WINAPI *directSoundCreate)(GUID *guid, IDirectSound **sound, void *outer); /* @data 0x4b9b38 */
+extern long(WINAPI *directSoundEnumerate)(DSENUMCALLBACK callback, void *context); /* @data 0x4b9b3c */
+
+/* WaveMix (the engine's software mixer): its objects stand in for waveOut
+   devices, handed out as handles by wavebufOpen and used through the other
+   wavebuf API functions, which mirror waveOut's. Mixed objects share a
+   wmxDevice (one per wave device, owning its wavebuf); objects opened with
+   bit 31 of the flags set are plain wmxObjects; when WaveMix is disabled
+   they're wmxWaveOuts, which pass everything to waveOut. */
+struct wmxDevice;
+
+class wmxObject
+{
+public:
+    __cdecl wmxObject(wmxDevice *device, PCMWAVEFORMAT *format, long callback, long instance,
+              unsigned long flags);
+    virtual __cdecl ~wmxObject();
+    virtual short __cdecl v1();
+    virtual void __cdecl v2();
+    virtual unsigned short __cdecl breakLoop();
+    virtual unsigned short __cdecl close();
+    virtual unsigned short __cdecl v5(long);
+    virtual unsigned short __cdecl getID(unsigned short *id);
+    virtual unsigned short __cdecl getPitch(unsigned long *pitch);
+    virtual unsigned short __cdecl getPlaybackRate(unsigned long *rate);
+    virtual unsigned short __cdecl getPosition(MMTIME *time, unsigned short size);
+    virtual unsigned short __cdecl getVolume(unsigned long *volume);
+    virtual unsigned short __cdecl pause();
+    virtual unsigned short __cdecl prepareHeader(WAVEHDR *header, unsigned short size);
+    virtual unsigned short __cdecl reset();
+    virtual unsigned short __cdecl restart();
+    virtual unsigned short __cdecl v15(long);
+    virtual unsigned short __cdecl setPitch(unsigned long pitch);
+    virtual unsigned short __cdecl setPlaybackRate(unsigned long rate);
+    virtual unsigned short __cdecl setVolume(unsigned long volume);
+    virtual unsigned short __cdecl unprepareHeader(WAVEHDR *header, unsigned short size);
+    virtual unsigned short __cdecl write(WAVEHDR *header, unsigned short size);
+
+    static void *__cdecl operator new(size_t size);
+    void notify(unsigned short message, long param1, long param2); /* 0x47f9f6 */
+
+    unsigned long tag; /* 'WMix' */
+    wmxObject *next; /* in wmx.objects */
+    wmxObject *prev;
+    wmxDevice *device;
+    PCMWAVEFORMAT format;
+    long callback;
+    long instance;
+    unsigned long flags;
+    wmxObject *deviceNext; /* in device->objects */
+    wmxObject *devicePrev;
+};
+
+/* A mixed channel. */
+class wmxMixer : public wmxObject
+{
+public:
+    __cdecl wmxMixer(wmxDevice *device, PCMWAVEFORMAT *format, long callback, long instance,
+             unsigned long flags);
+    char unknown38[0x29c - 0x38];
+};
+
+/* Straight through to waveOut. */
+class wmxWaveOut : public wmxObject
+{
+public:
+    __cdecl wmxWaveOut(PCMWAVEFORMAT *format, long callback, long instance, unsigned long flags);
+    unsigned short open(unsigned short device, unsigned long flags); /* 0x47fddc */
+    HWAVEOUT wave;
+    WAVEOUTCAPS caps;
+};
+
+/* A wave device WaveMix mixes for. */
+struct wmxDevice
+{
+    __cdecl wmxDevice(); /* 0x47e0ec */
+    __cdecl ~wmxDevice(); /* 0x47e0f9 */
+    static void *__cdecl operator new(size_t size);
+    unsigned short open(unsigned short device); /* 0x47e1a0 */
+
+    short isOpen;
+    unsigned short device;
+    wmxDevice *next; /* in wmx.devices */
+    wmxDevice *prev;
+    PCMWAVEFORMAT format; /* the mix's */
+    wavebuf *buffer;
+    unsigned long unknown20;
+    short objectCount;
+    short unknown26;
+    wmxObject *objects;
+};
+
+/* The extended caps wavebufGetDevCaps fills in when asked for them. */
+struct WmxCaps
+{
+    WAVEOUTCAPS caps;
+    unsigned long rate;
+    unsigned long formats;
+};
+
+struct WmxState
+{
+    short initialized;
+    short stereo; /* [WaveMix] fStereo */
+    unsigned long rate; /* [WaveMix] ulFrameRate */
+    unsigned long frameSize; /* [WaveMix] ulFrameSize */
+    wmxObject *objects;
+    wmxDevice *devices;
+    short enabled; /* [WaveMix] fEnable */
+    short unknown16;
+};
+
+extern WmxState wmx; /* @data 0x4b9b40 */
+
+void wmxDeviceFormats(wavebuf *buffer, unsigned long *rate, unsigned long *formats); /* 0x47e52b */
+wmxObject *wmxObjectOf(long handle); /* 0x47caf0 */
+short __cdecl initWaveMix(); /* 0x47c62c */
+void __cdecl closeWaveMix(); /* 0x47c995 */
+unsigned short wavebufOpen(long *handle, unsigned short device, PCMWAVEFORMAT *format,
+                           long callback, long instance, unsigned long flags); /* 0x47c712 */
+unsigned short wavebufGetDevCaps(unsigned short device, WmxCaps *caps, unsigned short size); /* 0x47c432 */
+
+unsigned short wavebufBreakLoop(long handle); /* 0x47c3b4 */
+unsigned short wavebufClose(long handle); /* 0x47c3d4 */
+unsigned short wavebufV5(long handle, long value); /* 0x47c40d */
+unsigned short wavebufGetID(long handle, unsigned short *id); /* 0x47c56e */
+unsigned short wavebufGetPitch(long handle, unsigned long *pitch); /* 0x47c593 */
+unsigned short wavebufGetPlaybackRate(long handle, unsigned long *rate); /* 0x47c5b8 */
+unsigned short wavebufGetPosition(long handle, MMTIME *time, unsigned short size); /* 0x47c5dd */
+unsigned short wavebufGetVolume(long handle, unsigned long *volume); /* 0x47c607 */
+unsigned short wavebufPause(long handle); /* 0x47c94b */
+unsigned short wavebufPrepareHeader(long handle, WAVEHDR *header, unsigned short size); /* 0x47c96b */
+unsigned short wavebufReset(long handle); /* 0x47c9c8 */
+unsigned short wavebufRestart(long handle); /* 0x47c9e8 */
+unsigned short wavebufV15(long handle, long value); /* 0x47ca08 */
+unsigned short wavebufSetPitch(long handle, unsigned long pitch); /* 0x47ca2d */
+unsigned short wavebufSetPlaybackRate(long handle, unsigned long rate); /* 0x47ca52 */
+unsigned short wavebufSetVolume(long handle, unsigned long volume); /* 0x47ca77 */
+unsigned short wavebufUnprepareHeader(long handle, WAVEHDR *header, unsigned short size); /* 0x47ca9c */
+unsigned short wavebufWrite(long handle, WAVEHDR *header, unsigned short size); /* 0x47cac6 */
 
 /* The engine uses Windows 95's MIDIHDR (0x40 bytes, with the streaming
    fields); Borland C++ 4.5's headers have the older one (0x1c). */
@@ -2652,7 +3011,7 @@ void __cdecl initLock(DeferLock *lock, short listed); /* 0x46d8af */
 void __cdecl removeLock(DeferLock *lock); /* 0x46d8e8 */
 void __cdecl deferCall(DeferLock *lock, Deferred *call); /* 0x46d91c */
 short fn_46d9c8();
-void *localAlloc(unsigned long size); /* 0x46d95c */
+void *localAlloc(unsigned short size); /* 0x46d95c */
 void localFree(void *block); /* 0x46d998 */
 short fn_46e00b(unsigned long thread); /* whether a thread belongs to the game */
 void fn_46da35(short value);

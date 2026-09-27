@@ -42,7 +42,7 @@ short setSoundsActive(short active)
             sound.midiCache = 0;
         }
         if (sound.cacheWaveDevice && sound.waveCache) {
-            closeWaveOut(sound.waveCache);
+            wavebufClose(sound.waveCache);
             sound.waveCache = 0;
         }
         sound.driverOpen = fn_47a074(0) == 0 ? 0 : 1;
@@ -483,7 +483,7 @@ void closeSounds()
     if (sound.midiCache)
         midiMapClose((long)sound.midiCache);
     if (sound.waveCache)
-        closeWaveOut(sound.waveCache);
+        wavebufClose(sound.waveCache);
     sound.ready = 0;
     closeMidi();
 }
@@ -665,7 +665,7 @@ unsigned short setWaveDevice(unsigned short device)
     sound.waveDevice = device;
     if (sound.cacheWaveDevice && previous != device) {
         if (sound.waveCache) {
-            closeWaveOut(sound.waveCache);
+            wavebufClose(sound.waveCache);
             sound.waveCache = 0;
         }
         if (sound.active) {

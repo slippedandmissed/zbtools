@@ -196,7 +196,7 @@ short __cdecl waveObj::openDevice()
         return setSoundError(0x29cc);
     case 0:
         if (lockPtr(file)) {
-            closeWaveOut(wave);
+            wavebufClose(wave);
             wave = 0;
             return setSoundError(memError());
         }
@@ -304,7 +304,7 @@ void __cdecl waveObj::closeDevice()
     unlockPtr(file);
     unprepare();
     wavebufReset(wave);
-    closeWaveOut(wave);
+    wavebufClose(wave);
     wave = 0;
     removeLock(&lock);
 }

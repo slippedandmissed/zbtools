@@ -454,6 +454,72 @@
 0x0047ad19 waveObj::setText
 0x0047ae14 waveCallback
 0x0047ae62 waveBlockDone
+0x0047af1c wavebuf::~wavebuf
+0x0047af3b newWavebuf
+0x0047b000 initWavebuf
+0x0047b015 closeWavebuf
+0x0047b02e wavebufDS::operator new
+0x0047b03d wavebufWO::operator new
+0x0047b04c wavebufWO::wavebufWO
+0x0047b18e wavebufWO::~wavebufWO
+0x0047b1d5 wavebufWONotify
+0x0047b200 wavebufWO::close
+0x0047b2b3 wavebufWO::readDeviceInfo
+0x0047b360 wavebufWOCallback
+0x0047b38a wavebufWO::lock
+0x0047b39c wavebufWO::unlock
+0x0047b3ae wavebufWO::devicePosition
+0x0047b412 wavebufWO::position
+0x0047b46f forgetWavebufCache
+0x0047b479 wavebufWO::lockBuffer
+0x0047b7a9 wavebufWO::formats
+0x0047b7c2 freeWavebufCache
+0x0047b7e6 wavebufWO::start
+0x0047b856 wavebufWOThread
+0x0047b88b wavebufWO::unlockBuffer
+0x0047b8bc wavebufWO::fill
+0x0047b96c wavebufWO::operator delete
+0x0047b9d0 enumerateDirectSound
+0x0047ba2b wavebufDS::wavebufDS
+0x0047bb2f wavebufDS::~wavebufDS
+0x0047bb80 wavebufDSNotify
+0x0047bbab wavebufDS::close
+0x0047bbfa wavebufDS::lock
+0x0047bc17 wavebufDS::unlock
+0x0047bc34 wavebufDS::position
+0x0047bd45 loadDirectSound
+0x0047bf02 wavebufDS::open
+0x0047c0b1 wavebufDS::formats
+0x0047c1a7 freeDirectSound
+0x0047c1c7 wavebufDS::start
+0x0047c229 wavebufDSThread
+0x0047c297 wavebufDS::unlockBuffer
+0x0047c353 wavebufDS::operator delete
+0x0047c3b4 wavebufBreakLoop
+0x0047c3d4 wavebufClose
+0x0047c40d wavebufV5
+0x0047c432 wavebufGetDevCaps
+0x0047c56e wavebufGetID
+0x0047c593 wavebufGetPitch
+0x0047c5b8 wavebufGetPlaybackRate
+0x0047c5dd wavebufGetPosition
+0x0047c607 wavebufGetVolume
+0x0047c62c initWaveMix
+0x0047c712 wavebufOpen
+0x0047c94b wavebufPause
+0x0047c96b wavebufPrepareHeader
+0x0047c995 closeWaveMix
+0x0047c9c8 wavebufReset
+0x0047c9e8 wavebufRestart
+0x0047ca08 wavebufV15
+0x0047ca2d wavebufSetPitch
+0x0047ca52 wavebufSetPlaybackRate
+0x0047ca77 wavebufSetVolume
+0x0047ca9c wavebufUnprepareHeader
+0x0047cac6 wavebufWrite
+0x0047caf0 wmxObjectOf
+0x0047cb09 wmxObject::operator new
+0x0047cb18 wmxDevice::operator new
 0x0047cb30 wavestreamObj::newBuffer
 0x0047cb97 wavestreamObj::freeBuffer
 0x0047cbbb wavestreamObj::prepareBuffer

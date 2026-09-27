@@ -299,7 +299,7 @@ short __cdecl wavestreamObj::openDevice()
         if (cues && lockPtr(cues)) {
             setSoundError(memError());
         fail:
-            closeWaveOut(wave);
+            wavebufClose(wave);
             wave = 0;
             return sound.error;
         }
@@ -420,7 +420,7 @@ void __cdecl wavestreamObj::closeDevice()
         freeBuffer(loopBuffer);
         loopBuffer = 0;
     }
-    closeWaveOut(wave);
+    wavebufClose(wave);
     wave = 0;
     removeLock(&lock);
 }
