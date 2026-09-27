@@ -9,6 +9,12 @@ char installFromDirKey[] = "INSTALLFROMDIR";
 char dataDirName[] = "Data\\";
 char installToDirKey[] = "INSTALLTODIR";
 
+/* @zoombi32 0x0044695c */
+void fn_44695c()
+{
+    fn_46258a();
+}
+
 /* @zoombi32 0x00446962 */
 void fn_446962(char *, const char *)
 {

@@ -835,6 +835,8 @@ void fn_48c538();
 void fn_4887f4();
 void fn_48b1b4();
 void fn_455273(short);
+void fn_44695c();
+void fn_46258a();
 /* loading */
 unsigned short loadMidi(short key);
 void unloadMidi(short key);
