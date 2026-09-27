@@ -48,11 +48,11 @@ void initViews()
     }
     fn_456c00();
     for (short j = 0; j < 32; j++) {
-        g_4b8a0e[j] = 0;
-        g_4b8a90[j] = 0;
+        viewSounds.sounds[j] = 0;
+        viewSounds2.sounds[j] = 0;
     }
-    g_4b8a0c = 0;
-    g_4b8a8e = 0;
+    viewSounds.active = 0;
+    viewSounds2.active = 0;
     viewsReady = 1;
 }
 
@@ -136,11 +136,11 @@ void clearViews()
         g_4b7560 = 1;
         setViewsLocked(1);
         for (short j = 0; j < 32; j++) {
-            g_4b8a0e[j] = 0;
-            g_4b8a90[j] = 0;
+            viewSounds.sounds[j] = 0;
+            viewSounds2.sounds[j] = 0;
         }
-        g_4b8a0c = 0;
-        g_4b8a8e = 0;
+        viewSounds.active = 0;
+        viewSounds2.active = 0;
         g_4b9684 = 0;
         fn_45bfc0(0);
     }
@@ -884,4 +884,423 @@ void moveView(short moving, short after, short anchor)
             }
         }
     }
+}
+
+/* Loads an image bank ('tBMP'), trying four times; its count and offsets
+   big-endian. */
+/* Not exact: register allocation (the original keeps the bank in edx and
+   the index in ecx; BCC here swaps them). */
+/* @zoombi32 0x004651ee */
+ImageBank *loadImageBank(short id, long *resource)
+{
+    short tries = 4;
+    short error = 1;
+
+    g_4a4974 = 1;
+    while (error && tries) {
+        fn_46c4fe(resource, RESOURCE_TYPE('t', 'B', 'M', 'P'), id, 0, 0);
+        if (*resource) {
+            fn_46beac(*resource);
+            error = decompressImage(fn_46beac(*resource));
+            if (!error)
+                error = getPortError();
+        }
+        if (error)
+            fn_46c602(resource);
+        tries--;
+    }
+    if (!error) {
+        ImageBank *bank = (ImageBank *)fn_48ea00(fn_46beac(*resource));
+
+        bank->count = swapShort(bank->count);
+        for (short i = 1; i <= bank->count; i++)
+            bank->offsets[i] = swapLong(bank->offsets[i]);
+        g_4a4974 = 0;
+        return bank;
+    }
+    fatalError("Out of memory loading SHP@");
+    return 0;
+}
+
+/* Loads a resource of big-endian words, swapping them all. */
+/* @zoombi32 0x004652f5 */
+short *loadSwappedResource(long *resource, short id, long type)
+{
+    short handle;
+    short *at;
+    short *data;
+
+    fn_46c4fe(resource, type, id, 0, 1);
+    handle = fn_46beac(*resource);
+    at = (short *)fn_48ea00(handle);
+    data = at;
+    for (unsigned long size = handleSize(handle); size; size -= 2) {
+        *at = swapShort(*at);
+        at++;
+    }
+    return data;
+}
+
+/* @zoombi32 0x004655d3 */
+void fadeInViews()
+{
+    viewsBusy = 1;
+    fadePalette(g_4aabe8, 1, 0xfe, 0, 1, 0);
+    viewsBusy = 0;
+    viewsShown = 1;
+    fn_4624f4();
+}
+
+/* @zoombi32 0x0046560b */
+void fadeOutViews()
+{
+    if (viewsShown) {
+        viewsBusy = 1;
+        viewsShown = 0;
+        fadePalette(0, 1, 0xfe, 0, 1, 0);
+        if (g_4a48e6) {
+            fillPortRect(gameRect, Color(0), 0);
+            showRect(&gameRect);
+        }
+        viewsBusy = 0;
+    }
+}
+
+/* The value of the range a sound is in (0 if none), and the range's rank
+   (32 less its index). */
+/* @zoombi32 0x00465692 */
+short soundRangeFor(short sound, short *rank)
+{
+    *rank = 0;
+    {
+        for (short i = 0; i < soundRanges; i++)
+            if (sound >= soundRangeLow[i] && sound <= soundRangeHigh[i]) {
+                *rank = 32 - i;
+                return soundRangeValue[i];
+            }
+    }
+    return 0;
+}
+
+/* @zoombi32 0x004656e7 */
+void addSoundRange(short low, short high, short value)
+{
+    if (soundRanges < 32) {
+        soundRangeLow[soundRanges] = low;
+        soundRangeHigh[soundRanges] = high;
+        soundRangeValue[soundRanges] = value;
+        soundRanges++;
+    }
+}
+
+/* Keeps only the sound in the best-ranked range (the last of equals). */
+/* @zoombi32 0x00465738 */
+void pickViewSounds(SoundChannels *channels)
+{
+    short bestIndex;
+    short rank;
+    short bestRank;
+    short keep[32];
+    short best;
+    short i;
+
+    for (i = 0; i < 32; i++)
+        keep[i] = 0;
+    best = bestRank = 0;
+    for (i = 0; i < 32; i++) {
+        if (channels->sounds[i]) {
+            short value = soundRangeFor(channels->sounds[i], &rank);
+
+            if (best) {
+                if (rank >= bestRank) {
+                    keep[bestIndex] = 0;
+                    bestIndex = i;
+                    bestRank = rank;
+                    best = channels->sounds[i];
+                    keep[i] = 1;
+                    if (value && !channels->unknown42[i])
+                        channels->unknown42[i] = 1;
+                }
+            } else {
+                keep[i] = 1;
+                best = channels->sounds[i];
+                bestIndex = i;
+                bestRank = rank;
+                if (value && !channels->unknown42[i])
+                    channels->unknown42[i] = 1;
+            }
+        }
+    }
+    for (i = 0; i < 32; i++)
+        if (!keep[i])
+            channels->sounds[i] = 0;
+}
+
+/* Loads the sounds a view's script plays (now, with `now`). */
+/* @zoombi32 0x00465a5e */
+void loadViewSounds(short id, short now)
+{
+    short count;
+    short sounds[4];
+    long saved;
+
+    if (g_4b87fe) {
+        View *view = findView(id);
+
+        if (view) {
+            saved = g_4a7f58;
+            count = 4;
+            viewSoundList(view, &count, sounds);
+            for (short i = 0; i < count; i++) {
+                if (sounds[i] < 1000 || sounds[i] >= 20000)
+                    fn_46be2e(g_4b7b4c);
+                else
+                    g_4a7f58 = saved;
+                if (now)
+                    fn_411382(sounds[i], RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                else
+                    loadSoundByKey(sounds[i], RESOURCE_TYPE(0, 'S', 'N', 'D'));
+            }
+            g_4a7f58 = saved;
+        }
+    }
+}
+
+/*
+ * The sounds a view's script plays (up to *count; *count becomes how many):
+ * those its frames' ends name, and for a Zoombini (flag 1) those its
+ * commands 201-217 ask for (fn_45b8b0 picks them for its features).
+ */
+/* @zoombi32 0x0046583a */
+void viewSoundList(View *view, short *count, short *sounds)
+{
+    short frames;
+    short max;
+    Snoid *snoid;
+    short *at;
+    short left;
+    short value;
+
+    if (view) {
+        if (view->flags & 1) {
+            snoid = &view->snoid;
+            switch (snoid->unknownF4) {
+            default:
+                at = g_4b78b4[snoid->script];
+                break;
+            case 8:
+            case 9:
+                at = g_4b7980[snoid->script];
+                break;
+            }
+            frames = *at++;
+            at++;
+        } else {
+            snoid = 0;
+            at = scripts[view->snoid.script];
+            frames = *at++;
+        }
+        max = *count;
+        *count = 0;
+        for (; frames; frames--) {
+            left = 24;
+            do {
+                short word;
+
+                left--;
+                word = *at++;
+                if (word >= 0) {
+                    at += 2;
+                } else {
+                    if (word < -0x100) {
+                        value = *at++;
+                        if (value && *count < max) {
+                            sounds[*count] = value;
+                            (*count)++;
+                        }
+                    }
+                    if (snoid && (word &= 0xff) != 0 && --word >= 200 && word <= 0xef) {
+                        switch (word) {
+                        case 200:
+                            value = 8;
+                            break;
+                        case 201:
+                            value = 6;
+                            break;
+                        case 202:
+                            value = 7;
+                            break;
+                        case 203:
+                            value = 10;
+                            break;
+                        case 204:
+                            value = 2;
+                            break;
+                        case 205:
+                            value = 12;
+                            break;
+                        case 206:
+                            value = 1;
+                            break;
+                        case 207:
+                            value = 9;
+                            break;
+                        case 208:
+                            value = 0;
+                            break;
+                        case 209:
+                            value = 4;
+                            break;
+                        case 210:
+                            value = 5;
+                            break;
+                        case 211:
+                            value = 3;
+                            break;
+                        case 212:
+                            value = 11;
+                            break;
+                        case 213:
+                            value = 13;
+                            break;
+                        case 214:
+                            value = 14;
+                            break;
+                        case 215:
+                            value = 15;
+                            break;
+                        case 216:
+                            value = 16;
+                            break;
+                        default:
+                            value = 0;
+                            break;
+                        }
+                        if (value && *count < max) {
+                            sounds[*count] = fn_45b8b0(snoid, value);
+                            (*count)++;
+                        }
+                    }
+                    if (left)
+                        left = 0;
+                }
+            } while (left);
+        }
+    }
+}
+
+/* Reports a sound test: kind 1 a sound, 2 a streamed sound, 3 MIDI. */
+/* @zoombi32 0x00465b19 */
+void noteSoundTest(short sound, short kind)
+{
+    char snd[16] = "snd:";
+    char streamed[16] = "s-snd:";
+    char midi[20] = "midi test:";
+    char text[32] = "";
+
+    switch (kind) {
+    case 1:
+        strcpy(text, snd);
+        break;
+    case 2:
+        strcpy(text, streamed);
+        break;
+    case 3:
+        strcpy(text, midi);
+        break;
+    }
+    intToDecimal(sound, text + strlen(text));
+    fn_4589ce(text, 0, 1);
+}
+
+/*
+ * Plays the sounds views asked for in an update: forgets finished ones,
+ * picks one (with `pick`) and starts the new ones, from the sounds' map
+ * (MIDI from 30000, streamed from 20000). With `played` 0, drops them all.
+ * Returns the last sound started.
+ */
+/* @zoombi32 0x0046535f */
+short playViewSounds(SoundChannels *channels, short played, short pick)
+{
+    long saved;
+    char state;
+    long type;
+    short last = 0;
+    short i;
+
+    if (played) {
+        if (channels->active) {
+            for (i = 0; i < 32; i++) {
+                if (channels->sounds[i]) {
+                    state = channels->state[i];
+                    channels->state[i] = 0;
+                    if (isSoundPlaying(channels->sounds[i], RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+                        channels->state[i] = channels->unknown42[i] + 1;
+                    } else if (state) {
+                        unloadSound(channels->sounds[i], RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                        channels->sounds[i] = 0;
+                    }
+                }
+            }
+            if (pick)
+                pickViewSounds(channels);
+            for (i = 0; i < 32; i++) {
+                if (channels->sounds[i] && !channels->state[i]) {
+                    saved = g_4a7f58;
+                    type = RESOURCE_TYPE(0, 'S', 'N', 'D');
+                    if (channels->sounds[i] >= 30000) {
+                        fn_46be2e(g_4b7b50);
+                        type = RESOURCE_TYPE('t', 'M', 'I', 'D');
+                    } else if (channels->sounds[i] < 1000) {
+                        fn_46be2e(g_4b7b4c);
+                    } else if (channels->sounds[i] >= 20000) {
+                        fn_46be2e(g_4b7b4c);
+                        channels->unknown42[i] = 1;
+                    }
+                    if (channels->unknown42[i]) {
+                        short ok;
+
+                        last = channels->sounds[i];
+                        ok = fn_411bfe(last, type, -1);
+                        if (ok)
+                            channels->state[i] = 2;
+                        if (g_4b8803) {
+                            if (!ok)
+                                fn_462749(last, "Could not Get/Start s-sound ", 0, 0, 1);
+                            else if (soundTests)
+                                noteSoundTest(last, 2);
+                        }
+                    } else {
+                        last = channels->sounds[i];
+                        playSoundOn(last, type, -1);
+                        if (g_4b8803) {
+                            if (!playSoundOn(last, type, -1))
+                                fn_462749(last, "Could not Get/Start sound ", 0, 0, 1);
+                            else if (soundTests)
+                                noteSoundTest(last, 1);
+                        }
+                        channels->state[i] = 1;
+                    }
+                    g_4a7f58 = saved;
+                }
+            }
+            {
+                short to;
+
+                for (to = i = 0; i < 32; i++)
+                    if (channels->sounds[i] && to != i) {
+                        channels->sounds[to] = channels->sounds[i];
+                        channels->unknown42[to] = channels->unknown42[i];
+                        channels->state[to] = channels->state[i];
+                        to++;
+                        channels->sounds[i] = 0;
+                    }
+            }
+        }
+    } else {
+        for (i = 0; i < 32; i++)
+            channels->sounds[i] = 0;
+    }
+    channels->active = 0;
+    return last;
 }

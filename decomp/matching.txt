@@ -416,6 +416,16 @@
 0x00465146 setViewsLocked
 0x00465175 fn_465175
 0x0046517f moveView
+0x004652f5 loadSwappedResource
+0x0046535f playViewSounds
+0x004655d3 fadeInViews
+0x0046560b fadeOutViews
+0x00465692 soundRangeFor
+0x004656e7 addSoundRange
+0x00465738 pickViewSounds
+0x0046583a viewSoundList
+0x00465a5e loadViewSounds
+0x00465b19 noteSoundTest
 0x0046b07b fn_46b07b
 0x0046b747 fn_46b747
 0x0046be28 currentMap

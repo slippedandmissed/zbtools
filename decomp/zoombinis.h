@@ -320,6 +320,15 @@ struct Snoid
     char unknown103;
 };
 
+/* The sounds views ask to play in an update (0x82 bytes). */
+struct SoundChannels
+{
+    short active;
+    short sounds[32];
+    char unknown42[32];
+    char state[32];
+};
+
 struct View;
 typedef void (*ViewDraw)(View *view);
 typedef void (*ViewUpdate)(View *view, short region);
@@ -4031,6 +4040,8 @@ void fn_415a11(Callback callback);
 void fn_415a20(Callback callback);
 /* view */
 void initViews(); /* 0x46310c */
+short fn_45b8b0(Snoid *snoid, short which);
+void fn_4589ce(const char *text, short, short);
 void fn_459c84(short, short);
 void fn_4591cc();
 void fn_4571a8();
@@ -4086,12 +4097,13 @@ void setViewsLocked(short locked);
 void moveView(short moving, short after, short anchor);
 ImageBank *loadImageBank(short id, long *resource);
 short *loadSwappedResource(long *resource, short id, long type);
-short playViewSounds(short *channels, short played, short priority);
+short playViewSounds(SoundChannels *channels, short played, short pick);
+void viewSoundList(View *view, short *count, short *sounds);
 void fadeInViews();
 void fadeOutViews();
 short soundRangeFor(short sound, short *rank);
 void addSoundRange(short low, short high, short value);
-void pickViewSounds(short *channels);
+void pickViewSounds(SoundChannels *channels);
 void loadViewSounds(short id, short now);
 void noteSoundTest(short sound, short kind);
 extern View *views; /* @data 0x4a7ba8: viewHead, once set up */
@@ -4135,7 +4147,6 @@ extern short groupLeader[17]; /* @data 0x4b8b10 */
 extern char g_4b8b32[17];
 extern char g_4b8b43[17];
 extern short soundRanges; /* @data 0x4b94b8 */
-extern short g_4b8a0c;
 extern short placedViewCount; /* @data 0x4b80f4 */
 extern short placedViews[125]; /* @data 0x4b80f6: views added with flag 0x2000 */
 extern Point placedViewPoints[125]; /* @data 0x4b81f0 */
@@ -4148,9 +4159,14 @@ extern short g_4b7560;
 extern short g_4b7566;
 extern long g_4b9670;
 extern long g_4b9674;
-extern short g_4b8a0e[32];
-extern short g_4b8a8e;
-extern short g_4b8a90[32];
+extern SoundChannels viewSounds; /* @data 0x4b8a0c */
+extern SoundChannels viewSounds2; /* @data 0x4b8a8e */
+extern long g_4b7b4c; /* the sounds' map */
+extern short *g_4b78b4[]; /* scripts for Zoombinis */
+extern short *g_4b7980[];
+extern long g_4b7b50; /* the MIDI map */
+extern char g_4b8803;
+extern short soundTests; /* @data 0x4a7b80: report the sounds started */
 extern short soundRangeLow[32]; /* @data 0x4b94ba */
 extern short soundRangeHigh[32]; /* @data 0x4b94fa */
 extern short soundRangeValue[32]; /* @data 0x4b953a */
