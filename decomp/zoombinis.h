@@ -4239,6 +4239,12 @@ void fn_466b93();
 void loadDialogs();
 void freeDialogs();
 void askKeepParty();
+void dialogClick(Point where);
+void startNewGame();
+void askNewGame();
+void askLoadGame();
+void askSaveGame();
+void askQuit();
 void showDialog(short kind, const char *text, const char *button2, const char *button1); /* 0x466d7e */
 void fn_41f551();
 extern short g_4b966e;
@@ -4262,6 +4268,24 @@ extern MapSave *g_4a7d50;
 extern const char *keepPartyText; /* @data 0x4a53fc: 'THE CURRENT PARTY OF ZOOMBINIS W...' */
 extern const char *loseEmText; /* @data 0x4a5400: "LOSE 'EM" */
 extern const char *keepEmText; /* @data 0x4a5404: "KEEP 'EM" */
+extern const char *cancelText; /* @data 0x4a540c */
+extern const char *noSavedGamesText; /* @data 0x4a5448 */
+extern const char *okText; /* @data 0x4a544c */
+extern const char *notSavedNewGameText; /* @data 0x4a5450 */
+extern const char *newGameText; /* @data 0x4a5454 */
+extern const char *yesText; /* @data 0x4a5474 */
+extern const char *noText; /* @data 0x4a5484 */
+extern const char *practiceNoSaveText; /* @data 0x4a5488 */
+extern const char *sureNewGameText; /* @data 0x4a548c */
+extern const char *practiceNoLoadText; /* @data 0x4a5494 */
+extern const char *practiceNoNewText; /* @data 0x4a5498 */
+extern const char *reallyQuitText; /* @data 0x4a54a0 */
+extern char gameName[]; /* @data 0x4a48ea */
+extern char userFile[]; /* @data 0x4a4900 */
+extern short g_4b80e2;
+extern Point dialogWhere; /* @data 0x4b97f8 */
+extern ShortRect dialogSpots[17]; /* @data 0x4b982a */
+extern char g_4b98b2[17];
 extern long groupBankResources[8]; /* @data 0x4b95a4 */
 extern ImageBank *groupBanks[8]; /* @data 0x4b95c4 */
 extern long groupHotXResources[8]; /* @data 0x4b95e4 */

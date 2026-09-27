@@ -443,6 +443,12 @@
 0x00466c95 freeDialogs
 0x00466d3d askKeepParty
 0x004674af tickView
+0x0046879e dialogClick
+0x00469490 startNewGame
+0x00469556 askNewGame
+0x004695e5 askLoadGame
+0x00469627 askSaveGame
+0x00469669 askQuit
 0x0046b07b fn_46b07b
 0x0046b747 fn_46b747
 0x0046be28 currentMap

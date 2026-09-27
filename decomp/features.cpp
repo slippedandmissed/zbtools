@@ -644,3 +644,123 @@ void askKeepParty()
         showDialog(4, keepPartyText, loseEmText, keepEmText);
     }
 }
+
+/* Which of the dialog's hot spots (1-17) a click hits, of those the dialog
+   showing (g_4b9684) has; notes it in g_4b97fc. */
+/* @zoombi32 0x0046879e */
+void dialogClick(Point where)
+{
+    short hit;
+    short i;
+
+    if (g_4b9684 & 0x10) {
+        g_4b9686 = 5;
+        return;
+    }
+    for (i = 0; i < 17; i++)
+        g_4b98b2[i] = 0;
+    dialogWhere = where;
+    hit = 0;
+    for (i = 0; !hit && i < 17; i++)
+        if (ptInRect(&dialogSpots[i], where)) {
+            short spot = i + 1;
+
+            if (g_4b9684 & 8)
+                hit = spot >= 15 && spot <= 16;
+            else if (g_4b9684 & 2)
+                hit = (spot >= 11 && spot <= 14) || spot == 17;
+            else if (g_4b9684 & 4)
+                hit = spot >= 11 && spot <= 14;
+            else if (g_4b9684 & 1)
+                hit = spot >= 1 && spot <= 10;
+            if (hit)
+                g_4b97fc = spot;
+        }
+}
+
+/* @zoombi32 0x00469490 */
+void startNewGame()
+{
+    short scene;
+
+    g_4b80e2 = 0;
+    scene = currentScene;
+    fn_41f6fc(1);
+    fn_41f668();
+    currentScene = scene;
+    *(short *)(g_4a4ba0 + 0xca) = g_4b0d56 = 3;
+    g_4b0d54 = -1;
+    g_4b0d50 = -1;
+    g_4b0d52 = 1;
+    if (currentScene != 1)
+        g_4b0d52 = 3;
+    *(short *)(g_4a4ba0 + 0xcc) = g_4b0d52;
+    viewsLocked = 1;
+    g_4b7562 = 1;
+    strcpy(gameName, "New Game");
+    strcpy(userFile, "ZBUser");
+    strcat(userFile, ".txt");
+}
+
+/* The New Game button: asks first (warning if the game isn't saved). */
+/* @zoombi32 0x00469556 */
+void askNewGame()
+{
+    if (currentScene >= 1 && currentScene <= 18) {
+        if (!g_4b754a) {
+            if (!g_4b80e2) {
+                g_4b80e2 = 1;
+                if (g_4afb32)
+                    showDialog(4, notSavedNewGameText, newGameText, cancelText);
+                else
+                    showDialog(4, sureNewGameText, newGameText, cancelText);
+            } else {
+                startNewGame();
+            }
+        } else {
+            showDialog(4, practiceNoNewText, okText, 0);
+        }
+    }
+}
+
+/* The Load button. */
+/* @zoombi32 0x004695e5 */
+void askLoadGame()
+{
+    if (currentScene >= 1 && currentScene <= 18) {
+        if (!g_4b754a)
+            showDialog(2, 0, 0, 0);
+        else
+            showDialog(4, practiceNoLoadText, okText, 0);
+    }
+}
+
+/* The Save button. */
+/* @zoombi32 0x00469627 */
+void askSaveGame()
+{
+    if (currentScene >= 1 && currentScene <= 18) {
+        if (!g_4b754a)
+            showDialog(3, 0, 0, 0);
+        else
+            showDialog(4, practiceNoSaveText, okText, 0);
+    }
+}
+
+/* The Quit button. */
+/* @zoombi32 0x00469669 */
+void askQuit()
+{
+    if (!g_4b966c && (g_4b9684 & 1))
+        g_4b966c = 1;
+    if (g_4b966c) {
+        showDialog(4, reallyQuitText, yesText, noText);
+        return;
+    }
+    if (!g_4b754a && currentScene >= 1 && currentScene <= 18) {
+        if (!g_4b80e0 && !g_4b80e2)
+            g_4b80e0 = 1;
+    } else {
+        g_4b80e0 = -1;
+    }
+}
