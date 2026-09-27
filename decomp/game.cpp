@@ -19,7 +19,7 @@ void gameFrame()
 {
     if (currentScene != -1 && scenes[currentScene]->frame) {
         long saved = getPort();
-        setPort(g_4aa7c8);
+        setPort(workPort);
         scenes[currentScene]->frame();
         setPort(saved);
     }

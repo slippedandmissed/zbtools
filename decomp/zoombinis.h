@@ -11,6 +11,7 @@
 #include <windows.h>
 #include <stdarg.h>
 #include <time.h>
+#include <string.h>
 
 /* Types */
 
@@ -69,21 +70,65 @@ struct Cursor
 };
 
 /* A rectangle of shorts (Windows' order). */
-/* A colour as the Mohawk engine passes it around (returned through a hidden
-   pointer, so it has a constructor). */
-class Color
-{
-public:
-    long value;
-    Color() {}
-};
-
 struct ShortRect
 {
     short left;
     short top;
     short right;
     short bottom;
+};
+
+/* Resources (images) by index, from 1. */
+struct ResourceList
+{
+    long unknown0;
+    long unknown4;
+    long resources[1];
+};
+
+/* A saved area of a port (e2MapSave), 0xe bytes. */
+struct MapSave
+{
+    long port; /* holding the saved pixels */
+    short locks;
+    ShortRect rect;
+};
+
+/*
+ * The Mohawk engine's types, as the game's calls show them (the engine was
+ * compiled separately, without -p, so its methods are __cdecl).
+ *
+ * Rect: the engine takes rectangles by const reference, and the game passes
+ * its ShortRects, each converted into a temporary (memcpy'd, by an inline
+ * constructor).
+ */
+class Rect
+{
+public:
+    short left;
+    short top;
+    short right;
+    short bottom;
+    Rect(const ShortRect &rect) { memcpy(this, &rect, sizeof(Rect)); }
+};
+
+/* Color: a colour value or palette index. Constructed out of line by the
+   engine, returned through a hidden pointer, and copied whole and then by
+   index (hence the union). */
+class Color
+{
+public:
+    union {
+        long value;
+        short index;
+    };
+    __cdecl Color(); /* 0x488874 */
+    __cdecl Color(short index); /* 0x48889d */
+    Color(const Color &color)
+    {
+        value = color.value;
+        index = color.index;
+    }
 };
 
 /* An item (0x24 bytes). */
@@ -321,8 +366,9 @@ extern char formatJoin[]; /* @data 0x4a027d */
 extern char formatErrorNumber[]; /* @data 0x4a0282 */
 extern char formatSoundId[]; /* @data 0x4a028d */
 extern char msgDeviceFailed[]; /* @data 0x4a0297 */
-extern char msgNoScreenPort[]; /* @data 0x4a0313 */
+extern char msgNoScreenPort[]; /* @data 0x4a0313: graphics and placeGamePort share it */
 extern short breakpointKey; /* @data 0x4a0708 */
+extern char msgUnableToLockPort[]; /* @data 0x4a0710 */
 extern Callback g_4a07ac;
 extern long g_4a07b0;
 extern const char *g_4a07b4; /* the message for a fatal error */
@@ -420,19 +466,28 @@ extern short breakpointRequested; /* @data 0x4aa5d8 */
 extern Event eventQueue[32]; /* @data 0x4aa5da */
 extern short eventHead; /* @data 0x4aa79a */
 extern short eventTail; /* @data 0x4aa79c */
-extern long g_4aa7a4;
+extern long screenPort; /* @data 0x4aa7a4: the window's port */
 extern ShortRect gameRect; /* @data 0x4aa7a8: the game's area */
 extern ShortRect screenRect; /* @data 0x4aa7b0 */
 extern ShortRect g_4aa7b8;
-extern long g_4aa7c8;
-extern char g_4aa7d0[];
-extern char g_4aa7dc[];
+extern long workPort; /* @data 0x4aa7c8: where the game draws, off screen */
 extern short g_4aa7cc;
 extern short g_4aa7ce;
-extern long g_4aafe8;
+extern DisplayMode displayMode; /* @data 0x4aa7d0 */
+extern DisplayMode g_4aa7dc;
+extern PALETTEENTRY g_4aa7e8[256];
+extern PALETTEENTRY g_4aabe8[256];
+extern long palette; /* @data 0x4aafe8 */
 extern short bitsPerPixel; /* @data 0x4aafec */
+extern PALETTEENTRY colors[256]; /* @data 0x4aafee: the palette's colours */
 extern short debugMode; /* @data 0x4ab474 */
 extern short debugging; /* @data 0x4ab476: errors stop in the debugger */
+extern PALETTEENTRY *g_4ab3f0;
+extern char *g_4ab3f4;
+extern char *g_4ab3f8;
+extern char *g_4ab3fc;
+extern char *g_4ab400;
+extern short g_4ab404; /* displayMode.unknown8 */
 extern short g_4ab480;
 extern short g_4ab482;
 extern short g_4ab49c;
@@ -609,22 +664,72 @@ void fn_48daa8();
 void fn_48c538();
 void fn_4887f4();
 void fn_48b1b4();
-void fn_414d53(ShortRect *rect);
-void fn_414e18(ShortRect *rect, int x, int y, short how);
-void fn_414da5(long port);
 void fn_455273(short);
+void __cdecl fn_415477(const char *format, ...); /* reports running out of memory */
+/* graphics */
+void initGraphics(DisplayMode *mode, short depth);
+void closeGraphics();
+void drawImage(ResourceList *images, short index, short x, short y, short mode, short anchor);
+void drawImageInColor(ResourceList *images, short index, short x, short y, short mode, short color,
+                      short anchor);
+void getColors(PALETTEENTRY *to, short first, short count);
+void setColors(PALETTEENTRY *from, short first, short count);
+void fn_4148da(short first, short count);
+void createPort(long *port, ShortRect *bounds, short keep, const char *name);
+void destroyPort(long *port, short release);
+void fn_414a2e(long port, ShortRect *bounds);
+void saveRect(MapSave **save, ShortRect *rect, short locked, const char *name);
+void restoreRect(MapSave **save, short free);
+void freeSave(MapSave **save);
+void clipRect(short *region, ShortRect *rect, short keep);
+void fn_414c25(short *region, short free);
+void getClipRegion(short *region, short create);
+void createRegion(short *region);
+void freeRegion(short *region);
+void copyBits(long to, long from, ShortRect *rect);
+void showRect(ShortRect *rect);
+void lockPort(long port);
+void lockSave(MapSave *save);
+void unlockSave(MapSave *save);
+void alignRect(ShortRect *rect, short x, short y, short how);
+void fn_414e7d();
+void redrawRect(ShortRect *rect);
+void fn_414f01(InputItem *item);
+void fn_414f17(InputItem *item);
 void fn_456a64();
 /* Mohawk engine */
 void fn_480c04(ShortRect *rect, short dx, short dy); /* offsets a rectangle */
+short fn_48ba5a(DisplayMode *mode, short); /* non-zero on failure */
+void fn_48d798(short);
+long fn_488d08(short count, PALETTEENTRY *entries); /* creates a palette */
+void fn_48906c(long palette);
+short fn_48c300();
+void fn_48c314();
+unsigned short *fn_48e96c(short handle); /* locks a resource */
+void fn_48f550(short handle); /* unlocks it */
+void fn_48adf0(unsigned short *image, short x, short y, short mode); /* draws an image */
+long fn_48b4a8(); /* the current palette */
+void fn_48d5ec(long palette, short first, short count, PALETTEENTRY *entries);
+long fn_488ba8(short width, short height, short depth, long); /* creates a port */
+void fn_48db08(long port);
+void fn_4890f8(long port);
+void fn_48d9c8(short left, short top);
+short fn_4816d4(short region); /* whether it's empty */
+void fn_488828(const Rect &rect);
+void fn_48d1e0(short region);
+void fn_481670(short region);
+void fn_48b2ac(short region);
+short fn_481274(); /* creates a region */
+void fn_488a88(long to, long from, const Rect &fromRect, const Rect &toRect, short mode);
+short fn_48c750(long port); /* locks a port; non-zero on failure */
+void fn_48c5fc(const Rect &rect);
 void fn_480c24(ShortRect *rect, ShortRect *by);
-long fn_488f34(ShortRect *bounds, HWND window, long); /* creates a window port */
+long fn_488f34(const Rect &bounds, HWND window, long); /* creates a window port */
 void fn_48d574(long);
-void fn_48d194(ShortRect *rect);
-Color __cdecl fn_48889d(short index); /* a palette index's colour */
-void fn_48c9ac(ShortRect *rect, Color color, short); /* fills a rectangle */
-void __cdecl fn_488874(Color *color);
-void fn_48b4d8(Color *color);
-void fn_48d884(Color *, Color);
+void fn_48d194(const Rect &rect);
+void fn_48c9ac(const Rect &rect, Color color, short); /* fills a rectangle */
+Color fn_48b4d8(); /* the current colour */
+Color fn_48d884(Color color); /* sets the colour, returning the old one */
 void mouseButtonDown(short button, long keys, long where);
 short handleNextMessage();
 void flushInput(short which);
@@ -638,9 +743,8 @@ void fn_456b2e(short active);
 void fn_46da64(short active);
 short fn_4764bc(short open); /* opens (1) or closes the sound driver; non-zero on failure */
 void fn_4157c8(short active);
-void fn_48b2d8(void *);
-void fn_48d480(void *);
-void fn_4149e0(long *port, short);
+void fn_48b2d8(DisplayMode *mode);
+void fn_48d480(DisplayMode *mode);
 void *fn_48e6b4(long size); /* allocates memory */
 unsigned long fn_48e7ec(); /* free memory */
 void fn_48e928(MemoryInfo *info);
@@ -772,7 +876,6 @@ void getMousePosition(Point *where);
 void waitForEvent(short type, short discard);
 void __cdecl nextEventIndex(short *index);
 void fn_414358(void **block);
-void fn_414ce7(short *handle);
 void fn_4153b0(Callback callback);
 void fn_4153bf(long value);
 void fn_4153ce(const char *message);
@@ -820,7 +923,7 @@ void waitWhilePaused();
 short pumpMessage(MSG *message, unsigned short first, unsigned short last, unsigned short flags);
 void handleSystemKey(MSG *message);
 void handleMessage(MSG *message);
-short createMainWindow(long, long);
+short createMainWindow(short width, short height);
 short addModifierKeys(short modifiers);
 void getCursorPosition(Point *where);
 void setCursorPosition(short x, short y);

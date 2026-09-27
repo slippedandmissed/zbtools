@@ -71,11 +71,11 @@ void checkDisplayMode(DisplayMode *mode)
  * Whether the screen's port exists afterwards.
  */
 /* @zoombi32 0x004556aa */
-short createMainWindow(long, long)
+short createMainWindow(short, short)
 {
     int screenWidth, screenHeight, borderWidth, borderHeight;
 
-    if (g_4aa7a4)
+    if (screenPort)
         return 0;
     if (!appPreviousInstance) {
         windowClass.style = 0;
@@ -106,7 +106,7 @@ short createMainWindow(long, long)
     ShowWindow(mainWindow, appShowCommand);
     UpdateWindow(mainWindow);
     fn_456914();
-    return g_4aa7a4 != 0;
+    return screenPort != 0;
 }
 
 /* Whether a mouse is installed. */
@@ -218,7 +218,7 @@ void mouseButtonDown(short button, long keys, long where)
     point.x = position.x;
     point.y = position.y;
     saved = getPort();
-    setPort(g_4aa7a4);
+    setPort(screenPort);
     globalToLocal(&point);
     setPort(saved);
     if (!inputIgnored)
@@ -242,7 +242,7 @@ void handleMessagesIgnoringInput()
 /* @zoombi32 0x0045581b */
 void destroyMainWindow()
 {
-    fn_4149e0(&g_4aa7a4, 1);
+    destroyPort(&screenPort, 1);
     if (mainWindow) {
         g_4b2d32 = 1;
         activateApp(0);
@@ -328,7 +328,7 @@ short addModifierKeys(short modifiers)
     return modifiers;
 }
 
-/* Where the cursor is, in the coordinates of the port g_4aa7a4. */
+/* Where the cursor is, in the coordinates of the port screenPort. */
 /* @zoombi32 0x004559c0 */
 void getCursorPosition(Point *where)
 {
@@ -339,7 +339,7 @@ void getCursorPosition(Point *where)
     point.x = cursor.x;
     point.y = cursor.y;
     long saved = getPort();
-    setPort(g_4aa7a4);
+    setPort(screenPort);
     globalToLocal(&point);
     setPort(saved);
     *where = point;
@@ -352,7 +352,7 @@ inline void setPoint(Point *point, short y, short x)
     point->y = y;
 }
 
-/* Moves the cursor to a point in the coordinates of the port g_4aa7a4. */
+/* Moves the cursor to a point in the coordinates of the port screenPort. */
 /* @zoombi32 0x00455a10 */
 void setCursorPosition(short x, short y)
 {
@@ -360,7 +360,7 @@ void setCursorPosition(short x, short y)
 
     setPoint(&point, y, x);
     long saved = getPort();
-    setPort(g_4aa7a4);
+    setPort(screenPort);
     localToGlobal(&point);
     setPort(saved);
     SetCursorPos(point.x, point.y);
@@ -454,8 +454,8 @@ void restoreDirectory()
 /* @zoombi32 0x004568d8 */
 short fn_4568d8()
 {
-    if (!windowed && g_4aafe8) {
-        if (fn_48cab4(g_4aafe8, 1))
+    if (!windowed && palette) {
+        if (fn_48cab4(palette, 1))
             InvalidateRect(mainWindow, 0, 0);
         return 1;
     }
@@ -528,7 +528,7 @@ short isInputWaiting(short which)
  * cursor ones are logged before and after (logMessage), and clear g_4b2b00
  * unless they're keys. Keys and clicks become game events; closing the
  * window, or the session ending, is a fatal error (it quits); the window is
- * repainted by g_4a07ec (or fn_414d53) and blacked out around it.
+ * repainted by g_4a07ec (or showRect) and blacked out around it.
  */
 /* @zoombi32 0x0045605e */
 LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
@@ -662,13 +662,13 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
         if (windowed)
             return 0;
         port = getPort();
-        if (g_4aa7a4 && g_4aa7c8) {
-            setPort(g_4aa7a4);
+        if (screenPort && workPort) {
+            setPort(screenPort);
             fn_4887f4();
             if (g_4a07ec)
                 g_4a07ec();
             else
-                fn_414d53(&gameRect);
+                showRect(&gameRect);
             fn_48b1b4();
         }
         setPort(port);
@@ -798,8 +798,8 @@ void activateApp(long active)
         appActive = active;
         if (active) {
             if (!g_4b2d3a && g_4b9d22 >= 0x395 && !g_4b2b04) {
-                fn_48b2d8(g_4aa7dc);
-                fn_48d480(g_4aa7d0);
+                fn_48b2d8(&g_4aa7dc);
+                fn_48d480(&displayMode);
             }
             placeGamePort();
             fn_46da64(1);
@@ -823,7 +823,7 @@ void activateApp(long active)
             fn_4764bc(0);
             fn_46da64(0);
             if (!g_4b2d3a && g_4b9d22 >= 0x395 && !g_4b2b04)
-                fn_48d480(g_4aa7dc);
+                fn_48d480(&g_4aa7dc);
             if (!g_4b2d32 && g_4b9d22 >= 0x395 && g_4a4a0c && !g_4b2d3a) {
                 windowed = 1;
                 SendMessage(mainWindow, WM_SYSCOMMAND, SC_MINIMIZE, 0);
@@ -833,14 +833,13 @@ void activateApp(long active)
 }
 
 /*
- * Measures the screen, centres the game's area on it (fn_414e18) and moves
+ * Measures the screen, centres the game's area on it (alignRect) and moves
  * it to match, then creates the screen port there if there isn't one yet.
  */
 /* @zoombi32 0x00456914 */
 void placeGamePort()
 {
     ShortRect centred;
-    ShortRect bounds;
     ShortRect *screen;
     long saved;
 
@@ -849,61 +848,46 @@ void placeGamePort()
     screen->right = GetSystemMetrics(SM_CXSCREEN);
     screen->bottom = GetSystemMetrics(SM_CYSCREEN);
     centred = g_4aa7b8 = gameRect;
-    fn_414e18(&centred, (screen->right + screen->left) >> 1, (screen->bottom + screen->top) >> 1,
+    alignRect(&centred, (screen->right + screen->left) >> 1, (screen->bottom + screen->top) >> 1,
               0x22);
     fn_480c04(screen, -centred.left, -centred.top);
     fn_480c24(&g_4aa7b8, screen);
-    if (!g_4aa7a4) {
-        memcpy(&bounds, &centred, sizeof bounds);
-        g_4aa7a4 = fn_488f34(&bounds, mainWindow, 0);
-        if (g_4aa7a4)
-            fn_414da5(g_4aa7a4);
+    if (!screenPort) {
+        screenPort = fn_488f34(centred, mainWindow, 0);
+        if (screenPort)
+            lockPort(screenPort);
         else
             fn_41541a(msgNoScreenPort);
-        if (g_4aafe8) {
+        if (palette) {
             saved = getPort();
-            setPort(g_4aa7a4);
-            fn_48d574(g_4aafe8);
+            setPort(screenPort);
+            fn_48d574(palette);
             setPort(saved);
         }
     }
 }
 
-/*
- * Draws the palette as a chart of 8-pixel squares, 32 to a row.
- *
- * Not exact: the original gives i ebx and rect esi (the other way round),
- * copies `other` into `color` through its address, and passes `color` to
- * fn_48d884 as a dword and then a word, which suggests engine types (Color,
- * fn_48d884's parameter) not modelled yet.
- */
+/* Draws the palette as a chart of 8-pixel squares, 32 to a row, keeping the
+   current colour. */
 /* @zoombi32 0x00456a64 */
 void fn_456a64()
 {
     ShortRect cell;
     ShortRect saved;
-    Color color;
-    Color other;
-    ShortRect square;
-    Color unknown;
-    ShortRect *rect;
     short i;
 
-    rect = &cell;
     saved = g_4a4ae6;
-    fn_488874(&color);
-    fn_48b4d8(&other);
-    color = other;
+    Color color;
+    color = fn_48b4d8();
     for (i = 0; i <= 0xff; i++) {
-        rect->left = (i & 0x1f) << 3;
-        rect->top = ((i & 0xe0) >> 5) << 3;
-        rect->right = rect->left + 8;
-        rect->bottom = rect->top + 8;
-        memcpy(&square, rect, sizeof square);
-        fn_48c9ac(&square, fn_48889d(i), 0);
+        cell.left = (i & 0x1f) << 3;
+        cell.top = ((i & 0xe0) >> 5) << 3;
+        cell.right = cell.left + 8;
+        cell.bottom = cell.top + 8;
+        fn_48c9ac(cell, Color(i), 0);
     }
-    fn_48d884(&unknown, color);
-    fn_414d53(&saved);
+    fn_48d884(color);
+    showRect(&saved);
 }
 
 /* With a screen port: activating clears the game's area (and fills it via
@@ -912,25 +896,18 @@ void fn_456a64()
 /* @zoombi32 0x00456b2e */
 void fn_456b2e(short active)
 {
-    ShortRect first;
-    ShortRect second;
-    ShortRect third;
-
-    if (g_4aa7a4) {
+    if (screenPort) {
         if (active) {
             if (g_4b2ad4 && g_4b2ad8) {
-                memcpy(&first, &gameRect, sizeof first);
-                fn_48d194(&first);
-                memcpy(&second, &gameRect, sizeof second);
-                fn_48c9ac(&second, fn_48889d(0), 0);
+                fn_48d194(gameRect);
+                fn_48c9ac(gameRect, Color(0), 0);
             }
         } else if (g_4b2ad4 && g_4b2ad8) {
             g_4b7cf8 = 1;
             fn_455273(1);
         }
         if (!active) {
-            memcpy(&third, &gameRect, sizeof third);
-            fn_48d194(&third);
+            fn_48d194(gameRect);
         }
     }
 }
