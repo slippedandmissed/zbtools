@@ -437,6 +437,11 @@
 0x00465e59 runViewScript
 0x004666b7 queueViewSound
 0x0046675d removeFirstCel
+0x00466a25 strandParty
+0x00466b93 fn_466b93
+0x00466bd6 loadDialogs
+0x00466c95 freeDialogs
+0x00466d3d askKeepParty
 0x004674af tickView
 0x0046b07b fn_46b07b
 0x0046b747 fn_46b747

@@ -429,3 +429,218 @@ void runViewScript(View *view, short region)
         }
     }
 }
+
+/* A simpler view update: runs its script's frame as it stands (without
+   moving on to the next frame, sounds or events). */
+/* Not exact: register allocation (the original keeps the frame's word in
+   eax, the position in edx and the count in ecx, and no variable in edi). */
+/* @zoombi32 0x00466798 */
+void runViewCels(View *view, short region)
+{
+    short *cel;
+
+    if (view->body.running && !g_4b9684 && view->nextUpdate <= updateTime) {
+        ShortRect rect;
+        short *hotY;
+        short *cels;
+        ImageBank *bank;
+
+        view->nextUpdate = updateTime + view->interval;
+        if (view->reset) {
+            setViewScript(view, view->kind, 1);
+            view->unknown2e = 0;
+            view->changed = 1;
+        } else if (!(view->flags & 0x4000)) {
+            unionRgnRect(region, &view->body.bounds);
+            view->changed = 1;
+        }
+        if (view->changed) {
+            {
+                short word;
+                short *at;
+                short left;
+
+                at = scripts[view->body.script] + view->body.frameOffset;
+                bank = groupBanks[view->body.scriptGroup];
+                cels = cel = (short *)view->body.cels;
+                left = 24;
+                do {
+                    left--;
+                    word = *at++;
+                    if (!word) {
+                        at += 2;
+                        *cel++ = 0;
+                        *cel++ = 0;
+                        *cel++ = 0;
+                    } else if (word > 0) {
+                        *cel++ = word;
+                        *cel++ = *at++;
+                        *cel++ = *at++;
+                    } else {
+                        if (word < -0x100)
+                            at++;
+                        if (left)
+                            *cel = left = 0;
+                    }
+                } while (left);
+            }
+            if (view->placed)
+                view->placed(view);
+            if (groupHotXResources[view->body.scriptGroup]) {
+                short *hotX = groupHotX[view->body.scriptGroup];
+
+                hotY = groupHotY[view->body.scriptGroup];
+                for (cel = cels; *cel;) {
+                    short image = *cel++;
+
+                    *cel++ -= hotX[image];
+                    *cel++ -= hotY[image];
+                }
+            }
+            cel = cels;
+            if (*cel) {
+                unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
+
+                cel++;
+                view->body.bounds.left = *cel++;
+                view->body.bounds.right = swapShort(image[0]) + view->body.bounds.left;
+                view->body.bounds.top = *cel++;
+                view->body.bounds.bottom = swapShort(image[1]) + view->body.bounds.top;
+            }
+            while (*cel) {
+                unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
+
+                cel++;
+                rect.left = *cel++;
+                rect.right = swapShort(image[0]) + rect.left;
+                rect.top = *cel++;
+                rect.bottom = swapShort(image[1]) + rect.top;
+                unionRect(&view->body.bounds, &rect);
+            }
+        }
+    }
+}
+
+/*
+ * The party's journey ends in the current scene: parties stranded in
+ * scenes 3, 4 (the camp) and 5 wait there; otherwise it's emptied.
+ */
+/* @zoombi32 0x00466a25 */
+void strandParty()
+{
+    fn_459c84(1, 1);
+    switch (currentScene) {
+    case 1:
+    case 6:
+        party()->count = 0;
+        fn_41f551();
+        return;
+    case 4:
+        *savedParty() = *party();
+        party()->count = 0;
+        fn_41f551();
+        savedParty()->count = 0;
+        return;
+    case 5:
+        waitingParties()[2] = *party();
+        party()->count = 0;
+        fn_41f551();
+        waitingParties()[2].count = 0;
+        return;
+    case 3:
+        waitingParties()[0] = *party();
+        party()->count = 0;
+        fn_41f551();
+        waitingParties()[0].count = 0;
+        return;
+    case 2:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+    case 18:
+        fn_41f551();
+        party()->count = 0;
+        return;
+    case -1:
+    case 0:
+    case 19:
+    case 20:
+    case 21:
+        g_4afb32 = 0;
+        party()->count = 0;
+        break;
+    }
+}
+
+/* @zoombi32 0x00466b93 */
+void fn_466b93()
+{
+    if (g_4b966e) {
+        if (lastViewSound == g_4b966e) {
+            stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+            lastViewSound = 0;
+            return;
+        }
+        queueViewSound(g_4b966e, 0);
+    }
+}
+
+/* Loads the dialogs' images and scripts (from the sounds' map). */
+/* @zoombi32 0x00466bd6 */
+void loadDialogs()
+{
+    long saved;
+
+    if (!dialogResource) {
+        g_4b98cc = 0;
+        g_4b9686 = g_4b97fc = g_4b9688 = 0;
+        dialogView = dialogButton1 = dialogButton2 = g_4b9804 = 0;
+        g_4b9806 = g_4b9808 = g_4b980a = g_4b980c = g_4b980e = 0;
+        saved = g_4a7f58;
+        fn_46be2e(g_4b7b4c);
+        dialogImages = loadImageBank(1, &dialogResource);
+        for (short i = 0; i < 11; i++)
+            dialogScripts[i] = loadSwappedResource(&dialogScriptResources[i], i + 1,
+                                                   RESOURCE_TYPE('S', 'C', 'R', 'B'));
+        g_4a7f58 = saved;
+    }
+}
+
+/* @zoombi32 0x00466c95 */
+void freeDialogs()
+{
+    g_4b9686 = g_4b97fc = 0;
+    dialogView = dialogButton1 = dialogButton2 = 0;
+    g_4b9806 = g_4b9808 = g_4b980a = g_4b980c = g_4b980e = 0;
+    if (g_4a7d4c) {
+        disposePtr(g_4a7d4c);
+        g_4a7d4c = 0;
+    }
+    if (g_4a7d50) {
+        freeSave(&g_4a7d50);
+        g_4a7d50 = 0;
+    }
+    if (dialogResource) {
+        fn_46c602(&dialogResource);
+        for (short i = 0; i < 11; i++)
+            fn_46c602(&dialogScriptResources[i]);
+    }
+}
+
+/* Asks whether to keep the party, in a scene of the journey. */
+/* @zoombi32 0x00466d3d */
+void askKeepParty()
+{
+    if (!g_4b754a && currentScene >= 1 && currentScene <= 18) {
+        g_4b9688 = 1;
+        showDialog(4, keepPartyText, loseEmText, keepEmText);
+    }
+}

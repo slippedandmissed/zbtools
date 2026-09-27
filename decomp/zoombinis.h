@@ -1002,6 +1002,11 @@ inline Party *savedParty()
 {
     return (Party *)(g_4a4ba0 + 0xa462);
 }
+/* The parties waiting in scenes 3, 4 (the camp: savedParty) and 5. */
+inline Party *waitingParties()
+{
+    return (Party *)(g_4a4ba0 + 0xa1fc);
+}
 /* The Zoombinis on the journey. */
 inline Traveller *travellers()
 {
@@ -4228,6 +4233,35 @@ void queueViewSound(short sound, char streamed);
 void removeFirstCel(ViewCel *cels);
 void tickView(View *view, short);
 void runViewScript(View *view, short region);
+void runViewCels(View *view, short region);
+void strandParty();
+void fn_466b93();
+void loadDialogs();
+void freeDialogs();
+void askKeepParty();
+void showDialog(short kind, const char *text, const char *button2, const char *button1); /* 0x466d7e */
+void fn_41f551();
+extern short g_4b966e;
+extern long dialogResource; /* @data 0x4b9798 */
+extern ImageBank *dialogImages; /* @data 0x4b979c */
+extern long dialogScriptResources[11]; /* @data 0x4b97a0 */
+extern short *dialogScripts[11]; /* @data 0x4b97cc */
+extern short g_4b97fc;
+extern short dialogView; /* @data 0x4b97fe */
+extern short dialogButton1; /* @data 0x4b9800 */
+extern short dialogButton2; /* @data 0x4b9802 */
+extern short g_4b9804;
+extern short g_4b9806;
+extern short g_4b9808;
+extern short g_4b980a;
+extern short g_4b980c;
+extern short g_4b980e;
+extern short g_4b98cc;
+extern void *g_4a7d4c;
+extern MapSave *g_4a7d50;
+extern const char *keepPartyText; /* @data 0x4a53fc: 'THE CURRENT PARTY OF ZOOMBINIS W...' */
+extern const char *loseEmText; /* @data 0x4a5400: "LOSE 'EM" */
+extern const char *keepEmText; /* @data 0x4a5404: "KEEP 'EM" */
 extern long groupBankResources[8]; /* @data 0x4b95a4 */
 extern ImageBank *groupBanks[8]; /* @data 0x4b95c4 */
 extern long groupHotXResources[8]; /* @data 0x4b95e4 */
