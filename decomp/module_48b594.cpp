@@ -471,7 +471,7 @@ LRESULT CALLBACK graphicsWindowProc(HWND window, UINT message, WPARAM wParam, LP
         break;
     case WM_PALETTEISCHANGING:
         thread = GetWindowThreadProcessId((HWND)wParam, 0);
-        if (graphics.active && thread != appThreadId() && !fn_46e00b(thread)
+        if (graphics.active && thread != appThreadId() && !isMohawkThread(thread)
             && graphics.paletteReserved == 2) {
             dc = GetDC(0);
             setSystemPaletteUse(dc, SYSPAL_STATIC);

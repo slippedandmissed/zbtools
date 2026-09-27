@@ -70,7 +70,7 @@ unsigned short realizePalette(Palette *handle, short foreground)
         use = graphics.takeStatic ? SYSPAL_NOSTATIC : SYSPAL_STATIC;
         if (use != setSystemPaletteUse(dc, use))
             palette->realized = 0;
-    } else if (thread != ourThread && (!thread || !fn_46e00b(thread))
+    } else if (thread != ourThread && (!thread || !isMohawkThread(thread))
                && graphics.systemPaletteUse == SYSPAL_NOSTATIC
                && GetSystemPaletteUse(dc) == SYSPAL_NOSTATIC)
         setSystemPaletteUse(dc, SYSPAL_STATIC);

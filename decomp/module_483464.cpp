@@ -187,7 +187,7 @@ void __cdecl closeFiles()
 
     files.askUser = 0;
     files.canAsk = 1;
-    fn_46e410();
+    disableScheduling();
     setActivateHook(files.previousHook);
     files.previousHook = 0;
     filesActivated(0);
@@ -196,7 +196,7 @@ void __cdecl closeFiles()
     for (i = 0; i < files.drives->count; i++)
         files.drives->drives[i].~Drive();
     free(files.drives);
-    fn_46e43a();
+    enableScheduling();
     {
         AsyncWorker *worker;
         while ((worker = asyncWorkers) != 0)

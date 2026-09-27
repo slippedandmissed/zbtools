@@ -138,7 +138,7 @@ void mainLoopEvents()
         g_4a07c4();
     if (debugMode && breakpointRequested) {
         breakpointRequested = 0;
-        fn_46db93("generic breakpoint");
+        debugPrintf("generic breakpoint");
         debugBreak(0);
     }
     checkStarvation();
@@ -182,7 +182,7 @@ void checkStarvation()
             if (lastCheck + starvationLimit < thisCheck) {
                 g_4ab49c = 0;
                 g_4ab49e = 1;
-                fn_46db93(msgStarvation);
+                debugPrintf(msgStarvation);
                 debugBreak(0);
             }
             lastCheck = thisCheck;

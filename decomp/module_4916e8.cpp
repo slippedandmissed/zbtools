@@ -480,14 +480,14 @@ short resourceBufferSize()
 /* @zoombi32 0x0049269e */
 void closeResources()
 {
-    fn_46e410();
+    disableScheduling();
     if (resources.systemMap)
         closeResourceFile(resources.systemMap, 0, 1);
     while (resources.maps) {
         setResourceError(0x28d2);
         closeResourceFile((unsigned short)resources.maps, 0, 1);
     }
-    fn_46e43a();
+    enableScheduling();
     setPurgeProc(resources.previousPurgeProc);
     disposeHandle(resources.buffer);
     resources.ready = 0;

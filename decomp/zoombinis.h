@@ -532,10 +532,46 @@ public:
     virtual void __cdecl virtual2(int flag);
 };
 
-/* Something starting with the tag 'ksTI' (bytes in memory order). */
-struct Tagged
+/* A timer the OS layer runs from its window's messages (0x1c bytes), tagged
+   'ksTI' (bytes in memory order). Handed around as a handle (its address). */
+struct OsTimer
 {
     long tag;
+    OsTimer *prev;
+    OsTimer *next;
+    void (*proc)(long timer, long data);
+    long data;
+    long interval; /* ms; 0 stopped, -1 every time */
+    unsigned long due;
+};
+
+/* The OS layer's state (0x2c bytes), cleared by osStartup. */
+struct OsState
+{
+    short error; /* of the last call */
+    short running; /* started */
+    short active; /* the application is active */
+    short unknown6;
+    ActivateHook activateHook;
+    HINSTANCE instance;
+    unsigned long thread; /* the application's */
+    HWND window; /* 'MOHAWK OS Manager' */
+    HHOOK hook; /* on the thread's messages, to run timers */
+    short runningTimers;
+    short unknown1E;
+    unsigned long nextTimer; /* when the next timer is due (0: none) */
+    OsTimer *timers;
+    UINT timerId; /* WM_TIMER's, while there are timers */
+};
+
+/* The system, as osStartup found it (0x2c bytes). */
+struct SystemState
+{
+    short processor; /* 3 a 386 ... 7 */
+    unsigned short windowsVersion; /* BCD: 0x395 for 3.95 (Windows 95) */
+    SYSTEM_INFO info;
+    short windowsNT;
+    short unknown2A;
 };
 
 /* Something that records a return address at +0x28. */
@@ -841,15 +877,9 @@ extern short dataPathLength; /* @data 0x4b9ad6 */
 extern char dataDrive; /* @data 0x4b9ad8 */
 extern short regionErrorCode; /* @data 0x4b9b64 */
 extern short localMemErrorCode; /* @data 0x4b9cf0 */
-extern short osError; /* @data 0x4b9cf4 */
-extern short g_4b9cf6;
-extern short engineActive; /* @data 0x4b9cf8 */
-extern ActivateHook activateHook; /* @data 0x4b9cfc */
+extern OsState os; /* @data 0x4b9cf4 */
 extern short g_4b7cf8;
-extern HINSTANCE engineInstance; /* @data 0x4b9d00 */
-extern unsigned long appThread; /* @data 0x4b9d04 */
-extern HWND appWindow; /* @data 0x4b9d08 */
-extern unsigned short g_4b9d22;
+extern SystemState systemState; /* @data 0x4b9d20 */
 extern short g_4b9d4c;
 extern long g_4b9d70;
 extern long g_4b9d74;
@@ -892,7 +922,7 @@ void fn_4624bd(Point *where, short button);
 void fn_4624f4();
 void fn_464d7d();
 unsigned long fn_464d88();
-void __cdecl fn_46db93(const char *format, ...);
+void __cdecl debugPrintf(const char *format, ...); /* 0x46db93: to the debugger */
 void fn_41f195(const char *message);
 void fn_41f2c8(long, long);
 void fn_41f668();
@@ -914,7 +944,7 @@ void fn_46c4fe(long *handle, long type, short id, const char *what, short);
 /* Creates the font `name` at `size` into *font. */
 void fn_46cb10(Font **font, const char *name, long size, long);
 /* Initialises the Mohawk OS layer, with a work buffer. */
-short fn_46ddaf(HINSTANCE instance, void *buffer, long size);
+short osStartup(HINSTANCE instance, void *stacks, long size); /* 0x46ddaf */
 /* QuickTime (see quicktime.py) */
 long __cdecl QTInitialize(long *version);
 long qtim_0b();
@@ -1058,7 +1088,7 @@ void destroyMainWindow();
 void showError(const char *prefix, const char *format, va_list args);
 void releaseControlKeys();
 void fn_456b2e(short active);
-void fn_46da64(short active);
+
 void runClock(short running);
 void fn_48b2d8(DisplayMode *mode);
 void fn_48d480(DisplayMode *mode);
@@ -2248,7 +2278,6 @@ struct FileState
 };
 
 extern FileState files; /* @data 0x4b9b6c */
-extern short windowsNT; /* @data 0x4b9d48 */
 
 short setFileError(short error); /* 0x4861e7 */
 long driveNumber(char letter); /* 0x485d70: 0 if there's no such drive */
@@ -3374,8 +3403,10 @@ void resumeThread(long thread); /* 0x46e857 */
 void yieldThread(long); /* 0x46eb9f */
 void fn_46eadd(long thread, short state);
 short fn_46e605(long thread);
-void fn_46e410();
-void fn_46e43a();
+void disableScheduling(); /* 0x46e410 */
+void enableScheduling(); /* 0x46e43a */
+short initThreads(char *stacks, char *end); /* 0x46e658 */
+void stopThreads(); /* 0x46e749 */
 void suspendThread(long thread); /* 0x46ebca */
 long newEvent(short); /* 0x46e380 */
 void setEvent(long event); /* 0x46ea83 */
@@ -3699,14 +3730,27 @@ short localMemError();
 void *localAlloc(unsigned short size); /* 0x46d95c */
 void localFree(void *block); /* 0x46d998 */
 void *localReAlloc(void *block, unsigned short size); /* 0x46d9cf */
-short fn_46e00b(unsigned long thread); /* whether a thread belongs to the game */
+short isMohawkThread(unsigned long thread); /* 0x46e00b: whether a thread runs the Mohawk OS */
+BOOL CALLBACK findManagerWindow(HWND window, short *version); /* 0x46e02f */
 void setLocalMemError(short value);
 int isAlignedPointer(void *pointer);
 long atomicDecrement(long *value);
 void *atomicExchange(void **target, void *value);
 long atomicIncrement(long *value);
 short debugBreak(short value);
-void fn_46dc45();
+void enterAllLocks(); /* 0x46dc45 */
+void leaveAllLocks(); /* 0x46dd02 */
+short osSetActive(short active); /* 0x46da64 */
+long newTimer(void (*proc)(long timer, long data), long data, long interval); /* 0x46daca */
+void deleteTimer(long timer); /* 0x46dbc2 */
+void runTimers(unsigned long now, short all); /* 0x46dc64 */
+LRESULT CALLBACK timerHook(int code, WPARAM wParam, LPARAM lParam); /* 0x46dd40 */
+void osShutdown(); /* 0x46e081 */
+void setTimerInterval(long timer, long interval); /* 0x46e0f8 */
+LRESULT CALLBACK managerWindowProc(HWND window, UINT message, WPARAM wParam,
+                                   LPARAM lParam); /* 0x46e164 */
+void osIdle(); /* 0x46e1b2 */
+unsigned short bcdVersion(unsigned short version); /* 0x46e21a */
 HINSTANCE engineInstanceHandle();
 unsigned long appThreadId();
 HWND appWindowHandle();
@@ -3714,13 +3758,13 @@ unsigned long currentTimeMs();
 short osLockMemory(void *address, unsigned long size);
 short osUnlockMemory(void *address, unsigned long size);
 short isAppActive();
-short fn_46dff7();
+short osVersion(); /* 0x46dff7: 0x500 once running */
 ActivateHook setActivateHook(ActivateHook hook);
 HINSTANCE fn_46e0ec(long);
 short setOsError(short error);
-long fn_46e1f8(long value);
-Tagged *fn_46e202(Tagged *object);
-char __cdecl fn_46e28e(char value);
+long timerHandle(OsTimer *timer); /* 0x46e1f8 */
+OsTimer *timerOf(long timer); /* 0x46e202: 0 if it isn't one */
+char __cdecl lowByte(char value); /* 0x46e28e */
 int __cdecl highByte(unsigned short value);
 long fn_46e5dc();
 short threadError(); /* the OS layer's last error */

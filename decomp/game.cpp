@@ -104,7 +104,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     fn_456a2f(fn_4625b8);
     g_4b2aec = addModifierKeys(0) != 0x800;
 
-    if (fn_46ddaf(instance, osBuffer, sizeof osBuffer))
+    if (osStartup(instance, osBuffer, sizeof osBuffer))
         fatalError(msgInitOs);
     if (fn_493096())
         fatalError(msgInitTimer);

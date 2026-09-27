@@ -50,7 +50,7 @@ void Drive::eject()
 
     setLocked(0);
     if (type == 1) {
-        if (windowsNT) {
+        if (systemState.windowsNT) {
             sprintf(name, "\\\\.\\%c:", letter);
             device = CreateFile(name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 0,
                                 OPEN_EXISTING, 0, 0);
@@ -112,7 +112,7 @@ short Drive::init(long index)
     case DRIVE_REMOVABLE:
         removable = 1;
         type = 0;
-        if (windowsNT) {
+        if (systemState.windowsNT) {
             sprintf(root, "\\\\.\\%c:", letter);
             device = CreateFile(root, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
             DeviceIoControl(device, 0x70c00, 0, 0, media, sizeof media, &size, 0);
@@ -209,7 +209,7 @@ void Drive::setLocked(short on)
 
     if (!files.active)
         on = 0;
-    if (type == 1 && !windowsNT && on != locked) {
+    if (type == 1 && !systemState.windowsNT && on != locked) {
         unlock = on ? 0 : 1;
         memset(&regs, 0, sizeof regs);
         regs.eax = 0x440d;

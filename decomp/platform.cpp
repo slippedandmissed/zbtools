@@ -268,7 +268,7 @@ void showError(const char *prefix, const char *format, va_list args)
         sprintf(text, prefix);
         vsprintf(text + strlen(text), format, args);
         if (debugging) {
-            fn_46db93(text);
+            debugPrintf(text);
             debugBreak(0);
         }
         MessageBox(mainWindow, text, appName, MB_SYSTEMMODAL | MB_ICONEXCLAMATION);
@@ -797,12 +797,12 @@ void activateApp(long active)
     if (!windowed && active != appActive) {
         appActive = active;
         if (active) {
-            if (!g_4b2d3a && g_4b9d22 >= 0x395 && !g_4b2b04) {
+            if (!g_4b2d3a && systemState.windowsVersion >= 0x395 && !g_4b2b04) {
                 fn_48b2d8(&g_4aa7dc);
                 fn_48d480(&displayMode);
             }
             placeGamePort();
-            fn_46da64(1);
+            osSetActive(1);
             while (setSoundsActive(1))
                 if (MessageBox(mainWindow, "Sound driver missing or unavailable.", appName,
                                MB_RETRYCANCEL)
@@ -821,10 +821,10 @@ void activateApp(long active)
             g_4b2d34 = 1;
             runClock(0);
             setSoundsActive(0);
-            fn_46da64(0);
-            if (!g_4b2d3a && g_4b9d22 >= 0x395 && !g_4b2b04)
+            osSetActive(0);
+            if (!g_4b2d3a && systemState.windowsVersion >= 0x395 && !g_4b2b04)
                 fn_48d480(&g_4aa7dc);
-            if (!g_4b2d32 && g_4b9d22 >= 0x395 && g_4a4a0c && !g_4b2d3a) {
+            if (!g_4b2d32 && systemState.windowsVersion >= 0x395 && g_4a4a0c && !g_4b2d3a) {
                 windowed = 1;
                 SendMessage(mainWindow, WM_SYSCOMMAND, SC_MINIMIZE, 0);
             }
