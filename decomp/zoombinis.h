@@ -200,6 +200,16 @@ struct Fade
     PALETTEENTRY start[256];
 };
 
+/* A region: a list of rectangles, in a handle ('Rngr'). */
+struct Region
+{
+    long tag; /* 'Rngr' while valid */
+    ShortRect bounds;
+    unsigned short capacity; /* rectangles allocated (16 at a time) */
+    unsigned short count;
+    ShortRect rects[1];
+};
+
 /* A saved area of a port (e2MapSave), 0xe bytes. */
 struct MapSave
 {
@@ -708,6 +718,8 @@ extern short g_4b99d4;
 extern char dataPath[256]; /* @data 0x4b99d6 */
 extern short dataPathLength; /* @data 0x4b9ad6 */
 extern char dataDrive; /* @data 0x4b9ad8 */
+extern short iniErrorCode; /* @data 0x4b9b58 */
+extern short regionErrorCode; /* @data 0x4b9b64 */
 extern short g_4b9cf0;
 extern short g_4b9cf4;
 extern short g_4b9cf6;
@@ -903,15 +915,12 @@ void fn_414f01(InputItem *item);
 void fn_414f17(InputItem *item);
 void fn_456a64();
 /* Mohawk engine */
-void offsetRect(ShortRect *rect, short dx, short dy);
 short fn_48ba5a(DisplayMode *mode, short); /* non-zero on failure */
 void fn_48d798(short);
 long fn_488d08(short count, PALETTEENTRY *entries); /* creates a palette */
 void fn_48906c(long palette);
 short fn_48c300();
 void fn_48c314();
-unsigned short *fn_48e96c(short handle); /* locks a resource */
-void fn_48f550(short handle); /* unlocks it */
 void fn_48adf0(unsigned short *image, short x, short y, short mode); /* draws an image */
 long fn_48b4a8(); /* the current palette */
 void fn_48d5ec(long palette, short first, short count, PALETTEENTRY *entries);
@@ -919,18 +928,12 @@ long fn_488ba8(short width, short height, short depth, long); /* creates a port 
 void fn_48db08(long port);
 void fn_4890f8(long port);
 void fn_48d9c8(short left, short top);
-short fn_4816d4(short region); /* whether it's empty */
 void fn_488828(const Rect &rect);
 void fn_48d1e0(short region);
-void fn_481670(short region);
 void fn_48b2ac(short region);
-short fn_481274(); /* creates a region */
 void fn_488a88(long to, long from, const Rect &fromRect, const Rect &toRect, short mode);
 short fn_48c750(long port); /* locks a port; non-zero on failure */
 void fn_48c5fc(const Rect &rect);
-short sectRect(ShortRect *rect, ShortRect *with);
-short emptyRect(ShortRect *rect);
-void unionRect(ShortRect *into, ShortRect *add); /* the union, into `into` */
 long fn_488f34(const Rect &bounds, HWND window, long); /* creates a window port */
 void fn_48d574(long);
 void fn_48d194(const Rect &rect);
@@ -972,8 +975,56 @@ long fn_484b50(const fileSpec &file, long mode);
 /* Closes a file opened by fn_484b50. */
 void fn_48266c(long file, long);
 
-void fn_4812bc(short handle);
 void fn_48f660(long handle, long, long);
+
+/*
+ * The Mohawk engine
+ */
+
+/* Memory: relocatable blocks by handle (a short), as on the Mac. */
+short newHandle(long size);
+void *handleData(short handle);
+void *lockHandle(short handle);
+void unlockHandle(short handle);
+short setHandleSize(short handle, long size); /* an error code */
+short disposeHandle(short handle);
+short memError();
+
+/* Rectangles (QuickDraw's) */
+short emptyRect(ShortRect *rect);
+void offsetRect(ShortRect *rect, short dx, short dy);
+void insetRect(ShortRect *rect, short dx, short dy);
+short sectRect(ShortRect *rect, ShortRect *with);
+ShortRect *unionRect(ShortRect *into, ShortRect *add);
+short ptInRect(Point *point, ShortRect *rect);
+ShortRect *__cdecl setRect(ShortRect *rect, short left, short top, short right, short bottom);
+
+/* Regions (errors in regionError) */
+short newRgn();
+void disposeRgn(short region);
+void setEmptyRgn(short region);
+unsigned short emptyRgn(short region);
+void setRectRgn(short region, ShortRect *rect);
+void copyRgn(short to, short from);
+void compactRgn(short region);
+void regionToHrgn(HRGN target, short region, short dx, short dy);
+void sectRgnWithRect(short region, ShortRect *rect);
+void sectRgnRects(short region, long count, ShortRect *rects);
+void diffRgnRect(short region, ShortRect *rect);
+void diffRgnRects(short region, long count, ShortRect *rects);
+void unionRgnRect(short region, ShortRect *rect);
+short unionRgnRects(short region, long count, ShortRect *rects);
+short unionRgn(short to, short from);
+short tidyRgn(Region *region);
+Region *getRegion(short region);
+void shrinkRgn(short handle, Region **region);
+void removeRgnRect(Region *region, long index);
+short regionError();
+void insertRgnRect(short handle, Region **region, long index, ShortRect *rect);
+short setRegionError(short error);
+
+/* Settings files */
+short iniError();
 
 /* Decompiled functions, by address */
 
@@ -1113,7 +1164,6 @@ void fn_46c808(long *resource, short id, const char *name, short);
 void fn_46c86c(long *resource);
 void fn_46c88c(long *resource, short id, const char *name);
 void fn_46c970(long *resource);
-short *fn_48f5bc(short handle); /* a locked resource's data */
 void fn_48b1e8(const Rect &rect); /* erases a rectangle */
 /* buttons */
 void drawButtonOn(InputItem *item);

@@ -2,6 +2,8 @@
  * module_480c04 (0x480c04-0x480c24): one function (Mohawk engine)
  */
 
+/* @flags -p */
+
 #include "zoombinis.h"
 
 /* Moves a rectangle (QuickDraw's OffsetRect). */

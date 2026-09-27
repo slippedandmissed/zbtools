@@ -2,6 +2,8 @@
  * module_480bdc (0x480bdc-0x480c04): one function (Mohawk engine)
  */
 
+/* @flags -p */
+
 #include "zoombinis.h"
 
 /* Whether a rectangle is empty (QuickDraw's EmptyRect). */

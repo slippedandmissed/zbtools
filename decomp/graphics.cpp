@@ -89,7 +89,7 @@ void drawImage(ResourceList *images, short index, short x, short y, short mode, 
 
     if (index > 0) {
         handle = fn_46beac(images->resources[index]);
-        image = fn_48e96c(handle);
+        image = (unsigned short *)lockHandle(handle);
         if (anchor != 0x11) {
             width = swapShort(image[0]);
             height = swapShort(image[1]);
@@ -105,7 +105,7 @@ void drawImage(ResourceList *images, short index, short x, short y, short mode, 
             y -= height;
         }
         fn_48adf0(image, x, y, mode);
-        fn_48f550(handle);
+        unlockHandle(handle);
     }
 }
 
@@ -280,7 +280,7 @@ void clipRect(short *region, ShortRect *rect, short keep)
     if (keep) {
         if (*region)
             fatalError("e2ClipRect error -- region must equal 0");
-    } else if (!fn_4816d4(*region))
+    } else if (!emptyRgn(*region))
         fatalError("e2ClipRect error -- region must be empty");
     getClipRegion(region, keep);
     fn_488828(*rect);
@@ -290,9 +290,9 @@ void clipRect(short *region, ShortRect *rect, short keep)
 /* @zoombi32 0x00414c25 */
 void fn_414c25(short *region, short free)
 {
-    if (*region && !fn_4816d4(*region)) {
+    if (*region && !emptyRgn(*region)) {
         fn_48d1e0(*region);
-        fn_481670(*region);
+        setEmptyRgn(*region);
         if (free)
             freeRegion(region);
     }
@@ -306,7 +306,7 @@ void getClipRegion(short *region, short create)
         if (*region)
             fatalError("e2GetClipRgn error -- region must equal 0");
         createRegion(region);
-    } else if (!fn_4816d4(*region))
+    } else if (!emptyRgn(*region))
         fatalError("e2GetClipRgn error -- region must be empty");
     fn_48b2ac(*region);
 }
@@ -317,7 +317,7 @@ void createRegion(short *region)
 {
     if (*region)
         fatalError("e2CreateClipRgn error -- region must equal 0");
-    if ((*region = fn_481274()) == 0)
+    if ((*region = newRgn()) == 0)
         fatalError("unable to allocate region");
 }
 
@@ -325,7 +325,7 @@ void createRegion(short *region)
 void freeRegion(short *region)
 {
     if (*region) {
-        fn_4812bc(*region);
+        disposeRgn(*region);
         *region = 0;
     }
 }

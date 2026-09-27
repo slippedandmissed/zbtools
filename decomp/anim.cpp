@@ -345,9 +345,9 @@ void drawSprite(Anim *anim, Sprite *sprite)
         if (sprite->flags.bits.mode == 10)
             sprite->flags.bits.mode = 8;
         handle = fn_46beac(anim->cast[sprite->image - 1]);
-        fn_48adf0(fn_48e96c(handle), sprite->x + anim->bounds.left,
+        fn_48adf0((unsigned short *)lockHandle(handle), sprite->x + anim->bounds.left,
                   sprite->y + anim->bounds.top, sprite->flags.bits.mode);
-        fn_48f550(handle);
+        unlockHandle(handle);
     }
 }
 
@@ -580,16 +580,16 @@ short playAnim(AnimSpec *spec)
     if (INTERRUPTED && spec->flags.finishOnInterrupt)
         skipAnim(anim, 0x7fff);
     sounds = fn_46beac(anim->sounds);
-    count = i = *fn_48f5bc(sounds); /* (through i, as the original does) */
+    count = i = *(short *)handleData(sounds); /* (through i, as the original does) */
     for (i = 0; i < count; i++) {
         if (INTERRUPTED)
-            stopSounds(stopped = fn_48f5bc(sounds)[i + 1], SOUND);
+            stopSounds(stopped = ((unsigned short *)handleData(sounds))[i + 1], SOUND);
         else
-            fn_411e4c(left = fn_48f5bc(sounds)[i + 1], SOUND);
+            fn_411e4c(left = ((unsigned short *)handleData(sounds))[i + 1], SOUND);
     }
     if (spec->flags.waitForSounds)
         for (i = 0; i < count; i++)
-            while (fn_4120a2(waited = fn_48f5bc(sounds)[i + 1], SOUND, INTERRUPTED))
+            while (fn_4120a2(waited = ((unsigned short *)handleData(sounds))[i + 1], SOUND, INTERRUPTED))
                 mainLoopEvents();
     spritesBounds(anim, &animArea);
     if (spec->flags.restoreBackground && anim->background) {

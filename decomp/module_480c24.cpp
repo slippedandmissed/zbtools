@@ -2,6 +2,8 @@
  * module_480c24 (0x480c24-0x480ca0): one function (Mohawk engine)
  */
 
+/* @flags -p */
+
 #include <string.h>
 #include "zoombinis.h"
 
