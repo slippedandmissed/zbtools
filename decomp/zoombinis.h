@@ -523,14 +523,6 @@ struct Deferred
     void *data;
 };
 
-/* An object whose third virtual function takes a flag. */
-class Releasable
-{
-public:
-    virtual void __cdecl virtual0();
-    virtual void __cdecl virtual1();
-    virtual void __cdecl virtual2(int flag);
-};
 
 /* A timer the OS layer runs from its window's messages (0x1c bytes), tagged
    'ksTI' (bytes in memory order). Handed around as a handle (its address). */
@@ -574,11 +566,133 @@ struct SystemState
     short unknown2A;
 };
 
-/* Something that records a return address at +0x28. */
-struct Resume
+/*
+ * The OS layer's threads (os_threads) are its own, cooperative ones, as on
+ * the Mac: each has a stack of its own (carved from a buffer osStartup is
+ * given) and a saved register context, and they take turns on the
+ * application thread, switched by the scheduler at calls into the layer and
+ * every time slice (a timer). Threads, mutexes and events are sync objects
+ * (RTTI classes thread, mutex, event and their base sync): handed around as
+ * handles (their addresses), tagged 'sync', and waited for the same way.
+ */
+class thread;
+
+/* A thread's saved registers (0x2c bytes). */
+struct Context
 {
-    char unknown0[0x28];
-    long address;
+    long *stack; /* its stack's block (after the block's size) */
+    unsigned long flags;
+    unsigned long eax;
+    unsigned long ebx;
+    unsigned long ecx;
+    unsigned long edx;
+    unsigned long edi;
+    unsigned long esi;
+    unsigned long ebp;
+    unsigned long esp;
+    unsigned long eip; /* where it resumes */
+};
+
+class sync
+{
+public:
+    __cdecl sync(); /* 0x46efa4 */
+    virtual __cdecl ~sync(); /* 0 */
+    virtual thread *__cdecl owner(); /* 1: a mutex's; 0 */
+    virtual void __cdecl setSignaled(unsigned short signaled); /* 2: an event set, a thread ended */
+    /* 3: waits (-1: for ever); 0 when it's signaled (or acquired), else
+       an error (0x12e timed out). */
+    virtual short __cdecl wait(thread *waiter, unsigned long timeout);
+    virtual void __cdecl acquire(thread *waiter); /* 4: a waiter's wait is over */
+    virtual void __cdecl enqueue(thread *waiter); /* 5 */
+    virtual short __cdecl isBlocked(thread *waiter); /* 6: whether it must wait */
+    virtual void __cdecl dequeue(thread *waiter, short result); /* 7: ends its wait with `result` */
+
+    static void *__cdecl operator new(size_t size); /* 0x46f043: zeroed */
+    static void __cdecl operator delete(void *block); /* 0x46f07f */
+
+    long tag; /* +4: 'sync' */
+    long kind; /* +8: 'thrd', 'mutx' or 'evnt' */
+    unsigned short signaled; /* +0xc */
+    short unknownE;
+    sync *prev; /* +0x10: in threads.objects */
+    sync *next; /* +0x14 */
+    thread *waiters; /* +0x18: a ring */
+};
+
+class mutex : public sync
+{
+public:
+    __cdecl mutex(); /* 0x46ed4a */
+    virtual __cdecl ~mutex(); /* 0x46ed6a */
+    virtual thread *__cdecl owner(); /* 1 */
+    virtual void __cdecl setSignaled(unsigned short signaled); /* 2: released */
+    virtual short __cdecl wait(thread *waiter, unsigned long timeout); /* 3 */
+    virtual void __cdecl acquire(thread *waiter); /* 4 */
+    virtual short __cdecl isBlocked(thread *waiter); /* 6 */
+    virtual void __cdecl attach(thread *owner); /* 8 */
+    virtual void __cdecl detach(thread *owner); /* 9 */
+
+    unsigned short count; /* +0x1c: acquisitions by its owner */
+    short unknown1E;
+    thread *holder; /* +0x20 */
+    mutex *next; /* +0x24: in holder's ring of mutexes */
+    mutex *prev; /* +0x28 */
+};
+
+class event : public sync
+{
+public:
+    __cdecl event(); /* 0x46ece8 */
+    virtual void __cdecl setSignaled(unsigned short signaled); /* 2 */
+
+    Deferred resetCall; /* +0x1c: posted by resetEvent */
+    Deferred setCall; /* +0x30: posted by setEvent */
+};
+
+class thread : public sync
+{
+public:
+    __cdecl thread(); /* 0x46f1f5 */
+    virtual __cdecl ~thread(); /* 0x46f21b */
+    virtual void __cdecl setSignaled(unsigned short ended); /* 2: 0 to start it, 1 to end it */
+    virtual short __cdecl wait(thread *waiter, unsigned long timeout); /* 3: until it ends */
+
+    unsigned long sliceStart; /* +0x1c */
+    unsigned long sliceEnd; /* +0x20: 0 when it's to give way */
+    unsigned long wakeTime; /* +0x24: sleeping until (yieldThread) */
+    unsigned short suspendCount; /* +0x28 */
+    unsigned short priority; /* +0x2a: above 1 is urgent */
+    Context context; /* +0x2c */
+    mutex *mutexes; /* +0x58: held, a ring */
+    thread *prev; /* +0x5c: in the ring of threads started */
+    thread *next; /* +0x60 */
+    sync *waitingOn; /* +0x64 */
+    short waitResult; /* +0x68 */
+    short unknown6A;
+    thread *waitPrev; /* +0x6c: in waitingOn's ring of waiters */
+    thread *waitNext; /* +0x70 */
+    unsigned long waitUntil; /* +0x74: 0 for ever */
+};
+
+/* The threads' state (0x3c bytes). */
+struct ThreadState
+{
+    short error; /* of the last call */
+    short initialized;
+    DeferLock lock; /* +4: taken while scheduling state changes */
+    long timeSlice; /* +0x14: ms (20) */
+    unsigned short runnable; /* +0x18: threads started and not suspended */
+    unsigned short urgent; /* +0x1a: of those, with priorities above 1 */
+    unsigned short schedulingOff; /* +0x1c: disableScheduling's count */
+    short scheduling; /* +0x1e: in schedule */
+    thread *ring; /* +0x20: the threads started */
+    thread *main; /* +0x24: the application thread's own */
+    thread *current; /* +0x28 */
+    sync *objects; /* +0x2c: every sync object */
+    long timer; /* +0x30: the time-slice timer, while two threads run */
+    long *stacks; /* +0x34: blocks: a size (bit 0: used), then the stack */
+    long *stacksEnd; /* +0x38 */
 };
 
 /* The engine's file name class (4 bytes, no virtual functions). The engine
@@ -880,9 +994,8 @@ extern short localMemErrorCode; /* @data 0x4b9cf0 */
 extern OsState os; /* @data 0x4b9cf4 */
 extern short g_4b7cf8;
 extern SystemState systemState; /* @data 0x4b9d20 */
-extern short g_4b9d4c;
-extern long g_4b9d70;
-extern long g_4b9d74;
+extern ThreadState threads; /* @data 0x4b9d4c */
+extern thread *dyingThread; /* @data 0x4b9d88 */
 
 /* Game functions not decompiled yet */
 
@@ -3395,14 +3508,29 @@ unsigned short fixedFraction(long value); /* 0x4898ab */
 short fixedRound(long value); /* 0x4898b6 */
 
 /* Threads (the OS layer) */
-long createThread(void (*proc)(long), long, long stackSize, short); /* 0x46e302 */
+long createThread(void (*proc)(long), long argument, unsigned short stackSize,
+                  unsigned short priority); /* 0x46e302: suspended */
 /* Threads, events and mutexes are OS-layer sync objects, deleted, waited
    for (an event set, a mutex acquired) the same way. */
-void deleteSync(long sync); /* 0x46e463 */
+short deleteSync(long sync); /* 0x46e463 */
 void resumeThread(long thread); /* 0x46e857 */
 void yieldThread(long); /* 0x46eb9f */
-void fn_46eadd(long thread, short state);
-short fn_46e605(long thread);
+void setThreadPriority(long thread, unsigned short priority); /* 0x46eadd */
+unsigned short threadPriority(long thread); /* 0x46e605 */
+long currentThread(); /* 0x46e5dc */
+long mainThread(); /* 0x46e5f4 */
+void stopOtherThreads(); /* 0x46e2a4 */
+void reschedule(unsigned long now); /* 0x46e5a4 */
+void timesliceProc(long timer, long data); /* 0x46e71a */
+void threadExit(); /* 0x46e8e0: where a thread's procedure returns to */
+short schedule(unsigned long now); /* 0x46e90e: whether it switched threads */
+sync *__cdecl syncOf(long sync, long kind); /* 0x46f442: 0 if it isn't one (of the kind) */
+short initContext(Context *context, void (*proc)(long), long argument,
+                  unsigned short stackSize); /* 0x46f5c0 */
+short freeContext(Context *context); /* 0x46f68f */
+void resumeContext(Context *context); /* 0x46f6c9 */
+void abandonContext(Context *context); /* 0x46f6f9 */
+void switchContext(Context *to, Context *save); /* 0x46f70e */
 void disableScheduling(); /* 0x46e410 */
 void enableScheduling(); /* 0x46e43a */
 short initThreads(char *stacks, char *end); /* 0x46e658 */
@@ -3766,13 +3894,12 @@ long timerHandle(OsTimer *timer); /* 0x46e1f8 */
 OsTimer *timerOf(long timer); /* 0x46e202: 0 if it isn't one */
 char __cdecl lowByte(char value); /* 0x46e28e */
 int __cdecl highByte(unsigned short value);
-long fn_46e5dc();
 short threadError(); /* the OS layer's last error */
-long fn_46e5f4();
-void fn_46e842(Releasable *object);
-void fn_46eac8(Releasable *object);
-long __cdecl fn_46f43a(long value);
-void fn_46f771(Resume *resume, unsigned short depth);
-void fn_46f78e(short value);
+void resetEventCall(void *event); /* 0x46e842 */
+void setEventCall(void *event); /* 0x46eac8 */
+long __cdecl syncHandle(sync *object); /* 0x46f43a */
+void fn_46f74f(thread *to); /* 0x46f74f */
+void recordReturn(Context *context, unsigned short depth); /* 0x46f771 */
+short setThreadError(short error); /* 0x46f78e */
 
 #endif

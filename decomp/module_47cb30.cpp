@@ -353,15 +353,15 @@ short __cdecl wavestreamObj::startDevice(short paused)
     loopAdjust = 0;
     loopEndBuffer = 0;
     loopsRead = loopsPlayed;
-    self = fn_46e5dc();
-    priority = fn_46e605(self);
-    fn_46eadd(self, 3);
-    fn_46eadd(thread, 3);
+    self = currentThread();
+    priority = threadPriority(self);
+    setThreadPriority(self, 3);
+    setThreadPriority(thread, 3);
     setEvent(event);
     resumeThread(thread);
     yieldThread(0);
-    fn_46eadd(thread, 1);
-    fn_46eadd(self, priority);
+    setThreadPriority(thread, 1);
+    setThreadPriority(self, priority);
     if (!playing)
         wavebufRestart(wave);
     streaming = 1;
@@ -386,7 +386,7 @@ void __cdecl wavestreamObj::haltDevice()
         at = time.u.sample + base;
         wavebufReset(wave);
         resetEvent(event);
-        if (fn_46e5dc() != thread)
+        if (currentThread() != thread)
             suspendThread(thread);
         resetting = 0;
         unlockFile(file);

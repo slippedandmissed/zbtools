@@ -60,7 +60,7 @@ short AsyncWorker::run(void (*proc)(void *data), void *data)
         }
         SetThreadPriority(thread, THREAD_PRIORITY_ABOVE_NORMAL);
     }
-    caller = fn_46e5dc();
+    caller = currentThread();
     this->proc = proc;
     this->data = data;
     resetEvent(done);

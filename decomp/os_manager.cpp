@@ -450,7 +450,7 @@ LRESULT CALLBACK managerWindowProc(HWND window, UINT message, WPARAM wParam, LPA
 /* @zoombi32 0x0046e1b2 */
 void osIdle()
 {
-    if (fn_46e5dc() == fn_46e5f4()) {
+    if (currentThread() == mainThread()) {
         disableScheduling();
         runTimers(currentTimeMs(), 1);
         enableScheduling();

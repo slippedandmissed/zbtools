@@ -51,7 +51,7 @@ unsigned short servicePreloads(unsigned long time)
                 runMapPreloads((unsigned short)resources.preloadMap, time);
         } while (time == 0xffffffff && resources.preloads > 0
                  || currentTimeMs() - start < time && resources.syncPreloads > 0);
-        if (resources.asyncPreloads > 0 && fn_46e605(resources.preloadThread) == 1)
+        if (resources.asyncPreloads > 0 && threadPriority(resources.preloadThread) == 1)
             yieldThread(0);
     }
     return resources.preloads;
@@ -283,7 +283,7 @@ short disposePreload(PreloadRequest *request)
     resources.preloads--;
     if (!map->async)
         resources.syncPreloads--;
-    else if (!--resources.asyncPreloads && fn_46e5dc() != resources.preloadThread) {
+    else if (!--resources.asyncPreloads && currentThread() != resources.preloadThread) {
         deleteSync(resources.preloadThread);
         resources.preloadThread = 0;
     }
@@ -580,7 +580,7 @@ void preloadThread(long)
     PreloadRequest *request;
 
     while (resources.asyncPreloads) {
-        fn_46eadd(resources.preloadThread, 2);
+        setThreadPriority(resources.preloadThread, 2);
         handle = resources.preloadMap;
         map = (ResourceMap *)handleData(handle);
         if (!map->async || !map->preloads)
@@ -599,7 +599,7 @@ void preloadThread(long)
             unlockHandle(handle);
             unlockFile(map->file);
         }
-        fn_46eadd(resources.preloadThread, 1);
+        setThreadPriority(resources.preloadThread, 1);
         yieldThread(0);
     }
     long thread = resources.preloadThread;
