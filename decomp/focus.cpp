@@ -12,7 +12,7 @@
 /* Installs the lists of groups to move the focus over, and numbers their
    items. */
 /* @zoombi32 0x004124a4 */
-void setGroupLists(GroupList *lists, short count, unsigned short flags)
+void setGroupLists(GroupList *lists, short count, short flags)
 {
     g_4a01ac = lists;
     g_4aa48c = count;

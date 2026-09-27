@@ -571,6 +571,202 @@ long fn_417906(long)
     return 0;
 }
 
+/*
+ * Enters the camp: its slots from the game's state, BaseCamp.MHK and its
+ * views, the party back from the journey (if any) returned to the camp,
+ * and a greeting chosen by how the journey went.
+ */
+/* Not exact: register allocation. The original shares ebx between the
+   loop counters, `returned` and `reason`, esi between the views, `last` and
+   `sound`, and edi between `appended` and `limit`; here `last` gets a frame
+   slot and edi caches g_4a4ba0's address instead. */
+/* @zoombi32 0x00416789 */
+void enterCamp()
+{
+    Point places[16] = {
+        {0x194, 0x14e}, {0x185, 0x162}, {0x16a, 0x153}, {0x15e, 0x16b},
+        {0x143, 0x15c}, {0x130, 0x16f}, {0x118, 0x15e}, {0x106, 0x170},
+        {0xee, 0x15a}, {0xdd, 0x16e}, {0xc1, 0x160}, {0xb0, 0x173},
+        {0x98, 0x15f}, {0x85, 0x171}, {0x6e, 0x155}, {0x5e, 0x169},
+    };
+    short value;
+    short saved;
+    short returned;
+    short reason;
+    short sound;
+    short limit;
+
+    campActive = 0;
+    fn_416754();
+    saved = g_4b87fe;
+    g_4b87fe = 0;
+    g_4afb32 = 1;
+    fn_4656e7(20000, 29999, 1);
+    fn_4656e7(2000, 0x833, 0);
+    fn_4656e7(0x44c, 0x4af, 1);
+    camp = (Camp *)(g_4a4ba0 + 0xce);
+    campRow = camp->row;
+    campCount = camp->count;
+    campLast = campSlotsUsed();
+    noteCampSlot(-1);
+    openGameFile(&campMap, "BaseCamp.MHK");
+    fn_46be2e(campMap);
+    fn_45915d(1000);
+    fn_463e61(9000);
+    fn_46450c(100);
+    fn_464202(1000);
+    fn_465bd0(0x44c, 0, 0);
+    fn_465bd0(0x4b0, 1, 0);
+    fn_464231(0x44c, 0x10);
+    fn_46431e(0x4b0, 0x10, 0);
+    g_4a0974 = fn_4651ee(2000, &campFrameResource);
+    campButtonImages = fn_4651ee(0x834, &campButtonsResource);
+    fn_4148da(0xec, 10);
+    g_4ab518 = addView(0xc000, drawCamp, scrollCamp, 0, 6, 0, 0, 0);
+    addView(0x9000, drawCampButtons2, 0, 0, 0, 0, 0, 0);
+    addView(0x1000, drawCampButtons1, fn_417aec, 0, 0, 0, 0, 0);
+    for (short i = 0; i < 16; i++)
+        g_4b80f6[i] = addView(0x108a000, fn_465ce7, fn_465e59, i + 0x4b0, 7, &places[i], 0, 0);
+    g_4ab530[0] = addView(0x1180000, fn_465ce7, fn_465e59, 0x452, 6, 0, 0, 0);
+    g_4ab530[1] = addView(0x1180000, fn_465ce7, fn_465e59, 0x454, 6, 0, 0, 0);
+    g_4ab530[2] = addView(0x180000, fn_465ce7, fn_465e59, 0x455, 6, 0, 0, 0);
+    g_4ab530[3] = addView(0x50180000, fn_465ce7, fn_465e59, 0x456, 6, 0, 0, 0);
+    g_4ab530[4] = addView(0x1101000, fn_465ce7, fn_465e59, 0x453, 6, 0, 0, 0);
+    for (short k = 0x457; k <= 0x45b; k++) {
+        View *view = findView(addView(0x20000, fn_465ce7, fn_465e59, k, 0, 0, 0, 0));
+        if (view) {
+            fn_465e59(view, g_4a7b88);
+            value = ((short *)(g_4a4ba0 + 0x14))[k - 0x457];
+            view->snoid.unknown9a = fn_464cbc(g_4b9008[view->snoid.unknown92], &value, 0);
+            view->snoid.unknown98 = value;
+            view->nextUpdate = 0;
+            view->snoid.unknownB0 = 1;
+            view->snoid.unknown96++;
+            fn_465e59(view, g_4a7b88);
+            view->snoid.unknown96--;
+            view->snoid.unknown98 = value;
+        }
+    }
+    addView(0x2040000, fn_465ce7, fn_465e59, 0x450, 6, 0, 0, 0);
+    for (short j = 0x44c; j <= 0x44f; j++)
+        addView(0, fn_465ce7, fn_465e59, j, 0, 0, 0, 0);
+    fn_463dce(16, places, 1);
+    if (party()->count)
+        fn_4572f0(0);
+    returned = fn_456e4c();
+    *(short *)(g_4a4ba0 + 0x4a) += returned;
+    *party() = *savedParty();
+    savedParty()->count = 0;
+    savedParty()->unknown2 = 1;
+    savedParty()->unknown4 = 1;
+    if (returned) {
+        if (!party()->unknown2 && fn_4572bf()) {
+            short last = campLast;
+            short appended = returnToCamp();
+
+            campCount += fn_4572bf();
+            campLast = campSlotsUsed();
+            noteCampSlot(-1);
+            if (appended) {
+                campRow = (last + 1) / 5 % campRows;
+                noteCampSlot(-1);
+            }
+            party()->unknown2 = 1;
+        }
+    } else {
+        g_4b7562 = 1;
+    }
+    fn_4572f0(1);
+    fn_458cc1(-20);
+    fn_46356c();
+    if (returned)
+        fn_458f07(0x2d, 0x1e);
+    g_4ab52e = *(short *)(g_4a4ba0 + 0x48) >= 625
+               && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0xa1fc) < 16;
+    if (g_4ab52e) {
+        short n = fn_456e4c();
+
+        g_4ab524 = n && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0xa1fc) <= n;
+        g_4ab526 = g_4ab524;
+    } else {
+        g_4ab526 = g_4ab524 = fn_456e4c() >= 16;
+    }
+    setGroupLists(campGroupLists, 2, (short)0xc000);
+    highlightItemAt(1, 1);
+    drawCampButtons(0, 0, 0, 0);
+    showRect(&g_4aa7b8);
+    fn_4655d3();
+    campActive = 1;
+    sound = 0;
+    reason = -1;
+    if (g_4b0d4c) {
+        reason = fn_45bdc4(g_4a4ba0 + 0x30);
+        g_4b0d4c = 0;
+    }
+    if (reason == 2 && !*(short *)(g_4a4ba0 + 0x32) && !*(short *)(g_4a4ba0 + 0x38)
+        && *(short *)(g_4a4ba0 + 0x4a) <= 16) {
+        reason = 1;
+        *(unsigned short *)(g_4a4ba0 + 0x30) &= 0xcfff;
+    }
+    limit = 4;
+    if (*(unsigned short *)(g_4a4ba0 + 0x30) & 0x3000)
+        limit = 6;
+    if (!g_4ab52e) {
+        switch (reason) {
+        case 0:
+            switch (randomBetween(1, limit)) {
+            case 1:
+                sound = 0x4e51;
+                break;
+            case 2:
+                sound = 0x4e53;
+                break;
+            case 3:
+                sound = 0x4e55;
+                break;
+            case 4:
+                sound = 0x4e56;
+                break;
+            case 5:
+                sound = 0x4e52;
+                break;
+            case 6:
+                sound = 0x4e54;
+                break;
+            }
+            break;
+        case 1:
+            sound = 0x4e51;
+            break;
+        case 2:
+            sound = 0x4e52;
+            break;
+        case 12:
+            sound = 0x4e54;
+            break;
+        case 5:
+            sound = 0x4e51;
+            break;
+        }
+    } else if (reason != -1) {
+        switch (randomBetween(1, 3)) {
+        case 1:
+            sound = 0x4e53;
+            break;
+        case 2:
+            sound = 0x4e55;
+            break;
+        case 3:
+            sound = 0x4e56;
+            break;
+        }
+    }
+    fn_464d3c();
+    g_4b87fe = saved;
+    if (sound)
+        fn_4666b7(sound, 0);
+}
+
 /* Leaves the camp: the party that set out (or, if it was the journey's
    end or g_4a48e6 is set, none) saved, and everything the camp loaded
    freed. */
@@ -587,7 +783,7 @@ void leaveCamp()
                 party()->unknown2 = 0;
                 party()->unknown4 = 0;
                 *savedParty() = *party();
-                party()->unknown0 = 0;
+                party()->count = 0;
             } else {
                 party()->unknown2 = 1;
                 party()->unknown4 = 0;
@@ -643,6 +839,272 @@ void campIdle()
         }
         fn_43af6b();
         campBusy = 0;
+    }
+}
+
+/*
+ * A camp button clicked: 1 and 2 set out (with 996 and a walk to 0x13c or
+ * 0x190), or say why not (a random one of three, or 0x4e51); 3 leaves; 4-7
+ * scroll while held. If already leaving, leaves at once.
+ */
+/* @zoombi32 0x00417108 */
+void campButtonClicked(short button)
+{
+    Point where;
+    short sound;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        leaveCamp();
+    } else {
+        getCursorPosition(&where);
+        switch (button) {
+        case 1:
+            if (g_4ab524) {
+                fn_4666b7(996, 0);
+                drawCampButtons(button, 1, 0, 1);
+                waitForEventFor(0, 2, 0, 1);
+                drawCampButtons(button, 0, 0, 1);
+                fn_45a477();
+                fn_4590b6(0x2a8, 0x13c, 0x2d);
+                g_4b0d52 = 10;
+            } else {
+                if (g_4ab52e) {
+                    switch (randomBetween(1, 3)) {
+                    case 1:
+                        sound = 0x4e53;
+                        break;
+                    case 2:
+                        sound = 0x4e55;
+                        break;
+                    case 3:
+                        sound = 0x4e56;
+                        break;
+                    }
+                } else {
+                    sound = 0x4e51;
+                }
+                fn_4666b7(sound, 0);
+            }
+            break;
+        case 2:
+            if (g_4ab524) {
+                fn_4666b7(996, 0);
+                drawCampButtons(button, 1, 0, 1);
+                waitForEventFor(0, 2, 0, 1);
+                drawCampButtons(button, 0, 0, 1);
+                fn_45a477();
+                fn_4590b6(0x2a8, 0x190, 0x2d);
+                g_4b0d52 = 13;
+            } else {
+                if (g_4ab52e) {
+                    switch (randomBetween(1, 3)) {
+                    case 1:
+                        sound = 0x4e53;
+                        break;
+                    case 2:
+                        sound = 0x4e55;
+                        break;
+                    case 3:
+                        sound = 0x4e56;
+                        break;
+                    }
+                } else {
+                    sound = 0x4e51;
+                }
+                fn_4666b7(sound, 0);
+            }
+            break;
+        case 3:
+            fn_4666b7(999, 0);
+            drawCampButtons(button, 1, 0, 1);
+            waitForEventFor(0, 2, 0, 1);
+            drawCampButtons(button, 0, 0, 1);
+            g_4b0d50 = 1;
+            leaveCamp();
+            break;
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            g_4ab512 = button;
+            drawCampButtons(button, 1, 0, 1);
+            do {
+                g_4a080c = button - 3;
+                updateCampScroll(0);
+                mainLoopEvents();
+            } while (isButtonStillDown(g_4b80d0));
+            updateCampScroll(1);
+            g_4ab512 = 0;
+            drawCampButtons(button, 0, 0, 1);
+            break;
+        }
+    }
+}
+
+/*
+ * The camp's mouse handling (action 1 down, 2 up): picking a Zoombini up
+ * from its slot, dropping one in a slot (or back where it was, if it went
+ * nowhere), and clicking the other things there.
+ */
+/* @zoombi32 0x00417350 */
+void campMouse(short action)
+{
+    Point where;
+    ShortRect spot;
+    short drop;
+    short dragged;
+    short picked;
+    short result;
+    short count;
+    Snoid *snoid;
+    short moved;
+    View *view;
+    short slot;
+    short i;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        leaveCamp();
+    } else if (!g_4ab52a || action == 2) {
+        getCursorPosition(&where);
+        picked = 0;
+        view = 0;
+        if (action == 1 && g_4b755a <= 0) {
+            if ((view = viewAt(where, 1, 1)) == 0) {
+                spot.left = spot.right = where.x;
+                spot.top = spot.bottom = where.y;
+                slot = findCampSlot(campRow, spot, 1);
+                if (slot >= 0) {
+                    if (campCount > 0)
+                        campCount--;
+                    initSnoid(&draggedSnoid);
+                    draggedSnoid.zoombini = camp->slots[slot].zoombini;
+                    for (i = 0; i < 10; i++)
+                        draggedSnoid.name[i] = camp->slots[slot].name[i];
+                    draggedSnoid.x = where.x;
+                    draggedSnoid.y = where.y;
+                    camp->slots[slot].zoombini = 0;
+                    fn_4184b7();
+                    dragged = fn_4574ae(&draggedSnoid, 0);
+                    if (dragged) {
+                        view = findView(dragged);
+                        g_4a080c = -1;
+                        picked = 1;
+                        action = 2;
+                    }
+                }
+            } else {
+                action = 2;
+            }
+        }
+        switch (action) {
+        case 1:
+            break;
+        case 2:
+            if (!view && g_4b755a <= 0)
+                view = viewAt(where, 1, 1);
+            if (view) {
+                short placed = 0;
+
+                g_4ab51c = 0;
+                g_4ab52c = 1;
+                result = fn_458059(view, where, 0, 0);
+                g_4ab52c = 0;
+                count = fn_457fbb();
+                snoid = &view->snoid;
+                moved = snoid->targetX != snoid->x || snoid->targetY != snoid->y;
+                snoid->unknownF7 = count > 0;
+                if (snoid->unknownF7)
+                    snoid->unknownF8 = 1;
+                spot = view->snoid.bounds;
+                if (sectRect(&spot, &campArea)) {
+                    spot = view->snoid.bounds;
+                    drop = findCampSlot(campRow, spot, 0);
+                    if (drop >= 0) {
+                        noteCampSlot(drop);
+                        camp->slots[drop].zoombini = view->snoid.zoombini;
+                        for (i = 0; i < 10; i++)
+                            camp->slots[drop].name[i] = view->snoid.name[i];
+                        fn_464c53(view->id);
+                        fn_4184b7();
+                        g_4a080c = -1;
+                        picked = 0;
+                        placed = 1;
+                    }
+                }
+                if (picked) {
+                    short back = fn_456e7f() > 32;
+
+                    if (!back && !count && moved)
+                        back = 1;
+                    if (back) {
+                        camp->slots[slot].zoombini = draggedSnoid.zoombini;
+                        for (i = 0; i < 10; i++)
+                            camp->slots[slot].name[i] = draggedSnoid.name[i];
+                        fn_46411d(dragged, 1);
+                    }
+                    g_4a080c = -1;
+                } else if (result && !count && moved && !placed) {
+                    fn_45802e(result, view->id);
+                    snoid->unknownF7 = 1;
+                    snoid->unknownF8 = 1;
+                }
+                if (g_4ab52e) {
+                    short n = fn_456e4c();
+
+                    g_4ab524 = n && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0xa1fc) <= n;
+                } else {
+                    g_4ab524 = fn_456e4c() >= 16;
+                }
+            } else if ((view = viewAt(where, 0x20000, 1)) != 0) {
+                short sound = 0;
+
+                view->snoid.unknownB0 = 1;
+                switch (view->kind) {
+                case 0x457:
+                    i = 0;
+                    sound = 0x45e;
+                    break;
+                case 0x458:
+                    i = 1;
+                    sound = 0x45f;
+                    break;
+                case 0x459:
+                    i = 2;
+                    sound = 0x460;
+                    break;
+                case 0x45a:
+                    i = 3;
+                    sound = 0x461;
+                    break;
+                case 0x45b:
+                    i = 4;
+                    sound = 0x462;
+                    break;
+                }
+                ((short *)(g_4a4ba0 + 0x14))[i] = view->snoid.unknown98 + 1;
+                ((short *)(g_4a4ba0 + 0x14))[i] %= view->snoid.unknown96 + 1;
+                if (sound)
+                    fn_4666b7(sound, 0);
+            } else if ((view = viewAt(where, 0x40000, 1)) != 0) {
+                fn_464876(view, 0x451, 1);
+                fn_465a5e(view->id, 1);
+            } else {
+                for (i = 0; i < 5; i++)
+                    if (ptInRect(&g_4a0a34[i], where) && (view = findView(g_4ab530[i])) != 0
+                        && !view->snoid.unknownB0) {
+                        fn_464876(view, 0, 1);
+                        fn_465a5e(view->id, 1);
+                        i = 5;
+                    }
+            }
+            break;
+        }
     }
 }
 
@@ -828,7 +1290,7 @@ short findCampSlot(short start, ShortRect rect, short occupied)
  * step, every view->interval.
  */
 /* @zoombi32 0x00417cf1 */
-void scrollCamp(View *view, long)
+void scrollCamp(View *view, short)
 {
     short steps;
 
@@ -837,7 +1299,7 @@ void scrollCamp(View *view, long)
     view->nextUpdate = clockTime() + view->interval;
     if (view->reset) {
         view->reset = 0;
-        view->unknownCe = g_4a0920;
+        view->snoid.bounds = campArea;
         return;
     }
     if (!g_4a080c)
@@ -1147,7 +1609,7 @@ short returnToCamp()
             camp->slots[first + i].zoombini = travellers()[i].zoombini;
             camp->slots[first + i].rect = place;
             for (j = 0; j < 10; j++)
-                camp->slots[first + i].unknownC[j] = travellers()[i].unknown9[j];
+                camp->slots[first + i].name[j] = travellers()[i].name[j];
         }
         appended = 1;
     } else {
@@ -1158,7 +1620,7 @@ short returnToCamp()
                 camp->slots[i].zoombini = travellers()[i].zoombini;
                 camp->slots[i].rect = place;
                 for (j = 0; j < 10; j++)
-                    camp->slots[i].unknownC[j] = travellers()[i].unknown9[j];
+                    camp->slots[i].name[j] = travellers()[i].name[j];
                 placed++;
             }
     }

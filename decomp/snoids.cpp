@@ -5,7 +5,7 @@
 #include "zoombinis.h"
 
 /* @zoombi32 0x004572bf */
-int fn_4572bf()
+short fn_4572bf()
 {
     int count = 0;
     for (short i = 0; i < *(short *)(g_4a4ba0 + 0xa92e); i++)

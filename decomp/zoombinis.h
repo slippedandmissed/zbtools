@@ -266,7 +266,7 @@ struct CampSlot
 {
     long zoombini; /* 0: empty */
     ShortRect rect; /* where it stands */
-    char unknownC[10];
+    char name[10];
 };
 
 /* The camp's slots, in a block. */
@@ -282,21 +282,58 @@ struct Traveller
 {
     long zoombini;
     char unknown4[5];
-    char unknown9[10];
+    char name[10];
+};
+
+/* A Zoombini on screen (the snoids module), 0x104 bytes (by the frame
+   drawCamp gives it). Partly known. */
+struct Snoid
+{
+    char unknown0[0x92];
+    short unknown92;
+    short unknown94;
+    short unknown96;
+    short unknown98;
+    long unknown9a;
+    ShortRect bounds; /* +0x9e: where it was drawn */
+    short x; /* +0xa6 */
+    short y;
+    char unknownAa[6];
+    short unknownB0;
+    short unknownB2;
+    char unknownB4[8];
+    long zoombini; /* +0xbc */
+    short unknownC0;
+    char unknownC2[0x24];
+    short targetX; /* +0xe6 */
+    short targetY;
+    char unknownEa[0xd];
+    char unknownF7;
+    char unknownF8;
+    char name[10]; /* +0xf9 */
+    char unknown103;
 };
 
 /* A view (the view module): part of the screen, with callbacks to update
    and draw it. Partly known. */
 struct View
 {
-    char unknown0[0x24];
+    char unknown0[0x1a];
+    short id; /* +0x1a */
+    short kind; /* +0x1c */
+    char unknown1e[6];
     unsigned long nextUpdate; /* +0x24 */
     unsigned long interval; /* +0x28 */
     char changed; /* +0x2c */
     char reset; /* +0x2d */
-    char unknown2e[0xa0];
-    ShortRect unknownCe; /* +0xce */
+    char unknown2e[2];
+    Snoid snoid; /* +0x30 */
 };
+
+/* A view's callbacks: drawing it, and updating it (region: where the
+   screen changes). */
+typedef void (*ViewDraw)(View *view);
+typedef void (*ViewUpdate)(View *view, short region);
 
 /* A button in the camp (0x24 bytes). */
 struct CampButton
@@ -312,28 +349,11 @@ struct ImageBank
     long offsets[1];
 };
 
-/* A Zoombini on screen (the snoids module), 0x104 bytes (by the frame drawCamp gives it). Partly known. */
-struct Snoid
-{
-    char unknown0[0x98];
-    short unknown98;
-    long unknown9a;
-    ShortRect bounds; /* +0x9e: where it was drawn */
-    short x; /* +0xa6 */
-    short y;
-    char unknownAa[8];
-    short unknownB2;
-    char unknownB4[8];
-    long zoombini; /* +0xbc */
-    short unknownC0;
-    char unknownC2[0x42];
-};
-
 /* The Zoombinis setting out (0x266 bytes, at 0xa92e in the game's state;
    saved at 0xa462). */
 struct Party
 {
-    short unknown0;
+    short count; /* travellers (fn_4572bf counts those present) */
     short unknown2;
     short unknown4;
     Traveller travellers[32];
@@ -1083,12 +1103,25 @@ extern short g_4a48e6;
 extern short g_4b755a;
 extern short g_4b755c;
 extern short g_4b9684;
+extern short g_4b80d0; /* the mouse button down */
 extern ImageBank *g_4a0974; /* the camp's frame */
 extern ShortRect campButtonsBounds; /* @data 0x4a0a9e */
 extern ShortRect campArrival; /* @data 0x4a0aa6: where Zoombinis back from the journey stand */
 extern short g_4a080c;
 extern short g_4a080e; /* the camp is scrolled half a row */
-extern ShortRect g_4a0920; /* the way the camp is asked to scroll (1-4) */
+extern ShortRect campArea; /* @data 0x4a0920 */
+extern ShortRect g_4a0a34[5];
+extern short g_4ab530[5];
+extern Snoid draggedSnoid; /* @data 0x4ab53a */
+extern GroupList campGroupLists[2]; /* @data 0x4a0998 */
+extern char g_4b87fe;
+extern short g_4afb32;
+extern short g_4b80f6[16];
+extern short g_4a7b88;
+extern long g_4b9008[];
+extern short g_4b7562;
+extern short g_4b0d4c;
+extern long g_4ab51c; /* the way the camp is asked to scroll (1-4) */
 extern short campX[10]; /* @data 0x4a09b0: each row's x, in two layouts (4a080e) */
 extern short campY[10][5]; /* @data 0x4a09c6: each slot's y, in two layouts */
 extern short primes[5]; /* @data 0x4a0800 */
@@ -3851,7 +3884,7 @@ short focusItemAt(short x, short y);
 short focusItem(InputItem *item);
 void visitAllItems();
 void numberAllItems();
-void setGroupLists(GroupList *lists, short count, unsigned short flags);
+void setGroupLists(GroupList *lists, short count, short flags);
 void leaveEnteredItem();
 void enterFocusedItem();
 void moveMouseTo(short x, short y);
@@ -4038,8 +4071,45 @@ void drawOutlinedText(unsigned short outline, unsigned short color, ShortRect re
 void nudgeRect(ShortRect *rect, short direction);
 void fn_416754();
 long fn_417906(long);
+void enterCamp();
 void leaveCamp();
+short addView(long flags, ViewDraw draw, ViewUpdate update, short id, short, void *data, long,
+              long); /* 0x463afe */
+void fn_4656e7(short, short, short);
+void fn_45915d(short);
+void fn_463e61(short);
+void fn_46450c(short);
+void fn_464202(short);
+void fn_465bd0(short, short, short);
+void fn_464231(short, short);
+void fn_46431e(short, short, short);
+ImageBank *fn_4651ee(short id, long *resource);
+void fn_465ce7(View *view);
+void fn_465e59(View *view, short region);
+long fn_464cbc(long, short *, short);
+void fn_463dce(short count, Point *places, short);
+void fn_4572f0(short);
+void fn_458cc1(short);
+void fn_458f07(short, short);
+void fn_4655d3();
+short fn_45bdc4(char *);
+void fn_464d3c();
 void campIdle();
+void campButtonClicked(short button);
+void campMouse(short action);
+View *viewAt(Point where, long mask, short); /* 0x463cec */
+short fn_458059(View *view, Point where, short, short);
+short fn_457fbb();
+short fn_456e7f();
+short fn_456e4c();
+short fn_4574ae(Snoid *snoid, short);
+void fn_46411d(short id, short);
+void fn_45802e(short, short id);
+void fn_464c53(short id);
+void fn_464876(View *view, short, short);
+void fn_465a5e(short id, short);
+void fn_45a477();
+void fn_4590b6(short, short, short);
 void fn_463359();
 void fn_46560b();
 void fn_4624fc();
@@ -4053,7 +4123,7 @@ void fn_4640a6(long);
 void drawCampButtons2(View *);
 void fn_417aec(View *, short region);
 short findCampSlot(short start, ShortRect rect, short occupied);
-void scrollCamp(View *view, long);
+void scrollCamp(View *view, short);
 void drawCamp(View *);
 void noteCampSlot(short slot);
 void initSnoid(Snoid *snoid); /* 0x45bf41 */
@@ -4129,7 +4199,7 @@ short mainLoopUpdate();
 void fn_456a3e(long first, long second);
 void fn_456a55(void (*callback)(short active));
 short fn_456bf6();
-int fn_4572bf();
+short fn_4572bf();
 short fn_457fbb();
 void fn_45b39a(short value);
 void fn_45bfc0(long value);

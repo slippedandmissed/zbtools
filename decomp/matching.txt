@@ -283,6 +283,8 @@
 0x00416754 fn_416754
 0x00416ede leaveCamp
 0x00417000 campIdle
+0x00417108 campButtonClicked
+0x00417350 campMouse
 0x00417906 fn_417906
 0x0041790f drawCampButtons
 0x00417ac4 drawCampButtons1
