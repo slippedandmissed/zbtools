@@ -1,16 +1,16 @@
 /*
- * module_48b1e8 (Mohawk engine): eraseRgn, frameRect, getClip
+ * module_48b1e8 (Mohawk engine): eraseRect, frameRect, getClip
  */
 
 /* @flags -p -x- */
 
 #include "zoombinis.h"
 
-/* Fills a region with the current port's background colour. Not exact: the
-   original copies the colour through eax, BCC32 4.5 through a saved
+/* Fills a rectangle with the current port's background colour. Not exact:
+   the original copies the colour through eax, BCC32 4.5 through a saved
    register. */
 /* @zoombi32 0x0048b1e8 */
-short eraseRgn(short region)
+short eraseRect(const Rect &rect)
 {
     basePort *port;
     HBRUSH brush;
@@ -20,7 +20,7 @@ short eraseRgn(short region)
         return graphics.error;
     if ((brush = port->brush(port->backColor)) == 0)
         return graphics.error;
-    result = port->fillRgn(region, brush, 0);
+    result = port->patBlt(&rect, brush, 0);
     DeleteObject(brush);
     return result;
 }

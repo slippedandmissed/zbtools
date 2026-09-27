@@ -16,7 +16,7 @@
  * `Region **` gets the address into a register, but ranks it first.
  */
 /* @zoombi32 0x0048130c */
-void diffRgnRects(short handle, long count, ShortRect *rects)
+short diffRgnRects(short handle, long count, ShortRect *rects)
 {
     Region *data;
     long start;
@@ -30,10 +30,8 @@ void diffRgnRects(short handle, long count, ShortRect *rects)
     ShortRect *r;
 
     data = getRegion(handle);
-    if (!data) {
-        setRegionError(0x2937);
-        return;
-    }
+    if (!data)
+        return setRegionError(0x2937);
     start = 0;
     while (count--) {
         r = rects++;
@@ -109,5 +107,5 @@ void diffRgnRects(short handle, long count, ShortRect *rects)
     }
     tidyRgn(data);
     shrinkRgn(handle, &data);
-    setRegionError(0);
+    return setRegionError(0);
 }

@@ -132,7 +132,7 @@ unsigned short realizePalette(Palette *handle, short foreground)
     ReleaseDC(window, dc);
     for (port = palette->ports; port; port = port->nextOnPalette)
         if (port->locks)
-            port->paletteChanged();
+            port->realizePalette();
     if (foreground && (changed || changedCount != reservedCount))
         for (other = palette->next; palette != other; other = other->next)
             other->realized = 0;
@@ -151,8 +151,8 @@ static unsigned short packedWord(const unsigned char *data)
 }
 
 /*
- * Draws packed pixels into an 8-bit bottom-up bitmap (`bits` is its top
- * row) at x, y, clipped to `bounds` and `*clip`. Each row is a big-endian
+ * Draws packed pixels into an 8-bit bottom-up bitmap (`bits` + `offset` is
+ * its top row) at x, y, clipped to `bounds` and `*clip`. Each row is a big-endian
  * length and then packets: a header byte, bit 7 set for a run of the next
  * byte, else that many literal bytes, the count being the low bits plus 1.
  * With `transparent`, runs of 0 are skipped.
@@ -161,8 +161,8 @@ static unsigned short packedWord(const unsigned char *data)
  * are jump targets rather than functions); this does the same in C++.
  */
 /* @zoombi32-functional 0x0048cef4 */
-void drawPackedPixels(long offset, unsigned char *bits, long rowBytes, ShortRect bounds, short x,
-                      short y, ShortRect *clip, unsigned short width, unsigned short height,
+void drawPackedPixels(unsigned char *bits, long offset, long rowBytes, Rect bounds, short x,
+                      short y, const Rect &clip, unsigned short width, unsigned short height,
                       const unsigned char *data, short transparent)
 {
     short over;
@@ -178,7 +178,7 @@ void drawPackedPixels(long offset, unsigned char *bits, long rowBytes, ShortRect
     unsigned char header;
     unsigned char value;
 
-    if (!sectRect(&bounds, clip))
+    if (!sectRect(&bounds, (ShortRect *)&clip))
         return;
     skipX = 0;
     if ((over = x - bounds.left) < 0) {

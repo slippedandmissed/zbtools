@@ -15,7 +15,7 @@ Color getForeColor()
 
     if ((port = portObject(1)) == 0)
         return Color(0xffff);
-    return port->foreColor;
+    return port->pen.color;
 }
 
 /* @zoombi32 0x0048b510 */

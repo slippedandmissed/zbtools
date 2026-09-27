@@ -446,7 +446,8 @@ name = "module_4860cc"
 
 [[module]]
 start = 0x486318
-name = "module_486318"
+name = "baseport"
+note = "RTTI class basePort (its vtable's methods, constructor and destructor, and the pen's inline functions)"
 
 [[module]]
 start = 0x4887f4
@@ -494,7 +495,8 @@ name = "module_4890f8"
 
 [[module]]
 start = 0x489148
-name = "module_489148"
+name = "dib"
+note = "RTTI class DIB (its constructor and vtable); CreateDIBSection; the fixed-point helpers"
 
 [[module]]
 start = 0x48990c

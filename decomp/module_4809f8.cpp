@@ -68,8 +68,8 @@ short setIniError(short error)
 
 /* Whether a point is in a rectangle (QuickDraw's PtInRect). */
 /* @zoombi32 0x00480b80 */
-short ptInRect(ShortRect *rect, Point *point)
+short ptInRect(ShortRect *rect, const Point &point)
 {
-    return point->x >= rect->left && point->x < rect->right && point->y >= rect->top
-           && point->y < rect->bottom;
+    return point.x >= rect->left && point.x < rect->right && point.y >= rect->top
+           && point.y < rect->bottom;
 }

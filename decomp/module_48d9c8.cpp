@@ -14,7 +14,7 @@ short setOrigin(short left, short top)
 
     if ((port = portObject(1)) == 0)
         return graphics.error;
-    return port->setFrame(&port->unknown18, Pt(left, top), port->unknown2c);
+    return port->setFrame(&port->bounds, Pt(left, top), port->size);
 }
 
 /* @zoombi32 0x0048da17 */

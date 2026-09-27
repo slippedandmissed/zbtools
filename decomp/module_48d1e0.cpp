@@ -16,7 +16,7 @@ short setClip(short region)
         return graphics.error;
     if (copyRgn(port->clip, region))
         return setPortError(regionError());
-    port->clipChanged = 0;
+    port->clipApplied = 0;
     return setPortError(0);
 }
 

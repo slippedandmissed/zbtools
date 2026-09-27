@@ -16,9 +16,9 @@ Color setForeColor(Color color)
 
     if ((port = portObject(1)) == 0)
         return Color(0xffff);
-    if (port->setColor(color, port->mode))
+    if (port->setColor(color, port->pen.width))
         return Color(0xffff);
-    Color old = port->foreColor;
-    port->foreColor = color;
+    Color old = port->pen.color;
+    port->pen.color = color;
     return old;
 }

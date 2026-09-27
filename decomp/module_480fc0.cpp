@@ -41,15 +41,13 @@ short copyRgn(short to, short from)
     Region *data;
     unsigned short size;
 
-    if (!getRegion(to)) {
+    if (!getRegion(to))
         return setRegionError(0x2937);
-    }
     if (to == from) {
         return setRegionError(0);
     }
-    if ((data = getRegion(from)) == 0) {
+    if ((data = getRegion(from)) == 0)
         return setRegionError(0x2937);
-    }
     size = data->capacity * 8 + 0x10;
     if (setHandleSize(to, size)) {
         return setRegionError(memError());
@@ -60,7 +58,7 @@ short copyRgn(short to, short from)
 
 /* Makes a Windows region from a region, moved by (dx, dy). */
 /* @zoombi32 0x004810b8 */
-void regionToHrgn(HRGN target, short region, short dx, short dy)
+short regionToHrgn(HRGN target, short region, short dx, short dy)
 {
     HRGN spare;
     unsigned short swapped;
@@ -69,24 +67,17 @@ void regionToHrgn(HRGN target, short region, short dx, short dy)
     HRGN other;
     long i;
 
-    if (!target) {
-        setRegionError(0x2937);
-        return;
-    }
-    if ((data = getRegion(region)) == 0) {
-        setRegionError(0x2937);
-        return;
-    }
+    if (!target)
+        return setRegionError(0x2937);
+    if ((data = getRegion(region)) == 0)
+        return setRegionError(0x2937);
     other = CreateRectRgn(0, 0, 0, 0);
-    if (!other) {
-        setRegionError(0x2904);
-        return;
-    }
+    if (!other)
+        return setRegionError(0x2904);
     spare = CreateRectRgn(0, 0, 0, 0);
     if (!spare) {
         DeleteObject(other);
-        setRegionError(0x2904);
-        return;
+        return setRegionError(0x2904);
     }
     swapped = 0;
     SetRectRgn(target, 0, 0, 0, 0);
@@ -106,5 +97,5 @@ void regionToHrgn(HRGN target, short region, short dx, short dy)
     }
     DeleteObject(spare);
     DeleteObject(other);
-    setRegionError(0);
+    return setRegionError(0);
 }

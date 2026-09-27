@@ -22,14 +22,13 @@ __cdecl Color::Color(unsigned short index)
     }
 }
 
-/* Takes another colour's value, as RGB (dropping the index flag). */
+/* An RGB colour (dropping the index flag). */
 /* @zoombi32 0x004888d9 */
-Color &__cdecl Color::setRgb(const Color &color)
+__cdecl Color::Color(const RGBColor &color)
 {
     value = color.value;
     if (bytes.kind != 0xff)
         bytes.kind &= 0x7f;
-    return *this;
 }
 
 /* The colour's index in the current port's palette (0xffff if there's

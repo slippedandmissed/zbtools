@@ -17,5 +17,5 @@ unsigned short textWidth(const char *text, unsigned short length)
     if ((port = portObject(1)) == 0)
         return 0xffff;
     GetTextExtentPoint(port->dc, text, length == 0xffff ? strlen(text) : length, &size);
-    return size.cx ? size.cx - port->unknownA8 : 0;
+    return size.cx ? size.cx - port->metrics.tmOverhang : 0;
 }

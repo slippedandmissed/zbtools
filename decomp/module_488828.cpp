@@ -16,6 +16,6 @@ short clipPortToRect(const Rect &rect)
         return graphics.error;
     if (sectRgnWithRect(port->clip, (ShortRect *)&rect))
         return setPortError(regionError());
-    port->clipChanged = 0;
+    port->clipApplied = 0;
     return setPortError(0);
 }

@@ -217,6 +217,15 @@ struct Region
     ShortRect rects[1];
 };
 
+/* A polygon, in a handle (as a port fills them). */
+struct PolygonData
+{
+    long tag;
+    ShortRect bounds;
+    unsigned short count; /* +0xc */
+    Point points[1]; /* +0xe */
+};
+
 /* A saved area of a port (e2MapSave), 0xe bytes. */
 struct MapSave
 {
@@ -233,16 +242,21 @@ struct MapSave
  * its ShortRects, each converted into a temporary (memcpy'd, by an inline
  * constructor).
  */
-class Rect
+class Rect : public ShortRect
 {
 public:
-    short left;
-    short top;
-    short right;
-    short bottom;
+#ifdef RECT_OUT_OF_LINE
+    /* The engine's port modules call this out of line; the game expands it. */
+    __cdecl Rect(const ShortRect &rect); /* 0x48a667 */
+#else
     Rect(const ShortRect &rect) { memcpy(this, &rect, sizeof(Rect)); }
+#endif
     __cdecl Rect(short left, short top, short right, short bottom); /* 0x48c8d4 */
+    /* The ports' modules call these (out of line). */
+    __cdecl Rect(); /* 0x48ab89 */
+    void __cdecl operator=(const Rect &rect); /* 0x48ab91 */
 };
+
 
 class WinPoint;
 
@@ -253,6 +267,8 @@ public:
     __cdecl Pt(short x, short y); /* 0x48da17 */
     __cdecl Pt(const Point &point); /* 0x48c6f3 */
     __cdecl Pt(const WinPoint &point); /* 0x48c736 */
+    __cdecl Pt(); /* 0x488786 */
+    void __cdecl operator=(const Pt &point); /* 0x4887ab */
 };
 
 /* A Windows POINT made from a Pt. */
@@ -296,7 +312,7 @@ public:
         value = color.value;
         index = color.index;
     }
-    Color &__cdecl setRgb(const Color &color); /* 0x4888d9 */
+    __cdecl Color(const RGBColor &color); /* 0x4888d9 */
     unsigned short __cdecl paletteIndex() const; /* 0x4888f2 */
     RGBColor __cdecl rgb() const; /* 0x4889a4 */
     long __cdecl kind() const; /* 0x488a39 */
@@ -306,7 +322,10 @@ public:
 class RGBColor
 {
 public:
-    ColorBytes bytes;
+    union {
+        long value;
+        ColorBytes bytes;
+    };
     __cdecl RGBColor(unsigned char red, unsigned char green, unsigned char blue,
                      unsigned char kind); /* 0x48c4ac */
     __cdecl RGBColor(const Color &color); /* 0x488a64 */
@@ -1014,7 +1033,7 @@ short setOrigin(short left, short top);
 short clipPortToRect(const Rect &rect);
 short setClip(short region);
 short getClip(short region);
-short copyPortBits(basePort *to, basePort *from, const Rect &fromRect, const Rect &toRect, short mode);
+short copyPortBits(basePort *to, basePort *from, const Rect &toRect, const Rect &fromRect, short mode);
 short lockPort(basePort *port); /* locks a port; non-zero on failure */
 short invertRect(const Rect &rect);
 short lineTo(short x, short y);
@@ -1024,7 +1043,7 @@ short setClipRect(const Rect &rect);
 short fillPortRect(const Rect &rect, Color color, short);
 Color getForeColor();
 Color setForeColor(Color color); /* the previous one */
-unsigned short setPenMode(short mode); /* the previous one */
+unsigned short setPenWidth(short width); /* the previous one */
 void mouseButtonDown(short button, long keys, long where);
 short handleNextMessage();
 void flushInput(short which);
@@ -1119,88 +1138,161 @@ public:
     PALETTEENTRY entries[256]; /* +0x1c */
 };
 
+/* A port's pen (+0x54). */
+class Pen
+{
+public:
+    Pt position;
+    Color color;
+    short mode; /* setMode's */
+    short width;
+    __cdecl Pen(); /* 0x48878e */
+    __cdecl Pen(const Pt &position, const Color &color, short mode, short width); /* 0x4887c4 */
+};
+
+/* A device-independent bitmap (a DIB section) that ports draw through
+   (module_489148). */
+class DIB
+{
+public:
+    /* Draws `from` (of the bitmap) into `to` of a port, flipped as asked. */
+    virtual void draw(basePort *port, Rect to, Rect from, long usage, DWORD rop,
+                      unsigned short flipX, unsigned short flipY); /* 0 */
+    virtual HDC getDC(); /* 1 */
+    virtual void releaseDC(HDC dc); /* 2 */
+    virtual void getColors(unsigned short first, unsigned short count, RGBQUAD *colors); /* 3 */
+    virtual short create(short clear); /* 4: non-zero on failure */
+    virtual void destroy(); /* 5 */
+    /* The usage to draw with (DIB_RGB_COLORS unless the port takes indices). */
+    virtual long usage(long paletteKind, DWORD rop, short flipX, short flipY); /* 6 */
+    virtual void setColors(unsigned short first, unsigned short count,
+                           const RGBQUAD *colors); /* 7 */
+    virtual void setEntries(unsigned short first, short count,
+                            const PALETTEENTRY *entries); /* 8 */
+
+    __cdecl DIB(short width, short height, unsigned short depth); /* 0x489148 */
+
+    ShortRect bounds; /* +4: (0, 0, width, height) */
+    unsigned short depth; /* +0xc */
+    short unknownE;
+    long portUsage; /* +0x10: DIB_PAL_COLORS */
+    BITMAPINFO *indexInfo; /* +0x14: with palette indices for colours */
+    BITMAPINFO *info; /* +0x18: with RGB colours */
+    void *bits; /* +0x1c */
+    long rowBytes; /* +0x20 */
+    long lastRow; /* +0x24: the offset of the top row (DIBs are bottom-up) */
+    HBITMAP bitmap; /* +0x28 */
+    HDC dc; /* +0x2c */
+};
+
+extern RGBQUAD monoColors[2]; /* @data 0x4a8ab0 */
+extern RGBQUAD vgaColors[16]; /* @data 0x4a8ab8 */
+extern DWORD patternRops[8]; /* @data 0x4a8af8: PatBlt's for the drawing modes */
+extern DWORD copyRops[8]; /* @data 0x4a8b18: BitBlt's for the transfer modes */
+
 class basePort
 {
 public:
     virtual __cdecl ~basePort(); /* 0 */
-    virtual short v1(basePort *to, const Rect *fromRect, const Rect *toRect, short mode, long);
-    virtual void v2();
-    virtual void v3();
-    virtual void v4();
-    virtual void v5();
+    /* Copies `from` of this port to `to` of another, in a transfer mode;
+       flags: 1 and 2 pick the stretch mode, 0x10 and 0x20 flip. */
+    virtual short copyBits(basePort *port, const Rect *to, const Rect *from, unsigned short mode,
+                           unsigned char flags); /* 1 */
+    virtual void applyMapping(); /* 2: bounds to frame, as viewport and window */
+    virtual short clipTo(HRGN rgn); /* 3: clips to the clip region and rgn */
+    virtual void setupDC(); /* 4: once dc is made */
+    virtual short toHrgn(HRGN target, short region); /* 5: in device coordinates */
     virtual void depthChanged(); /* 6: the display's depth changed (while locked) */
-    virtual void v7();
+    virtual void cleanupDC(); /* 7: before dc goes */
     virtual void prepare(); /* 8: before GDI calls on dc */
-    virtual void paletteChanged(); /* 9: while locked */
-    virtual void v10();
-    virtual void v11();
+    virtual void realizePalette(); /* 9: while locked */
+    virtual short setBackColor(Color color); /* 10 */
+    virtual short setClip(short region); /* 11 */
     virtual short useFont(Font *font); /* 12 */
-    virtual void v13();
-    virtual short setColor(Color color, short mode); /* 14: the pen */
-    virtual void v15();
-    virtual short drawPixels(const Rect &bounds, short width, short height, short unknown,
-                             unsigned short flags, void *pixels, short mode, long); /* 16 */
-    virtual void v17();
+    virtual void setUnknown66(short value); /* 13 */
+    virtual short setColor(Color color, unsigned short width); /* 14: the pen */
+    virtual void setMode(short mode); /* 15: the pen's */
+    virtual short drawPixels(const Rect &bounds, unsigned short width, unsigned short height,
+                             short rowBytes, unsigned short format, void *pixels,
+                             unsigned short mode, unsigned short flags); /* 16 */
+    virtual void v17(long); /* 17: unsupported */
     virtual HBRUSH brush(Color color); /* 18: a new brush */
-    virtual void v19();
-    virtual void v20();
+    virtual HBRUSH patternBrush(const unsigned short *pattern); /* 19: a new brush */
+    virtual int stretchDIBits(int toX, int toY, int toWidth, int toHeight, int fromX, int fromY,
+                              int fromWidth, int fromHeight, const void *bits,
+                              BITMAPINFO *info, UINT usage, DWORD rop); /* 20 */
     virtual unsigned short nearestIndex(RGBColor color); /* 21 */
-    virtual void v22();
+    virtual Color getPixel(short x, short y); /* 22 */
     virtual RGBColor paletteColor(unsigned short index); /* 23 */
     virtual short init(); /* 24: after construction; non-zero on failure */
-    virtual short lock(); /* 25 */
-    virtual short fillRect(const Rect &rect, Color color, short); /* 26 */
-    virtual void v27();
-    virtual void v28();
-    virtual short fillRgn(short region, HBRUSH brush, short); /* 29 */
-    virtual void v30();
+    virtual short lock() = 0; /* 25 */
+    virtual short fillRect(const Rect &rect, Color color, short mode); /* 26 */
+    virtual short fillOval(const Rect *rect, HBRUSH brush, short mode); /* 27 */
+    virtual short fillPoly(short polygon, HBRUSH brush, short mode); /* 28 */
+    virtual short patBlt(const Rect *rect, HBRUSH brush, unsigned short mode); /* 29 */
+    virtual short fillRgn(short region, HBRUSH brush, short mode); /* 30 */
     virtual void release(); /* 31: before deleting */
-    virtual void v32();
+    /* Scrolls a rectangle; what's uncovered goes into `region`. */
+    virtual void scroll(const Rect *rect, short dx, short dy, short region); /* 32 */
     virtual Palette *setPalette(Palette *palette); /* 33: the previous one */
     virtual void unlock(); /* 34 */
-    virtual void v35();
-    virtual void v36();
+    /* Draws an 8-bit (or less) DIB with colour 0 transparent. */
+    virtual void drawMasked(const Rect *rect, const void *bits, BITMAPINFO *info, short flipX,
+                            short flipY); /* 35 */
+    virtual COLORREF colorRef(Color color); /* 36 */
 
     static void *operator new(size_t size); /* 0x487f56: zeroed */
-    short setFrame(Rect *rect, Pt origin, Pt size); /* 0x486407 */
-    static void operator delete(void *block);
+    static void operator delete(void *block); /* 0x4870d1 */
+    __cdecl basePort(const Rect *bounds); /* 0x486318 */
+    short setFrame(const Rect *bounds, Pt origin, Pt size); /* 0x486407 */
 
-    long unknown4; /* 'Port' */
+    long tag; /* +4: 'Port' */
     basePort *next; /* +8: in graphics.ports */
-    char unknownC[8];
+    basePort *prev; /* +0xc */
+    long paletteKind; /* +0x10: 1 selects its Palette's own HPALETTE (not a copy); 1 and 2 take RGB DIBs */
     long kind; /* +0x14: 5 a window */
-    Rect unknown18;
-    char unknown20[0xc];
-    Pt unknown2c;
-    char unknown30[0xc];
+    Rect bounds; /* +0x18: in device pixels */
+    Rect frame; /* +0x20: the coordinates drawn in */
+    Pt offset; /* +0x28: frame's origin less bounds' */
+    Pt size; /* +0x2c: the frame's (0: the bounds') */
+    short scaled; /* +0x30: frame and bounds differ in size */
+    short unknown32;
+    long scaleX; /* +0x34: frame over bounds, fixed-point */
+    long scaleY; /* +0x38 */
     Palette *palette; /* +0x3c */
-    char unknown40[4];
+    Palette *realized; /* +0x40: the palette last realized */
     basePort *nextOnPalette; /* +0x44: in palette->ports */
-    char unknown48[4];
+    basePort *prevOnPalette; /* +0x48 */
     Color backColor; /* +0x4c */
     Font *font; /* +0x50 */
-    char unknown54[4];
-    Color foreColor; /* +0x58 */
-    char unknown5c[2];
-    short mode; /* +0x5e */
+    Pen pen; /* +0x54 */
     short clip; /* +0x60: a region */
-    short clipChanged; /* +0x62 */
+    short clipApplied; /* +0x62: clip is selected into dc */
     unsigned short locks; /* +0x64 */
-    char unknown66[6];
+    short unknown66; /* +0x66 */
+    long unknown68;
     HDC dc; /* +0x6c */
-    char unknown70[0x38];
-    short unknownA8; /* +0xa8: subtracted from text widths */
-    char unknownAA[0x16];
+    short rasterCaps; /* +0x70 */
+    unsigned short depth; /* +0x72: bits per pixel (at most 24) */
+    long mapMode; /* +0x74 */
+    HRGN clipRgn; /* +0x78 */
+    HPALETTE hpal; /* +0x7c */
+    HPEN hpen; /* +0x80 */
+    HFONT hfont; /* +0x84 */
+    TEXTMETRIC metrics; /* +0x88 */
 };
 
 class displayPort : public basePort
 {
+public:
+    virtual short lock(); /* 25: 0x48ad80 */
 };
 
 /* A port in memory, in the display's format. */
 class memoryPort : public displayPort
 {
 public:
+    virtual short lock(); /* 25 */
     __cdecl memoryPort(short width, short height); /* 0x48c774 */
     char unknownC0[4];
 };
@@ -1209,6 +1301,7 @@ public:
 class DIBPort : public basePort
 {
 public:
+    virtual short lock(); /* 25 */
     __cdecl DIBPort(short width, short height, short depth); /* 0x48a720 */
     char unknownC0[8];
 };
@@ -1219,6 +1312,7 @@ public:
 class DIB8Port : public basePort
 {
 public:
+    virtual short lock(); /* 25 */
     __cdecl DIB8Port(short width, short height); /* 0x489be4 */
     char unknownC0[6];
 };
@@ -1227,6 +1321,7 @@ public:
 class windowPort : public displayPort
 {
 public:
+    virtual short lock(); /* 25 */
     __cdecl windowPort(const Rect &bounds, HWND window); /* 0x48db64 */
     virtual short v37();
     virtual short v38();
@@ -1250,9 +1345,10 @@ public:
     Font *next;
     Font *prev;
     unsigned short users; /* +0xc: can't be disposed of while used */
-    char unknownE[4];
-    short unknown12;
-    short unknown14;
+    short rotated; /* +0xe */
+    unsigned short angle; /* +0x10: of a turn (16-bit fraction) */
+    unsigned short size; /* +0x12: in pixels */
+    unsigned short style; /* +0x14: 1 bold, 2 italic, 4 underlined */
     char name[0x22]; /* +0x16: its face ("SYSTEM" by default), at most 31 characters */
 };
 
@@ -1353,7 +1449,7 @@ Palette *newPalette(unsigned short count, ColorBytes *colors); /* colours `kind`
 short deletePalette(Palette *palette);
 void disposePalette(Palette *palette);
 Palette *paletteHandle(Palette *palette); /* 0x48d5df */
-Font *newFont(const char *name, short, short);
+Font *newFont(const char *name, unsigned short size, unsigned short style);
 short disposeFont(Font *font);
 Font *fontObject(Font *font); /* 0x48d555 */
 Font *fontHandle(Font *font);
@@ -1398,15 +1494,15 @@ void swapWords(void *data, unsigned long count);
 void lzDecompress(unsigned char *dest, const unsigned char *source, unsigned long size,
                   unsigned char *ring, short bits);
 short setCursorShape(const MacCursor *cursor); /* 0-3: arrow, cross, I-beam, wait */
-void drawPackedPixels(long offset, unsigned char *bits, long rowBytes, ShortRect bounds, short x, short y,
-                      ShortRect *clip, unsigned short width, unsigned short height,
+void drawPackedPixels(unsigned char *bits, long offset, long rowBytes, Rect bounds, short x, short y,
+                      const Rect &clip, unsigned short width, unsigned short height,
                       const unsigned char *data, short transparent);
 unsigned char packedPixel(const unsigned char *data, unsigned short x, unsigned short y);
 basePort *checkPort(basePort *port, short kind);
 basePort *portObject(short kind);
 short setPortError(short error);
 short getPortError();
-short eraseRgn(short region);
+short eraseRect(const Rect &rect);
 short frameRect(const ShortRect &rect);
 Font *getFont();
 unsigned short nearestPaletteIndex(Palette *palette, RGBColor color);
@@ -3216,7 +3312,7 @@ void offsetRect(ShortRect *rect, short dx, short dy);
 void insetRect(ShortRect *rect, short dx, short dy);
 short sectRect(ShortRect *rect, ShortRect *with);
 ShortRect *unionRect(ShortRect *into, ShortRect *add);
-short ptInRect(ShortRect *rect, Point *point);
+short ptInRect(ShortRect *rect, const Point &point);
 ShortRect *__cdecl setRect(ShortRect *rect, short left, short top, short right, short bottom);
 
 /* Regions (errors in regionError) */
@@ -3227,11 +3323,11 @@ unsigned short emptyRgn(short region);
 short setRectRgn(short region, ShortRect *rect);
 short copyRgn(short to, short from);
 void compactRgn(short region);
-void regionToHrgn(HRGN target, short region, short dx, short dy);
+short regionToHrgn(HRGN target, short region, short dx, short dy);
 short sectRgnWithRect(short region, ShortRect *rect);
 short sectRgnRects(short region, long count, ShortRect *rects);
-void diffRgnRect(short region, ShortRect *rect);
-void diffRgnRects(short region, long count, ShortRect *rects);
+short diffRgnRect(short region, ShortRect *rect);
+short diffRgnRects(short region, long count, ShortRect *rects);
 void unionRgnRect(short region, ShortRect *rect);
 short unionRgnRects(short region, long count, ShortRect *rects);
 short unionRgn(short to, short from);

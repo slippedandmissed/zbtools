@@ -544,7 +544,7 @@ void closeGraphicsEngine()
 /* @zoombi32 0x0048c473 */
 basePort *checkPort(basePort *port, short kind)
 {
-    if (!port || port == (basePort *)-1 || port->unknown4 != 0x506f7274L /* 'Port' */) {
+    if (!port || port == (basePort *)-1 || port->tag != 0x506f7274L /* 'Port' */) {
         setPortError(0x2a73);
         return 0;
     }

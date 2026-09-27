@@ -10,7 +10,7 @@
 
 /* A new font ("SYSTEM" for no name or "default"), in graphics.fonts. */
 /* @zoombi32 0x00488ad0 */
-Font *newFont(const char *name, short unknown12, short unknown14)
+Font *newFont(const char *name, unsigned short size, unsigned short style)
 {
     Font *font;
     unsigned short length;
@@ -27,8 +27,8 @@ Font *newFont(const char *name, short unknown12, short unknown14)
     memset(font, 0, 0x38);
     font->magic = 0x466f6e74L; /* 'Font' */
     memcpy(font->name, name, length);
-    font->unknown12 = unknown12;
-    font->unknown14 = unknown14;
+    font->size = size;
+    font->style = style;
     if ((font->next = graphics.fonts) != 0) {
         font->prev = graphics.fonts->prev;
         font->prev->next = font;
