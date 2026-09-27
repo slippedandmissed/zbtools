@@ -2,7 +2,7 @@
  * module_480d64 (Mohawk engine): sectRgnRects
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include "zoombinis.h"
 

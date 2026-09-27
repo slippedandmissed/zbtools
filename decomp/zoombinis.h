@@ -457,8 +457,12 @@ struct Resume
 class fileSpec
 {
 public:
+    __cdecl fileSpec(); /* 0x4850ec */
     __cdecl fileSpec(const char *path);
-    __cdecl ~fileSpec();
+    __cdecl fileSpec(const fileSpec &directory, const char *name); /* 0x48518c */
+    __cdecl ~fileSpec(); /* 0x48533e */
+    fileSpec &__cdecl operator=(const fileSpec &from); /* 0x4853a2 */
+    short __cdecl compare(const fileSpec &with) const; /* 0x4853f3: 0 if the same, else 0x2844 or an error */
 
 private:
     long unknown0;
@@ -718,7 +722,6 @@ extern short g_4b99d4;
 extern char dataPath[256]; /* @data 0x4b99d6 */
 extern short dataPathLength; /* @data 0x4b9ad6 */
 extern char dataDrive; /* @data 0x4b9ad8 */
-extern short iniErrorCode; /* @data 0x4b9b58 */
 extern short regionErrorCode; /* @data 0x4b9b64 */
 extern short g_4b9cf0;
 extern short g_4b9cf4;
@@ -981,6 +984,43 @@ void fn_48f660(long handle, long, long);
  * The Mohawk engine
  */
 
+/* A settings file read into memory (in a handle), in a list of open ones. */
+class IniFile
+{
+public:
+    short prev;
+    short next;
+    fileSpec path;
+    short users;
+    unsigned short size;
+    unsigned short pos; /* where parsing has got to */
+    short text; /* the contents, NUL-terminated */
+};
+
+/* The settings files' state. */
+class IniState
+{
+public:
+    short error; /* of the last call */
+    short ready;
+    fileSpec path; /* MOHAWK.INI (or .W32) in the program's directory */
+    short files; /* the open settings files */
+    short unknownA;
+};
+
+extern IniState iniState; /* @data 0x4b9b58 */
+
+/* Files */
+long fileSize(fileSpec *file); /* -1 on error */
+short fileError();
+void programDirectory(fileSpec *directory);
+long openFile(fileSpec *file, short mode); /* 0 on error */
+short readFile(long file, void *buffer, long *size);
+void closeFile(long file, short);
+short fileMissing(fileSpec &file);
+unsigned long handleSize(short handle);
+void fn_48f464(short handle, short);
+
 /* Memory: relocatable blocks by handle (a short), as on the Mac. */
 short newHandle(long size);
 void *handleData(short handle);
@@ -996,7 +1036,7 @@ void offsetRect(ShortRect *rect, short dx, short dy);
 void insetRect(ShortRect *rect, short dx, short dy);
 short sectRect(ShortRect *rect, ShortRect *with);
 ShortRect *unionRect(ShortRect *into, ShortRect *add);
-short ptInRect(Point *point, ShortRect *rect);
+short ptInRect(ShortRect *rect, Point *point);
 ShortRect *__cdecl setRect(ShortRect *rect, short left, short top, short right, short bottom);
 
 /* Regions (errors in regionError) */
@@ -1026,6 +1066,24 @@ short setRegionError(short error);
 
 /* Settings files */
 short iniError();
+short openIni(fileSpec *path);
+unsigned short lineStart(IniFile *ini, char *text);
+unsigned short nextLine(IniFile *ini, char *text);
+void closeIni(short handle);
+unsigned short nextKey(IniFile *ini, char *text);
+unsigned short nextSection(IniFile *ini, char *text);
+short findKey(IniFile *ini, char *text, const char *section, const char *key);
+short findSection(IniFile *ini, char *text, const char *section);
+short initIni();
+short iniBufferSize();
+void closeAllIni();
+unsigned short skipSpaces(IniFile *ini, char *text);
+short isSpace(char c);
+short setIniError(short error);
+short getIniString(fileSpec *file, const char *section, const char *key, char *buffer,
+                   unsigned short size);
+short getIniBool(fileSpec *file, const char *section, const char *key, short *value);
+short getIniLong(fileSpec *file, const char *section, const char *key, long *value);
 
 /* Decompiled functions, by address */
 

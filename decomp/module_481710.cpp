@@ -2,7 +2,7 @@
  * module_481710 (Mohawk engine): tidyRgn
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include <string.h>
 #include "zoombinis.h"

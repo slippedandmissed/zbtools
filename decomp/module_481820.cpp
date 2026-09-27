@@ -2,7 +2,7 @@
  * module_481820 (Mohawk engine): unionRgn
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include "zoombinis.h"
 

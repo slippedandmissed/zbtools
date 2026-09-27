@@ -2,7 +2,7 @@
  * module_480bbc (Mohawk engine): insetRect
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include "zoombinis.h"
 

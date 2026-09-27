@@ -2,7 +2,7 @@
  * module_480bdc (0x480bdc-0x480c04): one function (Mohawk engine)
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include "zoombinis.h"
 

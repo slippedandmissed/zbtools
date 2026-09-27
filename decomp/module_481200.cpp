@@ -2,7 +2,7 @@
  * module_481200 (Mohawk engine): setRectRgn
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include "zoombinis.h"
 

@@ -2,7 +2,7 @@
  * module_4812bc (Mohawk engine): disposeRgn
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include "zoombinis.h"
 

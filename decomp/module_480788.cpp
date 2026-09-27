@@ -2,7 +2,7 @@
  * module_480788 (Mohawk engine): the settings-file error
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include "zoombinis.h"
 
@@ -10,5 +10,5 @@
 /* @zoombi32 0x00480788 */
 short iniError()
 {
-    return iniErrorCode;
+    return iniState.error;
 }

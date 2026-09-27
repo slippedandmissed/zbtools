@@ -2,7 +2,7 @@
  * module_4816d4 (Mohawk engine): emptyRgn
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include "zoombinis.h"
 

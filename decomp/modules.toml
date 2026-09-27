@@ -271,6 +271,11 @@ start = 0x47fd60
 name = "module_47fd60"
 
 [[module]]
+start = 0x4800c4
+name = "module_4800c4"
+note = "the settings-file parser; starts after wmxWaveOut's type descriptors (aligned, so no padding)"
+
+[[module]]
 start = 0x480788
 name = "module_480788"
 

@@ -2,7 +2,7 @@
  * module_481274 (Mohawk engine): newRgn
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include "zoombinis.h"
 

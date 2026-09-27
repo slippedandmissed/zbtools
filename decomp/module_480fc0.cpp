@@ -2,7 +2,7 @@
  * module_480fc0 (Mohawk engine): compacting, copying, conversion to a Windows region
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include <string.h>
 #include "zoombinis.h"

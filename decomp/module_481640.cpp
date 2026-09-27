@@ -2,7 +2,7 @@
  * module_481640 (Mohawk engine): diffRgnRect
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include "zoombinis.h"
 

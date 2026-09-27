@@ -2,7 +2,7 @@
  * module_480ca0 (Mohawk engine): unionRect
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include <string.h>
 #include "zoombinis.h"

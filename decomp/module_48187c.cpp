@@ -2,7 +2,7 @@
  * module_48187c (Mohawk engine): adding rectangles to regions
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include <string.h>
 #include "zoombinis.h"

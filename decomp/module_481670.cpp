@@ -2,7 +2,7 @@
  * module_481670 (Mohawk engine): setEmptyRgn
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include "zoombinis.h"
 

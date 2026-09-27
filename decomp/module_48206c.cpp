@@ -2,7 +2,7 @@
  * module_48206c (Mohawk engine): region errors, inserting rectangles
  */
 
-/* @flags -p */
+/* @flags -p -x- */
 
 #include <string.h>
 #include "zoombinis.h"
