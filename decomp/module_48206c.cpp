@@ -16,12 +16,11 @@ short regionError()
 /* Inserts a rectangle into a region's list at `index`, growing it (16 at a
    time) if needed. */
 /* @zoombi32 0x00482073 */
-void insertRgnRect(short handle, Region **region, long index, ShortRect *rect)
+short insertRgnRect(short handle, Region **region, long index, ShortRect *rect)
 {
     if ((*region)->capacity < (*region)->count + 1) {
         if (setHandleSize(handle, ((*region)->capacity + 16) * sizeof(ShortRect) + 0x10)) {
-            setRegionError(memError());
-            return;
+            return setRegionError(memError());
         }
         *region = (Region *)handleData(handle);
         (*region)->capacity += 16;
@@ -31,7 +30,7 @@ void insertRgnRect(short handle, Region **region, long index, ShortRect *rect)
                 ((*region)->count - index) * sizeof(ShortRect));
     memcpy(&(*region)->rects[index], rect, sizeof(ShortRect));
     (*region)->count++;
-    setRegionError(0);
+    return setRegionError(0);
 }
 
 /* @zoombi32 0x00482129 */

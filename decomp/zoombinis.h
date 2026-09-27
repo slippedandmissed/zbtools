@@ -1009,7 +1009,8 @@ void copyRgn(short to, short from);
 void compactRgn(short region);
 void regionToHrgn(HRGN target, short region, short dx, short dy);
 void sectRgnWithRect(short region, ShortRect *rect);
-void sectRgnRects(short region, long count, ShortRect *rects);
+short sectRgnRects(short region, long count, ShortRect *rects);
+short fn_48f4bc(short to, short from);
 void diffRgnRect(short region, ShortRect *rect);
 void diffRgnRects(short region, long count, ShortRect *rects);
 void unionRgnRect(short region, ShortRect *rect);
@@ -1020,7 +1021,7 @@ Region *getRegion(short region);
 void shrinkRgn(short handle, Region **region);
 void removeRgnRect(Region *region, long index);
 short regionError();
-void insertRgnRect(short handle, Region **region, long index, ShortRect *rect);
+short insertRgnRect(short handle, Region **region, long index, ShortRect *rect);
 short setRegionError(short error);
 
 /* Settings files */

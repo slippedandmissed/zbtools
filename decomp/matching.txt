@@ -356,6 +356,7 @@
 0x00480c04 offsetRect
 0x00480c24 sectRect
 0x00480ca0 unionRect
+0x00480d64 sectRgnRects
 0x004810b8 regionToHrgn
 0x00481200 setRectRgn
 0x00481274 newRgn
@@ -363,7 +364,12 @@
 0x00481640 diffRgnRect
 0x00481670 setEmptyRgn
 0x004816d4 emptyRgn
+0x00481710 tidyRgn
 0x00481820 unionRgn
+0x0048187c unionRgnRects
+0x00481f8e getRegion
+0x00481fa9 shrinkRgn
+0x00481ff4 removeRgnRect
 0x0048203c unionRgnRect
 0x0048206c regionError
 0x00482073 insertRgnRect
