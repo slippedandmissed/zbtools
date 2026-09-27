@@ -105,32 +105,32 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     g_4b2aec = addModifierKeys(0) != 0x800;
 
     if (fn_46ddaf(instance, osBuffer, sizeof osBuffer))
-        fn_41541a(msgInitOs);
+        fatalError(msgInitOs);
     if (fn_493096())
-        fn_41541a(msgInitTimer);
+        fatalError(msgInitTimer);
     if (fn_48ec85(0, 0))
-        fn_41541a(msgInitHeap);
+        fatalError(msgInitHeap);
     fn_48f2b0(fn_455013);
     unsigned long free = fn_48e7ec();
     if (free < 0x189c40 || aboveWindows311 && free < 0x389c40)
-        fn_41541a(msgNotEnoughMemory);
+        fatalError(msgNotEnoughMemory);
     if (aboveWindows311) {
         fn_48e928(&memory);
         if (memory.freePhysical < 0x600000)
-            fn_41541a(msgNotEnoughPhysicalMemory);
+            fatalError(msgNotEnoughPhysicalMemory);
     }
     if (fn_483732(0))
-        fn_41541a(msgInitFileManager);
+        fatalError(msgInitFileManager);
     if (fn_480642())
-        fn_41541a(msgInitConfiguration);
+        fatalError(msgInitConfiguration);
     if (fn_4922c6())
-        fn_41541a(msgInitResourceManager);
+        fatalError(msgInitResourceManager);
     if (fn_476d0a())
-        fn_41541a(msgInitSound);
+        fatalError(msgInitSound);
     if (!waveOutGetNumDevs())
-        fn_41541a(msgNoWaveDevices);
+        fatalError(msgNoWaveDevices);
     if (!midiOutGetNumDevs())
-        fn_41541a(msgNoMidiDevices);
+        fatalError(msgNoMidiDevices);
 
     fn_415910();
     fn_446962(g_4b29d4, rosterFileName);
@@ -184,9 +184,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
 
     long quickTimeVersion = 0;
     if (QTInitialize(&quickTimeVersion) || quickTimeVersion < 0x2300)
-        fn_41541a(msgRequiresQuickTime);
+        fatalError(msgRequiresQuickTime);
     if (qtim_0b())
-        fn_41541a(msgRequiresQuickTime);
+        fatalError(msgRequiresQuickTime);
     else
         quickTimeReady = 1;
 

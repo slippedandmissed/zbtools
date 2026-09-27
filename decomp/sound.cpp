@@ -252,7 +252,7 @@ short prepareSound(Entry *entry, short channel)
         }
     } while (answer == IDRETRY);
     if (answer == IDABORT)
-        fn_41541a(g_4a07b4);
+        fatalError(g_4a07b4);
     else if (answer == IDIGNORE) {
         soundErrorsIgnored = 1;
         return 0;

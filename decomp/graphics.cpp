@@ -26,21 +26,21 @@ void initGraphics(DisplayMode *mode, short depth)
     displayMode = *mode;
     g_4ab404 = mode->unknown8;
     if (fn_48ba5a(mode, 0))
-        fn_41541a("unable to initialize graphics");
+        fatalError("unable to initialize graphics");
     fn_48d798(depth);
     gameRect.right = width;
     gameRect.bottom = height;
     if (!createMainWindow(width, height))
-        fn_41541a(msgNoScreenPort);
+        fatalError(msgNoScreenPort);
     g_4aa7b8 = gameRect;
     fn_480c24(&g_4aa7b8, &screenRect);
     if (!allocateBlock((void **)&g_4ab3f0, 0x400))
-        fn_415477("initial RGB's");
+        notEnoughNearMemory("initial RGB's");
     memset(g_4ab3f0, 0, 4);
     for (i = 0; i < 0x100; i++)
         g_4ab3f0[i].peFlags = PC_RESERVED;
     if ((palette = fn_488d08(0x100, g_4ab3f0)) == 0)
-        fn_41541a("unable to create palette");
+        fatalError("unable to create palette");
     freeAndClear((void **)&g_4ab3f0);
     setPort(screenPort);
     fn_48d574(palette);
@@ -279,9 +279,9 @@ void clipRect(short *region, ShortRect *rect, short keep)
 {
     if (keep) {
         if (*region)
-            fn_41541a("e2ClipRect error -- region must equal 0");
+            fatalError("e2ClipRect error -- region must equal 0");
     } else if (!fn_4816d4(*region))
-        fn_41541a("e2ClipRect error -- region must be empty");
+        fatalError("e2ClipRect error -- region must be empty");
     getClipRegion(region, keep);
     fn_488828(*rect);
 }
@@ -304,10 +304,10 @@ void getClipRegion(short *region, short create)
 {
     if (create) {
         if (*region)
-            fn_41541a("e2GetClipRgn error -- region must equal 0");
+            fatalError("e2GetClipRgn error -- region must equal 0");
         createRegion(region);
     } else if (!fn_4816d4(*region))
-        fn_41541a("e2GetClipRgn error -- region must be empty");
+        fatalError("e2GetClipRgn error -- region must be empty");
     fn_48b2ac(*region);
 }
 
@@ -316,9 +316,9 @@ void getClipRegion(short *region, short create)
 void createRegion(short *region)
 {
     if (*region)
-        fn_41541a("e2CreateClipRgn error -- region must equal 0");
+        fatalError("e2CreateClipRgn error -- region must equal 0");
     if ((*region = fn_481274()) == 0)
-        fn_41541a("unable to allocate region");
+        fatalError("unable to allocate region");
 }
 
 /* @zoombi32 0x00414ce7 */
@@ -348,7 +348,7 @@ void showRect(ShortRect *rect)
 void lockPort(long port)
 {
     if (fn_48c750(port))
-        fn_41541a(msgUnableToLockPort);
+        fatalError(msgUnableToLockPort);
 }
 
 /* @zoombi32 0x00414dc4 */
@@ -356,7 +356,7 @@ void lockSave(MapSave *save)
 {
     lockPort(save->port);
     if (!++save->locks)
-        fn_41541a("MapSave lock count overflow");
+        fatalError("MapSave lock count overflow");
 }
 
 /* @zoombi32 0x00414def */
@@ -364,7 +364,7 @@ void unlockSave(MapSave *save)
 {
     fn_48db08(save->port);
     if (!save->locks)
-        fn_41541a("MapSave lock count underflow");
+        fatalError("MapSave lock count underflow");
     save->locks--;
 }
 

@@ -30,7 +30,7 @@ void checkDisplayMode(DisplayMode *mode)
         if (mode->colors <= 0x10000)
             minimum = minimumOfText;
     } else if (mode->colors > 0x100)
-        fn_41541a("Invalid display mode.");
+        fatalError("Invalid display mode.");
     if (mode->colors <= 0x100) {
         depth = colors256Text;
         bitsPerPixel = 8;
@@ -61,7 +61,7 @@ void checkDisplayMode(DisplayMode *mode)
         mode->width = 512;
         mode->height = 384;
         if (!g_4aa7cc || !fn_48c9e8(mode, 1))
-            fn_41541a(message);
+            fatalError(message);
     }
 }
 
@@ -424,7 +424,7 @@ void enterProgramDirectory()
     GetModuleFileName(appInstance, programPath, 0x100);
     strcpy(directory, programPath);
     if (!getcwd(savedDirectory, 0x100))
-        fn_41541a("path too long: limit %d characters", 0x100);
+        fatalError("path too long: limit %d characters", 0x100);
     savedDisk = getdisk();
     if (appName == emptyString)
         appName = programPath;
@@ -649,7 +649,7 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     case WM_ENDSESSION:
         if (!g_4b2d32) {
             g_4b2d32 = 1;
-            fn_41541a(g_4a07b4);
+            fatalError(g_4a07b4);
         }
         return 0;
     case WM_PALETTECHANGED:
@@ -807,7 +807,7 @@ void activateApp(long active)
                 if (MessageBox(mainWindow, "Sound driver missing or unavailable.", appName,
                                MB_RETRYCANCEL)
                     == IDCANCEL)
-                    fn_41541a(g_4a07b4);
+                    fatalError(g_4a07b4);
             fn_4157c8(1);
             g_4b2d34 = 0;
             g_4b2d30 = 1;
@@ -857,7 +857,7 @@ void placeGamePort()
         if (screenPort)
             lockPort(screenPort);
         else
-            fn_41541a(msgNoScreenPort);
+            fatalError(msgNoScreenPort);
         if (palette) {
             saved = getPort();
             setPort(screenPort);

@@ -27,7 +27,7 @@ void findGameData()
     char path[256];
 
     if (fn_480790(configFileName, "INSTALL", installFromDirKey, installDir, 0x100))
-        fn_41541a("unable to read file Zoombi32.CFG");
+        fatalError("unable to read file Zoombi32.CFG");
     path[0] = 0;
     strcpy(path, installDir);
     strcat(path, dataDirName);
@@ -38,14 +38,14 @@ void findGameData()
         g_4a3e5c = 1;
     } else {
         if (fn_480790(configFileName, "INSTALL", installToDirKey, installDir, 0x100))
-            fn_41541a("unable to read file Zoombi32.CFG");
+            fatalError("unable to read file Zoombi32.CFG");
         path[0] = 0;
         strcpy(path, installDir);
         setDataPath(path);
         strcat(path, "Zoombini.mhk");
         fileSpec installed(path);
         if (fn_483420(installed))
-            fn_41541a("Zoombini CD must be inserted in drive.", path[0]);
+            fatalError("Zoombini CD must be inserted in drive.", path[0]);
     }
 }
 
@@ -66,7 +66,7 @@ short preferFirstFile(const char *first, const char *fallback)
     } else {
         file = fn_484b50(fallbackSpec, 1);
         if (!file)
-            fn_41541a("Zoombini CD must be inserted in drive.");
+            fatalError("Zoombini CD must be inserted in drive.");
         fn_48266c(file, 0);
     }
     return useFirst;

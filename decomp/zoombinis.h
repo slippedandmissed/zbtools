@@ -369,8 +369,10 @@ extern char msgDeviceFailed[]; /* @data 0x4a0297 */
 extern char msgNoScreenPort[]; /* @data 0x4a0313: graphics and placeGamePort share it */
 extern short breakpointKey; /* @data 0x4a0708 */
 extern char msgUnableToLockPort[]; /* @data 0x4a0710 */
-extern Callback g_4a07ac;
-extern long g_4a07b0;
+extern char g_4a07a8[2]; /* a one-character string (the second byte is an empty one) */
+extern Callback g_4a07ac; /* called before a fatal error is reported */
+/* reports an error (showError, as the game sets it up) */
+extern void (*errorReporter)(const char *prefix, const char *format, va_list args); /* @data 0x4a07b0 */
 extern const char *g_4a07b4; /* the message for a fatal error */
 extern time_t g_4a07b8;
 extern Callback g_4a07c4;
@@ -480,8 +482,17 @@ extern PALETTEENTRY g_4aabe8[256];
 extern long palette; /* @data 0x4aafe8 */
 extern short bitsPerPixel; /* @data 0x4aafec */
 extern PALETTEENTRY colors[256]; /* @data 0x4aafee: the palette's colours */
+extern va_list formatArgs; /* @data 0x4ab40c: formatString's arguments */
+extern short lockedCount; /* @data 0x4ab410 */
+extern long lockedResources[10]; /* @data 0x4ab414: resources %L locked */
+extern long lockedData[10]; /* @data 0x4ab43c */
+/* extra conversions for formatString: whether a character starts one, and its text */
+extern short (*isFormatCharacter)(char c); /* @data 0x4ab464 */
+extern char *(*formatCharacter)(char c); /* @data 0x4ab468 */
+extern char numberText[]; /* @data 0x4ab46c */
 extern short debugMode; /* @data 0x4ab474 */
 extern short debugging; /* @data 0x4ab476: errors stop in the debugger */
+extern short reportingError; /* @data 0x4ab478 */
 extern PALETTEENTRY *g_4ab3f0;
 extern char *g_4ab3f4;
 extern char *g_4ab3f8;
@@ -573,7 +584,7 @@ extern long g_4b9d74;
 /* Game functions not decompiled yet */
 
 /* Reports an error, printf-style. */
-void __cdecl fn_41541a(const char *format, ...);
+void __cdecl fatalError(const char *format, ...);
 void fn_4144d0(DisplayMode *mode, long);
 /* Formats into `buffer` (of `size` bytes), printf-style. */
 void __cdecl fn_4150c7(long size, char *buffer, const char *format, ...);
@@ -665,7 +676,36 @@ void fn_48c538();
 void fn_4887f4();
 void fn_48b1b4();
 void fn_455273(short);
-void __cdecl fn_415477(const char *format, ...); /* reports running out of memory */
+/* loading */
+unsigned short loadMidi(short key);
+void unloadMidi(short key);
+void fn_414f5c(short key);
+short playMidiOn(short key, short channel);
+void stopMidi(unsigned short id);
+void fn_414fa3(unsigned short id);
+short isMidiPlaying(unsigned short id);
+short playMidi(short key, short channel, short eventType, short discard);
+short waitForMidi(unsigned short id, short eventType, short discard);
+short fn_415014(unsigned short id, short eventType, short discard);
+short fn_415034(unsigned short id, short stop);
+short fn_41504f(char value);
+short waitForMidiValue(char value, short eventType, short discard);
+short fn_415083(char value, short eventType, short discard);
+void stopAllMidi();
+void setFormatCharacters(short (*isSpecial)(char c), char *(*text)(char c));
+char *__cdecl formatText(long size, char *text, const char *format, ...);
+char *formatTextV(long size, char *text, const char *format, va_list args);
+char *formatString(long size, char *text, const char *format);
+void formatArgument(long size, char **text, const char **format);
+void __cdecl warning(const char *format, ...);
+void __cdecl unableToLoad(const char *format, ...);
+void __cdecl notEnoughMemory(const char *format, ...);
+void __cdecl notEnoughNearMemory(const char *format, ...);
+void __cdecl unableToAllocatePort(const char *format, ...);
+void reportFatalError(const char *prefix, const char *format, va_list args);
+long fn_46cabc(long resource); /* locks a resource */
+void fn_46cad1(long resource); /* unlocks it */
+char *fn_4155d0(long data, char which);
 /* graphics */
 void initGraphics(DisplayMode *mode, short depth);
 void closeGraphics();
@@ -877,7 +917,7 @@ void waitForEvent(short type, short discard);
 void __cdecl nextEventIndex(short *index);
 void fn_414358(void **block);
 void fn_4153b0(Callback callback);
-void fn_4153bf(long value);
+void setErrorReporter(void (*reporter)(const char *prefix, const char *format, va_list args));
 void fn_4153ce(const char *message);
 void fn_415514();
 void fn_415604(Callback callback);
