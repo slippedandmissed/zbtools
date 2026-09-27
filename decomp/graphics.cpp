@@ -104,7 +104,7 @@ void drawImage(ResourceList *images, short index, short x, short y, short mode, 
             x -= width;
             y -= height;
         }
-        fn_48adf0(image, x, y, mode);
+        drawImageData(image, x, y, mode);
         unlockHandle(handle);
     }
 }
@@ -116,7 +116,7 @@ void drawImageInColor(ResourceList *images, short index, short x, short y, short
 {
     Color saved;
 
-    saved = fn_48b4d8();
+    saved = getForeColor();
     fn_48d884(Color(color));
     drawImage(images, index, x, y, mode, anchor);
     fn_48d884(saved);
@@ -308,7 +308,7 @@ void getClipRegion(short *region, short create)
         createRegion(region);
     } else if (!emptyRgn(*region))
         fatalError("e2GetClipRgn error -- region must be empty");
-    fn_48b2ac(*region);
+    getClip(*region);
 }
 
 /* Creates a region into *region (which must be empty). */

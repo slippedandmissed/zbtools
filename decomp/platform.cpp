@@ -878,7 +878,7 @@ void fn_456a64()
 
     saved = g_4a4ae6;
     Color color;
-    color = fn_48b4d8();
+    color = getForeColor();
     for (i = 0; i <= 0xff; i++) {
         cell.left = (i & 0x1f) << 3;
         cell.top = ((i & 0xe0) >> 5) << 3;

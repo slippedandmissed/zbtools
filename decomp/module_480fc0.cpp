@@ -36,30 +36,26 @@ void compactRgn(short region)
 /* Not exact: the original tests `from`'s data in eax (no variable) and
    computes the size in 32 bits, straight into edi. */
 /* @zoombi32 0x00481024 */
-void copyRgn(short to, short from)
+short copyRgn(short to, short from)
 {
     Region *data;
     unsigned short size;
 
     if (!getRegion(to)) {
-        setRegionError(0x2937);
-        return;
+        return setRegionError(0x2937);
     }
     if (to == from) {
-        setRegionError(0);
-        return;
+        return setRegionError(0);
     }
     if ((data = getRegion(from)) == 0) {
-        setRegionError(0x2937);
-        return;
+        return setRegionError(0x2937);
     }
     size = data->capacity * 8 + 0x10;
     if (setHandleSize(to, size)) {
-        setRegionError(memError());
-        return;
+        return setRegionError(memError());
     }
     memcpy(handleData(to), handleData(from), size);
-    setRegionError(0);
+    return setRegionError(0);
 }
 
 /* Makes a Windows region from a region, moved by (dx, dy). */

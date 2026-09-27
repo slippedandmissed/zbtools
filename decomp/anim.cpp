@@ -345,7 +345,7 @@ void drawSprite(Anim *anim, Sprite *sprite)
         if (sprite->flags.bits.mode == 10)
             sprite->flags.bits.mode = 8;
         handle = fn_46beac(anim->cast[sprite->image - 1]);
-        fn_48adf0((unsigned short *)lockHandle(handle), sprite->x + anim->bounds.left,
+        drawImageData((unsigned short *)lockHandle(handle), sprite->x + anim->bounds.left,
                   sprite->y + anim->bounds.top, sprite->flags.bits.mode);
         unlockHandle(handle);
     }

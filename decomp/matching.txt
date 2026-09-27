@@ -402,6 +402,14 @@
 0x00488f34 newWindowPort
 0x004890ac disposePalette
 0x004890f8 deletePort
+0x0048ac68 initDisplayMode
+0x0048adf0 drawImageData
+0x0048ae53 drawPixelData
+0x0048b244 frameRect
+0x0048b2d8 getDisplayMode
+0x0048b358 getPortError
+0x0048b510 getPort
+0x0048b530 textWidth
 0x0048b5cb createPalette
 0x0048b642 polygon
 0x0048b6c1 setSystemPaletteUse
