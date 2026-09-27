@@ -95,6 +95,14 @@ struct JoinNode
     const char *second;
 };
 
+/* A group of graphic buttons' images (6 bytes). Images come in pairs, off
+   and on, one pair per state; kind 1 has only the "on" images. */
+struct ButtonGroup
+{
+    ResourceList *images;
+    short kind;
+};
+
 /* A palette fade in progress (0xc16 bytes). */
 struct Fade
 {
@@ -375,6 +383,7 @@ extern short channelCounts[2]; /* @data 0x4a00a4 */
 extern char currentChannel[2]; /* @data 0x4a00a8 */
 extern SoundChannel soundChannels[2][4]; /* @data 0x4a00aa */
 extern long soundTypes[2]; /* @data 0x4a00dc */
+extern short buttonColors[6]; /* @data 0x4a019c: colours buttons are drawn in */
 extern GroupList *g_4a01ac;
 extern short g_4a01b0;
 extern char emptyString[]; /* @data 0x4a01b8 */
@@ -468,7 +477,11 @@ extern char *g_4aa430;
 extern char *g_4aa434;
 extern char *g_4aa438;
 extern short soundErrorsIgnored; /* @data 0x4aa43c */
+extern ButtonGroup buttonGroups[10]; /* @data 0x4aa440 */
+extern char *buttonText; /* @data 0x4aa47c */
+extern char *buttonError; /* @data 0x4aa480 */
 extern InputItem *highlightedItem; /* @data 0x4aa484 */
+extern short buttonsOffscreen; /* @data 0x4aa488: drawn buttons aren't copied to the screen */
 extern unsigned short g_4aa48a;
 extern unsigned char g_4aa48b;
 extern short g_4aa48c; /* how many lists g_4a01ac has */
@@ -976,6 +989,24 @@ void getMousePosition(Point *where);
 void waitForEvent(short type, short discard);
 void __cdecl nextEventIndex(short *index);
 void freeFade(Fade **fade);
+/* buttons */
+void drawButtonOn(InputItem *item);
+void fn_4121df(InputItem *item);
+void drawButtonInColor0(InputItem *item);
+void drawButtonOff(InputItem *item);
+void fn_41221b(InputItem *item);
+void drawButtonInColor1(InputItem *item);
+void fn_412244(InputItem *item);
+void fn_412255(InputItem *item);
+void drawButtonInColor4(InputItem *item);
+void drawButtonPressed(InputItem *item, short mode);
+void drawButton(InputItem *item, short on, short mode);
+void drawButtonInColor(InputItem *item, short color);
+void addButtonGroup(ResourceList **images, short id, short kind, Group *group, const char *name);
+void freeButtonGroup(ResourceList **images);
+void fn_412482(ResourceList **images);
+void fn_46c011(ResourceList **list, short id, const char *what, short); /* loads a resource list */
+void fn_46c2db(ResourceList **list);
 void fadeTo(PALETTEENTRY *to);
 void fadePalette(PALETTEENTRY *to, unsigned short first, unsigned short count, short duration,
                  short byTime, Fade **fade);
