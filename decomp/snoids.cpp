@@ -2,13 +2,14 @@
  * snoids (0x456c00-0x45c0f4): 'Too many snoid NORMAL scripts', 'Zoombini.MHK', name syllables
  */
 
+#include <stdlib.h>
 #include "zoombinis.h"
 
 /* @zoombi32 0x00456c00 */
 void resetSnoids()
 {
     g_4b7564 = g_4b7558 = 0;
-    g_4b7b68 = 0;
+    arrivalHook = 0;
     g_4b754a = 0;
     g_4b7562 = g_4b7566 = g_4b7568 = 0;
     g_4b7552 = 0;
@@ -369,7 +370,390 @@ void fn_45b39a(short value)
 }
 
 /* @zoombi32 0x0045bfc0 */
-void fn_45bfc0(long value)
+void setArrivalHook(SnoidArrived hook)
 {
-    g_4b7b68 = value;
+    arrivalHook = hook;
+}
+
+/*
+ * Makes views for the party's Zoombinis: those on board (unless the party
+ * has unknown2 set), placed in turn by fn_457fff, and with `all` the others
+ * too (unless unknown4), where they stood. Empties the party.
+ */
+/* @zoombi32 0x004572f0 */
+void makePartySnoids(short all)
+{
+    Snoid snoid;
+    short placed;
+    short slot;
+    short i;
+
+    g_4b755c = g_4b755a = placed = 0;
+    slot = countSnoidViews();
+    for (i = slot; i < 32; i++)
+        partyViews[i] = 0;
+    for (i = 0; i < party()->count; i++) {
+        if (slot < 32
+            && ((travellers()[i].onboard && !party()->unknown2)
+                || (!travellers()[i].onboard && all && !party()->unknown4))) {
+            short j;
+
+            for (j = 0; j < 4; j++)
+                snoid.features[j] = travellers()[i].features[j];
+            snoid.unknownF7 = travellers()[i].onboard;
+            if (snoid.unknownF7) {
+                fn_457fff((Point *)&snoid.body.x, placed + 1);
+                placed++;
+                snoid.unknownF1 = 1;
+                snoid.unknownF2 = 0;
+            } else {
+                *(Point *)&snoid.body.x = travellers()[i].place;
+                snoid.unknownF1 = 1;
+                snoid.unknownF2 = 0;
+            }
+            for (j = 0; j < 10; j++)
+                snoid.name[j] = travellers()[i].name[j];
+            snoid.home = *(Point *)&snoid.body.x;
+            *(Point *)&snoid.body.unknownAa = *(Point *)&snoid.body.x;
+            *(Point *)&snoid.targetX = *(Point *)&snoid.body.x;
+            snoid.unknownEa = 0;
+            snoid.unknownEb = 0;
+            snoid.unknownEc = 0;
+            snoid.unknownEe = 0;
+            snoid.unknownF0 = 0;
+            snoid.unknownF8 = randomBetween(0, 0x40);
+            partyViews[slot] = addSnoidView(&snoid, 0);
+            slot++;
+        }
+    }
+    party()->count = 0;
+}
+
+/*
+ * A Zoombini view's update, when due (in step with its group): by what it
+ * is doing (unknownF4): 0 standing (blinking now and then), 1 and 2
+ * turning, 3 a shake, 4 jumping to its target, 7 setting off and 0x70
+ * walking there (a step at a time; on arriving it claims the placed view
+ * and place it stands on), 10 leaving; then runs its script a frame.
+ */
+/* @zoombi32 0x004575e6 */
+void updateSnoidView(View *view, short region)
+{
+    short stepX;
+    short stepY;
+    short dx;
+    short dy;
+    short event;
+    short changed;
+    short moving;
+    Snoid *snoid;
+
+    changed = 0;
+    if (!view->body.running)
+        return;
+    if (g_4b9684)
+        return;
+    {
+        short due;
+
+        if (view->body.group) {
+            if (!groupLeader[view->body.group])
+                groupLeader[view->body.group] = view->id;
+            if (groupLeader[view->body.group] == view->id)
+                g_4b8b32[view->body.group] = due = view->nextUpdate <= updateTime;
+            else
+                due = g_4b8b32[view->body.group];
+        } else {
+            due = view->nextUpdate <= updateTime;
+        }
+        if (!due)
+            return;
+    }
+    view->nextUpdate = updateTime + view->interval;
+    snoid = viewSnoid(view);
+    switch (snoid->unknownF4) {
+    case 7:
+        fn_4595c2(snoid, (Point *)&snoid->targetX);
+        fn_4591f8(snoid);
+        snoid->unknownF4 = 0x70;
+    case 0x70:
+        dx = snoid->body.unknownAa - snoid->body.x;
+        dy = snoid->body.y - snoid->body.unknownAc;
+        moving = 1;
+        if (!dx && !dy && !fn_4591f8(snoid)) {
+            ShortRect rect;
+            short found;
+            short i;
+
+            moving = 0;
+            unionRgnRect(currentViewRgn, &snoid->body.bounds);
+            snoid->unknownF8 = 0;
+            fn_45a75b(snoid, g_4b756a, 0);
+            if (g_4b755a > 0) {
+                g_4b755a--;
+                g_4b755c++;
+            }
+            if (g_4b7566 && snoid->unknownF7 == 2)
+                view->flags |= 0x4000000;
+            rect.left = snoid->body.x - g_4b755e;
+            rect.right = snoid->body.x + g_4b755e;
+            rect.top = snoid->body.y - g_4b755e;
+            rect.bottom = snoid->body.y + g_4b755e;
+            if (g_4b7554) {
+                found = 0;
+                for (i = 0; !found && i < placedViewCount; i++)
+                    if (!g_4b83e4[i] && ptInRect(&rect, placedViewPoints[i])) {
+                        found = 1;
+                        g_4b83e4[i] = view->id;
+                    }
+            }
+            found = 0;
+            for (i = 0; !found && i < viewPlaceCount; i++)
+                if (!g_4b86d4[i] && ptInRect(&rect, viewPlaces[i])) {
+                    found = 1;
+                    g_4b86d4[i] = view->id;
+                }
+            if (arrivalHook)
+                arrivalHook(view->id);
+        }
+        stepX = snoid->unknownEc;
+        stepY = snoid->unknownEe;
+        changed = 1;
+        if (!moving)
+            break;
+        if (dx) {
+            if (dx < 0) {
+                snoid->body.x -= abs(dx) < abs(stepX) ? abs(dx) : abs(stepX);
+                snoid->unknownF2 = 1;
+            } else {
+                snoid->body.x += abs(dx) < abs(stepX) ? abs(dx) : abs(stepX);
+                snoid->unknownF2 = 0;
+            }
+        }
+        if (dy) {
+            if (dy < 0)
+                snoid->body.y += abs(dy) < abs(stepY) ? abs(dy) : abs(stepY);
+            else
+                snoid->body.y -= abs(dy) < abs(stepY) ? abs(dy) : abs(stepY);
+        }
+        break;
+    case 5:
+        changed = 1;
+        break;
+    case 6:
+        changed = 1;
+        break;
+    case 1:
+    case 2:
+        snoid->unknownF8 = 0;
+        if (snoid->unknownF4 == 1) {
+            if (!snoid->unknownF2) {
+                switch (snoid->unknownF1) {
+                case 2:
+                    snoid->unknownF1 = 1;
+                    break;
+                case 1:
+                default:
+                    snoid->unknownF1 = 0;
+                    snoid->unknownF2 = 1;
+                    break;
+                }
+            } else {
+                snoid->unknownF1 = 1;
+                snoid->unknownF4 = 0;
+            }
+        } else if (snoid->unknownF2) {
+            switch (snoid->unknownF1) {
+            case 2:
+                snoid->unknownF1 = 1;
+                break;
+            case 1:
+            default:
+                snoid->unknownF1 = 0;
+                snoid->unknownF2 = 0;
+                break;
+            }
+        } else {
+            snoid->unknownF1 = 1;
+            snoid->unknownF4 = 0;
+        }
+        changed = 1;
+    case 0:
+        if (snoid->unknownF5) {
+            snoid->unknownF5 = 0;
+            changed = 1;
+        }
+        if (g_4a4b98 && !g_4b9684 && snoid->unknownF8++ > g_4a4b98) {
+            snoid->unknownF8 = 0;
+            if (!g_4a4cea && randomBetween(0, 100) < 10) {
+                snoid->unknownF5 = randomBetween(0, 7);
+                fn_45a75b(snoid, 6, 0);
+                changed = 1;
+            }
+        }
+        break;
+    case 4:
+        changed = 1;
+        if (snoid->targetX - snoid->body.x || snoid->body.y - snoid->targetY) {
+            snoid->unknownF1 = 1;
+            snoid->unknownF2 = 0;
+            *(Point *)&snoid->body.x = *(Point *)&snoid->targetX;
+        } else {
+            view->interval = 6;
+            snoid->unknownF8 = 0;
+            fn_45a75b(snoid, g_4b756a, 0);
+        }
+        break;
+    case 8:
+    case 9:
+        changed = 1;
+        break;
+    case 3:
+        if (snoid->unknownF5 < 6) {
+            for (short j = 0; j <= 4; j++) {
+                short image = snoid->body.cels[j].image;
+
+                snoid->body.cels[j].image = snoid->body.cels[j + 10].image;
+                snoid->body.cels[j + 10].image = image;
+            }
+            snoid->unknownF5++;
+        } else {
+            fn_45a75b(snoid, 0, 0);
+            snoid->unknownF8 = 0;
+        }
+        view->changed = 1;
+        return;
+    case 10:
+        fn_45a75b(snoid, 7, 0);
+        g_4b755a++;
+        return;
+    }
+    if (!changed)
+        return;
+    unionRgnRect(region, &view->body.bounds);
+    if (snoid->unknownF4 == 4) {
+        fn_45ab97(snoid, 0);
+    } else if (snoid->body.lastFrame > 1) {
+        if (snoid->body.frame >= snoid->body.lastFrame) {
+            switch (snoid->unknownF4) {
+            case 5:
+                view->notify = 0;
+                snoid->body.frame = 2;
+                if (g_4a4cea)
+                    snoid->body.frame = 0;
+                snoid->body.frameOffset =
+                    scriptFrameOffset(baseSnoidScripts[snoid->body.script], &snoid->body.frame, 1);
+                break;
+            case 7:
+            case 0x70:
+                snoid->body.frame = 1;
+                snoid->body.frameOffset =
+                    scriptFrameOffset(baseSnoidScripts[snoid->body.script], &snoid->body.frame, 1);
+                break;
+            case 8:
+            case 9:
+                if (snoid->unknownF8 == 1) {
+                    groupLeader[view->body.group] = 0;
+                    view->body.group = 0;
+                    snoid->body.running = 0;
+                    snoid->body.frame = 0;
+                    snoid->body.frameOffset = 2;
+                } else {
+                    unionRgnRect(currentViewRgn, &snoid->body.bounds);
+                    fn_45a75b(snoid, 0, 0);
+                }
+                if (view->notifyEnd && view->notify)
+                    view->notify(view, -1);
+                view->notify = 0;
+                view->changed = 1;
+                return;
+            default:
+                unionRgnRect(currentViewRgn, &snoid->body.bounds);
+                fn_45a75b(snoid, 0, 0);
+                view->notify = 0;
+                view->changed = 1;
+                return;
+            }
+        }
+        {
+            short sound = fn_45ab97(snoid, &event);
+
+            if (sound)
+                queueViewSound(sound, 0);
+        }
+        if (event) {
+            event--;
+            if (event >= 200 && event <= 0xef) {
+                short i;
+
+                switch (event) {
+                case 200:
+                    i = 8;
+                    break;
+                case 201:
+                    i = 6;
+                    break;
+                case 202:
+                    i = 7;
+                    break;
+                case 203:
+                    i = 10;
+                    break;
+                case 204:
+                    i = 2;
+                    break;
+                case 205:
+                    i = 12;
+                    break;
+                case 206:
+                    i = 1;
+                    break;
+                case 207:
+                    i = 9;
+                    break;
+                case 208:
+                    i = 0;
+                    break;
+                case 209:
+                    i = 4;
+                    break;
+                case 210:
+                    i = 5;
+                    break;
+                case 211:
+                    i = 3;
+                    break;
+                case 212:
+                    i = 11;
+                    break;
+                case 213:
+                    i = 13;
+                    break;
+                case 214:
+                    i = 14;
+                    break;
+                case 215:
+                    i = 15;
+                    break;
+                case 216:
+                    i = 16;
+                    break;
+                case 217:
+                    i = 17;
+                    break;
+                default:
+                    i = 0;
+                    break;
+                }
+                if (i)
+                    queueViewSound(fn_45b8b0(snoid, i), 0);
+                event = 0;
+            } else if (view->notify) {
+                view->notify(view, event);
+            }
+        }
+    } else {
+        fn_45ab97(snoid, 0);
+    }
+    view->changed = 1;
 }

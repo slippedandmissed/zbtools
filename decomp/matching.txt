@@ -387,10 +387,12 @@
 0x004571a8 freeSnoidScripts
 0x00457221 placeSnoid
 0x004572bf fn_4572bf
+0x004572f0 makePartySnoids
 0x004574ae addSnoidView
+0x004575e6 updateSnoidView
 0x00457fbb fn_457fbb
 0x0045b39a fn_45b39a
-0x0045bfc0 fn_45bfc0
+0x0045bfc0 setArrivalHook
 0x004623b8 mainLoopUpdate
 0x0046310c initViews
 0x004632af closeViews

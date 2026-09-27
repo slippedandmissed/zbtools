@@ -143,7 +143,7 @@ void clearViews()
         viewSounds.active = 0;
         viewSounds2.active = 0;
         g_4b9684 = 0;
-        fn_45bfc0(0);
+        setArrivalHook(0);
     }
 }
 

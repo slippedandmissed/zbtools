@@ -280,8 +280,12 @@ struct Camp
 /* A Zoombini on the journey (19 bytes, from 0xa934 in the game's state). */
 struct Traveller
 {
-    long zoombini;
-    char unknown4[5];
+    union {
+        long zoombini; /* its features, together */
+        char features[4];
+    };
+    Point place; /* +4 */
+    char onboard; /* +8 */
     char name[10];
 };
 
@@ -336,9 +340,8 @@ struct Snoid
     char unknownF0;
     char unknownF1;
     short unknownF2;
-    char unknownF4;
-    char unknownF5;
-    char unknownF6;
+    char unknownF4; /* +0xf4: what it is doing */
+    short unknownF5; /* +0xf5 */
     char unknownF7;
     char unknownF8; /* +0xf8: random (0-64) when made */
     char name[10]; /* +0xf9 */
@@ -1254,7 +1257,8 @@ extern short g_4b6d44[0x400];
 extern short g_4b754a;
 extern short g_4b7b38;
 extern short g_4b7b3a;
-extern long g_4b7b68;
+typedef void (*SnoidArrived)(short id);
+extern SnoidArrived arrivalHook; /* @data 0x4b7b68: told when a Zoombini arrives */
 extern long cursors[6]; /* @data 0x4b80ac */
 extern short g_4b80c4[6];
 extern short g_4b80d2;
@@ -4412,11 +4416,18 @@ void freeSnoidScripts(); /* 0x4571a8 */
 void drawSnoid(Snoid *snoid); /* 0x4571d8 */
 short placeSnoid(Snoid *snoid, unsigned long when, short x, short y, short targetX, short targetY);
 short addSnoidView(Snoid *snoid, short placed); /* 0x4574ae */
+void makePartySnoids(short all); /* 0x4572f0 */
+void fn_457fff(Point *where, short n);
+extern short partyViews[32]; /* @data 0x4b756c */
 void drawSnoidView(View *view);
 void updateSnoidView(View *view, short region); /* 0x4575e6 */
 void fn_45a75b(Snoid *snoid, short action, short);
 void fn_45aaff(short);
 void fn_45bbba(short);
+short fn_4591f8(Snoid *snoid);
+void fn_4595c2(Snoid *snoid, Point *target);
+extern short g_4b756a;
+extern short g_4a4cea;
 extern short g_4b7552;
 extern short g_4b7554;
 extern short g_4b7556;
@@ -4494,7 +4505,6 @@ long fn_417906(long);
 void enterCamp();
 void leaveCamp();
 void fn_45915d(short);
-void fn_4572f0(short);
 void fn_458cc1(short);
 void fn_458f07(short, short);
 short fn_45bdc4(char *);
@@ -4518,7 +4528,7 @@ void drawCamp(View *);
 void noteCampSlot(short slot);
 void initSnoid(Snoid *snoid); /* 0x45bf41 */
 void fn_45b06a(Snoid *snoid, short);
-void fn_45ab97(Snoid *snoid, short);
+short fn_45ab97(Snoid *snoid, short *event);
 short campSlotsUsed();
 void insertCampRow();
 void compactCamp();
@@ -4589,7 +4599,7 @@ short fn_456bf6();
 short fn_4572bf();
 short fn_457fbb();
 void fn_45b39a(short value);
-void fn_45bfc0(long value);
+void setArrivalHook(SnoidArrived hook); /* 0x45bfc0 */
 void fn_465175();
 long fn_46b07b(long);
 void fn_46b747(long, short id);

@@ -652,7 +652,7 @@ void enterCamp()
         addView(0, drawCels, runViewScript, j, 0, 0, 0, 0);
     setViewPlaces(16, places, 1);
     if (party()->count)
-        fn_4572f0(0);
+        makePartySnoids(0);
     returned = countChosenSnoids();
     *(short *)(g_4a4ba0 + 0x4a) += returned;
     *party() = *savedParty();
@@ -676,7 +676,7 @@ void enterCamp()
     } else {
         g_4b7562 = 1;
     }
-    fn_4572f0(1);
+    makePartySnoids(1);
     fn_458cc1(-20);
     updateViews();
     if (returned)
