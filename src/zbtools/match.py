@@ -37,6 +37,7 @@ import itertools
 import os
 import re
 import shlex
+import tempfile
 from collections.abc import Collection
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -353,9 +354,13 @@ def compile_source(release: str, source: Path, flags: str, *, use_cache: bool = 
         *shlex.split(flags),
         f"-o{toolchain.windows_path(obj_path)}",
     ]
-    result = toolchain.run_tool(
-        release, "BCC32", [*args, toolchain.windows_path(source)], cache_dir
-    )
+    # Each compile runs in a directory of its own: BCC32 writes scratch files
+    # into its working directory, and parallel compiles sharing one clobber
+    # each other's (a compile then fails without a message).
+    with tempfile.TemporaryDirectory(dir=cache_dir) as workdir:
+        result = toolchain.run_tool(
+            release, "BCC32", [*args, toolchain.windows_path(source)], Path(workdir)
+        )
     if result.returncode != 0 or not obj_path.exists():
         raise RuntimeError(f"compiling {source.name} failed:\n{result.stdout}{result.stderr}")
     key_path.write_text(key)

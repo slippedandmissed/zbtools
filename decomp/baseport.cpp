@@ -16,10 +16,10 @@ DWORD copyRops[8] = {SRCCOPY,    SRCAND,   SRCPAINT, SRCINVERT,
                      NOTSRCCOPY, 0x220326, MERGEPAINT, 0x990066};
 
 /* @zoombi32 0x00486318 */
-__cdecl basePort::basePort(const Rect *bounds)
+__cdecl basePort::basePort(const Rect &bounds)
 {
     tag = 0x506f7274L; /* 'Port' */
-    setFrame(bounds, Pt(0, 0), Pt(0, 0));
+    setFrame(&bounds, Pt(0, 0), Pt(0, 0));
     if ((next = graphics.ports) != 0)
         next->prev = this;
     prev = 0;
@@ -180,24 +180,21 @@ short basePort::clipTo(HRGN rgn)
 
 /* Reads the DC's depth and selects the port's state into it. */
 /* @zoombi32 0x00486a08 */
-void basePort::setupDC()
+short basePort::setupDC()
 {
     rasterCaps = GetDeviceCaps(dc, RASTERCAPS);
     depth = GetDeviceCaps(dc, BITSPIXEL) * GetDeviceCaps(dc, PLANES);
     depth = depth < 24 ? depth : 24;
     applyMapping();
-    if ((clipRgn = CreateRectRgn(0, 0, 0, 0)) != 0) {
+    if ((clipRgn = CreateRectRgn(0, 0, 0, 0)) != 0)
         clipApplied = 0;
-    } else {
-        setPortError(0x2a37);
-        return;
-    }
+    else
+        return setPortError(0x2a37);
     if (paletteKind == 1) {
         hpal = palette->hpal;
     } else if ((hpal = createPalette(palette->entries)) == 0) {
         DeleteObject(clipRgn);
-        setPortError(0x2a37);
-        return;
+        return setPortError(0x2a37);
     }
     realized = 0;
     SelectPalette(dc, hpal, TRUE);
@@ -216,7 +213,7 @@ void basePort::setupDC()
     useFont(font);
     locks--;
     graphics.currentPort = previous;
-    setPortError(0);
+    return setPortError(0);
 }
 
 /* @zoombi32 0x00486b82 */
@@ -696,7 +693,7 @@ int basePort::stretchDIBits(int toX, int toY, int toWidth, int toHeight, int fro
 }
 
 /* @zoombi32 0x00487b35 */
-void basePort::v17(long)
+void basePort::getBits(PixMap *)
 {
     setPortError(0x2a32);
 }

@@ -29,8 +29,8 @@ __cdecl DIB::DIB(short width, short height, unsigned short depth)
    selects its palette's own HPALETTE takes a StretchBlt from the DIB
    section's DC; others get the bits. */
 /* @zoombi32 0x00489198 */
-void DIB::draw(basePort *port, Rect to, Rect from, long usage, DWORD rop, unsigned short flipX,
-               unsigned short flipY)
+short DIB::draw(basePort *port, Rect to, Rect from, long usage, DWORD rop, unsigned short flipX,
+                unsigned short flipY)
 {
     short over;
     RECT source;
@@ -63,27 +63,26 @@ void DIB::draw(basePort *port, Rect to, Rect from, long usage, DWORD rop, unsign
         source = device;
         DPtoLP(dc, (POINT *)&source, 2);
         port->prepare();
-        setPortError(StretchBlt(port->dc, to.left, to.top, to.right - to.left, to.bottom - to.top,
-                                dc, flipX ? source.right - 1 : source.left,
-                                flipY ? source.bottom - 1 : source.top,
-                                flipX ? source.left - source.right : source.right - source.left,
-                                flipY ? source.top - source.bottom : source.bottom - source.top,
-                                rop)
-                         ? 0
-                         : 0x2a37);
+        return setPortError(
+            StretchBlt(port->dc, to.left, to.top, to.right - to.left, to.bottom - to.top, dc,
+                       flipX ? source.right - 1 : source.left,
+                       flipY ? source.bottom - 1 : source.top,
+                       flipX ? source.left - source.right : source.right - source.left,
+                       flipY ? source.top - source.bottom : source.bottom - source.top, rop)
+                ? 0
+                : 0x2a37);
     } else {
         unsigned short height = from.bottom - from.top;
 
-        setPortError(port->stretchDIBits(flipX ? to.right : to.left,
-                                         flipY ? to.bottom - 1 : to.top,
-                                         flipX ? to.left - to.right : to.right - to.left,
-                                         flipY ? to.top - to.bottom : to.bottom - to.top,
-                                         from.left, bounds.bottom - height - from.top,
-                                         from.right - from.left, height, bits,
-                                         usage == DIB_PAL_COLORS ? indexInfo : info, usage, rop)
-                             > 0
-                         ? 0
-                         : 0x2a37);
+        return setPortError(
+            port->stretchDIBits(flipX ? to.right : to.left, flipY ? to.bottom - 1 : to.top,
+                                flipX ? to.left - to.right : to.right - to.left,
+                                flipY ? to.top - to.bottom : to.bottom - to.top, from.left,
+                                bounds.bottom - height - from.top, from.right - from.left, height,
+                                bits, usage == DIB_PAL_COLORS ? indexInfo : info, usage, rop)
+                    > 0
+                ? 0
+                : 0x2a37);
     }
 }
 

@@ -792,7 +792,7 @@
 0x00487539 basePort::brush
 0x00487583 basePort::patternBrush
 0x0048792c basePort::stretchDIBits
-0x00487b35 basePort::v17
+0x00487b35 basePort::getBits
 0x00487b46 basePort::nearestIndex
 0x00487da8 basePort::paletteColor
 0x00487e50 basePort::init
@@ -839,6 +839,19 @@
 0x0048989e fixedToInt
 0x004898ab fixedFraction
 0x004898b6 fixedRound
+0x0048a720 DIBPort::DIBPort
+0x0048a8fe DIBPort::prepare
+0x0048a917 DIBPort::realizePalette
+0x0048a989 DIBPort::getBits
+0x0048a9f8 DIBPort::init
+0x0048aaae DIBPort::lock
+0x0048ab27 DIBPort::unlock
+0x0048ab5a DIBPort::release
+0x0048ab89 Rect::Rect
+0x0048ab91 Rect::operator =
+0x0048aba7 DIB::operator delete
+0x0048ac29 Rect::operator =
+0x0048ac52 DIB::operator new
 0x0048ac68 initDisplayMode
 0x0048adf0 drawImageData
 0x0048ae53 drawPixelData

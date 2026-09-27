@@ -504,7 +504,8 @@ name = "module_48990c"
 
 [[module]]
 start = 0x48a720
-name = "module_48a720"
+name = "dibport"
+note = "RTTI class DIBPort (its constructor and methods); Rect's and DIB's out-of-line inline functions"
 
 [[module]]
 start = 0x48ac68

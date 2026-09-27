@@ -254,7 +254,8 @@ public:
     __cdecl Rect(short left, short top, short right, short bottom); /* 0x48c8d4 */
     /* The ports' modules call these (out of line). */
     __cdecl Rect(); /* 0x48ab89 */
-    void __cdecl operator=(const Rect &rect); /* 0x48ab91 */
+    Rect &__cdecl operator=(const ShortRect &rect); /* 0x48ab91 */
+    void __cdecl operator=(const tagRECT &rect); /* 0x48ac29 */
 };
 
 
@@ -1150,14 +1151,16 @@ public:
     __cdecl Pen(const Pt &position, const Color &color, short mode, short width); /* 0x4887c4 */
 };
 
+class PixMap;
+
 /* A device-independent bitmap (a DIB section) that ports draw through
    (module_489148). */
 class DIB
 {
 public:
     /* Draws `from` (of the bitmap) into `to` of a port, flipped as asked. */
-    virtual void draw(basePort *port, Rect to, Rect from, long usage, DWORD rop,
-                      unsigned short flipX, unsigned short flipY); /* 0 */
+    virtual short draw(basePort *port, Rect to, Rect from, long usage, DWORD rop,
+                       unsigned short flipX, unsigned short flipY); /* 0 */
     virtual HDC getDC(); /* 1 */
     virtual void releaseDC(HDC dc); /* 2 */
     virtual void getColors(unsigned short first, unsigned short count, RGBQUAD *colors); /* 3 */
@@ -1171,6 +1174,8 @@ public:
                             const PALETTEENTRY *entries); /* 8 */
 
     __cdecl DIB(short width, short height, unsigned short depth); /* 0x489148 */
+    static void *__cdecl operator new(size_t size); /* 0x48ac52 */
+    static void __cdecl operator delete(void *block); /* 0x48aba7 */
 
     ShortRect bounds; /* +4: (0, 0, width, height) */
     unsigned short depth; /* +0xc */
@@ -1200,7 +1205,7 @@ public:
                            unsigned char flags); /* 1 */
     virtual void applyMapping(); /* 2: bounds to frame, as viewport and window */
     virtual short clipTo(HRGN rgn); /* 3: clips to the clip region and rgn */
-    virtual void setupDC(); /* 4: once dc is made */
+    virtual short setupDC(); /* 4: once dc is made */
     virtual short toHrgn(HRGN target, short region); /* 5: in device coordinates */
     virtual void depthChanged(); /* 6: the display's depth changed (while locked) */
     virtual void cleanupDC(); /* 7: before dc goes */
@@ -1215,7 +1220,7 @@ public:
     virtual short drawPixels(const Rect &bounds, unsigned short width, unsigned short height,
                              short rowBytes, unsigned short format, void *pixels,
                              unsigned short mode, unsigned short flags); /* 16 */
-    virtual void v17(long); /* 17: unsupported */
+    virtual void getBits(PixMap *map); /* 17: unsupported but by DIB ports */
     virtual HBRUSH brush(Color color); /* 18: a new brush */
     virtual HBRUSH patternBrush(const unsigned short *pattern); /* 19: a new brush */
     virtual int stretchDIBits(int toX, int toY, int toWidth, int toHeight, int fromX, int fromY,
@@ -1243,7 +1248,7 @@ public:
 
     static void *operator new(size_t size); /* 0x487f56: zeroed */
     static void operator delete(void *block); /* 0x4870d1 */
-    __cdecl basePort(const Rect *bounds); /* 0x486318 */
+    __cdecl basePort(const Rect &bounds); /* 0x486318 */
     short setFrame(const Rect *bounds, Pt origin, Pt size); /* 0x486407 */
 
     long tag; /* +4: 'Port' */
@@ -1270,7 +1275,8 @@ public:
     short clipApplied; /* +0x62: clip is selected into dc */
     unsigned short locks; /* +0x64 */
     short unknown66; /* +0x66 */
-    long unknown68;
+    short unknown68;
+    short unknown6A;
     HDC dc; /* +0x6c */
     short rasterCaps; /* +0x70 */
     unsigned short depth; /* +0x72: bits per pixel (at most 24) */
@@ -1298,12 +1304,36 @@ public:
 };
 
 /* A device-independent bitmap of any depth. */
+/* What a port's getBits gives (0x22 bytes). */
+class PixMap
+{
+public:
+    void *bits;
+    long rowBytes; /* negative: bottom-up */
+    unsigned short depth;
+    Rect dibBounds; /* +0xa */
+    Rect bounds; /* +0x12 */
+    Rect frame; /* +0x1a */
+};
+
+/* A port drawing into a DIB section (module_48a720). */
 class DIBPort : public basePort
 {
 public:
+    __cdecl DIBPort(short width, short height, unsigned short depth); /* 0x48a720 */
+    virtual short copyBits(basePort *port, const Rect *to, const Rect *from, unsigned short mode,
+                           unsigned char flags); /* 1 */
+    virtual void prepare(); /* 8 */
+    virtual void realizePalette(); /* 9 */
+    virtual void getBits(PixMap *map); /* 17 */
+    virtual short init(); /* 24 */
     virtual short lock(); /* 25 */
-    __cdecl DIBPort(short width, short height, short depth); /* 0x48a720 */
-    char unknownC0[8];
+    virtual void release(); /* 31 */
+    virtual void unlock(); /* 34 */
+
+    DIB *dib; /* +0xc0 */
+    short drawn; /* +0xc4: prepared for drawing since... */
+    short unknownC6;
 };
 
 /* An 8-bit DIB. RTTI names DIBPort as its base, but it is smaller (0xc6
