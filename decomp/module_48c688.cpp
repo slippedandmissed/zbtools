@@ -29,7 +29,8 @@ __cdecl Pt::Pt(const Point &point)
 }
 
 /* Not exact: the original has `point` in eax and `this` in edx, and returns
-   `this` explicitly. */
+   `this` explicitly (WinRect's constructor, 0x48df26, is the same shape and
+   matches, its copy going through edi). */
 /* @zoombi32 0x0048c70c */
 __cdecl WinPoint::WinPoint(const Pt &point)
 {
@@ -37,8 +38,7 @@ __cdecl WinPoint::WinPoint(const Pt &point)
 
     converted.x = point.x;
     converted.y = point.y;
-    x = converted.x;
-    y = converted.y;
+    *(POINT *)this = converted;
 }
 
 /* @zoombi32 0x0048c736 */

@@ -918,6 +918,15 @@
 0x0048da48 setTakeStatic
 0x0048daa8 showCursor
 0x0048db08 unlockPort
+0x0048db64 windowPort::windowPort
+0x0048db92 windowPort::beginUpdate
+0x0048dc69 windowPort::setClip
+0x0048dd1d windowPort::endUpdate
+0x0048dd5e windowPort::lock
+0x0048ddcd windowPort::release
+0x0048ddf3 windowPort::scroll
+0x0048def9 windowPort::unlock
+0x0048df26 WinRect::WinRect
 0x0048e5d9 setPortError
 0x0048e6b4 newPtr
 0x0048e6f0 availableMemory

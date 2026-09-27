@@ -953,18 +953,16 @@ void basePort::release()
 }
 
 /* @zoombi32 0x004883fb */
-void basePort::scroll(const Rect *rect, short dx, short dy, short region)
+short basePort::scroll(const Rect *rect, short dx, short dy, short region)
 {
     Rect moved = *rect;
 
     offsetRect(&moved, dx, dy);
-    if (region && (setRectRgn(region, (ShortRect *)rect) || diffRgnRect(region, &moved))) {
-        setPortError(regionError());
-        return;
-    }
+    if (region && (setRectRgn(region, (ShortRect *)rect) || diffRgnRect(region, &moved)))
+        return setPortError(regionError());
     prepare();
     WinRect device(*rect);
-    setPortError(ScrollDC(dc, dx, dy, &device, &device, 0, 0) ? 0 : 0x2a37);
+    return setPortError(ScrollDC(dc, dx, dy, &device, &device, 0, 0) ? 0 : 0x2a37);
 }
 
 /* @zoombi32 0x004884aa */

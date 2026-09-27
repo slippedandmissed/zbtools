@@ -664,12 +664,12 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
         port = getPort();
         if (screenPort && workPort) {
             setPort(screenPort);
-            fn_4887f4();
+            beginPortUpdate();
             if (g_4a07ec)
                 g_4a07ec();
             else
                 showRect(&gameRect);
-            fn_48b1b4();
+            endPortUpdate();
         }
         setPort(port);
         dc = BeginPaint(window, &paint);

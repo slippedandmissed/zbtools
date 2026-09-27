@@ -950,8 +950,8 @@ short setTakeStatic(short take);
 short setCursorLevel(short level);
 short showCursor();
 short hideCursor();
-short fn_4887f4();
-short fn_48b1b4();
+short beginPortUpdate();
+short endPortUpdate();
 void fn_455273(short);
 void fn_44695c();
 void fn_46258a();
@@ -1239,7 +1239,7 @@ public:
     virtual short fillRgn(short region, HBRUSH brush, short mode); /* 30 */
     virtual void release(); /* 31: before deleting */
     /* Scrolls a rectangle; what's uncovered goes into `region`. */
-    virtual void scroll(const Rect *rect, short dx, short dy, short region); /* 32 */
+    virtual short scroll(const Rect *rect, short dx, short dy, short region); /* 32 */
     virtual Palette *setPalette(Palette *palette); /* 33: the previous one */
     virtual void unlock(); /* 34 */
     /* Draws an 8-bit (or less) DIB with colour 0 transparent. */
@@ -1381,11 +1381,18 @@ public:
 class windowPort : public displayPort
 {
 public:
-    virtual short lock(); /* 25 */
     __cdecl windowPort(const Rect &bounds, HWND window); /* 0x48db64 */
-    virtual short v37();
-    virtual short v38();
-    char unknownC0[8];
+    virtual short setClip(short region); /* 11 */
+    virtual short lock(); /* 25 */
+    virtual void release(); /* 31 */
+    virtual short scroll(const Rect *rect, short dx, short dy, short region); /* 32 */
+    virtual void unlock(); /* 34 */
+    /* Takes the window's update region as a clip (after WM_PAINT). */
+    virtual short beginUpdate(); /* 37 */
+    virtual short endUpdate(); /* 38 */
+
+    HWND window; /* +0xc0 */
+    HRGN update; /* +0xc4: between beginUpdate and endUpdate */
 };
 
 /* A Mac 'CURS' resource: 16x16 image and mask, hot spot (big-endian). */

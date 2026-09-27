@@ -660,7 +660,8 @@ name = "module_48db08"
 
 [[module]]
 start = 0x48db64
-name = "module_48db64"
+name = "windowport"
+note = "RTTI class windowPort (GetDC, GetUpdateRgn, ScrollDC); WinRect's constructor"
 
 [[module]]
 start = 0x48e0a0
