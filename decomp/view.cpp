@@ -266,7 +266,7 @@ void updateViews()
         setPort(saved);
         if (g_4b9686) {
             if (g_4b9686 > 0)
-                fn_4674cf(g_4b9686);
+                closeDialog(g_4b9686);
             g_4b9686 = 0;
             if (g_4b966c == 4) {
                 g_4b966c = 0;

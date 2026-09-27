@@ -907,10 +907,10 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
             g_4a7d3c++;
             saved = g_4a7f58;
             fn_46be2e(g_4b7b4c);
-            g_4b9678 = loadImageBank(20, &g_4b9670);
-            g_4b967c = loadSwappedResource(&g_4b9674, 20, RESOURCE_TYPE('S', 'C', 'R', 'B'));
+            creditsImages = loadImageBank(20, &g_4b9670);
+            creditsBackdrop = loadSwappedResource(&g_4b9674, 20, RESOURCE_TYPE('S', 'C', 'R', 'B'));
             interval = 1;
-            g_4b9804 = addView(0x4001000, fn_467227, tickView, 0, interval, 0, 0, 0);
+            g_4b9804 = addView(0x4001000, drawCredits, tickView, 0, interval, 0, 0, 0);
             g_4a7f58 = saved;
             queueViewSound(20104, 0);
         }
@@ -918,4 +918,167 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
     }
     if (kind)
         g_4b9684 |= flag;
+}
+
+/* Closes a dialog (by kind, as showDialog), bringing the one below back
+   (the menu, or a save dialog under a message). */
+/* @zoombi32 0x004674cf */
+void closeDialog(short kind)
+{
+    short closed = 1;
+    unsigned short flag;
+
+    switch (kind) {
+    case 1:
+        deleteView(dialogView);
+        deleteView(dialogButton1);
+        deleteView(dialogButton2);
+        dialogView = dialogButton1 = dialogButton2 = 0;
+        flag = 1;
+        break;
+    case 2:
+        g_4a7d3e = 0;
+    case 3:
+        if (g_4a7d4c) {
+            disposePtr(g_4a7d4c);
+            g_4a7d4c = 0;
+        }
+        if (kind == 2)
+            flag = 2;
+        else
+            flag = 4;
+        deleteView(g_4b9806);
+        deleteView(g_4b9808);
+        deleteView(g_4b980a);
+        g_4b9806 = g_4b9808 = g_4b980a = 0;
+        if (g_4a7d50) {
+            freeSave(&g_4a7d50);
+            g_4a7d50 = 0;
+        }
+        if (g_4a7d3c)
+            g_4a7d3c--;
+        break;
+    case 4:
+        flag = 8;
+        deleteView(g_4b980c);
+        deleteView(g_4b980e);
+        g_4b980c = g_4b980e = 0;
+        if (g_4b9684 & 4) {
+            View *view = findView(g_4b9806);
+
+            if (view)
+                view->changed = 1;
+            view = findView(g_4b980a);
+            if (view)
+                view->changed = 1;
+        }
+        if (g_4a7d3c)
+            g_4a7d3c--;
+        break;
+    case 5:
+        flag = 0x10;
+        if (lastViewSound) {
+            stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+            lastViewSound = 0;
+        }
+        deleteView(g_4b9804);
+        g_4b9804 = 0;
+        fn_46c602(&g_4b9670);
+        fn_46c602(&g_4b9674);
+        unionRgnRect(removedRgn, &gameRect);
+        if (g_4a7d3c)
+            g_4a7d3c--;
+        break;
+    default:
+        g_4b9686 &= 0x1f;
+        closed = 0;
+        break;
+    }
+    if (closed) {
+        g_4b9684 &= ~flag;
+        if (g_4b9684 == 1) {
+            View *view = findView(dialogButton1);
+
+            if (view)
+                view->changed = 1;
+            view = findView(dialogButton2);
+            if (view)
+                view->changed = 1;
+        }
+    }
+    resetViewClock();
+    if (g_4b98cc) {
+        g_4b97fc = g_4b98cc;
+        g_4b98cc = 0;
+    }
+}
+
+/*
+ * The credits view's drawing: first a backdrop of images, then every 15
+ * frames scrolls the credits up and adds a line (headings in another
+ * colour after a blank; '*' starts over).
+ */
+/* Functional: the original reads each image's words as it pushes them
+   (relying on BCC's left-to-right evaluation), as drawCels does. */
+/* @zoombi32-functional 0x00467227 */
+void drawCredits(View *view)
+{
+    Color saved;
+
+    if (creditsShowing && view->changed) {
+        switch (view->kind) {
+        case 0:
+            view->kind++;
+            break;
+        case 1:
+            view->kind++;
+            setClipRect(gameRect);
+            fillPortRect(gameRect, Color(0x2d), 0);
+            {
+                for (short *cel = creditsBackdrop + 1; *cel > 0;) {
+                    unsigned short *image =
+                        (unsigned short *)(creditsImages->offsets[*cel++] + (char *)creditsImages);
+                    short x = *cel++;
+                    short y = *cel++;
+
+                    drawImageData(image, x, y, 8);
+                }
+            }
+            creditTick = creditLine = 0;
+            creditHeading = 1;
+            showRect(&gameRect);
+            break;
+        default: {
+            setClipRect(creditsClip);
+            copyPortBits(workPort, workPort, creditsScrollTo, creditsScrollFrom, 0);
+            creditTick++;
+            if (creditTick == 15) {
+                const char *line;
+
+                creditTick = 0;
+                line = creditLines[creditLine];
+                if (*line == '*') {
+                    creditLine = 0;
+                    line = creditLines[creditLine];
+                }
+                if (!*line) {
+                    creditHeading = 1;
+                } else {
+                    if (creditHeading) {
+                        creditHeading = 0;
+                        saved = setForeColor(Color(0x26));
+                        drawText(creditsLineRect, 0x22, line, 0xffff);
+                    } else {
+                        saved = setForeColor(Color(0x23));
+                        drawText(creditsLineRect, 0x22, line, 0xffff);
+                    }
+                    setForeColor(saved);
+                }
+                creditLine++;
+            }
+            showRect(&creditsClip);
+            break;
+        }
+        }
+    }
 }

@@ -4071,7 +4071,6 @@ void fn_415a11(Callback callback);
 void fn_415a20(Callback callback);
 /* view */
 void initViews(); /* 0x46310c */
-void fn_4674cf(short);
 void fn_469669();
 short fn_45b8b0(Snoid *snoid, short which);
 void fn_4589ce(const char *text, short, short);
@@ -4249,7 +4248,8 @@ void drawDialogPart(View *view); /* 0x467745 */
 void updateDialogPart(View *view, short region); /* 0x468033 */
 void placeDialogButton(View *view); /* 0x4688a5 */
 void placeDialogList(View *view); /* 0x468bde */
-void fn_467227(View *view);
+void drawCredits(View *view); /* 0x467227 */
+void closeDialog(short kind); /* 0x4674cf */
 void showDialog(short kind, const char *text, const char *button2, const char *button1); /* 0x466d7e */
 void fn_41f551();
 extern short g_4b966e;
@@ -4294,11 +4294,21 @@ extern char g_4b98b2[17];
 extern short g_4a74dc;
 extern short savedGames; /* @data 0x4b95a0 */
 extern short g_4a7d3c;
+extern short g_4a7d3e;
 extern short g_4b9664;
 extern short g_4b9666;
 extern long g_4b9668;
-extern ImageBank *g_4b9678;
-extern short *g_4b967c;
+extern ImageBank *creditsImages; /* @data 0x4b9678 */
+extern short *creditsBackdrop; /* @data 0x4b967c: the images, as cels (after a count) */
+extern short creditsShowing; /* @data 0x4b9680 */
+extern short creditHeading; /* @data 0x4b9682 */
+extern short creditTick; /* @data 0x4b98ce */
+extern short creditLine; /* @data 0x4b98d0 */
+extern const char *creditLines[]; /* @data 0x4a54a4 */
+extern ShortRect creditsLineRect; /* @data 0x4a7d54 */
+extern ShortRect creditsScrollFrom; /* @data 0x4a7d5c */
+extern ShortRect creditsScrollTo; /* @data 0x4a7d64 */
+extern ShortRect creditsClip; /* @data 0x4a7d6c */
 extern const char *dialogText; /* @data 0x4b968c */
 extern const char *dialogButton2Text; /* @data 0x4b9690 */
 extern const char *dialogButton1Text; /* @data 0x4b9694 */

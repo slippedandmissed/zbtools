@@ -444,6 +444,7 @@
 0x00466d3d askKeepParty
 0x00466d7e showDialog
 0x004674af tickView
+0x004674cf closeDialog
 0x0046879e dialogClick
 0x00469490 startNewGame
 0x00469556 askNewGame
