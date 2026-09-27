@@ -134,7 +134,7 @@ void fn_415811()
 void mainLoopEvents()
 {
     handleWaitingMessage();
-    if (!g_4ab480 && g_4a07c4)
+    if (!loadingAnimation && g_4a07c4)
         g_4a07c4();
     if (debugMode && breakpointRequested) {
         breakpointRequested = 0;

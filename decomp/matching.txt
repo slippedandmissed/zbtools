@@ -1,6 +1,26 @@
 # Functions that match zoombi32.exe byte for byte, by address. Written by
 # `uv run match --update` (the pre-commit hook runs it); `uv run match` fails
 # if one of them stops matching.
+0x0041008c freeAnim
+0x004100e5 stepAnim
+0x00410427 skipAnim
+0x0041069b showAnim
+0x004106f1 drawAnim
+0x0041085c drawSprite
+0x004108c7 markSprite
+0x004109df resetSprite
+0x00410a0e addRect
+0x00410b66 playAnimation
+0x00410b8a setupAnim
+0x00410ec8 playAnim
+0x004110fd freeAnimSpec
+0x00411145 restartAnim
+0x00411194 runFrame
+0x004111bc loadScript
+0x004111f9 freeScript
+0x00411212 fn_411212
+0x00411217 setupAnimOffscreen
+0x00411257 spritesBounds
 0x00411350 loadSoundByKey
 0x00411382 fn_411382
 0x00411478 getSound

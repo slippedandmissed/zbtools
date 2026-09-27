@@ -103,6 +103,87 @@ struct ButtonGroup
     short kind;
 };
 
+/* A sprite in an animation (8 bytes). */
+struct SpriteBits
+{
+    unsigned short mode : 4; /* drawing mode */
+    unsigned short other : 12;
+};
+
+struct Sprite
+{
+    short image; /* cast member, from 1; 0: none */
+    union
+    {
+        unsigned short all;
+        SpriteBits bits;
+    } flags;
+    short x;
+    short y;
+};
+
+struct Anim;
+typedef void (*AnimCallback)(Anim *anim, short value);
+
+/*
+ * A running animation (0x358 bytes, then its cast): a script of opcodes
+ * moving up to 32 sprites over a background, drawn into a port and copied to
+ * the screen through lists of changed rectangles.
+ */
+struct Anim
+{
+    long port; /* drawn into */
+    long screen; /* shown on */
+    long background; /* a saved copy of what's under it, or 0 */
+    ShortRect bounds;
+    ShortRect changed;
+    long script; /* the resource */
+    unsigned char *pc;
+    union
+    {
+        short count; /* frames left at this rate */
+        unsigned long until; /* when a pause ends */
+        char value; /* the MIDI value waited for */
+    } wait;
+    short drawn;
+    unsigned short frame;
+    unsigned short frameTicks;
+    unsigned long frameTime;
+    short counts[2];
+    ShortRect rects[2][32]; /* to show, and to erase */
+    AnimCallback callbacks[4];
+    Sprite sprites[32];
+    long sounds; /* resource: a count, then sound ids */
+    short noOverlap;
+    short unknown34c;
+    long unknown34e;
+    long unknown352;
+    unsigned short castCount;
+    long cast[1];
+};
+
+struct AnimFlags
+{
+    unsigned char saveBackground : 1;
+    unsigned char keepMidi : 1;
+    unsigned char finishOnInterrupt : 1;
+    unsigned char interruptible : 1; /* by a click or key */
+    unsigned char waitForSounds : 1;
+    unsigned char restoreBackground : 1;
+    unsigned char noOverlap : 1;
+};
+
+/* How to play an animation (0xc bytes). */
+struct AnimSpec
+{
+    Anim *anim;
+    unsigned short id;
+    unsigned char idOffset;
+    AnimFlags flags;
+    unsigned short firstColor; /* colours set from g_4aa7e8 */
+    unsigned short colorCount;
+};
+
 /* A palette fade in progress (0xc16 bytes). */
 struct Fade
 {
@@ -383,6 +464,9 @@ extern short channelCounts[2]; /* @data 0x4a00a4 */
 extern char currentChannel[2]; /* @data 0x4a00a8 */
 extern SoundChannel soundChannels[2][4]; /* @data 0x4a00aa */
 extern long soundTypes[2]; /* @data 0x4a00dc */
+extern long *screenPortRef; /* @data 0x4a0070: animations show on *screenPortRef */
+extern unsigned char animOpcodes[13]; /* @data 0x4a0074 */
+extern unsigned char animOperandSizes[13]; /* @data 0x4a0081 */
 extern short buttonColors[6]; /* @data 0x4a019c: colours buttons are drawn in */
 extern GroupList *g_4a01ac;
 extern short g_4a01b0;
@@ -470,6 +554,12 @@ extern unsigned long g_4a79c8;
 extern short g_4a7b94;
 extern long g_4a7f58;
 extern Counted *g_4a8dcc;
+extern short loadWholeCast; /* @data 0x4aa410 */
+extern short keepFrameRate; /* @data 0x4aa412: frames stay on the beat when late */
+extern ShortRect animArea; /* @data 0x4aa414 */
+extern char *scriptText; /* @data 0x4aa41c */
+extern long castInfo; /* @data 0x4aa420 */
+extern short animDrawing; /* @data 0x4aa424: stepping (not skipping) */
 extern short g_4aa428;
 extern short g_4aa42a;
 extern short g_4aa42c;
@@ -545,7 +635,7 @@ extern char *g_4ab3f8;
 extern char *g_4ab3fc;
 extern char *g_4ab400;
 extern short g_4ab404; /* displayMode.unknown8 */
-extern short g_4ab480;
+extern short loadingAnimation; /* @data 0x4ab480: the main loop's callback is held off */
 extern short clockInTicks; /* @data 0x4ab482: the clock counts 60ths of a second, else ms */
 extern unsigned long clockStoppedAt; /* @data 0x4ab484 */
 extern unsigned long clockOffset; /* @data 0x4ab488 */
@@ -836,7 +926,9 @@ short fn_481274(); /* creates a region */
 void fn_488a88(long to, long from, const Rect &fromRect, const Rect &toRect, short mode);
 short fn_48c750(long port); /* locks a port; non-zero on failure */
 void fn_48c5fc(const Rect &rect);
-void fn_480c24(ShortRect *rect, ShortRect *by);
+short fn_480c24(ShortRect *rect, ShortRect *by); /* intersects rect with by; whether they overlap */
+short fn_480bdc(ShortRect *rect); /* whether it's empty */
+void fn_480ca0(ShortRect *into, ShortRect *add); /* the union, into `into` */
 long fn_488f34(const Rect &bounds, HWND window, long); /* creates a window port */
 void fn_48d574(long);
 void fn_48d194(const Rect &rect);
@@ -989,6 +1081,38 @@ void getMousePosition(Point *where);
 void waitForEvent(short type, short discard);
 void __cdecl nextEventIndex(short *index);
 void freeFade(Fade **fade);
+/* anim */
+void freeAnim(Anim **anim);
+short stepAnim(Anim *anim);
+short skipAnim(Anim *anim, short frames);
+Anim *showAnim(Anim *anim);
+void drawAnim(Anim *anim);
+void drawSprite(Anim *anim, Sprite *sprite);
+void markSprite(Anim *anim, short index, short which);
+void resetSprite(Sprite *sprite);
+void addRect(Anim *anim, ShortRect *rect, short which);
+short playAnimation(AnimSpec *spec);
+void setupAnim(AnimSpec *spec);
+void loadCast(Anim *anim, short first, const char *name);
+short playAnim(AnimSpec *spec);
+void freeAnimSpec(AnimSpec *spec);
+void restartAnim(Anim *anim, short run);
+void runFrame(Anim *anim);
+void loadScript(long *script, short id, const char *name);
+void freeScript(long *script);
+short fn_411212();
+void setupAnimOffscreen(AnimSpec *spec);
+void spritesBounds(Anim *anim, ShortRect *into);
+short *fn_46cae6(long resource);
+void fn_46c6db(long *info, short id, short *count, const char *name);
+void fn_46c77c(long *resource);
+void fn_46c148(long *resource, short first, short member, const char *name);
+void fn_46c808(long *resource, short id, const char *name, short);
+void fn_46c86c(long *resource);
+void fn_46c88c(long *resource, short id, const char *name);
+void fn_46c970(long *resource);
+short *fn_48f5bc(short handle); /* a locked resource's data */
+void fn_48b1e8(const Rect &rect); /* erases a rectangle */
 /* buttons */
 void drawButtonOn(InputItem *item);
 void fn_4121df(InputItem *item);
