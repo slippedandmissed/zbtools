@@ -531,7 +531,9 @@ class fileSpec
 {
 public:
     __cdecl fileSpec(); /* 0x4850ec */
-    __cdecl fileSpec(const char *path);
+    __cdecl fileSpec(const char *path); /* 0x4850f8 */
+    __cdecl fileSpec(const fileSpec &from); /* 0x485373 */
+    __cdecl fileSpec(long volume, const char *path); /* 0x485291 */
     __cdecl fileSpec(const fileSpec &directory, const char *name); /* 0x48518c */
     __cdecl ~fileSpec(); /* 0x48533e */
     fileSpec &__cdecl operator=(const fileSpec &from); /* 0x4853a2 */
@@ -900,7 +902,7 @@ basePort *setPort(basePort *port); /* 0x48d960: the previous one */
 short globalToLocal(Point *point); /* 0x48c4cc */
 short localToGlobal(Point *point); /* 0x48c688 */
 short fn_480642(); /* initialises the configuration file */
-short fn_483732(long); /* initialises the file manager */
+short initFiles(long); /* 0x483732: initialises the file layer */
 void __cdecl initDisplayMode(DisplayMode *mode, unsigned short width, unsigned short height, unsigned long colors,
                              short palettized);
 unsigned short realizePalette(Palette *palette, short foreground);
@@ -1026,8 +1028,6 @@ short fn_493096(); /* initialises the timer */
    it couldn't. */
 short fn_480790(const fileSpec &file, const char *section, const char *key, char *buffer,
                 long size);
-/* Zero if `file` exists (as the game uses it). */
-short fn_483420(const fileSpec &file);
 /* Opens `file` (mode 1 as the game uses it), returning a handle or 0. */
 long fn_484b50(const fileSpec &file, long mode);
 short closeResourceFile(long map, short compact, short force);
@@ -1069,13 +1069,15 @@ void programDirectory(fileSpec *directory);
 long openFile(fileSpec *file, short mode); /* 0 on error */
 short readFile(long file, void *buffer, long *size);
 short closeFile(long file, short force); /* 0x48266c: even if closing fails, with force */
-short fileMissing(const fileSpec &file); /* 0 if it exists, else an error (0x2845 not found) */
-void currentDirectory(fileSpec *directory);
+short fileMissing(const fileSpec &file); /* 0x483420: 0 if it exists, else an error (0x2845 not found) */
+void currentDirectory(fileSpec *directory); /* 0x4845e4 */
 short setCurrentDirectory(fileSpec *directory);
 void fn_484994(fileSpec *directory); /* the directory at 0x4b9b9c, where .FOT files go */
 short deleteFile(const fileSpec &file);
-/* Calls `callback` for each file in the current directory. */
-short forEachFile(FileCallback callback, void *data);
+/* Calls `callback` for each file (or subdirectory) in the current
+   directory, until it returns nonzero. */
+short forEachDirectory(FileCallback callback, void *data); /* 0x4831bc */
+short forEachFile(FileCallback callback, void *data); /* 0x483310 */
 
 /*
  * Ports (QuickDraw's GrafPorts): C++ objects, handed around as their
@@ -1944,7 +1946,7 @@ struct FileRequest
     short unknown6;
     long drive;
     long volume;
-    long unknown10;
+    char *message;
 };
 
 /* A drive letter's state. */
@@ -2030,6 +2032,9 @@ public:
 };
 
 Volume *volumeOf(long id); /* 0x485dc5: 0 if it isn't a volume */
+/* The known volume with that label, in the drive (or any removable drive
+   for a removable one) or on the share; 0 if none. */
+long findVolume(DiskInfo *info, long drive, const char *share); /* 0x485f2a */
 
 /* The file layer's state. */
 struct FileState
@@ -2044,7 +2049,7 @@ struct FileState
     AsyncWorker *spareWorker;
     DriveTable *drives;
     short (*askUser)(void *request); /* to insert a disk, retry, ... */
-    short canAsk;
+    unsigned short canAsk;
     short unknown22;
     fileSpec currentDirectory;
     fileSpec programDirectory;
@@ -2063,6 +2068,12 @@ Drive *driveAt(long number, short check); /* 0x48607c */
 short askAboutError(const char *path, DWORD error); /* 0x4835d8 */
 short readDiskInfo(const char *root, DiskInfo *info); /* 0x4834aa */
 short askFileUser(FileRequest *request); /* 0x484365: 0 to give up */
+void filesActivated(short active); /* 0x483464: the activate hook */
+short __fastcall fileLayerVersion(); /* 0x483a22: 0x500, or 0 if not initialised */
+void __cdecl closeFiles(); /* 0x483a36 */
+FileRecord *findOpenFile(long volume, const char *path); /* 0x483c8a */
+short fileErrorOf(DWORD error); /* 0x483cfb: a Win32 error as the file layer's */
+long mountDrive(long number); /* 0x484a4c: finds the volume in a drive, 0 if none */
 short getAttributes(const char *path, DWORD *attributes); /* 0x483557 */
 short setAttributes(const char *path, DWORD attributes); /* 0x483ad5 */
 /* Whether a directory is one of the engine's or holds an open file, or a

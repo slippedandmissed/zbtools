@@ -280,13 +280,10 @@ short __cdecl wavebufWO::lockBuffer(unsigned long at, void **first, unsigned lon
     return locked > 0 ? 0 : WAVERR_STILLPLAYING;
 }
 
-/* Not exact: esi and edi are swapped (the original keeps the cache pointer
-   and the loop counter in edi, the error and the header in esi). */
 /* @zoombi32 0x0047b580 */
 short __cdecl wavebufWO::open(PCMWAVEFORMAT *format, WavebufNotify notify, long data)
 {
     unsigned long i;
-    short *cache = &wavebufCache;
     short error;
     unsigned long size;
     WAVEHDR *header;
@@ -311,10 +308,10 @@ short __cdecl wavebufWO::open(PCMWAVEFORMAT *format, WavebufNotify notify, long 
     }
     totalSamples = blockCount * blockSamples;
     size = format->wf.nBlockAlign * totalSamples;
-    if (!*cache && (*cache = newHandle(size)) != 0)
-        setPurgeable(*cache, 1);
-    if (*cache && !handleLocks(*cache) && !setHandleSize(*cache, size))
-        buffer = (unsigned char *)fn_48ea00(*cache);
+    if (!wavebufCache && (wavebufCache = newHandle(size)) != 0)
+        setPurgeable(wavebufCache, 1);
+    if (wavebufCache && !handleLocks(wavebufCache) && !setHandleSize(wavebufCache, size))
+        buffer = (unsigned char *)fn_48ea00(wavebufCache);
     else if ((buffer = (unsigned char *)newPtr(size)) == 0) {
         error = MMSYSERR_NOMEM;
         disposePtr(headers);

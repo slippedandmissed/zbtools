@@ -40,7 +40,7 @@ void findGameData()
     setDataPath(path);
     strcat(path, "Zoombini.mhk");
     fileSpec archive(path);
-    if (!fn_483420(archive)) {
+    if (!fileMissing(archive)) {
         g_4a3e5c = 1;
     } else {
         if (fn_480790(configFileName, "INSTALL", installToDirKey, installDir, 0x100))
@@ -50,7 +50,7 @@ void findGameData()
         setDataPath(path);
         strcat(path, "Zoombini.mhk");
         fileSpec installed(path);
-        if (fn_483420(installed))
+        if (fileMissing(installed))
             fatalError("Zoombini CD must be inserted in drive.", path[0]);
     }
 }

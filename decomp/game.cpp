@@ -119,7 +119,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         if (memory.totalPhysical < 0x600000)
             fatalError(msgNotEnoughPhysicalMemory);
     }
-    if (fn_483732(0))
+    if (initFiles(0))
         fatalError(msgInitFileManager);
     if (fn_480642())
         fatalError(msgInitConfiguration);
