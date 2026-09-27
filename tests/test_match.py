@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from zbtools.match import (
+    DEFAULT_RELEASE,
     Checked,
     Marker,
     Outcome,
@@ -14,6 +15,7 @@ from zbtools.match import (
     local_headers,
     outcome,
     parameter_types,
+    release_for,
     write_baseline,
 )
 
@@ -140,3 +142,9 @@ def test_parameter_types_drop_names() -> None:
     assert parameter_types("void") == ""
     assert parameter_types("") == ""
     assert parameter_types("fileSpec *path, short") == "fileSpec*,short"
+
+
+def test_release_by_directive_or_override() -> None:
+    assert release_for("int f();") == DEFAULT_RELEASE
+    assert release_for("/* @release 5.02 */\nint f();") == "5.02"
+    assert release_for("/* @release 5.02 */", override="4.52") == "4.52"

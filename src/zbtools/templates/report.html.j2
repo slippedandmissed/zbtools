@@ -37,8 +37,9 @@
   .s-matched { background: var(--matched); } .s-functional { background: var(--functional); } .s-nonmatching { background: var(--nonmatching); }
   .s-library { background: var(--library); } .s-todo { background: var(--todo); border: 1px solid var(--muted); }
   .fn { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; margin: 16px 0; overflow: hidden; }
-  .fn header { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; }
-  .fn header strong { font-size: 15px; }
+  .fn > summary { padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; }
+  .fn[open] > summary { border-bottom: 1px solid var(--border); }
+  .fn > summary strong { font-size: 14px; }
   .scroll { overflow-x: auto; }
   table.cmp { border-collapse: collapse; width: 100%; }
   table.cmp th { text-align: left; font-weight: 600; padding: 6px 10px; color: var(--muted); border-bottom: 1px solid var(--border); font-size: 12px; }
@@ -53,12 +54,24 @@
   table.list th, table.list td { padding: 4px 10px; border-bottom: 1px solid var(--border); text-align: left; }
   table.list th { color: var(--muted); font-weight: 600; font-size: 12px; }
   table.list td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  details.section > summary { cursor: pointer; font-size: 18px; font-weight: 600; margin: 40px 0 12px; }
+  details.group { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; margin: 8px 0; }
+  details.group > summary { cursor: pointer; padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
+  details.group > summary::before, details.fn > summary::before { content: "\25B8"; color: var(--muted); }
+  details.group[open] > summary::before, details.fn[open] > summary::before { content: "\25BE"; }
+  details.group > summary::-webkit-details-marker, details.fn > summary::-webkit-details-marker { display: none; }
+  details.group > summary { list-style: none; } details.fn > summary { list-style: none; cursor: pointer; }
+  details.group[open] > summary { border-bottom: 1px solid var(--border); }
+  .group-body { padding: 0 12px 4px; }
+  .counts { display: flex; gap: 10px; font-size: 12px; color: var(--muted); }
+  .toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
+  .toolbar button { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font: inherit; cursor: pointer; }
 </style>
 </head>
 <body>
 <main>
   <h1>Zoombinis decompilation progress</h1>
-  <p class="muted">Generated {{ generated }} &middot; compiled with Borland C++ {{ release }} &middot; percentages are by bytes of code</p>
+  <p class="muted">Generated {{ generated }} &middot; compiled with Borland C++ {{ default_release }} unless a file names another release &middot; percentages are by bytes of code</p>
 
   <h2>By region</h2>
   <div class="cards">
@@ -80,7 +93,8 @@
     {% endfor %}
   </div>
 
-  <h2>By module</h2>
+  <details class="section">
+  <summary>By module ({{ module_stats | length }})</summary>
   <div class="scroll">
     <table class="list">
       <thead><tr><th>Module</th><th>Start</th><th class="num">Functions</th><th class="num">Bytes</th><th class="num">Done</th><th>Progress</th></tr></thead>
@@ -98,8 +112,9 @@
       </tbody>
     </table>
   </div>
+  </details>
 
-  <h2>Decompiled functions ({{ details | length }})</h2>
+  <h2>Decompiled functions ({{ details | length }}, in {{ groups | length }} files)</h2>
   {% set flagged = details | selectattr('outcome.discrepancy') | list %}
   {% if flagged or unmarked %}
   <div class="card" style="margin-bottom: 16px">
@@ -111,9 +126,22 @@
     </ul>
   </div>
   {% endif %}
-  {% for d in details %}
-  <section class="fn" id="fn-{{ '%x' % d.address }}">
-    <header>
+  <div class="toolbar"><button type="button" data-open="1">Expand all</button><button type="button" data-open="0">Collapse all</button></div>
+  {% for g in groups %}
+  <details class="group" id="file-{{ g.source_file | replace('/', '-') }}">
+    <summary>
+      <strong class="mono">{{ g.source_file }}</strong>
+      <span class="counts">
+        <span>{{ g.details | length }} functions</span>
+        {% for status in [Status.MATCHED, Status.NONMATCHING, Status.FUNCTIONAL] %}{% set n = g.count(status) %}{% if n %}<span><span class="dot s-{{ status }}"></span>{{ n }} {{ status }}</span>{% endif %}{% endfor %}
+        {% if g.release != default_release %}<span>Borland C++ {{ g.release }}</span>{% endif %}
+      </span>
+      {% if g.discrepancies %}<span class="badge">{{ g.discrepancies }} to check</span>{% endif %}
+    </summary>
+    <div class="group-body">
+    {% for d in g.details %}
+  <details class="fn" id="fn-{{ '%x' % d.address }}">
+    <summary>
       <strong class="mono">{{ d.name }}</strong>
       <span class="mono muted">{{ '0x%08x' % d.address }}</span>
       <span title="recorded"><span class="dot s-{{ d.status }}"></span>{{ d.status }}</span>
@@ -121,8 +149,7 @@
       {% if d.outcome == 'error' %}<span class="badge">error</span>{% endif %}
       <span class="muted">{{ d.size }} bytes</span>
       {% if d.matching_percent is not none %}<span class="muted">{{ d.matching_percent | round(1) }}% of bytes match</span>{% endif %}
-      <span class="muted mono">{{ d.source_file }}</span>
-    </header>
+    </summary>
     {% if d.error %}<div class="error mono">{{ d.error }}</div>{% endif %}
     <div class="scroll">
       <table class="cmp mono">
@@ -138,10 +165,14 @@
         {% endfor %}
       </table>
     </div>
-  </section>
+  </details>
+    {% endfor %}
+    </div>
+  </details>
   {% endfor %}
 
-  <h2>All functions ({{ functions | length }})</h2>
+  <details class="section" id="all">
+  <summary>All functions ({{ functions | length }})</summary>
   <div class="filters">
     <input id="q" type="search" placeholder="Filter by name or address">
     <select id="region"><option value="">All regions</option>{% for r in stats if r.total.functions %}<option>{{ r.region }}</option>{% endfor %}</select>
@@ -165,6 +196,7 @@
       </tbody>
     </table>
   </div>
+  </details>
 </main>
 <script>
   const q = document.getElementById("q"), region = document.getElementById("region"),
@@ -180,6 +212,21 @@
     }
   }
   for (const el of [q, region, status]) el.addEventListener("input", filter);
+
+  // Open the sections holding a linked function, so links into collapsed ones work.
+  function reveal() {
+    const target = location.hash && document.getElementById(location.hash.slice(1));
+    if (!target) return;
+    for (let el = target; el; el = el.parentElement) if (el.tagName === "DETAILS") el.open = true;
+    target.scrollIntoView();
+  }
+  window.addEventListener("hashchange", reveal);
+  reveal();
+  for (const button of document.querySelectorAll(".toolbar button")) {
+    button.addEventListener("click", () => {
+      for (const el of document.querySelectorAll("details.group, details.fn")) el.open = button.dataset.open === "1";
+    });
+  }
 </script>
 </body>
 </html>

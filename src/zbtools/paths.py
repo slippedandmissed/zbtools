@@ -7,10 +7,12 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO_ROOT / "data"
 GAME_ISO = DATA_DIR / "Logical Journey of the Zoombinis.iso"
 WINDOWS_ISO = DATA_DIR / "Windows 98 Second Edition.iso"
-# Borland C++ CDs, by release. The game was built with 4.5 or 4.52.
+# Borland C++ CDs, by release. The game was built with 4.5 or 4.52; 5.02 is
+# optional, for comparison (it fits the Mohawk engine worse than 4.5 does).
 BORLAND_ISOS = {
     "4.5": DATA_DIR / "Borland C++ 4.5.iso",
     "4.52": DATA_DIR / "Borland C++ 4.52.iso",
+    "5.02": DATA_DIR / "Borland C++ 5.02.iso",
 }
 ENV_FILE = REPO_ROOT / ".env"
 

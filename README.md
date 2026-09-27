@@ -34,6 +34,7 @@ No game files or Windows media are committed to this repository; you need your o
 | `data/Logical Journey of the Zoombinis.iso` | The game CD, e.g. from [the Internet Archive](https://archive.org/details/logical-journey-of-the-zoombinis) |
 | `data/Windows 98 Second Edition.iso` | Windows 98 SE install CD, for the emulated PC |
 | `data/Borland C++ 4.5.iso` | Borland C++ 4.5 CD, for the compiler the game was built with. (4.52 generates identical code and also works, as `data/Borland C++ 4.52.iso`; see `docs/findings.md`) |
+| `data/Borland C++ 5.02.iso` | Optional: Borland C++ 5.02 CD, for comparing the Mohawk engine's code with a later compiler (`uv run match --release 5.02`, or `/* @release 5.02 */` in a file) |
 
 Then create a gitignored `.env` file in the repo root with your Windows product key:
 
@@ -94,7 +95,7 @@ uv run toolchain check                       # re-run the test program with each
 uv run toolchain run 4.5 BCC32 -c foo.c      # run any Borland tool, in the current directory
 ```
 
-Under Wine, release 4.5 is drive `T:` and 4.52 is drive `U:` (e.g. `T:\BC45\INCLUDE`); host files are on `Z:`.
+Under Wine, release 4.5 is drive `T:`, 4.52 is `U:` (e.g. `T:\BC45\INCLUDE`) and 5.02 is `V:` (`V:\BC5\INCLUDE`); host files are on `Z:`.
 
 ### Ghidra
 
@@ -141,7 +142,7 @@ Functions are named for what they do once that's clear (`isMousePresent`), and a
 
 Whether a function matches is measured, not declared: `decomp/matching.txt` records the functions that match, `uv run match` fails if one of them stops matching (a regression) and lists new matches, and `uv run match --update` records them (the pre-commit hook runs it when `decomp/` changes; if it rewrites the file, add it and commit again). The decompiled code is portable C++, so a function the original wrote in machine code (inline assembly) is written portably and marked `/* @zoombi32-functional 0x... */`: complete, but not byte-exact by design. The report shows each function's recorded status and what's measured now, with a badge where they disagree.
 
-`match` compiles each file with Borland C++ 4.5 and the game's usual options (`-p -k-`; a file can set its own with a `/* @flags ... */` comment, as some modules were built differently) and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets); a call to another marked function in the same file must go to that function's address in the game. Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. Compiled objects are cached in `build/match-cache/`, keyed on each source, the headers it includes, its options and the release, so reruns (and `uv run report`) only recompile what changed; `--no-cache` recompiles everything. It needs `uv run extract-game` and `uv run toolchain setup` first.
+`match` compiles each file with Borland C++ 4.5 and the game's usual options (`-p -k-`; a file can set its own with a `/* @flags ... */` comment, as some modules were built differently, and another release with `/* @release 5.02 */`; `--release` and `--flags` override every file's, to experiment) and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets); a call to another marked function in the same file must go to that function's address in the game. Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. Compiled objects are cached in `build/match-cache/`, keyed on each source, the headers it includes, its options and the release, so reruns (and `uv run report`) only recompile what changed; `--no-cache` recompiles everything. It needs `uv run extract-game` and `uv run toolchain setup` first.
 
 ### Choosing what to decompile, and tracking progress
 
@@ -155,7 +156,7 @@ uv run modules                 # the game's source modules, with the evidence fo
 
 The game's code is divided into its original source modules (object files) in `decomp/modules.toml`, a map maintained by hand: TLINK32 pads each module's code with zeros to a 4-byte boundary, and `uv run modules` checks the map against that padding and shows what each module's code refers to (strings, Windows functions), which is how modules get their names. Decompiled functions go in `decomp/<module>.cpp`.
 
-A function is *ready* when everything it calls directly is done (matched, identified runtime code, or outside the region you're working on). `report` writes `build/report/index.html`: statistics per region (by function and by bytes), every function with its status and name (as decompiled, else Ghidra's), and for each decompiled function its original machine code, C++ and recompiled machine code side by side, with differences highlighted and calls and globals annotated with their names. It contains the game's disassembly, so keep it local.
+A function is *ready* when everything it calls directly is done (matched, identified runtime code, or outside the region you're working on). `report` writes `build/report/index.html`: statistics per region (by function and by bytes), every function with its status and name (as decompiled, else Ghidra's), and for each decompiled function (grouped by source file, in collapsible sections) its original machine code, C++ and recompiled machine code side by side, with differences highlighted and calls and globals annotated with their names. It contains the game's disassembly, so keep it local.
 
 Both need `uv run ghidra setup`, `uv run runtime-symbols` and `uv run classes` to have run.
 

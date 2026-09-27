@@ -101,7 +101,7 @@ def _modules(path: Path) -> list[omf.ObjectFile]:
 
 
 def find_symbols(release: str, exe: Executable) -> RuntimeSymbols:
-    lib_dir = toolchain.bc45_dir(release) / "LIB"
+    lib_dir = toolchain.root_dir(release) / "LIB"
     symbols: dict[tuple[int, str], RuntimeSymbol] = {}
     segments: dict[int, RuntimeSegment] = {}
     ambiguous: set[str] = set()

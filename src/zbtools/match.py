@@ -19,12 +19,15 @@ be portable C++, so where only machine code (inline assembly, emitted bytes,
 pseudo-registers) would reproduce the original, the function does the same
 thing portably instead.
 
-Each file is compiled with Borland C++ 4.5 using the game's usual options
-(`-p -k-`), or those given by a `/* @flags ... */` comment in the file, and
-every marked function is compared with the original, ignoring the bytes the
-linker fills in (relocated addresses and call targets). Calls the compiler
-resolves itself, to other marked functions in the same file, must reach the
-function at the callee's marker address. Mismatches are shown side by side.
+Each file is compiled with Borland C++ 4.5, or the release a `/* @release
+5.02 */` comment in the file names, using the game's usual options
+(`-p -k-`), or those a `/* @flags ... */` comment gives; `--release` and
+`--flags` override them for every file (to explore: the record of what
+matches only applies without `--release`). Every marked function is
+compared with the original, ignoring the bytes the linker fills in
+(relocated addresses and call targets). Calls the compiler resolves itself,
+to other marked functions in the same file, must reach the function at the
+callee's marker address. Mismatches are shown side by side.
 """
 
 import difflib
@@ -51,9 +54,11 @@ from zbtools.exe import Executable, Instruction, disassemble
 # library just below the runtime used -p alone. See docs/findings.md.
 DEFAULT_FLAGS = "-p -k-"
 _FLAGS = re.compile(r"/\*\s*@flags\s+(.*?)\s*\*/")
-# Release used unless --release is given. 4.5 and 4.52 generate identical code
-# unless 4.52's -fp (Pentium FDIV workaround) is used, which the game doesn't.
+# Release used unless a file says otherwise (/* @release ... */) or --release is
+# given. 4.5 and 4.52 generate identical code unless 4.52's -fp (Pentium FDIV
+# workaround) is used, which the game doesn't.
 DEFAULT_RELEASE = "4.5"
+_RELEASE = re.compile(r"/\*\s*@release\s+(\S+)\s*\*/")
 
 _MARKER = re.compile(r"/\*\s*@zoombi32(?:-(functional))?\s+(0x[0-9a-fA-F]+)\s*\*/")
 # The (possibly qualified) name of the function defined after a marker.
@@ -261,6 +266,15 @@ def compare(
     )
 
 
+def release_for(source: str, override: str | None = None) -> str:
+    """The release to compile a file with: --release, else its
+    /* @release ... */, else the default."""
+    if override is not None:
+        return override
+    directive = _RELEASE.search(source)
+    return directive.group(1) if directive else DEFAULT_RELEASE
+
+
 def _flags_for(source: str, override: str | None) -> str:
     """The BCC32 options for a file: --flags, else its /* @flags ... */, else the default."""
     if override is not None:
@@ -400,11 +414,9 @@ def decomp_sources() -> list[Path]:
     return sorted([*paths.DECOMP_DIR.rglob("*.cpp"), *paths.DECOMP_DIR.rglob("*.c")])
 
 
-def default_release() -> str:
-    installed = toolchain.installed_releases()
-    if not installed:
+def require_toolchain() -> None:
+    if not toolchain.installed_releases():
         raise typer.BadParameter("no toolchain installed; run `uv run toolchain setup` first")
-    return DEFAULT_RELEASE if DEFAULT_RELEASE in installed else installed[0]
 
 
 def game_executable() -> Executable:
@@ -427,23 +439,29 @@ class Checked:
 
 def check(
     sources: list[Path],
-    release: str,
     exe: Executable,
+    release: str | None = None,
     flags: str | None = None,
     *,
     use_cache: bool = True,
 ) -> list[Checked]:
-    """Compile each source (or reuse its cached object) and compare every
-    function marked in it."""
+    """Compile each source (or reuse its cached object) with its release, or
+    `release` if given, and compare every function marked in it."""
     checked = []
+    installed = toolchain.installed_releases()
     for source in sources:
         text = source.read_text()
         targets = find_targets(text)
         if not targets:
             continue
+        file_release = release_for(text, release)
+        if file_release not in installed:
+            error = f"Borland C++ {file_release} isn't installed (uv run toolchain setup)"
+            checked += [Checked(source, t, None, error) for t in targets]
+            continue
         try:
             compiled = compile_source(
-                release, source.resolve(), _flags_for(text, flags), use_cache=use_cache
+                file_release, source.resolve(), _flags_for(text, flags), use_cache=use_cache
             )
         except RuntimeError as e:
             checked += [Checked(source, t, None, str(e)) for t in targets]
@@ -537,7 +555,10 @@ def main(
     release: Annotated[
         list[str] | None,
         typer.Option(
-            "--release", "-r", help=f"Borland C++ release(s) to use (default: {DEFAULT_RELEASE})"
+            "--release",
+            "-r",
+            help="Borland C++ release(s) to use for every file (default: each file's @release, "
+            f"or {DEFAULT_RELEASE})",
         ),
     ] = None,
     flags: Annotated[
@@ -561,16 +582,17 @@ def main(
     if update and (files or release or flags):
         raise typer.BadParameter("--update checks everything with the default options")
     sources = files or decomp_sources()
-    releases = release or [default_release()]
+    require_toolchain()
+    releases: list[str | None] = [*release] if release else [None]
     exe = game_executable()
     recorded = load_baseline()
 
     failures = 0
     for rel in releases:
-        print(f"Borland C++ {rel}:")
-        # The record is of the default release; others are just compared.
-        baseline = recorded if rel == DEFAULT_RELEASE else {}
-        results = check(sources, rel, exe, flags, use_cache=not no_cache)
+        print(f"Borland C++ {rel}:" if rel else "Borland C++ (each file's release):")
+        # The record is of each file's own release; an override is just compared.
+        baseline = recorded if rel is None else {}
+        results = check(sources, exe, rel, flags, use_cache=not no_cache)
         outcomes = [(item, outcome(item, baseline)) for item in results]
         for item, found in outcomes:
             failures += found.failure

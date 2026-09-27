@@ -81,6 +81,7 @@ class Detail:
     status: Status  # as recorded (decomp/matching.txt and the markers)
     outcome: match.Outcome  # as measured now
     source_file: str
+    release: str  # the Borland C++ release it's compiled with
     source: str
     rows: list[DetailRow]
     matching_percent: float | None  # of bytes; None if it couldn't be compiled
@@ -175,6 +176,7 @@ def _detail(
         status=function.status,
         outcome=found,
         source_file=str(checked.source.relative_to(paths.REPO_ROOT)),
+        release=match.release_for(checked.source.read_text()),
         source=function_source(checked.source.read_text(), function.address),
         rows=rows,
         matching_percent=percent,
@@ -207,13 +209,37 @@ def _module_stats(functions: list[inventory.Function]) -> list[ModuleStats]:
     return stats
 
 
-def build(release: str) -> str:
+@dataclass(frozen=True)
+class SourceGroup:
+    """The decompiled functions of one source file."""
+
+    source_file: str
+    release: str
+    details: list[Detail]
+
+    def count(self, status: Status) -> int:
+        return sum(d.status == status for d in self.details)
+
+    @property
+    def discrepancies(self) -> int:
+        return sum(d.outcome.discrepancy for d in self.details)
+
+
+def _groups(details: list[Detail]) -> list[SourceGroup]:
+    """Details by source file, in the order of their first function."""
+    by_file: dict[str, list[Detail]] = {}
+    for detail in details:
+        by_file.setdefault(detail.source_file, []).append(detail)
+    return [SourceGroup(file, group[0].release, group) for file, group in by_file.items()]
+
+
+def build() -> str:
     exe = match.game_executable()
     functions = inventory.load(exe)
     by_address = {f.address: f for f in functions}
     names = Names.of(functions)
-    checked = match.check(match.decomp_sources(), release, exe)
-    baseline = match.load_baseline() if release == match.DEFAULT_RELEASE else {}
+    checked = match.check(match.decomp_sources(), exe)
+    baseline = match.load_baseline()
     details = sorted(
         (
             _detail(by_address[c.target.address], c, match.outcome(c, baseline), names)
@@ -232,11 +258,12 @@ def build(release: str) -> str:
     )
     return environment.get_template("report.html.j2").render(
         generated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-        release=release,
+        default_release=match.DEFAULT_RELEASE,
         stats=_stats(functions),
         module_stats=_module_stats(functions),
         functions=functions,
         details=details,
+        groups=_groups(details),
         outcomes={d.address: d.outcome for d in details},
         unmarked=unmarked,
         Status=Status,
@@ -252,7 +279,8 @@ def main(
         bool, typer.Option("--open", help="Open the report in a web browser")
     ] = False,
 ) -> None:
-    html = build(match.default_release())
+    match.require_toolchain()
+    html = build()
     paths.REPORT_DIR.mkdir(parents=True, exist_ok=True)
     paths.REPORT.write_text(html)
     print(f"Report written to {paths.REPORT}")
