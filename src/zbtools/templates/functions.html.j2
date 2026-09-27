@@ -1,0 +1,38 @@
+{% extends "base.html.j2" %}
+{% from "macros.html.j2" import outcome_badge %}
+{% block title %}All functions{% endblock %}
+{% block content %}
+  <h1>All functions ({{ functions | length }})</h1>
+  <div class="filters">
+    <input id="q" type="search" placeholder="Filter by name or address">
+    <select id="region"><option value="">All regions</option>{% for r in stats if r.total.functions %}<option>{{ r.region }}</option>{% endfor %}</select>
+    <select id="status"><option value="">All statuses</option>{% for s in Status %}<option>{{ s }}</option>{% endfor %}</select>
+  </div>
+  <div class="scroll">
+    <table class="list" id="functions">
+      <thead><tr><th>Address</th><th>Name</th><th>Module</th><th>Region</th><th>Status</th><th class="num">Bytes</th><th class="num">Calls</th></tr></thead>
+      <tbody>
+      {% for f in functions -%}
+        <tr data-region="{{ f.region }}" data-status="{{ f.status }}"><td class="mono">{% if f.address in pages %}<a href="{{ pages[f.address] }}#fn-{{ '%x' % f.address }}">{{ '0x%08x' % f.address }}</a>{% else %}{{ '0x%08x' % f.address }}{% endif %}</td><td class="mono">{{ f.name }}</td><td class="mono">{{ f.module or '' }}</td><td>{{ f.region }}</td><td><span class="dot s-{{ f.status }}"></span>{{ f.status }}{% set o = outcomes.get(f.address) %}{% if o and o.discrepancy %} {{ outcome_badge(o) }}{% endif %}</td><td class="num">{{ f.size }}</td><td class="num">{{ f.calls | length }}{% if f.indirect_calls %} + {{ f.indirect_calls }}{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+{% block script %}
+<script>
+  const q = document.getElementById("q"), region = document.getElementById("region"),
+        status = document.getElementById("status"),
+        rows = [...document.querySelectorAll("#functions tbody tr")];
+  function filter() {
+    const text = q.value.toLowerCase();
+    for (const row of rows) {
+      const show = (!text || row.textContent.toLowerCase().includes(text)) &&
+        (!region.value || row.dataset.region === region.value) &&
+        (!status.value || row.dataset.status === status.value);
+      row.hidden = !show;
+    }
+  }
+  for (const el of [q, region, status]) el.addEventListener("input", filter);
+</script>
+{% endblock %}

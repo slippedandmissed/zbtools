@@ -1,0 +1,57 @@
+{% extends "base.html.j2" %}
+{% from "macros.html.j2" import outcome_badge, asm %}
+{% block title %}{{ group.source_file }}{% endblock %}
+{% block content %}
+  <h1 class="mono">{{ group.source_file }}</h1>
+  <p class="counts">
+    <span>{{ group.details | length }} functions</span>
+    {% for status in [Status.MATCHED, Status.NONMATCHING, Status.FUNCTIONAL] %}{% set n = group.count(status) %}{% if n %}<span><span class="dot s-{{ status }}"></span>{{ n }} {{ status }}</span>{% endif %}{% endfor %}
+    {% if group.release != default_release %}<span>Borland C++ {{ group.release }}</span>{% endif %}
+    {% if group.discrepancies %}<span class="badge">{{ group.discrepancies }} to check</span>{% endif %}
+  </p>
+  <div class="toolbar"><button type="button" data-open="1">Expand all</button><button type="button" data-open="0">Collapse all</button></div>
+  {% for d in group.details %}
+  <details class="fn" id="fn-{{ '%x' % d.address }}">
+    <summary>
+      <strong class="mono">{{ d.name }}</strong>
+      <span class="mono muted">{{ '0x%08x' % d.address }}</span>
+      <span title="recorded"><span class="dot s-{{ d.status }}"></span>{{ d.status }}</span>
+      {% if d.outcome.discrepancy %}{{ outcome_badge(d.outcome, "measured now, unlike what's recorded") }}{% endif %}
+      {% if d.outcome == 'error' %}<span class="badge">error</span>{% endif %}
+      <span class="muted">{{ d.size }} bytes</span>
+      {% if d.matching_percent is not none %}<span class="muted">{{ d.matching_percent | round(1) }}% of bytes match</span>{% endif %}
+    </summary>
+    {% if d.error %}<div class="error mono">{{ d.error }}</div>{% endif %}
+    <div class="scroll">
+      <table class="cmp mono">
+        <tr><th>Original</th><th>C++</th><th>Recompiled</th></tr>
+        {% for row in d.rows -%}
+        <tr{% if not row.same %} class="diff"{% endif %}><td class="asm">{{ asm(row.original) }}</td>
+        {%- if loop.first %}<td class="src" rowspan="{{ d.rows | length }}">{{ d.source }}</td>{% endif -%}
+        <td class="asm">{{ asm(row.recompiled) }}</td></tr>
+        {% else %}
+        <tr><td></td><td class="src">{{ d.source }}</td><td></td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  </details>
+  {% endfor %}
+{% endblock %}
+{% block script %}
+<script>
+  // Open the function a link points to.
+  function reveal() {
+    const target = location.hash && document.getElementById(location.hash.slice(1));
+    if (!target) return;
+    target.open = true;
+    target.scrollIntoView();
+  }
+  window.addEventListener("hashchange", reveal);
+  reveal();
+  for (const button of document.querySelectorAll(".toolbar button")) {
+    button.addEventListener("click", () => {
+      for (const el of document.querySelectorAll("details.fn")) el.open = button.dataset.open === "1";
+    });
+  }
+</script>
+{% endblock %}

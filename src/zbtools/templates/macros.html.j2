@@ -1,0 +1,6 @@
+{% macro outcome_badge(outcome, title='') -%}
+<span class="badge {{ 'new' if outcome == 'new match' else ('info' if outcome == 'exact but marked functional' else '') }}"{% if title %} title="{{ title }}"{% endif %}>{{ outcome }}</span>
+{%- endmacro %}
+{% macro asm(line) -%}
+{% if line %}<span class="off">{{ line.offset }}</span>  <span class="raw">{{ '%-21s' % line.raw }}</span> {{ line.text }}{% if line.note %}<span class="note">  ; {{ line.note }}</span>{% endif %}{% endif %}
+{%- endmacro %}

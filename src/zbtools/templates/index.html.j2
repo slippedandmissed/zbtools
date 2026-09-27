@@ -1,0 +1,77 @@
+{% extends "base.html.j2" %}
+{% from "macros.html.j2" import outcome_badge %}
+{% block title %}Zoombinis decompilation progress{% endblock %}
+{% block content %}
+  <h1>Zoombinis decompilation progress</h1>
+  <p class="muted">Generated {{ generated }} &middot; compiled with Borland C++ {{ default_release }} unless a file names another release &middot; percentages are by bytes of code</p>
+
+  <h2>By region</h2>
+  <div class="cards">
+    {% for s in stats if s.total.functions %}
+    <div class="card">
+      <h3>{{ s.region }}</h3>
+      <div class="muted">{{ s.total.functions }} functions &middot; {{ (s.total.size / 1024) | round(1) }} KB</div>
+      <div class="bar" title="matched {{ s.percent(Status.MATCHED) | round(1) }}%">
+        {% for status in [Status.MATCHED, Status.FUNCTIONAL, Status.NONMATCHING, Status.LIBRARY] %}
+        <span class="s-{{ status }}" style="width: {{ s.percent(status) }}%"></span>
+        {% endfor %}
+      </div>
+      <div class="legend">
+        {% for status in Status %}{% set t = s.by_status.get(status) %}{% if t %}
+        <span><span class="dot s-{{ status }}"></span>{{ status }}: {{ t.functions }} ({{ s.percent(status) | round(1) }}%)</span>
+        {% endif %}{% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <details class="section">
+  <summary>By module ({{ module_stats | length }})</summary>
+  <div class="scroll">
+    <table class="list">
+      <thead><tr><th>Module</th><th>Start</th><th class="num">Functions</th><th class="num">Bytes</th><th class="num">Done</th><th>Progress</th></tr></thead>
+      <tbody>
+      {% for m in module_stats %}
+        <tr>
+          <td class="mono">{{ m.name }}</td>
+          <td class="mono">{{ '0x%08x' % m.start }}</td>
+          <td class="num">{{ m.done.functions }} / {{ m.total.functions }}</td>
+          <td class="num">{{ m.total.size }}</td>
+          <td class="num">{{ m.percent | round(1) }}%</td>
+          <td><div class="bar" style="min-width: 120px"><span class="s-matched" style="width: {{ m.percent }}%"></span></div></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  </details>
+
+  <h2>Decompiled functions ({{ details | length }}, in {{ groups | length }} files)</h2>
+  {% set flagged = details | selectattr('outcome.discrepancy') | list %}
+  {% if flagged or unmarked %}
+  <div class="card" style="margin-bottom: 16px">
+    <h3>Recorded and measured disagree</h3>
+    <div class="muted">Run <span class="mono">uv run match --update</span> to record new matches (the pre-commit hook does); regressions need fixing.</div>
+    <ul>
+      {% for d in flagged %}<li><a class="mono" href="{{ pages[d.address] }}#fn-{{ '%x' % d.address }}">{{ d.name }}</a> {{ outcome_badge(d.outcome) }}</li>{% endfor %}
+      {% for address, name in unmarked | dictsort %}<li><span class="mono">{{ name }}</span> <span class="badge">regressed</span> <span class="muted">recorded as matching, but no longer marked</span></li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  <div class="scroll">
+    <table class="list">
+      <thead><tr><th>Source file</th><th class="num">Functions</th>{% for status in [Status.MATCHED, Status.NONMATCHING, Status.FUNCTIONAL] %}<th class="num">{{ status }}</th>{% endfor %}<th>Release</th><th></th></tr></thead>
+      <tbody>
+      {% for g in groups %}
+        <tr>
+          <td class="mono"><a href="{{ g.page }}">{{ g.source_file }}</a></td>
+          <td class="num">{{ g.details | length }}</td>
+          {% for status in [Status.MATCHED, Status.NONMATCHING, Status.FUNCTIONAL] %}{% set n = g.count(status) %}<td class="num">{% if n %}<span class="dot s-{{ status }}"></span>{{ n }}{% endif %}</td>{% endfor %}
+          <td>{% if g.release != default_release %}Borland C++ {{ g.release }}{% endif %}</td>
+          <td>{% if g.discrepancies %}<span class="badge">{{ g.discrepancies }} to check</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

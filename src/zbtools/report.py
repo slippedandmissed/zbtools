@@ -2,12 +2,15 @@
 status, and for each decompiled function its original machine code, its C++
 and its recompiled machine code side by side.
 
-The report is a single self-contained HTML file in build/report/. It contains
-disassembly of the game, so it's for local use: don't publish it.
+The report is a small static site in build/report/: an overview (index.html),
+a list of every function (functions.html), and a page per source file with its
+functions' code (files/). It contains disassembly of the game, so it's for
+local use: don't publish it.
 """
 
 import datetime
 import re
+import shutil
 import webbrowser
 from dataclasses import dataclass
 from pathlib import Path
@@ -227,6 +230,12 @@ class SourceGroup:
     def discrepancies(self) -> int:
         return sum(d.outcome.discrepancy for d in self.details)
 
+    @property
+    def page(self) -> str:
+        """The group's page, relative to the report's root."""
+        name = Path(self.source_file).with_suffix("").as_posix().removeprefix("decomp/")
+        return f"files/{name.replace('/', '-')}.html"
+
 
 def _groups(details: list[Detail]) -> list[SourceGroup]:
     """Details by source file, in the order of their first function."""
@@ -236,7 +245,8 @@ def _groups(details: list[Detail]) -> list[SourceGroup]:
     return [SourceGroup(file, group[0].release, group) for file, group in by_file.items()]
 
 
-def build() -> str:
+def build() -> dict[str, str]:
+    """The report's files, by path relative to its root."""
     exe = match.game_executable()
     functions = inventory.load(exe)
     by_address = {f.address: f for f in functions}
@@ -254,23 +264,40 @@ def build() -> str:
     # Recorded as matching but no longer marked: the report's other way to regress.
     marked = {c.target.address for c in checked}
     unmarked = {a: n for a, n in baseline.items() if a not in marked}
+    groups = _groups(details)
     environment = jinja2.Environment(
         loader=jinja2.PackageLoader("zbtools", "templates"),
         autoescape=True,
         undefined=jinja2.StrictUndefined,
     )
-    return environment.get_template("report.html.j2").render(
-        generated=datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-        default_release=match.DEFAULT_RELEASE,
-        stats=_stats(functions),
-        module_stats=_module_stats(functions),
-        functions=functions,
-        details=details,
-        groups=_groups(details),
-        outcomes={d.address: d.outcome for d in details},
-        unmarked=unmarked,
-        Status=Status,
-    )
+    common = {
+        "generated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "default_release": match.DEFAULT_RELEASE,
+        "stats": _stats(functions),
+        "pages": {d.address: g.page for g in groups for d in g.details},
+        "Status": Status,
+    }
+    site = {
+        "style.css": environment.get_template("style.css").render(),
+        "index.html": environment.get_template("index.html.j2").render(
+            common,
+            root="",
+            module_stats=_module_stats(functions),
+            details=details,
+            groups=groups,
+            unmarked=unmarked,
+        ),
+        "functions.html": environment.get_template("functions.html.j2").render(
+            common,
+            root="",
+            functions=functions,
+            outcomes={d.address: d.outcome for d in details},
+        ),
+    }
+    page = environment.get_template("file.html.j2")
+    for group in groups:
+        site[group.page] = page.render(common, root="../", group=group)
+    return site
 
 
 app = typer.Typer(add_completion=False)
@@ -283,9 +310,12 @@ def main(
     ] = False,
 ) -> None:
     match.require_toolchain()
-    html = build()
-    paths.REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    paths.REPORT.write_text(html)
+    site = build()
+    shutil.rmtree(paths.REPORT_DIR, ignore_errors=True)  # drop pages of removed files
+    for name, text in site.items():
+        path = paths.REPORT_DIR / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
     print(f"Report written to {paths.REPORT}")
     if open_report:
         webbrowser.open(Path(paths.REPORT).as_uri())

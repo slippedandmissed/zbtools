@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{% endblock %}</title>
+<link rel="stylesheet" href="{{ root }}style.css">
+</head>
+<body>
+<main>
+  <nav><a href="{{ root }}index.html">Overview</a><a href="{{ root }}functions.html">All functions</a></nav>
+  {% block content %}{% endblock %}
+</main>
+{% block script %}{% endblock %}
+</body>
+</html>
