@@ -216,6 +216,8 @@ Regions are rectangle lists in a handle (`'Rngr'` tag, bounds, capacity grown 16
 
 A few drawing routines were written in assembly: the nearest-colour search (`0x48b38c`, which saves registers mid-function and squares bytes with `mul al`) and the packed-pixel code (`0x48cef4` draws, `0x48d13c` reads one pixel; `push ds`, string instructions, `jcxz`/`loop`). They are decompiled as `@zoombi32-functional` C++. `0x48cfc9` and `0x48d03f`, listed as functions, are the two inner loops of `0x48cef4` (it jumps to one through `ebx`: copy, or skip runs of 0), not functions of their own.
 
+Modules holding assembly went through Turbo Assembler (BCC32 compiles inline assembly by writing assembly source and running TASM32): `decompressImage` (`0x48e0a0`, in the module with the LZ decompressor) differs from our compile only in instruction encodings, TASM's accumulator forms (`66 25 0f 00` for `and ax, 0xf`, `66 3d 01 00` for `cmp ax, 1`) where BCC32 emits the sign-extended-immediate ones (`66 83 e0 0f`). The decompiled code stays portable C++ compiled by BCC32, so such functions are marked functional. Compiling via assembly doesn't change register allocation (`BCC32 -S` shows the same registers as a direct compile), so it doesn't explain the other near-misses. `decompressImage` uses `alloca` for its ring buffer, and its epilogue restores registers from the frame (`mov edi, [ebp-0x28]`), which our compile reproduces.
+
 Packed pixels (the engine's run-length encoding of 8-bit images): each row is a big-endian byte count and then packets, each a header byte whose bit 7 means a run of the next byte and whose low 7 bits plus 1 are the count (else that many literal bytes follow).
 
 ### Engine: exceptions off, and an open question about registers

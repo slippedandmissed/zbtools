@@ -445,3 +445,4 @@
 0x0048da48 setTakeStatic
 0x0048daa8 showCursor
 0x0048db08 unlockPort
+0x0048e5d9 setPortError

@@ -1348,6 +1348,45 @@ Font *fontObject(Font *font); /* 0x48d555 */
 Font *fontHandle(Font *font);
 Palette *checkPalette(Palette *palette, short kind); /* 0x48d779 */
 basePort *portHandle(basePort *port); /* 0x48d9bd */
+/* An image resource: this header (big-endian, as stored), then its pixels
+   or, compressed, an LzImage or ExternalImage. */
+struct ImageHeader
+{
+    short width;
+    short height;
+    short rowBytes; /* negative for top-down rows */
+    unsigned short flags; /* bits 0-3 depth (0-4: 1, 4, 8, 16, 24 bits), 8-11 compression
+                             (1 LZ, 15 a decompressor DLL), 12 16-bit pixels byte-swapped */
+};
+
+/* After an ImageHeader: Mohawk's LZ compression. */
+struct LzImage
+{
+    unsigned long size; /* decompressed */
+    long unknown4;
+    unsigned short window; /* the ring buffer's size: 256 to 4096 */
+    unsigned char data[1];
+};
+
+/* After an ImageHeader: compressed by a decompressor DLL. */
+struct ExternalImage
+{
+    char name[8]; /* its key in [Graphics.Decompressors] */
+    unsigned long size; /* decompressed */
+    unsigned long paramSize;
+    unsigned char params[1];
+};
+
+/* A decompressor DLL's GFXXDECPROC. */
+typedef short (*DecompressProc)(void *out, unsigned long size, short width, short height,
+                                short depth, long rowBytes, void *params,
+                                unsigned long paramSize, unsigned short);
+
+unsigned long __cdecl fn_4926ff(unsigned long value); /* a long as stored (big-endian) */
+short decompressImage(short handle);
+void swapWords(void *data, unsigned long count);
+void lzDecompress(unsigned char *dest, const unsigned char *source, unsigned long size,
+                  unsigned char *ring, short bits);
 short setCursorShape(const MacCursor *cursor); /* 0-3: arrow, cross, I-beam, wait */
 void drawPackedPixels(long offset, unsigned char *bits, long rowBytes, ShortRect bounds, short x, short y,
                       ShortRect *clip, unsigned short width, unsigned short height,
@@ -1364,13 +1403,13 @@ unsigned short nearestPaletteIndex(Palette *palette, RGBColor color);
 unsigned short textWidth(const char *text, unsigned short length); /* length 0xffff: NUL-terminated */
 
 /* Memory: relocatable blocks by handle (a short), as on the Mac. */
-short newHandle(long size);
-void *handleData(short handle);
-void *lockHandle(short handle);
-void unlockHandle(short handle);
+short newHandle(long size); /* 0x48e5ec */
+void *handleData(short handle); /* 0x48f5bc */
+void *lockHandle(short handle); /* 0x48e96c */
+void unlockHandle(short handle); /* 0x48f550 */
 short setHandleSize(short handle, long size); /* an error code */
-short disposeHandle(short handle);
-short memError();
+short disposeHandle(short handle); /* 0x48e71c */
+short memError(); /* 0x48e80c */
 
 /* Rectangles (QuickDraw's) */
 short emptyRect(ShortRect *rect);
