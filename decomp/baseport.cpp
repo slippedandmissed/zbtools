@@ -1078,7 +1078,7 @@ void __cdecl Pt::operator=(const Pt &point)
 }
 
 /* @zoombi32 0x004887c4 */
-__cdecl Pen::Pen(const Pt &position, const Color &color, short mode, short width)
+__cdecl Pen::Pen(const Pt &position, const Color &color, unsigned short mode, short width)
     : position(position), color(color)
 {
     this->mode = mode;

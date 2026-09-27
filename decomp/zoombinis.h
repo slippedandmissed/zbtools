@@ -1039,6 +1039,8 @@ short lockPort(basePort *port); /* locks a port; non-zero on failure */
 short invertRect(const Rect &rect);
 short lineTo(short x, short y);
 short moveTo(short x, short y); /* 0x48c974 */
+short drawText(const Rect &rect, unsigned short flags, const char *text,
+               unsigned short length); /* 0x48aed8 */
 basePort *newWindowPort(const Rect &bounds, HWND window, Palette *palette);
 Palette *setPortPalette(Palette *palette); /* the previous one */
 short setClipRect(const Rect &rect);
@@ -1146,10 +1148,10 @@ class Pen
 public:
     Pt position;
     Color color;
-    short mode; /* setMode's */
+    unsigned short mode; /* setMode's */
     short width;
     __cdecl Pen(); /* 0x48878e */
-    __cdecl Pen(const Pt &position, const Color &color, short mode, short width); /* 0x4887c4 */
+    __cdecl Pen(const Pt &position, const Color &color, unsigned short mode, short width); /* 0x4887c4 */
 };
 
 class PixMap;

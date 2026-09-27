@@ -523,7 +523,8 @@ name = "module_48adf0"
 
 [[module]]
 start = 0x48aed8
-name = "module_48aed8"
+name = "drawtext"
+note = "DrawTextA"
 
 [[module]]
 start = 0x48b1b4

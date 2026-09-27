@@ -891,6 +891,7 @@
 0x0048ad80 displayPort::lock
 0x0048adf0 drawImageData
 0x0048ae53 drawPixelData
+0x0048aed8 drawText
 0x0048b244 frameRect
 0x0048b2d8 getDisplayMode
 0x0048b358 getPortError
