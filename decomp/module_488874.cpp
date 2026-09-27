@@ -46,8 +46,8 @@ unsigned short __cdecl Color::paletteIndex() const
     if ((port = portObject(1)) == 0)
         return 0xffff;
     if (bytes.kind == 0x80) {
-        if (!(paletteReserved / 2 + port->palette->first > index
-              || (index < 0x100 && 0x100 - paletteReserved / 2 <= index))) {
+        if (!(graphics.paletteReserved / 2 + port->palette->first > index
+              || (index < 0x100 && 0x100 - graphics.paletteReserved / 2 <= index))) {
             setPortError(0x2a64);
             return 0xffff;
         }

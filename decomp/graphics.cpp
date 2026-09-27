@@ -24,8 +24,8 @@ void initGraphics(DisplayMode *mode, short depth)
     height = mode->height;
     checkDisplayMode(mode);
     displayMode = *mode;
-    g_4ab404 = mode->unknown8;
-    if (fn_48ba5a(mode, 0))
+    g_4ab404 = mode->palettized;
+    if (openGraphicsEngine(mode, 0))
         fatalError("unable to initialize graphics");
     fn_48d798(depth);
     gameRect.right = width;
@@ -39,7 +39,7 @@ void initGraphics(DisplayMode *mode, short depth)
     memset(g_4ab3f0, 0, 4);
     for (i = 0; i < 0x100; i++)
         g_4ab3f0[i].peFlags = PC_RESERVED;
-    if ((palette = fn_488d08(0x100, g_4ab3f0)) == 0)
+    if ((palette = newPalette(0x100, (ColorBytes *)g_4ab3f0)) == 0)
         fatalError("unable to create palette");
     freeAndClear((void **)&g_4ab3f0);
     setPort(screenPort);
@@ -63,14 +63,14 @@ void closeGraphics()
     if (palette) {
         setPort(screenPort);
         fn_48d574(0);
-        fn_48906c(palette);
+        deletePalette(palette);
         palette = 0;
     }
     freeAndClear((void **)&g_4ab3f0);
     destroyMainWindow();
-    if (fn_48c300()) {
+    if (graphicsBufferSize()) {
         fn_48d22c(isMousePresent() - 1);
-        fn_48c314();
+        closeGraphicsEngine();
     }
 }
 
@@ -134,7 +134,7 @@ void getColors(PALETTEENTRY *to, short first, short count)
 /* @zoombi32 0x00414845 */
 void setColors(PALETTEENTRY *from, short first, short count)
 {
-    long current;
+    Palette *current;
 
     if (count > 0) {
         current = fn_48b4a8();
@@ -162,12 +162,12 @@ void fn_4148da(short first, short count)
  * (fn_48db08). `name` is for error messages.
  */
 /* @zoombi32 0x0041490e */
-void createPort(long *port, ShortRect *bounds, short keep, const char *name)
+void createPort(basePort **port, ShortRect *bounds, short keep, const char *name)
 {
     short width;
     short height;
-    long saved;
-    long current;
+    basePort *saved;
+    Palette *current;
 
     joinText(&g_4ab3f4, name, "back port");
     if (*port) {
@@ -176,7 +176,7 @@ void createPort(long *port, ShortRect *bounds, short keep, const char *name)
     }
     width = bounds->right - bounds->left;
     height = bounds->bottom - bounds->top;
-    if ((*port = fn_488ba8(width, height, bitsPerPixel, 0)) == 0)
+    if ((*port = newPort(width, height, bitsPerPixel, 0)) == 0)
         reportJoinedError(g_4ab3f4);
     saved = getPort();
     current = fn_48b4a8();
@@ -193,7 +193,7 @@ void createPort(long *port, ShortRect *bounds, short keep, const char *name)
 /* Destroys a port (releasing it first, if asked), leaving no current port if
    it was current. */
 /* @zoombi32 0x004149e0 */
-void destroyPort(long *port, short release)
+void destroyPort(basePort **port, short release)
 {
     freeText((void **)&g_4ab3f4);
     freeText((void **)&g_4ab3f8);
@@ -202,16 +202,16 @@ void destroyPort(long *port, short release)
             setPort(0);
         if (release)
             fn_48db08(*port);
-        fn_4890f8(*port);
+        deletePort(*port);
         *port = 0;
     }
 }
 
 /* Gives a port its origin and clipping from `bounds`. */
 /* @zoombi32 0x00414a2e */
-void fn_414a2e(long port, ShortRect *bounds)
+void fn_414a2e(basePort *port, ShortRect *bounds)
 {
-    long saved = getPort();
+    basePort *saved = getPort();
 
     setPort(port);
     fn_48d9c8(bounds->left, bounds->top);
@@ -283,7 +283,7 @@ void clipRect(short *region, ShortRect *rect, short keep)
     } else if (!emptyRgn(*region))
         fatalError("e2ClipRect error -- region must be empty");
     getClipRegion(region, keep);
-    fn_488828(*rect);
+    clipPortToRect(*rect);
 }
 
 /* Restores a clip region kept by clipRect, freeing it if asked. */
@@ -332,20 +332,20 @@ void freeRegion(short *region)
 
 /* Copies a rectangle of port `from` to the same place in port `to`. */
 /* @zoombi32 0x00414d07 */
-void copyBits(long to, long from, ShortRect *rect)
+void copyBits(basePort *to, basePort *from, ShortRect *rect)
 {
-    fn_488a88(to, from, *rect, *rect, 0);
+    copyPortBits(to, from, *rect, *rect, 0);
 }
 
 /* Copies a rectangle of the work port to the screen. */
 /* @zoombi32 0x00414d53 */
 void showRect(ShortRect *rect)
 {
-    fn_488a88(screenPort, workPort, *rect, *rect, 0);
+    copyPortBits(screenPort, workPort, *rect, *rect, 0);
 }
 
 /* @zoombi32 0x00414da5 */
-void lockPort(long port)
+void lockPort(basePort *port)
 {
     if (fn_48c750(port))
         fatalError(msgUnableToLockPort);
@@ -394,15 +394,15 @@ void alignRect(ShortRect *rect, short x, short y, short how)
 /* @zoombi32 0x00414e7d */
 void fn_414e7d()
 {
-    fn_48ac68(&displayMode, 0xffff, 0xffff, -1, 0);
-    fn_48ac68(&g_4aa7dc, 0xffff, 0xffff, -1, 0);
+    initDisplayMode(&displayMode, 0xffff, 0xffff, -1, 0);
+    initDisplayMode(&g_4aa7dc, 0xffff, 0xffff, -1, 0);
 }
 
 /* Redraws a rectangle of the work port (fn_48c5fc) and shows it. */
 /* @zoombi32 0x00414eb4 */
 void redrawRect(ShortRect *rect)
 {
-    long saved = getPort();
+    basePort *saved = getPort();
 
     setPort(workPort);
     fn_48c5fc(*rect);

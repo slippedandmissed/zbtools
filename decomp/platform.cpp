@@ -26,7 +26,7 @@ void checkDisplayMode(DisplayMode *mode)
     unsigned short width, height;
     short i, found;
 
-    if (!mode->unknown8) {
+    if (!mode->palettized) {
         if (mode->colors <= 0x10000)
             minimum = minimumOfText;
     } else if (mode->colors > 0x100)
@@ -211,7 +211,7 @@ void mouseButtonDown(short button, long keys, long where)
 {
     POINT position;
     Point point;
-    long saved;
+    basePort *saved;
 
     position.x = (short)LOWORD(where);
     position.y = (short)HIWORD(where);
@@ -338,7 +338,7 @@ void getCursorPosition(Point *where)
     GetCursorPos(&cursor);
     point.x = cursor.x;
     point.y = cursor.y;
-    long saved = getPort();
+    basePort *saved = getPort();
     setPort(screenPort);
     globalToLocal(&point);
     setPort(saved);
@@ -359,7 +359,7 @@ void setCursorPosition(short x, short y)
     Point point;
 
     setPoint(&point, y, x);
-    long saved = getPort();
+    basePort *saved = getPort();
     setPort(screenPort);
     localToGlobal(&point);
     setPort(saved);
@@ -538,7 +538,7 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     LRESULT result;
     PAINTSTRUCT paint;
     RECT rect;
-    long port;
+    basePort *port;
     HDC dc;
     char key;
     UINT hitTest;
@@ -841,7 +841,7 @@ void placeGamePort()
 {
     ShortRect centred;
     ShortRect *screen;
-    long saved;
+    basePort *saved;
 
     screen = &screenRect;
     screen->left = screen->top = 0;
@@ -853,7 +853,7 @@ void placeGamePort()
     offsetRect(screen, -centred.left, -centred.top);
     sectRect(&g_4aa7b8, screen);
     if (!screenPort) {
-        screenPort = fn_488f34(centred, mainWindow, 0);
+        screenPort = newWindowPort(centred, mainWindow, 0);
         if (screenPort)
             lockPort(screenPort);
         else

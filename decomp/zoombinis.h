@@ -35,7 +35,12 @@ inline unsigned long swapLong(unsigned long value)
 #define RESOURCE_TYPE(a, b, c, d) (((long)(a) << 24) | ((long)(b) << 16) | ((long)(c) << 8) | (d))
 
 /* A function registered to be called back later (e.g. by fn_415604). */
+class basePort;
+class Palette;
 typedef void (*Callback)();
+/* Told when the application is activated or deactivated. */
+typedef void (*ActivateHook)(short active);
+typedef short (*FileCallback)(const char *name, void *data);
 
 /* A point, as the engine's QuickDraw-like graphics use them. */
 struct Point
@@ -132,9 +137,9 @@ typedef void (*AnimCallback)(Anim *anim, short value);
  */
 struct Anim
 {
-    long port; /* drawn into */
-    long screen; /* shown on */
-    long background; /* a saved copy of what's under it, or 0 */
+    basePort *port; /* drawn into */
+    basePort *screen; /* shown on */
+    basePort *background; /* a saved copy of what's under it, or 0 */
     ShortRect bounds;
     ShortRect changed;
     long script; /* the resource */
@@ -213,7 +218,7 @@ struct Region
 /* A saved area of a port (e2MapSave), 0xe bytes. */
 struct MapSave
 {
-    long port; /* holding the saved pixels */
+    basePort *port; /* holding the saved pixels */
     short locks;
     ShortRect rect;
 };
@@ -363,8 +368,8 @@ struct DisplayMode
 {
     unsigned short width;
     unsigned short height;
-    unsigned long colors;
-    short unknown8; /* 0: `colors` is a minimum */
+    unsigned long colors; /* at least; 0xffff / -1: any */
+    short palettized; /* needs an 8-bit palettized mode */
     char unknownA[2];
 };
 
@@ -487,6 +492,7 @@ public:
     __cdecl ~fileSpec(); /* 0x48533e */
     fileSpec &__cdecl operator=(const fileSpec &from); /* 0x4853a2 */
     short __cdecl compare(const fileSpec &with) const; /* 0x4853f3: 0 if the same, else 0x2844 or an error */
+    void __cdecl getPath(char *path) const; /* 0x4854c5 */
 
 private:
     long unknown0;
@@ -502,7 +508,7 @@ extern short channelCounts[2]; /* @data 0x4a00a4 */
 extern char currentChannel[2]; /* @data 0x4a00a8 */
 extern SoundChannel soundChannels[2][4]; /* @data 0x4a00aa */
 extern long soundTypes[2]; /* @data 0x4a00dc */
-extern long *screenPortRef; /* @data 0x4a0070: animations show on *screenPortRef */
+extern basePort **screenPortRef; /* @data 0x4a0070: animations show on *screenPortRef */
 extern unsigned char animOpcodes[13]; /* @data 0x4a0074 */
 extern unsigned char animOperandSizes[13]; /* @data 0x4a0081 */
 extern short buttonColors[6]; /* @data 0x4a019c: colours buttons are drawn in */
@@ -642,18 +648,18 @@ extern Event eventQueue[32]; /* @data 0x4aa5da */
 extern short eventHead; /* @data 0x4aa79a */
 extern short eventTail; /* @data 0x4aa79c */
 extern Fade *defaultFade; /* @data 0x4aa7a0 */
-extern long screenPort; /* @data 0x4aa7a4: the window's port */
+extern basePort *screenPort; /* @data 0x4aa7a4: the window's port */
 extern ShortRect gameRect; /* @data 0x4aa7a8: the game's area */
 extern ShortRect screenRect; /* @data 0x4aa7b0 */
 extern ShortRect g_4aa7b8;
-extern long workPort; /* @data 0x4aa7c8: where the game draws, off screen */
+extern basePort *workPort; /* @data 0x4aa7c8: where the game draws, off screen */
 extern short g_4aa7cc;
 extern short g_4aa7ce;
 extern DisplayMode displayMode; /* @data 0x4aa7d0 */
 extern DisplayMode g_4aa7dc;
 extern PALETTEENTRY g_4aa7e8[256];
 extern PALETTEENTRY g_4aabe8[256];
-extern long palette; /* @data 0x4aafe8 */
+extern Palette *palette; /* @data 0x4aafe8 */
 extern short bitsPerPixel; /* @data 0x4aafec */
 extern PALETTEENTRY colors[256]; /* @data 0x4aafee: the palette's colours */
 extern va_list formatArgs; /* @data 0x4ab40c: formatString's arguments */
@@ -750,12 +756,12 @@ extern short regionErrorCode; /* @data 0x4b9b64 */
 extern short g_4b9cf0;
 extern short g_4b9cf4;
 extern short g_4b9cf6;
-extern short g_4b9cf8;
-extern long g_4b9cfc;
+extern short engineActive; /* @data 0x4b9cf8 */
+extern ActivateHook activateHook; /* @data 0x4b9cfc */
 extern short g_4b7cf8;
 extern long g_4b9d00;
-extern long g_4b9d04;
-extern long g_4b9d08;
+extern unsigned long appThread; /* @data 0x4b9d04 */
+extern HWND appWindow; /* @data 0x4b9d08 */
 extern unsigned short g_4b9d22;
 extern short g_4b9d4c;
 extern long g_4b9d70;
@@ -855,23 +861,22 @@ void fn_4771e4(long handle);
 short fn_480b80(InputItem *item, Point *where); /* the default hit test */
 /* The engine's graphics follow Mac QuickDraw: a current port, and conversions
    between a port's coordinates and the screen's. */
-long getPort(); /* 0x48b510 */
-void setPort(long port); /* 0x48d960 */
+basePort *getPort(); /* 0x48b510 */
+void setPort(basePort *port); /* 0x48d960 */
 void globalToLocal(Point *point); /* 0x48c4cc */
 void localToGlobal(Point *point); /* 0x48c688 */
 short fn_476d0a(); /* initialises sound */
 short fn_480642(); /* initialises the configuration file */
 short fn_483732(long); /* initialises the file manager */
-void __cdecl fn_48ac68(DisplayMode *mode, long, long, long, long);
-long fn_48b4a8();
-short fn_48cab4(long, long);
-short fn_48c9e8(DisplayMode *mode, long); /* sets the display mode */
+void __cdecl initDisplayMode(DisplayMode *mode, long width, long height, long colors, long palettized);
+short fn_48cab4(Palette *palette, long);
+short fn_48c9e8(DisplayMode *mode, short change); /* whether a display mode is available */
 void fn_48d4c4(long);
 void fn_48da48(short);
 short fn_48d22c(int);
 void fn_48daa8();
 void fn_48c538();
-void fn_4887f4();
+short fn_4887f4();
 void fn_48b1b4();
 void fn_455273(short);
 void fn_44695c();
@@ -919,9 +924,9 @@ void drawImageInColor(ResourceList *images, short index, short x, short y, short
 void getColors(PALETTEENTRY *to, short first, short count);
 void setColors(PALETTEENTRY *from, short first, short count);
 void fn_4148da(short first, short count);
-void createPort(long *port, ShortRect *bounds, short keep, const char *name);
-void destroyPort(long *port, short release);
-void fn_414a2e(long port, ShortRect *bounds);
+void createPort(basePort **port, ShortRect *bounds, short keep, const char *name);
+void destroyPort(basePort **port, short release);
+void fn_414a2e(basePort *port, ShortRect *bounds);
 void saveRect(MapSave **save, ShortRect *rect, short locked, const char *name);
 void restoreRect(MapSave **save, short free);
 void freeSave(MapSave **save);
@@ -930,9 +935,9 @@ void fn_414c25(short *region, short free);
 void getClipRegion(short *region, short create);
 void createRegion(short *region);
 void freeRegion(short *region);
-void copyBits(long to, long from, ShortRect *rect);
+void copyBits(basePort *to, basePort *from, ShortRect *rect);
 void showRect(ShortRect *rect);
-void lockPort(long port);
+void lockPort(basePort *port);
 void lockSave(MapSave *save);
 void unlockSave(MapSave *save);
 void alignRect(ShortRect *rect, short x, short y, short how);
@@ -942,27 +947,22 @@ void fn_414f01(InputItem *item);
 void fn_414f17(InputItem *item);
 void fn_456a64();
 /* Mohawk engine */
-short fn_48ba5a(DisplayMode *mode, short); /* non-zero on failure */
 void fn_48d798(short);
-long fn_488d08(short count, PALETTEENTRY *entries); /* creates a palette */
-void fn_48906c(long palette);
-short fn_48c300();
-void fn_48c314();
 void fn_48adf0(unsigned short *image, short x, short y, short mode); /* draws an image */
-long fn_48b4a8(); /* the current palette */
-void fn_48d5ec(long palette, short first, short count, PALETTEENTRY *entries);
-long fn_488ba8(short width, short height, short depth, long); /* creates a port */
-void fn_48db08(long port);
-void fn_4890f8(long port);
+Palette *fn_48b4a8(); /* the current palette */
+void fn_48d5ec(Palette *palette, short first, short count, PALETTEENTRY *entries);
+basePort *newPort(short width, short height, short depth, Palette *palette);
+void fn_48db08(basePort *port);
+short deletePort(basePort *port);
 void fn_48d9c8(short left, short top);
-void fn_488828(const Rect &rect);
+short clipPortToRect(const Rect &rect);
 void fn_48d1e0(short region);
 void fn_48b2ac(short region);
-void fn_488a88(long to, long from, const Rect &fromRect, const Rect &toRect, short mode);
-short fn_48c750(long port); /* locks a port; non-zero on failure */
+short copyPortBits(basePort *to, basePort *from, const Rect &fromRect, const Rect &toRect, short mode);
+short fn_48c750(basePort *port); /* locks a port; non-zero on failure */
 void fn_48c5fc(const Rect &rect);
-long fn_488f34(const Rect &bounds, HWND window, long); /* creates a window port */
-void fn_48d574(long);
+basePort *newWindowPort(const Rect &bounds, HWND window, Palette *palette);
+void fn_48d574(Palette *palette);
 void fn_48d194(const Rect &rect);
 void fn_48c9ac(const Rect &rect, Color color, short); /* fills a rectangle */
 Color fn_48b4d8(); /* the current colour */
@@ -1041,7 +1041,13 @@ void programDirectory(fileSpec *directory);
 long openFile(fileSpec *file, short mode); /* 0 on error */
 short readFile(long file, void *buffer, long *size);
 void closeFile(long file, short);
-short fileMissing(fileSpec &file);
+short fileMissing(const fileSpec &file); /* 0 if it exists, else an error (0x2845 not found) */
+void currentDirectory(fileSpec *directory);
+short setCurrentDirectory(fileSpec *directory);
+void fn_484994(fileSpec *directory); /* the directory at 0x4b9b9c, where .FOT files go */
+short deleteFile(const fileSpec &file);
+/* Calls `callback` for each file in the current directory. */
+short forEachFile(FileCallback callback, void *data);
 unsigned long handleSize(short handle);
 void fn_48f464(short handle, short);
 
@@ -1057,9 +1063,11 @@ class basePort;
 class Palette
 {
 public:
-    char unknown0[0xc];
+    long magic; /* 'Palt' */
+    Palette *next; /* +4: palettes form a ring (graphics.palettes) */
+    Palette *prev; /* +8 */
     basePort *ports; /* +0xc: the ports using it */
-    short unknown10;
+    short realized; /* +0x10: cleared when the system palette changes */
     short unknown12;
     short unknown14;
     unsigned short first; /* +0x16: the first colour the game may set */
@@ -1076,7 +1084,7 @@ public:
     virtual void v3();
     virtual void v4();
     virtual void v5();
-    virtual void v6();
+    virtual void depthChanged(); /* 6: the display's depth changed (while locked) */
     virtual void v7();
     virtual void prepare(); /* 8: before GDI calls on dc */
     virtual void v9();
@@ -1094,7 +1102,7 @@ public:
     virtual unsigned short nearestIndex(RGBColor color); /* 21 */
     virtual void v22();
     virtual RGBColor paletteColor(unsigned short index); /* 23 */
-    virtual void v24();
+    virtual short init(); /* 24: after construction; non-zero on failure */
     virtual short lock(); /* 25 */
     virtual short fillRect(short, Color color, const Rect *rect); /* 26 */
     virtual void v27();
@@ -1103,13 +1111,17 @@ public:
     virtual void v30();
     virtual void release(); /* 31: before deleting */
     virtual void v32();
-    virtual void v33();
+    virtual void setPalette(Palette *palette); /* 33 */
     virtual void unlock(); /* 34 */
     virtual void v35();
     virtual void v36();
 
+    static void *operator new(size_t size); /* 0x487f56: zeroed */
+    static void operator delete(void *block);
+
     long unknown4; /* 'Port' */
-    char unknown8[0xc];
+    basePort *next; /* +8: in graphics.ports */
+    char unknownC[8];
     long kind; /* +0x14: 5 a window */
     char unknown18[0x24];
     Palette *palette; /* +0x3c */
@@ -1119,28 +1131,173 @@ public:
     short mode; /* +0x5e */
     short clip; /* +0x60: a region */
     short clipChanged; /* +0x62 */
-    short locks; /* +0x64 */
+    unsigned short locks; /* +0x64 */
     char unknown66[6];
     HDC dc; /* +0x6c */
     char unknown70[0x50];
 };
 
-/* A window's port: two more slots. */
-class windowPort : public basePort
+class displayPort : public basePort
 {
-public:
-    virtual void v37();
-    virtual short v38();
 };
 
-extern short portError; /* @data 0x4b9ba0 */
-extern unsigned short paletteReserved; /* @data 0x4b9c0c: system colours kept (half at each end) */
-extern basePort *currentPort; /* @data 0x4b9c70 */
+/* A port in memory, in the display's format. */
+class memoryPort : public displayPort
+{
+public:
+    __cdecl memoryPort(short width, short height); /* 0x48c774 */
+    char unknownC0[4];
+};
+
+/* A device-independent bitmap of any depth. */
+class DIBPort : public basePort
+{
+public:
+    __cdecl DIBPort(short width, short height, short depth); /* 0x48a720 */
+    char unknownC0[8];
+};
+
+/* An 8-bit DIB. RTTI names DIBPort as its base, but it is smaller (0xc6
+   bytes) than DIBPort (0xc8); modelled on basePort until its fields are
+   known. */
+class DIB8Port : public basePort
+{
+public:
+    __cdecl DIB8Port(short width, short height); /* 0x489be4 */
+    char unknownC0[6];
+};
+
+/* A window's port: two more slots. */
+class windowPort : public displayPort
+{
+public:
+    __cdecl windowPort(const Rect &bounds, HWND window); /* 0x48db64 */
+    virtual short v37();
+    virtual short v38();
+    char unknownC0[8];
+};
+
+/* A font (0x38 bytes and its name), in a ring (graphics.fonts). */
+class Font
+{
+public:
+    long magic; /* 'Font' */
+    Font *next;
+    Font *prev;
+    unsigned short users; /* +0xc: can't be disposed of while used */
+    char unknownE[4];
+    short unknown12;
+    short unknown14;
+    char name[0x22]; /* +0x16: its face ("SYSTEM" by default), at most 31 characters */
+};
+
+/* A font file added for the game (graphics.fontFiles). */
+struct FontFile
+{
+    FontFile *next;
+    short trueType; /* made into a .FOT to add it */
+    short created; /* the .FOT was created (and is deleted on removal) */
+    char path[1]; /* +8: what was added, NUL-terminated */
+};
+
+/* A decompressor DLL listed in the settings (graphics.decompressors). */
+struct Decompressor
+{
+    Decompressor *next;
+    char name[8]; /* its key in [Graphics.Decompressors] */
+    HMODULE module; /* +0xc */
+    FARPROC proc; /* +0x10: GFXXDECPROC */
+};
+
+/* The drawing engine's state, cleared by openGraphicsEngine. */
+struct GraphicsState
+{
+    short error; /* of the last call */
+    short ready; /* +2 */
+    short active; /* +4: the application is active */
+    char unknown6[2];
+    ActivateHook previousHook; /* +8 */
+    WNDPROC windowProc; /* +0xc: the main window's, before openGraphicsEngine */
+    unsigned short depth; /* +0x10: the display's bits per pixel (at most 24) */
+    char unknown12[2];
+    HCURSOR cursor; /* +0x14 */
+    short cursorShown; /* +0x18 */
+    char unknown1a[0x46];
+    short cursorFix; /* +0x60: [Graphics] fEnableCursorFix */
+    char unknown62[6];
+    short unknown68; /* +0x68: don't broadcast palette changes */
+    char unknown6a[2];
+    unsigned short paletteReserved; /* +0x6c: system colours kept (half at each end) */
+    char unknown6e[2];
+    short unknown70; /* +0x70: take over the static colours while active */
+    char unknown72[2];
+    UINT systemPaletteUse; /* +0x74 */
+    PALETTEENTRY systemColors[20]; /* +0x78: the static colours (10 at each end) */
+    FontFile *fontFiles; /* +0xc8 */
+    Decompressor *decompressors; /* +0xcc */
+    basePort *currentPort; /* +0xd0 */
+    basePort *ports; /* +0xd4 */
+    Font *fonts; /* +0xd8: a ring */
+    Font *defaultFont; /* +0xdc */
+    Palette *palettes; /* +0xe0: a ring */
+    Palette *defaultPalette; /* +0xe4 */
+};
+
+extern GraphicsState graphics; /* @data 0x4b9ba0 */
+extern int sysColorIndices[21]; /* @data 0x4a8b38: the colours the static palette entries show */
+extern COLORREF monoSysColors[21]; /* @data 0x4a8b8c: them in black and white (SYSPAL_NOSTATIC) */
+extern COLORREF savedSysColors[21]; /* @data 0x4b9c88 */
+
+/* Display modes and the system palette. The engine uses Windows 95's
+   DEVMODE (0x94 bytes); Borland C++ 4.5's headers have the older one (0x7c)
+   and lack the display-settings constants. */
+#ifndef DM_BITSPERPEL
+#define DM_BITSPERPEL 0x00040000L
+#define DM_PELSWIDTH 0x00080000L
+#define DM_PELSHEIGHT 0x00100000L
+struct DeviceMode : DEVMODE
+{
+    DWORD dmICMMethod;
+    DWORD dmICMIntent;
+    DWORD dmMediaType;
+    DWORD dmDitherType;
+    DWORD dmReserved1;
+    DWORD dmReserved2;
+};
+#else
+typedef DEVMODE DeviceMode;
+#endif
+long changeDisplaySettings(DeviceMode *mode, unsigned long flags);
+HPALETTE createPalette(PALETTEENTRY *entries);
+BOOL enumDisplaySettings(const char *device, unsigned long index, DeviceMode *mode);
+BOOL polygon(HDC dc, const Point *points, unsigned short count);
+UINT setSystemPaletteUse(HDC dc, UINT use);
+void graphicsActivate(short active);
+short findDisplayMode(const DisplayMode *want, DeviceMode *best);
+void currentDisplayMode(DeviceMode *mode);
+short openGraphicsEngine(const DisplayMode *mode, short change); /* an error code */
+short addFont(const char *name, void *directory);
+LRESULT CALLBACK graphicsWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
+short graphicsBufferSize();
+void closeGraphicsEngine();
+void getDisplayMode(DisplayMode *mode);
+short setDisplayMode(const DisplayMode *mode);
+Palette *newPalette(unsigned short count, ColorBytes *colors); /* colours `kind` bit 0: PC_RESERVED */
+short deletePalette(Palette *palette);
+void disposePalette(Palette *palette);
+Palette *paletteHandle(Palette *palette); /* 0x48d5df */
+Font *newFont(const char *name, short, short);
+short disposeFont(Font *font);
+Font *fontObject(Font *font); /* 0x48d555 */
+Font *fontHandle(Font *font);
+Palette *checkPalette(Palette *palette, short kind); /* 0x48d779 */
+basePort *portHandle(basePort *port); /* 0x48d9bd */
+void fn_48d22c(short);
+void fn_48d278(short);
 basePort *checkPort(basePort *port, short kind);
 basePort *portObject(short kind);
 short setPortError(short error);
 short getPortError();
-long portHandle(basePort *port);
 
 /* Memory: relocatable blocks by handle (a short), as on the Mac. */
 short newHandle(long size);
@@ -1163,13 +1320,13 @@ ShortRect *__cdecl setRect(ShortRect *rect, short left, short top, short right, 
 /* Regions (errors in regionError) */
 short newRgn();
 void disposeRgn(short region);
-void setEmptyRgn(short region);
+short setEmptyRgn(short region);
 unsigned short emptyRgn(short region);
 void setRectRgn(short region, ShortRect *rect);
 void copyRgn(short to, short from);
 void compactRgn(short region);
 void regionToHrgn(HRGN target, short region, short dx, short dy);
-void sectRgnWithRect(short region, ShortRect *rect);
+short sectRgnWithRect(short region, ShortRect *rect);
 short sectRgnRects(short region, long count, ShortRect *rects);
 short fn_48f4bc(short to, short from);
 void diffRgnRect(short region, ShortRect *rect);
@@ -1459,6 +1616,9 @@ void setDataPath(const char *path);
 void fn_46ca9c(long *handle);
 long __cdecl fn_46d827(Counted *object);
 short fn_46d9c8();
+void *localAlloc(unsigned long size); /* 0x46d95c */
+void localFree(void *block); /* 0x46d998 */
+short fn_46e00b(unsigned long thread); /* whether a thread belongs to the game */
 void fn_46da35(short value);
 int isAlignedPointer(void *pointer);
 long atomicDecrement(long *value);
@@ -1467,14 +1627,14 @@ long atomicIncrement(long *value);
 short debugBreak(short value);
 void fn_46dc45();
 long fn_46dd21();
-long fn_46dd27();
-long fn_46dd2d();
+unsigned long appThreadId();
+HWND appWindowHandle();
 unsigned long currentTimeMs();
 void fn_46dfd4(long, long);
 void fn_46dfe2(long, long);
-short fn_46dff0();
+short isAppActive();
 short fn_46dff7();
-long fn_46e0d7(long value);
+ActivateHook setActivateHook(ActivateHook hook);
 long fn_46e0ec(long);
 void fn_46e1e7(short value);
 long fn_46e1f8(long value);

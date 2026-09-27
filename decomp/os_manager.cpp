@@ -66,15 +66,15 @@ long fn_46dd21()
 }
 
 /* @zoombi32 0x0046dd27 */
-long fn_46dd27()
+unsigned long appThreadId()
 {
-    return g_4b9d04;
+    return appThread;
 }
 
 /* @zoombi32 0x0046dd2d */
-long fn_46dd2d()
+HWND appWindowHandle()
 {
-    return g_4b9d08;
+    return appWindow;
 }
 
 /* The time in milliseconds since Windows started. */
@@ -97,9 +97,9 @@ void fn_46dfe2(long, long)
 }
 
 /* @zoombi32 0x0046dff0 */
-short fn_46dff0()
+short isAppActive()
 {
-    return g_4b9cf8;
+    return engineActive;
 }
 
 /* @zoombi32 0x0046dff7 */
@@ -108,12 +108,13 @@ short fn_46dff7()
     return g_4b9cf6 ? 0x500 : 0;
 }
 
-/* Sets g_4b9cfc, returning its old value. */
+/* Sets the function told when the application is activated or
+   deactivated, returning the previous one. */
 /* @zoombi32 0x0046e0d7 */
-long fn_46e0d7(long value)
+ActivateHook setActivateHook(ActivateHook hook)
 {
-    long old = g_4b9cfc;
-    g_4b9cfc = value;
+    ActivateHook old = activateHook;
+    activateHook = hook;
     return old;
 }
 

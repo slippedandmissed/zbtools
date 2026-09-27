@@ -6,13 +6,9 @@
 
 #include "zoombinis.h"
 
-/* Intersects a region with a rectangle. Not exact: the original has region
-   in ebx and rect in esi. */
+/* Intersects a region with a rectangle; an error code. */
 /* @zoombi32 0x00480f90 */
-void sectRgnWithRect(short region, ShortRect *rect)
+short sectRgnWithRect(short region, ShortRect *rect)
 {
-    if (emptyRect(rect))
-        setEmptyRgn(region);
-    else
-        sectRgnRects(region, 1, rect);
+    return emptyRect(rect) ? setEmptyRgn(region) : sectRgnRects(region, 1, rect);
 }

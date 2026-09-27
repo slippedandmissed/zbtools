@@ -8,7 +8,8 @@ Function pointer globals (`extern void (*g_4aa4c4)(Point *where);`) are
 passed on as `void *`. Structs are passed on as C, with the function pointer
 typedefs they may use: Ghidra's C parser doesn't know C++'s implicit `struct`
 type names, so each struct also gets a typedef. C++ classes (with virtual
-functions) aren't passed on.
+functions) aren't passed on, only declared (as empty structs), so that
+structs can point to them.
 
 A regular-expression reader is enough here because the header is ours and
 written plainly; a C++ parser would be a heavy dependency for it.
@@ -27,6 +28,8 @@ _EXTERN_FUNCTION_POINTER = re.compile(r"^extern\s+[^;(]*\(\s*\*\s*(\w+)\s*\)\s*\
 _ADDRESS_NAME = re.compile(r"^g_([0-9a-fA-F]{6,8})$")
 _DATA_MARKER = re.compile(r"/\*\s*@data\s+(0x[0-9a-fA-F]+)\s*\*/")
 _STRUCT = re.compile(r"^struct\s+(\w+)\s*\n\{.*?\n\};", re.MULTILINE | re.DOTALL)
+# `class basePort;` or `class Palette\n{`: a C++ class, declared or defined.
+_CLASS = re.compile(r"^class\s+(\w+)\b", re.MULTILINE)
 # `typedef void (*Callback)();`: a function pointer type, passed on as a pointer.
 _FUNCTION_POINTER = re.compile(r"^typedef\s[^;(]*\(\s*\*\s*(\w+)\s*\)[^;]*;", re.MULTILINE)
 _CONST = re.compile(r"\bconst\s+")
@@ -76,7 +79,8 @@ def structs_as_c(text: str) -> str:
     """The header's structs as C, with byte packing like Borland's default."""
     structs = [m.group(0) for m in _STRUCT.finditer(text)]
     names = [m.group(1) for m in _STRUCT.finditer(text)]
-    typedefs = [f"typedef struct {name} {name};" for name in names]
+    classes = dict.fromkeys(name for name in _CLASS.findall(text) if name not in names)
+    typedefs = [f"typedef struct {name} {name};" for name in [*names, *classes]]
     pointers = [m.group(0) for m in _FUNCTION_POINTER.finditer(text)]
     parts = ["#pragma pack(push, 1)", *typedefs, *pointers, *structs, "#pragma pack(pop)"]
     return "\n".join(parts) + "\n"

@@ -49,3 +49,15 @@ def test_structs_get_typedefs_and_packing() -> None:
         "struct Link\n{"
     )
     assert c.endswith("};\n#pragma pack(pop)\n")
+
+
+def test_classes_are_declared_not_defined() -> None:
+    c = structs_as_c(
+        "class basePort;\n"
+        "class Palette\n{\npublic:\n    virtual ~Palette();\n};\n"
+        "struct Holder\n{\n    basePort *port;\n    Palette *palette;\n};\n"
+    )
+    assert "typedef struct Holder Holder;\n" in c
+    assert "typedef struct basePort basePort;\n" in c
+    assert "typedef struct Palette Palette;\n" in c
+    assert "virtual" not in c

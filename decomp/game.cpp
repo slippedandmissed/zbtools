@@ -18,7 +18,7 @@
 void gameFrame()
 {
     if (currentScene != -1 && scenes[currentScene]->frame) {
-        long saved = getPort();
+        basePort *saved = getPort();
         setPort(workPort);
         scenes[currentScene]->frame();
         setPort(saved);
@@ -89,7 +89,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     if (*appCommandLine == 'd')
         debugMode = 1;
 
-    fn_48ac68(&mode, 0xffff, 0xffff, -1, 0);
+    initDisplayMode(&mode, 0xffff, 0xffff, -1, 0);
     g_4b2aea = 0;
     quickTimeReady = 0;
     appName = "Zoombini";
@@ -141,7 +141,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
 
     mode.width = 640;
     mode.height = 480;
-    mode.unknown8 = 1;
+    mode.palettized = 1;
     mode.colors = 256;
     fn_4144d0(&mode, 1);
     if (instanceAtom) {

@@ -13,7 +13,7 @@
 #define SOUND RESOURCE_TYPE(0, 'S', 'N', 'D')
 #define MIDI RESOURCE_TYPE('t', 'M', 'I', 'D')
 
-long *screenPortRef = &screenPort;
+basePort **screenPortRef = &screenPort;
 /* The opcodes (the last four are families: 0x10 and 0x14 by the top six
    bits, the others by the top three), and the size of each one's operands. */
 unsigned char animOpcodes[13] = {0, 1, 2, 3, 4, 5, 6, 7, 0x10, 0x14, 0x20, 0x60, 0x80};
@@ -56,7 +56,7 @@ short stepAnim(Anim *anim)
     short finished;
     unsigned char *operands;
     Sprite *sprite;
-    long saved;
+    basePort *saved;
     short index;
     short stop;
     short advance;
@@ -186,7 +186,7 @@ short skipAnim(Anim *anim, short frames)
     short finished;
     unsigned char *operands;
     Sprite *sprite;
-    long saved;
+    basePort *saved;
     short which, i;
     short stop;
     short advance;
@@ -323,7 +323,7 @@ void drawAnim(Anim *anim)
         for (which = 0; which < anim->counts[0]; which++) {
             clip = anim->rects[0][which];
             sectRect(&clip, &anim->bounds);
-            fn_488828(clip);
+            clipPortToRect(clip);
             for (i = 0; i < 32; i++)
                 drawSprite(anim, &anim->sprites[i]);
             fn_48d1e0(region);
@@ -662,7 +662,7 @@ short fn_411212()
 /* @zoombi32 0x00411217 */
 void setupAnimOffscreen(AnimSpec *spec)
 {
-    long port = getPort();
+    basePort *port = getPort();
 
     screenPortRef = &port;
     setupAnim(spec);
