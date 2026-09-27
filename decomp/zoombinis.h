@@ -4245,6 +4245,11 @@ void askNewGame();
 void askLoadGame();
 void askSaveGame();
 void askQuit();
+void drawDialogPart(View *view); /* 0x467745 */
+void updateDialogPart(View *view, short region); /* 0x468033 */
+void placeDialogButton(View *view); /* 0x4688a5 */
+void placeDialogList(View *view); /* 0x468bde */
+void fn_467227(View *view);
 void showDialog(short kind, const char *text, const char *button2, const char *button1); /* 0x466d7e */
 void fn_41f551();
 extern short g_4b966e;
@@ -4286,6 +4291,23 @@ extern short g_4b80e2;
 extern Point dialogWhere; /* @data 0x4b97f8 */
 extern ShortRect dialogSpots[17]; /* @data 0x4b982a */
 extern char g_4b98b2[17];
+extern short g_4a74dc;
+extern short savedGames; /* @data 0x4b95a0 */
+extern short g_4a7d3c;
+extern short g_4b9664;
+extern short g_4b9666;
+extern long g_4b9668;
+extern ImageBank *g_4b9678;
+extern short *g_4b967c;
+extern const char *dialogText; /* @data 0x4b968c */
+extern const char *dialogButton2Text; /* @data 0x4b9690 */
+extern const char *dialogButton1Text; /* @data 0x4b9694 */
+extern ShortRect dialogFrame; /* @data 0x4b98aa */
+extern long g_4b98c4;
+extern short g_4b98c8;
+extern short g_4b98ca;
+extern char saveName[]; /* @data 0x4b9810 */
+extern short saveNameLength; /* @data 0x4b9826 */
 extern long groupBankResources[8]; /* @data 0x4b95a4 */
 extern ImageBank *groupBanks[8]; /* @data 0x4b95c4 */
 extern long groupHotXResources[8]; /* @data 0x4b95e4 */

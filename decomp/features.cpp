@@ -764,3 +764,158 @@ void askQuit()
         g_4b80e0 = -1;
     }
 }
+
+/*
+ * Shows a dialog: 1 (unused?), 2 load a game, 3 save one, 4 a message with
+ * one or two buttons, 5 the credits(?). Not over another dialog or while
+ * leaving a scene; each kind's flag goes in g_4b9684 while it shows.
+ */
+/* @zoombi32 0x00466d7e */
+void showDialog(short kind, const char *text, const char *button2, const char *button1)
+{
+    long saved;
+    short flag;
+    short y;
+
+    if (!viewsReady || !g_4b2aea || g_4a74dc != -1 || g_4b0d52 > 1 || g_4b0d50 != -1)
+        return;
+    viewsPaused = 0;
+    setDragCursor(0);
+    updateViews();
+    dialogText = text;
+    dialogButton2Text = button2;
+    dialogButton1Text = button1;
+    switch (kind) {
+    case 1:
+        flag = 1;
+        break;
+    case 2:
+        g_4b9664 = 0;
+        g_4b9666 = 1;
+        g_4b9668 = 0;
+        flag = 2;
+        y = 0x6e;
+        break;
+    case 3:
+        g_4b98c8 = g_4b98ca = 0;
+        g_4b98c4 = 0;
+        g_4b9664 = 0;
+        strcpy(saveName, gameName);
+        saveNameLength = strlen(saveName);
+        flag = 4;
+        y = 0x5e;
+        if (g_4a7d50) {
+            freeSave(&g_4a7d50);
+            g_4a7d50 = 0;
+        }
+        break;
+    case 4:
+        flag = 8;
+        break;
+    case 5:
+        flag = 0x10;
+        break;
+    default:
+        return;
+    }
+    if (kind == 2 || kind == 3) {
+        dialogFrame.left = 0xc0;
+        dialogFrame.right = 0x195;
+        dialogFrame.top = y;
+        dialogFrame.bottom = y + 0xa0;
+    }
+    if (!flag)
+        return;
+    if (g_4b9684 & flag)
+        return;
+    if (lastViewSound != 999) {
+        stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+        lastViewSound = 0;
+    }
+    switch (kind) {
+    case 1:
+        dialogView = addView(0x4001000, drawDialogPart, updateDialogPart, 1, 0, 0, 0, 0);
+        moveView(dialogView, 0, -1);
+        dialogButton1 = addView(0x4000000, drawDialogPart, updateDialogPart, 2, 1, 0, 0, 0);
+        dialogButton2 = addView(0x4000000, drawDialogPart, updateDialogPart, 3, 9, 0, 0, 0);
+        {
+            View *view = findView(dialogButton1);
+
+            if (view)
+                view->placed = placeDialogButton;
+        }
+        {
+            View *view = findView(dialogButton2);
+
+            if (view)
+                view->placed = placeDialogButton;
+        }
+        break;
+    case 2:
+        if (!savedGames) {
+            g_4a7d3c++;
+            showDialog(4, noSavedGamesText, okText, 0);
+            kind = 0;
+            break;
+        }
+    case 3:
+        {
+            short script;
+
+            g_4a7d3c++;
+            if (kind == 2)
+                script = 4;
+            else
+                script = 7;
+            g_4a7d4c = newPtr(0x646);
+            if (!g_4a7d4c)
+                fn_41f195("Out of Memory.");
+            fn_41f2c8((long)g_4a7d4c, 2);
+            g_4b9806 = addView(0x4001000, drawDialogPart, updateDialogPart, script, 0, 0, 0, 0);
+            g_4b9808 = addView(0x4000000, drawDialogPart, updateDialogPart, script + 1, 11, 0, 0, 0);
+            g_4b980a = addView(0x4000000, drawDialogPart, updateDialogPart, script + 2, 13, 0, 0, 0);
+            {
+                View *view = findView(g_4b9808);
+
+                if (view)
+                    view->placed = placeDialogList;
+            }
+            {
+                View *view = findView(g_4b980a);
+
+                if (view)
+                    view->placed = placeDialogList;
+            }
+        }
+        break;
+    case 4:
+        g_4a7d3c++;
+        g_4b980c = addView(0x4001000, drawDialogPart, updateDialogPart, 10, 0, 0, 0, 0);
+        g_4b980e = addView(0x4001000, drawDialogPart, updateDialogPart, 11, 15, 0, 0, 0);
+        {
+            View *view = findView(g_4b980e);
+
+            if (view)
+                view->placed = placeDialogList;
+        }
+        g_4b9688 = 1;
+        break;
+    case 5:
+        {
+            long interval;
+
+            g_4a7d3c++;
+            saved = g_4a7f58;
+            fn_46be2e(g_4b7b4c);
+            g_4b9678 = loadImageBank(20, &g_4b9670);
+            g_4b967c = loadSwappedResource(&g_4b9674, 20, RESOURCE_TYPE('S', 'C', 'R', 'B'));
+            interval = 1;
+            g_4b9804 = addView(0x4001000, fn_467227, tickView, 0, interval, 0, 0, 0);
+            g_4a7f58 = saved;
+            queueViewSound(20104, 0);
+        }
+        break;
+    }
+    if (kind)
+        g_4b9684 |= flag;
+}
