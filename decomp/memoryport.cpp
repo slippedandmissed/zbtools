@@ -72,6 +72,8 @@ __cdecl Rect::Rect(short left, short top, short right, short bottom)
     this->bottom = bottom;
 }
 
+/* @zoombi32-implicit 0x0048c94f memoryPort::~memoryPort */
+
 /* Moves the current port's pen. Not exact: the original keeps `port` in eax
    (see the open question in findings.md); BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x0048c974 */

@@ -61,6 +61,8 @@ __cdecl asyncCreateDirectory::asyncCreateDirectory(const char *path, SECURITY_AT
     this->security = security;
 }
 
+/* @zoombi32-implicit 0x004828fa asyncCreateDirectory::~asyncCreateDirectory */
+
 /* Deletes a file or (empty) directory, unless it's in use. */
 /* @zoombi32 0x00482920 */
 short deleteFile(const fileSpec &spec)
@@ -91,3 +93,7 @@ __cdecl asyncDeleteFile::asyncDeleteFile(const char *path)
 {
     this->path = path;
 }
+
+/* @zoombi32-implicit 0x00482b02 asyncRemoveDirectory::~asyncRemoveDirectory */
+
+/* @zoombi32-implicit 0x00482b28 asyncDeleteFile::~asyncDeleteFile */

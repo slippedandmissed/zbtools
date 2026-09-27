@@ -56,3 +56,5 @@ __cdecl asyncSetEndOfFile::asyncSetEndOfFile(HANDLE file)
 {
     this->file = file;
 }
+
+/* @zoombi32-implicit 0x004850ab asyncSetEndOfFile::~asyncSetEndOfFile */

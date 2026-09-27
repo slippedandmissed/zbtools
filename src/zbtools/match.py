@@ -17,7 +17,10 @@ reports new matches. A function that is complete but deliberately not
 byte-exact is marked `/* @zoombi32-functional 0x... */`: decompiled code must
 be portable C++, so where only machine code (inline assembly, emitted bytes,
 pseudo-registers) would reproduce the original, the function does the same
-thing portably instead.
+thing portably instead. A function the compiler generates by itself (an
+implicit destructor, say) has no definition to mark; a marker naming it,
+`/* @zoombi32-implicit 0x0048a6f9 DIB8Port::~DIB8Port */`, has it measured
+from the object of the file the marker is in.
 
 Each file is compiled (in parallel, one Wine process per file) with
 Borland C++ 4.5, or the release a `/* @release 5.02 */` comment in the file
@@ -65,6 +68,10 @@ DEFAULT_RELEASE = "4.5"
 _RELEASE = re.compile(r"/\*\s*@release\s+(\S+)\s*\*/")
 
 _MARKER = re.compile(r"/\*\s*@zoombi32(?:-(functional))?\s+(0x[0-9a-fA-F]+)\s*\*/")
+# A compiler-generated function, named in the marker: `@zoombi32-implicit 0x... A::~A`.
+_IMPLICIT = re.compile(
+    r"/\*\s*@zoombi32-implicit\s+(0x[0-9a-fA-F]+)\s+((?:[A-Za-z_]\w*::)*~?[A-Za-z_]\w*)\s*\*/"
+)
 # The (possibly qualified) name of the function defined after a marker.
 _DEFINITION = re.compile(
     r"((?:[A-Za-z_][\w:]*::)?operator\s*(?:new|delete|\[\]|\(\)|[-+*/%^&|~!=<>]+)(?:\[\])?"
@@ -113,9 +120,15 @@ class MarkerPosition:
 
 
 def marker_positions(source: str) -> list[MarkerPosition]:
+    """Where the markers of functions defined in a source are."""
     return [
         MarkerPosition(int(m.group(2), 16), m.start(), m.end()) for m in _MARKER.finditer(source)
     ]
+
+
+def implicit_markers(source: str) -> dict[int, str]:
+    """The markers of compiler-generated functions in a source, by address."""
+    return {int(m.group(1), 16): m.group(0) for m in _IMPLICIT.finditer(source)}
 
 
 # Words that can end a parameter's type; any other last word is its name.
@@ -149,7 +162,8 @@ def parameter_types(parameters: str) -> str:
 
 
 def find_targets(source: str) -> list[Target]:
-    """Marked functions: the first `name(` after each @zoombi32 marker."""
+    """Marked functions: the first `name(` after each @zoombi32 marker, then
+    the functions @zoombi32-implicit markers name."""
     found = []
     for marker in _MARKER.finditer(source):
         name = _DEFINITION.search(source, marker.end())
@@ -160,6 +174,8 @@ def find_targets(source: str) -> list[Target]:
         close = source.find(")", name.end())
         parameters = parameter_types(source[name.end() : close]) if close >= 0 else None
         found.append(Target(_OPERATOR.sub("operator ", name.group(1)), address, kind, parameters))
+    for marker in _IMPLICIT.finditer(source):
+        found.append(Target(marker.group(2), int(marker.group(1), 16)))
     return found
 
 

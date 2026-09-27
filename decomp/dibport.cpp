@@ -154,6 +154,8 @@ void __cdecl DIB::operator delete(void *block)
     localFree(block);
 }
 
+/* @zoombi32-implicit 0x0048ac04 DIBPort::~DIBPort */
+
 /* @zoombi32 0x0048ac29 */
 void __cdecl Rect::operator=(const tagRECT &rect)
 {

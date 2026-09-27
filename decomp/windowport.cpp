@@ -150,3 +150,7 @@ __cdecl WinRect::WinRect(const Rect &rect)
     converted.bottom = rect.bottom;
     *(RECT *)this = converted;
 }
+
+/* @zoombi32-implicit 0x0048dfff displayPort::~displayPort */
+
+/* @zoombi32-implicit 0x0048e078 windowPort::~windowPort */

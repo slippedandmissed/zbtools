@@ -90,7 +90,10 @@ class Detail:
 
 def function_source(text: str, address: int) -> str:
     """The source of the function marked with this address: from its marker to
-    the brace closing its body."""
+    the brace closing its body (or, for a compiler-generated one, its marker)."""
+    implicit = match.implicit_markers(text)
+    if address in implicit:
+        return implicit[address]
     for marker in match.marker_positions(text):
         if marker.address != address:
             continue

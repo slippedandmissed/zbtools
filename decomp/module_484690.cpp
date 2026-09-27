@@ -83,3 +83,5 @@ __cdecl DirectorySize::DirectorySize(const fileSpec *directory)
     error = 0;
     total = 0;
 }
+
+/* @zoombi32-implicit 0x0048490d asyncFindFirstFile::~asyncFindFirstFile */

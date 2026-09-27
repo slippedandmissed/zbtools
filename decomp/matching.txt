@@ -688,9 +688,12 @@
 0x0048266c closeFile
 0x004826b4 createPath
 0x00482875 asyncCreateDirectory::asyncCreateDirectory
+0x004828fa asyncCreateDirectory::~asyncCreateDirectory
 0x00482920 deleteFile
 0x00482a0c asyncRemoveDirectory::asyncRemoveDirectory
 0x00482a2b asyncDeleteFile::asyncDeleteFile
+0x00482b02 asyncRemoveDirectory::~asyncRemoveDirectory
+0x00482b28 asyncDeleteFile::~asyncDeleteFile
 0x00482b50 Drive::~Drive
 0x00482b80 Drive::activate
 0x00482bbc Drive::eject
@@ -717,11 +720,16 @@
 0x004840ed FileRecord::close
 0x00484203 asyncCreateFile::asyncCreateFile
 0x00484246 asyncCloseHandle::asyncCloseHandle
+0x00484319 asyncCreateFile::~asyncCreateFile
+0x0048433f asyncCloseHandle::~asyncCloseHandle
 0x00484365 askFileUser
 0x004843b3 asyncGetVolumeInformation::asyncGetVolumeInformation
 0x004843fc asyncGetFileAttributes::asyncGetFileAttributes
 0x0048441b asyncSetFileAttributes::asyncSetFileAttributes
 0x00484440 FileRecord::operator delete
+0x00484572 asyncGetVolumeInformation::~asyncGetVolumeInformation
+0x00484598 asyncGetFileAttributes::~asyncGetFileAttributes
+0x004845be asyncSetFileAttributes::~asyncSetFileAttributes
 0x004845e4 currentDirectory
 0x004845fc fileLength
 0x00484670 fileError
@@ -730,6 +738,7 @@
 0x00484816 directorySizeCallback
 0x00484874 asyncFindFirstFile::asyncFindFirstFile
 0x00484899 DirectorySize::DirectorySize
+0x0048490d asyncFindFirstFile::~asyncFindFirstFile
 0x00484934 fileSpecOf
 0x00484994 tempDirectory
 0x004849ac volumeInfo
@@ -738,10 +747,12 @@
 0x00484bdc FileRecord::operator new
 0x00484c08 readFile
 0x00484ce3 asyncReadFile::asyncReadFile
+0x00484d72 asyncReadFile::~asyncReadFile
 0x00484d98 unlockFile
 0x00484e9c setCurrentDirectory
 0x00484f3c setFileSize
 0x00485030 asyncSetEndOfFile::asyncSetEndOfFile
+0x004850ab asyncSetEndOfFile::~asyncSetEndOfFile
 0x004850d4 setAskUser
 0x004850ec fileSpec::fileSpec
 0x004850f8 fileSpec::fileSpec
@@ -770,6 +781,7 @@
 0x004861e7 setFileError
 0x00486240 fileOf
 0x00486262 asyncWriteFile::asyncWriteFile
+0x004862f1 asyncWriteFile::~asyncWriteFile
 0x00486318 basePort::basePort
 0x004863bb basePort::~basePort
 0x00486407 basePort::setFrame
@@ -850,6 +862,7 @@
 0x0048a640 DIB8Port::colorRef
 0x0048a667 Rect::Rect
 0x0048a681 DIB8Port::flush
+0x0048a6f9 DIB8Port::~DIB8Port
 0x0048a720 DIBPort::DIBPort
 0x0048a775 DIBPort::copyBits
 0x0048a8fe DIBPort::prepare
@@ -862,6 +875,7 @@
 0x0048ab89 Rect::Rect
 0x0048ab91 Rect::operator =
 0x0048aba7 DIB::operator delete
+0x0048ac04 DIBPort::~DIBPort
 0x0048ac29 Rect::operator =
 0x0048ac52 DIB::operator new
 0x0048ac68 initDisplayMode
@@ -899,6 +913,7 @@
 0x0048c844 memoryPort::lock
 0x0048c8b7 memoryPort::release
 0x0048c8d4 Rect::Rect
+0x0048c94f memoryPort::~memoryPort
 0x0048c9e8 canUseDisplayMode
 0x0048d194 setClipRect
 0x0048d1e0 setClip
@@ -927,6 +942,8 @@
 0x0048ddf3 windowPort::scroll
 0x0048def9 windowPort::unlock
 0x0048df26 WinRect::WinRect
+0x0048dfff displayPort::~displayPort
+0x0048e078 windowPort::~windowPort
 0x0048e5d9 setPortError
 0x0048e6b4 newPtr
 0x0048e6f0 availableMemory

@@ -416,6 +416,10 @@ __cdecl asyncCloseHandle::asyncCloseHandle(HANDLE handle)
     this->handle = handle;
 }
 
+/* @zoombi32-implicit 0x00484319 asyncCreateFile::~asyncCreateFile */
+
+/* @zoombi32-implicit 0x0048433f asyncCloseHandle::~asyncCloseHandle */
+
 /* Asks the user (through FileState.askUser) what to do; without a way to
    ask, gives up only if asking is allowed. */
 /* @zoombi32 0x00484365 */
@@ -461,6 +465,12 @@ void __cdecl FileRecord::operator delete(void *block)
 {
     free(block);
 }
+
+/* @zoombi32-implicit 0x00484572 asyncGetVolumeInformation::~asyncGetVolumeInformation */
+
+/* @zoombi32-implicit 0x00484598 asyncGetFileAttributes::~asyncGetFileAttributes */
+
+/* @zoombi32-implicit 0x004845be asyncSetFileAttributes::~asyncSetFileAttributes */
 
 /* @zoombi32 0x004845e4 */
 void currentDirectory(fileSpec *directory)

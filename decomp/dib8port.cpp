@@ -379,3 +379,5 @@ void DIB8Port::flush()
         gdiPending = 0;
     }
 }
+
+/* @zoombi32-implicit 0x0048a6f9 DIB8Port::~DIB8Port */

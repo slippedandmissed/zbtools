@@ -74,3 +74,5 @@ __cdecl asyncWriteFile::asyncWriteFile(HANDLE file, const void *buffer, DWORD si
     this->written = written;
     this->overlapped = overlapped;
 }
+
+/* @zoombi32-implicit 0x004862f1 asyncWriteFile::~asyncWriteFile */
