@@ -326,7 +326,7 @@ void drawAnim(Anim *anim)
             clipPortToRect(clip);
             for (i = 0; i < 32; i++)
                 drawSprite(anim, &anim->sprites[i]);
-            fn_48d1e0(region);
+            setClip(region);
         }
         freeRegion(&region);
         memset(&anim->changed, 0, sizeof(anim->changed));

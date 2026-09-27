@@ -57,10 +57,10 @@ void checkDisplayMode(DisplayMode *mode)
         }
     }
     fn_4150c7(0x100, message, svgaRequiredFormat, minimum, depth, width, height);
-    if (!fn_48c9e8(mode, 1)) {
+    if (!canUseDisplayMode(mode, 1)) {
         mode->width = 512;
         mode->height = 384;
-        if (!g_4aa7cc || !fn_48c9e8(mode, 1))
+        if (!g_4aa7cc || !canUseDisplayMode(mode, 1))
             fatalError(message);
     }
 }
@@ -597,7 +597,7 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
         break;
     case WM_SETFOCUS:
         windowed = 0;
-        fn_48da48(g_4aa7ce);
+        setTakeStatic(g_4aa7ce);
         fn_4568d8();
         activateApp(1);
         g_4b2d3a = 0;
@@ -605,18 +605,18 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
             if (g_4b2d3e) {
                 if (g_4b2d3e > 0)
                     for (i = 0; i < g_4b2d3e; i++)
-                        fn_48daa8();
+                        showCursor();
                 else
                     for (i = 0; i < -g_4b2d3e; i++)
-                        fn_48c538();
+                        hideCursor();
             }
             g_4b2d40 = 0;
         }
         break;
     case WM_KILLFOCUS:
-        fn_48da48(0);
+        setTakeStatic(0);
         if (!g_4b2d40) {
-            g_4b2d3e = fn_48d22c(isMousePresent() - 1);
+            g_4b2d3e = setCursorLevel(isMousePresent() - 1);
             g_4b2d3e -= isMousePresent() - 1;
             g_4b2d40 = 1;
         }
@@ -636,7 +636,7 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
             g_4b2d3a = 1;
         }
         if (command == SC_TASKLIST) {
-            g_4b2d3e = fn_48d22c(isMousePresent() - 1);
+            g_4b2d3e = setCursorLevel(isMousePresent() - 1);
             g_4b2d3e -= isMousePresent() - 1;
             g_4b2d40 = 1;
         }
@@ -855,13 +855,13 @@ void placeGamePort()
     if (!screenPort) {
         screenPort = newWindowPort(centred, mainWindow, 0);
         if (screenPort)
-            lockPort(screenPort);
+            lockPortOrFail(screenPort);
         else
             fatalError(msgNoScreenPort);
         if (palette) {
             saved = getPort();
             setPort(screenPort);
-            fn_48d574(palette);
+            setPortPalette(palette);
             setPort(saved);
         }
     }
@@ -884,14 +884,14 @@ void fn_456a64()
         cell.top = ((i & 0xe0) >> 5) << 3;
         cell.right = cell.left + 8;
         cell.bottom = cell.top + 8;
-        fn_48c9ac(cell, Color(i), 0);
+        fillPortRect(cell, Color(i), 0);
     }
-    fn_48d884(color);
+    setForeColor(color);
     showRect(&saved);
 }
 
 /* With a screen port: activating clears the game's area (and fills it via
-   fn_48c9ac) when g_4b2ad4 and g_4b2ad8 are set; deactivating calls
+   fillPortRect) when g_4b2ad4 and g_4b2ad8 are set; deactivating calls
    fn_455273 then, and clears the area. */
 /* @zoombi32 0x00456b2e */
 void fn_456b2e(short active)
@@ -899,15 +899,15 @@ void fn_456b2e(short active)
     if (screenPort) {
         if (active) {
             if (g_4b2ad4 && g_4b2ad8) {
-                fn_48d194(gameRect);
-                fn_48c9ac(gameRect, Color(0), 0);
+                setClipRect(gameRect);
+                fillPortRect(gameRect, Color(0), 0);
             }
         } else if (g_4b2ad4 && g_4b2ad8) {
             g_4b7cf8 = 1;
             fn_455273(1);
         }
         if (!active) {
-            fn_48d194(gameRect);
+            setClipRect(gameRect);
         }
     }
 }

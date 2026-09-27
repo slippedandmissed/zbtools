@@ -151,7 +151,7 @@ void graphicsActivate(short active)
         dc = GetDC(0);
         if (!active && graphics.systemPaletteUse == SYSPAL_NOSTATIC)
             setSystemPaletteUse(dc, SYSPAL_STATIC);
-        else if (active && graphics.unknown70)
+        else if (active && graphics.takeStatic)
             setSystemPaletteUse(dc, SYSPAL_NOSTATIC);
         ReleaseDC(0, dc);
     }
@@ -267,7 +267,7 @@ short openGraphicsEngine(const DisplayMode *mode, short change)
     initDisplayMode(&saved, 0xffff, 0xffff, -1, 0);
     getDisplayMode(&saved);
     want = *mode;
-    if (!fn_48c9e8(&want, change))
+    if (!canUseDisplayMode(&want, change))
         return setPortError(0x2a36);
     if (change)
         setDisplayMode(&want);
@@ -503,7 +503,7 @@ void closeGraphicsEngine()
     setActivateHook(state->previousHook);
     state->previousHook = 0;
     graphicsActivate(0);
-    fn_48d22c(0);
+    setCursorLevel(0);
     fn_48d278(0);
     while ((port = state->ports) != 0) {
         while (port->locks)

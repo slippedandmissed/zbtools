@@ -148,14 +148,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         GlobalDeleteAtom(instanceAtom);
         instanceAtom = 0;
     }
-    fn_48da48(0);
-    fn_48cab4(fn_48b4a8(), 1);
+    setTakeStatic(0);
+    fn_48cab4(getPortPalette(), 1);
 
     for (i = 0; i < 3; i++)
         fonts[i] = 0;
     fn_46cb10(&fonts[1], "CornerStone", 13, 0);
     fn_46cb10(&fonts[2], "CornerStone", 18, 0);
-    fn_48d4c4(fonts[1]);
+    setFont(fonts[1]);
 
     g_4b754a = 0;
     g_4a4ba0 = (char *)fn_48e6b4(0xae05);

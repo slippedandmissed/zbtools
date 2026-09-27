@@ -27,7 +27,7 @@ void initGraphics(DisplayMode *mode, short depth)
     g_4ab404 = mode->palettized;
     if (openGraphicsEngine(mode, 0))
         fatalError("unable to initialize graphics");
-    fn_48d798(depth);
+    setMinimalReserve(depth);
     gameRect.right = width;
     gameRect.bottom = height;
     if (!createMainWindow(width, height))
@@ -43,12 +43,12 @@ void initGraphics(DisplayMode *mode, short depth)
         fatalError("unable to create palette");
     freeAndClear((void **)&g_4ab3f0);
     setPort(screenPort);
-    fn_48d574(palette);
+    setPortPalette(palette);
     createPort(&workPort, &gameRect, 1, "work port");
     setPort(workPort);
     setColors(0, 0, 0x100);
     if (!(short)isMousePresent()) /* the original tests only ax */
-        fn_48daa8();
+        showCursor();
 }
 
 /* Frees what initGraphics set up, and the main window. */
@@ -62,14 +62,14 @@ void closeGraphics()
     destroyPort(&workPort, 1);
     if (palette) {
         setPort(screenPort);
-        fn_48d574(0);
+        setPortPalette(0);
         deletePalette(palette);
         palette = 0;
     }
     freeAndClear((void **)&g_4ab3f0);
     destroyMainWindow();
     if (graphicsBufferSize()) {
-        fn_48d22c(isMousePresent() - 1);
+        setCursorLevel(isMousePresent() - 1);
         closeGraphicsEngine();
     }
 }
@@ -117,9 +117,9 @@ void drawImageInColor(ResourceList *images, short index, short x, short y, short
     Color saved;
 
     saved = getForeColor();
-    fn_48d884(Color(color));
+    setForeColor(Color(color));
     drawImage(images, index, x, y, mode, anchor);
-    fn_48d884(saved);
+    setForeColor(saved);
 }
 
 /* Copies `count` of the palette's colours, from `first`. */
@@ -137,12 +137,12 @@ void setColors(PALETTEENTRY *from, short first, short count)
     Palette *current;
 
     if (count > 0) {
-        current = fn_48b4a8();
+        current = getPortPalette();
         if (!from)
             memset(&colors[first], 0, count * sizeof(PALETTEENTRY));
         else
             memcpy(&colors[first], from, count * sizeof(PALETTEENTRY));
-        fn_48d5ec(current, first, count, &colors[first]);
+        setPaletteColors(current, first, count, (ColorBytes *)&colors[first]);
         fn_48cab4(current, 1);
         if (!g_4ab404)
             showRect(&gameRect);
@@ -159,7 +159,7 @@ void fn_4148da(short first, short count)
 /*
  * Creates an off-screen port the size of `bounds`, in the palette, with its
  * origin at the bounds' corner; unless `keep`, it's released again
- * (fn_48db08). `name` is for error messages.
+ * (unlockPort). `name` is for error messages.
  */
 /* @zoombi32 0x0041490e */
 void createPort(basePort **port, ShortRect *bounds, short keep, const char *name)
@@ -179,13 +179,13 @@ void createPort(basePort **port, ShortRect *bounds, short keep, const char *name
     if ((*port = newPort(width, height, bitsPerPixel, 0)) == 0)
         reportJoinedError(g_4ab3f4);
     saved = getPort();
-    current = fn_48b4a8();
-    lockPort(*port);
+    current = getPortPalette();
+    lockPortOrFail(*port);
     setPort(*port);
-    fn_48d574(current);
+    setPortPalette(current);
     fn_414a2e(*port, bounds);
     if (!keep)
-        fn_48db08(*port);
+        unlockPort(*port);
     setPort(saved);
     freeText((void **)&g_4ab3f4);
 }
@@ -201,7 +201,7 @@ void destroyPort(basePort **port, short release)
         if (getPort() == *port)
             setPort(0);
         if (release)
-            fn_48db08(*port);
+            unlockPort(*port);
         deletePort(*port);
         *port = 0;
     }
@@ -214,8 +214,8 @@ void fn_414a2e(basePort *port, ShortRect *bounds)
     basePort *saved = getPort();
 
     setPort(port);
-    fn_48d9c8(bounds->left, bounds->top);
-    fn_48d194(*bounds);
+    setOrigin(bounds->left, bounds->top);
+    setClipRect(*bounds);
     setPort(saved);
 }
 
@@ -291,7 +291,7 @@ void clipRect(short *region, ShortRect *rect, short keep)
 void fn_414c25(short *region, short free)
 {
     if (*region && !emptyRgn(*region)) {
-        fn_48d1e0(*region);
+        setClip(*region);
         setEmptyRgn(*region);
         if (free)
             freeRegion(region);
@@ -345,16 +345,16 @@ void showRect(ShortRect *rect)
 }
 
 /* @zoombi32 0x00414da5 */
-void lockPort(basePort *port)
+void lockPortOrFail(basePort *port)
 {
-    if (fn_48c750(port))
+    if (lockPort(port))
         fatalError(msgUnableToLockPort);
 }
 
 /* @zoombi32 0x00414dc4 */
 void lockSave(MapSave *save)
 {
-    lockPort(save->port);
+    lockPortOrFail(save->port);
     if (!++save->locks)
         fatalError("MapSave lock count overflow");
 }
@@ -362,7 +362,7 @@ void lockSave(MapSave *save)
 /* @zoombi32 0x00414def */
 void unlockSave(MapSave *save)
 {
-    fn_48db08(save->port);
+    unlockPort(save->port);
     if (!save->locks)
         fatalError("MapSave lock count underflow");
     save->locks--;
@@ -398,14 +398,14 @@ void fn_414e7d()
     initDisplayMode(&g_4aa7dc, 0xffff, 0xffff, -1, 0);
 }
 
-/* Redraws a rectangle of the work port (fn_48c5fc) and shows it. */
+/* Redraws a rectangle of the work port (invertRect) and shows it. */
 /* @zoombi32 0x00414eb4 */
 void redrawRect(ShortRect *rect)
 {
     basePort *saved = getPort();
 
     setPort(workPort);
-    fn_48c5fc(*rect);
+    invertRect(*rect);
     showRect(rect);
     setPort(saved);
 }

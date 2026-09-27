@@ -60,9 +60,9 @@ void fn_46dc45()
 }
 
 /* @zoombi32 0x0046dd21 */
-long fn_46dd21()
+HINSTANCE engineInstanceHandle()
 {
-    return g_4b9d00;
+    return engineInstance;
 }
 
 /* @zoombi32 0x0046dd27 */
@@ -119,9 +119,9 @@ ActivateHook setActivateHook(ActivateHook hook)
 }
 
 /* @zoombi32 0x0046e0ec */
-long fn_46e0ec(long)
+HINSTANCE fn_46e0ec(long)
 {
-    return g_4b9d00;
+    return engineInstance;
 }
 
 /* @zoombi32 0x0046e1e7 */

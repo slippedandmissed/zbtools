@@ -243,6 +243,31 @@ public:
     __cdecl Rect(short left, short top, short right, short bottom); /* 0x48c8d4 */
 };
 
+class WinPoint;
+
+/* A point as the engine passes it by value. */
+class Pt : public Point
+{
+public:
+    __cdecl Pt(short x, short y); /* 0x48da17 */
+    __cdecl Pt(const Point &point); /* 0x48c6f3 */
+    __cdecl Pt(const WinPoint &point); /* 0x48c736 */
+};
+
+/* A Windows POINT made from a Pt. */
+class WinPoint : public tagPOINT
+{
+public:
+    __cdecl WinPoint(const Pt &point); /* 0x48c70c */
+};
+
+/* A Windows RECT made from a Rect. */
+class WinRect : public tagRECT
+{
+public:
+    __cdecl WinRect(const Rect &rect); /* 0x48df26 */
+};
+
 /* The four bytes of a Color. */
 struct ColorBytes
 {
@@ -701,7 +726,7 @@ extern short g_4b0d52;
 extern short g_4b0d54;
 extern short g_4b0d56;
 extern char installDir[256]; /* @data 0x4b1828 */
-extern long fonts[3]; /* @data 0x4b28c8 */
+extern Font *fonts[3]; /* @data 0x4b28c8 */
 extern char moduleFileName[256]; /* @data 0x4b28d4 */
 extern char g_4b29d4[];
 extern short g_4b2ad4;
@@ -761,7 +786,7 @@ extern short g_4b9cf6;
 extern short engineActive; /* @data 0x4b9cf8 */
 extern ActivateHook activateHook; /* @data 0x4b9cfc */
 extern short g_4b7cf8;
-extern long g_4b9d00;
+extern HINSTANCE engineInstance; /* @data 0x4b9d00 */
 extern unsigned long appThread; /* @data 0x4b9d04 */
 extern HWND appWindow; /* @data 0x4b9d08 */
 extern unsigned short g_4b9d22;
@@ -827,7 +852,7 @@ short fn_46beac(long);
 /* Loads resource `id` of type `type` (e.g. 'CURS') into *handle. */
 void fn_46c4fe(long *handle, long type, short id, const char *what, short);
 /* Creates the font `name` at `size` into *font. */
-void fn_46cb10(long *font, const char *name, long size, long);
+void fn_46cb10(Font **font, const char *name, long size, long);
 /* Initialises the Mohawk OS layer, with a work buffer. */
 short fn_46ddaf(HINSTANCE instance, void *buffer, long size);
 /* QuickTime (see quicktime.py) */
@@ -864,21 +889,21 @@ short fn_480b80(InputItem *item, Point *where); /* the default hit test */
 /* The engine's graphics follow Mac QuickDraw: a current port, and conversions
    between a port's coordinates and the screen's. */
 basePort *getPort(); /* 0x48b510 */
-void setPort(basePort *port); /* 0x48d960 */
-void globalToLocal(Point *point); /* 0x48c4cc */
-void localToGlobal(Point *point); /* 0x48c688 */
+basePort *setPort(basePort *port); /* 0x48d960: the previous one */
+short globalToLocal(Point *point); /* 0x48c4cc */
+short localToGlobal(Point *point); /* 0x48c688 */
 short fn_476d0a(); /* initialises sound */
 short fn_480642(); /* initialises the configuration file */
 short fn_483732(long); /* initialises the file manager */
 void __cdecl initDisplayMode(DisplayMode *mode, unsigned short width, unsigned short height, unsigned long colors,
                              short palettized);
 short fn_48cab4(Palette *palette, long);
-short fn_48c9e8(DisplayMode *mode, short change); /* whether a display mode is available */
-void fn_48d4c4(long);
-void fn_48da48(short);
-short fn_48d22c(int);
-void fn_48daa8();
-void fn_48c538();
+short canUseDisplayMode(DisplayMode *mode, short change); /* whether a display mode is available (filling in the one it would use) */
+Font *setFont(Font *font); /* the previous one */
+short setTakeStatic(short take);
+short setCursorLevel(short level);
+short showCursor();
+short hideCursor();
 short fn_4887f4();
 short fn_48b1b4();
 void fn_455273(short);
@@ -940,7 +965,7 @@ void createRegion(short *region);
 void freeRegion(short *region);
 void copyBits(basePort *to, basePort *from, ShortRect *rect);
 void showRect(ShortRect *rect);
-void lockPort(basePort *port);
+void lockPortOrFail(basePort *port);
 void lockSave(MapSave *save);
 void unlockSave(MapSave *save);
 void alignRect(ShortRect *rect, short x, short y, short how);
@@ -950,29 +975,31 @@ void fn_414f01(InputItem *item);
 void fn_414f17(InputItem *item);
 void fn_456a64();
 /* Mohawk engine */
-void fn_48d798(short);
+short setMinimalReserve(short minimal);
 short drawImageData(unsigned short *image, short x, short y, short mode);
 short drawPixelData(short width, short height, short unknown, unsigned short flags, void *pixels,
                     short x, short y, short mode);
 unsigned short __cdecl fn_492730(unsigned short value); /* an image header field, as stored */
-Palette *fn_48b4a8(); /* the current palette */
-void fn_48d5ec(Palette *palette, short first, short count, PALETTEENTRY *entries);
+Palette *getPortPalette(); /* the current palette */
+short setPaletteColors(Palette *palette, unsigned short first, unsigned short count, ColorBytes *colors);
 basePort *newPort(short width, short height, short depth, Palette *palette);
-void fn_48db08(basePort *port);
+short unlockPort(basePort *port);
 short deletePort(basePort *port);
-void fn_48d9c8(short left, short top);
+short setOrigin(short left, short top);
 short clipPortToRect(const Rect &rect);
-void fn_48d1e0(short region);
+short setClip(short region);
 short getClip(short region);
 short copyPortBits(basePort *to, basePort *from, const Rect &fromRect, const Rect &toRect, short mode);
-short fn_48c750(basePort *port); /* locks a port; non-zero on failure */
-void fn_48c5fc(const Rect &rect);
+short lockPort(basePort *port); /* locks a port; non-zero on failure */
+short invertRect(const Rect &rect);
+short lineTo(short x, short y);
 basePort *newWindowPort(const Rect &bounds, HWND window, Palette *palette);
-void fn_48d574(Palette *palette);
-void fn_48d194(const Rect &rect);
-void fn_48c9ac(const Rect &rect, Color color, short); /* fills a rectangle */
+Palette *setPortPalette(Palette *palette); /* the previous one */
+short setClipRect(const Rect &rect);
+short fillPortRect(const Rect &rect, Color color, short);
 Color getForeColor();
-Color fn_48d884(Color color); /* sets the colour, returning the old one */
+Color setForeColor(Color color); /* the previous one */
+unsigned short setPenMode(short mode); /* the previous one */
 void mouseButtonDown(short button, long keys, long where);
 short handleNextMessage();
 void flushInput(short which);
@@ -1096,9 +1123,9 @@ public:
     virtual void v9();
     virtual void v10();
     virtual void v11();
-    virtual void v12();
+    virtual short useFont(Font *font); /* 12 */
     virtual void v13();
-    virtual short setColor(short which, Color color); /* 14 */
+    virtual short setColor(Color color, short mode); /* 14: the pen */
     virtual void v15();
     virtual short drawPixels(const Rect &bounds, short width, short height, short unknown,
                              unsigned short flags, void *pixels, short mode, long); /* 16 */
@@ -1111,26 +1138,30 @@ public:
     virtual RGBColor paletteColor(unsigned short index); /* 23 */
     virtual short init(); /* 24: after construction; non-zero on failure */
     virtual short lock(); /* 25 */
-    virtual short fillRect(short, Color color, const Rect *rect); /* 26 */
+    virtual short fillRect(const Rect &rect, Color color, short); /* 26 */
     virtual void v27();
     virtual void v28();
     virtual short fillRgn(short region, HBRUSH brush, short); /* 29 */
     virtual void v30();
     virtual void release(); /* 31: before deleting */
     virtual void v32();
-    virtual void setPalette(Palette *palette); /* 33 */
+    virtual Palette *setPalette(Palette *palette); /* 33: the previous one */
     virtual void unlock(); /* 34 */
     virtual void v35();
     virtual void v36();
 
     static void *operator new(size_t size); /* 0x487f56: zeroed */
+    short setFrame(Rect *rect, Pt origin, Pt size); /* 0x486407 */
     static void operator delete(void *block);
 
     long unknown4; /* 'Port' */
     basePort *next; /* +8: in graphics.ports */
     char unknownC[8];
     long kind; /* +0x14: 5 a window */
-    char unknown18[0x24];
+    Rect unknown18;
+    char unknown20[0xc];
+    Pt unknown2c;
+    char unknown30[0xc];
     Palette *palette; /* +0x3c */
     char unknown40[0xc];
     Color backColor; /* +0x4c */
@@ -1235,13 +1266,14 @@ struct GraphicsState
     HCURSOR cursor; /* +0x14 */
     short cursorShown; /* +0x18 */
     char unknown1a[0x46];
-    short cursorFix; /* +0x60: [Graphics] fEnableCursorFix */
-    char unknown62[6];
+    short cursorFix; /* +0x60: [Graphics] fEnableCursorFix: hide the cursor by making it blank */
+    short cursorLevel; /* +0x62: with cursorFix, as ShowCursor counts */
+    HCURSOR savedCursor; /* +0x64: with cursorFix, the real cursor while it is hidden */
     short unknown68; /* +0x68: don't broadcast palette changes */
-    char unknown6a[2];
+    short minimalReserve; /* +0x6a: keep only black and white */
     unsigned short paletteReserved; /* +0x6c: system colours kept (half at each end) */
     char unknown6e[2];
-    short unknown70; /* +0x70: take over the static colours while active */
+    short takeStatic; /* +0x70: take over the static colours while active */
     char unknown72[2];
     UINT systemPaletteUse; /* +0x74 */
     PALETTEENTRY systemColors[20]; /* +0x78: the static colours (10 at each end) */
@@ -1304,7 +1336,6 @@ Font *fontObject(Font *font); /* 0x48d555 */
 Font *fontHandle(Font *font);
 Palette *checkPalette(Palette *palette, short kind); /* 0x48d779 */
 basePort *portHandle(basePort *port); /* 0x48d9bd */
-void fn_48d22c(short);
 void fn_48d278(short);
 basePort *checkPort(basePort *port, short kind);
 basePort *portObject(short kind);
@@ -1339,7 +1370,7 @@ short newRgn();
 void disposeRgn(short region);
 short setEmptyRgn(short region);
 unsigned short emptyRgn(short region);
-void setRectRgn(short region, ShortRect *rect);
+short setRectRgn(short region, ShortRect *rect);
 short copyRgn(short to, short from);
 void compactRgn(short region);
 void regionToHrgn(HRGN target, short region, short dx, short dy);
@@ -1643,7 +1674,7 @@ long atomicExchange(long *target, long value);
 long atomicIncrement(long *value);
 short debugBreak(short value);
 void fn_46dc45();
-long fn_46dd21();
+HINSTANCE engineInstanceHandle();
 unsigned long appThreadId();
 HWND appWindowHandle();
 unsigned long currentTimeMs();
@@ -1652,7 +1683,7 @@ void fn_46dfe2(long, long);
 short isAppActive();
 short fn_46dff7();
 ActivateHook setActivateHook(ActivateHook hook);
-long fn_46e0ec(long);
+HINSTANCE fn_46e0ec(long);
 void fn_46e1e7(short value);
 long fn_46e1f8(long value);
 Tagged *fn_46e202(Tagged *object);
