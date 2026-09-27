@@ -22,6 +22,80 @@ char formatErrorNumber[] = ":error #%d";
 char formatSoundId[] = "%s id #%u";
 char msgDeviceFailed[] = " sound device or driver has failed to respond.";
 
+/* Loads the sound with a key (of a type): the key if it's loaded, else -1. */
+/* @zoombi32 0x00411350 */
+unsigned short loadSoundByKey(short key, long type)
+{
+    unsigned short result = 0xffff;
+    Entry *entry;
+
+    if ((entry = getSound(key, type)) != 0 && loadSound(entry))
+        result = key;
+    return result;
+}
+
+/*
+ * Loads the sound with a key (of a type), finding its resource first unless
+ * g_4aa428 is set: the key if it's loaded, 0 if sound is off, else -1. Sounds
+ * no larger than g_4a009c are loaded by loadSoundByKey.
+ */
+/* @zoombi32 0x00411382 */
+unsigned short fn_411382(short key, long type)
+{
+    Entry *entry;
+    unsigned short result;
+
+    if (g_4aa428)
+        return loadSoundByKey(key, type);
+    result = 0xffff;
+    if (fn_4121a5(1))
+        return 0;
+    if ((entry = findOrAddSound(key, type)) != 0) {
+        if (entry->handle)
+            return key;
+        if (!(entry->unknownA = fn_46c402(type, key, 1))) {
+            if (g_4aa42c)
+                reportSoundError(key, type, 0, 0);
+            removeSound(&entry);
+            g_4aa4cb = 0;
+        } else {
+            entry->type = 0;
+            if (fn_48ff28(entry->unknownA) <= g_4a009c)
+                return loadSoundByKey(key, type);
+            if (!entry->unknown2 && !fn_490140(entry->unknownA))
+                entry->unknown2 = 1;
+            if (loadSound(entry))
+                result = key;
+        }
+    }
+    return result;
+}
+
+/* Stops and unloads the sound with a key (of a type), releasing its resource. */
+/* @zoombi32 0x0041153c */
+void unloadSound(short key, long type)
+{
+    Entry *entry;
+
+    if ((entry = fn_4115f5(key, type)) != 0) {
+        stopSounds(key, type);
+        fn_4117a8(entry);
+        fn_46c5b7(&entry->unknownA);
+        if (fn_46bee2() == 1)
+            removeSound(&entry);
+    }
+}
+
+/* unloadSound with fn_46bee9's setting at 1. */
+/* @zoombi32 0x0041158c */
+void fn_41158c(short key, long type)
+{
+    short saved = fn_46bee9(1);
+
+    unloadSound(key, type);
+    fn_46bee9(saved);
+}
+
 /* The sound with a key (of a type), loading its resource and type (a
    big-endian tag, as on the Mac) if it isn't loaded. */
 /* @zoombi32 0x00411478 */
@@ -264,6 +338,55 @@ void reportSoundError(short id, long type, Entry *entry, const char *message)
     fn_413d33(g_4aa430);
 }
 
+/*
+ * Plays the sound with a key (of a type) on a channel (-1: whichever
+ * findChannel picks), stopping what's playing there. Whether it started.
+ *
+ * Differs only in register choice: the original has entry (and result) in
+ * ebx, channel in esi and key (then the sound's type) in edi; this compiles to
+ * key in ebx, entry in esi, channel in edi. BCC32 ranks register candidates by
+ * use count, so the original presumably used key once less, or channel and
+ * entry once more.
+ */
+/* @zoombi32 0x00411b28 */
+short playSoundOn(short key, long type, short channel)
+{
+    short result = 0;
+    Entry *entry;
+
+    waitWhilePaused();
+    if (loadSoundByKey(key, type) != 0xffff) {
+        entry = fn_4115f5(key, type);
+        key = entry->type; /* from here on, the sound's type */
+        if (channel == -1)
+            channel = findChannel(key);
+        if (soundChannels[key][channel].id != 0xffff)
+            stopSounds(soundChannels[key][channel].id, type);
+        if (!prepareSound(entry, channel))
+            return 0;
+        if (fn_476ff6(entry->handle, 0)) {
+            if (g_4aa42a)
+                return 0;
+            reportSoundError(0, 0, entry, msgSeekError);
+        }
+        if (!startSound(entry, channel))
+            return 0;
+        result = 1;
+    }
+    return result;
+}
+
+/* playSoundOn, finding the sound's resource first (fn_411382). */
+/* @zoombi32 0x00411bfe */
+short fn_411bfe(short key, long type, short channel)
+{
+    short result = 0;
+
+    if (fn_411382(key, type) != 0xffff)
+        result = playSoundOn(key, type, channel);
+    return result;
+}
+
 /* The channel for a new sound of a type: a free one, else the idle one
    started longest ago, else the playing one started longest ago. */
 /* @zoombi32 0x00411c30 */
@@ -379,6 +502,31 @@ short isSoundPlaying(unsigned short id, long type)
     }
     return found;
 }
+/* Frees the error message's parts and unloads every sound. */
+/* @zoombi32 0x00411fd3 */
+void unloadSounds()
+{
+    Entry *entry;
+
+    fn_413c6d((void **)&g_4aa430);
+    fn_413c6d((void **)&g_4aa434);
+    fn_413c6d((void **)&g_4aa438);
+    while ((entry = g_4a00a0) != 0)
+        fn_41158c(entry->key, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+}
+
+/*
+ * Plays the sound with a key (of a type) on a channel, unless an event of
+ * eventType is already waiting; then waits for it as waitForSound does.
+ */
+/* @zoombi32 0x0041200c */
+short playSound(short key, long type, short channel, short eventType, short discard)
+{
+    if (!isEventWaiting(eventType, 0))
+        playSoundOn(key, type, channel);
+    return waitForSound(key, type, eventType, discard);
+}
+
 
 /* Waits for a sound to finish, running the main loop; an input event (of
    eventType) cuts it short. Whether it finished uninterrupted. */

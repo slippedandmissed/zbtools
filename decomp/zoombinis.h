@@ -289,6 +289,7 @@ private:
 
 extern short soundLevel; /* @data 0x4a0090 */
 extern long g_4a0098;
+extern unsigned long g_4a009c; /* sounds larger than this are loaded differently */
 extern Entry *g_4a00a0;
 extern short channelCounts[2]; /* @data 0x4a00a4 */
 extern char currentChannel[2]; /* @data 0x4a00a8 */
@@ -398,6 +399,7 @@ extern short g_4aa4c2;
 extern void (*g_4aa4c4)(Point *where);
 extern char allocationFailed; /* @data 0x4aa4c8 */
 extern char g_4aa4c9;
+extern char g_4aa4cb;
 extern short breakpointKeyEnabled; /* @data 0x4aa5d4 */
 extern short dispatchingEvents; /* @data 0x4aa5d6 */
 extern short breakpointRequested; /* @data 0x4aa5d8 */
@@ -493,7 +495,7 @@ unsigned long fn_41571f(); /* a tick count */
 unsigned long fn_415772(); /* a tick count */
 void fn_415880();
 void fn_43ac20();
-void fn_41200c(short id, long type, long, long, long); /* plays a sound */
+short playSound(short key, long type, short channel, short eventType, short discard);
 short fn_45590b();
 void fn_455ab0(short type);
 void fn_46293a(short key);
@@ -536,6 +538,7 @@ void fn_4771a4(long handle);
 short fn_476bb4(); /* the last sound error */
 void fn_476f50(long handle);
 short fn_476e72(long handle, long); /* prepares a sound */
+short fn_476ff6(long handle, long position); /* seeks a sound */
 char *fn_46cafb(long resource); /* a resource's data */
 long fn_477794(short resource);
 long fn_477848(long resource, long);
@@ -543,6 +546,11 @@ void fn_41585f();
 /* Starts a sound; its owner hears about it through `notify`. Non-zero on failure. */
 short fn_47712a(long handle, void (*notify)(long, SoundNotice *, long cookie), long cookie);
 void fn_46c602(long *);
+/* Finds resource `id` of type `type`; 0 if there's none. */
+long fn_46c402(long type, short id, short);
+void fn_46c5b7(long *resource); /* releases a resource */
+unsigned long fn_48ff28(long resource); /* a resource's size */
+short fn_490140(long resource);
 /* Joins two strings into a new block at *joined. */
 void fn_413c24(char **joined, const char *first, const char *second);
 void fn_413d33(char *message);
@@ -588,6 +596,13 @@ void fn_48f660(long handle, long, long);
 
 /* Decompiled functions, by address */
 
+unsigned short loadSoundByKey(short key, long type);
+unsigned short fn_411382(short key, long type);
+void unloadSound(short key, long type);
+void fn_41158c(short key, long type);
+short playSoundOn(short key, long type, short channel);
+short fn_411bfe(short key, long type, short channel);
+void unloadSounds();
 Entry *fn_4115f5(short key, long tag);
 void fn_411910(Entry *entry, short channel);
 Entry *addSound(short key, long type);

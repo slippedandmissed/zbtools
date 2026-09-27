@@ -301,7 +301,7 @@ void toggleFocusedItem()
     fn_412bb3(off);
     g_4aa498->flags ^= 4;
     if (g_4aa494->sounds)
-        fn_41200c(g_4aa494->sounds[g_4aa49c.c.y * 2 - off - 1], RESOURCE_TYPE(0, 'S', 'N', 'D'), 0,
+        playSound(g_4aa494->sounds[g_4aa49c.c.y * 2 - off - 1], RESOURCE_TYPE(0, 'S', 'N', 'D'), 0,
                   0, 1);
 }
 
