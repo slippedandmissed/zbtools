@@ -1015,7 +1015,7 @@ void campMouse(short action)
                 g_4ab52c = 1;
                 result = fn_458059(view, where, 0, 0);
                 g_4ab52c = 0;
-                count = fn_457fbb();
+                count = heldPlaceNumber();
                 snoid = viewSnoid(view);
                 moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
                 snoid->unknownF7 = count > 0;
@@ -1050,7 +1050,7 @@ void campMouse(short action)
                     }
                     g_4a080c = -1;
                 } else if (result && !count && moved && !placed) {
-                    fn_45802e(result, view->id);
+                    claimPlacedView(result, view->id);
                     snoid->unknownF7 = 1;
                     snoid->unknownF8 = 1;
                 }

@@ -390,7 +390,11 @@
 0x004572f0 makePartySnoids
 0x004574ae addSnoidView
 0x004575e6 updateSnoidView
-0x00457fbb fn_457fbb
+0x00457f96 releaseHeldPlace
+0x00457fbb heldPlaceNumber
+0x00457fd0 placedViewPoint
+0x00457fff viewPlace
+0x0045802e claimPlacedView
 0x0045b39a fn_45b39a
 0x0045bfc0 setArrivalHook
 0x004623b8 mainLoopUpdate

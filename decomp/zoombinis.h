@@ -1255,8 +1255,8 @@ extern long g_4b4d44[0x400];
 extern long g_4b5d44[0x400];
 extern short g_4b6d44[0x400];
 extern short g_4b754a;
-extern short g_4b7b38;
-extern short g_4b7b3a;
+extern short heldPlace; /* @data 0x4b7b38 */
+extern short placeHeld; /* @data 0x4b7b3a */
 typedef void (*SnoidArrived)(short id);
 extern SnoidArrived arrivalHook; /* @data 0x4b7b68: told when a Zoombini arrives */
 extern long cursors[6]; /* @data 0x4b80ac */
@@ -4417,7 +4417,9 @@ void drawSnoid(Snoid *snoid); /* 0x4571d8 */
 short placeSnoid(Snoid *snoid, unsigned long when, short x, short y, short targetX, short targetY);
 short addSnoidView(Snoid *snoid, short placed); /* 0x4574ae */
 void makePartySnoids(short all); /* 0x4572f0 */
-void fn_457fff(Point *where, short n);
+void viewPlace(Point *where, short n); /* 0x457fff */
+void placedViewPoint(Point *where, short n);
+void releaseHeldPlace();
 extern short partyViews[32]; /* @data 0x4b756c */
 void drawSnoidView(View *view);
 void updateSnoidView(View *view, short region); /* 0x4575e6 */
@@ -4512,8 +4514,8 @@ void campIdle();
 void campButtonClicked(short button);
 void campMouse(short action);
 short fn_458059(View *view, Point where, short, short);
-short fn_457fbb();
-void fn_45802e(short, short id);
+short heldPlaceNumber(); /* 0x457fbb */
+void claimPlacedView(short n, short id); /* 0x45802e */
 void fn_45a477();
 void fn_4590b6(short, short, short);
 void fn_4624fc();
@@ -4597,7 +4599,7 @@ void fn_456a3e(long first, long second);
 void fn_456a55(void (*callback)(short active));
 short fn_456bf6();
 short fn_4572bf();
-short fn_457fbb();
+short heldPlaceNumber(); /* 0x457fbb */
 void fn_45b39a(short value);
 void setArrivalHook(SnoidArrived hook); /* 0x45bfc0 */
 void fn_465175();

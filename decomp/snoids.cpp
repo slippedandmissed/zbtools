@@ -355,12 +355,52 @@ short fn_4572bf()
     return count;
 }
 
-/* @zoombi32 0x00457fbb */
-short fn_457fbb()
+/* @zoombi32 0x00457f96 */
+void releaseHeldPlace()
 {
-    if (g_4b7b3a)
-        return g_4b7b38 + 1;
+    if (placeHeld) {
+        g_4b83e4[heldPlace] = 0;
+        placeHeld = 0;
+    }
+}
+
+/* The place held (from 1), if any. */
+/* @zoombi32 0x00457fbb */
+short heldPlaceNumber()
+{
+    if (placeHeld)
+        return heldPlace + 1;
     return 0;
+}
+
+/* Where placed view `n` (from 1) was placed; (0, 0) if out of range. */
+/* @zoombi32 0x00457fd0 */
+void placedViewPoint(Point *where, short n)
+{
+    if (n > 0 && n < 125)
+        *where = placedViewPoints[n - 1];
+    else
+        where->x = where->y = 0;
+}
+
+/* Where place `n` (from 1) is; (0, 0) if out of range. */
+/* @zoombi32 0x00457fff */
+void viewPlace(Point *where, short n)
+{
+    if (n > 0 && n < 125)
+        *where = viewPlaces[n - 1];
+    else
+        where->x = where->y = 0;
+}
+
+/* Marks placed view `n` (from 1) as taken by view `id`. */
+/* @zoombi32 0x0045802e */
+void claimPlacedView(short n, short id)
+{
+    if (n > 0 && n < 125) {
+        if (id >= 0)
+            g_4b83e4[n - 1] = id;
+    }
 }
 
 /* @zoombi32 0x0045b39a */
@@ -377,7 +417,7 @@ void setArrivalHook(SnoidArrived hook)
 
 /*
  * Makes views for the party's Zoombinis: those on board (unless the party
- * has unknown2 set), placed in turn by fn_457fff, and with `all` the others
+ * has unknown2 set), placed in turn by viewPlace, and with `all` the others
  * too (unless unknown4), where they stood. Empties the party.
  */
 /* @zoombi32 0x004572f0 */
@@ -402,7 +442,7 @@ void makePartySnoids(short all)
                 snoid.features[j] = travellers()[i].features[j];
             snoid.unknownF7 = travellers()[i].onboard;
             if (snoid.unknownF7) {
-                fn_457fff((Point *)&snoid.body.x, placed + 1);
+                viewPlace((Point *)&snoid.body.x, placed + 1);
                 placed++;
                 snoid.unknownF1 = 1;
                 snoid.unknownF2 = 0;
