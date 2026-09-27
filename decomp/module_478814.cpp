@@ -755,8 +755,8 @@ long __cdecl MidiSound::dispatch(MidiTrack *track, short play, short notify)
                 break;
             case 0x2f:
                 track->done = 1;
-                if (unknown1C < ticks)
-                    unknown1C = ticks;
+                if (duration < ticks)
+                    duration = ticks;
                 return track->delta = 0;
             case 6:
                 if (length >= 9 && !memicmp(p, setupEndMarker, 9)) {

@@ -1852,7 +1852,7 @@ public:
     AudioObject *prev;
     long rate; /* speed (MIDI: tempo scale) */
     long volume; /* MIDI: the velocity curve */
-    long unknown1C;
+    long duration; /* ms (MIDI: ticks) */
     short unknown20;
     short endingLoop;
     short active; /* sounds are on (the application is active) */
@@ -1895,7 +1895,7 @@ short findIniEntry(fileSpec *file, const char *section, char *entry, unsigned sh
                    const char *name, unsigned short version, unsigned short, unsigned short);
 unsigned short soundDevice(long sound);
 long soundDeviceHandle(long sound);
-long soundField1C(long sound);
+long soundDuration(long sound);
 short soundError(); /* 0x476bb4 */
 long soundRate(long sound);
 long soundPosition(long sound);
@@ -1919,7 +1919,7 @@ short stopSound(long sound);
 short closeSound(long sound);
 unsigned short setMidiDevice(unsigned short device); /* the previous one */
 unsigned short setWaveDevice(unsigned short device);
-short openWaveOutDevice(long *out, unsigned short device, PCMWAVEFORMAT *format, long, long,
+unsigned short openWaveOutDevice(long *out, unsigned short device, PCMWAVEFORMAT *format, long, long,
                         long flags);
 AudioObject *audioObject(long sound); /* 0 if it isn't one */
 unsigned short __cdecl makeWord(unsigned char low, unsigned char high);
@@ -1986,6 +1986,92 @@ struct MidiMap
     WORD drumCache[128];
     WORD patchCache[128];
 };
+
+/* A stretch of a wave sound played as one buffer: split at cue points and
+   at the loop's ends. */
+class WaveSound;
+struct WaveBlock
+{
+    Deferred call; /* runs waveBlockDone */
+    WaveSound *sound;
+    unsigned long start; /* in samples */
+    unsigned long length;
+    unsigned char *cue; /* the cue point it starts at */
+    short prepared;
+    short unknown26;
+    WAVEHDR header;
+};
+
+/* A wave sound: a Mohawk WAVE file (a Data chunk of PCM samples, perhaps
+   looping, and a Cue# list of named positions) played through the
+   engine's wave output (wavebuf). */
+class WaveSound : public AudioObject
+{
+public:
+    virtual void __cdecl release();
+    virtual short __cdecl openDevice();
+    virtual short __cdecl setDeviceRate(long rate);
+    virtual short __cdecl setDeviceVolume(long volume);
+    virtual short __cdecl startDevice(short paused);
+    virtual void __cdecl haltDevice();
+    virtual void __cdecl closeDevice();
+    virtual long __cdecl deviceHandle();
+    virtual long __cdecl position();
+    virtual void __cdecl pause();
+    virtual void __cdecl endLoop();
+    virtual void __cdecl resetLoop();
+    virtual void __cdecl resume();
+    virtual short __cdecl seek(long position);
+    virtual short __cdecl setText(const char *text, unsigned short length);
+    virtual short __cdecl play(SoundNotify notify, long cookie);
+
+    void __cdecl buildBlocks();
+    void __cdecl unprepare();
+    unsigned long __cdecl positionAt(unsigned long sample);
+
+    long wave;
+    short data; /* the file's handle */
+    short unknown4E;
+    unsigned long *file;
+    unsigned char *cues; /* Cue# */
+    unsigned long start; /* in samples */
+    long samplesPerMs; /* fixed-point */
+    long msPerSample;
+    unsigned long base; /* the device's position 0, in samples */
+    short resetting;
+    short loopDone;
+    unsigned long loopAdjust;
+    WaveBlock *loopBlock;
+    WaveBlock *afterLoop;
+    WAVEHDR loopHeader; /* from a position inside the loop */
+    short loopHeaderPrepared;
+    unsigned short blockAlign;
+    unsigned long sampleCount;
+    unsigned short sampleRate;
+    unsigned char bitsPerSample;
+    unsigned char channels;
+    unsigned short encoding;
+    unsigned short loops; /* 0xffff: forever */
+    unsigned long loopStart;
+    unsigned long loopEnd;
+    unsigned char *samples;
+    unsigned short blockCount;
+    short unknownB6;
+    WaveBlock blocks[1];
+};
+
+void waveBlockDone(void *block); /* 0x47ae62 */
+void CALLBACK waveCallback(long wave, UINT message, DWORD instance, DWORD, DWORD); /* 0x47ae14 */
+short wavebufPause(long wave); /* 0x47c94b */
+short wavebufPrepareHeader(long wave, WAVEHDR *header, unsigned short size); /* 0x47c96b */
+short wavebufReset(long wave); /* 0x47c9c8 */
+short wavebufRestart(long wave); /* 0x47c9e8 */
+short wavebufSetPlaybackRate(long wave, long rate); /* 0x47ca52 */
+short wavebufSetVolume(long wave, long volume); /* 0x47ca77 */
+short wavebufUnprepareHeader(long wave, WAVEHDR *header, unsigned short size); /* 0x47ca9c */
+short wavebufWrite(long wave, WAVEHDR *header, unsigned short size); /* 0x47cac6 */
+short wavebufGetPosition(long wave, MMTIME *time, unsigned short size); /* 0x47c5dd */
+short wavebufBreakLoop(long wave); /* 0x47c3b4 */
 
 /* The engine uses Windows 95's MIDIHDR (0x40 bytes, with the streaming
    fields); Borland C++ 4.5's headers have the older one (0x1c). */

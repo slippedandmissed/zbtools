@@ -301,7 +301,7 @@ long soundDeviceHandle(long handle)
 }
 
 /* @zoombi32 0x00476b84 */
-long soundField1C(long handle)
+long soundDuration(long handle)
 {
     AudioObject *object;
 
@@ -310,7 +310,7 @@ long soundField1C(long handle)
         return -1;
     }
     setSoundError(0);
-    return object->unknown1C;
+    return object->duration;
 }
 
 /* @zoombi32 0x00476bb4 */
@@ -685,7 +685,7 @@ unsigned short setWaveDevice(unsigned short device)
 /* Opens a wave device for PCM whose rate the device may not take:
    [Audio.WaveRateTranslations] maps a rate to one to use instead. */
 /* @zoombi32 0x0047739b */
-short openWaveOutDevice(long *out, unsigned short device, PCMWAVEFORMAT *format, long a, long b,
+unsigned short openWaveOutDevice(long *out, unsigned short device, PCMWAVEFORMAT *format, long a, long b,
                         long flags)
 {
     char key[8];
