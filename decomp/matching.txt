@@ -171,7 +171,8 @@
 0x00455f96 pumpMessage
 0x00455fff handleSystemKey
 0x00456041 handleMessage
-0x004565c8 fn_4565c8
+0x0045605e mainWindowProc
+0x004565c8 logMessage
 0x00456638 dumpMessages
 0x004568d8 fn_4568d8
 0x00456a2f fn_456a2f

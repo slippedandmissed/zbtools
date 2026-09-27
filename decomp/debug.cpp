@@ -76,7 +76,7 @@ void fn_415a11(Callback callback)
 }
 
 /* @zoombi32 0x00415a20 */
-void fn_415a20(long value)
+void fn_415a20(Callback callback)
 {
-    g_4a07ec = value;
+    g_4a07ec = callback;
 }

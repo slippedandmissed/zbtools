@@ -318,7 +318,7 @@ extern const char *g_4a07b4; /* the message for a fatal error */
 extern time_t g_4a07b8;
 extern Callback g_4a07c4;
 extern Callback g_4a07e8;
-extern long g_4a07ec;
+extern Callback g_4a07ec; /* draws the window's contents, if set */
 extern Scene *scenes[]; /* @data 0x4a26e8 */
 extern short g_4a3e5c; /* set when the game data is found in INSTALLFROMDIR */
 extern char installFromDirKey[]; /* @data 0x4a3f06 */
@@ -329,7 +329,8 @@ extern char rosterFileName[]; /* @data 0x4a4920 */
 extern short aboveWindows311; /* @data 0x4a494a */
 extern short g_4a4974;
 extern short g_4a4976[12];
-extern long g_4a4a00;
+extern void (*g_4a4a00)(short active); /* told when the window is (de)activated */
+extern short g_4a4ad6;
 extern HWND mainWindow; /* @data 0x4a4a04 */
 extern char *appName; /* @data 0x4a4a08 */
 extern short g_4a4a0c;
@@ -407,8 +408,10 @@ extern Event eventQueue[32]; /* @data 0x4aa5da */
 extern short eventHead; /* @data 0x4aa79a */
 extern short eventTail; /* @data 0x4aa79c */
 extern long g_4aa7a4;
+extern char g_4aa7a8[];
 extern long g_4aa7c8;
 extern short g_4aa7cc;
+extern short g_4aa7ce;
 extern long g_4aafe8;
 extern short bitsPerPixel; /* @data 0x4aafec */
 extern short debugMode; /* @data 0x4ab474 */
@@ -430,6 +433,8 @@ extern char installDir[256]; /* @data 0x4b1828 */
 extern long fonts[3]; /* @data 0x4b28c8 */
 extern char moduleFileName[256]; /* @data 0x4b28d4 */
 extern char g_4b29d4[];
+extern short g_4b2ad4;
+extern long g_4b2adc;
 extern unsigned short instanceAtom; /* @data 0x4b2ae0 */
 extern short quickTimeReady; /* @data 0x4b2ae8 */
 extern short g_4b2aea;
@@ -440,6 +445,7 @@ extern HINSTANCE appPreviousInstance; /* @data 0x4b2af4 */
 extern char *appCommandLine; /* @data 0x4b2af8 */
 extern long appShowCommand; /* @data 0x4b2afc */
 extern short g_4b2b00;
+extern short g_4b2b02;
 extern char programPath[0x100]; /* @data 0x4b2b06 */
 extern char savedDirectory[]; /* @data 0x4b2c06 */
 extern WNDCLASS windowClass; /* @data 0x4b2d06 */
@@ -448,7 +454,10 @@ extern short g_4b2d32;
 extern short g_4b2d34;
 extern short g_4b2d36;
 extern short windowed; /* @data 0x4b2d38 */
+extern short g_4b2d3a;
 extern short g_4b2d3c;
+extern short g_4b2d3e;
+extern short g_4b2d40;
 extern short g_4b2d42;
 extern long g_4b2d44[0x400];
 extern long g_4b3d44[0x400];
@@ -514,7 +523,7 @@ void fn_454caa();
 void fn_455f66();
 void fn_455023(short);
 void fn_46251c(long);
-LRESULT CALLBACK fn_45605e(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
 void fn_456914();
 void fn_4625b8();
 void fn_46310c();
@@ -529,6 +538,7 @@ short fn_46ddaf(HINSTANCE instance, void *buffer, long size);
 /* QuickTime (see quicktime.py) */
 long __cdecl QTInitialize(long *version);
 long qtim_0b();
+long __cdecl cmgr_0b(long, HWND window, UINT message, WPARAM wParam, LPARAM lParam);
 
 /* Engine functions whose calling conventions aren't known yet: these
    declarations produce the calls the game makes. */
@@ -570,7 +580,15 @@ long fn_48b4a8();
 short fn_48cab4(long, long);
 short fn_48c9e8(DisplayMode *mode, long); /* sets the display mode */
 void fn_48d4c4(long);
-void fn_48da48(long);
+void fn_48da48(short);
+short fn_48d22c(int);
+void fn_48daa8();
+void fn_48c538();
+void fn_4887f4();
+void fn_48b1b4();
+void fn_414d53(void *);
+void fn_455ef9(short button, long keys, long where);
+void fn_456747(long);
 void *fn_48e6b4(long size); /* allocates memory */
 unsigned long fn_48e7ec(); /* free memory */
 void fn_48e928(MemoryInfo *info);
@@ -714,7 +732,7 @@ void fn_41581b(short flag);
 unsigned short toLowerAscii(unsigned short c);
 unsigned short toUpperAscii(unsigned short c);
 void fn_415a11(Callback callback);
-void fn_415a20(long value);
+void fn_415a20(Callback callback);
 long fn_417906(long);
 long fn_4196a8(long);
 short fn_419f1a();
@@ -761,7 +779,7 @@ void enterProgramDirectory();
 void restoreDirectory();
 void brightenPalette(PALETTEENTRY *entries, short first, short count);
 short isInputWaiting(short which);
-void fn_4565c8(long a, long b, long c, short d, long e);
+void logMessage(long message, long wParam, long lParam, short after, long result);
 void dumpMessages();
 long fn_455013(long, long);
 int isMousePresent();
@@ -775,7 +793,7 @@ void fn_456a2f(Callback callback);
 short fn_4568d8();
 short mainLoopUpdate();
 void fn_456a3e(long first, long second);
-void fn_456a55(long value);
+void fn_456a55(void (*callback)(short active));
 short fn_456bf6();
 int fn_4572bf();
 short fn_457fbb();

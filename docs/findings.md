@@ -120,6 +120,8 @@ Details that depend on how the source is written, found while matching:
 - A comparison's operand order follows the source (`exclude != i` gives `cmp ax, si`; `i != exclude` gives `cmp si, ax`).
 - Initialising several variables in the `for` header (`for (i = 1, best = 0, ...)`) versus in declarations changes the order of the setup instructions.
 - A search loop written `while (p && !found) p = p->next;` compiles to the game's layout; a `for` with `break` doesn't.
+- Register variables (`ebx`, `esi`, `edi`, in that order) go to the most-used candidates; on a tie, to the one used first in the code (experiments on `playSoundOn` (`0x411b28`): one extra use of a variable moves it up). Variables whose lifetimes don't overlap can share a register: in `playSoundOn` a `result` set at the start and the end shares `ebx` with an `entry` used in between. A value read from a global into a local (`while ((entry = g_4a00a0) != 0)`, `unloadSounds`) can stay in `eax` where repeating the global makes BCC32 hoist its address into a register.
+- A local whose value doesn't live across a call is kept in `eax` rather than a register variable or the stack: `unloadSounds` (above), and `active = wParam; if (g_4a4ad6 && !active) ...` in the window procedure (`0x45605e`), where the copy shows as a `mov eax, esi` before the global's test. Comparing a `char` with `sub al, 9` / `jne` comes from a one-case `switch`; `if (key == '\t')` compares as `int`.
 
 ### The Pascal calling convention (`-p`)
 

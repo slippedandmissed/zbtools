@@ -79,7 +79,7 @@ short createMainWindow(long, long)
         return 0;
     if (!appPreviousInstance) {
         windowClass.style = 0;
-        windowClass.lpfnWndProc = fn_45605e;
+        windowClass.lpfnWndProc = mainWindowProc;
         windowClass.cbClsExtra = 0;
         windowClass.cbWndExtra = 0;
         windowClass.hInstance = appInstance;
@@ -170,9 +170,9 @@ void fn_456a3e(long first, long second)
 }
 
 /* @zoombi32 0x00456a55 */
-void fn_456a55(long value)
+void fn_456a55(void (*callback)(short active))
 {
-    g_4a4a00 = value;
+    g_4a4a00 = callback;
 }
 
 /* @zoombi32 0x00456bf6 */
@@ -389,18 +389,185 @@ short isInputWaiting(short which)
     }
     return 0;
 }
+/*
+ * The main window's procedure. QuickTime's component manager sees each
+ * message first when g_4b2ad4 is set. Messages other than timer, mouse and
+ * cursor ones are logged before and after (logMessage), and clear g_4b2b00
+ * unless they're keys. Keys and clicks become game events; closing the
+ * window, or the session ending, is a fatal error (it quits); the window is
+ * repainted by g_4a07ec (or fn_414d53) and blacked out around it.
+ */
+/* @zoombi32 0x0045605e */
+LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    short i;
+    long command;
+    LRESULT result;
+    PAINTSTRUCT paint;
+    RECT rect;
+    long port;
+    HDC dc;
+    char key;
+    UINT hitTest;
+    BOOL active;
+
+    if (g_4b2ad4 && cmgr_0b(g_4b2adc, window, message, wParam, lParam))
+        return 0;
+    if (message != WM_TIMER && (message < WM_KEYFIRST || message > WM_KEYLAST)
+        && (message < WM_MOUSEFIRST || message > WM_MOUSELAST) && message != WM_NCHITTEST
+        && message != WM_SETCURSOR)
+        g_4b2b00 = 0;
+    if (message != WM_TIMER && (message < WM_MOUSEFIRST || message > WM_MOUSELAST)
+        && message != WM_NCHITTEST && message != WM_SETCURSOR)
+        logMessage(message, wParam, lParam, 0, 0);
+    switch (message) {
+    case WM_SETCURSOR:
+        hitTest = LOWORD(lParam);
+        if (hitTest == HTCLIENT && g_4a07e8) {
+            g_4a07e8();
+            return 1;
+        }
+        break;
+    case WM_CHAR:
+    case WM_DEADCHAR:
+        key = wParam;
+        /* (Shift+Tab was presumably meant to become something else.) */
+        switch (key) {
+        case '\t':
+            if (GetKeyState(VK_SHIFT) < 0)
+                key = '\t';
+        }
+        if (!g_4b2d36)
+            postKeyEvent(key);
+        return 0;
+    case WM_KEYDOWN:
+        if (!g_4b2d36)
+            postKeyEvent(addModifierKeys(wParam + 0xff));
+        return 0;
+    case WM_LBUTTONDOWN:
+        fn_455ef9(1, wParam, lParam);
+        return 0;
+    case WM_RBUTTONDOWN:
+        fn_455ef9(2, wParam, lParam);
+        return 0;
+    case WM_MBUTTONDOWN:
+        fn_455ef9(3, wParam, lParam);
+        return 0;
+    case WM_NCACTIVATE:
+        active = wParam;
+        if (g_4a4ad6 && !active)
+            fn_456747(active);
+        g_4a4ad6 = 0;
+        break;
+    case WM_ACTIVATEAPP:
+        fn_456747(wParam);
+        break;
+    case WM_SETFOCUS:
+        windowed = 0;
+        fn_48da48(g_4aa7ce);
+        fn_4568d8();
+        fn_456747(1);
+        g_4b2d3a = 0;
+        if (g_4b2d40) {
+            if (g_4b2d3e) {
+                if (g_4b2d3e > 0)
+                    for (i = 0; i < g_4b2d3e; i++)
+                        fn_48daa8();
+                else
+                    for (i = 0; i < -g_4b2d3e; i++)
+                        fn_48c538();
+            }
+            g_4b2d40 = 0;
+        }
+        break;
+    case WM_KILLFOCUS:
+        fn_48da48(0);
+        if (!g_4b2d40) {
+            g_4b2d3e = fn_48d22c(isMousePresent() - 1);
+            g_4b2d3e -= isMousePresent() - 1;
+            g_4b2d40 = 1;
+        }
+        break;
+    case WM_ACTIVATE:
+        if (!g_4b2d34) {
+            active = LOWORD(wParam);
+            if (g_4a4a00)
+                g_4a4a00(active != WA_INACTIVE);
+        }
+        break;
+    case WM_SYSCOMMAND:
+        command = wParam & 0xfff0;
+        if (command == SC_SCREENSAVE) {
+            if (g_4b2b02)
+                return 1;
+            g_4b2d3a = 1;
+        }
+        if (command == SC_TASKLIST) {
+            g_4b2d3e = fn_48d22c(isMousePresent() - 1);
+            g_4b2d3e -= isMousePresent() - 1;
+            g_4b2d40 = 1;
+        }
+        if (command != SC_CLOSE)
+            break;
+        /* fall through */
+    case WM_DESTROY:
+    case WM_CLOSE:
+    case WM_QUIT:
+    case WM_ENDSESSION:
+        if (!g_4b2d32) {
+            g_4b2d32 = 1;
+            fn_41541a(g_4a07b4);
+        }
+        return 0;
+    case WM_PALETTECHANGED:
+        if ((HWND)wParam != mainWindow)
+            fn_4568d8();
+        break;
+    case WM_QUERYNEWPALETTE:
+        return 1;
+    case WM_PAINT:
+        if (windowed)
+            return 0;
+        port = getPort();
+        if (g_4aa7a4 && g_4aa7c8) {
+            setPort(g_4aa7a4);
+            fn_4887f4();
+            if (g_4a07ec)
+                g_4a07ec();
+            else
+                fn_414d53(g_4aa7a8);
+            fn_48b1b4();
+        }
+        setPort(port);
+        dc = BeginPaint(window, &paint);
+        GetClientRect(window, &rect);
+        FillRect(dc, &rect, (HBRUSH)GetStockObject(BLACK_BRUSH));
+        EndPaint(window, &paint);
+        return 0;
+    }
+    result = DefWindowProc(window, message, wParam, lParam);
+    if (message != WM_TIMER && (message < WM_KEYFIRST || message > WM_KEYLAST)
+        && (message < WM_MOUSEFIRST || message > WM_MOUSELAST) && message != WM_NCHITTEST
+        && message != WM_SETCURSOR)
+        g_4b2b00 = 0;
+    if (message != WM_TIMER && (message < WM_MOUSEFIRST || message > WM_MOUSELAST)
+        && message != WM_NCHITTEST && message != WM_SETCURSOR)
+        logMessage(message, wParam, lParam, 1, result);
+    return result;
+}
+
 
 /* Appends a record to a queue of up to 1024 (in five parallel arrays; the
    window procedure fills it). */
 /* @zoombi32 0x004565c8 */
-void fn_4565c8(long a, long b, long c, short d, long e)
+void logMessage(long message, long wParam, long lParam, short after, long result)
 {
     if (g_4b2d42 != 0x400) {
-        g_4b2d44[g_4b2d42] = a;
-        g_4b3d44[g_4b2d42] = b;
-        g_4b4d44[g_4b2d42] = c;
-        g_4b6d44[g_4b2d42] = d;
-        g_4b5d44[g_4b2d42] = e;
+        g_4b2d44[g_4b2d42] = message;
+        g_4b3d44[g_4b2d42] = wParam;
+        g_4b4d44[g_4b2d42] = lParam;
+        g_4b6d44[g_4b2d42] = after;
+        g_4b5d44[g_4b2d42] = result;
         g_4b2d42++;
     }
 }
@@ -449,7 +616,7 @@ void handleMessage(MSG *message)
 }
 
 /*
- * Writes the queued messages (fn_4565c8) to the first unused msgNNN.txt, then
+ * Writes the queued messages (logMessage) to the first unused msgNNN.txt, then
  * empties the queue.
  *
  * Not exact yet, but only because its literals are addressed from the
