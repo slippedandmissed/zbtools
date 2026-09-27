@@ -203,10 +203,10 @@ short loadSound(Entry *entry)
     if (!entry->handle) {
         if (entry->unknown2) {
             fn_41585f();
-            entry->handle = fn_477848(entry->unknownA, g_4a0098);
+            entry->handle = newStreamedSound(entry->unknownA, g_4a0098);
             mainLoopEvents();
         } else
-            entry->handle = fn_477794(fn_46beac(entry->unknownA));
+            entry->handle = newSound(fn_46beac(entry->unknownA));
         if (!entry->handle && !g_4aa42a)
             reportSoundError(0, 0, entry, msgUnableToCreate);
     }
@@ -217,7 +217,7 @@ short loadSound(Entry *entry)
 void fn_4117a8(Entry *entry)
 {
     if (entry->handle) {
-        fn_476622(entry->handle);
+        disposeSound(entry->handle);
         entry->handle = 0;
     }
 }
@@ -241,7 +241,7 @@ short prepareSound(Entry *entry, short channel)
         return 0;
     do {
         answer = IDOK;
-        if (fn_476e72(entry->handle, 0xffff)) {
+        if (openSound(entry->handle, 0xffff)) {
             if (!g_4aa42a)
                 reportSoundError(0, 0, entry, msgUnableToPrepare);
             if (soundErrorsIgnored)
@@ -268,7 +268,7 @@ short prepareSound(Entry *entry, short channel)
 /* @zoombi32 0x00411910 */
 void fn_411910(Entry *entry, short channel)
 {
-    fn_4771e4(entry->handle);
+    closeSound(entry->handle);
     soundChannels[entry->type][channel].id = 0xffff;
 }
 
@@ -284,7 +284,7 @@ short startSound(Entry *entry, short channel)
     type = entry->type;
     soundChannels[type][channel].playing = 1;
     currentChannel[type] = 0;
-    if (fn_47712a(entry->handle, fn_411d2c,
+    if (playSound(entry->handle, fn_411d2c,
                   ((unsigned long)(unsigned short)type << 16) + (unsigned short)channel)) {
         if (g_4aa42a)
             soundChannels[type][channel].playing = 0;
@@ -301,7 +301,7 @@ void fn_4119f3(Entry *entry, short channel)
     short type = entry->type;
 
     if (soundChannels[type][channel].playing)
-        fn_4771a4(entry->handle);
+        stopSound(entry->handle);
     soundChannels[type][channel].playing = 0;
     currentChannel[type] = -1;
 }
@@ -327,7 +327,7 @@ void reportSoundError(short id, long type, Entry *entry, const char *message)
         kind = textWaveform;
     else if (type == RESOURCE_TYPE('t', 'M', 'I', 'D'))
         kind = textMidi;
-    if ((code = fn_476bb4()) != 0) {
+    if ((code = soundError()) != 0) {
         fn_4150c7(0xe, error, formatErrorNumber, code);
         errorText = error;
     }
@@ -364,7 +364,7 @@ short playSoundOn(short key, long type, short channel)
             stopSounds(soundChannels[key][channel].id, type);
         if (!prepareSound(entry, channel))
             return 0;
-        if (fn_476ff6(entry->handle, 0)) {
+        if (seekSound(entry->handle, 0)) {
             if (g_4aa42a)
                 return 0;
             reportSoundError(0, 0, entry, msgSeekError);
@@ -459,7 +459,7 @@ void stopSounds(unsigned short id, long type)
     }
 }
 
-/* Passes each matching sound that's playing to the engine (fn_476f50). */
+/* Updates each matching sound that's playing (updateSound). */
 /* @zoombi32 0x00411e4c */
 void fn_411e4c(unsigned short id, long type)
 {
@@ -475,7 +475,7 @@ void fn_411e4c(unsigned short id, long type)
                     current = soundChannels[t][channel].id;
                 if (soundChannels[t][channel].id != 0xffff && current == soundChannels[t][channel].id
                     && soundChannels[t][channel].playing)
-                    fn_476f50(fn_4115f5(id, soundTypes[t])->handle);
+                    updateSound(fn_4115f5(id, soundTypes[t])->handle);
             }
         }
     }

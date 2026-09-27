@@ -60,7 +60,7 @@ unsigned long clockTime()
     unsigned long now;
 
     waitWhilePaused();
-    now = fn_492fbc() - clockStoppedAt + clockOffset;
+    now = timerTime() - clockStoppedAt + clockOffset;
     if (clockInTicks)
         now /= 17;
     return now;
@@ -105,9 +105,9 @@ short timerExpired(unsigned short timer)
 void runClock(short running)
 {
     if (running)
-        clockStoppedAt = fn_492fbc();
+        clockStoppedAt = timerTime();
     else
-        clockOffset += fn_492fbc() - clockStoppedAt;
+        clockOffset += timerTime() - clockStoppedAt;
 }
 
 /* Returns whether either flag was set, and clears both. */

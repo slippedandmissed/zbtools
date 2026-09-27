@@ -803,7 +803,7 @@ void activateApp(long active)
             }
             placeGamePort();
             fn_46da64(1);
-            while (fn_4764bc(1))
+            while (setSoundsActive(1))
                 if (MessageBox(mainWindow, "Sound driver missing or unavailable.", appName,
                                MB_RETRYCANCEL)
                     == IDCANCEL)
@@ -820,7 +820,7 @@ void activateApp(long active)
                 fn_456b2e(0);
             g_4b2d34 = 1;
             runClock(0);
-            fn_4764bc(0);
+            setSoundsActive(0);
             fn_46da64(0);
             if (!g_4b2d3a && g_4b9d22 >= 0x395 && !g_4b2b04)
                 fn_48d480(&g_4aa7dc);

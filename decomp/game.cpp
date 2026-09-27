@@ -125,7 +125,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         fatalError(msgInitConfiguration);
     if (initResources())
         fatalError(msgInitResourceManager);
-    if (fn_476d0a())
+    if (initSound())
         fatalError(msgInitSound);
     if (!waveOutGetNumDevs())
         fatalError(msgNoWaveDevices);

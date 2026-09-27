@@ -25,9 +25,9 @@ long atomicDecrement(long *value)
 
 /* Stores value in *target and returns what was there. */
 /* @zoombi32-functional 0x0046daac */
-long atomicExchange(long *target, long value)
+void *atomicExchange(void **target, void *value)
 {
-    return InterlockedExchange(target, value);
+    return (void *)InterlockedExchange((long *)target, (long)value);
 }
 
 /* Adds one to *value and returns the result. */
@@ -48,13 +48,13 @@ short debugBreak(short value)
     return value;
 }
 
-/* Adds a reference to everything in the list at g_4a8dcc. */
+/* Takes every listed lock (see DeferLock). */
 /* @zoombi32 0x0046dc45 */
 void fn_46dc45()
 {
-    Counted *object = g_4a8dcc;
+    DeferLock *object = locks;
     while (object) {
-        fn_46d827(object);
+        enterLock(object);
         object = object->next;
     }
 }

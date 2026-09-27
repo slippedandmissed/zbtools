@@ -9,6 +9,7 @@
 #define ZOOMBINIS_H
 
 #include <windows.h>
+#include <mmsystem.h>
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
@@ -479,11 +480,27 @@ struct Link
 };
 
 /* Something reference-counted, with its count at +8. */
-struct Counted
+struct Deferred;
+
+/* A lock (the OS layer's): while it's held, calls posted to it (deferCall)
+   wait in a queue, and the last leaveLock runs them. Locks can be listed at
+   `locks` (all of them held at once by fn_46dc45). */
+struct DeferLock
 {
-    long unknown0;
-    Counted *next;
-    long references;
+    DeferLock *prev;
+    DeferLock *next;
+    unsigned long depth; /* how many times it's held */
+    Deferred *queue;
+};
+
+/* A call to make under a DeferLock. */
+struct Deferred
+{
+    Deferred *next;
+    long queued;
+    unsigned long count; /* posted and not yet run */
+    void (*proc)(void *data);
+    void *data;
 };
 
 /* An object whose third virtual function takes a flag. */
@@ -625,7 +642,7 @@ extern unsigned long g_4a79c4;
 extern unsigned long g_4a79c8;
 extern short g_4a7b94;
 extern long g_4a7f58;
-extern Counted *g_4a8dcc;
+extern DeferLock *locks; /* @data 0x4a8dcc */
 extern short loadWholeCast; /* @data 0x4aa410 */
 extern short keepFrameRate; /* @data 0x4aa412: frames stay on the beat when late */
 extern ShortRect animArea; /* @data 0x4aa414 */
@@ -823,7 +840,7 @@ short isLastRepeated(char *items, unsigned short count, unsigned short size);
 short allocateSlot(unsigned long *used, short count, unsigned long reserved);
 short randomBelow(short limit);
 void fn_46be3d();
-unsigned long fn_492fbc(); /* the engine's clock, in ms */
+unsigned long timerTime(); /* the engine's clock, in ms */
 void fn_43ac20();
 short playSound(short key, long type, short channel, short eventType, short discard);
 short fn_45590b();
@@ -864,18 +881,8 @@ long __cdecl cmgr_0b(long, HWND window, UINT message, WPARAM wParam, LPARAM lPar
 /* Engine functions whose calling conventions aren't known yet: these
    declarations produce the calls the game makes. */
 
-void fn_476622(long handle);
-void fn_4771a4(long handle);
-short fn_476bb4(); /* the last sound error */
-void fn_476f50(long handle);
-short fn_476e72(long handle, long); /* prepares a sound */
-short fn_476ff6(long handle, long position); /* seeks a sound */
 char *fn_46cafb(long resource); /* a resource's data */
-long fn_477794(short resource);
-long fn_477848(long resource, long);
 void fn_41585f();
-/* Starts a sound; its owner hears about it through `notify`. Non-zero on failure. */
-short fn_47712a(long handle, void (*notify)(long, SoundNotice *, long cookie), long cookie);
 void fn_46c602(long *);
 /* Finds resource `id` of type `type`; 0 if there's none. */
 long fn_46c402(long type, short id, short);
@@ -883,7 +890,6 @@ void fn_46c5b7(long *resource); /* releases a resource */
 /* Joins two strings into a new block at *joined. */
 void joinText(char **joined, const char *first, const char *second);
 void reportJoinedError(char *message);
-void fn_4771e4(long handle);
 short fn_480b80(InputItem *item, Point *where); /* the default hit test */
 /* The engine's graphics follow Mac QuickDraw: a current port, and conversions
    between a port's coordinates and the screen's. */
@@ -891,7 +897,6 @@ basePort *getPort(); /* 0x48b510 */
 basePort *setPort(basePort *port); /* 0x48d960: the previous one */
 short globalToLocal(Point *point); /* 0x48c4cc */
 short localToGlobal(Point *point); /* 0x48c688 */
-short fn_476d0a(); /* initialises sound */
 short fn_480642(); /* initialises the configuration file */
 short fn_483732(long); /* initialises the file manager */
 void __cdecl initDisplayMode(DisplayMode *mode, unsigned short width, unsigned short height, unsigned long colors,
@@ -1009,7 +1014,6 @@ void showError(const char *prefix, const char *format, va_list args);
 void releaseControlKeys();
 void fn_456b2e(short active);
 void fn_46da64(short active);
-short fn_4764bc(short open); /* opens (1) or closes the sound driver; non-zero on failure */
 void runClock(short running);
 void fn_48b2d8(DisplayMode *mode);
 void fn_48d480(DisplayMode *mode);
@@ -1751,6 +1755,193 @@ short fileSpecOf(long file, fileSpec *spec); /* 0x484934 */
 short volumeInfo(long volume, VolumeInfo *info); /* 0x4849ac */
 long fn_4850d4(long value); /* 0x4850d4: the previous value */
 
+/*
+ * Timers: multimedia timer events ('TEvt'), whose procedures run under the
+ * timers' lock. Delays longer than the timer device allows are counted down
+ * in steps; periodic ones are rescheduled to catch up when late.
+ */
+typedef void (*TimerProc)(long timer, long data);
+
+struct TimerEvent
+{
+    unsigned long tag; /* 'TEvt' */
+    TimerEvent *next; /* the active list, or the free list */
+    TimerEvent *prev;
+    short active;
+    short unknownE;
+    unsigned long remaining; /* until it fires */
+    unsigned long period; /* 0: fire once */
+    TimerProc proc;
+    long data;
+    long unknown20;
+    Deferred call; /* runs fireTimer under the lock */
+    unsigned long id; /* the multimedia timer */
+    unsigned long interval; /* of the multimedia timer */
+    unsigned long due;
+    short oneShot; /* the multimedia timer is one-shot (adjusted) */
+    short unknown46;
+};
+
+struct TimerState
+{
+    short error; /* of the last call */
+    short ready;
+    DeferLock lock;
+    TIMECAPS caps;
+    TimerEvent *free;
+    TimerEvent *active;
+    TimerEvent *current; /* firing */
+};
+
+extern TimerState timerState; /* @data 0x4b9db0 */
+
+long newTimer(unsigned long delay, unsigned long period, TimerProc proc, long data);
+short killTimer(long timer);
+void freeTimer(TimerEvent *event);
+TimerEvent *timerEvent(long timer);
+void lockTimers();
+void unlockTimers();
+void CALLBACK timerCallback(UINT id, UINT message, DWORD data, DWORD, DWORD);
+void fireTimer(void *event);
+short timerError();
+short initTimers();
+short timerBufferSize();
+void closeTimers();
+unsigned short startTimer(TimerEvent *event);
+short setTimerError(short error);
+long timerId(TimerEvent *event);
+
+/*
+ * Sounds: MIDI and wave objects (AudioObject, tagged 'AObj'), handed around
+ * as handles (their addresses) and kept in a list. Errors of the last call
+ * are in sound.error.
+ */
+
+/* Told when a sound starts (4) or stops (5), and of its progress. */
+typedef void (*SoundNotify)(long sound, SoundNotice *notice, long cookie);
+
+class AudioObject
+{
+public:
+    virtual void __cdecl release() = 0; /* before it's freed */
+    virtual short __cdecl activate(short active);
+    virtual short __cdecl openDevice() = 0;
+    virtual short __cdecl setDeviceVolume(long volume) = 0;
+    virtual short __cdecl setDevicePan(long pan) = 0;
+    virtual short __cdecl startDevice(short playing) = 0;
+    virtual void __cdecl haltDevice() = 0;
+    virtual void __cdecl closeDevice() = 0;
+    virtual long __cdecl length() = 0;
+    virtual long __cdecl position() = 0;
+    virtual void __cdecl pause() = 0;
+    virtual short __cdecl open(unsigned short device);
+    virtual void __cdecl update() = 0;
+    virtual void __cdecl rewound() = 0;
+    virtual void __cdecl resume() = 0;
+    virtual short __cdecl seek(long position) = 0;
+    virtual short __cdecl setText(const char *text, unsigned short length) = 0;
+    virtual short __cdecl setVolume(long volume);
+    virtual short __cdecl setPan(long pan);
+    virtual short __cdecl play(SoundNotify notify, long cookie);
+    virtual void __cdecl stop();
+    virtual void __cdecl close();
+
+    unsigned long tag; /* 'AObj' */
+    long kind; /* 0 MIDI, 1 wave */
+    AudioObject *next;
+    AudioObject *prev;
+    long volume;
+    long pan;
+    long unknown1C;
+    short unknown20;
+    short unknown22;
+    short active; /* sounds are on (the application is active) */
+    short playing;
+    short started; /* play() has started it */
+    short isOpen;
+    unsigned short device;
+    short unknown2E;
+    SoundNotify notify;
+    long cookie;
+    DeferLock lock;
+};
+
+struct SoundState
+{
+    short error; /* of the last call */
+    short ready;
+    short active;
+    short driverOpen;
+    AudioObject *objects;
+    unsigned short midiDevice;
+    short cacheMidiDevice; /* keep the default MIDI device open */
+    long midiCache;
+    unsigned short waveDevice;
+    short cacheWaveDevice;
+    long waveCache;
+    short translateWaveRate; /* [Audio] fTranslateWaveRateOnError */
+    short unknown1E;
+};
+
+extern SoundState sound; /* @data 0x4b9b08 */
+
+short setSoundsActive(short active); /* 0x4764bc: non-zero on failure */
+short disposeSound(long sound);
+short forEachSound(long kind, unsigned short device, short (*proc)(AudioObject *object, long data),
+                   long data);
+void chooseMidiDevice();
+void chooseWaveDevice();
+short findIniEntry(fileSpec *file, const char *section, char *entry, unsigned short size,
+                   const char *name, unsigned short version, long, long);
+unsigned short soundDevice(long sound);
+long soundLength(long sound);
+long soundField1C(long sound);
+short soundError(); /* 0x476bb4 */
+long soundVolume(long sound);
+long soundPosition(long sound);
+unsigned short soundFlags(long sound);
+long soundKind(long sound);
+long soundPan(long sound);
+short initSound(); /* 0x476d0a */
+short pauseSound(long sound);
+short openSound(long sound, unsigned short device); /* 0xffff: the default device */
+short soundBufferSize();
+void closeSounds();
+short updateSound(long sound);
+short resumeSound(long sound);
+short seekSound(long sound, long position);
+short setSoundText(long sound, const char *text, unsigned short length);
+short setSoundVolume(long sound, long volume);
+short setSoundPan(long sound, long pan);
+/* Starts a sound; its owner hears about it through `notify`. Non-zero on failure. */
+short playSound(long sound, SoundNotify notify, long cookie);
+short stopSound(long sound);
+short closeSound(long sound);
+unsigned short setMidiDevice(unsigned short device); /* the previous one */
+unsigned short setWaveDevice(unsigned short device);
+short openWaveOutDevice(long *out, unsigned short device, PCMWAVEFORMAT *format, long, long,
+                        long flags);
+AudioObject *audioObject(long sound); /* 0 if it isn't one */
+unsigned short __cdecl makeWord(unsigned char low, unsigned char high);
+long newSound(short data); /* from a Mohawk MIDI or WAVE in a handle */
+long newStreamedSound(long resource, long);
+/* Called but not decompiled yet */
+short openMidiOut(long *out, unsigned short device, long, long, long flags); /* 0x47818b */
+short closeMidiOut(long midi); /* 0x477b91 */
+short openWaveOut(long *out, unsigned short device, PCMWAVEFORMAT *format, long, long,
+                  long flags); /* 0x47c712 */
+short closeWaveOut(long wave); /* 0x47c3d4 */
+short getWaveCaps(unsigned short device, void *caps, long size); /* 0x47c432 */
+short fn_47a074(short open);
+unsigned short fn_47a07f();
+void fn_47a0c0();
+unsigned short __cdecl parseNumber(const char *text); /* 0x47a066 */
+short setSoundError(short error); /* 0x47de96 */
+void __cdecl notifySound(AudioObject *object, SoundNotice *notice); /* 0x47e0d3 */
+AudioObject *__cdecl newMidiSound(short data); /* 0x478f0b */
+AudioObject *__cdecl newWaveSound(short data); /* 0x47a28d */
+AudioObject *__cdecl newStreamedWave(long resource, long file, long); /* 0x47cd5c */
+
 /* Threads (the OS layer) */
 long createThread(void (*proc)(long), long, long stackSize, short); /* 0x46e302 */
 void deleteThread(long thread); /* 0x46e463 */
@@ -2066,7 +2257,12 @@ short fn_46bee2();
 short fn_46bee9(short value);
 void setDataPath(const char *path);
 void fn_46ca9c(long *handle);
-long __cdecl fn_46d827(Counted *object);
+void __cdecl clearLock(DeferLock *lock); /* 0x46d7f8 */
+long __cdecl enterLock(DeferLock *lock); /* 0x46d827 */
+void __cdecl leaveLock(DeferLock *lock); /* 0x46d838 */
+void __cdecl initLock(DeferLock *lock, short listed); /* 0x46d8af */
+void __cdecl removeLock(DeferLock *lock); /* 0x46d8e8 */
+void __cdecl deferCall(DeferLock *lock, Deferred *call); /* 0x46d91c */
 short fn_46d9c8();
 void *localAlloc(unsigned long size); /* 0x46d95c */
 void localFree(void *block); /* 0x46d998 */
@@ -2074,7 +2270,7 @@ short fn_46e00b(unsigned long thread); /* whether a thread belongs to the game *
 void fn_46da35(short value);
 int isAlignedPointer(void *pointer);
 long atomicDecrement(long *value);
-long atomicExchange(long *target, long value);
+void *atomicExchange(void **target, void *value);
 long atomicIncrement(long *value);
 short debugBreak(short value);
 void fn_46dc45();
