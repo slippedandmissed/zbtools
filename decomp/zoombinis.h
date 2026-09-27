@@ -9,6 +9,7 @@
 #define ZOOMBINIS_H
 
 #include <windows.h>
+#include <stdarg.h>
 #include <time.h>
 
 /* Types */
@@ -68,6 +69,15 @@ struct Cursor
 };
 
 /* A rectangle of shorts (Windows' order). */
+/* A colour as the Mohawk engine passes it around (returned through a hidden
+   pointer, so it has a constructor). */
+class Color
+{
+public:
+    long value;
+    Color() {}
+};
+
 struct ShortRect
 {
     short left;
@@ -311,6 +321,7 @@ extern char formatJoin[]; /* @data 0x4a027d */
 extern char formatErrorNumber[]; /* @data 0x4a0282 */
 extern char formatSoundId[]; /* @data 0x4a028d */
 extern char msgDeviceFailed[]; /* @data 0x4a0297 */
+extern char msgNoScreenPort[]; /* @data 0x4a0313 */
 extern short breakpointKey; /* @data 0x4a0708 */
 extern Callback g_4a07ac;
 extern long g_4a07b0;
@@ -349,6 +360,8 @@ extern unsigned short resolutionHeights[4]; /* @data 0x4a4ab4 */
 extern long buttonKeys[3]; /* @data 0x4a4abc */
 extern UINT buttonUpMessages[3]; /* @data 0x4a4ac8 */
 extern char messageLogName[]; /* @data 0x4a4ad8 */
+extern unsigned short appActive; /* @data 0x4a4ae4 */
+extern ShortRect g_4a4ae6;
 extern short g_4a4b98;
 extern char *g_4a4ba0;
 extern short g_4a4ce6;
@@ -408,13 +421,18 @@ extern Event eventQueue[32]; /* @data 0x4aa5da */
 extern short eventHead; /* @data 0x4aa79a */
 extern short eventTail; /* @data 0x4aa79c */
 extern long g_4aa7a4;
-extern char g_4aa7a8[];
+extern ShortRect gameRect; /* @data 0x4aa7a8: the game's area */
+extern ShortRect screenRect; /* @data 0x4aa7b0 */
+extern ShortRect g_4aa7b8;
 extern long g_4aa7c8;
+extern char g_4aa7d0[];
+extern char g_4aa7dc[];
 extern short g_4aa7cc;
 extern short g_4aa7ce;
 extern long g_4aafe8;
 extern short bitsPerPixel; /* @data 0x4aafec */
 extern short debugMode; /* @data 0x4ab474 */
+extern short debugging; /* @data 0x4ab476: errors stop in the debugger */
 extern short g_4ab480;
 extern short g_4ab482;
 extern short g_4ab49c;
@@ -434,6 +452,7 @@ extern long fonts[3]; /* @data 0x4b28c8 */
 extern char moduleFileName[256]; /* @data 0x4b28d4 */
 extern char g_4b29d4[];
 extern short g_4b2ad4;
+extern long g_4b2ad8;
 extern long g_4b2adc;
 extern unsigned short instanceAtom; /* @data 0x4b2ae0 */
 extern short quickTimeReady; /* @data 0x4b2ae8 */
@@ -446,10 +465,12 @@ extern char *appCommandLine; /* @data 0x4b2af8 */
 extern long appShowCommand; /* @data 0x4b2afc */
 extern short g_4b2b00;
 extern short g_4b2b02;
+extern short g_4b2b04;
 extern char programPath[0x100]; /* @data 0x4b2b06 */
 extern char savedDirectory[]; /* @data 0x4b2c06 */
 extern WNDCLASS windowClass; /* @data 0x4b2d06 */
 extern short classRegistered; /* @data 0x4b2d2e */
+extern short g_4b2d30;
 extern short g_4b2d32;
 extern short g_4b2d34;
 extern short inputIgnored; /* @data 0x4b2d36: keys and clicks are dropped */
@@ -485,9 +506,11 @@ extern short g_4b9cf4;
 extern short g_4b9cf6;
 extern short g_4b9cf8;
 extern long g_4b9cfc;
+extern short g_4b7cf8;
 extern long g_4b9d00;
 extern long g_4b9d04;
 extern long g_4b9d08;
+extern unsigned short g_4b9d22;
 extern short g_4b9d4c;
 extern long g_4b9d70;
 extern long g_4b9d74;
@@ -586,12 +609,38 @@ void fn_48daa8();
 void fn_48c538();
 void fn_4887f4();
 void fn_48b1b4();
-void fn_414d53(void *);
+void fn_414d53(ShortRect *rect);
+void fn_414e18(ShortRect *rect, int x, int y, short how);
+void fn_414da5(long port);
+void fn_455273(short);
+void fn_456a64();
+/* Mohawk engine */
+void fn_480c04(ShortRect *rect, short dx, short dy); /* offsets a rectangle */
+void fn_480c24(ShortRect *rect, ShortRect *by);
+long fn_488f34(ShortRect *bounds, HWND window, long); /* creates a window port */
+void fn_48d574(long);
+void fn_48d194(ShortRect *rect);
+Color __cdecl fn_48889d(short index); /* a palette index's colour */
+void fn_48c9ac(ShortRect *rect, Color color, short); /* fills a rectangle */
+void __cdecl fn_488874(Color *color);
+void fn_48b4d8(Color *color);
+void fn_48d884(Color *, Color);
 void mouseButtonDown(short button, long keys, long where);
 short handleNextMessage();
 void flushInput(short which);
 void handleMessagesIgnoringInput();
-void fn_456747(long);
+void activateApp(long active);
+void placeGamePort();
+void destroyMainWindow();
+void showError(const char *prefix, const char *format, va_list args);
+void releaseControlKeys();
+void fn_456b2e(short active);
+void fn_46da64(short active);
+short fn_4764bc(short open); /* opens (1) or closes the sound driver; non-zero on failure */
+void fn_4157c8(short active);
+void fn_48b2d8(void *);
+void fn_48d480(void *);
+void fn_4149e0(long *port, short);
 void *fn_48e6b4(long size); /* allocates memory */
 unsigned long fn_48e7ec(); /* free memory */
 void fn_48e928(MemoryInfo *info);

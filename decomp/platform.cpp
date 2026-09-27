@@ -237,6 +237,61 @@ void handleMessagesIgnoringInput()
     inputIgnored = 0;
 }
 
+/* Destroys the main window (the app is deactivated first) and unregisters
+   its class. */
+/* @zoombi32 0x0045581b */
+void destroyMainWindow()
+{
+    fn_4149e0(&g_4aa7a4, 1);
+    if (mainWindow) {
+        g_4b2d32 = 1;
+        activateApp(0);
+        DestroyWindow(mainWindow);
+        mainWindow = 0;
+    }
+    if (!appPreviousInstance && classRegistered) {
+        UnregisterClass(programPath, appInstance);
+        classRegistered = 0;
+    }
+}
+
+/* Shows an error: `prefix`, then `format` filled in from `args`. When
+   debugging, it's also printed and the debugger stops. */
+/* @zoombi32 0x0045587f */
+void showError(const char *prefix, const char *format, va_list args)
+{
+    char *text;
+    HGLOBAL block;
+
+    if ((block = GlobalAlloc(GMEM_FIXED, 0x400)) != 0) {
+        text = (char *)GlobalLock(block);
+        sprintf(text, prefix);
+        vsprintf(text + strlen(text), format, args);
+        if (debugging) {
+            fn_46db93(text);
+            debugBreak(0);
+        }
+        MessageBox(mainWindow, text, appName, MB_SYSTEMMODAL | MB_ICONEXCLAMATION);
+        GlobalUnlock(block);
+        GlobalFree(block);
+    }
+}
+
+/* Marks Ctrl and Alt as up in the keyboard state, then handles the waiting
+   messages, ignoring input. */
+/* @zoombi32 0x00455e4d */
+void releaseControlKeys()
+{
+    char unused[12]; /* the original's frame has 12 unused bytes above keys */
+    BYTE keys[256];
+
+    GetKeyboardState(keys);
+    keys[VK_CONTROL] &= 0x7f;
+    keys[VK_MENU] &= 0x7f;
+    SetKeyboardState(keys);
+    handleMessagesIgnoringInput();
+}
+
 /* @zoombi32 0x00456a2f */
 void fn_456a2f(Callback callback)
 {
@@ -534,17 +589,17 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     case WM_NCACTIVATE:
         active = wParam;
         if (g_4a4ad6 && !active)
-            fn_456747(active);
+            activateApp(active);
         g_4a4ad6 = 0;
         break;
     case WM_ACTIVATEAPP:
-        fn_456747(wParam);
+        activateApp(wParam);
         break;
     case WM_SETFOCUS:
         windowed = 0;
         fn_48da48(g_4aa7ce);
         fn_4568d8();
-        fn_456747(1);
+        activateApp(1);
         g_4b2d3a = 0;
         if (g_4b2d40) {
             if (g_4b2d3e) {
@@ -613,7 +668,7 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
             if (g_4a07ec)
                 g_4a07ec();
             else
-                fn_414d53(g_4aa7a8);
+                fn_414d53(&gameRect);
             fn_48b1b4();
         }
         setPort(port);
@@ -728,4 +783,154 @@ void dumpMessages()
     }
     fclose(file);
     g_4b2d42 = 0;
+}
+
+/*
+ * The app is activated or deactivated (unless the window is minimised).
+ * Activating sets up the screen port and the sound driver (asking to retry
+ * while it's missing); deactivating shuts them down and, in some setups,
+ * minimises the window.
+ */
+/* @zoombi32 0x00456747 */
+void activateApp(long active)
+{
+    if (!windowed && active != appActive) {
+        appActive = active;
+        if (active) {
+            if (!g_4b2d3a && g_4b9d22 >= 0x395 && !g_4b2b04) {
+                fn_48b2d8(g_4aa7dc);
+                fn_48d480(g_4aa7d0);
+            }
+            placeGamePort();
+            fn_46da64(1);
+            while (fn_4764bc(1))
+                if (MessageBox(mainWindow, "Sound driver missing or unavailable.", appName,
+                               MB_RETRYCANCEL)
+                    == IDCANCEL)
+                    fn_41541a(g_4a07b4);
+            fn_4157c8(1);
+            g_4b2d34 = 0;
+            g_4b2d30 = 1;
+            g_4a4a10 = 1;
+            if (g_4a4a10)
+                fn_456b2e(1);
+        } else {
+            g_4a4a10 = 0;
+            if (!g_4a4a10)
+                fn_456b2e(0);
+            g_4b2d34 = 1;
+            fn_4157c8(0);
+            fn_4764bc(0);
+            fn_46da64(0);
+            if (!g_4b2d3a && g_4b9d22 >= 0x395 && !g_4b2b04)
+                fn_48d480(g_4aa7dc);
+            if (!g_4b2d32 && g_4b9d22 >= 0x395 && g_4a4a0c && !g_4b2d3a) {
+                windowed = 1;
+                SendMessage(mainWindow, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+            }
+        }
+    }
+}
+
+/*
+ * Measures the screen, centres the game's area on it (fn_414e18) and moves
+ * it to match, then creates the screen port there if there isn't one yet.
+ */
+/* @zoombi32 0x00456914 */
+void placeGamePort()
+{
+    ShortRect centred;
+    ShortRect bounds;
+    ShortRect *screen;
+    long saved;
+
+    screen = &screenRect;
+    screen->left = screen->top = 0;
+    screen->right = GetSystemMetrics(SM_CXSCREEN);
+    screen->bottom = GetSystemMetrics(SM_CYSCREEN);
+    centred = g_4aa7b8 = gameRect;
+    fn_414e18(&centred, (screen->right + screen->left) >> 1, (screen->bottom + screen->top) >> 1,
+              0x22);
+    fn_480c04(screen, -centred.left, -centred.top);
+    fn_480c24(&g_4aa7b8, screen);
+    if (!g_4aa7a4) {
+        memcpy(&bounds, &centred, sizeof bounds);
+        g_4aa7a4 = fn_488f34(&bounds, mainWindow, 0);
+        if (g_4aa7a4)
+            fn_414da5(g_4aa7a4);
+        else
+            fn_41541a(msgNoScreenPort);
+        if (g_4aafe8) {
+            saved = getPort();
+            setPort(g_4aa7a4);
+            fn_48d574(g_4aafe8);
+            setPort(saved);
+        }
+    }
+}
+
+/*
+ * Draws the palette as a chart of 8-pixel squares, 32 to a row.
+ *
+ * Not exact: the original gives i ebx and rect esi (the other way round),
+ * copies `other` into `color` through its address, and passes `color` to
+ * fn_48d884 as a dword and then a word, which suggests engine types (Color,
+ * fn_48d884's parameter) not modelled yet.
+ */
+/* @zoombi32 0x00456a64 */
+void fn_456a64()
+{
+    ShortRect cell;
+    ShortRect saved;
+    Color color;
+    Color other;
+    ShortRect square;
+    Color unknown;
+    ShortRect *rect;
+    short i;
+
+    rect = &cell;
+    saved = g_4a4ae6;
+    fn_488874(&color);
+    fn_48b4d8(&other);
+    color = other;
+    for (i = 0; i <= 0xff; i++) {
+        rect->left = (i & 0x1f) << 3;
+        rect->top = ((i & 0xe0) >> 5) << 3;
+        rect->right = rect->left + 8;
+        rect->bottom = rect->top + 8;
+        memcpy(&square, rect, sizeof square);
+        fn_48c9ac(&square, fn_48889d(i), 0);
+    }
+    fn_48d884(&unknown, color);
+    fn_414d53(&saved);
+}
+
+/* With a screen port: activating clears the game's area (and fills it via
+   fn_48c9ac) when g_4b2ad4 and g_4b2ad8 are set; deactivating calls
+   fn_455273 then, and clears the area. */
+/* @zoombi32 0x00456b2e */
+void fn_456b2e(short active)
+{
+    ShortRect first;
+    ShortRect second;
+    ShortRect third;
+
+    if (g_4aa7a4) {
+        if (active) {
+            if (g_4b2ad4 && g_4b2ad8) {
+                memcpy(&first, &gameRect, sizeof first);
+                fn_48d194(&first);
+                memcpy(&second, &gameRect, sizeof second);
+                fn_48c9ac(&second, fn_48889d(0), 0);
+            }
+        } else if (g_4b2ad4 && g_4b2ad8) {
+            g_4b7cf8 = 1;
+            fn_455273(1);
+        }
+        if (!active) {
+            memcpy(&third, &gameRect, sizeof third);
+            fn_48d194(&third);
+        }
+    }
 }

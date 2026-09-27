@@ -151,6 +151,8 @@
 0x00455013 fn_455013
 0x00455530 checkDisplayMode
 0x004556aa createMainWindow
+0x0045581b destroyMainWindow
+0x0045587f showError
 0x00455903 isMousePresent
 0x0045590b handleNextMessage
 0x00455990 addModifierKeys
@@ -169,6 +171,7 @@
 0x00455e26 fn_455e26
 0x00455e2d fn_455e2d
 0x00455e34 handleWaitingMessage
+0x00455e4d releaseControlKeys
 0x00455e85 fn_455e85
 0x00455e8e waitWhilePaused
 0x00455ef9 mouseButtonDown
@@ -179,10 +182,13 @@
 0x0045605e mainWindowProc
 0x004565c8 logMessage
 0x00456638 dumpMessages
+0x00456747 activateApp
 0x004568d8 fn_4568d8
+0x00456914 placeGamePort
 0x00456a2f fn_456a2f
 0x00456a3e fn_456a3e
 0x00456a55 fn_456a55
+0x00456b2e fn_456b2e
 0x00456bf6 fn_456bf6
 0x004572bf fn_4572bf
 0x00457fbb fn_457fbb
