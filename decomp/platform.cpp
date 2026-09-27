@@ -156,6 +156,87 @@ short fn_455e85(Point *, short)
     return 0;
 }
 
+/*
+ * Handles the next waiting message, if any: 0 if there was none, 2 if it was
+ * a mouse button going down, 1 if a key going down, else 0 or whatever an
+ * earlier test found.
+ */
+/* @zoombi32 0x0045590b */
+short handleNextMessage()
+{
+    MSG message;
+    short kind;
+
+    dispatchingEvents = 1;
+    kind = 0;
+    if (!pumpMessage(&message, 0, 0, 0)) {
+        dispatchingEvents = 0;
+        return 0;
+    }
+    if (message.message >= WM_KEYFIRST && message.message <= WM_KEYLAST
+        && message.message != WM_KEYUP && message.message != WM_SYSKEYUP)
+        kind = 1;
+    switch (message.message) {
+    case WM_LBUTTONDOWN:
+    case WM_RBUTTONDOWN:
+    case WM_MBUTTONDOWN:
+        kind = 2;
+    }
+    dispatchingEvents = 0;
+    return kind;
+}
+
+/* Throws away waiting input: keys (which & 1; system keys are handled
+   first) and mouse buttons (which & 2). */
+/* @zoombi32 0x00455ab0 */
+void flushInput(short which)
+{
+    MSG message;
+
+    if (which & 1) {
+        while (pumpMessage(&message, WM_SYSKEYDOWN, WM_KEYLAST, PM_NOYIELD))
+            ;
+        while (PeekMessage(&message, 0, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE | PM_NOYIELD))
+            ;
+    }
+    if (which & 2)
+        while (PeekMessage(&message, 0, WM_LBUTTONDOWN, WM_MOUSELAST, PM_REMOVE | PM_NOYIELD))
+            ;
+}
+
+/* A mouse button went down at `where` (a message's lParam, in the window):
+   posts it, in the game port's coordinates, unless input is ignored. */
+/* @zoombi32 0x00455ef9 */
+void mouseButtonDown(short button, long keys, long where)
+{
+    POINT position;
+    Point point;
+    long saved;
+
+    position.x = (short)LOWORD(where);
+    position.y = (short)HIWORD(where);
+    point.x = position.x;
+    point.y = position.y;
+    saved = getPort();
+    setPort(g_4aa7a4);
+    globalToLocal(&point);
+    setPort(saved);
+    if (!inputIgnored)
+        postMouseEvent(&point, button);
+}
+
+/* Handles every waiting message, dropping keys and clicks. */
+/* @zoombi32 0x00455f66 */
+void handleMessagesIgnoringInput()
+{
+    MSG message;
+
+    inputIgnored = 1;
+    while (pumpMessage(&message, 0, 0, 0))
+        ;
+    inputIgnored = 0;
+}
+
 /* @zoombi32 0x00456a2f */
 void fn_456a2f(Callback callback)
 {
@@ -209,24 +290,20 @@ void getCursorPosition(Point *where)
     *where = point;
 }
 
-/* QuickDraw's SetPt. */
-inline void setPoint(Point *point, short x, short y)
+/* Sets a point, vertical coordinate first (the original evaluates y before x). */
+inline void setPoint(Point *point, short y, short x)
 {
     point->x = x;
     point->y = y;
 }
 
-/*
- * Moves the cursor to a point in the coordinates of the port g_4aa7a4.
- * Not exact: the original loads y before x (into ax and dx) when setting the
- * point; direct stores, an initialiser and this inline helper don't.
- */
+/* Moves the cursor to a point in the coordinates of the port g_4aa7a4. */
 /* @zoombi32 0x00455a10 */
 void setCursorPosition(short x, short y)
 {
     Point point;
 
-    setPoint(&point, x, y);
+    setPoint(&point, y, x);
     long saved = getPort();
     setPort(g_4aa7a4);
     localToGlobal(&point);
@@ -238,7 +315,8 @@ void setCursorPosition(short x, short y)
  * Whether mouse button 1-3 is still held down: pressed, with no button-up
  * message waiting. Not exact: the original tests `ah` for 0x80, as it would
  * with GetAsyncKeyState returning int (as in the 16-bit Windows headers);
- * with the Win32 declaration's SHORT, every form tried is a sign test.
+ * with the Win32 declaration's SHORT, `>= 0` is a sign test and `& 0x8000`
+ * (with any cast tried) sign-extends first.
  */
 /* @zoombi32 0x00455a5b */
 short isButtonStillDown(unsigned short button)
@@ -345,10 +423,10 @@ void waitWhilePaused()
     MSG message;
 
     if (g_4b2d34 && !g_4b2d3c && !g_4b2d32) {
-        g_4b2d36 = g_4b2d3c = 1;
+        inputIgnored = g_4b2d3c = 1;
         while (g_4b2d34 && !g_4b2d32)
             pumpMessage(&message, 0, 0, 0);
-        g_4b2d36 = g_4b2d3c = 0;
+        inputIgnored = g_4b2d3c = 0;
     }
 }
 
@@ -437,21 +515,21 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
             if (GetKeyState(VK_SHIFT) < 0)
                 key = '\t';
         }
-        if (!g_4b2d36)
+        if (!inputIgnored)
             postKeyEvent(key);
         return 0;
     case WM_KEYDOWN:
-        if (!g_4b2d36)
+        if (!inputIgnored)
             postKeyEvent(addModifierKeys(wParam + 0xff));
         return 0;
     case WM_LBUTTONDOWN:
-        fn_455ef9(1, wParam, lParam);
+        mouseButtonDown(1, wParam, lParam);
         return 0;
     case WM_RBUTTONDOWN:
-        fn_455ef9(2, wParam, lParam);
+        mouseButtonDown(2, wParam, lParam);
         return 0;
     case WM_MBUTTONDOWN:
-        fn_455ef9(3, wParam, lParam);
+        mouseButtonDown(3, wParam, lParam);
         return 0;
     case WM_NCACTIVATE:
         active = wParam;

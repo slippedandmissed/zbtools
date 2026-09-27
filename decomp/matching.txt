@@ -152,8 +152,11 @@
 0x00455530 checkDisplayMode
 0x004556aa createMainWindow
 0x00455903 isMousePresent
+0x0045590b handleNextMessage
 0x00455990 addModifierKeys
 0x004559c0 getCursorPosition
+0x00455a10 setCursorPosition
+0x00455ab0 flushInput
 0x00455b1b isInputWaiting
 0x00455c18 allocateBlock
 0x00455c43 freeAndClear
@@ -168,6 +171,8 @@
 0x00455e34 handleWaitingMessage
 0x00455e85 fn_455e85
 0x00455e8e waitWhilePaused
+0x00455ef9 mouseButtonDown
+0x00455f66 handleMessagesIgnoringInput
 0x00455f96 pumpMessage
 0x00455fff handleSystemKey
 0x00456041 handleMessage

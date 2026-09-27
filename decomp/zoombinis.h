@@ -452,7 +452,7 @@ extern WNDCLASS windowClass; /* @data 0x4b2d06 */
 extern short classRegistered; /* @data 0x4b2d2e */
 extern short g_4b2d32;
 extern short g_4b2d34;
-extern short g_4b2d36;
+extern short inputIgnored; /* @data 0x4b2d36: keys and clicks are dropped */
 extern short windowed; /* @data 0x4b2d38 */
 extern short g_4b2d3a;
 extern short g_4b2d3c;
@@ -587,7 +587,10 @@ void fn_48c538();
 void fn_4887f4();
 void fn_48b1b4();
 void fn_414d53(void *);
-void fn_455ef9(short button, long keys, long where);
+void mouseButtonDown(short button, long keys, long where);
+short handleNextMessage();
+void flushInput(short which);
+void handleMessagesIgnoringInput();
 void fn_456747(long);
 void *fn_48e6b4(long size); /* allocates memory */
 unsigned long fn_48e7ec(); /* free memory */
