@@ -289,51 +289,65 @@ struct Traveller
    drawCamp gives it). Partly known. */
 struct Snoid
 {
-    char unknown0[0x92];
-    short unknown92;
-    short unknown94;
-    short unknown96;
-    short unknown98;
-    long unknown9a;
+    short unknown0;
+    char unknown2[0x8e];
+    short unknown90;
+    short script; /* +0x92: its script's index in scripts */
+    short scriptGroup; /* +0x94 */
+    short lastFrame; /* +0x96 */
+    short frame; /* +0x98 */
+    long frameOffset; /* +0x9a: in the script, in shorts */
     ShortRect bounds; /* +0x9e: where it was drawn */
     short x; /* +0xa6 */
     short y;
-    char unknownAa[6];
-    short unknownB0;
-    short unknownB2;
-    char unknownB4[8];
-    long zoombini; /* +0xbc */
+    short unknownAa;
+    short unknownAc;
+    short group; /* +0xae: views moving together (1-16) */
+    short running; /* +0xb0: its script runs */
+    short unknownB2; /* use unknownB4 as the bounds */
+    ShortRect unknownB4;
+    long zoombini; /* +0xbc: the rest is a Zoombini's only */
     short unknownC0;
     char unknownC2[0x24];
     short targetX; /* +0xe6 */
     short targetY;
-    char unknownEa[0xd];
+    char unknownEa[0xa];
+    char unknownF4;
+    char unknownF5[2];
     char unknownF7;
     char unknownF8;
     char name[10]; /* +0xf9 */
     char unknown103;
 };
 
+struct View;
+typedef void (*ViewDraw)(View *view);
+typedef void (*ViewUpdate)(View *view, short region);
+
 /* A view (the view module): part of the screen, with callbacks to update
    and draw it. Partly known. */
 struct View
 {
-    char unknown0[0x1a];
+    View *prev; /* toward viewHead */
+    View *next; /* toward viewTail */
+    ViewDraw draw;
+    ViewUpdate update;
+    long unknown10;
+    long unknown14;
+    short region; /* +0x18: its shape, if not its bounds */
     short id; /* +0x1a */
-    short kind; /* +0x1c */
-    char unknown1e[6];
+    short kind; /* +0x1c: its script's id */
+    short unknown1e;
+    unsigned long flags; /* +0x20 */
     unsigned long nextUpdate; /* +0x24 */
     unsigned long interval; /* +0x28 */
     char changed; /* +0x2c */
     char reset; /* +0x2d */
-    char unknown2e[2];
-    Snoid snoid; /* +0x30 */
+    char unknown2e;
+    char unknown2f;
+    Snoid snoid; /* +0x30: a plain view has only its first 0xbc bytes */
 };
 
-/* A view's callbacks: drawing it, and updating it (region: where the
-   screen changes). */
-typedef void (*ViewDraw)(View *view);
-typedef void (*ViewUpdate)(View *view, short region);
 
 /* A button in the camp (0x24 bytes). */
 struct CampButton
@@ -345,8 +359,9 @@ struct CampButton
 /* Images in one block: each one's offset from the start (from index 1). */
 struct ImageBank
 {
-    long unknown0;
-    long offsets[1];
+    short count;
+    short unknown2;
+    long offsets[1]; /* by image number, from 1 */
 };
 
 /* The Zoombinis setting out (0x266 bytes, at 0xa92e in the game's state;
@@ -975,7 +990,7 @@ extern char configFileName[]; /* @data 0x4a5149 */
 extern short g_4a79c0;
 extern unsigned long g_4a79c4;
 extern unsigned long g_4a79c8;
-extern short g_4a7b94;
+extern short viewsSorted; /* @data 0x4a7b94: sort the views on the next update */
 extern long g_4a7f58;
 extern DeferLock *locks; /* @data 0x4a8dcc */
 extern short loadWholeCast; /* @data 0x4aa410 */
@@ -1098,7 +1113,6 @@ extern long campFrameResource; /* @data 0x4a096c: holding g_4a0974 */
 extern long campMap; /* @data 0x4ab520: BaseCamp.MHK */
 extern short campActive; /* @data 0x4ab528 */
 extern short campBusy; /* @data 0x4a0a9c: in campIdle */
-extern short g_4b80ee;
 extern short g_4a48e6;
 extern short g_4b755a;
 extern short g_4b755c;
@@ -1116,9 +1130,6 @@ extern Snoid draggedSnoid; /* @data 0x4ab53a */
 extern GroupList campGroupLists[2]; /* @data 0x4a0998 */
 extern char g_4b87fe;
 extern short g_4afb32;
-extern short g_4b80f6[16];
-extern short g_4a7b88;
-extern long g_4b9008[];
 extern short g_4b7562;
 extern short g_4b0d4c;
 extern long g_4ab51c; /* the way the camp is asked to scroll (1-4) */
@@ -1184,7 +1195,6 @@ extern unsigned long g_4b80d4;
 extern unsigned long g_4b80d8;
 extern unsigned long g_4b80dc;
 extern short g_4b80e0; /* ends the main loop when set */
-extern short g_4b83e4[];
 extern short g_4b99d4; /* 1: e2memory's frees free at once, else mark purgeable */
 extern unsigned long memoryPeak; /* @data 0x4b99c4: e2memory's use, most and now */
 extern unsigned long memoryInUse; /* @data 0x4b99c8 */
@@ -4019,6 +4029,135 @@ unsigned short toLowerAscii(unsigned short c);
 unsigned short toUpperAscii(unsigned short c);
 void fn_415a11(Callback callback);
 void fn_415a20(Callback callback);
+/* view */
+void initViews(); /* 0x46310c */
+void fn_459c84(short, short);
+void fn_4591cc();
+void fn_4571a8();
+void fn_465c81();
+void fn_462749(short value, const char *after, short *number, const char *before, short level);
+void fn_456c00();
+void fn_466c95();
+short *fn_456dbe(short id, long *resource);
+void closeViews();
+void clearViews();
+void removeDeadViews();
+void updateViews();
+void initView(View *view, View *prev, View *next, short id);
+void drawBackdropList(ResourceList *images);
+short addView(long flags, ViewDraw draw, ViewUpdate update, short kind, short interval, void *data,
+              long, long);
+View *viewAt(Point where, unsigned long mask, short backwards);
+View *nextActorView(short again);
+void setViewPlaces(short count, Point *places, short apply);
+void loadDragCursors(short id);
+void setDragCursor(short cursor);
+void freeDragCursors();
+void trackDragCursor(View *view, short region);
+void drawDragCursor(View *view);
+View *viewListEnd(short head);
+View *findView(short id);
+View *removeView(short id, short dispose);
+void insertViewAtEnd(View *view);
+void insertViewBeforeCursor(View *view);
+long countViews();
+void drawBackdrop(short id);
+void loadScripts(short first, short count);
+void addScripts(short first, short count, short limit);
+void findScript(short id, short *group, short *index);
+void freeScripts();
+void loadTerrain(short id);
+void freeTerrain();
+View *startView(short id, short script, long unknown10, char unknown2f);
+void setViewScript(View *view, short script, short running);
+short freeViewGroup();
+short groupViews(short a, short b, short c, short d, short e, short f);
+void pairViews(short a, short b);
+void deleteView(short id);
+long scriptFrameOffset(short *script, short *frame, short second);
+unsigned long resetViewClock();
+unsigned long viewClock();
+void markViewTime();
+unsigned long viewTimeSinceMark();
+void sortViews();
+View *sortViewList(View *list);
+View *mergeViewList(View *list, View *into);
+void setViewsLocked(short locked);
+void moveView(short moving, short after, short anchor);
+ImageBank *loadImageBank(short id, long *resource);
+short *loadSwappedResource(long *resource, short id, long type);
+short playViewSounds(short *channels, short played, short priority);
+void fadeInViews();
+void fadeOutViews();
+short soundRangeFor(short sound, short *rank);
+void addSoundRange(short low, short high, short value);
+void pickViewSounds(short *channels);
+void loadViewSounds(short id, short now);
+void noteSoundTest(short sound, short kind);
+extern View *views; /* @data 0x4a7ba8: viewHead, once set up */
+extern short viewsReady; /* @data 0x4a7b86 */
+extern short removedRgn; /* @data 0x4a7b88: gRemovedFeatureBounds */
+extern short currentViewRgn; /* @data 0x4a7b8a: gCurrentViewRgn */
+extern short featureClipRgn; /* @data 0x4a7b8c: gFeatureClipRgn */
+extern unsigned short *terrain; /* @data 0x4a7b90 */
+extern ShortRect noRect; /* @data 0x4a7b96: all zero */
+extern long terrainResource; /* @data 0x4a7ba0 */
+extern basePort *viewPort; /* @data 0x4a7ba4 */
+extern View *lastActorView; /* @data 0x4a7bac */
+extern short viewsBusy; /* @data 0x4a7bb0 */
+extern ShortRect g_4a7bb2;
+extern short viewsLocked; /* @data 0x4b80ee */
+extern short viewsShown; /* @data 0x4b80ec */
+extern long viewUnlocks; /* @data 0x4b80f0 */
+extern short viewPlaceCount; /* @data 0x4b84de */
+extern Point viewPlaces[125]; /* @data 0x4b84e0 */
+extern short g_4b86d4[125];
+extern long dragCursorResource; /* @data 0x4b87d0 */
+extern ImageBank *dragCursors; /* @data 0x4b87d4 */
+extern long dragHotXResource; /* @data 0x4b87d8 */
+extern long dragHotYResource; /* @data 0x4b87dc */
+extern short *dragHotX; /* @data 0x4b87e0 */
+extern short *dragHotY; /* @data 0x4b87e4 */
+extern short dragWidth; /* @data 0x4b87e8 */
+extern short dragHeight; /* @data 0x4b87ea */
+extern ShortRect dragRect; /* @data 0x4b87ec */
+extern unsigned short *dragImage; /* @data 0x4b87f4 */
+extern Point dragWhere; /* @data 0x4b87f8 */
+extern unsigned long viewClockStart; /* @data 0x4b8804 */
+extern unsigned long viewClockMark; /* @data 0x4b8808 */
+extern unsigned short dragCursor; /* @data 0x4b89d8 */
+extern ResourceList *backdropImages; /* @data 0x4b89e4 */
+extern short scriptGroupFirst[8]; /* @data 0x4b89e8 */
+extern short scriptGroupCount[8]; /* @data 0x4b89f8 */
+extern short scriptGroups; /* @data 0x4b8a08 */
+extern short g_4b8a0a;
+extern short groupLeader[17]; /* @data 0x4b8b10 */
+extern char g_4b8b32[17];
+extern char g_4b8b43[17];
+extern short soundRanges; /* @data 0x4b94b8 */
+extern short g_4b8a0c;
+extern short placedViewCount; /* @data 0x4b80f4 */
+extern short placedViews[125]; /* @data 0x4b80f6: views added with flag 0x2000 */
+extern Point placedViewPoints[125]; /* @data 0x4b81f0 */
+extern short g_4b83e4[125];
+extern short g_4a7d42;
+extern short g_4b9688;
+extern short g_4b754c;
+extern short g_4b755e;
+extern short g_4b7560;
+extern short g_4b7566;
+extern long g_4b9670;
+extern long g_4b9674;
+extern short g_4b8a0e[32];
+extern short g_4b8a8e;
+extern short g_4b8a90[32];
+extern short soundRangeLow[32]; /* @data 0x4b94ba */
+extern short soundRangeHigh[32]; /* @data 0x4b94fa */
+extern short soundRangeValue[32]; /* @data 0x4b953a */
+extern View viewHead; /* @data 0x4b880c: the list's ends (plain views) */
+extern View viewTail; /* @data 0x4b88f8 */
+extern short *scripts[300]; /* @data 0x4b9008: the 'SCRB' scripts loaded */
+extern long scriptResources[300]; /* @data 0x4b8b58 */
 /* basecamp */
 unsigned short loadWave(short key);
 unsigned short fn_415a46(short key);
@@ -4073,53 +4212,29 @@ void fn_416754();
 long fn_417906(long);
 void enterCamp();
 void leaveCamp();
-short addView(long flags, ViewDraw draw, ViewUpdate update, short id, short, void *data, long,
-              long); /* 0x463afe */
-void fn_4656e7(short, short, short);
 void fn_45915d(short);
-void fn_463e61(short);
-void fn_46450c(short);
-void fn_464202(short);
 void fn_465bd0(short, short, short);
-void fn_464231(short, short);
-void fn_46431e(short, short, short);
-ImageBank *fn_4651ee(short id, long *resource);
 void fn_465ce7(View *view);
 void fn_465e59(View *view, short region);
-long fn_464cbc(long, short *, short);
-void fn_463dce(short count, Point *places, short);
 void fn_4572f0(short);
 void fn_458cc1(short);
 void fn_458f07(short, short);
-void fn_4655d3();
 short fn_45bdc4(char *);
-void fn_464d3c();
 void campIdle();
 void campButtonClicked(short button);
 void campMouse(short action);
-View *viewAt(Point where, long mask, short); /* 0x463cec */
 short fn_458059(View *view, Point where, short, short);
 short fn_457fbb();
 short fn_456e7f();
 short fn_456e4c();
 short fn_4574ae(Snoid *snoid, short);
-void fn_46411d(short id, short);
 void fn_45802e(short, short id);
-void fn_464c53(short id);
-void fn_464876(View *view, short, short);
-void fn_465a5e(short id, short);
 void fn_45a477();
 void fn_4590b6(short, short, short);
-void fn_463359();
-void fn_46560b();
 void fn_4624fc();
-void fn_46356c();
-void fn_463e9e(short);
 void fn_43af6b();
 void drawCampButtons(short button, short pressed, short group, short show); /* 0x41790f */
 void drawCampButtons1(View *);
-long fn_4640d1(short);
-void fn_4640a6(long);
 void drawCampButtons2(View *);
 void fn_417aec(View *, short region);
 short findCampSlot(short start, ShortRect rect, short occupied);
@@ -4136,7 +4251,6 @@ void compactCamp();
 void updateCampScroll(short stop);
 void fn_4184b7();
 short returnToCamp();
-View *findView(short id); /* 0x4640f8 */
 void fn_4666b7(short sound, short);
 long fn_4196a8(long);
 short fn_419f1a();

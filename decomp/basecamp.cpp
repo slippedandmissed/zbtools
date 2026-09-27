@@ -601,9 +601,9 @@ void enterCamp()
     saved = g_4b87fe;
     g_4b87fe = 0;
     g_4afb32 = 1;
-    fn_4656e7(20000, 29999, 1);
-    fn_4656e7(2000, 0x833, 0);
-    fn_4656e7(0x44c, 0x4af, 1);
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(2000, 0x833, 0);
+    addSoundRange(0x44c, 0x4af, 1);
     camp = (Camp *)(g_4a4ba0 + 0xce);
     campRow = camp->row;
     campCount = camp->count;
@@ -612,21 +612,21 @@ void enterCamp()
     openGameFile(&campMap, "BaseCamp.MHK");
     fn_46be2e(campMap);
     fn_45915d(1000);
-    fn_463e61(9000);
-    fn_46450c(100);
-    fn_464202(1000);
+    loadDragCursors(9000);
+    loadTerrain(100);
+    drawBackdrop(1000);
     fn_465bd0(0x44c, 0, 0);
     fn_465bd0(0x4b0, 1, 0);
-    fn_464231(0x44c, 0x10);
-    fn_46431e(0x4b0, 0x10, 0);
-    g_4a0974 = fn_4651ee(2000, &campFrameResource);
-    campButtonImages = fn_4651ee(0x834, &campButtonsResource);
+    loadScripts(0x44c, 0x10);
+    addScripts(0x4b0, 0x10, 0);
+    g_4a0974 = loadImageBank(2000, &campFrameResource);
+    campButtonImages = loadImageBank(0x834, &campButtonsResource);
     fn_4148da(0xec, 10);
     g_4ab518 = addView(0xc000, drawCamp, scrollCamp, 0, 6, 0, 0, 0);
     addView(0x9000, drawCampButtons2, 0, 0, 0, 0, 0, 0);
     addView(0x1000, drawCampButtons1, fn_417aec, 0, 0, 0, 0, 0);
     for (short i = 0; i < 16; i++)
-        g_4b80f6[i] = addView(0x108a000, fn_465ce7, fn_465e59, i + 0x4b0, 7, &places[i], 0, 0);
+        placedViews[i] = addView(0x108a000, fn_465ce7, fn_465e59, i + 0x4b0, 7, &places[i], 0, 0);
     g_4ab530[0] = addView(0x1180000, fn_465ce7, fn_465e59, 0x452, 6, 0, 0, 0);
     g_4ab530[1] = addView(0x1180000, fn_465ce7, fn_465e59, 0x454, 6, 0, 0, 0);
     g_4ab530[2] = addView(0x180000, fn_465ce7, fn_465e59, 0x455, 6, 0, 0, 0);
@@ -635,22 +635,22 @@ void enterCamp()
     for (short k = 0x457; k <= 0x45b; k++) {
         View *view = findView(addView(0x20000, fn_465ce7, fn_465e59, k, 0, 0, 0, 0));
         if (view) {
-            fn_465e59(view, g_4a7b88);
+            fn_465e59(view, removedRgn);
             value = ((short *)(g_4a4ba0 + 0x14))[k - 0x457];
-            view->snoid.unknown9a = fn_464cbc(g_4b9008[view->snoid.unknown92], &value, 0);
-            view->snoid.unknown98 = value;
+            view->snoid.frameOffset = scriptFrameOffset(scripts[view->snoid.script], &value, 0);
+            view->snoid.frame = value;
             view->nextUpdate = 0;
-            view->snoid.unknownB0 = 1;
-            view->snoid.unknown96++;
-            fn_465e59(view, g_4a7b88);
-            view->snoid.unknown96--;
-            view->snoid.unknown98 = value;
+            view->snoid.running = 1;
+            view->snoid.lastFrame++;
+            fn_465e59(view, removedRgn);
+            view->snoid.lastFrame--;
+            view->snoid.frame = value;
         }
     }
     addView(0x2040000, fn_465ce7, fn_465e59, 0x450, 6, 0, 0, 0);
     for (short j = 0x44c; j <= 0x44f; j++)
         addView(0, fn_465ce7, fn_465e59, j, 0, 0, 0, 0);
-    fn_463dce(16, places, 1);
+    setViewPlaces(16, places, 1);
     if (party()->count)
         fn_4572f0(0);
     returned = fn_456e4c();
@@ -678,7 +678,7 @@ void enterCamp()
     }
     fn_4572f0(1);
     fn_458cc1(-20);
-    fn_46356c();
+    updateViews();
     if (returned)
         fn_458f07(0x2d, 0x1e);
     g_4ab52e = *(short *)(g_4a4ba0 + 0x48) >= 625
@@ -695,7 +695,7 @@ void enterCamp()
     highlightItemAt(1, 1);
     drawCampButtons(0, 0, 0, 0);
     showRect(&g_4aa7b8);
-    fn_4655d3();
+    fadeInViews();
     campActive = 1;
     sound = 0;
     reason = -1;
@@ -761,7 +761,7 @@ void enterCamp()
             break;
         }
     }
-    fn_464d3c();
+    resetViewClock();
     g_4b87fe = saved;
     if (sound)
         fn_4666b7(sound, 0);
@@ -777,8 +777,8 @@ void leaveCamp()
         campActive = 0;
         short saved = fn_46bee9(1);
 
-        fn_463359();
-        if (!g_4b80ee) {
+        clearViews();
+        if (!viewsLocked) {
             if (g_4a48e6 || g_4b0d50 == 1) {
                 party()->unknown2 = 0;
                 party()->unknown4 = 0;
@@ -800,7 +800,7 @@ void leaveCamp()
         fn_46c602(&campFrameResource);
         fn_46bee9(saved);
         fn_46ca9c(&campMap);
-        fn_46560b();
+        fadeOutViews();
         fn_4624fc();
     }
 }
@@ -814,13 +814,13 @@ void campIdle()
 
     if (!campBusy && campActive) {
         campBusy = 1;
-        fn_46356c();
+        updateViews();
         if (g_4b0d52) {
             if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
                 campBusy = 0;
                 return;
             }
-            if (g_4b80ee || !g_4b755a || g_4b755c >= 1) {
+            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
                 fn_46be2e(0);
@@ -835,7 +835,7 @@ void campIdle()
                     if (ptInRect(&campButtons[i].rect, where))
                         over = i - 2;
             }
-            fn_463e9e(over);
+            setDragCursor(over);
         }
         fn_43af6b();
         campBusy = 0;
@@ -1030,7 +1030,7 @@ void campMouse(short action)
                         camp->slots[drop].zoombini = view->snoid.zoombini;
                         for (i = 0; i < 10; i++)
                             camp->slots[drop].name[i] = view->snoid.name[i];
-                        fn_464c53(view->id);
+                        deleteView(view->id);
                         fn_4184b7();
                         g_4a080c = -1;
                         picked = 0;
@@ -1046,7 +1046,7 @@ void campMouse(short action)
                         camp->slots[slot].zoombini = draggedSnoid.zoombini;
                         for (i = 0; i < 10; i++)
                             camp->slots[slot].name[i] = draggedSnoid.name[i];
-                        fn_46411d(dragged, 1);
+                        removeView(dragged, 1);
                     }
                     g_4a080c = -1;
                 } else if (result && !count && moved && !placed) {
@@ -1064,7 +1064,7 @@ void campMouse(short action)
             } else if ((view = viewAt(where, 0x20000, 1)) != 0) {
                 short sound = 0;
 
-                view->snoid.unknownB0 = 1;
+                view->snoid.running = 1;
                 switch (view->kind) {
                 case 0x457:
                     i = 0;
@@ -1087,19 +1087,19 @@ void campMouse(short action)
                     sound = 0x462;
                     break;
                 }
-                ((short *)(g_4a4ba0 + 0x14))[i] = view->snoid.unknown98 + 1;
-                ((short *)(g_4a4ba0 + 0x14))[i] %= view->snoid.unknown96 + 1;
+                ((short *)(g_4a4ba0 + 0x14))[i] = view->snoid.frame + 1;
+                ((short *)(g_4a4ba0 + 0x14))[i] %= view->snoid.lastFrame + 1;
                 if (sound)
                     fn_4666b7(sound, 0);
             } else if ((view = viewAt(where, 0x40000, 1)) != 0) {
-                fn_464876(view, 0x451, 1);
-                fn_465a5e(view->id, 1);
+                setViewScript(view, 0x451, 1);
+                loadViewSounds(view->id, 1);
             } else {
                 for (i = 0; i < 5; i++)
                     if (ptInRect(&g_4a0a34[i], where) && (view = findView(g_4ab530[i])) != 0
-                        && !view->snoid.unknownB0) {
-                        fn_464876(view, 0, 1);
-                        fn_465a5e(view->id, 1);
+                        && !view->snoid.running) {
+                        setViewScript(view, 0, 1);
+                        loadViewSounds(view->id, 1);
                         i = 5;
                     }
             }
@@ -1189,7 +1189,7 @@ void drawCampButtons(short button, short pressed, short group, short show)
     }
     if (show) {
         if (toggles)
-            fn_4640a6(fn_4640d1(0));
+            drawDragCursor(viewListEnd(0));
         showRect(&bounds);
     }
 }
@@ -1397,8 +1397,8 @@ void drawCamp(View *)
             }
             snoid.unknownB2 = 0;
             snoid.unknownC0 = -1;
-            snoid.unknown98 = 0;
-            snoid.unknown9a = 2;
+            snoid.frame = 0;
+            snoid.frameOffset = 2;
             snoid.zoombini = camp->slots[index].zoombini;
             snoid.x = x;
             snoid.y = y;
