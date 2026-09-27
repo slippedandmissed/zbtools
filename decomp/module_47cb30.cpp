@@ -9,7 +9,7 @@
 
 /* A buffer for `samples` samples; 0 on error. */
 /* @zoombi32 0x0047cb30 */
-StreamBuffer *__cdecl StreamedWave::newBuffer(unsigned long samples)
+StreamBuffer *__cdecl wavestreamObj::newBuffer(unsigned long samples)
 {
     unsigned long size = blockAlign * samples;
     StreamBuffer *buffer = (StreamBuffer *)newPtr(size + 0x60);
@@ -30,7 +30,7 @@ StreamBuffer *__cdecl StreamedWave::newBuffer(unsigned long samples)
 }
 
 /* @zoombi32 0x0047cb97 */
-void __cdecl StreamedWave::freeBuffer(StreamBuffer *buffer)
+void __cdecl wavestreamObj::freeBuffer(StreamBuffer *buffer)
 {
     if (buffer->prepared)
         unprepareBuffer(buffer);
@@ -39,7 +39,7 @@ void __cdecl StreamedWave::freeBuffer(StreamBuffer *buffer)
 
 /* Prepares the whole buffer (whatever it holds now) for the device. */
 /* @zoombi32 0x0047cbbb */
-short __cdecl StreamedWave::prepareBuffer(StreamBuffer *buffer)
+short __cdecl wavestreamObj::prepareBuffer(StreamBuffer *buffer)
 {
     DWORD length;
 
@@ -54,7 +54,7 @@ short __cdecl StreamedWave::prepareBuffer(StreamBuffer *buffer)
 
 /* Reads the buffer's samples, from the preloaded start where it can. */
 /* @zoombi32 0x0047cc0f */
-short __cdecl StreamedWave::readBuffer(StreamBuffer *buffer)
+short __cdecl wavestreamObj::readBuffer(StreamBuffer *buffer)
 {
     unsigned char *to = buffer->data;
     unsigned long size = buffer->header.dwBufferLength;
@@ -75,7 +75,7 @@ short __cdecl StreamedWave::readBuffer(StreamBuffer *buffer)
 
 /* Writes the buffer to the device, adding it to the ring. */
 /* @zoombi32 0x0047cca9 */
-short __cdecl StreamedWave::queueBuffer(StreamBuffer *buffer)
+short __cdecl wavestreamObj::queueBuffer(StreamBuffer *buffer)
 {
     if (wavebufWrite(wave, &buffer->header, sizeof buffer->header))
         return setSoundError(0x29cc);
@@ -96,7 +96,7 @@ short __cdecl StreamedWave::queueBuffer(StreamBuffer *buffer)
 }
 
 /* @zoombi32 0x0047cd26 */
-void __cdecl StreamedWave::unprepareBuffer(StreamBuffer *buffer)
+void __cdecl wavestreamObj::unprepareBuffer(StreamBuffer *buffer)
 {
     DWORD length;
 
@@ -113,7 +113,7 @@ void __cdecl StreamedWave::unprepareBuffer(StreamBuffer *buffer)
    or (resource 0) the open file `file`; the first `preloadMs` ms read in
    now. 0 on error. */
 /* @zoombi32 0x0047cd5c */
-AudioObject *__cdecl newStreamedWave(long resource, long file, long preloadMs)
+audioObj *__cdecl newStreamedWave(long resource, long file, long preloadMs)
 {
     unsigned long size;
     unsigned long chunk[2];
@@ -135,7 +135,7 @@ AudioObject *__cdecl newStreamedWave(long resource, long file, long preloadMs)
         unsigned long loopEnd;
         unsigned long unknown1C;
     } format;
-    StreamedWave *wave;
+    wavestreamObj *wave;
     unsigned char *cues;
     unsigned long offset;
 
@@ -197,8 +197,8 @@ AudioObject *__cdecl newStreamedWave(long resource, long file, long preloadMs)
             goto fail;
         }
     } while (chunk[0] != 0x44617461);
-    if ((wave = (StreamedWave *)newPtr(sizeof(StreamedWave))) != 0)
-        new (wave) StreamedWave;
+    if ((wave = (wavestreamObj *)newPtr(sizeof(wavestreamObj))) != 0)
+        new (wave) wavestreamObj;
     else {
         setSoundError(memError());
         goto fail;
@@ -262,7 +262,7 @@ AudioObject *__cdecl newStreamedWave(long resource, long file, long preloadMs)
 }
 
 /* @zoombi32 0x0047d243 */
-void __cdecl StreamedWave::release()
+void __cdecl wavestreamObj::release()
 {
     if (preload)
         disposePtr(preload);
@@ -275,7 +275,7 @@ void __cdecl StreamedWave::release()
 /* Opens the wave device for the sound's format, and starts the thread that
    reads for it. */
 /* @zoombi32 0x0047d27f */
-short __cdecl StreamedWave::openDevice()
+short __cdecl wavestreamObj::openDevice()
 {
     PCMWAVEFORMAT format;
 
@@ -322,13 +322,13 @@ short __cdecl StreamedWave::openDevice()
 }
 
 /* @zoombi32 0x0047d3dd */
-short __cdecl StreamedWave::setDeviceRate(long speed)
+short __cdecl wavestreamObj::setDeviceRate(long speed)
 {
     return setSoundError(speed == rate ? 0 : wavebufSetPlaybackRate(wave, speed) ? 0x29d2 : 0);
 }
 
 /* @zoombi32 0x0047d411 */
-short __cdecl StreamedWave::setDeviceVolume(long level)
+short __cdecl wavestreamObj::setDeviceVolume(long level)
 {
     return setSoundError(wavebufSetVolume(wave, level) ? 0x29d3 : 0);
 }
@@ -337,7 +337,7 @@ short __cdecl StreamedWave::setDeviceVolume(long level)
    caller's priority) until it has queued the first buffers; then starts
    the device unless paused. */
 /* @zoombi32 0x0047d43d */
-short __cdecl StreamedWave::startDevice(short paused)
+short __cdecl wavestreamObj::startDevice(short paused)
 {
     long self;
     short priority;
@@ -371,7 +371,7 @@ short __cdecl StreamedWave::startDevice(short paused)
 /* Stops the device and the thread, keeping the position (and the loops
    played); drops the queued buffers. */
 /* @zoombi32 0x0047d50b */
-void __cdecl StreamedWave::haltDevice()
+void __cdecl wavestreamObj::haltDevice()
 {
     MMTIME time;
     unsigned long at;
@@ -408,7 +408,7 @@ void __cdecl StreamedWave::haltDevice()
 }
 
 /* @zoombi32 0x0047d62e */
-void __cdecl StreamedWave::closeDevice()
+void __cdecl wavestreamObj::closeDevice()
 {
     haltDevice();
     deleteThread(thread);
@@ -431,7 +431,7 @@ void __cdecl StreamedWave::closeDevice()
    each pass, and marking the loop's last one to loop on the device where
    it can. On error it halts the sound and tells it it finished. */
 /* @zoombi32 0x0047d69c */
-short __cdecl StreamedWave::stream()
+short __cdecl wavestreamObj::stream()
 {
     StreamBuffer *spare = 0;
     short locked;
@@ -560,7 +560,7 @@ done:
 }
 
 /* @zoombi32 0x0047dab4 */
-long __cdecl StreamedWave::deviceHandle()
+long __cdecl wavestreamObj::deviceHandle()
 {
     return wave;
 }
@@ -568,7 +568,7 @@ long __cdecl StreamedWave::deviceHandle()
 /* The position in samples, given the device's (0xffffffff: ask it),
    allowing for the loop. */
 /* @zoombi32 0x0047dabf */
-unsigned long __cdecl StreamedWave::positionAt(unsigned long sample)
+unsigned long __cdecl wavestreamObj::positionAt(unsigned long sample)
 {
     MMTIME time;
     unsigned long at;
@@ -594,7 +594,7 @@ unsigned long __cdecl StreamedWave::positionAt(unsigned long sample)
 
 /* The position in ms. */
 /* @zoombi32 0x0047db64 */
-long __cdecl StreamedWave::position()
+long __cdecl wavestreamObj::position()
 {
     return fixedMul(positionAt(0xffffffff), msPerSample);
 }
@@ -604,7 +604,7 @@ long __cdecl StreamedWave::position()
 /* @zoombi32 0x0047db85 */
 void streamThread(long data)
 {
-    StreamedWave *wave = (StreamedWave *)data;
+    wavestreamObj *wave = (wavestreamObj *)data;
 
     while (!waitEvent(wave->event, -1)) {
         resetEvent(wave->event);
@@ -616,7 +616,7 @@ void streamThread(long data)
 }
 
 /* @zoombi32 0x0047dbcc */
-void __cdecl StreamedWave::pause()
+void __cdecl wavestreamObj::pause()
 {
     SoundNotice notice;
 
@@ -642,7 +642,7 @@ short __cdecl readStream(long resource, long file, void *buffer, unsigned long *
 /* Lets the loop play out: breaks it on the device, and notes how much
    looping it did. */
 /* @zoombi32 0x0047dc62 */
-void __cdecl StreamedWave::endLoop()
+void __cdecl wavestreamObj::endLoop()
 {
     MMTIME time;
     unsigned long at;
@@ -663,7 +663,7 @@ void __cdecl StreamedWave::endLoop()
 }
 
 /* @zoombi32 0x0047dd32 */
-void __cdecl StreamedWave::resetLoop()
+void __cdecl wavestreamObj::resetLoop()
 {
     if (loops) {
         loopsPlayed = 0;
@@ -673,7 +673,7 @@ void __cdecl StreamedWave::resetLoop()
 }
 
 /* @zoombi32 0x0047dd5c */
-void __cdecl StreamedWave::resume()
+void __cdecl wavestreamObj::resume()
 {
     SoundNotice notice;
 
@@ -686,7 +686,7 @@ void __cdecl StreamedWave::resume()
 
 /* Moves to `ms` (-1: the end). */
 /* @zoombi32 0x0047dd92 */
-short __cdecl StreamedWave::seek(long ms)
+short __cdecl wavestreamObj::seek(long ms)
 {
     unsigned long sample = ms == -1 ? sampleCount : fixedMul(ms, samplesPerMs);
 
@@ -700,7 +700,7 @@ short __cdecl StreamedWave::seek(long ms)
 
 /* Moves to the cue point named `text`. */
 /* @zoombi32 0x0047dde7 */
-short __cdecl StreamedWave::setText(const char *text, unsigned short length)
+short __cdecl wavestreamObj::setText(const char *text, unsigned short length)
 {
     unsigned short count;
     unsigned char *entry;
@@ -721,10 +721,10 @@ short __cdecl StreamedWave::setText(const char *text, unsigned short length)
 
 /* Not exact: the original keeps `this` in ebx; BCC32 4.5 uses eax. */
 /* @zoombi32 0x0047de63 */
-short __cdecl StreamedWave::play(SoundNotify proc, long data)
+short __cdecl wavestreamObj::play(SoundNotify proc, long data)
 {
     if (start < sampleCount)
-        return AudioObject::play(proc, data);
+        return audioObj::play(proc, data);
     return setSoundError(0x29cf);
 }
 
@@ -750,7 +750,7 @@ void CALLBACK streamCallback(long, unsigned short message, DWORD instance, DWORD
     StreamBuffer *buffer;
 
     if (message == WOM_DONE) {
-        StreamedWave *wave = (StreamedWave *)instance;
+        wavestreamObj *wave = (wavestreamObj *)instance;
         WAVEHDR *done = (WAVEHDR *)header;
         if (!wave->resetting && (buffer = (StreamBuffer *)done->dwUser) != 0)
             deferCall(&wave->lock, &buffer->call);
@@ -764,7 +764,7 @@ void CALLBACK streamCallback(long, unsigned short message, DWORD instance, DWORD
 void streamBufferDone(void *data)
 {
     StreamBuffer *buffer = (StreamBuffer *)data;
-    StreamedWave *wave = buffer->sound;
+    wavestreamObj *wave = buffer->sound;
     SoundNotice notice;
 
     buffer->done = 1;
@@ -805,7 +805,7 @@ void streamBufferDone(void *data)
 
 /* Tells the sound's owner. */
 /* @zoombi32 0x0047e0d3 */
-void __cdecl notifySound(AudioObject *object, SoundNotice *notice)
+void __cdecl notifySound(audioObj *object, SoundNotice *notice)
 {
     if (object->notify)
         object->notify((long)object, notice, object->cookie);

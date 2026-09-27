@@ -11,7 +11,7 @@
 long newSound(short data)
 {
     unsigned long *header;
-    AudioObject *object;
+    audioObj *object;
 
     if ((header = (unsigned long *)handleData(data)) == 0) {
         setSoundError(memError());

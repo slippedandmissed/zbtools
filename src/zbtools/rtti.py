@@ -6,12 +6,14 @@ Borland's 32-bit type descriptor layout (worked out from the runtime library's
 own descriptors, see docs/findings.md):
 
     +0x00  object size
-    +0x04  flags (0x0001: a class; 0x0002: has a destructor and more fields)
-    +0x06  offset of the class name within the descriptor
+    +0x04  flags (0x0001: a class; 0x0002: more fields follow)
+    +0x06  offset of the class name within the descriptor: 0x30 with a
+           destructor, 0x20 without one (both with the fields below), 0x10
+           for a class with neither
     +0x08  offset of the vtable pointer in objects (-1: no vtable)
     +0x10  offset of the base-class list: (descriptor, offset, flags) entries,
            ended by a null descriptor
-    +0x28  the destructor
+    +0x28  the destructor (name at 0x30)
 
 and in the data section, each vtable is preceded by a pointer to the class's
 descriptor and two zero words; constructors store the vtable's address.
@@ -26,7 +28,7 @@ from pydantic import BaseModel, ConfigDict
 from zbtools import paths
 from zbtools.exe import Executable
 
-_CLASS, _HAS_DESTRUCTOR = 0x0001, 0x0002
+_CLASS, _HAS_FIELDS = 0x0001, 0x0002
 _NAME = re.compile(rb"[A-Za-z_][A-Za-z0-9_:<>,*& ]{0,79}\x00")
 _VTABLE_AFTER_DESCRIPTOR = 12
 
@@ -60,7 +62,7 @@ def _u16(exe: Executable, address: int) -> int:
 def _descriptor(exe: Executable, address: int, end: int) -> tuple[str, int, int] | None:
     """(name, flags, name offset) if a class descriptor starts at address."""
     flags, name_offset = _u16(exe, address + 4), _u16(exe, address + 6)
-    full = flags & 0x0003 == 0x0003 and name_offset == 0x30
+    full = flags & 0x0003 == 0x0003 and name_offset in (0x20, 0x30)
     short = flags & 0x0003 == _CLASS and name_offset == 0x10
     if not (full or short) or address + name_offset + 2 > end:
         return None
@@ -102,8 +104,8 @@ def find_classes(exe: Executable) -> list[ClassInfo]:
                 descriptors[address] = found
 
     classes = []
-    for address, (name, flags, _) in sorted(descriptors.items()):
-        full = bool(flags & _HAS_DESTRUCTOR)
+    for address, (name, flags, name_offset) in sorted(descriptors.items()):
+        full = bool(flags & _HAS_FIELDS)
         vptr = int.from_bytes(exe.read(address + 8, 4), "little", signed=True)
         bases = []
         if full:
@@ -111,7 +113,7 @@ def find_classes(exe: Executable) -> list[ClassInfo]:
             while exe.pointer(entry) in descriptors:
                 bases.append(descriptors[exe.pointer(entry)][0])
                 entry += 12
-        destructor = exe.pointer(address + 0x28) if full else None
+        destructor = exe.pointer(address + 0x28) if full and name_offset == 0x30 else None
         vtables = []
         # A class without a vtable can still have its descriptor referenced from
         # data (e.g. exception tables), so only look for vtables where one exists.

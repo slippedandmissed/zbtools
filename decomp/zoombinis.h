@@ -1812,7 +1812,7 @@ short setTimerError(short error);
 long timerId(TimerEvent *event);
 
 /*
- * Sounds: MIDI and wave objects (AudioObject, tagged 'AObj'), handed around
+ * Sounds: MIDI and wave objects (audioObj, tagged 'AObj'), handed around
  * as handles (their addresses) and kept in a list. Errors of the last call
  * are in sound.error.
  */
@@ -1820,7 +1820,7 @@ long timerId(TimerEvent *event);
 /* Told when a sound starts (4) or stops (5), and of its progress. */
 typedef void (*SoundNotify)(long sound, SoundNotice *notice, long cookie);
 
-class AudioObject
+class audioObj
 {
 public:
     virtual void __cdecl release() = 0; /* before it's freed */
@@ -1848,8 +1848,8 @@ public:
 
     unsigned long tag; /* 'AObj' */
     long kind; /* 0 MIDI, 1 wave */
-    AudioObject *next;
-    AudioObject *prev;
+    audioObj *next;
+    audioObj *prev;
     long rate; /* speed (MIDI: tempo scale) */
     long volume; /* MIDI: the velocity curve */
     long duration; /* ms (MIDI: ticks) */
@@ -1872,7 +1872,7 @@ struct SoundState
     short ready;
     short active;
     short driverOpen;
-    AudioObject *objects;
+    audioObj *objects;
     unsigned short midiDevice;
     short cacheMidiDevice; /* keep the default MIDI device open */
     struct MidiMap *midiCache;
@@ -1887,7 +1887,7 @@ extern SoundState sound; /* @data 0x4b9b08 */
 
 short setSoundsActive(short active); /* 0x4764bc: non-zero on failure */
 short disposeSound(long sound);
-short forEachSound(long kind, unsigned short device, short (*proc)(AudioObject *object, long data),
+short forEachSound(long kind, unsigned short device, short (*proc)(audioObj *object, long data),
                    long data);
 void chooseMidiDevice();
 void chooseWaveDevice();
@@ -1921,7 +1921,7 @@ unsigned short setMidiDevice(unsigned short device); /* the previous one */
 unsigned short setWaveDevice(unsigned short device);
 unsigned short openWaveOutDevice(long *out, unsigned short device, PCMWAVEFORMAT *format, long, long,
                         long flags);
-AudioObject *audioObject(long sound); /* 0 if it isn't one */
+audioObj *audioObject(long sound); /* 0 if it isn't one */
 unsigned short __cdecl makeWord(unsigned char low, unsigned char high);
 long newSound(short data); /* from a Mohawk MIDI or WAVE in a handle */
 long newStreamedSound(long resource, long);
@@ -1937,11 +1937,11 @@ short fn_47c62c();
 void fn_47c995();
 long __cdecl parseNumber(const char *text); /* 0x47a066 */
 short setSoundError(short error); /* 0x47de96 */
-void __cdecl notifySound(AudioObject *object, SoundNotice *notice); /* 0x47e0d3 */
-AudioObject *__cdecl newMidiSound(short data); /* 0x478f0b */
+void __cdecl notifySound(audioObj *object, SoundNotice *notice); /* 0x47e0d3 */
+audioObj *__cdecl newMidiSound(short data); /* 0x478f0b */
 void *__cdecl operator new(size_t size, void *where); /* 0x47dea7: zeroed */
-AudioObject *__cdecl newWaveSound(short data); /* 0x47a28d */
-AudioObject *__cdecl newStreamedWave(long resource, long file, long preloadMs); /* 0x47cd5c */
+audioObj *__cdecl newWaveSound(short data); /* 0x47a28d */
+audioObj *__cdecl newStreamedWave(long resource, long file, long preloadMs); /* 0x47cd5c */
 
 /*
  * The MIDI mapper: midiOut-style calls on "maps", which share a device
@@ -1989,11 +1989,11 @@ struct MidiMap
 
 /* A stretch of a wave sound played as one buffer: split at cue points and
    at the loop's ends. */
-class WaveSound;
+class waveObj;
 struct WaveBlock
 {
     Deferred call; /* runs waveBlockDone */
-    WaveSound *sound;
+    waveObj *sound;
     unsigned long start; /* in samples */
     unsigned long length;
     unsigned char *cue; /* the cue point it starts at */
@@ -2005,7 +2005,7 @@ struct WaveBlock
 /* A wave sound: a Mohawk WAVE file (a Data chunk of PCM samples, perhaps
    looping, and a Cue# list of named positions) played through the
    engine's wave output (wavebuf). */
-class WaveSound : public AudioObject
+class waveObj : public audioObj
 {
 public:
     virtual void __cdecl release();
@@ -2061,13 +2061,13 @@ public:
 };
 
 /* A buffer a streamed wave sound reads into and queues (in a ring). */
-class StreamedWave;
+class wavestreamObj;
 struct StreamBuffer
 {
     Deferred call; /* runs streamBufferDone */
     StreamBuffer *next;
     StreamBuffer *prev;
-    StreamedWave *sound;
+    wavestreamObj *sound;
     unsigned long start; /* in samples */
     unsigned long length;
     unsigned char *cue; /* the cue point it ends at */
@@ -2085,7 +2085,7 @@ struct StreamBuffer
 /* A wave sound played from its resource's file (or a file of its own) as it
    goes: a thread reads ahead into buffers, up to three seconds' worth, after
    an optional preloaded start. */
-class StreamedWave : public AudioObject
+class wavestreamObj : public audioObj
 {
 public:
     virtual void __cdecl release();
@@ -2164,7 +2164,7 @@ void CALLBACK streamCallback(long wave, unsigned short message, DWORD instance, 
                              DWORD); /* 0x47df34 */
 void streamBufferDone(void *buffer); /* 0x47df7a */
 void waveBlockDone(void *block); /* 0x47ae62 */
-void CALLBACK waveCallback(long wave, UINT message, DWORD instance, DWORD, DWORD); /* 0x47ae14 */
+void CALLBACK waveCallback(long wave, unsigned short message, DWORD instance, DWORD header, DWORD); /* 0x47ae14 */
 short wavebufPause(long wave); /* 0x47c94b */
 unsigned short wavebufPrepareHeader(long wave, WAVEHDR *header, unsigned short size); /* 0x47c96b */
 short wavebufReset(long wave); /* 0x47c9c8 */
@@ -2203,7 +2203,7 @@ struct MidiTrack
    and Prg# lists of the drum keys and patches to cache) played through a
    MIDI map by a timer. Markers "setup end", "loop start" and "loop end#n"
    control looping; cue points are passed to the owner. */
-class MidiSound : public AudioObject
+class midiObj : public audioObj
 {
 public:
     virtual void __cdecl release();

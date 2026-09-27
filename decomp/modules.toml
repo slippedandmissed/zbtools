@@ -251,8 +251,9 @@ start = 0x47a0ec
 name = "module_47a0ec"
 
 [[module]]
-start = 0x47adf8
-name = "module_47adf8"
+start = 0x47af1c
+name = "wavebuf"
+note = "RTTI classes wavebuf, wavebufWO, wavebufDS; 'WaveMix.DeviceInfo', 'not supported', '[WaveMix] ulFrameRate'. module_47a0ec runs to here: its RTTI descriptor (waveObj, 0x47add8) is followed by its callbacks"
 
 [[module]]
 start = 0x47cb30

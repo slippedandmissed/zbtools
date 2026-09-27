@@ -1,6 +1,6 @@
 /*
  * module_4764bc (Mohawk engine): sounds (the API over MIDI and wave objects,
- * the default devices, and AudioObject's own methods)
+ * the default devices, and audioObj's own methods)
  */
 
 /* @flags -p -x- */
@@ -30,7 +30,7 @@ static char rateFormat[] = "%lu";
 short setSoundsActive(short active)
 {
     short error = 0;
-    AudioObject *object;
+    audioObj *object;
     PCMWAVEFORMAT format;
 
     if (sound.active && !active) {
@@ -77,7 +77,7 @@ short setSoundsActive(short active)
 /* @zoombi32 0x00476622 */
 short disposeSound(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
@@ -98,10 +98,10 @@ short disposeSound(long handle)
 /* Calls `proc` for each open sound of a kind on a device (0xffff: the
    default one) until it returns non-zero. */
 /* @zoombi32 0x00476698 */
-short forEachSound(long kind, unsigned short device, short (*proc)(AudioObject *object, long data),
+short forEachSound(long kind, unsigned short device, short (*proc)(audioObj *object, long data),
                    long data)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if (kind == 0) {
         if (device == 0xffff)
@@ -265,7 +265,7 @@ short findIniEntry(fileSpec *file, const char *section, char *entry, unsigned sh
 /* @zoombi32 0x00476ade */
 unsigned short soundDevice(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0) {
         setSoundError(0x29ff);
@@ -282,7 +282,7 @@ unsigned short soundDevice(long handle)
 /* @zoombi32 0x00476b27 */
 long soundDeviceHandle(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0) {
         setSoundError(0x29ff);
@@ -303,7 +303,7 @@ long soundDeviceHandle(long handle)
 /* @zoombi32 0x00476b84 */
 long soundDuration(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0) {
         setSoundError(0x29ff);
@@ -322,7 +322,7 @@ short soundError()
 /* @zoombi32 0x00476bc2 */
 long soundRate(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0) {
         setSoundError(0x29ff);
@@ -335,7 +335,7 @@ long soundRate(long handle)
 /* @zoombi32 0x00476bf1 */
 long soundPosition(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0) {
         setSoundError(0x29ff);
@@ -349,7 +349,7 @@ long soundPosition(long handle)
 /* @zoombi32 0x00476c25 */
 unsigned short soundFlags(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0) {
         setSoundError(0x29ff);
@@ -363,7 +363,7 @@ unsigned short soundFlags(long handle)
 /* @zoombi32 0x00476ca3 */
 long soundKind(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0) {
         setSoundError(0x29ff);
@@ -376,7 +376,7 @@ long soundKind(long handle)
 /* @zoombi32 0x00476cd3 */
 long soundVolume(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0) {
         setSoundError(0x29ff);
@@ -427,7 +427,7 @@ short initSound()
 /* @zoombi32 0x00476e1f */
 short pauseSound(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
@@ -445,7 +445,7 @@ short pauseSound(long handle)
 /* @zoombi32 0x00476e72 */
 short openSound(long handle, unsigned short device)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
@@ -472,7 +472,7 @@ short soundBufferSize()
 /* @zoombi32 0x00476ef7 */
 void closeSounds()
 {
-    AudioObject *object;
+    audioObj *object;
 
     while ((object = sound.objects) != 0) {
         object->stop();
@@ -492,7 +492,7 @@ void closeSounds()
 /* @zoombi32 0x00476f50 */
 short endSoundLoop(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
@@ -508,7 +508,7 @@ short endSoundLoop(long handle)
 /* @zoombi32 0x00476fa3 */
 short resumeSound(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
@@ -523,7 +523,7 @@ short resumeSound(long handle)
 /* @zoombi32 0x00476ff6 */
 short seekSound(long handle, long position)
 {
-    AudioObject *object;
+    audioObj *object;
     short error;
 
     if ((object = audioObject(handle)) == 0)
@@ -542,7 +542,7 @@ short seekSound(long handle, long position)
 /* @zoombi32 0x00477064 */
 short setSoundText(long handle, const char *text, unsigned short length)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
@@ -557,7 +557,7 @@ short setSoundText(long handle, const char *text, unsigned short length)
 /* @zoombi32 0x004770d4 */
 short setSoundRate(long handle, long rate)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
@@ -568,7 +568,7 @@ short setSoundRate(long handle, long rate)
 /* @zoombi32 0x004770ff */
 short setSoundVolume(long handle, long volume)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
@@ -579,7 +579,7 @@ short setSoundVolume(long handle, long volume)
 /* @zoombi32 0x0047712a */
 short playSound(long handle, SoundNotify notify, long cookie)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
@@ -598,7 +598,7 @@ short playSound(long handle, SoundNotify notify, long cookie)
 /* @zoombi32 0x004771a4 */
 short stopSound(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
@@ -612,7 +612,7 @@ short stopSound(long handle)
 /* @zoombi32 0x004771e4 */
 short closeSound(long handle)
 {
-    AudioObject *object;
+    audioObj *object;
 
     if ((object = audioObject(handle)) == 0)
         return setSoundError(0x29ff);
@@ -723,7 +723,7 @@ unsigned short openWaveOutDevice(long *out, unsigned short device, PCMWAVEFORMAT
    it if it was playing). */
 /* Not exact: `on` and `error` swap registers (edi and esi). */
 /* @zoombi32 0x00477490 */
-short __cdecl AudioObject::activate(short on)
+short __cdecl audioObj::activate(short on)
 {
     short error;
 
@@ -750,7 +750,7 @@ short __cdecl AudioObject::activate(short on)
 
 /* Opens the sound's device. */
 /* @zoombi32 0x0047757e */
-short __cdecl AudioObject::open(unsigned short on)
+short __cdecl audioObj::open(unsigned short on)
 {
     short error;
 
@@ -770,7 +770,7 @@ short __cdecl AudioObject::open(unsigned short on)
 }
 
 /* @zoombi32 0x00477605 */
-short __cdecl AudioObject::setRate(long level)
+short __cdecl audioObj::setRate(long level)
 {
     if (isOpen && setDeviceRate(level))
         return sound.error;
@@ -779,7 +779,7 @@ short __cdecl AudioObject::setRate(long level)
 }
 
 /* @zoombi32 0x0047763c */
-short __cdecl AudioObject::setVolume(long level)
+short __cdecl audioObj::setVolume(long level)
 {
     if (isOpen && setDeviceVolume(level))
         return sound.error;
@@ -789,7 +789,7 @@ short __cdecl AudioObject::setVolume(long level)
 
 /* Starts the sound, telling `notify`. */
 /* @zoombi32 0x00477673 */
-short __cdecl AudioObject::play(SoundNotify proc, long data)
+short __cdecl audioObj::play(SoundNotify proc, long data)
 {
     SoundNotice notice;
 
@@ -808,7 +808,7 @@ short __cdecl AudioObject::play(SoundNotify proc, long data)
 }
 
 /* @zoombi32 0x004776e0 */
-void __cdecl AudioObject::stop()
+void __cdecl audioObj::stop()
 {
     SoundNotice notice;
     short wasPlaying = playing || started;
@@ -824,7 +824,7 @@ void __cdecl AudioObject::stop()
 }
 
 /* @zoombi32 0x0047773f */
-void __cdecl AudioObject::close()
+void __cdecl audioObj::close()
 {
     unlockPtr(this);
     if (active)
@@ -833,9 +833,9 @@ void __cdecl AudioObject::close()
 }
 
 /* @zoombi32 0x00477763 */
-AudioObject *audioObject(long handle)
+audioObj *audioObject(long handle)
 {
-    AudioObject *object = (AudioObject *)handle;
+    audioObj *object = (audioObj *)handle;
 
     if (object && object->tag == 0x414f626a)
         return object;

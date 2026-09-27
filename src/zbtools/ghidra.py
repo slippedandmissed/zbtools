@@ -177,10 +177,13 @@ def open_gui() -> None:
 
 @app.command()
 def decompile(
-    address: Annotated[str, typer.Argument(help="Function address in zoombi32.exe, e.g. 0x46be2e")],
+    addresses: Annotated[
+        list[str], typer.Argument(help="Function addresses in zoombi32.exe, e.g. 0x46be2e")
+    ],
 ) -> None:
-    """Print Ghidra's C decompilation of a function: a first draft to rewrite
-    into matching code. (Close the project in Ghidra's GUI first.)"""
+    """Print Ghidra's C decompilation of functions: first drafts to rewrite
+    into matching code, each after a `/* ==== address */` line. (Close the
+    project in Ghidra's GUI first.)"""
     _start()
     # Ghidra's Java classes can only be imported once the JVM has started.
     from ghidra.app.decompiler import DecompInterface  # noqa: PLC0415
@@ -190,15 +193,19 @@ def decompile(
         pyghidra.program_context(project, f"/{PROGRAM_NAME}") as program,
     ):
         space = program.getAddressFactory().getDefaultAddressSpace()
-        function = program.getFunctionManager().getFunctionAt(space.getAddress(int(address, 16)))
-        if function is None:
-            sys.exit(f"error: no function starts at {address}")
         decompiler = DecompInterface()
         decompiler.openProgram(program)
-        result = decompiler.decompileFunction(function, 60, pyghidra.task_monitor())
-        if not result.decompileCompleted():
-            sys.exit(f"error: decompiling failed: {result.getErrorMessage()}")
-        print(result.getDecompiledFunction().getC())
+        for address in addresses:
+            at = space.getAddress(int(address, 16))
+            function: Function | None = program.getFunctionManager().getFunctionAt(at)
+            if function is None:
+                sys.exit(f"error: no function starts at {address}")
+            result = decompiler.decompileFunction(function, 60, pyghidra.task_monitor())
+            if not result.decompileCompleted():
+                sys.exit(f"error: decompiling {address} failed: {result.getErrorMessage()}")
+            if len(addresses) > 1:
+                print(f"/* ==== {address} */")
+            print(result.getDecompiledFunction().getC())
 
 
 def _write_functions(functions: list[FunctionInfo]) -> None:

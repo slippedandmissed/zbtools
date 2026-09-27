@@ -10,7 +10,7 @@
 /* Splits the samples into blocks: at each cue point, and at the loop's
    start and end. */
 /* @zoombi32 0x0047a0ec */
-void __cdecl WaveSound::buildBlocks()
+void __cdecl waveObj::buildBlocks()
 {
     unsigned long nextLoopStart;
     unsigned long nextLoopEnd;
@@ -75,10 +75,10 @@ void __cdecl WaveSound::buildBlocks()
 
 /* A wave sound from a Mohawk WAVE file in a handle; 0 on error. */
 /* @zoombi32 0x0047a28d */
-AudioObject *__cdecl newWaveSound(short data)
+audioObj *__cdecl newWaveSound(short data)
 {
     unsigned char *end;
-    WaveSound *wave;
+    waveObj *wave;
     unsigned long *file;
     unsigned char *chunk;
     unsigned short count;
@@ -90,12 +90,12 @@ AudioObject *__cdecl newWaveSound(short data)
         setSoundError(0x29d0);
         return 0;
     }
-    if ((wave = (WaveSound *)newPtr(sizeof(WaveSound))) == 0) {
+    if ((wave = (waveObj *)newPtr(sizeof(waveObj))) == 0) {
         unlockHandle(data);
         setSoundError(memError());
         return 0;
     }
-    new (wave) WaveSound;
+    new (wave) waveObj;
     wave->tag = 0x414f626a;
     wave->kind = 1;
     wave->rate = makeFixed(1, 0);
@@ -153,7 +153,7 @@ AudioObject *__cdecl newWaveSound(short data)
     }
     count = wave->cues ? byteSwapShort(*(unsigned short *)(wave->cues + 8)) : 0;
     count += wave->loops ? 3 : 1;
-    if ((wave = (WaveSound *)resizePtr(wave, count * sizeof(WaveBlock) + 0xb8)) == 0) {
+    if ((wave = (waveObj *)resizePtr(wave, count * sizeof(WaveBlock) + 0xb8)) == 0) {
         setSoundError(memError());
         goto fail;
     }
@@ -167,14 +167,14 @@ AudioObject *__cdecl newWaveSound(short data)
 }
 
 /* @zoombi32 0x0047a621 */
-void __cdecl WaveSound::release()
+void __cdecl waveObj::release()
 {
     unlockHandle(data);
 }
 
 /* Opens the wave device for the sound's format. */
 /* @zoombi32 0x0047a633 */
-short __cdecl WaveSound::openDevice()
+short __cdecl waveObj::openDevice()
 {
     PCMWAVEFORMAT format;
 
@@ -206,13 +206,13 @@ short __cdecl WaveSound::openDevice()
 }
 
 /* @zoombi32 0x0047a72a */
-short __cdecl WaveSound::setDeviceRate(long speed)
+short __cdecl waveObj::setDeviceRate(long speed)
 {
     return setSoundError(speed == rate ? 0 : wavebufSetPlaybackRate(wave, speed) ? 0x29d2 : 0);
 }
 
 /* @zoombi32 0x0047a75e */
-short __cdecl WaveSound::setDeviceVolume(long level)
+short __cdecl waveObj::setDeviceVolume(long level)
 {
     return setSoundError(wavebufSetVolume(wave, level) ? 0x29d3 : 0);
 }
@@ -221,7 +221,7 @@ short __cdecl WaveSound::setDeviceVolume(long level)
    from the middle of it, as a buffer of its own), and starts them unless
    paused. */
 /* @zoombi32 0x0047a78a */
-short __cdecl WaveSound::startDevice(short paused)
+short __cdecl waveObj::startDevice(short paused)
 {
     unsigned short i;
     unsigned long at;
@@ -278,7 +278,7 @@ short __cdecl WaveSound::startDevice(short paused)
 
 /* Stops the device, keeping the position (and the loops left). */
 /* @zoombi32 0x0047a95f */
-void __cdecl WaveSound::haltDevice()
+void __cdecl waveObj::haltDevice()
 {
     MMTIME time;
     unsigned long at;
@@ -299,7 +299,7 @@ void __cdecl WaveSound::haltDevice()
 }
 
 /* @zoombi32 0x0047aa07 */
-void __cdecl WaveSound::closeDevice()
+void __cdecl waveObj::closeDevice()
 {
     unlockPtr(file);
     unprepare();
@@ -310,7 +310,7 @@ void __cdecl WaveSound::closeDevice()
 }
 
 /* @zoombi32 0x0047aa3f */
-void __cdecl WaveSound::unprepare()
+void __cdecl waveObj::unprepare()
 {
     unsigned short i;
 
@@ -326,7 +326,7 @@ void __cdecl WaveSound::unprepare()
 }
 
 /* @zoombi32 0x0047aab6 */
-long __cdecl WaveSound::deviceHandle()
+long __cdecl waveObj::deviceHandle()
 {
     return wave;
 }
@@ -334,7 +334,7 @@ long __cdecl WaveSound::deviceHandle()
 /* The position in samples, given the device's (0xffffffff: ask it),
    allowing for the loop. */
 /* @zoombi32 0x0047aac1 */
-unsigned long __cdecl WaveSound::positionAt(unsigned long sample)
+unsigned long __cdecl waveObj::positionAt(unsigned long sample)
 {
     MMTIME time;
     unsigned long at;
@@ -360,13 +360,13 @@ unsigned long __cdecl WaveSound::positionAt(unsigned long sample)
 
 /* The position in ms. */
 /* @zoombi32 0x0047ab5a */
-long __cdecl WaveSound::position()
+long __cdecl waveObj::position()
 {
     return fixedMul(positionAt(0xffffffff), msPerSample);
 }
 
 /* @zoombi32 0x0047ab78 */
-void __cdecl WaveSound::pause()
+void __cdecl waveObj::pause()
 {
     SoundNotice notice;
 
@@ -380,7 +380,7 @@ void __cdecl WaveSound::pause()
 /* Lets the loop play out: breaks it on the device, and notes how much
    looping it did. */
 /* @zoombi32 0x0047abae */
-void __cdecl WaveSound::endLoop()
+void __cdecl waveObj::endLoop()
 {
     MMTIME time;
     unsigned long at;
@@ -399,7 +399,7 @@ void __cdecl WaveSound::endLoop()
 }
 
 /* @zoombi32 0x0047ac61 */
-void __cdecl WaveSound::resetLoop()
+void __cdecl waveObj::resetLoop()
 {
     if (loops) {
         endingLoop = 0;
@@ -408,7 +408,7 @@ void __cdecl WaveSound::resetLoop()
 }
 
 /* @zoombi32 0x0047ac97 */
-void __cdecl WaveSound::resume()
+void __cdecl waveObj::resume()
 {
     SoundNotice notice;
 
@@ -421,7 +421,7 @@ void __cdecl WaveSound::resume()
 
 /* Moves to `ms` (-1: the end). */
 /* @zoombi32 0x0047accd */
-short __cdecl WaveSound::seek(long ms)
+short __cdecl waveObj::seek(long ms)
 {
     unsigned long sample = ms == -1 ? sampleCount : fixedMul(ms, samplesPerMs);
 
@@ -435,7 +435,7 @@ short __cdecl WaveSound::seek(long ms)
 
 /* Moves to the cue point named `text`. */
 /* @zoombi32 0x0047ad19 */
-short __cdecl WaveSound::setText(const char *text, unsigned short length)
+short __cdecl waveObj::setText(const char *text, unsigned short length)
 {
     unsigned short count;
     unsigned char *entry;
@@ -456,9 +456,63 @@ short __cdecl WaveSound::setText(const char *text, unsigned short length)
 
 /* Not exact: the original keeps `this` in ebx; BCC32 4.5 uses eax. */
 /* @zoombi32 0x0047ada8 */
-short __cdecl WaveSound::play(SoundNotify proc, long data)
+short __cdecl waveObj::play(SoundNotify proc, long data)
 {
     if (start < sampleCount)
-        return AudioObject::play(proc, data);
+        return audioObj::play(proc, data);
     return setSoundError(0x29cf);
+}
+
+/* The wave device's callback: passes finished blocks to waveBlockDone under
+   the sound's lock. */
+/* @zoombi32 0x0047ae14 */
+void CALLBACK waveCallback(long, unsigned short message, DWORD instance, DWORD header, DWORD)
+{
+    HINSTANCE saved = fn_46e0ec(0);
+    WaveBlock *block;
+
+    if (message == WOM_DONE || message == 0x8000) {
+        waveObj *wave = (waveObj *)instance;
+        WAVEHDR *done = (WAVEHDR *)header;
+        if (!wave->resetting && (block = (WaveBlock *)done->dwUser) != 0)
+            deferCall(&wave->lock, &block->call);
+    }
+    fn_46e0ec((long)saved);
+}
+
+/* A block has played: reports its cue point, notes the end of the loop,
+   and the end. */
+/* @zoombi32 0x0047ae62 */
+void waveBlockDone(void *data)
+{
+    WaveBlock *block = (WaveBlock *)data;
+    waveObj *wave = block->sound;
+    SoundNotice notice;
+
+    {
+        unsigned char *cue = block->cue;
+        if (cue) {
+            notice.what = 0;
+            notice.unknown4 = cue[4];
+            notice.data = (char *)cue + 5;
+            notifySound(wave, &notice);
+        }
+    }
+    if (block->header.dwFlags & WHDR_DONE) {
+        if (block == wave->afterLoop) {
+            wave->loopDone = 1;
+            if (!wave->endingLoop) {
+                wave->loopAdjust = (wave->loopEnd - wave->loopStart) * (wave->loopBlock->header.dwLoops - 1);
+                if (wave->loops != 0xffff)
+                    wave->loopBlock->header.dwLoops = 1;
+            }
+        }
+        if (block->start + block->length == wave->sampleCount) {
+            wave->started = 0;
+            wave->start = wave->sampleCount;
+            notice.what = 1;
+            notice.unknown4 = 0;
+            notifySound(wave, &notice);
+        }
+    }
 }

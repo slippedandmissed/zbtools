@@ -15,7 +15,7 @@ long newStreamedSound(long resource, long unknown)
     long file;
     unsigned long offset;
     unsigned long size;
-    AudioObject *object;
+    audioObj *object;
 
     if (getResourceInfo(resource, &file, &offset, &size)) {
         setSoundError(resourceError());

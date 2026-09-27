@@ -224,7 +224,7 @@ MidiMap *midiMap(long handle)
 /* Caches (or uncaches) the drum keys and patches the file lists, on
    devices that cache. */
 /* @zoombi32 0x00478d50 */
-short __cdecl MidiSound::cachePatches(short cache)
+short __cdecl midiObj::cachePatches(short cache)
 {
     unsigned short drumChannel;
     WORD cachedKeys[128];
@@ -267,13 +267,13 @@ short __cdecl MidiSound::cachePatches(short cache)
 /* Not exact: the original keeps `tracks` in ebx (before `midi`); BCC32 4.5 puts it
    on the stack. */
 /* @zoombi32 0x00478f0b */
-AudioObject *__cdecl newMidiSound(short data)
+audioObj *__cdecl newMidiSound(short data)
 {
     unsigned long size;
     unsigned char *end;
     unsigned short format;
     unsigned short division;
-    MidiSound *midi;
+    midiObj *midi;
     unsigned long *file;
     unsigned char *header;
     unsigned short tracks;
@@ -297,12 +297,12 @@ AudioObject *__cdecl newMidiSound(short data)
         setSoundError(0x29d1);
         return 0;
     }
-    if ((midi = (MidiSound *)newPtr((unsigned short)(tracks * 16 + 0x184))) == 0) {
+    if ((midi = (midiObj *)newPtr((unsigned short)(tracks * 16 + 0x184))) == 0) {
         unlockHandle(data);
         setSoundError(memError());
         return 0;
     }
-    new (midi) MidiSound;
+    new (midi) midiObj;
     midi->tag = 0x414f626a;
     midi->kind = 0;
     midi->rate = makeFixed(1, 0);
@@ -354,7 +354,7 @@ AudioObject *__cdecl newMidiSound(short data)
 }
 
 /* @zoombi32 0x004791a1 */
-void __cdecl MidiSound::release()
+void __cdecl midiObj::release()
 {
     unlockHandle(data);
 }
@@ -362,7 +362,7 @@ void __cdecl MidiSound::release()
 /* Opens a map on the device, caches the file's patches and prepares the
    file (for its sysex). */
 /* @zoombi32 0x004791b6 */
-short __cdecl MidiSound::openDevice()
+short __cdecl midiObj::openDevice()
 {
     short error;
 
@@ -391,7 +391,7 @@ short __cdecl MidiSound::openDevice()
 }
 
 /* @zoombi32 0x004792c6 */
-short __cdecl MidiSound::setDeviceRate(long speed)
+short __cdecl midiObj::setDeviceRate(long speed)
 {
     if (speed > 0x1000000 || speed < 0x100)
         return setSoundError(0x29d2);
@@ -402,14 +402,14 @@ short __cdecl MidiSound::setDeviceRate(long speed)
 }
 
 /* @zoombi32 0x0047931d */
-short __cdecl MidiSound::setDeviceVolume(long curve)
+short __cdecl midiObj::setDeviceVolume(long curve)
 {
     return setSoundError(setMidiMapTable((long)map, curve) ? 0x29d3 : 0);
 }
 
 /* Starts playing (after the setup section, first time round) on a timer. */
 /* @zoombi32 0x00479349 */
-short __cdecl MidiSound::startDevice(short paused)
+short __cdecl midiObj::startDevice(short paused)
 {
     unsigned long at;
 
@@ -430,7 +430,7 @@ short __cdecl MidiSound::startDevice(short paused)
 }
 
 /* @zoombi32 0x0047941b */
-void __cdecl MidiSound::haltDevice()
+void __cdecl midiObj::haltDevice()
 {
     lockTimers();
     if (started) {
@@ -444,7 +444,7 @@ void __cdecl MidiSound::haltDevice()
 }
 
 /* @zoombi32 0x0047947d */
-void __cdecl MidiSound::closeDevice()
+void __cdecl midiObj::closeDevice()
 {
     midiMapUnprepareHeader((long)map, &header, sizeof header);
     cachePatches(0);
@@ -454,13 +454,13 @@ void __cdecl MidiSound::closeDevice()
 }
 
 /* @zoombi32 0x004794bd */
-long __cdecl MidiSound::deviceHandle()
+long __cdecl midiObj::deviceHandle()
 {
     return (long)map;
 }
 
 /* @zoombi32 0x004794c8 */
-long __cdecl MidiSound::position()
+long __cdecl midiObj::position()
 {
     unsigned long at;
 
@@ -471,7 +471,7 @@ long __cdecl MidiSound::position()
 }
 
 /* @zoombi32 0x004794f0 */
-void __cdecl MidiSound::pause()
+void __cdecl midiObj::pause()
 {
     SoundNotice notice;
 
@@ -485,13 +485,13 @@ void __cdecl MidiSound::pause()
 }
 
 /* @zoombi32 0x00479556 */
-void __cdecl MidiSound::endLoop()
+void __cdecl midiObj::endLoop()
 {
     endingLoop = 1;
 }
 
 /* @zoombi32 0x00479564 */
-void __cdecl MidiSound::resetLoop()
+void __cdecl midiObj::resetLoop()
 {
     lastLoop = 0;
     endingLoop = 0;
@@ -500,7 +500,7 @@ void __cdecl MidiSound::resetLoop()
 }
 
 /* @zoombi32 0x0047958c */
-void __cdecl MidiSound::resume()
+void __cdecl midiObj::resume()
 {
     SoundNotice notice;
 
@@ -518,7 +518,7 @@ void __cdecl MidiSound::resume()
 /* Moves to the cue point `text` (leaving the position alone if there's
    none). */
 /* @zoombi32 0x00479625 */
-short __cdecl MidiSound::setText(const char *text, unsigned short size)
+short __cdecl midiObj::setText(const char *text, unsigned short size)
 {
     unsigned long at = ticks;
 
@@ -538,10 +538,10 @@ short __cdecl MidiSound::setText(const char *text, unsigned short size)
 
 /* Not exact: the original keeps `this` in ebx; BCC32 4.5 uses eax. */
 /* @zoombi32 0x004796bf */
-short __cdecl MidiSound::play(SoundNotify proc, long data)
+short __cdecl midiObj::play(SoundNotify proc, long data)
 {
     if (finishedTracks < trackCount)
-        return AudioObject::play(proc, data);
+        return audioObj::play(proc, data);
     return setSoundError(0x29cf);
 }
 
@@ -549,7 +549,7 @@ short __cdecl MidiSound::play(SoundNotify proc, long data)
    (sending them if `play`, and telling the owner of cue points if
    `notify`), and jumps back to the loop's start if a loop's end asks. */
 /* @zoombi32 0x00479730 */
-void __cdecl MidiSound::advance(unsigned short elapsed, short play, short notify)
+void __cdecl midiObj::advance(unsigned short elapsed, short play, short notify)
 {
     unsigned long before;
     unsigned long delta;
@@ -593,7 +593,7 @@ void __cdecl MidiSound::advance(unsigned short elapsed, short play, short notify
 /* Sets the tempo (microseconds per quarter note), and the conversions
    between ticks and ms. */
 /* @zoombi32 0x0047987c */
-void __cdecl MidiSound::setTempo(unsigned long microseconds)
+void __cdecl midiObj::setTempo(unsigned long microseconds)
 {
     long ratio;
 
@@ -609,7 +609,7 @@ void __cdecl MidiSound::setTempo(unsigned long microseconds)
 
 /* The ticks to the next event (at most the longest step). */
 /* @zoombi32 0x0047991a */
-unsigned short __cdecl MidiSound::nextStep()
+unsigned short __cdecl midiObj::nextStep()
 {
     long ms;
 
@@ -637,14 +637,14 @@ unsigned long __cdecl readVarLen(unsigned char **p)
 }
 
 /* @zoombi32 0x004799bd */
-short __cdecl MidiSound::seek(long at)
+short __cdecl midiObj::seek(long at)
 {
     return seekTo(at, 0);
 }
 
 /* Moves to `position` (in ticks), from the start if it's behind. */
 /* @zoombi32 0x004799d3 */
-short __cdecl MidiSound::seekTo(unsigned long at, short play)
+short __cdecl midiObj::seekTo(unsigned long at, short play)
 {
     unsigned short i;
     MidiTrack *track;
@@ -684,7 +684,7 @@ short __cdecl MidiSound::seekTo(unsigned long at, short play)
 /* @zoombi32 0x00479b13 */
 void midiStep(void *data)
 {
-    MidiSound *midi = (MidiSound *)data;
+    midiObj *midi = (midiObj *)data;
     SoundNotice notice;
     long next;
     short error;
@@ -714,7 +714,7 @@ void midiStep(void *data)
 /* @zoombi32 0x00479c17 */
 void midiTimer(long, long data)
 {
-    MidiSound *midi = (MidiSound *)data;
+    midiObj *midi = (midiObj *)data;
 
     deferCall(&midi->lock, &midi->call);
 }
@@ -723,7 +723,7 @@ void midiTimer(long, long data)
 /* Not exact: the original increments `p` before reading through the old value in
    `*p++`; BCC32 4.5 increments after. */
 /* @zoombi32 0x00479c34 */
-long __cdecl MidiSound::dispatch(MidiTrack *track, short play, short notify)
+long __cdecl midiObj::dispatch(MidiTrack *track, short play, short notify)
 {
     unsigned char *p;
     unsigned char type;
