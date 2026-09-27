@@ -23,6 +23,12 @@ inline unsigned short swapShort(unsigned short value)
     return (unsigned short)(bytes[1] | bytes[0] << 8);
 }
 
+/* Swaps a big-endian value where it is. */
+inline void swapInPlace(unsigned short &value)
+{
+    value = swapShort(value);
+}
+
 inline unsigned long swapLong(unsigned long value)
 {
     unsigned char *bytes = (unsigned char *)&value;
@@ -4104,9 +4110,9 @@ void fn_415a20(Callback callback);
 void initViews(); /* 0x46310c */
 void fn_469669();
 short fn_45b8b0(Snoid *snoid, short which);
-void fn_4589ce(const char *text, short, short);
+void showNameTag(const char *text, unsigned long duration, short large); /* 0x4589ce */
 void fn_459c84(short, short);
-void fn_4591cc();
+void freePaths();
 void fn_462749(short value, const char *after, short *number, const char *before, short level);
 void fn_466c95();
 void closeViews();
@@ -4416,6 +4422,27 @@ void freeSnoidScripts(); /* 0x4571a8 */
 void drawSnoid(Snoid *snoid); /* 0x4571d8 */
 short placeSnoid(Snoid *snoid, unsigned long when, short x, short y, short targetX, short targetY);
 short addSnoidView(Snoid *snoid, short placed); /* 0x4574ae */
+short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(Point where)); /* 0x458059 */
+void hideNameTag();
+void drawNameTag(View *view);
+void updateNameTag(View *view, short region);
+void toggleShowPositions();
+void setSnoidsRunning(short running);
+void runSnoid(short id, short chosen);
+View *idleSnoidView(short id);
+Snoid *findSnoid(short id, short wake);
+extern ShortRect nameTagRect; /* @data 0x4a4cc4 */
+extern ShortRect largeNameTagRect; /* @data 0x4a4ccc */
+extern unsigned short *paths; /* @data 0x4a4cd4: 'PATH' */
+extern short *pathNodes; /* @data 0x4a4cd8: 'NODE' */
+extern long pathsResource; /* @data 0x4a4cdc */
+extern long pathNodesResource; /* @data 0x4a4ce0 */
+extern short g_4a4b9c;
+short fn_45ba1f();
+short fn_458772(View *view);
+extern unsigned short showPositions; /* @data 0x4a4b9a: show the dragged Zoombini's position (a cheat) */
+extern short dragX; /* @data 0x4b754e */
+extern short dragY; /* @data 0x4b7550 */
 void makePartySnoids(short all); /* 0x4572f0 */
 void viewPlace(Point *where, short n); /* 0x457fff */
 void placedViewPoint(Point *where, short n);
@@ -4506,17 +4533,16 @@ void fn_416754();
 long fn_417906(long);
 void enterCamp();
 void leaveCamp();
-void fn_45915d(short);
+void loadPaths(short);
 void fn_458cc1(short);
 void fn_458f07(short, short);
 short fn_45bdc4(char *);
 void campIdle();
 void campButtonClicked(short button);
 void campMouse(short action);
-short fn_458059(View *view, Point where, short, short);
 short heldPlaceNumber(); /* 0x457fbb */
 void claimPlacedView(short n, short id); /* 0x45802e */
-void fn_45a477();
+void markPlacedSnoids();
 void fn_4590b6(short, short, short);
 void fn_4624fc();
 void fn_43af6b();

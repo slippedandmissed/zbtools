@@ -611,7 +611,7 @@ void enterCamp()
     noteCampSlot(-1);
     openGameFile(&campMap, "BaseCamp.MHK");
     fn_46be2e(campMap);
-    fn_45915d(1000);
+    loadPaths(1000);
     loadDragCursors(9000);
     loadTerrain(100);
     drawBackdrop(1000);
@@ -867,7 +867,7 @@ void campButtonClicked(short button)
                 drawCampButtons(button, 1, 0, 1);
                 waitForEventFor(0, 2, 0, 1);
                 drawCampButtons(button, 0, 0, 1);
-                fn_45a477();
+                markPlacedSnoids();
                 fn_4590b6(0x2a8, 0x13c, 0x2d);
                 g_4b0d52 = 10;
             } else {
@@ -895,7 +895,7 @@ void campButtonClicked(short button)
                 drawCampButtons(button, 1, 0, 1);
                 waitForEventFor(0, 2, 0, 1);
                 drawCampButtons(button, 0, 0, 1);
-                fn_45a477();
+                markPlacedSnoids();
                 fn_4590b6(0x2a8, 0x190, 0x2d);
                 g_4b0d52 = 13;
             } else {
@@ -1013,7 +1013,7 @@ void campMouse(short action)
 
                 g_4ab51c = 0;
                 g_4ab52c = 1;
-                result = fn_458059(view, where, 0, 0);
+                result = dragSnoid(view, where, 0, 0);
                 g_4ab52c = 0;
                 count = heldPlaceNumber();
                 snoid = viewSnoid(view);

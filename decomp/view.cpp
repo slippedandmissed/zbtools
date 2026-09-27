@@ -120,7 +120,7 @@ void clearViews()
         }
         setEmptyRgn(currentViewRgn);
         setEmptyRgn(removedRgn);
-        fn_4591cc();
+        freePaths();
         freeScripts();
         freeTerrain();
         freeSnoidScripts();
@@ -1323,7 +1323,7 @@ void noteSoundTest(short sound, short kind)
         break;
     }
     intToDecimal(sound, text + strlen(text));
-    fn_4589ce(text, 0, 1);
+    showNameTag(text, 0, 1);
 }
 
 /*

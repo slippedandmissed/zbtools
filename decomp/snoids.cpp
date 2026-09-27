@@ -797,3 +797,427 @@ void updateSnoidView(View *view, short region)
     }
     view->changed = 1;
 }
+
+/*
+ * Drags a Zoombini with the mouse (from `where`, kept inside `bounds` or
+ * the game area, `track` told of each position), lighting up the placed
+ * view it's over; on release it heads for that view's place, or (if
+ * fn_458772 doesn't place it) back where it was. Returns the placed view
+ * it started on (from 1).
+ */
+/* @zoombi32 0x00458059 */
+short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(Point where))
+{
+    short dx;
+    short dy;
+    short id;
+    short target;
+    short which;
+    Point last;
+    Point current;
+    Point start;
+    View *dragged;
+    View *placed;
+    View *old;
+    ShortRect rect;
+    ShortRect area;
+    unsigned long savedInterval;
+    unsigned long savedFlags;
+    short moved;
+    short savedBlink;
+    short hit;
+    short prevId;
+    ShortRect limits;
+    Snoid *snoid;
+    short found;
+
+    if (bounds != 0)
+        limits = *bounds;
+    else
+        limits = gameRect;
+    savedBlink = g_4a4b98;
+    g_4a4b98 = hit = prevId = 0;
+    heldPlace = placeHeld = 0;
+    id = view->id;
+    if (g_4b7556)
+        prevId = view->prev->id;
+    if ((dragged = removeView(id, 0)) == 0)
+        return 0;
+    g_4b7568 = 1;
+    current = where;
+    dragged->id = -3;
+    savedFlags = dragged->flags;
+    dragged->flags |= 0x4001000;
+    insertViewAtEnd(dragged);
+    if ((!g_4b754a && viewSnoid(view)->name[0]) || showPositions)
+        showNameTag(viewSnoid(view)->name, 0, 0);
+    savedInterval = dragged->interval;
+    dragged->nextUpdate = 0;
+    dragged->interval = 3;
+    snoid = viewSnoid(dragged);
+    snoid->unknownF8 = 0;
+    start = *(Point *)&snoid->body.x;
+    unionRgnRect(removedRgn, &snoid->body.bounds);
+    if (!g_4b7552)
+        fn_45a75b(snoid, 5, 0);
+    unionRgnRect(currentViewRgn, &snoid->body.bounds);
+    last = current;
+    dx = current.x - start.x;
+    dy = current.y - start.y;
+    rect.left = start.x - g_4b755e;
+    rect.right = start.x + g_4b755e;
+    rect.top = start.y - g_4b755e;
+    rect.bottom = start.y + g_4b755e;
+    found = 0;
+    {
+        short i;
+
+        for (i = 0; !found && i < placedViewCount; i++)
+            if (ptInRect(&rect, placedViewPoints[i])) {
+                hit = i + 1;
+                found = 1;
+                if (g_4b83e4[i] == id)
+                    g_4b83e4[i] = 0;
+            }
+        found = 0;
+        for (i = 0; !found && i < viewPlaceCount; i++)
+            if (ptInRect(&rect, viewPlaces[i])) {
+                found = 1;
+                if (g_4b86d4[i] == id)
+                    g_4b86d4[i] = 0;
+            }
+    }
+    target = 0;
+    moved = 1;
+    while (fn_45ba1f()) {
+        getCursorPosition(&current);
+        if (track)
+            track(current);
+        if (last.x > current.x) {
+            if (!snoid->unknownF2)
+                snoid->unknownF2 = 1;
+        } else if (last.x < current.x) {
+            if (snoid->unknownF2)
+                snoid->unknownF2 = 0;
+        }
+        if (!g_4b7556) {
+            dragX = current.x - dx;
+            if (dragX < limits.left)
+                dragX = limits.left;
+            if (dragX > limits.right)
+                dragX = limits.right;
+            snoid->body.x = dragX;
+            dragY = current.y - dy;
+            if (dragY < limits.top)
+                dragY = limits.top;
+            if (dragY > limits.bottom)
+                dragY = limits.bottom;
+            snoid->body.y = dragY;
+            {
+                short ddx = last.x - current.x;
+                short ddy = last.y - current.y;
+
+                if (!moved && (ddx || ddy))
+                    moved = 1;
+            }
+        } else {
+            moved = 1;
+        }
+        last = current;
+        if (placedViewCount && (moved || g_4b754c)) {
+            short i;
+
+            moved = 0;
+            rect.left = snoid->body.x - g_4b755e;
+            rect.right = snoid->body.x + g_4b755e;
+            rect.top = snoid->body.y - g_4b755e;
+            rect.bottom = snoid->body.y + g_4b755e;
+            found = 0;
+            if (!g_4b754c) {
+                for (i = 0; !found && i < placedViewCount && g_4b7560; i++)
+                    if (!g_4b83e4[i] && ptInRect(&rect, placedViewPoints[i])) {
+                        if ((placed = findView(placedViews[i])) != 0) {
+                            found = 1;
+                            if (placed->id != target) {
+                                if ((old = findView(target)) != 0 && old->body.running) {
+                                    old->flags |= 0x10000;
+                                    old->nextUpdate = 0;
+                                    mainLoopEvents();
+                                }
+                                which = i;
+                                target = placed->id;
+                                placed->body.running = 1;
+                                placed->body.frame = 0;
+                                placed->body.frameOffset = 1;
+                            }
+                        }
+                    }
+            }
+            if (!found && target) {
+                if ((old = findView(target)) != 0 && old->body.running) {
+                    old->flags |= 0x10000;
+                    old->nextUpdate = 0;
+                    mainLoopEvents();
+                }
+                target = 0;
+            }
+        }
+        mainLoopEvents();
+        resetViewClock();
+    }
+    if (target && !g_4b7556) {
+        g_4b83e4[which] = id;
+        heldPlace = which;
+        placeHeld = id;
+        if ((old = findView(target)) != 0 && old->body.running) {
+            old->flags |= 0x10000;
+            old->nextUpdate = 0;
+        }
+    }
+    if (showPositions) {
+        View *other = findView(-2);
+
+        if (other && other->body.running)
+            other->body.running = 0;
+    } else {
+        hideNameTag();
+    }
+    area = dragged->body.bounds;
+    unionRgnRect(removedRgn, &area);
+    if (!g_4b7556) {
+        if (target)
+            *(Point *)&snoid->targetX = placedViewPoints[which];
+        else if (currentScene == 6)
+            *(Point *)&snoid->targetX = start;
+        else if (!fn_458772(dragged))
+            *(Point *)&snoid->targetX = start;
+    }
+    snoid->unknownF8 = 1;
+    unionRgnRect(removedRgn, &snoid->body.bounds);
+    if (!g_4b7552) {
+        if (g_4b7556) {
+            snoid->unknownF2 = 0;
+            fn_45a75b(snoid, 0, 0);
+        } else {
+            fn_45a75b(snoid, 4, 0);
+        }
+    }
+    dragged->id = id;
+    dragged->flags = savedFlags;
+    dragged->interval = savedInterval;
+    g_4a4b98 = savedBlink;
+    if (g_4b7556)
+        moveView(id, 1, prevId);
+    g_4b7556 = 0;
+    g_4b754c = 0;
+    g_4b7568 = 0;
+    return hit;
+}
+
+/*
+ * Shows a name tag (view -2) with `text`, large or small, for `duration`
+ * ms (0: until taken down).
+ */
+/* @zoombi32 0x004589ce */
+void showNameTag(const char *text, unsigned long duration, short large)
+{
+    View *view;
+
+    deleteView(-2);
+    if (!g_4b9684) {
+        view = (View *)newPtr(0xec);
+        if (view) {
+            initView(view, 0, 0, -2);
+            strcpy((char *)&view->body, text);
+            view->draw = drawNameTag;
+            view->update = updateNameTag;
+            view->body.frameOffset = 0;
+            if (large)
+                view->unknown1e = 1;
+            else
+                view->unknown1e = 0;
+            view->flags |= 0x4001000;
+            if (duration)
+                { duration += clockTime(); view->body.frameOffset = duration; }
+            insertViewAtEnd(view);
+        }
+    }
+}
+
+/* Takes down the name tag. */
+/* @zoombi32 0x00458a61 */
+void hideNameTag()
+{
+    View *view = findView(-2);
+
+    if (view && view->body.running) {
+        view->body.running = 0;
+        unionRgnRect(removedRgn, &view->body.bounds);
+        unionRgnRect(currentViewRgn, &view->body.bounds);
+    }
+}
+
+/* Draws the name tag (with the dragged Zoombini's position, if showing them). */
+/* @zoombi32 0x00458aaa */
+void drawNameTag(View *view)
+{
+    Color saved;
+    ShortRect rect;
+    short image;
+    char text[24];
+
+    if (view->body.running) {
+        saved = setForeColor(Color(0x2d));
+        if (view->unknown1e) {
+            rect = largeNameTagRect;
+            image = 2;
+        } else {
+            rect = nameTagRect;
+            image = 1;
+        }
+        drawImageData((unsigned short *)((char *)snoidImages3 + snoidImages3->offsets[image]), rect.left,
+                      rect.top, 8);
+        if (showPositions && g_4b7568) {
+            short length;
+
+            intToDecimal(dragX, text);
+            length = strlen(text);
+            text[length++] = ',';
+            text[length++] = ' ';
+            text[length] = 0;
+            intToDecimal(dragY, text + length);
+            drawText(Rect(rect), 0x22, text, 0xffff);
+        } else {
+            drawText(Rect(rect), 0x22, (char *)&view->body, 0xffff);
+        }
+        setForeColor(saved);
+    }
+}
+
+/* @zoombi32 0x00458c17 */
+void updateNameTag(View *view, short region)
+{
+    if (view->body.running) {
+        if (view->reset) {
+            ShortRect rect;
+
+            if (view->unknown1e)
+                rect = largeNameTagRect;
+            else
+                rect = nameTagRect;
+            rect.bottom = 0x244;
+            unionRgnRect(region, &rect);
+            view->body.bounds = rect;
+            view->changed = 1;
+            view->reset = 0;
+        }
+        if (showPositions)
+            view->changed = 1;
+        if (view->body.frameOffset && view->body.frameOffset <= updateTime)
+            hideNameTag();
+    }
+}
+
+/* Loads the paths Zoombinis walk ('NODE' and 'PATH' resources `id`). */
+/* @zoombi32 0x0045915d */
+void loadPaths(short id)
+{
+    short handle;
+
+    pathNodes = loadSwappedResource(&pathNodesResource, id, RESOURCE_TYPE('N', 'O', 'D', 'E'));
+    fn_46c4fe(&pathsResource, RESOURCE_TYPE('P', 'A', 'T', 'H'), id, 0, 1);
+    handle = fn_46beac(pathsResource);
+    paths = (unsigned short *)fn_48ea00(handle);
+    swapInPlace(*paths);
+}
+
+/* @zoombi32 0x004591cc */
+void freePaths()
+{
+    fn_46c602(&pathsResource);
+    fn_46c602(&pathNodesResource);
+    paths = 0;
+    pathNodes = 0;
+    g_4a4b9c = 0;
+}
+
+/* @zoombi32 0x00459c02 */
+void toggleShowPositions()
+{
+    showPositions = !showPositions;
+}
+
+/* Sets every Zoombini's view's script running (or not). */
+/* @zoombi32 0x0045a44c */
+void setSnoidsRunning(short running)
+{
+    for (View *view = viewListEnd(1); view; view = view->next)
+        if (view->flags & 1)
+            view->body.running = running;
+}
+
+/* Marks the Zoombinis holding places (unknownF7). */
+/* @zoombi32 0x0045a477 */
+void markPlacedSnoids()
+{
+    for (short i = 0; i < 125; i++)
+        if (g_4b83e4[i]) {
+            View *view = findView(g_4b83e4[i]);
+
+            if (view && (view->flags & 1))
+                viewSnoid(view)->unknownF7 = 1;
+        }
+}
+
+/* Runs the Zoombini view `id`'s script, setting its unknownF7. */
+/* @zoombi32 0x0045a4b2 */
+void runSnoid(short id, short chosen)
+{
+    for (View *view = viewListEnd(1); view; view = view->next)
+        if ((view->flags & 1) && id == view->id) {
+            view->body.running = 1;
+            viewSnoid(view)->unknownF7 = chosen;
+        }
+}
+
+/* @zoombi32 0x0045aaff */
+void fn_45aaff(short mode)
+{
+    switch (mode) {
+    case -1:
+        g_4b756a = 1;
+        break;
+    case 1:
+        g_4b756a = 2;
+        break;
+    default:
+        g_4b756a = 0;
+        break;
+    }
+}
+
+/* The Zoombini view `id`'s snoid, if it's idle (state 0). */
+/* @zoombi32 0x0045b37a */
+View *idleSnoidView(short id)
+{
+    View *view = findView(id);
+
+    if (!view || viewSnoid(view)->unknownF4)
+        return 0;
+    return view;
+}
+
+/* The Zoombini `id`'s snoid (0 if it isn't one), stopping its clock if asked. */
+/* @zoombi32 0x0045b9ef */
+Snoid *findSnoid(short id, short wake)
+{
+    Snoid *snoid = 0;
+    View *view = findView(id);
+
+    if (view && (view->flags & 1)) {
+        snoid = viewSnoid(view);
+        if (wake)
+            view->nextUpdate = 0;
+    }
+    return snoid;
+}
