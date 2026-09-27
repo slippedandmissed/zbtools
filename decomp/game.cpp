@@ -149,7 +149,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         instanceAtom = 0;
     }
     setTakeStatic(0);
-    fn_48cab4(getPortPalette(), 1);
+    realizePalette(getPortPalette(), 1);
 
     for (i = 0; i < 3; i++)
         fonts[i] = 0;

@@ -455,7 +455,7 @@ void restoreDirectory()
 short fn_4568d8()
 {
     if (!windowed && palette) {
-        if (fn_48cab4(palette, 1))
+        if (realizePalette(palette, 1))
             InvalidateRect(mainWindow, 0, 0);
         return 1;
     }

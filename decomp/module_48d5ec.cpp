@@ -54,7 +54,7 @@ short setPaletteColors(Palette *handle, unsigned short first, unsigned short cou
                 palette->realized = 0;
         }
     }
-    palette->unknown12 = 1;
+    palette->changed = 1;
     return setPortError(0);
 }
 

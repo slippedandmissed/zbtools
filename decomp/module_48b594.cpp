@@ -131,7 +131,7 @@ UINT setSystemPaletteUse(HDC dc, UINT use)
                 palette->realized = 0;
                 palette = palette->next;
             } while (palette != graphics.palettes);
-        if (!graphics.unknown68)
+        if (!graphics.realizing)
             SendMessage(HWND_BROADCAST, WM_PALETTECHANGED, (WPARAM)GetDesktopWindow(), 0);
     } else
         graphics.systemPaletteUse = use;
@@ -373,7 +373,7 @@ short openGraphicsEngine(const DisplayMode *mode, short change)
         }
 
     SetCursor(graphics.cursor = LoadCursor(0, IDC_ARROW));
-    graphics.cursorShown = 1;
+    graphics.standardCursor = 1;
     getIniBool(0, "Graphics", "fEnableCursorFix", &graphics.cursorFix);
     graphics.previousHook = setActivateHook(graphicsActivate);
     window = appWindowHandle();
@@ -504,7 +504,7 @@ void closeGraphicsEngine()
     state->previousHook = 0;
     graphicsActivate(0);
     setCursorLevel(0);
-    fn_48d278(0);
+    setCursorShape(0);
     while ((port = state->ports) != 0) {
         while (port->locks)
             port->unlock();

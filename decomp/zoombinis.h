@@ -897,7 +897,7 @@ short fn_480642(); /* initialises the configuration file */
 short fn_483732(long); /* initialises the file manager */
 void __cdecl initDisplayMode(DisplayMode *mode, unsigned short width, unsigned short height, unsigned long colors,
                              short palettized);
-short fn_48cab4(Palette *palette, long);
+unsigned short realizePalette(Palette *palette, short foreground);
 short canUseDisplayMode(DisplayMode *mode, short change); /* whether a display mode is available (filling in the one it would use) */
 Font *setFont(Font *font); /* the previous one */
 short setTakeStatic(short take);
@@ -1101,8 +1101,8 @@ public:
     Palette *prev; /* +8 */
     basePort *ports; /* +0xc: the ports using it */
     short realized; /* +0x10: cleared when the system palette changes */
-    short unknown12;
-    short unknown14;
+    short changed; /* +0x12: colours set since it was realized */
+    short foreground; /* +0x14: realized as the foreground palette */
     unsigned short first; /* +0x16: the first colour the game may set */
     HPALETTE hpal; /* +0x18 */
     PALETTEENTRY entries[256]; /* +0x1c */
@@ -1120,7 +1120,7 @@ public:
     virtual void depthChanged(); /* 6: the display's depth changed (while locked) */
     virtual void v7();
     virtual void prepare(); /* 8: before GDI calls on dc */
-    virtual void v9();
+    virtual void paletteChanged(); /* 9: while locked */
     virtual void v10();
     virtual void v11();
     virtual short useFont(Font *font); /* 12 */
@@ -1163,7 +1163,9 @@ public:
     Pt unknown2c;
     char unknown30[0xc];
     Palette *palette; /* +0x3c */
-    char unknown40[0xc];
+    char unknown40[4];
+    basePort *nextOnPalette; /* +0x44: in palette->ports */
+    char unknown48[4];
     Color backColor; /* +0x4c */
     Font *font; /* +0x50 */
     char unknown54[4];
@@ -1220,6 +1222,15 @@ public:
     char unknownC0[8];
 };
 
+/* A Mac 'CURS' resource: 16x16 image and mask, hot spot (big-endian). */
+struct MacCursor
+{
+    unsigned short data[16];
+    unsigned short mask[16];
+    short hotV; /* +0x40 */
+    short hotH; /* +0x42 */
+};
+
 /* A font (0x38 bytes and its name), in a ring (graphics.fonts). */
 class Font
 {
@@ -1264,12 +1275,13 @@ struct GraphicsState
     unsigned short depth; /* +0x10: the display's bits per pixel (at most 24) */
     char unknown12[2];
     HCURSOR cursor; /* +0x14 */
-    short cursorShown; /* +0x18 */
-    char unknown1a[0x46];
+    short standardCursor; /* +0x18: the cursor is a system one (not to be destroyed) */
+    unsigned char cursorData[0x44]; /* +0x1a: the MacCursor it was made from */
+    char unknown5e[2];
     short cursorFix; /* +0x60: [Graphics] fEnableCursorFix: hide the cursor by making it blank */
     short cursorLevel; /* +0x62: with cursorFix, as ShowCursor counts */
     HCURSOR savedCursor; /* +0x64: with cursorFix, the real cursor while it is hidden */
-    short unknown68; /* +0x68: don't broadcast palette changes */
+    unsigned short realizing; /* +0x68: in realizePalette (no WM_PALETTECHANGED broadcasts) */
     short minimalReserve; /* +0x6a: keep only black and white */
     unsigned short paletteReserved; /* +0x6c: system colours kept (half at each end) */
     char unknown6e[2];
@@ -1336,7 +1348,11 @@ Font *fontObject(Font *font); /* 0x48d555 */
 Font *fontHandle(Font *font);
 Palette *checkPalette(Palette *palette, short kind); /* 0x48d779 */
 basePort *portHandle(basePort *port); /* 0x48d9bd */
-void fn_48d278(short);
+short setCursorShape(const MacCursor *cursor); /* 0-3: arrow, cross, I-beam, wait */
+void drawPackedPixels(long offset, unsigned char *bits, long rowBytes, ShortRect bounds, short x, short y,
+                      ShortRect *clip, unsigned short width, unsigned short height,
+                      const unsigned char *data, short transparent);
+unsigned char packedPixel(const unsigned char *data, unsigned short x, unsigned short y);
 basePort *checkPort(basePort *port, short kind);
 basePort *portObject(short kind);
 short setPortError(short error);

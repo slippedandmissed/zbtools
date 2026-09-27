@@ -212,6 +212,12 @@ TLINK32's zero padding splits the engine (`0x4764bc` to the import thunks at the
 
 Regions are rectangle lists in a handle (`'Rngr'` tag, bounds, capacity grown 16 at a time, count, rectangles), with the error of the last region call in `regionErrorCode` (`0x4b9b64`); `setRegionError` returns the code it stores, which region calls hand back.
 
+### Engine: hand-written assembly in the drawing code
+
+A few drawing routines were written in assembly: the nearest-colour search (`0x48b38c`, which saves registers mid-function and squares bytes with `mul al`) and the packed-pixel code (`0x48cef4` draws, `0x48d13c` reads one pixel; `push ds`, string instructions, `jcxz`/`loop`). They are decompiled as `@zoombi32-functional` C++. `0x48cfc9` and `0x48d03f`, listed as functions, are the two inner loops of `0x48cef4` (it jumps to one through `ebx`: copy, or skip runs of 0), not functions of their own.
+
+Packed pixels (the engine's run-length encoding of 8-bit images): each row is a big-endian byte count and then packets, each a header byte whose bit 7 means a run of the next byte and whose low 7 bits plus 1 are the count (else that many literal bytes follow).
+
 ### Engine: exceptions off, and an open question about registers
 
 The engine was compiled without exception handling (`-x-`): functions with `fileSpec` locals (`initIni`, `0x480642`) have no `__InitExceptBlock` frames, which BCC32 adds by default. So engine modules set `/* @flags -p -x- */`. `fileSpec` has a constructor from a directory and a name (`0x48518c`): a temporary built with it hands its address on in `eax` (constructors return `this`), which a by-value `operator+` wouldn't.

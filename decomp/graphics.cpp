@@ -143,7 +143,7 @@ void setColors(PALETTEENTRY *from, short first, short count)
         else
             memcpy(&colors[first], from, count * sizeof(PALETTEENTRY));
         setPaletteColors(current, first, count, (ColorBytes *)&colors[first]);
-        fn_48cab4(current, 1);
+        realizePalette(current, 1);
         if (!g_4ab404)
             showRect(&gameRect);
     }
