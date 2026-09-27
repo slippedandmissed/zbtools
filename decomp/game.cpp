@@ -94,7 +94,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     quickTimeReady = 0;
     appName = "Zoombini";
     g_4aa42a = 1;
-    g_4ab482 = 1;
+    clockInTicks = 1;
     g_4aa428 = 0;
     g_4a4a0c = 1;
     g_4aa7cc = 0;

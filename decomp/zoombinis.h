@@ -375,6 +375,8 @@ extern Callback g_4a07ac; /* called before a fatal error is reported */
 extern void (*errorReporter)(const char *prefix, const char *format, va_list args); /* @data 0x4a07b0 */
 extern const char *g_4a07b4; /* the message for a fatal error */
 extern time_t g_4a07b8;
+extern unsigned long starvationLimit; /* @data 0x4a07c8: longest gap between main loop passes */
+extern char msgStarvation[]; /* @data 0x4a07cc */
 extern Callback g_4a07c4;
 extern Callback g_4a07e8;
 extern Callback g_4a07ec; /* draws the window's contents, if set */
@@ -500,9 +502,14 @@ extern char *g_4ab3fc;
 extern char *g_4ab400;
 extern short g_4ab404; /* displayMode.unknown8 */
 extern short g_4ab480;
-extern short g_4ab482;
+extern short clockInTicks; /* @data 0x4ab482: the clock counts 60ths of a second, else ms */
+extern unsigned long clockStoppedAt; /* @data 0x4ab484 */
+extern unsigned long clockOffset; /* @data 0x4ab488 */
+extern unsigned long timers[4]; /* @data 0x4ab48c: when each expires */
 extern short g_4ab49c;
 extern short g_4ab49e;
+extern unsigned long lastCheck; /* @data 0x4ab4a0 */
+extern unsigned long thisCheck; /* @data 0x4ab4a4 */
 extern Entry22 *g_4ab64c;
 extern short g_4af350;
 extern short g_4af35a;
@@ -591,7 +598,25 @@ void __cdecl fn_4150c7(long size, char *buffer, const char *format, ...);
 void fn_415910();
 unsigned long fn_41571f(); /* a tick count */
 unsigned long fn_415772(); /* a tick count */
-void fn_415880();
+void checkStarvation();
+short waitForEventOrTimer(short timer, short type, short discard);
+short fn_4156a3(short timer, short type, short discard);
+short waitForEventFor(unsigned short timer, long ticks, short type, short discard);
+short fn_4156e3(unsigned short timer, long ticks, short type, short discard);
+void runMainLoop(short passes);
+unsigned long clockTime();
+unsigned long clockMs();
+unsigned long clockTicks();
+void setTimer(unsigned short timer, long ticks);
+short timerExpired(unsigned short timer);
+void setStarvationLimit(unsigned long limit);
+void fn_415910();
+void fn_415916();
+short isLastRepeated(char *items, unsigned short count, unsigned short size);
+short allocateSlot(unsigned long *used, short count, unsigned long reserved);
+short randomBelow(short limit);
+void fn_46be3d();
+unsigned long fn_492fbc(); /* the engine's clock, in ms */
 void fn_43ac20();
 short playSound(short key, long type, short channel, short eventType, short discard);
 short fn_45590b();
@@ -782,7 +807,7 @@ void releaseControlKeys();
 void fn_456b2e(short active);
 void fn_46da64(short active);
 short fn_4764bc(short open); /* opens (1) or closes the sound driver; non-zero on failure */
-void fn_4157c8(short active);
+void runClock(short running);
 void fn_48b2d8(DisplayMode *mode);
 void fn_48d480(DisplayMode *mode);
 void *fn_48e6b4(long size); /* allocates memory */

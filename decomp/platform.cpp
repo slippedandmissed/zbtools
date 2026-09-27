@@ -808,7 +808,7 @@ void activateApp(long active)
                                MB_RETRYCANCEL)
                     == IDCANCEL)
                     fatalError(g_4a07b4);
-            fn_4157c8(1);
+            runClock(1);
             g_4b2d34 = 0;
             g_4b2d30 = 1;
             g_4a4a10 = 1;
@@ -819,7 +819,7 @@ void activateApp(long active)
             if (!g_4a4a10)
                 fn_456b2e(0);
             g_4b2d34 = 1;
-            fn_4157c8(0);
+            runClock(0);
             fn_4764bc(0);
             fn_46da64(0);
             if (!g_4b2d3a && g_4b9d22 >= 0x395 && !g_4b2b04)
