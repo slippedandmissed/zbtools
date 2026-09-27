@@ -261,6 +261,50 @@ public:
 };
 
 
+/* A slot in the camp (basecamp), 22 bytes. */
+struct CampSlot
+{
+    long zoombini; /* 0: empty */
+    ShortRect rect; /* where it stands */
+    char unknownC[10];
+};
+
+/* The camp's slots, in a block. */
+struct Camp
+{
+    short row; /* the first row shown */
+    short count;
+    CampSlot slots[625];
+};
+
+/* A Zoombini on the journey (19 bytes, from 0xa934 in the game's state). */
+struct Traveller
+{
+    long zoombini;
+    char unknown4[5];
+    char unknown9[10];
+};
+
+/* A view (the view module): part of the screen, with callbacks to update
+   and draw it. Partly known. */
+struct View
+{
+    char unknown0[0x24];
+    unsigned long nextUpdate; /* +0x24 */
+    unsigned long interval; /* +0x28 */
+    char changed; /* +0x2c */
+    char reset; /* +0x2d */
+    char unknown2e[0xa0];
+    ShortRect unknownCe; /* +0xce */
+};
+
+/* A button in the camp (0x24 bytes). */
+struct CampButton
+{
+    ShortRect rect;
+    char unknown8[0x1c];
+};
+
 /* A wipe in progress (basecamp's runWipe). */
 struct Wipe
 {
@@ -846,6 +890,11 @@ extern unsigned short appActive; /* @data 0x4a4ae4 */
 extern ShortRect g_4a4ae6;
 extern short g_4a4b98;
 extern char *g_4a4ba0;
+/* The Zoombinis on the journey. */
+inline Traveller *travellers()
+{
+    return (Traveller *)(g_4a4ba0 + 0xa934);
+}
 extern short g_4a4ce6;
 extern char msgRequiresQuickTime[]; /* @data 0x4a4dc7 */
 extern char msgInitOs[]; /* @data 0x4a4e28 */
@@ -966,6 +1015,27 @@ extern long shapeListKind; /* @data 0x4a07f0: 'SHPL' */
 extern long soundListKind; /* @data 0x4a07f4: 'SNDL' */
 extern long noPreloadKind; /* @data 0x4a07f8 */
 extern long cheatHash; /* @data 0x4a07fc */
+extern short campRow; /* @data 0x4ab508: the first row of the camp shown */
+extern short campRows; /* @data 0x4ab50a */
+extern short campShown; /* @data 0x4ab50c: slots shown (campRows * 5) */
+extern short campCount; /* @data 0x4ab50e: Zoombinis in the camp */
+extern short campLast; /* @data 0x4ab510: the last slot used */
+extern short g_4ab512;
+extern Camp *camp; /* @data 0x4ab514 */
+extern short g_4ab518;
+extern short g_4ab51a;
+extern short g_4ab524;
+extern short g_4ab526;
+extern short g_4ab52a;
+extern short g_4ab52c;
+extern short g_4ab52e;
+extern CampButton campButtons[7]; /* @data 0x4a0824 */
+extern ShortRect campArrival; /* @data 0x4a0aa6: where Zoombinis back from the journey stand */
+extern short g_4a080c;
+extern short g_4a080e; /* the camp is scrolled half a row */
+extern ShortRect g_4a0920; /* the way the camp is asked to scroll (1-4) */
+extern short campX[10]; /* @data 0x4a09b0: each row's x, in two layouts (4a080e) */
+extern short campY[10][5]; /* @data 0x4a09c6: each slot's y, in two layouts */
 extern short primes[5]; /* @data 0x4a0800 */
 extern Entry22 *g_4ab64c;
 extern short g_4af350;
@@ -3905,7 +3975,29 @@ void startScreenBlinds(const ShortRect *rect, short duration, short stripe);
 void preloadResource(long type, short id, long *kind);
 void *preloadDone(long event, long id, void *kind);
 void freePreloaded(short release);
+void copyRegion(basePort *to, basePort *from, short region);
+void showRegion(short region);
+void getDateTime(short *year, char *month, char *day, char *hour, char *minute);
+void drawOutlinedText(unsigned short outline, unsigned short color, ShortRect rect,
+                      unsigned short flags, const char *text);
+void nudgeRect(ShortRect *rect, short direction);
+void fn_416754();
 long fn_417906(long);
+void drawCampButtons(short button, short pressed, short group, short show); /* 0x41790f */
+void drawCampButtons1(View *);
+void drawCampButtons2(View *);
+void fn_417aec(View *, short region);
+short findCampSlot(short start, ShortRect rect, short occupied);
+void scrollCamp(View *view, long);
+void noteCampSlot(short slot);
+short campSlotsUsed();
+void insertCampRow();
+void compactCamp();
+void updateCampScroll(short stop);
+void fn_4184b7();
+short returnToCamp();
+View *findView(short id); /* 0x4640f8 */
+void fn_4666b7(short sound, short);
 long fn_4196a8(long);
 short fn_419f1a();
 int fn_41d3e6(long, short value);
