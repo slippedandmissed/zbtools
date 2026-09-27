@@ -348,6 +348,13 @@ struct LargeViewBody
     char unknown[0x22a];
 };
 
+/* The saved games' names, as the load and save dialogs list them. */
+struct SavedGameList
+{
+    short unknown0[3];
+    char names[50][32];
+};
+
 struct View;
 typedef void (*ViewDraw)(View *view);
 typedef void (*ViewUpdate)(View *view, short region);
@@ -4270,29 +4277,67 @@ extern short g_4b980a;
 extern short g_4b980c;
 extern short g_4b980e;
 extern short g_4b98cc;
-extern void *g_4a7d4c;
-extern MapSave *g_4a7d50;
-extern const char *keepPartyText; /* @data 0x4a53fc: 'THE CURRENT PARTY OF ZOOMBINIS W...' */
-extern const char *loseEmText; /* @data 0x4a5400: "LOSE 'EM" */
-extern const char *keepEmText; /* @data 0x4a5404: "KEEP 'EM" */
-extern const char *cancelText; /* @data 0x4a540c */
-extern const char *noSavedGamesText; /* @data 0x4a5448 */
-extern const char *okText; /* @data 0x4a544c */
-extern const char *notSavedNewGameText; /* @data 0x4a5450 */
-extern const char *newGameText; /* @data 0x4a5454 */
-extern const char *yesText; /* @data 0x4a5474 */
-extern const char *noText; /* @data 0x4a5484 */
-extern const char *practiceNoSaveText; /* @data 0x4a5488 */
-extern const char *sureNewGameText; /* @data 0x4a548c */
-extern const char *practiceNoLoadText; /* @data 0x4a5494 */
-extern const char *practiceNoNewText; /* @data 0x4a5498 */
-extern const char *reallyQuitText; /* @data 0x4a54a0 */
+extern SavedGameList *savedGameList; /* @data 0x4a7d4c */
+/* The dialogs' texts, by index. */
+enum DialogText
+{
+    textKeepParty = 0,
+    textLoseEm = 1,
+    textKeepEm = 2,
+    textOk = 3,
+    textCancel = 4,
+    textLoad = 5,
+    textSave = 6,
+    textOptions = 7,
+    textOn = 8,
+    textOff = 9,
+    textToggles = 10,
+    textMenuItems = 11,
+    textNoSavedGames = 19,
+    textOk2 = 20,
+    textNotSavedNewGame = 21,
+    textNewGame = 22,
+    textReplace = 23,
+    textSaveAGame = 24,
+    textSaveGameAs = 25,
+    textLoadAGame = 26,
+    textSureReplace = 27,
+    textCredits = 28,
+    textSaveCurrent = 29,
+    textYes = 30,
+    textNo = 34,
+    textPracticeNoSave = 35,
+    textSureNewGame = 36,
+    textPracticeNoLoad = 38,
+    textPracticeNoNew = 39,
+    text40 = 40,
+    textReallyQuit = 41,
+    textCreditLines = 42,
+};
+extern const char *dialogTexts[]; /* @data 0x4a53fc */
 extern char gameName[]; /* @data 0x4a48ea */
 extern char userFile[]; /* @data 0x4a4900 */
 extern short g_4b80e2;
 extern Point dialogWhere; /* @data 0x4b97f8 */
 extern ShortRect dialogSpots[17]; /* @data 0x4b982a */
 extern short g_4b98d2;
+extern ShortRect saveField; /* @data 0x4a7d44: where the save dialog's name is typed */
+extern MapSave *saveFieldSave; /* @data 0x4a7d50: what's under it */
+extern ShortRect optionsTitleRect; /* @data 0x4a7d74 */
+extern ShortRect loadTitleRect; /* @data 0x4a7d7c */
+extern ShortRect saveTitleRect; /* @data 0x4a7d84 */
+extern ShortRect saveAsRect; /* @data 0x4a7d8c */
+extern ShortRect togglesRect; /* @data 0x4a7d94 */
+extern ShortRect messageTitleRect; /* @data 0x4a7d9c */
+extern ShortRect onRect; /* @data 0x4a7da4 */
+extern ShortRect offRect; /* @data 0x4a7dac */
+extern ShortRect menuItemRect; /* @data 0x4a7db4 */
+extern short menuItemTops[8]; /* @data 0x4a7dbc */
+extern ShortRect dialogOkRect; /* @data 0x4b988a */
+extern ShortRect dialogCancelRect; /* @data 0x4b9892 */
+extern ShortRect dialogButton2Rect; /* @data 0x4b989a */
+extern ShortRect dialogButton1Rect; /* @data 0x4b98a2 */
+extern short caretBlink; /* @data 0x4b9828 */
 extern char buttonPressed[17]; /* @data 0x4b98b2: dialog hot spots shown pressed */
 extern char g_4b8800;
 extern unsigned short g_4b0d4a;
@@ -4309,7 +4354,6 @@ extern short creditsShowing; /* @data 0x4b9680 */
 extern short creditHeading; /* @data 0x4b9682 */
 extern short creditTick; /* @data 0x4b98ce */
 extern short creditLine; /* @data 0x4b98d0 */
-extern const char *creditLines[]; /* @data 0x4a54a4 */
 extern ShortRect creditsLineRect; /* @data 0x4a7d54 */
 extern ShortRect creditsScrollFrom; /* @data 0x4a7d5c */
 extern ShortRect creditsScrollTo; /* @data 0x4a7d64 */

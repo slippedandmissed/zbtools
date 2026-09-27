@@ -620,13 +620,13 @@ void freeDialogs()
     g_4b9686 = g_4b97fc = 0;
     dialogView = dialogButton1 = dialogButton2 = 0;
     g_4b9806 = g_4b9808 = g_4b980a = g_4b980c = g_4b980e = 0;
-    if (g_4a7d4c) {
-        disposePtr(g_4a7d4c);
-        g_4a7d4c = 0;
+    if (savedGameList) {
+        disposePtr(savedGameList);
+        savedGameList = 0;
     }
-    if (g_4a7d50) {
-        freeSave(&g_4a7d50);
-        g_4a7d50 = 0;
+    if (saveFieldSave) {
+        freeSave(&saveFieldSave);
+        saveFieldSave = 0;
     }
     if (dialogResource) {
         fn_46c602(&dialogResource);
@@ -641,7 +641,7 @@ void askKeepParty()
 {
     if (!g_4b754a && currentScene >= 1 && currentScene <= 18) {
         g_4b9688 = 1;
-        showDialog(4, keepPartyText, loseEmText, keepEmText);
+        showDialog(4, dialogTexts[textKeepParty], dialogTexts[textLoseEm], dialogTexts[textKeepEm]);
     }
 }
 
@@ -711,14 +711,14 @@ void askNewGame()
             if (!g_4b80e2) {
                 g_4b80e2 = 1;
                 if (g_4afb32)
-                    showDialog(4, notSavedNewGameText, newGameText, cancelText);
+                    showDialog(4, dialogTexts[textNotSavedNewGame], dialogTexts[textNewGame], dialogTexts[textCancel]);
                 else
-                    showDialog(4, sureNewGameText, newGameText, cancelText);
+                    showDialog(4, dialogTexts[textSureNewGame], dialogTexts[textNewGame], dialogTexts[textCancel]);
             } else {
                 startNewGame();
             }
         } else {
-            showDialog(4, practiceNoNewText, okText, 0);
+            showDialog(4, dialogTexts[textPracticeNoNew], dialogTexts[textOk2], 0);
         }
     }
 }
@@ -731,7 +731,7 @@ void askLoadGame()
         if (!g_4b754a)
             showDialog(2, 0, 0, 0);
         else
-            showDialog(4, practiceNoLoadText, okText, 0);
+            showDialog(4, dialogTexts[textPracticeNoLoad], dialogTexts[textOk2], 0);
     }
 }
 
@@ -743,7 +743,7 @@ void askSaveGame()
         if (!g_4b754a)
             showDialog(3, 0, 0, 0);
         else
-            showDialog(4, practiceNoSaveText, okText, 0);
+            showDialog(4, dialogTexts[textPracticeNoSave], dialogTexts[textOk2], 0);
     }
 }
 
@@ -754,7 +754,7 @@ void askQuit()
     if (!g_4b966c && (g_4b9684 & 1))
         g_4b966c = 1;
     if (g_4b966c) {
-        showDialog(4, reallyQuitText, yesText, noText);
+        showDialog(4, dialogTexts[textReallyQuit], dialogTexts[textYes], dialogTexts[textNo]);
         return;
     }
     if (!g_4b754a && currentScene >= 1 && currentScene <= 18) {
@@ -804,9 +804,9 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
         saveNameLength = strlen(saveName);
         flag = 4;
         y = 0x5e;
-        if (g_4a7d50) {
-            freeSave(&g_4a7d50);
-            g_4a7d50 = 0;
+        if (saveFieldSave) {
+            freeSave(&saveFieldSave);
+            saveFieldSave = 0;
         }
         break;
     case 4:
@@ -854,7 +854,7 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
     case 2:
         if (!savedGames) {
             g_4a7d3c++;
-            showDialog(4, noSavedGamesText, okText, 0);
+            showDialog(4, dialogTexts[textNoSavedGames], dialogTexts[textOk2], 0);
             kind = 0;
             break;
         }
@@ -867,10 +867,10 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
                 script = 4;
             else
                 script = 7;
-            g_4a7d4c = newPtr(0x646);
-            if (!g_4a7d4c)
+            savedGameList = (SavedGameList *)newPtr(0x646);
+            if (!savedGameList)
                 fn_41f195("Out of Memory.");
-            fn_41f2c8((long)g_4a7d4c, 2);
+            fn_41f2c8((long)savedGameList, 2);
             g_4b9806 = addView(0x4001000, drawDialogPart, updateDialogPart, script, 0, 0, 0, 0);
             g_4b9808 = addView(0x4000000, drawDialogPart, updateDialogPart, script + 1, 11, 0, 0, 0);
             g_4b980a = addView(0x4000000, drawDialogPart, updateDialogPart, script + 2, 13, 0, 0, 0);
@@ -939,9 +939,9 @@ void closeDialog(short kind)
     case 2:
         g_4a7d3e = 0;
     case 3:
-        if (g_4a7d4c) {
-            disposePtr(g_4a7d4c);
-            g_4a7d4c = 0;
+        if (savedGameList) {
+            disposePtr(savedGameList);
+            savedGameList = 0;
         }
         if (kind == 2)
             flag = 2;
@@ -951,9 +951,9 @@ void closeDialog(short kind)
         deleteView(g_4b9808);
         deleteView(g_4b980a);
         g_4b9806 = g_4b9808 = g_4b980a = 0;
-        if (g_4a7d50) {
-            freeSave(&g_4a7d50);
-            g_4a7d50 = 0;
+        if (saveFieldSave) {
+            freeSave(&saveFieldSave);
+            saveFieldSave = 0;
         }
         if (g_4a7d3c)
             g_4a7d3c--;
@@ -1056,10 +1056,10 @@ void drawCredits(View *view)
                 const char *line;
 
                 creditTick = 0;
-                line = creditLines[creditLine];
+                line = dialogTexts[textCreditLines + creditLine];
                 if (*line == '*') {
                     creditLine = 0;
-                    line = creditLines[creditLine];
+                    line = dialogTexts[textCreditLines + creditLine];
                 }
                 if (!*line) {
                     creditHeading = 1;
@@ -1453,5 +1453,169 @@ void dialogKey(unsigned short key)
         else if (g_4b9684 & 1)
             g_4b97fc = 9;
         break;
+    }
+}
+
+/*
+ * A dialog part's drawing: its cels, and then what the dialog showing puts
+ * on it: a message's text and buttons; the save dialog's title, games and
+ * (blinking every few ticks) the name being typed; the load dialog's list
+ * (the selected game outlined); or the menu's titles, toggles and items.
+ */
+/* Functional: the cels are drawn as in drawCels (the original reads each
+   cel's words as it pushes them). */
+/* @zoombi32-functional 0x00467745 */
+void drawDialogPart(View *view)
+{
+    Color saved;
+    ShortRect rect;
+    short caret;
+
+    if (!view->body.running)
+        return;
+    {
+        short *cel = (short *)view->body.cels;
+        ImageBank *bank = dialogImages;
+
+        while (*cel && *cel <= bank->count) {
+            unsigned short *image = (unsigned short *)(bank->offsets[*cel++] + (char *)bank);
+            short x = *cel++;
+            short y = *cel++;
+
+            drawImageData(image, x, y, 8);
+        }
+    }
+    if (g_4b9684 & 8) {
+        if (!view->changed)
+            return;
+        if (dialogText) {
+            setFont(fonts[2]);
+            drawOutlinedText(0xe, 0x2d, messageTitleRect, 0x22, dialogText);
+            setFont(fonts[1]);
+        }
+        if (dialogButton2Text)
+            drawText(dialogButton2Rect, 0x22, dialogButton2Text, 0xffff);
+        if (dialogButton1Text)
+            drawText(dialogButton1Rect, 0x22, dialogButton1Text, 0xffff);
+    } else if (g_4b9684 & 4) {
+        if (view->changed) {
+            if (view->id == g_4b980a) {
+                drawText(dialogOkRect, 0x22, dialogTexts[textSave], 0xffff);
+                drawText(dialogCancelRect, 0x22, dialogTexts[textCancel], 0xffff);
+            } else if (view->id == g_4b9806) {
+                saved = setForeColor(Color(0xd));
+                setFont(fonts[2]);
+                drawOutlinedText(0xe, 0x2d, saveTitleRect, 0x22, dialogTexts[textSaveAGame]);
+                drawText(saveAsRect, 1, dialogTexts[textSaveGameAs], 0xffff);
+                setForeColor(Color(0xd));
+                rect.left = 0xc0;
+                rect.right = 0x195;
+                rect.top = 0x5e;
+                {
+                    short shown = 0;
+
+                    for (short game = g_4b9664; game < savedGames && shown < 8; game++, shown++) {
+                        rect.bottom = rect.top + 20;
+                        drawText(rect, 1, savedGameList->names[game], 0xffff);
+                        rect.top += 20;
+                    }
+                }
+                setFont(fonts[1]);
+                setForeColor(saved);
+            }
+        }
+        if (view->id != g_4b9806)
+            return;
+        if (!saveFieldSave)
+            saveRect(&saveFieldSave, &saveField, 1, 0);
+        if (!view->nextUpdate) {
+            view->nextUpdate = 1;
+            return;
+        }
+        if (!saveFieldSave)
+            return;
+        if (!view->changed && clockTime() - g_4b98c4 <= 4)
+            return;
+        g_4b98c4 = clockTime();
+        caretBlink++;
+        caretBlink &= 3;
+        unionRgnRect(currentViewRgn, &saveField);
+        setClip(currentViewRgn);
+        copyPortBits(workPort, saveFieldSave->port, saveField, saveField, 0);
+        strlen(saveName);
+        setFont(fonts[2]);
+        if (caretBlink & 2)
+            caret = textWidth(saveName, saveNameLength) + saveField.left;
+        drawText(saveField, 1, saveName, 0xffff);
+        setFont(fonts[1]);
+        if (caretBlink & 2) {
+            moveTo(caret, saveField.top);
+            lineTo(caret, saveField.bottom);
+        }
+        copyPortBits(screenPort, workPort, saveField, saveField, 0);
+    } else if (g_4b9684 & 2) {
+        if (!view->changed)
+            return;
+        saved = setForeColor(Color(0x2d));
+        if (view->id == g_4b9806) {
+            setFont(fonts[2]);
+            drawOutlinedText(0xe, 0x2d, loadTitleRect, 0x22, dialogTexts[textLoadAGame]);
+            rect.left = 0xc0;
+            rect.right = 0x195;
+            rect.top = 0x6e;
+            {
+                short game = g_4b9664;
+
+                for (short shown = 0; game < savedGames && shown < 8; shown++) {
+                    rect.bottom = rect.top + 20;
+                    if (game == g_4b9666 - 1) {
+                        drawOutlinedText(0x2d, 0x22, rect, 1, savedGameList->names[game]);
+                        setForeColor(saved);
+                    } else {
+                        drawText(rect, 1, savedGameList->names[game], 0xffff);
+                    }
+                    rect.top += 20;
+                    game++;
+                }
+            }
+            setFont(fonts[1]);
+        } else if (view->id == g_4b980a) {
+            drawText(dialogOkRect, 0x22, dialogTexts[textLoad], 0xffff);
+            drawText(dialogCancelRect, 0x22, dialogTexts[g_4a7d3e ? text40 : textCancel], 0xffff);
+        }
+        setForeColor(saved);
+    } else if ((g_4b9684 & 1) && view->changed) {
+        if (view->id == dialogButton1) {
+            saved = setForeColor(Color(0x2d));
+            setFont(fonts[2]);
+            drawOutlinedText(0xe, 0x2d, optionsTitleRect, 0x22, dialogTexts[textOptions]);
+            drawText(togglesRect, 1, dialogTexts[textToggles], 0xffff);
+            drawText(onRect, 1, dialogTexts[textOn], 0xffff);
+            drawText(offRect, 1, dialogTexts[textOff], 0xffff);
+            setFont(fonts[1]);
+            for (short i = 0; i < 8; i++) {
+                menuItemRect.top = menuItemTops[i];
+                menuItemRect.bottom = menuItemRect.top + 18;
+                drawText(menuItemRect, 1, dialogTexts[textMenuItems + i], 0xffff);
+            }
+            setForeColor(saved);
+        } else if (view->id == dialogButton2) {
+            setFont(fonts[2]);
+            for (short spot = 9; spot < 11; spot++) {
+                rect = dialogSpots[spot - 1];
+                if (!buttonPressed[spot - 1]) {
+                    rect.top--;
+                    rect.bottom--;
+                } else {
+                    rect.top++;
+                    rect.bottom++;
+                }
+                if (spot == 9)
+                    drawText(rect, 0x22, dialogTexts[textOk], 0xffff);
+                else
+                    drawText(rect, 0x22, dialogTexts[textCredits], 0xffff);
+            }
+            setFont(fonts[1]);
+        }
     }
 }
