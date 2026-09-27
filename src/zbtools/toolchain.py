@@ -132,10 +132,13 @@ def ensure_prefix() -> None:
     if not repo.is_symlink() or repo.resolve() != paths.REPO_ROOT.resolve():
         repo.unlink(missing_ok=True)
         repo.symlink_to(paths.REPO_ROOT.resolve(), target_is_directory=True)
+    # Only relink what's wrong: parallel compiles all call this.
     for release in installed_releases():
         link = dosdevices / RELEASES[release].drive.lower()
-        link.unlink(missing_ok=True)
-        link.symlink_to(paths.TOOLCHAIN_DIR / release, target_is_directory=True)
+        target = paths.TOOLCHAIN_DIR / release
+        if not link.is_symlink() or link.resolve() != target.resolve():
+            link.unlink(missing_ok=True)
+            link.symlink_to(target, target_is_directory=True)
 
 
 def wine(

@@ -19,8 +19,9 @@ be portable C++, so where only machine code (inline assembly, emitted bytes,
 pseudo-registers) would reproduce the original, the function does the same
 thing portably instead.
 
-Each file is compiled with Borland C++ 4.5, or the release a `/* @release
-5.02 */` comment in the file names, using the game's usual options
+Each file is compiled (in parallel, one Wine process per file) with
+Borland C++ 4.5, or the release a `/* @release 5.02 */` comment in the file
+names, using the game's usual options
 (`-p -k-`), or those a `/* @flags ... */` comment gives; `--release` and
 `--flags` override them for every file (to explore: the record of what
 matches only applies without `--release`). Every marked function is
@@ -33,9 +34,11 @@ callee's marker address. Mismatches are shown side by side.
 import difflib
 import hashlib
 import itertools
+import os
 import re
 import shlex
 from collections.abc import Collection
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -439,6 +442,23 @@ class Checked:
     cached: bool = False  # its source's object came from the cache
 
 
+def _compile_all(
+    jobs: list[tuple[str, Path, str]], *, use_cache: bool
+) -> list[Compiled | RuntimeError]:
+    """Compile (or fetch from the cache) each (release, source, flags), in
+    parallel: each compile is a separate Wine process, mostly waiting."""
+
+    def one(job: tuple[str, Path, str]) -> Compiled | RuntimeError:
+        release, source, flags = job
+        try:
+            return compile_source(release, source, flags, use_cache=use_cache)
+        except RuntimeError as e:
+            return e
+
+    with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as pool:
+        return list(pool.map(one, jobs))
+
+
 def check(
     sources: list[Path],
     exe: Executable,
@@ -451,6 +471,8 @@ def check(
     `release` if given, and compare every function marked in it."""
     checked = []
     installed = toolchain.installed_releases()
+    toolchain.ensure_prefix()  # once, before the compiles run in parallel
+    pending: list[tuple[Path, list[Target], tuple[str, Path, str]]] = []
     for source in sources:
         text = source.read_text()
         targets = find_targets(text)
@@ -461,12 +483,11 @@ def check(
             error = f"Borland C++ {file_release} isn't installed (uv run toolchain setup)"
             checked += [Checked(source, t, None, error) for t in targets]
             continue
-        try:
-            compiled = compile_source(
-                file_release, source.resolve(), _flags_for(text, flags), use_cache=use_cache
-            )
-        except RuntimeError as e:
-            checked += [Checked(source, t, None, str(e)) for t in targets]
+        pending.append((source, targets, (file_release, source.resolve(), _flags_for(text, flags))))
+    compiled_all = _compile_all([job for _, _, job in pending], use_cache=use_cache)
+    for (source, targets, _), compiled in zip(pending, compiled_all, strict=True):
+        if isinstance(compiled, RuntimeError):
+            checked += [Checked(source, t, None, str(compiled)) for t in targets]
             continue
         obj, cached = compiled.obj, compiled.cached
         siblings = {}
