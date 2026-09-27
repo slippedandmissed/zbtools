@@ -14,6 +14,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated
@@ -141,17 +142,28 @@ def wine(
     program: Path, args: list[str], cwd: Path, capture: bool = True, path: str = ""
 ) -> "subprocess.CompletedProcess[str]":
     """Run a Windows program under Wine in the project's prefix, with path
-    added to its Windows PATH."""
+    added to its Windows PATH.
+
+    Output is captured through temporary files, not pipes: Wine's background
+    processes (wineserver and the services it starts) inherit the program's
+    output handles and keep a pipe open until they exit, seconds later, so
+    waiting for the pipe to close made every run take about five seconds."""
     ensure_prefix()
-    return subprocess.run(
-        [str(host.wine_bin_dir() / "wine"), str(program), *args],
-        cwd=cwd,
-        env=_wine_env(path),
-        capture_output=capture,
-        text=True,
-        errors="replace",
-        check=False,
-    )
+    command = [str(host.wine_bin_dir() / "wine"), str(program), *args]
+    if not capture:
+        return subprocess.run(command, cwd=cwd, env=_wine_env(path), text=True, check=False)
+    with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
+        done = subprocess.run(
+            command, cwd=cwd, env=_wine_env(path), stdout=out, stderr=err, check=False
+        )
+        out.seek(0)
+        err.seek(0)
+        return subprocess.CompletedProcess(
+            command,
+            done.returncode,
+            out.read().decode(errors="replace"),
+            err.read().decode(errors="replace"),
+        )
 
 
 def run_tool(
