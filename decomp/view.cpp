@@ -47,7 +47,7 @@ void initViews()
         g_4b8b32[i] = 0;
         g_4b8b43[i] = 0;
     }
-    fn_456c00();
+    resetSnoids();
     for (short j = 0; j < 32; j++) {
         viewSounds.sounds[j] = 0;
         viewSounds2.sounds[j] = 0;
@@ -123,7 +123,7 @@ void clearViews()
         fn_4591cc();
         freeScripts();
         freeTerrain();
-        fn_4571a8();
+        freeSnoidScripts();
         fn_46c602(&g_4b9670);
         fn_46c602(&g_4b9674);
         for (short i = 0; i < 17; i++) {
@@ -381,7 +381,7 @@ void setViewPlaces(short count, Point *places, short apply)
     for (i = 0; i < count; i++)
         viewPlaces[i] = places[i];
     if (count && apply) {
-        short actors = fn_456e4c();
+        short actors = countChosenSnoids();
 
         lastActorView = 0;
         for (i = 0; i < actors; i++) {
@@ -399,8 +399,8 @@ void setViewPlaces(short count, Point *places, short apply)
 void loadDragCursors(short id)
 {
     dragCursors = loadImageBank(id, &dragCursorResource);
-    dragHotX = fn_456dbe(id, &dragHotXResource);
-    dragHotY = fn_456dbe(id + 1, &dragHotYResource);
+    dragHotX = loadShortTable(id, &dragHotXResource);
+    dragHotY = loadShortTable(id + 1, &dragHotYResource);
 }
 
 /* Shows a drag cursor (1 up to the bank's count) in place of the mouse
@@ -1199,11 +1199,11 @@ void viewSoundList(View *view, short *count, short *sounds)
             snoid = viewSnoid(view);
             switch (snoid->unknownF4) {
             default:
-                at = g_4b78b4[snoid->body.script];
+                at = baseSnoidScripts[snoid->body.script];
                 break;
             case 8:
             case 9:
-                at = g_4b7980[snoid->body.script];
+                at = snoidScripts[snoid->body.script];
                 break;
             }
             frames = *at++;

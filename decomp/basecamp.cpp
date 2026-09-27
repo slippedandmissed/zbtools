@@ -653,7 +653,7 @@ void enterCamp()
     setViewPlaces(16, places, 1);
     if (party()->count)
         fn_4572f0(0);
-    returned = fn_456e4c();
+    returned = countChosenSnoids();
     *(short *)(g_4a4ba0 + 0x4a) += returned;
     *party() = *savedParty();
     savedParty()->count = 0;
@@ -684,12 +684,12 @@ void enterCamp()
     g_4ab52e = *(short *)(g_4a4ba0 + 0x48) >= 625
                && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0xa1fc) < 16;
     if (g_4ab52e) {
-        short n = fn_456e4c();
+        short n = countChosenSnoids();
 
         g_4ab524 = n && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0xa1fc) <= n;
         g_4ab526 = g_4ab524;
     } else {
-        g_4ab526 = g_4ab524 = fn_456e4c() >= 16;
+        g_4ab526 = g_4ab524 = countChosenSnoids() >= 16;
     }
     setGroupLists(campGroupLists, 2, (short)0xc000);
     highlightItemAt(1, 1);
@@ -990,7 +990,7 @@ void campMouse(short action)
                     draggedSnoid.body.y = where.y;
                     camp->slots[slot].zoombini = 0;
                     fn_4184b7();
-                    dragged = fn_4574ae(&draggedSnoid, 0);
+                    dragged = addSnoidView(&draggedSnoid, 0);
                     if (dragged) {
                         view = findView(dragged);
                         g_4a080c = -1;
@@ -1038,7 +1038,7 @@ void campMouse(short action)
                     }
                 }
                 if (picked) {
-                    short back = fn_456e7f() > 32;
+                    short back = countSnoidViews() > 32;
 
                     if (!back && !count && moved)
                         back = 1;
@@ -1055,11 +1055,11 @@ void campMouse(short action)
                     snoid->unknownF8 = 1;
                 }
                 if (g_4ab52e) {
-                    short n = fn_456e4c();
+                    short n = countChosenSnoids();
 
                     g_4ab524 = n && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0xa1fc) <= n;
                 } else {
-                    g_4ab524 = fn_456e4c() >= 16;
+                    g_4ab524 = countChosenSnoids() >= 16;
                 }
             } else if ((view = viewAt(where, 0x20000, 1)) != 0) {
                 short sound = 0;
@@ -1405,7 +1405,7 @@ void drawCamp(View *)
             fn_45b06a(&snoid, 0);
             fn_45ab97(&snoid, 0);
             camp->slots[index].rect = snoid.body.bounds;
-            fn_4571d8(&snoid);
+            drawSnoid(&snoid);
         }
         column++;
         if (column >= 5) {

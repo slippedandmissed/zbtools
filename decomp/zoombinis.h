@@ -320,16 +320,27 @@ struct ViewBody
 struct Snoid
 {
     ViewBody body;
-    long zoombini; /* +0xbc */
+    union {
+        long zoombini; /* +0xbc: its features, together (0: none) */
+        char features[4]; /* hair, eyes, nose, feet (1-5) */
+    };
     short unknownC0;
-    char unknownC2[0x24];
+    short unknownC2[16];
+    Point home; /* +0xe2 */
     short targetX; /* +0xe6 */
     short targetY;
-    char unknownEa[0xa];
+    char unknownEa;
+    char unknownEb;
+    short unknownEc;
+    short unknownEe;
+    char unknownF0;
+    char unknownF1;
+    short unknownF2;
     char unknownF4;
-    char unknownF5[2];
+    char unknownF5;
+    char unknownF6;
     char unknownF7;
-    char unknownF8;
+    char unknownF8; /* +0xf8: random (0-64) when made */
     char name[10]; /* +0xf9 */
 };
 
@@ -4092,11 +4103,8 @@ short fn_45b8b0(Snoid *snoid, short which);
 void fn_4589ce(const char *text, short, short);
 void fn_459c84(short, short);
 void fn_4591cc();
-void fn_4571a8();
 void fn_462749(short value, const char *after, short *number, const char *before, short level);
-void fn_456c00();
 void fn_466c95();
-short *fn_456dbe(short id, long *resource);
 void closeViews();
 void clearViews();
 void removeDeadViews();
@@ -4210,8 +4218,6 @@ extern long g_4b9674;
 extern SoundChannels viewSounds; /* @data 0x4b8a0c */
 extern SoundChannels viewSounds2; /* @data 0x4b8a8e */
 extern long g_4b7b4c; /* the sounds' map */
-extern short *g_4b78b4[]; /* scripts for Zoombinis */
-extern short *g_4b7980[];
 extern long g_4b7b50; /* the MIDI map */
 extern char g_4b8803;
 extern short fillViews; /* @data 0x4a7b78: debugging: fill the game area first */
@@ -4388,6 +4394,51 @@ extern long groupHotXResources[8]; /* @data 0x4b95e4 */
 extern long groupHotYResources[8]; /* @data 0x4b9604 */
 extern short *groupHotX[8]; /* @data 0x4b9624 */
 extern short *groupHotY[8]; /* @data 0x4b9644 */
+/* snoids */
+void resetSnoids(); /* 0x456c00 */
+void loadSnoids(short files);
+void closeSnoids();
+short *loadShortTable(short id, long *resource); /* 0x456dbe */
+void freeSnoidTables();
+short countChosenSnoids(); /* 0x456e4c */
+short countSnoidViews(); /* 0x456e7f */
+void loadBaseSnoidScripts();
+void freeBaseSnoidScripts();
+void loadSnoidScripts(short first, short count, short limit);
+void addSnoidScripts(short first, short count, short limit);
+void findSnoidScript(short id, short *group, short *index);
+void loadSnoidScript(short id);
+void freeSnoidScripts(); /* 0x4571a8 */
+void drawSnoid(Snoid *snoid); /* 0x4571d8 */
+short placeSnoid(Snoid *snoid, unsigned long when, short x, short y, short targetX, short targetY);
+short addSnoidView(Snoid *snoid, short placed); /* 0x4574ae */
+void drawSnoidView(View *view);
+void updateSnoidView(View *view, short region); /* 0x4575e6 */
+void fn_45a75b(Snoid *snoid, short action, short);
+void fn_45aaff(short);
+void fn_45bbba(short);
+extern short g_4b7552;
+extern short g_4b7554;
+extern short g_4b7556;
+extern short g_4b7558;
+extern short g_4b7564;
+extern short g_4b7568;
+extern long snoidImagesResource; /* @data 0x4b7b54 */
+extern long snoidImages2Resource; /* @data 0x4b7b58 */
+extern ImageBank *snoidImages; /* @data 0x4b7b5c */
+extern ImageBank *snoidImages2; /* @data 0x4b7b60 */
+extern ImageBank *snoidImages3; /* @data 0x4b7b64 */
+extern long snoidImages3Resource; /* @data 0x4a4c08 */
+extern short snoidTablesLoaded; /* @data 0x4a4c04 */
+extern short *snoidTables[4]; /* @data 0x4b7b3c */
+extern long snoidTableResources[4]; /* @data 0x4b7b6c */
+extern long baseSnoidScriptResources[51]; /* @data 0x4b7630 */
+extern short *baseSnoidScripts[51]; /* @data 0x4b78b4 */
+extern long snoidScriptResources[110]; /* @data 0x4b76fc */
+extern short *snoidScripts[110]; /* @data 0x4b7980 */
+extern short snoidScriptGroupFirst[2]; /* @data 0x4b7b7c */
+extern short snoidScriptGroupCount[2]; /* @data 0x4b7b80 */
+extern short snoidScriptGroups; /* @data 0x4b7b84 */
 /* basecamp */
 unsigned short loadWave(short key);
 unsigned short fn_415a46(short key);
@@ -4452,9 +4503,6 @@ void campButtonClicked(short button);
 void campMouse(short action);
 short fn_458059(View *view, Point where, short, short);
 short fn_457fbb();
-short fn_456e7f();
-short fn_456e4c();
-short fn_4574ae(Snoid *snoid, short);
 void fn_45802e(short, short id);
 void fn_45a477();
 void fn_4590b6(short, short, short);
@@ -4471,7 +4519,6 @@ void noteCampSlot(short slot);
 void initSnoid(Snoid *snoid); /* 0x45bf41 */
 void fn_45b06a(Snoid *snoid, short);
 void fn_45ab97(Snoid *snoid, short);
-void fn_4571d8(Snoid *snoid);
 short campSlotsUsed();
 void insertCampRow();
 void compactCamp();

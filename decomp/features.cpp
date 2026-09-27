@@ -17,8 +17,8 @@ void loadFeatureGroup(short id, short group, short hotspots)
         if (!groupBankResources[group]) {
             groupBanks[group] = loadImageBank(id, &groupBankResources[group]);
             if (hotspots) {
-                groupHotX[group] = fn_456dbe(id, &groupHotXResources[group]);
-                groupHotY[group] = fn_456dbe(id + 1, &groupHotYResources[group]);
+                groupHotX[group] = loadShortTable(id, &groupHotXResources[group]);
+                groupHotY[group] = loadShortTable(id + 1, &groupHotYResources[group]);
             }
         } else {
             fatalError("Feature Group already used");
