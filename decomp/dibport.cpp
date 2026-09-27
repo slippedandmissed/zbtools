@@ -19,16 +19,14 @@ __cdecl DIBPort::DIBPort(short width, short height, unsigned short depth)
     kind = 0;
 }
 
-/* Copies through the DIB, unless within the port and overlapping. Not
-   exact: the original keeps `this` in ebx and `flags` in edi; BCC32 4.5 swaps
-   them. */
+/* Copies through the DIB, unless within the port and overlapping. */
 /* @zoombi32 0x0048a775 */
 short DIBPort::copyBits(basePort *port, const Rect *to, const Rect *from, unsigned short mode,
-                        unsigned char flags)
+                        unsigned short flags)
 {
     Rect clipped;
 
-    if (port != this || !sectRect(&(clipped = *from), (ShortRect *)to)) {
+    if (this != port || !sectRect(&(clipped = *from), (ShortRect *)to)) {
         SetStretchBltMode(port->dc,
                           flags & 1 ? BLACKONWHITE : flags & 2 ? WHITEONBLACK : COLORONCOLOR);
         Rect source = *from;
@@ -54,7 +52,7 @@ short DIBPort::copyBits(basePort *port, const Rect *to, const Rect *from, unsign
 /* @zoombi32 0x0048a8fe */
 void DIBPort::prepare()
 {
-    drawn = 1;
+    gdiPending = 1;
     basePort::prepare();
 }
 

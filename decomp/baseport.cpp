@@ -69,7 +69,7 @@ short basePort::setFrame(const Rect *bounds, Pt origin, Pt size)
    converted rectangle. */
 /* @zoombi32 0x00486511 */
 short basePort::copyBits(basePort *port, const Rect *to, const Rect *from, unsigned short mode,
-                         unsigned char flags)
+                         unsigned short flags)
 {
     DWORD rop;
     unsigned short width;

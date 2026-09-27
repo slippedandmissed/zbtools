@@ -1202,7 +1202,7 @@ public:
     /* Copies `from` of this port to `to` of another, in a transfer mode;
        flags: 1 and 2 pick the stretch mode, 0x10 and 0x20 flip. */
     virtual short copyBits(basePort *port, const Rect *to, const Rect *from, unsigned short mode,
-                           unsigned char flags); /* 1 */
+                           unsigned short flags); /* 1 */
     virtual void applyMapping(); /* 2: bounds to frame, as viewport and window */
     virtual short clipTo(HRGN rgn); /* 3: clips to the clip region and rgn */
     virtual short setupDC(); /* 4: once dc is made */
@@ -1316,13 +1316,15 @@ public:
     Rect frame; /* +0x1a */
 };
 
-/* A port drawing into a DIB section (module_48a720). */
+/* A port drawing into a DIB section (dibport). Declared with 4-byte
+   alignment: it's 0xc8 bytes, but DIB8Port, derived from it, is 0xc6. */
+#pragma pack(push, 4)
 class DIBPort : public basePort
 {
 public:
     __cdecl DIBPort(short width, short height, unsigned short depth); /* 0x48a720 */
     virtual short copyBits(basePort *port, const Rect *to, const Rect *from, unsigned short mode,
-                           unsigned char flags); /* 1 */
+                           unsigned short flags); /* 1 */
     virtual void prepare(); /* 8 */
     virtual void realizePalette(); /* 9 */
     virtual void getBits(PixMap *map); /* 17 */
@@ -1332,19 +1334,34 @@ public:
     virtual void unlock(); /* 34 */
 
     DIB *dib; /* +0xc0 */
-    short drawn; /* +0xc4: prepared for drawing since... */
-    short unknownC6;
+    short gdiPending; /* +0xc4: GDI has drawn since the last GdiFlush */
 };
+#pragma pack(pop)
 
-/* An 8-bit DIB. RTTI names DIBPort as its base, but it is smaller (0xc6
-   bytes) than DIBPort (0xc8); modelled on basePort until its fields are
-   known. */
-class DIB8Port : public basePort
+/* An 8-bit DIB port, which draws into its bits directly where it can
+   (module_48990c). */
+class DIB8Port : public DIBPort
 {
 public:
-    virtual short lock(); /* 25 */
     __cdecl DIB8Port(short width, short height); /* 0x489be4 */
-    char unknownC0[6];
+    virtual short copyBits(basePort *port, const Rect *to, const Rect *from, unsigned short mode,
+                           unsigned short flags); /* 1 */
+    virtual void realizePalette(); /* 9 */
+    virtual short drawPixels(const Rect &bounds, unsigned short width, unsigned short height,
+                             short rowBytes, unsigned short format, void *pixels,
+                             unsigned short mode, unsigned short flags); /* 16 */
+    virtual int stretchDIBits(int toX, int toY, int toWidth, int toHeight, int fromX, int fromY,
+                              int fromWidth, int fromHeight, const void *bits,
+                              BITMAPINFO *info, UINT usage, DWORD rop); /* 20 */
+    virtual Color getPixel(short x, short y); /* 22 */
+    virtual short fillRect(const Rect &rect, Color color, short mode); /* 26 */
+    virtual COLORREF colorRef(Color color); /* 36 */
+    /* Draws 8-bit pixels (bottom-up rows `rowBytes` apart) with their
+       origin at x, y, within `clip` and the clip region. */
+    virtual void drawBits(short x, short y, unsigned short width, unsigned short height,
+                          long rowBytes, const void *bits, const Rect *clip); /* 37 */
+
+    void flush(); /* 0x48a681: GdiFlush, if GDI has drawn */
 };
 
 /* A window's port: two more slots. */
@@ -1528,6 +1545,15 @@ void drawPackedPixels(unsigned char *bits, long offset, long rowBytes, Rect boun
                       const Rect &clip, unsigned short width, unsigned short height,
                       const unsigned char *data, short transparent);
 unsigned char packedPixel(const unsigned char *data, unsigned short x, unsigned short y);
+/* DIB8Port's blitters (dib8port) */
+void copyPixels(unsigned char *bits, long offset, long rowBytes, Rect bounds, short x, short y,
+                const Rect &clip, unsigned short width, unsigned short height, long fromRowBytes,
+                const unsigned char *from, short transparent); /* 0x48990c */
+void fillPixels(unsigned char *bits, long offset, long rowBytes, Rect bounds, const Rect &area,
+                unsigned char value); /* 0x489a2d */
+void expandBits(unsigned char *bits, long offset, long rowBytes, Rect bounds, short x, short y,
+                const Rect &clip, unsigned short width, unsigned short height, long fromRowBytes,
+                const unsigned char *from, unsigned char color); /* 0x489aad */
 basePort *checkPort(basePort *port, short kind);
 basePort *portObject(short kind);
 short setPortError(short error);
@@ -3338,7 +3364,7 @@ void releaseMutex(long mutex); /* 0x46e78c */
 
 /* Rectangles (QuickDraw's) */
 short emptyRect(ShortRect *rect);
-void offsetRect(ShortRect *rect, short dx, short dy);
+ShortRect *offsetRect(ShortRect *rect, short dx, short dy); /* the rectangle */
 void insetRect(ShortRect *rect, short dx, short dy);
 short sectRect(ShortRect *rect, ShortRect *with);
 ShortRect *unionRect(ShortRect *into, ShortRect *add);

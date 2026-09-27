@@ -8,10 +8,11 @@
 
 /* Moves a rectangle (QuickDraw's OffsetRect). */
 /* @zoombi32 0x00480c04 */
-void offsetRect(ShortRect *rect, short dx, short dy)
+ShortRect *offsetRect(ShortRect *rect, short dx, short dy)
 {
     rect->left += dx;
     rect->right += dx;
     rect->top += dy;
     rect->bottom += dy;
+    return rect;
 }

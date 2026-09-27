@@ -500,7 +500,8 @@ note = "RTTI class DIB (its constructor and vtable); CreateDIBSection; the fixed
 
 [[module]]
 start = 0x48990c
-name = "module_48990c"
+name = "dib8port"
+note = "RTTI class DIB8Port (its constructor and methods), its blitters (assembly), and the Rect conversion"
 
 [[module]]
 start = 0x48a720
