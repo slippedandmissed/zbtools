@@ -278,3 +278,95 @@ void fn_436356(View *view)
     cel[1] -= g_4afbe8[cel[0]];
     cel[2] += 25 - g_4afbec[cel[0]];
 }
+
+/* The arrival hook (setArrivalHook): a Zoombini arriving in pose 1 or 3
+   sets g_4b0a0a or g_4b0a0c. */
+/* @zoombi32 0x00435f03 */
+void fn_435f03(short id)
+{
+    View *view = findView(id);
+
+    if (view) {
+        short *parts = (short *)&view->body;
+
+        switch (parts[35]) {
+        case 1:
+            g_4b0a0a = 1;
+            break;
+        case 3:
+            g_4b0a0c = 1;
+            break;
+        }
+    }
+}
+
+/* Lists (by index, in place) the entries of g_4aff9a that are empty. */
+/* @zoombi32 0x0043824f */
+void fn_43824f()
+{
+    short i;
+
+    fillMemory(g_4affc4, 0, 42);
+    for (i = 0; i < 21; i++)
+        if (!g_4aff9a[i])
+            g_4affc4[i] = i;
+}
+
+/* Packs the list made by fn_43824f into g_4b0018 (from 1), counting them
+   in g_4b00c6 (g_4b00c8: any); returns the count. */
+/* @zoombi32 0x00438280 */
+short fn_438280()
+{
+    short i;
+
+    g_4b00c8 = 0;
+    fillMemory(g_4b0018, 0, 42);
+    for (i = 0, g_4b00c6 = 0; i < 21; i++)
+        if (g_4affc4[i]) {
+            g_4b00c8 = 1;
+            g_4b00c6++;
+            g_4b0018[g_4b00c6] = g_4affc4[i];
+        }
+    return g_4b00c6;
+}
+
+/* The same as fn_43824f into g_4affee. */
+/* @zoombi32 0x004382df */
+void fn_4382df()
+{
+    short i;
+
+    fillMemory(g_4affee, 0, 42);
+    for (i = 0; i < 21; i++)
+        if (!g_4aff9a[i])
+            g_4affee[i] = i;
+}
+
+/* The same as fn_438280 from g_4affee into g_4b0042 (g_4b00ca, g_4b00cc). */
+/* @zoombi32 0x00438310 */
+short fn_438310()
+{
+    short i;
+
+    g_4b00cc = 0;
+    fillMemory(g_4b0042, 0, 42);
+    for (i = 0, g_4b00ca = 0; i < 21; i++)
+        if (g_4affee[i]) {
+            g_4b00cc = 1;
+            g_4b00ca++;
+            g_4b0042[g_4b00ca] = g_4affee[i];
+        }
+    return g_4b00ca;
+}
+
+/* Lists all of 0-20 in g_4b0018 (count 20). */
+/* @zoombi32 0x0043836f */
+void fn_43836f()
+{
+    short i;
+
+    for (i = 0; i < 21; i++)
+        g_4b0018[i] = i;
+    g_4b00c6 = 20;
+    g_4b00c8 = 1;
+}
