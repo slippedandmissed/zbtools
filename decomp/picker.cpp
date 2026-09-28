@@ -2,6 +2,8 @@
  * picker (0x42f920-0x433510): 'Picker.MHK', 'New Game', 'Snoids to practice with = '
  */
 
+#include <stdlib.h>
+
 #include "zoombinis.h"
 #include "basecamp.h"
 #include "debug.h"
@@ -1646,5 +1648,55 @@ void scene20Frame()
             }
         }
         g_4a20b0 = 0;
+    }
+}
+
+/* Leaves practice for the game: puts back the map's saved areas, makes its
+   views again (shown as in the game), and the first time, the player's
+   user file and roster (fn_41f5d0). */
+/* @zoombi32 0x00430724 */
+void fn_430724()
+{
+    short level;
+    View *view;
+    short i;
+    short id;
+
+    level = g_4b754a;
+    g_4b754a = 0;
+    for (i = 0; i < 6; i++)
+        copyPortBits(viewPort, g_4afb18[i]->port, g_4a1f54[i], g_4a1f54[i], 0);
+    fn_43145f(0);
+    view = findView(g_4afb38);
+    if (view) {
+        view->kind = abs(view->kind);
+        view->nextUpdate = 0;
+        setViewScript(view, 0, 1);
+        view->reset = 1;
+    }
+    for (i = 0; i < 2; i++) {
+        switch (i) {
+        case 0:
+            id = g_4afb3c;
+            break;
+        case 1:
+            id = g_4afb3a;
+            break;
+        }
+        startView(id, 0, 0, 0);
+        view = findView(id);
+        if (view) {
+            view->reset = 1;
+            view->nextUpdate = 0;
+        }
+    }
+    updateViews();
+    g_4b754a = level;
+    if (g_4afb30) {
+        g_4afb30 = 0;
+        fn_41f5d0();
+        viewsLocked = 1;
+        g_4b0d52 = 0;
+        strcpy(userFile, savedUserFile);
     }
 }

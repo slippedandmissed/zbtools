@@ -84,7 +84,7 @@ void fn_430b31(ShortRect *rect);
 void fn_4328e2(short which);
 void fn_43108f(View *view, volatile short region);
 void fn_43160a(View *view);
-extern ShortRect g_4a1f54[4]; /* @data 0x4a1f54: where the terrains' names go */
+extern ShortRect g_4a1f54[6]; /* @data 0x4a1f54: the map's areas saved (g_4afb18); the first four hold the terrains' names */
 void fn_431111();
 extern short g_4afb74; /* @data 0x4afb74: the next hundred to score */
 extern short g_4afb78; /* @data 0x4afb78 */
@@ -126,5 +126,7 @@ void scene1Frame();
 extern short g_4a20b0; /* @data 0x4a20b0: scene20Frame is running */
 extern short g_4afb90; /* @data 0x4afb90: the target hit bursting (negated until it's done) */
 void scene20Frame();
+
+void fn_430724();
 
 #endif
