@@ -1633,3 +1633,97 @@ void fn_443e2e()
     setForeColor(saved);
     showRect(&box);
 }
+
+/*
+ * A troll reacts to the pizza by its verdict (fn_44338b): for 0 or 4, the
+ * troll is picked from those there (with both Willa and Shyler there, it
+ * sets g_4b161a again from g_4b161c first); 1 (not all it wants) it
+ * asks for more (8000, 9021 or 10009 on, by g_4b16b6, g_4b16be,
+ * g_4b16c4); otherwise it grumbles (8015, 9017 or 10027 on).
+ */
+/* @zoombi32 0x00445b80 */
+void fn_445b80(short troll, short verdict)
+{
+    View *view;
+    long both;
+
+    g_4b16ea = 0;
+    if (!verdict || verdict == 4) {
+        if (g_4b1618 == 1) {
+            if (g_4b161a != 1 && g_4b161c != 1)
+                troll = 0;
+            else if (g_4b161a == 1 && g_4b161c != 1)
+                troll = randomUpTo(1);
+            else if (g_4b161a != 1 && g_4b161c == 1)
+                troll = randomUpTo(1) * 2;
+            else {
+                if (g_4b161c != 1)
+                    both = 0;
+                else
+                    both = 1;
+                if ((g_4b161a = both) != 0)
+                    troll = randomUpTo(2);
+            }
+        } else if (g_4b161a == 1) {
+            if (g_4b161c != 1)
+                troll = 1;
+            else
+                troll = randomUpTo(1) + 1;
+        } else {
+            troll = 2;
+        }
+    }
+    switch (troll) {
+    case 0:
+        g_4b15fe = 1;
+        if (verdict == 1) {
+            view = findView(g_4b160e);
+            setViewScript(view, g_4b16b6 + 8000, 1);
+            fn_446035();
+            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            g_4b1670 = 1;
+            g_4b1710 = 5;
+        } else {
+            view = findView(g_4b160e);
+            setViewScript(view, randomUpTo(1) + 8015, 1);
+            fn_446035();
+            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            g_4b1710 = 4;
+        }
+        break;
+    case 1:
+        g_4b15fe = 2;
+        if (verdict == 1) {
+            view = findView(g_4b1610);
+            setViewScript(view, g_4b16be + 9021, 1);
+            fn_446035();
+            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            g_4b1670 = 2;
+            g_4b1710 = 6;
+        } else {
+            view = findView(g_4b1610);
+            setViewScript(view, randomUpTo(1) + 9017, 1);
+            fn_446035();
+            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            g_4b1710 = 4;
+        }
+        break;
+    case 2:
+        g_4b15fe = 3;
+        if (verdict == 1) {
+            view = findView(g_4b1612);
+            setViewScript(view, g_4b16c4 + 10009, 1);
+            fn_446035();
+            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            g_4b1670 = 3;
+            g_4b1710 = 7;
+        } else {
+            view = findView(g_4b1612);
+            setViewScript(view, randomUpTo(2) + 10027, 1);
+            fn_446035();
+            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            g_4b1710 = 4;
+        }
+        break;
+    }
+}
