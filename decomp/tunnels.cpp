@@ -441,3 +441,116 @@ short fn_460c41(TunnelRules *rules, short door, Snoid *snoid, unsigned short *fi
     }
     return !passes;
 }
+
+/* Makes a one-feature rule (level 1): counts the chosen Zoombinis having
+   each of the 20 feature values (a nibble each of a long, big-endian like
+   the features), leaves out (g_4b7544) the count g_4b7548 if others remain,
+   looks around half the party's size for a count some values have, picks
+   one of those values at random as the rule, which the door accepts or
+   refuses at random (unknown2). */
+/* @zoombi32 0x00460e3d */
+void fn_460e3d()
+{
+    ChosenSnoids *chosen;
+    unsigned long picked;
+    unsigned short j;
+    unsigned short best;
+    unsigned long masks[20];
+    unsigned short counts[20];
+    unsigned short n;
+    unsigned short sign;
+    short matches;
+    unsigned short i;
+    unsigned long value;
+    unsigned long step;
+    unsigned long features;
+    unsigned short target;
+    short pick;
+    short found;
+
+    chosen = listChosenSnoids();
+    for (i = 0; i < 20; i++) {
+        masks[i] = 0;
+        counts[i] = 0;
+    }
+    value = 1;
+    step = 1;
+    for (i = 0; i < 20; i++) {
+        masks[i] = value;
+        switch (value) {
+        case 5:
+            value = step = 0x100;
+            break;
+        case 0x500:
+            value = step = 0x10000;
+            break;
+        case 0x50000:
+            value = step = 0x1000000;
+            break;
+        case 0x5000000:
+            break;
+        default:
+            value += step;
+            break;
+        }
+    }
+    n = 20;
+    for (j = 0; j < chosen->count; j++) {
+        features = swapLong(*(unsigned long *)chosen->features[j]);
+        for (i = 0; i < n; i++)
+            if ((features & 0xf) == (masks[i] & 0xf) || (features & 0xf00) == (masks[i] & 0xf00)
+                || (features & 0xf0000) == (masks[i] & 0xf0000)
+                || (features & 0xf000000) == (masks[i] & 0xf000000))
+                counts[i]++;
+    }
+    if (g_4b7544 && g_4b7548) {
+        found = 0;
+        for (i = 0; !found && i < n; i++)
+            if (counts[i] && counts[i] != g_4b7548)
+                found = 1;
+        if (found)
+            for (i = 0; i < n; i++)
+                if (counts[i] == g_4b7548)
+                    counts[i] = 0;
+    }
+    matches = 0;
+    sign = 1;
+    target = chosen->count / 2;
+    while (!matches) {
+        if (target > 0 && target < 16) {
+            for (i = 0; i < n; i++)
+                if (target == counts[i])
+                    matches++;
+            best = target;
+        }
+        target += sign;
+        /* sign is unsigned, so the test is always false: the steps go +1,
+           -2, +1, -2, ... (probably meant to widen either way). */
+        if (sign < 0)
+            sign--;
+        sign++;
+        sign = -sign;
+    }
+    pick = randomBetween(1, matches);
+    for (i = 0; i < n; i++)
+        if (counts[i] == best && !--pick) {
+            picked = masks[i];
+            i = n;
+        }
+    g_4b7f18.unknown0 = 1;
+    g_4b7f18.unknown2 = randomBetween(0, 1);
+    g_4b7f18.rules[0].count = 1;
+    if (picked & 0xff) {
+        g_4b7f18.rules[0].features[0] = 4;
+        g_4b7f18.rules[0].values[0] = picked & 0xf;
+    } else if (picked & 0xff00) {
+        g_4b7f18.rules[0].features[0] = 3;
+        g_4b7f18.rules[0].values[0] = (picked >> 8) & 0xf;
+    } else if (picked & 0xff0000) {
+        g_4b7f18.rules[0].features[0] = 2;
+        g_4b7f18.rules[0].values[0] = (picked >> 16) & 0xf;
+    } else if (picked & 0xff000000) {
+        g_4b7f18.rules[0].features[0] = 1;
+        g_4b7f18.rules[0].values[0] = (picked >> 24) & 0xf;
+    }
+}

@@ -111,4 +111,6 @@ short removeTunnelEntry(TunnelList *list, short view);
 
 short fn_460c41(TunnelRules *rules, short door, Snoid *snoid, unsigned short *first);
 
+void fn_460e3d();
+
 #endif
