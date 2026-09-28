@@ -21,8 +21,8 @@ struct LillyActor
     char unknownC6;
     char unknownC7;
     char unknownC8;
-    short unknownC9;
-    short unknownCb;
+    short startX; /* +0xc9 */
+    short startY;
     short targetX; /* +0xcd */
     short targetY;
     short stepX; /* +0xd1 */
@@ -1203,8 +1203,8 @@ short addLillyActor(short value)
     actor.body.scriptGroup = 0;
     actor.body.frameOffset = 1;
     actor.body.running = 0;
-    actor.unknownC9 = 0;
-    actor.unknownCb = 0;
+    actor.startX = 0;
+    actor.startY = 0;
     actor.body.x = 100;
     actor.body.y = 25;
     actor.body.unknownAa = 100;
@@ -1819,8 +1819,8 @@ void addLillyActors()
         actor.unknownE4 = 0;
         actor.body.celsEnd = 0;
         actor.body.running = 1;
-        actor.unknownC9 = 0;
-        actor.unknownCb = 0;
+        actor.startX = 0;
+        actor.startY = 0;
         actor.targetX = 0;
         actor.targetY = 0;
         actor.body.x = 0;
@@ -2005,4 +2005,88 @@ short fn_42f506(View *view)
         return actor->unknownD9 = 10075;
     }
     return 0;
+}
+
+/* A hopping lilly actor's script events: 11 sets off for the next square
+   (unknownD5: 0 up, 1 right, 2 down, 3 left), 12 puts it halfway, 13-14
+   there, 10 and 15 end the hop. */
+/* @zoombi32 0x00429d94 */
+void hopNotify(View *view, short event)
+{
+    short *cel = (short *)&view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+
+    switch (event) {
+    case 11:
+        actor->unknownC5 = actor->column;
+        actor->unknownC6 = actor->row;
+        switch (actor->unknownD5) {
+        case 0:
+            actor->targetX = g_4ac940[--actor->row + 1] + actor->column * 35;
+            break;
+        case 2:
+            actor->targetX = g_4ac940[++actor->row + 1] + actor->column * 35;
+            break;
+        case 1:
+            actor->targetX = g_4ac940[actor->row + 1] + ++actor->column * 35;
+            break;
+        case 3:
+            actor->targetX = g_4ac940[actor->row + 1] + --actor->column * 35;
+            break;
+        }
+        actor->targetY = g_4ac944[actor->row + 1] + g_4a1d70[actor->column];
+        *(Point *)&actor->startX = *(Point *)&actor->body.x;
+        break;
+    case 12:
+        switch (actor->unknownD5) {
+        case 0:
+        case 2:
+            while (*cel++) {
+                cel++;
+                *cel++ = (actor->targetY - actor->startY) / 2 + actor->body.y;
+            }
+            break;
+        case 1:
+        case 3:
+            while (*cel++) {
+                *cel++ = (actor->targetX - actor->startX) / 2 + actor->body.x;
+                cel++;
+            }
+            break;
+        }
+        g_4acff4[actor->unknownC6][actor->unknownC5].attributes[0] = 0;
+        break;
+    case 13:
+    case 14:
+        switch (actor->unknownD5) {
+        case 0:
+        case 2:
+            while (*cel++) {
+                *cel++ = actor->targetX;
+                cel++;
+            }
+            break;
+        case 1:
+        case 3:
+            while (*cel++) {
+                *cel++ = actor->targetX;
+                cel++;
+            }
+            break;
+        }
+        break;
+    case 10:
+        actor->body.x = actor->targetX;
+        actor->body.y = actor->targetY;
+        actor->body.unknownAa = actor->targetX;
+        actor->body.unknownAc = actor->targetY;
+        g_4acd4c[g_4acd74] = view->id;
+        g_4acd74++;
+        view->nextUpdate = clockTime() + 30;
+        break;
+    case 15:
+        g_4acd4c[g_4acd74] = view->id;
+        g_4acd74++;
+        break;
+    }
 }
