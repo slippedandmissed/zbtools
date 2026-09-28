@@ -9,6 +9,8 @@
 #include "features.h"
 #include "module_4623b8.h"
 #include "picker.h"
+#include "platform.h"
+#include "snoids.h"
 #include "sound.h"
 #include "view.h"
 
@@ -787,4 +789,107 @@ void fn_432eff(View *view)
     }
     body->cels[0].x = body->x;
     body->cels[0].y = body->y;
+}
+
+/* Sends a random Zoombini across the screen, along one of three paths
+   below the cursor or above it (at a random height, either way round), at
+   the speed pickerData.counts.speed (now and then a little faster), with a
+   random remark. Returns its view. */
+/* @zoombi32 0x00431ea0 */
+short fn_431ea0()
+{
+    short sound;
+    Point where;
+    Snoid snoid;
+    View *view;
+    short n;
+    short from;
+    short to;
+    short swap;
+    short speed;
+
+    fillMemory(&snoid, 0, sizeof snoid);
+    for (n = 0; n < 4; n++)
+        snoid.features[n] = randomBetween(1, 5);
+    getCursorPosition(&where);
+    if (where.y > 240)
+        n = randomBetween(4, 6);
+    else
+        n = randomBetween(1, 3);
+    switch (n) {
+    case 1:
+        n = randomBetween(230, 270);
+        from = -20;
+        to = 660;
+        break;
+    case 2:
+        n = randomBetween(380, 450);
+        from = -20;
+        to = 660;
+        break;
+    case 3:
+        n = randomBetween(325, 335);
+        from = 325;
+        to = 660;
+        break;
+    case 4:
+        n = randomBetween(165, 185);
+        from = 328;
+        to = 557;
+        break;
+    case 5:
+        n = randomBetween(165, 185);
+        from = -20;
+        to = 557;
+        break;
+    case 6:
+        n = randomBetween(165, 185);
+        from = -20;
+        to = 250;
+        break;
+    }
+    if (randomBetween(1, 100) <= 50) {
+        swap = from;
+        from = to;
+        to = swap;
+    }
+    n = placeSnoid(&snoid, 0, from, n, to, n);
+    view = findView(n);
+    if (view) {
+        speed = pickerData.counts.speed;
+        view->interval = speed;
+        if (speed > 1 && randomBetween(1, 100) <= 25)
+            view->interval = speed - 1;
+        switch (randomBetween(1, 9)) {
+        case 1:
+            sound = 6;
+            break;
+        case 2:
+            sound = 12;
+            break;
+        case 3:
+            sound = 10;
+            break;
+        case 4:
+            sound = 9;
+            break;
+        case 5:
+            sound = 0;
+            break;
+        case 6:
+            sound = 1;
+            break;
+        case 7:
+            sound = 11;
+            break;
+        case 8:
+            sound = 2;
+            break;
+        case 9:
+            sound = 8;
+            break;
+        }
+        queueViewSound(snoidSound(viewSnoid(view), sound), 0);
+    }
+    return n;
 }

@@ -24,6 +24,8 @@ struct PickerData
             char unknown0[0x24];
             short unknown24; /* shown by fn_4320e3 */
             short unknown26; /* 0-99, shown by fn_4320e3; the most is kept in the roster (+0x22) */
+            short unknown28;
+            short speed; /* +0x2a: the walking Zoombinis' interval (fn_431ea0) */
         } counts;
     };
 };
@@ -92,5 +94,7 @@ extern short g_4afb8e; /* @data 0x4afb8e: the target hit (from 1) */
 extern ShortRect *g_4afb94[6]; /* @data 0x4afb94: the targets' bounds */
 extern short g_4afbac[6]; /* @data 0x4afbac: the targets' views */
 void fn_432eff(View *view);
+
+short fn_431ea0();
 
 #endif
