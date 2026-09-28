@@ -53,7 +53,11 @@ extern Point g_4a74de[16]; /* @data 0x4a74de: the groups' hotspots (fn_45db25) *
 extern unsigned char g_4b7f14; /* @data 0x4b7f14: the clock's minute hand when winding started */
 extern unsigned char g_4b7f15; /* @data 0x4b7f15: and hour hand */
 
+extern short g_4a7412; /* @data 0x4a7412: scene0Frame is running */
+extern char logoPath[]; /* @data 0x4b7cfa */
+
 void openScene0();
+void scene0Frame();
 void drawClock(View *view);
 void fn_45db25(View *view);
 short scene0Key(unsigned short key);

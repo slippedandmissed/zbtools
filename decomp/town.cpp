@@ -439,3 +439,52 @@ void fn_45db25(View *view)
             cel += 3;
         }
 }
+
+/* Scene 0's frame: plays the logo movie (Data\Logo025.MOV) once, then
+   clicks; leaves when asked (g_4b0d52). */
+/* @zoombi32 0x0045c212 */
+void scene0Frame()
+{
+    if (g_4a7412 || !g_4b7cf4)
+        return;
+    g_4a7412 = 1;
+    if (g_4b2ad4 && !g_4b7cf8) {
+        if (fn_455229() == 1)
+            g_4b7cf0 = 1;
+    } else if (g_4b7cf8 || !g_4b2ad4 && g_4b7cf6) {
+        g_4b7cf6 = 0;
+        g_4b0d52 = fn_454c10();
+    }
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeScene0();
+    } else if (g_4b7cf0) {
+        switch (g_4b7cec) {
+        case 0:
+            g_4b7cf0 = 0;
+            g_4b7cec++;
+            if (!g_4b2ad4) {
+                g_4a7410 = 1;
+                logoPath[0] = 0;
+                strcpy(logoPath, installDir);
+                strcat(logoPath, "Data\\");
+                strcat(logoPath, "Logo025.MOV");
+                if (fn_45537f(logoPath)) {
+                    scene0Clicked(1);
+                } else {
+                    g_4b7cf6 = 1;
+                    hideCursor();
+                }
+            }
+            break;
+        case 1:
+            g_4b2ad6 = 0;
+            g_4b7cec++;
+            scene0Clicked(-1);
+            break;
+        }
+    }
+    g_4a7412 = 0;
+}

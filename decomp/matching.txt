@@ -838,6 +838,7 @@
 0x0045c0f4 scene0Key
 0x0045c12e openScene0
 0x0045c175 closeScene0
+0x0045c212 scene0Frame
 0x0045c391 scene0Clicked
 0x0045c3ec resetScene6
 0x0045c4c9 fn_45c4c9
