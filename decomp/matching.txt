@@ -330,9 +330,10 @@
 0x0041f100 openRosterFile
 0x0041f195 reportRosterError
 0x0041f1da readWriteRoster
-0x0041f514 fn_41f514
+0x0041f514 newSaveFileName
 0x0041f5d0 fn_41f5d0
 0x0041f668 applyPlayerSettings
+0x0041f6fc fn_41f6fc
 0x0042492b fn_42492b
 0x004249c4 drawButtons
 0x004249e1 fn_4249e1

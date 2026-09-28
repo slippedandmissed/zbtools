@@ -1399,7 +1399,6 @@ void __cdecl debugPrintf(const char *format, ...); /* 0x46db93: to the debugger 
 void fn_41f195(const char *message);
 void fn_41f2c8(long, long);
 void fn_41f668();
-void fn_41f6fc(long);
 void fn_44695c();
 void fn_454c8e();
 void fn_454caa();
@@ -4342,7 +4341,7 @@ void freeDialogs();
 void askKeepParty();
 void dialogClick(Point where);
 void dialogKey(unsigned short key); /* 0x4682f9 */
-void fn_41f514(const char *name, char *file, short *nextId);
+void newSaveFileName(const char *, char *file, short *nextId);
 void fn_41f5d0();
 void fn_43151e();
 void fn_46293a(unsigned short key);
@@ -6123,7 +6122,6 @@ extern Point g_4ab8e0;
 void fn_41dccb();
 void fn_41dbab(View *view, short region);
 void fn_41e8f3(short id, short n);
-void fn_41f514(long, char *name, short *counter);
 extern char *rosterError; /* @data 0x4aba80 */
 extern short g_4ab874;
 extern Point *g_4ab8e4;
@@ -6197,8 +6195,27 @@ extern short rosterPlaceImages[11]; /* @data 0x4ab856: the image placed there */
 void fn_41db60(View *view);
 void fn_41dadf(View *);
 void fn_41eaf1();
-void fn_41f5d0();
 extern short g_4a100c; /* @data 0x4a100c */
 extern short g_4ab916[2][21]; /* @data 0x4ab916: the values of the roster's features each place wants */
 void fn_41e5e1();
 short fn_41e771(short id, short n);
+extern unsigned long g_4a75e4; /* @data 0x4a75e4: slots used (allocateSlot) */
+extern unsigned long g_4a7600; /* @data 0x4a7600: slots used (allocateSlot) */
+extern unsigned long g_4a7614; /* @data 0x4a7614 */
+extern unsigned long g_4a7628; /* @data 0x4a7628: slots used (allocateSlot) */
+extern unsigned long g_4a763c; /* @data 0x4a763c: slots used (allocateSlot) */
+extern unsigned long g_4a764c; /* @data 0x4a764c: slots used (allocateSlot) */
+extern unsigned long g_4a7658; /* @data 0x4a7658 */
+extern unsigned long g_4a7668; /* @data 0x4a7668 */
+extern unsigned long g_4a78c4; /* @data 0x4a78c4: slots used (allocateSlot) */
+extern unsigned long g_4a78c8; /* @data 0x4a78c8 */
+extern unsigned long g_4a78cc; /* @data 0x4a78cc */
+extern unsigned long g_4a78d0; /* @data 0x4a78d0 */
+extern unsigned long g_4a78d4; /* @data 0x4a78d4 */
+extern unsigned long g_4a78d8; /* @data 0x4a78d8: slots used (allocateSlot) */
+extern unsigned long g_4a78dc; /* @data 0x4a78dc */
+extern short g_4afb30; /* @data 0x4afb30 */
+extern short g_4b807e; /* @data 0x4b807e */
+extern short g_4abafc; /* @data 0x4abafc */
+extern long g_4abb00; /* @data 0x4abb00 */
+void fn_41f6fc(short reset);

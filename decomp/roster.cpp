@@ -59,17 +59,17 @@ void fn_41e8f3(short id, short n)
     }
 }
 
-/* A new player's file name: "ZOOM" and the next number (*counter, four
-   digits). */
+/* A new saved game's file name: "ZOOM" and the next number (*nextId,
+   four digits); the game's name isn't used. */
 /* @zoombi32 0x0041f514 */
-void fn_41f514(long, char *name, short *counter)
+void newSaveFileName(const char *, char *file, short *nextId)
 {
-    name[0] = 'Z';
-    name[1] = 'O';
-    name[2] = 'O';
-    name[3] = 'M';
-    sprintf(name + 4, "%04d", (*counter)++);
-    name[8] = 0;
+    file[0] = 'Z';
+    file[1] = 'O';
+    file[2] = 'O';
+    file[3] = 'M';
+    sprintf(file + 4, "%04d", (*nextId)++);
+    file[8] = 0;
 }
 
 /* Reports a roster error. */
@@ -650,6 +650,49 @@ short fn_41e771(short id, short n)
     if (count)
         return places[randomBetween(0, --count)];
     return 1;
+}
+
+/* Fills in the roster's header (g_4a4ba0): when `reset`, a new one (version
+   107, default settings) with the sound slots (allocateSlot) and more reset, else the
+   player's current settings; then the scene (or, in scene 2, g_4b0d54). */
+/* @zoombi32 0x0041f6fc */
+void fn_41f6fc(short reset)
+{
+    if (reset) {
+        fillMemory(g_4a4ba0, 0, 0xae05);
+        *(unsigned short *)g_4a4ba0 = swapShort(107);
+        *(unsigned short *)(g_4a4ba0 + 2) = swapShort(30);
+        g_4a4ba0[4] = 1;
+        g_4a4ba0[5] = 1;
+        g_4a4ba0[6] = 1;
+        g_4a4ba0[7] = 1;
+        g_4a4ba0[8] = 0;
+        g_4a4ba0[9] = 0;
+        *(short *)(g_4a4ba0 + 0xa) = 0;
+        *(short *)(g_4a4ba0 + 0x20) = g_4b2b00;
+        g_4afb32 = 1;
+        g_4afb30 = 0;
+        g_4b807e = 0;
+        g_4a75e4 = g_4a7600 = g_4a7614 = g_4a7628 = g_4a763c = 0;
+        g_4a764c = g_4a7658 = g_4a7668 = g_4a78c4 = g_4a78c8 = 0;
+        g_4a78cc = g_4a78d0 = g_4a78d4 = g_4a78d8 = 0;
+        g_4a78dc = 0;
+        g_4abafc = 0;
+        g_4abb00 = 0;
+    } else {
+        *(unsigned short *)(g_4a4ba0 + 2) = swapShort(clickTime);
+        g_4a4ba0[4] = g_4b87fe;
+        g_4a4ba0[5] = g_4b87ff;
+        g_4a4ba0[6] = clickToDragOption;
+        g_4a4ba0[7] = hideDragCursor;
+        g_4a4ba0[8] = g_4b8803;
+        g_4a4ba0[9] = dragClicks;
+        *(short *)(g_4a4ba0 + 0xa) = g_4b0d4a;
+    }
+    *(short *)(g_4a4ba0 + 0xcc) = currentScene;
+    *(short *)(g_4a4ba0 + 0xca) = g_4b0d56;
+    if (currentScene == 2)
+        *(short *)(g_4a4ba0 + 0xcc) = g_4b0d54;
 }
 
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to

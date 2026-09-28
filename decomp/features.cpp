@@ -1787,7 +1787,7 @@ void placeDialogList(View *view)
                                     strandParty();
                                     break;
                                 case 2:
-                                    fn_41f514(saveName, file, &nextSaveId);
+                                    newSaveFileName(saveName, file, &nextSaveId);
                                     strcpy(gameName, saveName);
                                     strcpy(userFile, file);
                                     strcpy(savedGameList->games[savedGames].name, gameName);
