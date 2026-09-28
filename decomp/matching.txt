@@ -451,6 +451,7 @@
 0x0043160a fn_43160a
 0x0043190d closeScene19
 0x0043195a scene19Frame
+0x00431ab5 scene19Clicked
 0x00431e5e fn_431e5e
 0x00431ea0 fn_431ea0
 0x004320da fn_4320da

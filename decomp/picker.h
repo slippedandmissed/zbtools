@@ -13,20 +13,27 @@ struct PickerHotspot
     char unknown8[28];
 };
 
-/* The picker's data from 0x4af8ac, laid out differently by its uses. */
+/* The picker's data from 0x4af8ac, laid out differently by its scenes. */
 struct PickerData
 {
     union {
-        PickerHotspot hotspots[17]; /* scenes 19 and 21; the last is the whole screen */
-        short view; /* deleted by fn_431e5e */
+        PickerHotspot hotspots[17]; /* scene 1; the last is the whole screen */
         struct
         {
-            char unknown0[0x24];
-            short unknown24; /* shown by fn_4320e3 */
-            short unknown26; /* 0-99, shown by fn_4320e3; the most is kept in the roster (+0x22) */
-            short unknown28;
+            short caught; /* the view of the Zoombini just caught (fn_431e5e deletes it) */
+            short overView; /* +2: shown when the throws run out */
+            short againView; /* +4: its "again" button */
+            short streak; /* +6: catches in a row */
+            char unknown8[0x1c];
+            short throws; /* +0x24: left */
+            short count; /* +0x26: caught; the most is kept in the roster (+0x22) */
+            short remaining; /* +0x28: of 99, neither caught nor to throw */
             short speed; /* +0x2a: the walking Zoombinis' interval (fn_431ea0) */
-        } counts;
+            char unknown2c[0x1c];
+            ShortRect leave; /* +0x48: click here to go back to the map */
+            char unknown50[0xac];
+            ShortRect again; /* +0xfc: the "again" button's bounds */
+        } game; /* scene 19: catching Zoombinis */
     };
 };
 
@@ -131,5 +138,7 @@ void fn_430724();
 extern basePort **g_4afb2c; /* @data 0x4afb2c */
 extern ShortRect g_4a1f7c; /* @data 0x4a1f7c */
 short scene1Key(unsigned short key);
+extern ShortRect g_4a2068[3]; /* @data 0x4a2068: where a click catches nothing */
+void scene19Clicked(short);
 
 #endif

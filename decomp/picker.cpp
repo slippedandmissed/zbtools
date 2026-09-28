@@ -92,7 +92,8 @@ void fn_43151e()
     startView(g_4afb34, 1002, 0, 0);
 }
 
-/* A notify: 0 deletes the view pickerData.view; at the end (-1), g_4afb3a (2
+/* A notify: 0 deletes the view caught (pickerData.game.caught); at the end
+   (-1), g_4afb3a (2
    calls fn_465175) is cleared. */
 /* @zoombi32 0x00431e5e */
 void fn_431e5e(View *, short event)
@@ -101,8 +102,8 @@ void fn_431e5e(View *, short event)
 
     switch (event) {
     case 0:
-        id = pickerData.view;
-        pickerData.view = 0;
+        id = pickerData.game.caught;
+        pickerData.game.caught = 0;
         deleteView(id);
         break;
     case -1:
@@ -205,8 +206,8 @@ void fn_430ff2(View *view)
 
 /* A view's placed callback: shows three two-digit numbers in its first six
    cels (images counted from the first cel's): the most in the roster
-   (+0x22, raised to pickerData.counts.unknown26 if need be; that wraps
-   at 100), pickerData.counts.unknown26 and pickerData.counts.unknown24. */
+   (+0x22, raised to pickerData.game.count if need be; that wraps
+   at 100), pickerData.game.count and pickerData.game.throws. */
 /* @zoombi32 0x004320e3 */
 void fn_4320e3(View *view)
 {
@@ -214,21 +215,21 @@ void fn_4320e3(View *view)
     short first;
     short tens;
 
-    if (pickerData.counts.unknown26 > 99)
-        pickerData.counts.unknown26 = 0;
-    if (*(short *)(g_4a4ba0 + 0x22) < pickerData.counts.unknown26)
-        *(short *)(g_4a4ba0 + 0x22) = pickerData.counts.unknown26;
+    if (pickerData.game.count > 99)
+        pickerData.game.count = 0;
+    if (*(short *)(g_4a4ba0 + 0x22) < pickerData.game.count)
+        *(short *)(g_4a4ba0 + 0x22) = pickerData.game.count;
     body = &view->body;
     first = body->cels[0].image;
     tens = *(short *)(g_4a4ba0 + 0x22) / 10;
     body->cels[0].image = first + tens;
     body->cels[1].image = *(short *)(g_4a4ba0 + 0x22) - tens * 10 + first;
-    tens = pickerData.counts.unknown26 / 10;
+    tens = pickerData.game.count / 10;
     body->cels[2].image = first + tens;
-    body->cels[3].image = pickerData.counts.unknown26 - tens * 10 + first;
-    tens = pickerData.counts.unknown24 / 10;
+    body->cels[3].image = pickerData.game.count - tens * 10 + first;
+    tens = pickerData.game.throws / 10;
     body->cels[4].image = first + tens;
-    body->cels[5].image = pickerData.counts.unknown24 - tens * 10 + first;
+    body->cels[5].image = pickerData.game.throws - tens * 10 + first;
 }
 
 /* Resets the picker: its counts and state, and the hotspots, 40 by 30
@@ -799,7 +800,7 @@ void fn_432eff(View *view)
 
 /* Sends a random Zoombini across the screen, along one of three paths
    below the cursor or above it (at a random height, either way round), at
-   the speed pickerData.counts.speed (now and then a little faster), with a
+   the speed pickerData.game.speed (now and then a little faster), with a
    random remark. Returns its view. */
 /* @zoombi32 0x00431ea0 */
 short fn_431ea0()
@@ -862,7 +863,7 @@ short fn_431ea0()
     n = placeSnoid(&snoid, 0, from, n, to, n);
     view = findView(n);
     if (view) {
-        speed = pickerData.counts.speed;
+        speed = pickerData.game.speed;
         view->interval = speed;
         if (speed > 1 && randomBetween(1, 100) <= 25)
             view->interval = speed - 1;
@@ -1445,9 +1446,9 @@ void fn_43145f(short update)
 }
 
 /* Scene 19's frame: deletes the Zoombinis that have finished crossing
-   (g_4afb60) and, while pickerData.counts.unknown24, now and then (every
+   (g_4afb60) and, while pickerData.game.throws, now and then (every
    20-120 ticks) sends new ones, more of them together as
-   pickerData.counts.unknown26 grows. */
+   pickerData.game.count grows. */
 /* @zoombi32 0x0043195a */
 void scene19Frame()
 {
@@ -1463,29 +1464,29 @@ void scene19Frame()
                 g_4afb60[i] = 0;
                 deleteView(id);
             }
-        if (clockTime() > g_4afb68 && pickerData.counts.unknown24) {
+        if (clockTime() > g_4afb68 && pickerData.game.throws) {
             for (i = 0; viewsSorted && i < 3; i++) {
                 if (!g_4afb60[i]) {
                     g_4afb60[i] = fn_431ea0();
                     g_4afb68 = randomBetween(20, 120) + clockTime();
                 }
-                if (pickerData.counts.unknown26 < 10) {
+                if (pickerData.game.count < 10) {
                     i = 3;
-                } else if (pickerData.counts.unknown26 < 15) {
+                } else if (pickerData.game.count < 15) {
                     if (i == 1)
                         i = 3;
-                } else if (pickerData.counts.unknown26 < 20) {
+                } else if (pickerData.game.count < 20) {
                     if (i == 2)
                         i = 3;
-                } else if (pickerData.counts.unknown26 < 40) {
+                } else if (pickerData.game.count < 40) {
                     if (i == 1)
                         i = 3;
-                } else if (pickerData.counts.unknown26 < 60) {
+                } else if (pickerData.game.count < 60) {
                     i = 3;
-                } else if (pickerData.counts.unknown26 < 80) {
+                } else if (pickerData.game.count < 80) {
                     if (i == 1)
                         i = 3;
-                } else if (pickerData.counts.unknown26 > 80) {
+                } else if (pickerData.game.count > 80) {
                     i = 3;
                 }
             }
@@ -1802,4 +1803,134 @@ short scene1Key(unsigned short key)
         break;
     }
     return used;
+}
+
+/* Scene 19's clicks (catching Zoombinis): the leave area goes back to the
+   map; otherwise, with throws left, throws at the cursor (the view g_4afb3e,
+   or g_4afb3c on a catch): a Zoombini within 12 pixels of its middle (and
+   not behind the areas g_4a2068) is caught, scoring and, every other catch
+   in a row, bonus throws; the Zoombinis speed up as more are caught. Out of
+   throws, "again" (pickerData.game.again) starts over. */
+/* @zoombi32 0x00431ab5 */
+void scene19Clicked(short)
+{
+    Point where;
+    short thrown;
+    View *view;
+    View *shown;
+    short x;
+    short y;
+    short bonus;
+
+    getCursorPosition(&where);
+    if (ptInRect(&pickerData.game.leave, where)) {
+        g_4b0d50 = 1;
+        fn_46be2e(0);
+        closeScene19();
+        return;
+    }
+    view = viewAt(where, 1, 1);
+    if (view) {
+        x = (view->body.bounds.left + view->body.bounds.right) / 2;
+        y = (view->body.bounds.top + view->body.bounds.bottom) / 2;
+        x = abs(x - where.x);
+        y = abs(y - where.y);
+        if (x > 12 || y > 12)
+            view = 0;
+        for (y = 0; view && y < 3; y++)
+            if (ptInRect(&g_4a2068[y], where))
+                view = 0;
+    }
+    if (!g_4afb3a && pickerData.game.throws) {
+        pickerData.game.throws--;
+        g_4afb3a = 1;
+        if (view) {
+            pickerData.game.streak++;
+            switch (pickerData.game.streak) {
+            case 0:
+            case 1:
+                bonus = 0;
+                break;
+            case 2:
+            case 3:
+                bonus = 5;
+                break;
+            case 4:
+            case 5:
+                bonus = 10;
+                break;
+            case 6:
+            case 7:
+                bonus = 15;
+                break;
+            default:
+                bonus = 20;
+                break;
+            }
+            if (bonus && pickerData.game.remaining) {
+                if (bonus <= pickerData.game.remaining)
+                    pickerData.game.throws += bonus;
+                else
+                    pickerData.game.throws += pickerData.game.remaining;
+            }
+            thrown = g_4afb3c;
+            view->nextUpdate = clockTime() + 240;
+            pickerData.game.caught = view->id;
+            for (y = 0; y < 3; y++)
+                if (g_4afb60[y] == pickerData.game.caught)
+                    g_4afb60[y] = 0;
+            pickerData.game.count++;
+            if (pickerData.game.count == 5)
+                pickerData.game.speed = 7;
+            if (pickerData.game.count == 10)
+                pickerData.game.speed = 6;
+            if (pickerData.game.count == 20)
+                pickerData.game.speed = 5;
+            if (pickerData.game.count == 40)
+                pickerData.game.speed = 4;
+            if (pickerData.game.count == 60)
+                pickerData.game.speed = 3;
+            if (pickerData.game.count == 80)
+                pickerData.game.speed = 2;
+            if (pickerData.game.count == 90)
+                pickerData.game.speed = 1;
+            setViewsLocked(0);
+            g_4afb3a = 2;
+        } else {
+            pickerData.game.streak = 0;
+            thrown = g_4afb3e;
+        }
+        shown = findView(thrown);
+        if (shown)
+            *(Point *)&shown->body.x = where;
+        startView(thrown, 0, fn_431e5e, 1);
+        if (g_4afb3a == 2)
+            moveView(thrown, 1, pickerData.game.caught);
+        pickerData.game.remaining = 99 - pickerData.game.count - pickerData.game.throws;
+        startView(g_4afb38, 0, 0, 0);
+        if (!pickerData.game.throws && !pickerData.game.overView) {
+            pickerData.game.overView = addView(0, drawCels, runViewScript, 1204, 1, 0, 0, 0);
+            shown = findView(pickerData.game.againView);
+            if (shown) {
+                pickerData.game.again = shown->body.bounds;
+                shown->body.running = 0;
+                showCursor();
+            }
+        }
+    } else if (!pickerData.game.throws && ptInRect(&pickerData.game.again, where)
+               && pickerData.game.overView) {
+        pickerData.game.count = 0;
+        pickerData.game.throws = 9;
+        pickerData.game.remaining = 99 - pickerData.game.count - pickerData.game.throws;
+        pickerData.game.speed = 8;
+        pickerData.game.streak = 0;
+        deleteView(pickerData.game.overView);
+        pickerData.game.overView = 0;
+        startView(g_4afb38, 0, 0, 0);
+        shown = findView(pickerData.game.againView);
+        if (shown) {
+            shown->body.running = 1;
+            hideCursor();
+        }
+    }
 }
