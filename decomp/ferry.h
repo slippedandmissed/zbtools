@@ -7,12 +7,17 @@
 #define FERRY_H
 
 extern short g_4a1440[]; /* @data 0x4a1440: scripts by g_4abaee */
+extern short g_4a1424[5]; /* @data 0x4a1424: sounds (g_4a1430 picks) */
+extern unsigned long g_4a1430; /* @data 0x4a1430: slots used (allocateSlot) */
+extern short g_4a1454[10]; /* @data 0x4a1454: scripts by g_4abaee */
+extern short g_4a1468[10]; /* @data 0x4a1468: and the next */
 extern ImageBank *g_4a147c; /* @data 0x4a147c: the buttons' images */
 extern SceneButton ferryButtons[2]; /* @data 0x4a1480 */
 extern long g_4a151c; /* @data 0x4a151c */
 extern short g_4a1570; /* @data 0x4a1570: button 2 is drawn lit */
 extern short g_4a1572; /* @data 0x4a1572: button 1 is drawn */
 extern short g_4aba88; /* @data 0x4aba88 */
+extern short g_4aba8a; /* @data 0x4aba8a: the level */
 extern Point g_4aba8c; /* @data 0x4aba8c */
 extern short g_4aba90; /* @data 0x4aba90 */
 extern Point g_4aba92; /* @data 0x4aba92 */
@@ -34,11 +39,12 @@ extern short g_4ababc; /* @data 0x4ababc */
 extern short g_4ababe; /* @data 0x4ababe */
 extern short g_4abac0; /* @data 0x4abac0 */
 extern short g_4abac2; /* @data 0x4abac2 */
+extern short g_4abac6[20]; /* @data 0x4abac6: the placed views */
 extern short g_4abaee; /* @data 0x4abaee */
 extern short g_4abaf0; /* @data 0x4abaf0 */
 extern short g_4abaf2; /* @data 0x4abaf2 */
 extern short g_4abaf4; /* @data 0x4abaf4 */
-extern void *g_4abaf8; /* @data 0x4abaf8 */
+extern char (*ferryLinks)[8]; /* @data 0x4abaf8: for each placed view, those it touches (from 1; linkFerryPlaces) */
 extern short g_4abb04; /* @data 0x4abb04 */
 extern short g_4abb06; /* @data 0x4abb06 */
 extern short g_4abb08; /* @data 0x4abb08 */
@@ -49,6 +55,7 @@ extern short g_4abb16; /* @data 0x4abb16: Captain Cajun's script */
 extern Point ferryPlaces[20]; /* @data 0x4a1520: where the Zoombinis wait */
 
 void resetScene10();
+void linkFerryPlaces(short draw);
 void findFerryPlace(short *spot);
 void fn_420f85(short n);
 void fn_420a60(View *view, short event);

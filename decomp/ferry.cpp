@@ -4,6 +4,7 @@
 
 #include "zoombinis.h"
 #include "basecamp.h"
+#include "debug.h"
 #include "e2memory.h"
 #include "features.h"
 #include "ferry.h"
@@ -73,9 +74,9 @@ void closeScene10()
         clearViews();
         fn_46c602(&g_4a151c);
         unloadSounds();
-        if (g_4abaf8) {
-            disposePtr(g_4abaf8);
-            g_4abaf8 = 0;
+        if (ferryLinks) {
+            disposePtr(ferryLinks);
+            ferryLinks = 0;
         }
         fn_46bee9(saved);
         fn_46ca9c(&g_4abaa8);
@@ -280,4 +281,137 @@ void fn_420f85(short n)
     view->notify = fn_420a60;
     groupViews(view->id, g_4abac0, g_4abaf2, 0, 0, 0);
     setViewsLocked(0);
+}
+
+/* A crossing Zoombini's notify (g_4abaf2, by g_4abaee): 1 walks it on
+   (g_4a1454), 2 and 3 on again (g_4a1468; 2 also lets the views go, or
+   puts it behind g_4ababc when that script is 1907), 4 sets it down facing
+   left at (93, 408), 5 walks it off to g_4aba9c; 6 picks a sound
+   (g_4a1424) if none is due. */
+/* @zoombi32 0x00420a60 */
+void fn_420a60(View *view, short event)
+{
+    View *other;
+
+    switch (event) {
+    case 1:
+        fn_4209b8();
+        fn_420a08(view->body.group, g_4a1454[g_4abaee], fn_420a60, 1);
+        break;
+    case 2:
+        if (g_4a1468[g_4abaee] == 1907) {
+            moveView(g_4abaf2, 0, g_4ababc);
+            g_4abaa4 = 1;
+        } else {
+            g_4aba98 = &g_4aba92;
+            fn_420a08(view->body.group, g_4a1468[g_4abaee], 0, 0);
+            g_4aba98 = 0;
+            g_4aba90 = 0;
+            fn_465175();
+        }
+        break;
+    case 3:
+        g_4aba98 = &g_4aba92;
+        fn_420a08(view->body.group, g_4a1468[g_4abaee], 0, 1);
+        g_4aba98 = 0;
+        break;
+    case 6:
+        if (!g_4abaa0)
+            g_4abaa0 = g_4a1424[allocateSlot(&g_4a1430, 5, 0)];
+        break;
+    case 4:
+        other = findView(g_4abaf2);
+        if (other) {
+            viewSnoid(other)->unknownF2 = 1;
+            other->body.x = 93;
+            other->body.y = 408;
+            startSnoidScript(viewSnoid(other), viewSnoid(other)->features[3] * 2 + 998, 0, 0);
+            other->notify = fn_420a60;
+            other->body.group = view->body.group;
+            fn_465175();
+        }
+        break;
+    case 5:
+        other = findView(g_4abaf2);
+        if (other) {
+            viewSnoid(other)->unknownF2 = 0;
+            startSnoidScript(viewSnoid(other), viewSnoid(other)->features[3] * 2 + 999, &g_4aba9c, 0);
+            other->body.group = view->body.group;
+            other->notify = fn_420c82;
+        }
+        g_4abaf2 = 0;
+        g_4aba90 = 0;
+        break;
+    }
+}
+
+/* Works out which of the placed views (g_4abac6) touch: for each, the
+   others meeting its bounds grown or shrunk by half its height less 2 (and
+   from level 3, g_4aba8a, widened), up to 8, into ferryLinks (from 1); with
+   `draw`, draws each link as a line between the centres. */
+/* @zoombi32 0x0042121c */
+void linkFerryPlaces(short draw)
+{
+    short count;
+    ShortRect rect;
+    ShortRect other;
+    ShortRect probe;
+    ShortRect rects[20];
+    short i;
+    short j;
+    short d;
+    short met;
+    View *view;
+
+    for (i = 0; i < 20; i++)
+        for (j = 0; j < 8; j++)
+            ferryLinks[i][j] = 0;
+    for (i = 0; i < placedViewCount; i++) {
+        view = findView(g_4abac6[i]);
+        if (view)
+            rects[i] = view->body.bounds;
+    }
+    for (i = 0; i < placedViewCount; i++) {
+        rect = rects[i];
+        count = 0;
+        for (j = 0; j < placedViewCount; j++) {
+            if (i == j)
+                continue;
+            other = rects[j];
+            d = (rect.bottom - rect.top) / 2 - 2;
+            probe.top = rect.top - d;
+            probe.bottom = rect.bottom + d;
+            probe.right = rect.right - d;
+            probe.left = rect.left + d;
+            met = sectRect(&probe, &other);
+            if (!met) {
+                probe.top = rect.top + d;
+                probe.bottom = rect.bottom - d;
+                probe.right = rect.right + d;
+                probe.left = rect.left - d;
+                met = sectRect(&probe, &other);
+            }
+            if (!met && g_4aba8a >= 3) {
+                probe.top = rect.top - d;
+                probe.bottom = d += rect.bottom;
+                probe.right = rect.right;
+                probe.left = rect.left;
+                met = sectRect(&probe, &other);
+            }
+            if (met && count < 8) {
+                if (draw) {
+                    Color saved;
+
+                    saved = setForeColor(Color(11));
+                    moveTo((rect.right + rect.left) / 2, (rect.bottom + rect.top) / 2);
+                    lineTo((other.right + other.left) / 2, (other.bottom + other.top) / 2);
+                    setForeColor(saved);
+                }
+                ferryLinks[i][count] = j + 1;
+                count++;
+            }
+        }
+    }
+    if (draw)
+        showRect(&gameRect);
 }
