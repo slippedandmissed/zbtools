@@ -6225,3 +6225,4 @@ extern short g_4ab8da; /* @data 0x4ab8da */
 extern short g_4ab8dc; /* @data 0x4ab8dc */
 extern short g_4a0ffc; /* @data 0x4a0ffc: the first of the walking scripts */
 void fn_41cf14(short which);
+void fn_41e326(short kind);

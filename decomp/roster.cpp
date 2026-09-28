@@ -831,6 +831,99 @@ void fn_41cf14(short which)
     }
 }
 
+/* Places the roster's feature images: `kind` 1 at the first five
+   places, 2 at two of them at random, 3 at two of each row of five; each
+   showing the value there of the row's feature (images 5 apart per
+   feature). */
+/* @zoombi32 0x0041e326 */
+void fn_41e326(short kind)
+{
+    short count;
+    short offset;
+    short j;
+    short order[7];
+    short i;
+    short left;
+    short k;
+
+    for (i = 0; i < 7; i++)
+        order[i] = i;
+    for (i = 0; i < 11; i++) {
+        rosterPlaced[i] = 0;
+        rosterPlaceImages[i] = 0;
+    }
+    switch (kind) {
+    case 1:
+        for (i = 1; i < 6; i++)
+            rosterPlaced[i] = 1;
+        break;
+    case 2:
+        left = 5;
+        count = randomBetween(2, 2);
+        for (i = 0; i < count; i++) {
+            k = randomBetween(1, left);
+            rosterPlaced[order[k]] = 1;
+            for (; k < left + 1; k++)
+                order[k] = order[k + 1];
+            left--;
+        }
+        break;
+    case 3:
+        for (j = 0; j < 2; j++) {
+            if (j)
+                offset = 5;
+            else
+                offset = 0;
+            for (i = 0; i < 7; i++)
+                order[i] = i;
+            left = 5;
+            count = randomBetween(2, 2);
+            for (i = 0; i < count; i++) {
+                k = randomBetween(1, left);
+                rosterPlaced[offset + order[k]] = 1;
+                for (; k < left + 1; k++)
+                    order[k] = order[k + 1];
+                left--;
+            }
+        }
+        break;
+    case 4:
+        break;
+    }
+    for (i = 1; i < 6; i++)
+        if (rosterPlaced[i])
+            switch (rosterFeatures[0]) {
+            case 0:
+                rosterPlaceImages[i] = rosterValues[0][i - 1];
+                break;
+            case 1:
+                rosterPlaceImages[i] = rosterValues[0][i - 1] + 5;
+                break;
+            case 2:
+                rosterPlaceImages[i] = rosterValues[0][i - 1] + 10;
+                break;
+            case 3:
+                rosterPlaceImages[i] = rosterValues[0][i - 1] + 15;
+                break;
+            }
+    for (i = 6; i < 11; i++)
+        if (rosterPlaced[i])
+            switch (rosterFeatures[1]) {
+            case 0:
+                rosterPlaceImages[i] = rosterValues[1][i - 6];
+                break;
+            case 1:
+                rosterPlaceImages[i] = rosterValues[1][i - 6] + 5;
+                break;
+            case 2:
+                rosterPlaceImages[i] = rosterValues[1][i - 6] + 10;
+                break;
+            case 3:
+                rosterPlaceImages[i] = rosterValues[1][i - 6] + 15;
+                break;
+            }
+}
+
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to
    the roster file next to the program (userFile). */
 /* @zoombi32 0x0041f1da */
