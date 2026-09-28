@@ -323,6 +323,7 @@
 0x00428c45 fn_428c45
 0x00429d94 hopNotify
 0x0042a077 fn_42a077
+0x0042a163 placeHopper
 0x0042a4d2 placeJumper
 0x0042a6fa fn_42a6fa
 0x0042a7b6 fn_42a7b6

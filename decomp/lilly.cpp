@@ -2376,3 +2376,90 @@ short planWay(LillyActor *actor, short limit)
     actor->unknownD7 = actor->grid[row][column];
     return actor->unknownD6 = reach;
 }
+
+/* Places a hopping lilly actor's cels through its hop (by frame), its
+   parts showing image 0x110 offset by unknownE0 and the rest hidden while
+   its ninth cel's x is set. */
+/* @zoombi32 0x0042a163 */
+void placeHopper(View *view)
+{
+    short *cel = (short *)&view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+    short x;
+    short y;
+    short shown = !cel[25];
+    short image;
+
+    switch (actor->body.frame) {
+    case 0:
+        actor->unknownC5 = actor->column;
+        actor->unknownC6 = actor->row;
+        switch (actor->unknownD9) {
+        case 10071:
+            actor->targetX = g_4ac940[--actor->row + 1] + actor->column * 35;
+            break;
+        case 10073:
+            actor->targetX = g_4ac940[++actor->row + 1] + actor->column * 35;
+            break;
+        case 10077:
+            actor->targetX = g_4ac940[actor->row + 1] + ++actor->column * 35;
+            break;
+        case 10075:
+            actor->targetX = g_4ac940[actor->row + 1] + --actor->column * 35;
+            break;
+        }
+        actor->targetY = g_4ac944[actor->row + 1] + g_4a1d70[actor->column];
+        *(Point *)&actor->startX = *(Point *)&actor->body.x;
+        /* fall through */
+    case 1:
+    case 3:
+    case 4:
+    case 5:
+        x = cel[1];
+        y = cel[2];
+        break;
+    case 2:
+        x = (actor->targetX - actor->startX) / 2 + actor->body.x;
+        y = (actor->targetY - actor->startY) / 2 + actor->body.y;
+        break;
+    case 6:
+        x = actor->targetX;
+        y = actor->targetY;
+        if (!cel[25])
+            g_4acff4[actor->unknownC6][actor->unknownC5].attributes[0] = 0;
+        break;
+    case 7:
+        if (cel[26])
+            shown = cel[26];
+        x = actor->targetX;
+        y = actor->targetY;
+        actor->body.x = x;
+        actor->body.y = y;
+        actor->body.unknownAa = x;
+        actor->body.unknownAc = y;
+        view->nextUpdate = clockTime() + 35;
+        g_4ac9e6[g_4acb06] = view->id;
+        g_4acb06++;
+        break;
+    }
+    image = *cel++;
+    if (image) {
+        *cel++ = x - g_4ac950[image];
+        *cel++ = y - g_4ac954[image];
+    }
+    if (*cel == 0x110 && shown) {
+        *cel += actor->unknownE0;
+        image = *cel++;
+        *cel++ = x - g_4ac950[image];
+        *cel++ = y - g_4ac954[image];
+    } else if (!shown) {
+        *cel++ = 0;
+        cel++;
+        cel++;
+    }
+    while (*cel) {
+        image = *cel++;
+        *cel++ = x - g_4ac950[image];
+        *cel++ = y - g_4ac954[image];
+    }
+}
