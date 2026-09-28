@@ -6,11 +6,13 @@
 #ifndef TUNNELS_H
 #define TUNNELS_H
 
-/* A record of 14 shorts the caves keep a list of (fn_460527); its fields
-   aren't known yet. */
+/* A record the caves keep a list of (fn_460527), 14 shorts: a view, and
+   its kind last; the rest aren't known yet. */
 struct TunnelEntry
 {
-    short fields[14];
+    short view;
+    short unknown2[12];
+    short kind; /* +0x1a */
 };
 
 /* A list of up to five of them. */
@@ -34,5 +36,18 @@ void closeScene8();
 void fn_45fa56(View *, short event);
 void fn_45fb10(View *, short event);
 void fn_460527(TunnelList *list, TunnelEntry entry);
+extern TunnelList g_4b7ff0; /* @data 0x4b7ff0 */
+extern short g_4b7fd0; /* @data 0x4b7fd0 */
+extern short g_4b7fbe; /* @data 0x4b7fbe */
+extern short g_4b8094; /* @data 0x4b8094 */
+extern short g_4b7fba; /* @data 0x4b7fba: button 2 is live */
+extern short g_4b7fda; /* @data 0x4b7fda: button 2 is drawn lit */
+extern short g_4b7fdc; /* @data 0x4b7fdc: button 1 has been drawn */
+extern SceneButton tunnelsButtons[2]; /* @data 0x4a766c: buttons 1 and 2 */
+extern ImageBank *g_4a770c; /* @data 0x4a770c: the buttons' images */
+void fn_45faa3(View *, short event);
+void fn_45e9b9(View *, short region);
+void drawTunnelsButton(short which, short lit, short show);
+void fn_4622f5();
 
 #endif
