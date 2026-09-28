@@ -5978,7 +5978,15 @@ extern short g_4b165a;
 void fn_444556();
 void fn_44509b();
 void fn_445ae1(View *, short);
-extern short g_4b164a[8]; /* toppings shown on the pizza */
+/* Toppings shown on the pizza (one each): */
+extern short g_4b164a;
+extern short g_4b164c;
+extern short g_4b164e;
+extern short g_4b1650;
+extern short g_4b1652;
+extern short g_4b1654;
+extern short g_4b1656;
+extern short g_4b1658;
 extern short g_4b1660;
 extern short g_4b1600;
 extern short g_4b1602;
@@ -5995,3 +6003,15 @@ extern short g_4b15ee;
 extern short g_4b171e;
 void drawPizzaButtonsView(View *);
 void fn_445789();
+extern short g_4b1664;
+extern short g_4b1616;
+extern short g_4b1712;
+extern short g_4b1734;
+extern short g_4b16ca[8];
+extern short toppingViews[8]; /* @data 0x4b1636 */
+extern short g_4b1630;
+extern short g_4b1666;
+extern short g_4b1668;
+void fn_446035();
+void fn_446198();
+void fn_442a9f(View *view);

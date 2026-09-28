@@ -275,7 +275,8 @@ void fn_445ae1(View *, short)
 }
 
 /* A view's placing: drops the cels of toppings (images 57-61 and 67-69)
-   not on the pizza (g_4b164a). `i` never moves. */
+   not on the pizza (g_4b164a-g_4b1658). `i` never
+   moves. */
 /* @zoombi32 0x00442443 */
 void fn_442443(View *view)
 {
@@ -287,49 +288,49 @@ void fn_442443(View *view)
         removed = 0;
         switch (cel[i]) {
         case 61:
-            if (!g_4b164a[0]) {
+            if (!g_4b164a) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 60:
-            if (!g_4b164a[1]) {
+            if (!g_4b164c) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 59:
-            if (!g_4b164a[2]) {
+            if (!g_4b164e) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 58:
-            if (!g_4b164a[3]) {
+            if (!g_4b1650) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 57:
-            if (!g_4b164a[4]) {
+            if (!g_4b1652) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 67:
-            if (!g_4b164a[5]) {
+            if (!g_4b1654) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 68:
-            if (!g_4b164a[6]) {
+            if (!g_4b1656) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 69:
-            if (!g_4b164a[7]) {
+            if (!g_4b1658) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -439,6 +440,203 @@ void fn_445789()
                 g_4b171e++;
         } else {
             g_4b165a++;
+        }
+    }
+}
+
+/* Puts the Zoombini at the pizza (g_4a3d42) and the trolls up (g_4b160e,
+   g_4b1610, g_4b1612, as g_4b1618-g_4b161c say) in front of each other,
+   behind g_4b1616; and the view g_4b1664 too. */
+/* @zoombi32 0x00446035 */
+void fn_446035()
+{
+    if (g_4b1664) {
+        moveView(g_4b1664, 1, g_4b1616);
+        if (g_4b1618 == 3) {
+            if (g_4b1712 >= 0)
+                moveView(g_4b160e, 0, g_4b1734);
+            else
+                moveView(g_4b160e, 0, g_4b1664);
+        }
+    }
+    if (g_4a3d42 < 0)
+        return;
+    moveView(g_4a3d42, 0, g_4b1616);
+    if (g_4b1618 == 1) {
+        moveView(g_4b160e, 0, g_4a3d42);
+        if (g_4b161c == 1) {
+            moveView(g_4b1612, 0, g_4b160e);
+            if (g_4b161a == 1)
+                moveView(g_4b1610, 0, g_4b1612);
+        } else if (g_4b161a == 1) {
+            moveView(g_4b1610, 0, g_4b160e);
+        }
+    } else if (g_4b161c == 1) {
+        moveView(g_4b1612, 0, g_4a3d42);
+        if (g_4b161a == 1)
+            moveView(g_4b1610, 0, g_4b1612);
+    } else if (g_4b161a == 1) {
+        moveView(g_4b1610, 0, g_4a3d42);
+    }
+}
+
+/* Clears the toppings (g_4b16ca, and the ones shown, g_4b164a-g_4b1658) and sets
+   the topping views (toppingViews) to the level's scripts (7005 on). */
+/* @zoombi32 0x00446198 */
+void fn_446198()
+{
+    fillMemory(g_4b16ca, 0, 16);
+    g_4b1652 = g_4b1650 = g_4b164c = g_4b164e = g_4b164a = g_4b1654 = g_4b1656 = g_4b1658 = 0;
+    switch (g_4b161e) {
+    case 0:
+        setViewScript(findView(toppingViews[0]), 7005, 1);
+        setViewScript(findView(toppingViews[1]), 7007, 1);
+        setViewScript(findView(toppingViews[3]), 7011, 1);
+        setViewScript(findView(toppingViews[2]), 7009, 1);
+        setViewScript(findView(toppingViews[4]), 7013, 1);
+        break;
+    case 1:
+        setViewScript(findView(toppingViews[0]), 7015, 1);
+        setViewScript(findView(toppingViews[1]), 7017, 1);
+        setViewScript(findView(toppingViews[3]), 7021, 1);
+        setViewScript(findView(toppingViews[2]), 7019, 1);
+        setViewScript(findView(toppingViews[5]), 7023, 1);
+        setViewScript(findView(toppingViews[6]), 7025, 1);
+        break;
+    case 2:
+        setViewScript(findView(toppingViews[0]), 7027, 1);
+        setViewScript(findView(toppingViews[1]), 7029, 1);
+        setViewScript(findView(toppingViews[3]), 7033, 1);
+        setViewScript(findView(toppingViews[2]), 7031, 1);
+        setViewScript(findView(toppingViews[4]), 7035, 1);
+        setViewScript(findView(toppingViews[5]), 7037, 1);
+        setViewScript(findView(toppingViews[6]), 7039, 1);
+        break;
+    case 3:
+        setViewScript(findView(toppingViews[0]), 7041, 1);
+        setViewScript(findView(toppingViews[1]), 7043, 1);
+        setViewScript(findView(toppingViews[3]), 7047, 1);
+        setViewScript(findView(toppingViews[2]), 7045, 1);
+        setViewScript(findView(toppingViews[4]), 7049, 1);
+        setViewScript(findView(toppingViews[5]), 7051, 1);
+        setViewScript(findView(toppingViews[6]), 7053, 1);
+        setViewScript(findView(toppingViews[7]), 7055, 1);
+        break;
+    }
+}
+
+/* A view's placing: drops the cels of toppings not on the pizza
+   (g_4b16da; images 5-24 by topping, 25-40 by level too) and moves the
+   rest by (g_4b1666, g_4b1668), or, while g_4b1630, to there from where
+   the first one was. */
+/* @zoombi32 0x00442a9f */
+void fn_442a9f(View *view)
+{
+    short dx;
+    short dy;
+    short *cel = (short *)&view->body;
+    short removed;
+    short first = 1;
+
+    while (*cel) {
+        removed = 0;
+        switch (*cel) {
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+            if (!g_4b16da[4]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 9:
+        case 10:
+        case 11:
+        case 12:
+            if (!g_4b16da[3]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 13:
+        case 14:
+        case 15:
+        case 16:
+            if (!g_4b16da[2]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 17:
+        case 18:
+        case 19:
+        case 20:
+            if (!g_4b16da[1]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 21:
+        case 22:
+        case 23:
+        case 24:
+            if (!g_4b16da[0]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 25:
+        case 26:
+        case 27:
+        case 28:
+            if (!g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 29:
+        case 30:
+        case 31:
+        case 32:
+            if (!g_4b16da[5] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 33:
+        case 34:
+        case 35:
+        case 36:
+            if (!g_4b16da[6] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 37:
+        case 38:
+        case 39:
+        case 40:
+            if (!g_4b16da[7] || g_4b161e != 3) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        }
+        if (!removed) {
+            if (!g_4b1630) {
+                cel[1] += g_4b1666;
+                cel[2] += g_4b1668;
+            } else {
+                if (first) {
+                    dx = cel[1];
+                    dy = cel[2];
+                    first = 0;
+                }
+                cel[1] += g_4b1666 - dx;
+                cel[2] += g_4b1668 - dy;
+            }
+            cel += 3;
         }
     }
 }
