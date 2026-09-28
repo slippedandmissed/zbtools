@@ -57,7 +57,15 @@ void fn_42403b(View *view, short event);
 extern short g_4abb20; /* @data 0x4abb20 */
 extern short g_4abb24; /* @data 0x4abb24 */
 
+extern short feetLayers[6]; /* @data 0x4a1654: the feature layers by value, for ferryLayOutSnoid */
+extern short noseLayers[6]; /* @data 0x4a1660 */
+extern short eyesLayers[6]; /* @data 0x4a166c */
+extern short hairLayers[6]; /* @data 0x4a1678 */
+extern short *ferryHotX; /* @data 0x4abb98: the ferry's images' hot spots */
+extern short *ferryHotY; /* @data 0x4abb9c */
+
 void resetScene13();
+short ferryLayOutSnoid(Snoid *snoid, short *event);
 void fn_423512(View *view, short event);
 short ferryScript(View *view, short which);
 void drawFerryButton(short which, short lit, short show);

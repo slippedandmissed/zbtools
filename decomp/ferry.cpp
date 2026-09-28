@@ -494,3 +494,143 @@ void fn_423512(View *view, short event)
         break;
     }
 }
+
+/*
+ * The ferry's layOutSnoid: lays out a Zoombini's cels for its ferry script's
+ * current frame. The script's second word is the order of its feature
+ * layers, set up in unknownC2 when it changes (unknownC0); the rest is as
+ * layOutSnoid, with the ferry's hot spots and images.
+ */
+/* @zoombi32 0x00422747 */
+short ferryLayOutSnoid(Snoid *snoid, short *event)
+{
+    short *layers;
+    short sound;
+    short *script;
+    short last;
+    short offsetX;
+    short offsetY;
+    ShortRect rect;
+    short *cel;
+    short *at;
+    short i;
+    short word;
+
+    sound = 0;
+    if (event)
+        *event = 0;
+    snoid->body.bounds.left = 0;
+    snoid->body.bounds.top = 0;
+    snoid->body.bounds.right = 0;
+    snoid->body.bounds.bottom = 0;
+    cel = (short *)snoid->body.cels;
+    layers = snoid->unknownC2;
+    last = 5;
+    script = ferryScripts[snoid->body.script];
+    word = script[1];
+    at = script + snoid->body.frameOffset;
+    if (word != snoid->unknownC0) {
+        snoid->unknownC0 = word;
+        switch (word) {
+        case 0:
+            layers[1] = feetLayers[snoid->features[3]];
+            layers[2] = 0;
+            layers[3] = noseLayers[snoid->features[2]];
+            layers[4] = eyesLayers[snoid->features[1]];
+            layers[5] = hairLayers[snoid->features[0]];
+            break;
+        case 1:
+            layers[1] = feetLayers[snoid->features[3]];
+            layers[2] = noseLayers[snoid->features[2]];
+            layers[3] = 0;
+            layers[4] = eyesLayers[snoid->features[1]];
+            layers[5] = hairLayers[snoid->features[0]];
+            break;
+        case 2:
+            layers[1] = 0;
+            layers[2] = eyesLayers[snoid->features[1]];
+            layers[3] = noseLayers[snoid->features[2]];
+            layers[4] = feetLayers[snoid->features[3]];
+            layers[5] = hairLayers[snoid->features[0]];
+            break;
+        case 3:
+            layers[1] = 0;
+            layers[2] = feetLayers[snoid->features[3]];
+            layers[3] = noseLayers[snoid->features[2]];
+            layers[4] = eyesLayers[snoid->features[1]];
+            layers[5] = hairLayers[snoid->features[0]];
+            break;
+        }
+    }
+    layers = snoid->unknownC2 + 1;
+    offsetY = -snoid->body.unknownAc;
+    if (*at > 0) {
+        offsetX = -snoid->body.unknownAa;
+        snoid->body.x = at[1] + offsetX;
+        snoid->body.y = at[2] + offsetY;
+    }
+    i = 0;
+    if (!snoid->unknownF2) {
+        for (; i <= last; i++) {
+            word = *at++;
+            if (!word) {
+                at += 2;
+                *cel++ = 0;
+                *cel++ = 0;
+                *cel++ = 0;
+            } else if (word > 0) {
+                word = (word + layers[i]) * 2 - 1;
+                *cel++ = word;
+                *cel++ = offsetX + *at++ - ferryHotX[word];
+                *cel++ = offsetY + *at++ - ferryHotY[word];
+            } else {
+                if (word < -0x100)
+                    sound = *at++;
+                if (event)
+                    *event = word & 0xff;
+                if (i)
+                    *cel = 0;
+                i = last + 1;
+            }
+        }
+    } else {
+        for (; i <= last; i++) {
+            word = *at++;
+            if (!word) {
+                at += 2;
+                *cel++ = 0;
+                *cel++ = 0;
+                *cel++ = 0;
+            } else if (word > 0) {
+                word = (word + layers[i]) * 2;
+                *cel++ = word;
+                *cel++ = offsetX + *at++ - ferryHotX[word];
+                *cel++ = offsetY + *at++ - ferryHotY[word];
+            } else {
+                if (word < -0x100)
+                    sound = *at++;
+                if (event)
+                    *event = word & 0xff;
+                if (i)
+                    *cel = 0;
+                i = last + 1;
+            }
+        }
+    }
+    cel = (short *)snoid->body.cels;
+    while (*cel) {
+        unsigned short *image = (unsigned short *)(g_4abb94->offsets[*cel] + (char *)g_4abb94);
+
+        cel++;
+        rect.left = *cel++;
+        rect.top = *cel++;
+        rect.right = swapShort(image[0]) + rect.left;
+        rect.bottom = swapShort(image[1]) + rect.top;
+        unionRect(&snoid->body.bounds, &rect);
+    }
+    if (event) {
+        snoid->body.frameOffset = at - script;
+        snoid->body.frame++;
+    }
+    return sound;
+}
