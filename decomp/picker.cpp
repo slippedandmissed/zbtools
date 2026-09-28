@@ -33,10 +33,12 @@ long fn_4320da(long)
     return 0;
 }
 
+/* The notify of a target bursting (scene20Frame): when its script ends,
+   marks it done (g_4afb90 positive). */
 /* @zoombi32 0x004334f0 */
-void fn_4334f0(long, short value)
+void fn_4334f0(View *, short event)
 {
-    if (value == -1 && g_4afb90 < 0)
+    if (event == -1 && g_4afb90 < 0)
         g_4afb90 = -g_4afb90;
 }
 
@@ -1547,5 +1549,102 @@ void scene1Frame()
             closeScene1();
         }
         g_4a2008 = 0;
+    }
+}
+
+/* Scene 20's frame (the practice game): starts targets when there are none
+   (one or two of kind 2), clears the stopped shot, and bursts the target
+   hit (g_4afb8e): a large one splits into two or three of the next size,
+   flying off on either side; when the last goes, every other time a big
+   one (kind 3 or 4) crosses. */
+/* @zoombi32 0x0043261d */
+void scene20Frame()
+{
+    DriftingBody *body;
+    short split;
+    View *view;
+    short n;
+    short size;
+    short turn;
+
+    if (!g_4a20b0 && g_4afb14) {
+        g_4a20b0 = 1;
+        updateViews();
+        if (!g_4afbba) {
+            fn_4330f3(2, 0);
+            if (randomBetween(1, 10) <= 4)
+                fn_4330f3(2, 0);
+        }
+        if (g_4afb8a) {
+            n = g_4afb8a;
+            g_4afb8a = 0;
+            deleteView(n);
+            g_4afb8c--;
+            if (g_4afb8c < 0)
+                g_4afb8c = 0;
+        }
+        if (g_4afb8e) {
+            if (!g_4afb90) {
+                n = g_4afb8e;
+                n--;
+                g_4afb90 = -g_4afbac[n];
+                view = findView(-g_4afb90);
+                if (view) {
+                    size = 0;
+                    if (view->kind >= 1016 && view->kind < 1021)
+                        size = 2;
+                    if (view->kind < 1005)
+                        size = 1;
+                    if (size) {
+                        body = (DriftingBody *)&view->body;
+                        g_4afb6c = body->x;
+                        g_4afb6e = body->y;
+                        if (randomBetween(1, 100) <= 33) {
+                            turn = 2;
+                            split = 6;
+                        } else {
+                            turn = 1;
+                            split = 7;
+                        }
+                        g_4afb70 = (turn + body->unknown32) & 7;
+                        fn_4330f3(size - 1, 1);
+                        g_4afb70 = (body->unknown32 + split) & 7;
+                        fn_4330f3(size - 1, 1);
+                        if (size == 1 && randomBetween(1, 100) <= 33) {
+                            g_4afb70 = (body->unknown32 + 4) & 7;
+                            fn_4330f3(--size, 1);
+                        }
+                    }
+                    view->flags = 0x100000;
+                    view->update = runViewScript;
+                    setViewScript(view, 1015, 1);
+                    view->notify = fn_4334f0;
+                    view->notifyEnd = 1;
+                }
+                g_4afbac[n] = 0;
+                g_4afb94[n] = 0;
+                g_4afbba--;
+                if (g_4afbba <= 0) {
+                    g_4afbba = 0;
+                    g_4afbbc = !g_4afbbc;
+                    if (g_4afbbc) {
+                        if (randomBetween(1, 10) <= 5)
+                            n = 3;
+                        else
+                            n = 4;
+                        g_4afbbe = fn_4330f3(n, 0);
+                    }
+                }
+            } else if (g_4afb90 > 0) {
+                if (g_4afb90 == g_4afbbe) {
+                    g_4afbbc = 0;
+                    g_4afbbe = 0;
+                }
+                n = g_4afb90;
+                g_4afb90 = g_4afb8e = 0;
+                deleteView(n);
+            }
+        }
+        g_4a20b0 = 0;
     }
 }

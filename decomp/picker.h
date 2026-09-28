@@ -36,7 +36,7 @@ extern short g_4afb90;
 void fn_43151e();
 void fn_42fc89(Counters *object);
 long fn_4320da(long);
-void fn_4334f0(long, short value);
+void fn_4334f0(View *, short event);
 extern long g_4afb10; /* @data 0x4afb10: Picker.MHK */
 extern short g_4afb14; /* @data 0x4afb14: the scene is open */
 extern short g_4afbb8; /* @data 0x4afbb8 */
@@ -106,8 +106,8 @@ extern short g_4afb7a; /* @data 0x4afb7a */
 void fn_432cec(View *view);
 
 void fn_4321ac(View *view, short region);
-extern short g_4afbbc; /* @data 0x4afbbc */
-extern short g_4afbbe; /* @data 0x4afbbe */
+extern unsigned short g_4afbbc; /* @data 0x4afbbc: a big target is out */
+extern unsigned short g_4afbbe; /* @data 0x4afbbe: its view */
 short scene20Key(unsigned short key);
 extern char *placeNames[16]; /* @data 0x4a5278: the hotspots' names ("zoombini isle", ...) */
 /* The map's box: 0-3 the camps ("zoombini isle", "shelter rock", "shade
@@ -123,5 +123,8 @@ extern short g_4afb60[3]; /* @data 0x4afb60: the Zoombinis crossing */
 extern unsigned long g_4afb68; /* @data 0x4afb68: when to send more */
 void scene19Frame();
 void scene1Frame();
+extern short g_4a20b0; /* @data 0x4a20b0: scene20Frame is running */
+extern short g_4afb90; /* @data 0x4afb90: the target hit bursting (negated until it's done) */
+void scene20Frame();
 
 #endif
