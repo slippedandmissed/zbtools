@@ -326,6 +326,7 @@
 0x0042a6fa fn_42a6fa
 0x0042a7b6 fn_42a7b6
 0x0042aaba fn_42aaba
+0x0042ab6f placeJumperAt
 0x0042adb5 fn_42adb5
 0x0042ae14 fn_42ae14
 0x0042afbe fn_42afbe

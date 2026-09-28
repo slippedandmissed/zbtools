@@ -1632,3 +1632,156 @@ void layOutLillyView(View *view, short region)
         fn_46c602(&resource);
     }
 }
+
+/*
+ * Follows the rising numbers in an actor's grid from where it is (clearing
+ * them as it goes) until it reaches `limit` across (unknownC0 0) or down
+ * (1), or 200 steps.
+ */
+/* Not exact: register allocation (the original keeps `actor` in esi and
+   the direction in ecx, `reach` on the stack). */
+/* @zoombi32 0x0042ef4d */
+void followGrid(LillyActor *actor, short limit)
+{
+    short best;
+    short bestX;
+    short bestY;
+    short x;
+    short y;
+    short value;
+    short reach;
+    short steps;
+    char direction;
+
+    if (!actor->unknownC0) {
+        actor->grid[actor->unknownC8][actor->unknownC7] = 0;
+        x = actor->unknownC7;
+        y = actor->unknownC8;
+    } else {
+        actor->grid[actor->row][actor->column] = 0;
+        x = actor->column;
+        y = actor->row;
+    }
+    steps = 0;
+    bestX = x;
+    bestY = y;
+    if (!actor->unknownC0)
+        reach = actor->column;
+    else
+        reach = actor->row;
+    best = 0;
+    while (reach < limit && steps < 200) {
+        for (direction = 0; direction < 4; direction++) {
+            char c = x;
+            char r = y;
+
+            switch (direction) {
+            case 0:
+                r--;
+                if (r < 0) {
+                    r++;
+                    value = 0;
+                } else {
+                    value = actor->grid[r][c];
+                }
+                break;
+            case 1:
+                c++;
+                if (c > 11) {
+                    c--;
+                    value = 0;
+                } else {
+                    value = actor->grid[r][c];
+                }
+                break;
+            case 2:
+                r++;
+                if (r > 11) {
+                    r--;
+                    value = 0;
+                } else {
+                    value = actor->grid[r][c];
+                }
+                break;
+            case 3:
+                c--;
+                if (c < 0) {
+                    c++;
+                    value = 0;
+                } else {
+                    value = actor->grid[r][c];
+                }
+                break;
+            }
+            if (value > best) {
+                best = value;
+                bestX = c;
+                bestY = r;
+                if (!actor->unknownC0 && c > reach)
+                    reach = c;
+                else if (actor->unknownC0 == 1 && r > reach)
+                    reach = r;
+            }
+        }
+        actor->grid[bestY][bestX] = 0;
+        x = bestX;
+        y = bestY;
+        steps++;
+    }
+}
+
+/* The same, jumping to its place in g_4a1ca4 (by unknownBe). */
+/* @zoombi32 0x0042ab6f */
+void placeJumperAt(View *view)
+{
+    LillyActor *actor = (LillyActor *)&view->body;
+    short *cel;
+    short image;
+
+    switch (actor->body.frame) {
+    case 0:
+        actor->targetX = g_4a1ca4[actor->unknownBe].x;
+        actor->targetY = g_4a1ca4[actor->unknownBe].y;
+        actor->stepX = (actor->targetX - actor->body.x) / 3;
+        actor->stepY = (actor->targetY - actor->body.y) / 3;
+        /* fall through */
+    case 1:
+    case 2:
+        cel = (short *)&view->body;
+        image = *cel++;
+        *cel++ -= g_4ac950[image];
+        *cel++ -= g_4ac954[image];
+        *cel += actor->unknownE0;
+        image = *cel++;
+        *cel++ -= g_4ac950[image];
+        *cel -= g_4ac954[image];
+        break;
+    case 3:
+    case 4:
+        cel = (short *)&view->body;
+        image = *cel++;
+        *cel++ = actor->body.x + actor->stepX - g_4ac950[image];
+        *cel++ = actor->body.y + actor->stepY - g_4ac954[image];
+        *cel += actor->unknownE0;
+        image = *cel++;
+        *cel++ = actor->body.x + actor->stepX - g_4ac950[image];
+        *cel = actor->body.y + actor->stepY - g_4ac954[image];
+        actor->stepX += actor->stepX;
+        actor->stepY += actor->stepY;
+        break;
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+        cel = (short *)&view->body;
+        image = *cel++;
+        *cel++ = actor->targetX - g_4ac950[image];
+        *cel++ = actor->targetY - g_4ac954[image];
+        *cel += actor->unknownE0;
+        image = *cel++;
+        *cel++ = actor->targetX - g_4ac950[image];
+        *cel = actor->targetY - g_4ac954[image];
+        break;
+    }
+}

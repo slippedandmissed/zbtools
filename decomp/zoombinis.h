@@ -4801,6 +4801,8 @@ void drawSquare(short row, short column);
 void drawBoard(short);
 void drawCursorSquare(View *view);
 void placeJumper(View *view);
+void placeJumperAt(View *view);
+extern Point g_4a1ca4[];
 void dealSquares();
 void layOutLillyView(View *view, short region);
 extern short g_4a1e3c[12];
