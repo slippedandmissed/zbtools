@@ -474,6 +474,7 @@
 0x0043e435 fn_43e435
 0x0043e5a7 fn_43e5a7
 0x0043e620 resetZoombiniMade
+0x0043e6b6 openIsle
 0x0043eb13 closeIsle
 0x0043ebf4 isleFrame
 0x0043ec8c isleKey

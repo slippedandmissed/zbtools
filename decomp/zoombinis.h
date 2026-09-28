@@ -5879,3 +5879,8 @@ void fn_43d0b4(short which, short value);
 extern short g_4b11a4;
 extern unsigned long g_4b1470;
 void fn_43c48b(short button);
+extern Point g_4a3364;
+extern Point g_4a3368;
+extern GroupList g_4a330c[2];
+extern char g_4a7410;
+void openIsle();

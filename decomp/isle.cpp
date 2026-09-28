@@ -25,6 +25,122 @@ void resetZoombiniMade()
     g_4b755c = g_4b755a = 0;
 }
 
+/*
+ * Opens Zoombini Isle: loads Picker.MHK's backdrop, images, scripts and
+ * sounds, adds the scene's views and the queue's places, brings back the
+ * party waiting here, places each spot by the queue (the nearest one no
+ * earlier place has taken), and sets up the Zoombini being made. Offers to
+ * load a saved game first if asked (g_4a7410). Then a hint, unless coming
+ * from the camp, where a remark (20043/20044) may say how many Zoombinis
+ * are left to make.
+ */
+/* @zoombi32 0x0043e6b6 */
+void openIsle()
+{
+    Point entry = g_4a3364;
+    Point exit;
+    short i;
+    short skip;
+    short spot;
+    short j;
+
+    g_4b15a4 = 0;
+    resetZoombiniMade();
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(1000, 1007, 0);
+    fn_45aaff(0);
+    g_4b15ae = 16;
+    g_4b15aa = zoombiniMadeAllowed();
+    setPenWidth(1);
+    openGameFile(&g_4b1588, "Picker.MHK");
+    fn_46be2e(g_4b1588);
+    loadPaths(1000);
+    drawBackdrop(4000);
+    g_4b1598 = loadImageBank(4400, &g_4b158c);
+    g_4b15a0 = loadImageBank(4200, &g_4b1594);
+    g_4b159c = loadImageBank(4300, &g_4b1590);
+    loadFeatureGroup(4100, 0, 0);
+    loadScripts(4100, 11);
+    fn_4148da(10, 236);
+    loadSoundByKey(1000, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    loadSoundByKey(1004, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    loadSoundByKey(1005, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    loadSoundByKey(1006, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    for (i = 4101; i <= 4103; i++)
+        addView(0x8000, drawCels, runViewScript, i, i - 4091, 0, 0, 0);
+    if (!*(short *)(g_4a4ba0 + 0x20))
+        fn_440218();
+    g_4b15b4 = addView(0x64000000, drawCels, runViewScript, 4100, 0, 0, 0, 0);
+    addView(0x108a000, drawCels, runViewScript, 4110, 6, &entry, 0, 0);
+    for (i = 4106; i <= 4109; i++)
+        addView(0, drawCels, runViewScript, i, 0, 0, 0, 0);
+    addView(0x4001000, drawIsleButtonsView, fn_43fc9a, 0, 0, 0, 0, 0);
+    setViewPlaces(16, g_4a3324, 1);
+    *party() = *waitingParties();
+    waitingParties()->count = 0;
+    makePartySnoids(0);
+    exit = g_4a3368;
+    spotTaken(&exit, 0, 500);
+    for (i = 0; i < 16; i++) {
+        skip = 0;
+        spot = spotNear(&g_4a3324[i], 500, skip);
+        for (j = 0; spot && j < i; j++)
+            if (spot == sortedIds[j]) {
+                skip++;
+                spot = spotNear(&g_4a3324[i], 500, skip);
+                j = 0;
+            }
+        sortedIds[i] = spot;
+    }
+    chooseSnoids(1, 0);
+    updateViews();
+    if (*(short *)(g_4a4ba0 + 0x20))
+        *(short *)(g_4a4ba0 + 0x26) = 1;
+    fn_43ff1d(1);
+    fn_440286();
+    setGroupLists(g_4a330c, 2, (short)0xc000);
+    highlightItemAt(1, 1);
+    visitAllItems();
+    g_4b1484.body.x = g_4a31cc[2].rect.left + 39;
+    g_4b1484.body.y = g_4a31cc[2].rect.top + 31;
+    g_4b1484.unknownF7 = 1;
+    drawIsleButtons(0, 0, 0);
+    drawFeatureButtons(0, 0, 0);
+    if (g_4a7410) {
+        if (savedGames)
+            askLoadGame();
+        updateViews();
+    }
+    showRect(&gameRect);
+    fadeInViews();
+    g_4b15a4 = 1;
+    queueViewSound(30001, 0);
+    if (g_4b0d56 != 1) {
+        campHint((short *)(g_4a4ba0 + 0x28));
+        if (*(short *)(g_4a4ba0 + 0x48) < 625 && g_4a7410 == 1)
+            g_4b15b6 = 20042;
+    } else {
+        short made = countSnoidViews();
+        short left = 625 - (*(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c) + *(short *)(g_4a4ba0 + 0x4e))
+            - made;
+
+        if (left > 0 && made < 625) {
+            switch (randomBetween(1, 20)) {
+            case 1:
+                g_4b15b6 = 20043;
+                break;
+            case 10:
+                g_4b15b6 = 20044;
+                break;
+            }
+        }
+    }
+    if (g_4b15b6)
+        queueViewSound(g_4b15b6, 1);
+    g_4a7410 = 0;
+    g_4b7562 = 0;
+}
+
 /* Closes the scene, leaving the party waiting (or, when it's leaving,
    taking it on). */
 /* @zoombi32 0x0043eb13 */
