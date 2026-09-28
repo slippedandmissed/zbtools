@@ -82,7 +82,7 @@ void fn_43151e()
     startView(g_4afb34, 1002, 0, 0);
 }
 
-/* A notify: 0 deletes the view g_4af8ac; at the end (-1), g_4afb3a (2
+/* A notify: 0 deletes the view pickerData.view; at the end (-1), g_4afb3a (2
    calls fn_465175) is cleared. */
 /* @zoombi32 0x00431e5e */
 void fn_431e5e(View *, short event)
@@ -91,8 +91,8 @@ void fn_431e5e(View *, short event)
 
     switch (event) {
     case 0:
-        id = g_4af8ac;
-        g_4af8ac = 0;
+        id = pickerData.view;
+        pickerData.view = 0;
         deleteView(id);
         break;
     case -1:
@@ -191,4 +191,32 @@ void fn_430ff2(View *view)
         drawText(view->body.bounds, 0x22, (char *)&view->body.cels[10], 0xffff);
         setForeColor(saved);
     }
+}
+
+/* A view's placed callback: shows three two-digit numbers in its first six
+   cels (images counted from the first cel's): the most in the roster
+   (+0x22, raised to pickerData.counts.unknown26 if need be; that wraps
+   at 100), pickerData.counts.unknown26 and pickerData.counts.unknown24. */
+/* @zoombi32 0x004320e3 */
+void fn_4320e3(View *view)
+{
+    ViewBody *body;
+    short first;
+    short tens;
+
+    if (pickerData.counts.unknown26 > 99)
+        pickerData.counts.unknown26 = 0;
+    if (*(short *)(g_4a4ba0 + 0x22) < pickerData.counts.unknown26)
+        *(short *)(g_4a4ba0 + 0x22) = pickerData.counts.unknown26;
+    body = &view->body;
+    first = body->cels[0].image;
+    tens = *(short *)(g_4a4ba0 + 0x22) / 10;
+    body->cels[0].image = first + tens;
+    body->cels[1].image = *(short *)(g_4a4ba0 + 0x22) - tens * 10 + first;
+    tens = pickerData.counts.unknown26 / 10;
+    body->cels[2].image = first + tens;
+    body->cels[3].image = pickerData.counts.unknown26 - tens * 10 + first;
+    tens = pickerData.counts.unknown24 / 10;
+    body->cels[4].image = first + tens;
+    body->cels[5].image = pickerData.counts.unknown24 - tens * 10 + first;
 }

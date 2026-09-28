@@ -6,6 +6,30 @@
 #ifndef PICKER_H
 #define PICKER_H
 
+/* A place to click on the picker's screens (scenes 19 and 21). */
+struct PickerHotspot
+{
+    ShortRect rect; /* 40 by 30 around its point */
+    char unknown8[28];
+};
+
+/* The picker's data from 0x4af8ac, laid out differently by its uses. */
+struct PickerData
+{
+    union {
+        PickerHotspot hotspots[17]; /* scenes 19 and 21; the last is the whole screen */
+        short view; /* deleted by fn_431e5e */
+        struct
+        {
+            char unknown0[0x24];
+            short unknown24; /* shown by fn_4320e3 */
+            short unknown26; /* 0-99, shown by fn_4320e3; the most is kept in the roster (+0x22) */
+        } counts;
+    };
+};
+
+extern PickerData pickerData; /* @data 0x4af8ac */
+
 extern short g_4afb90;
 void fn_43151e();
 void fn_42fc89(Counters *object);
@@ -17,7 +41,6 @@ extern short g_4afbb8; /* @data 0x4afbb8 */
 extern basePort **g_4afb28; /* @data 0x4afb28 */
 extern short g_4afb34; /* @data 0x4afb34 */
 extern short g_4afb3a; /* @data 0x4afb3a */
-extern short g_4af8ac; /* @data 0x4af8ac */
 extern ShortRect g_4a1f74; /* @data 0x4a1f74 */
 void closeScene19();
 void closeScene20();
@@ -33,5 +56,7 @@ void fn_430f8e(View *view);
 void driftView(View *view);
 void fn_432905();
 void fn_430ff2(View *view);
+
+void fn_4320e3(View *view);
 
 #endif
