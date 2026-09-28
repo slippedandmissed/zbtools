@@ -137,8 +137,8 @@ note = "'Zoombi32.CFG', 'INSTALLFROMDIR', 'Zoombini CD must be inserted in drive
 
 [[module]]
 start = 0x446bf8
-name = "module_446bf8"
-note = "'INSTALLFROMDIR'"
+name = "slides"
+note = "Stone Rise (scene 12: picker's hotspot 8, 'stone rise'): opens 'Slides.MHK'"
 
 [[module]]
 start = 0x44b550

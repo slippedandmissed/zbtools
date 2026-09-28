@@ -1,0 +1,29 @@
+/*
+ * slides's functions and globals: the declarations only its code and
+ * its callers need (shared types and the rest are in zoombinis.h).
+ */
+
+#ifndef SLIDES_H
+#define SLIDES_H
+
+void fn_4489ce(View *view);
+extern long g_4b1928; /* @data 0x4b1928: Slides.MHK */
+extern short g_4b1930; /* @data 0x4b1930: the scene is open */
+extern short g_4b1932; /* @data 0x4b1932 */
+extern long g_4a3fc8; /* @data 0x4a3fc8 */
+extern SceneButton slidesButtons[2]; /* @data 0x4a3f28: buttons 1 and 2 */
+extern short g_4a41e0; /* @data 0x4a41e0: button 2 is drawn lit */
+extern short g_4a41e2; /* @data 0x4a41e2: button 1 has been drawn */
+extern short g_4b1ab4[27]; /* @data 0x4b1ab4: cells (from 1, g_4b240e of them) */
+extern short g_4b240e; /* @data 0x4b240e */
+extern short g_4b1a42; /* @data 0x4b1a42 */
+extern short g_4b1a44; /* @data 0x4b1a44: the sum of the counted cells' numbers */
+extern short g_4b1a46; /* @data 0x4b1a46 */
+void closeScene12();
+void fn_4470b2(View *, short region);
+void fn_44943b();
+void fn_449475();
+short fn_44b261();
+void fn_44b2a4();
+
+#endif
