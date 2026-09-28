@@ -1048,3 +1048,111 @@ void scene12Frame()
         g_4a41e4 = 0;
     }
 }
+
+/* Pairs up the party by shared features (g_4b24f2 marks those paired, 99
+   those left alone; g_4b2452 notes each pair's feature, 510-513, or 501):
+   each tries the features in turn from a random one. Unless all are paired
+   (or one, with an odd party), the lonely ones are swapped with the first
+   and it tries again, up to ten rounds. */
+/* @zoombi32 0x004494b3 */
+void fn_4494b3()
+{
+    short feature;
+    short lonely;
+    short done;
+    short rounds;
+    short i;
+    short j;
+    short tries;
+    short swap;
+    short *paired = g_4b24f2;
+
+    feature = randomUpTo(3);
+    lonely = rounds = done = 0;
+    do {
+        fillMemory(g_4b2452, 0, 32);
+        fillMemory(paired, 0, 32);
+        g_4b2450 = 0;
+        for (i = 0; i < g_4b2414; i++) {
+            tries = 4;
+            if (paired[i])
+                continue;
+            do {
+                if (++feature > 3)
+                    feature = 0;
+                for (j = i + 1; j < g_4b2414; j++) {
+                    switch (feature) {
+                    case 0:
+                        if (!paired[j] && partyHair[i] == partyHair[j]) {
+                            g_4b2452[g_4b2450] = 510;
+                            g_4b2450++;
+                            paired[i] = paired[j] = 1;
+                            j = 20;
+                        }
+                        break;
+                    case 1:
+                        if (!paired[j] && partyEyes[i] == partyEyes[j]) {
+                            g_4b2452[g_4b2450] = 511;
+                            g_4b2450++;
+                            paired[i] = paired[j] = 1;
+                            j = 20;
+                        }
+                        break;
+                    case 2:
+                        if (!paired[j] && partyNoses[i] == partyNoses[j]) {
+                            g_4b2452[g_4b2450] = 512;
+                            g_4b2450++;
+                            paired[i] = paired[j] = 1;
+                            j = 20;
+                        }
+                        break;
+                    case 3:
+                        if (!paired[j] && partyFeet[i] == partyFeet[j]) {
+                            g_4b2452[g_4b2450] = 513;
+                            g_4b2450++;
+                            paired[i] = paired[j] = 1;
+                            j = 20;
+                        }
+                        break;
+                    }
+                }
+                tries--;
+                if (!tries && !paired[i]) {
+                    paired[i] = 99;
+                    g_4b2452[g_4b2450] = 501;
+                    g_4b2450++;
+                    lonely++;
+                }
+            } while (tries && !paired[i]);
+        }
+        if (!lonely) {
+            done++;
+        } else if (lonely == 1 && g_4b2414 % 2) {
+            done++;
+        } else {
+            for (i = g_4b2414 - 1; i >= 0; i--) {
+                if (paired[i] != 99)
+                    continue;
+                for (j = 0; j < g_4b2414; j++) {
+                    if (paired[j] == 99)
+                        break;
+                    swap = partyHair[i];
+                    partyHair[i] = partyHair[j];
+                    partyHair[j] = swap;
+                    swap = partyEyes[i];
+                    partyEyes[i] = partyEyes[j];
+                    partyEyes[j] = swap;
+                    swap = partyNoses[i];
+                    partyNoses[i] = partyNoses[j];
+                    partyNoses[j] = swap;
+                    swap = partyFeet[i];
+                    partyFeet[i] = partyFeet[j];
+                    partyFeet[j] = swap;
+                    break;
+                }
+            }
+        }
+        if (++rounds >= 10)
+            done++;
+    } while (!done);
+}

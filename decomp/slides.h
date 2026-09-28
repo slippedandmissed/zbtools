@@ -68,4 +68,6 @@ extern unsigned long g_4b252c; /* @data 0x4b252c: when a Zoombini last fidgeted 
 extern unsigned long g_4b2538; /* @data 0x4b2538: slots used (allocateSlot) */
 void scene12Frame();
 
+void fn_4494b3();
+
 #endif
