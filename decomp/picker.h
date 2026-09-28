@@ -69,5 +69,9 @@ extern ShortRect g_4afb42; /* @data 0x4afb42 */
 extern short g_4afb5c; /* @data 0x4afb5c */
 extern short g_4afb5e; /* @data 0x4afb5e */
 void fn_42f920();
+extern short g_4afb72; /* @data 0x4afb72 */
+extern short g_4afb76; /* @data 0x4afb76 */
+void fn_430030(short n);
+void fn_4333ef(View *view);
 
 #endif

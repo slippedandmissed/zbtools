@@ -251,3 +251,88 @@ void fn_42f920()
     g_4afb3a = g_4afb3c = g_4afb3e = g_4afb40 = 0;
     g_4afb42 = noRect;
 }
+
+/* Picks hotspot `n` (1-16; -1 for none) as g_4afb5c and redraws the view
+   g_4afb3a: with g_4b754a any of them, except 5, 12 and 16 until the
+   roster says they're open (+0x50, +0x52, +0x51); otherwise only 1, 5, 12
+   and 16. */
+/* @zoombi32 0x00430030 */
+void fn_430030(short n)
+{
+    View *view;
+    short picked;
+    short allowed;
+
+    picked = 0;
+    if (n >= 1 && n <= 16) {
+        if (g_4b754a) {
+            allowed = 1;
+            switch (n) {
+            case 16:
+                if (!(g_4a4ba0[0x51] & 0xf))
+                    allowed = 0;
+                break;
+            case 12:
+                if (!(g_4a4ba0[0x52] & 0xff))
+                    allowed = 0;
+                break;
+            case 5:
+                if (!(g_4a4ba0[0x50] & 0xf))
+                    allowed = 0;
+                break;
+            }
+            if (allowed) {
+                g_4afb5c = n;
+                picked = 1;
+            }
+        } else if (n == 1 || n == 5 || n == 12 || n == 16) {
+            g_4afb5c = n;
+            picked = 1;
+        }
+    } else if (n == -1) {
+        g_4afb5c = 0;
+        picked = 1;
+    } else {
+        picked = 0;
+    }
+    if (picked) {
+        view = startView(g_4afb3a, 0, 0, 0);
+        if (view)
+            view->reset = 1;
+    }
+}
+
+/* A view's placed callback: shows two three-digit numbers in its first six
+   cels (images counted from the first cel's), the most in the roster
+   (+0x24, raised to g_4afb72 if need be; that wraps at 1000) and g_4afb72,
+   and in its seventh the image g_4afb76 on. */
+/* @zoombi32 0x004333ef */
+void fn_4333ef(View *view)
+{
+    ViewBody *body;
+    short first;
+    short digit;
+    short counted;
+
+    if (g_4afb72 > 999)
+        g_4afb72 = 0;
+    if (*(short *)(g_4a4ba0 + 0x24) < g_4afb72)
+        *(short *)(g_4a4ba0 + 0x24) = g_4afb72;
+    body = &view->body;
+    first = body->cels[0].image;
+    digit = *(short *)(g_4a4ba0 + 0x24) / 100;
+    body->cels[0].image = first + digit;
+    counted = digit * 100;
+    digit = (*(short *)(g_4a4ba0 + 0x24) - counted) / 10;
+    body->cels[1].image = first + digit;
+    counted += digit * 10;
+    body->cels[2].image = *(short *)(g_4a4ba0 + 0x24) - counted + first;
+    digit = g_4afb72 / 100;
+    body->cels[3].image = first + digit;
+    counted = digit * 100;
+    digit = (g_4afb72 - counted) / 10;
+    body->cels[4].image = first + digit;
+    counted += digit * 10;
+    body->cels[5].image = g_4afb72 - counted + first;
+    body->cels[6].image = first + g_4afb76;
+}
