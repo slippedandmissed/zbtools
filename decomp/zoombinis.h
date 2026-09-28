@@ -6128,8 +6128,6 @@ extern char *rosterError; /* @data 0x4aba80 */
 extern short g_4ab874;
 extern Point *g_4ab8e4;
 extern short g_4ab9f8;
-extern short g_4a1000;
-extern short g_4a1002;
 extern short g_4aba78[2];
 extern long g_4aba70[2];
 void reportRosterError(const char *message);
@@ -6140,9 +6138,19 @@ void fn_41dce6();
 extern short g_4a0fe8;
 extern short g_4a120a;
 extern short g_4a120c;
-extern ShortRect g_4a1024;
-extern ShortRect g_4a1048;
 extern long g_4aba7c; /* the roster file */
 void fn_41d972(View *, short region);
 void applyPlayerSettings();
 short openRosterFile(const char *path, short mode);
+/* The roster screen's buttons (1-2); [0] isn't one: its first words are the
+   script and number of frames fn_41dd37 shows. */
+extern SceneButton rosterButtons[3]; /* @data 0x4a1000 */
+extern ImageBank *g_4a1020;
+extern short g_4a1282[6];
+extern short g_4a128e[6];
+extern short g_4a129a[6];
+extern short g_4a12a6[6];
+extern short g_4ab8ec[21];
+void drawRosterButton(short which, short lit, short show);
+void fn_41ed59(short kind, short n, ShortRect rect);
+void fn_41d80e(short x, short y, long interval);

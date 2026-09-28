@@ -97,15 +97,16 @@ void fn_41d167(short group, short script, ViewNotify notify, char f8)
     }
 }
 
-/* Shows frame n (up to g_4a1002) of the view g_4ab9f8 (script g_4a1000
-   on), if it's not running, with notify fn_41d30b. */
+/* Shows frame n (up to rosterButtons[0].rect.top) of the view g_4ab9f8
+   (script rosterButtons[0].rect.left on), if it's not running, with notify
+   fn_41d30b. */
 /* @zoombi32 0x0041dd37 */
 void fn_41dd37(volatile short n)
 {
     View *view = findView(g_4ab9f8);
 
-    if (view && !view->body.running && n <= g_4a1002) {
-        setViewScript(view, g_4a1000 + n, 1);
+    if (view && !view->body.running && n <= rosterButtons[0].rect.top) {
+        setViewScript(view, rosterButtons[0].rect.left + n, 1);
         view->notify = fn_41d30b;
     }
 }
@@ -126,7 +127,7 @@ void fn_41dce6()
         }
 }
 
-/* A view's update: redraws g_4a1048 when g_4a0fe8 changes, and g_4a1024
+/* A view's update: redraws button 2 when g_4a0fe8 changes, and button 1
    once. */
 /* @zoombi32 0x0041d972 */
 void fn_41d972(View *, short region)
@@ -134,15 +135,15 @@ void fn_41d972(View *, short region)
     if (g_4a0fe8) {
         if (!g_4a120a) {
             g_4a120a = 1;
-            unionRgnRect(region, &g_4a1048);
+            unionRgnRect(region, &rosterButtons[2].rect);
         }
     } else if (g_4a120a) {
         g_4a120a = 0;
-        unionRgnRect(region, &g_4a1048);
+        unionRgnRect(region, &rosterButtons[2].rect);
     }
     if (!g_4a120c) {
         g_4a120c = 1;
-        unionRgnRect(region, &g_4a1024);
+        unionRgnRect(region, &rosterButtons[1].rect);
     }
 }
 
@@ -183,4 +184,100 @@ short openRosterFile(const char *path, short mode)
             result = 1;
     }
     return result;
+}
+
+/* Draws button `which` (1: 5, 2: 2, or 1 if g_4a0fe8 isn't set; the next
+   image if lit) from the bank g_4a1020, showing it if `show`. */
+/* @zoombi32 0x0041d8bc */
+void drawRosterButton(short which, short lit, short show)
+{
+    short image = 0;
+
+    switch (which) {
+    case 1:
+        image = 5;
+        break;
+    case 2:
+        image = 2;
+        if (!g_4a0fe8) {
+            lit = 0;
+            image = 1;
+        }
+        break;
+    }
+    if (image) {
+        if (lit)
+            image++;
+        drawImageData((unsigned short *)(g_4a1020->offsets[image] + (char *)g_4a1020), rosterButtons[which].rect.left,
+                      rosterButtons[which].rect.top, 8);
+        if (show)
+            showRect(&rosterButtons[which].rect);
+    }
+}
+
+/* Draws feature n of kind `kind` (1-4: a table each; kind 1 five pixels
+   further up and left) from the Zoombini images at `rect`, and shows it. */
+/* @zoombi32 0x0041ed59 */
+void fn_41ed59(short kind, short n, ShortRect rect)
+{
+    short handle;
+    short image;
+    ImageBank *bank;
+
+    switch (kind) {
+    case 1:
+        rect.left += -5;
+        rect.right += -5;
+        image = g_4a12a6[n];
+        break;
+    case 2:
+        image = g_4a129a[n];
+        break;
+    case 3:
+        image = g_4a128e[n];
+        break;
+    case 4:
+        image = g_4a1282[n];
+        break;
+    }
+    handle = fn_46beac(snoidImagesResource);
+    lockHandle(handle);
+    bank = (ImageBank *)handleData(handle);
+    drawImageData((unsigned short *)((char *)bank + bank->offsets[image]), rect.left, rect.top, 8);
+    unlockHandle(handle);
+    showRect(&rect);
+}
+
+/* Sends up to three of the placed Zoombinis (g_4ab8ec, from the 20th)
+   that are ready off to (x, y), `interval` apart. */
+/* @zoombi32 0x0041d80e */
+void fn_41d80e(short x, short y, long interval)
+{
+    unsigned long when;
+    short count;
+    short i;
+    View *view;
+
+    count = 0;
+    when = clockTime();
+    for (i = 20; i > 0 && count < 3; i--) {
+        view = findView(g_4ab8ec[i]);
+        if (view) {
+            view->flags = 1;
+            Snoid *snoid = (Snoid *)&view->body;
+
+            if (snoid->unknownF7) {
+                *(Point *)&snoid->body.unknownAa = *(Point *)&snoid->body.x;
+                snoid->targetX = x;
+                snoid->targetY = y;
+                setSnoidAction(snoid, 10, 0);
+                view->nextUpdate = when;
+                when += interval;
+                count++;
+            }
+        }
+    }
+    sortViews();
+    g_4b755a = 1;
+    g_4b755c = 0;
 }
