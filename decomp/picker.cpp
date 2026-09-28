@@ -1078,3 +1078,65 @@ void closeScene1()
         fn_4624fc();
     }
 }
+
+/* The ship's placed callback (the view g_4afb7c): moves it by g_4afb86,
+   g_4afb88 wrapping round the screen and shows it facing g_4afb7e (images
+   17-24). Touching a target, it bursts (g_4afb80 counts images 11-14,
+   then it's gone) and loses one of g_4afb76; the last starts the view
+   g_4afb7a (script 1013). */
+/* @zoombi32 0x00432cec */
+void fn_432cec(View *view)
+{
+    ShortRect target;
+    ViewBody *body;
+    short i;
+
+    body = &view->body;
+    if (g_4afb80) {
+        if (g_4afb80 > 4) {
+            body->cels[0].image = 0;
+            return;
+        }
+        g_4afb82 += g_4afb86;
+        g_4afb84 += g_4afb88;
+        if (g_4afb82 > 650)
+            g_4afb82 = -10;
+        else if (g_4afb82 < -10)
+            g_4afb82 = 650;
+        if (g_4afb84 > 490)
+            g_4afb84 = -10;
+        else if (g_4afb84 < -10)
+            g_4afb84 = 490;
+        body->cels[0].image = g_4afb80 + 10;
+        g_4afb80++;
+        body->cels[0].x = g_4afb82;
+        body->cels[0].y = g_4afb84;
+        return;
+    }
+    for (i = 0; !g_4afb80 && i < 6; i++) {
+        if (!g_4afb94[i])
+            continue;
+        target = *g_4afb94[i];
+        if (!sectRect(&target, &view->body.bounds))
+            continue;
+        g_4afb80 = 1;
+        queueViewSound(3001, 0);
+        g_4afb76--;
+        if (!g_4afb76)
+            g_4afb7a = addView(0, drawCels, runViewScript, 1013, 6, 0, 0, 0);
+        startView(g_4afb78, 0, 0, 0);
+    }
+    g_4afb82 += g_4afb86;
+    g_4afb84 += g_4afb88;
+    if (g_4afb82 > 650)
+        g_4afb82 = -10;
+    else if (g_4afb82 < -10)
+        g_4afb82 = 650;
+    if (g_4afb84 > 490)
+        g_4afb84 = -10;
+    else if (g_4afb84 < -10)
+        g_4afb84 = 490;
+    body->cels[0].image = g_4afb7e + 17;
+    body->cels[0].x = g_4afb82;
+    body->cels[0].y = g_4afb84;
+}

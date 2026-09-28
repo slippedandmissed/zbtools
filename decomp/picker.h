@@ -53,7 +53,6 @@ extern short g_4afb80; /* @data 0x4afb80 */
 extern short g_4afb82; /* @data 0x4afb82 */
 extern short g_4afb84; /* @data 0x4afb84 */
 extern short g_4afb88; /* @data 0x4afb88 */
-void fn_432cec(View *view);
 void fn_430f8e(View *view);
 void driftView(View *view);
 void fn_432905();
@@ -103,5 +102,7 @@ extern short g_4afbba; /* @data 0x4afbba: targets started */
 short fn_4330f3(short kind, short preset);
 extern char savedUserFile[]; /* @data 0x4a1f84: the user file while practising (in ZBtemp) */
 void closeScene1();
+extern short g_4afb7a; /* @data 0x4afb7a */
+void fn_432cec(View *view);
 
 #endif
