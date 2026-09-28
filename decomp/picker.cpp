@@ -1140,3 +1140,89 @@ void fn_432cec(View *view)
     body->cels[0].x = g_4afb82;
     body->cels[0].y = g_4afb84;
 }
+
+/* A view's update like runViewCels, drawing its script's frame at the
+   cursor (relative to the view's own place with flag 0x800000) whenever it
+   runs. */
+/* Not exact: register allocation, as in runViewCels (the original keeps the
+   frame's word in eax, the position in the script in edx and the count in
+   ecx). */
+/* @zoombi32 0x004321ac */
+void fn_4321ac(View *view, short region)
+{
+    ShortRect rect;
+    short x;
+    short y;
+    short *cels;
+    ImageBank *bank;
+    Point where;
+    short *cel;
+
+    if (view->body.running) {
+        getCursorPosition(&where);
+        view->changed = 1;
+        if (view->reset) {
+            setViewScript(view, view->kind, 1);
+            view->unknown2e = 0;
+        } else {
+            unionRgnRect(region, &view->body.bounds);
+        }
+        {
+            short *at;
+            short word;
+            short left;
+
+            at = scripts[view->body.script] + view->body.frameOffset;
+            bank = groupBanks[view->body.scriptGroup];
+            x = where.x;
+            y = where.y;
+            if (view->flags & 0x800000) {
+                x -= view->body.x;
+                y -= view->body.y;
+            }
+            cels = cel = (short *)view->body.cels;
+            left = 24;
+            do {
+                left--;
+                word = *at++;
+                if (!word) {
+                    at += 2;
+                    *cel++ = 0;
+                    *cel++ = 0;
+                    *cel++ = 0;
+                } else if (word > 0) {
+                    *cel++ = word;
+                    *cel++ = x;
+                    *cel++ = y;
+                    at++;
+                    at++;
+                } else {
+                    if (word < -0x100)
+                        at++;
+                    if (left)
+                        *cel = left = 0;
+                }
+            } while (left);
+        }
+        cel = cels;
+        if (*cel) {
+            unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
+
+            cel++;
+            view->body.bounds.left = *cel++;
+            view->body.bounds.right = swapShort(image[0]) + view->body.bounds.left;
+            view->body.bounds.top = *cel++;
+            view->body.bounds.bottom = swapShort(image[1]) + view->body.bounds.top;
+        }
+        while (*cel) {
+            unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
+
+            cel++;
+            rect.left = *cel++;
+            rect.right = swapShort(image[0]) + rect.left;
+            rect.top = *cel++;
+            rect.bottom = swapShort(image[1]) + rect.top;
+            unionRect(&view->body.bounds, &rect);
+        }
+    }
+}

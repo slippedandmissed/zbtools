@@ -105,4 +105,6 @@ void closeScene1();
 extern short g_4afb7a; /* @data 0x4afb7a */
 void fn_432cec(View *view);
 
+void fn_4321ac(View *view, short region);
+
 #endif
