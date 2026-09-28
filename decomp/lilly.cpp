@@ -2238,3 +2238,141 @@ short fn_42b276(LillyActor *actor)
     }
     return 0;
 }
+
+/*
+ * Plans a lilly actor's way across (unknownC0 0) or down (1) to `limit`,
+ * numbering the squares it would visit in its grid: from each square, the
+ * least visited neighbour that's free and of its kind, trying directions
+ * from the last one taken; at most 200 steps. How far it got.
+ */
+/* @zoombi32 0x0042ec2a */
+short planWay(LillyActor *actor, short limit)
+{
+    char direction;
+    unsigned short tries;
+    short best;
+    short value;
+    short count;
+    short bestColumn;
+    short bestRow;
+    short column;
+    short row;
+    short steps;
+    short reach;
+    short heading;
+
+    if (!actor->unknownC0)
+        reach = actor->column;
+    else
+        reach = actor->row;
+    if (actor->unknownD6 == 11) {
+        column = actor->column;
+        row = actor->row;
+    } else {
+        column = actor->unknownC7;
+        row = actor->unknownC8;
+    }
+    bestColumn = column;
+    bestRow = row;
+    heading = actor->unknownD5;
+    actor->grid[row][column] = actor->unknownD7;
+    value = actor->unknownD7;
+    count = value;
+    steps = 0;
+    while (steps < 200 && reach < limit) {
+        direction = heading;
+        tries = 0;
+        while (tries < 4 && reach < limit) {
+            short open = 1;
+            char c = column;
+            char r = row;
+
+            switch (direction) {
+            case 0:
+                r--;
+                if (r < 0) {
+                    r++;
+                    open = 0;
+                }
+                break;
+            case 1:
+                c++;
+                if (c > 11) {
+                    c--;
+                    open = 0;
+                    if (!actor->unknownC0)
+                        reach = c;
+                }
+                break;
+            case 2:
+                r++;
+                if (r > 11) {
+                    r--;
+                    open = 0;
+                    if (actor->unknownC0 == 1)
+                        reach = r;
+                }
+                break;
+            case 3:
+                c--;
+                if (c < 0) {
+                    c++;
+                    open = 0;
+                }
+                break;
+            }
+            if (open) {
+                switch (actor->unknownDe) {
+                case 1:
+                    if (g_4acff4[r][c].attributes[1] != actor->unknownDf)
+                        open = 0;
+                    break;
+                case 2:
+                    if (g_4acff4[r][c].attributes[2] != actor->unknownDf)
+                        open = 0;
+                    break;
+                case 3:
+                    if (g_4acff4[r][c].attributes[3] != actor->unknownDf)
+                        open = 0;
+                    break;
+                }
+            } else {
+                open = 0;
+            }
+            if (open && actor->grid[r][c] < value) {
+                best = direction;
+                value = actor->grid[r][c];
+                bestColumn = c;
+                bestRow = r;
+                if (!actor->unknownC0) {
+                    if (c > reach)
+                        reach = c;
+                    if (c < actor->unknownC7) {
+                        actor->unknownC7 = c;
+                        actor->unknownC8 = r;
+                    }
+                } else {
+                    if (r > reach)
+                        reach = r;
+                    if (r < actor->unknownC8) {
+                        actor->unknownC7 = c;
+                        actor->unknownC8 = r;
+                    }
+                }
+            }
+            direction++;
+            if (direction > 3)
+                direction = 0;
+            tries++;
+        }
+        heading = best;
+        actor->grid[bestRow][bestColumn] = count + 1;
+        column = bestColumn;
+        row = bestRow;
+        value = count + 1;
+        count = value;
+        steps++;
+    }
+    actor->unknownD7 = actor->grid[row][column];
+    return actor->unknownD6 = reach;
+}
