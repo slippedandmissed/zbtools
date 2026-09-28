@@ -38,7 +38,7 @@ short sceneGroup(short *last)
 }
 
 /* @zoombi32 0x0044027b */
-short fn_44027b(long, long)
+short fn_44027b(short, short)
 {
     return 1;
 }
@@ -1435,5 +1435,66 @@ void pickZoombiniMade(short rename)
     }
     if (rename)
         makeName(g_4b157d, 10);
+    g_4b15ac = 1;
+}
+
+/* The view drawing the panel and the net's buttons. */
+/* @zoombi32 0x0043fc7d */
+void drawNetButtonsView(View *)
+{
+    drawNetPanel(0, 0, 0);
+    fn_43f856(0, 0, 0);
+}
+
+/* A net button clicked (1-20, in four groups of five): picks that feature
+   for the Zoombini being made (sound 1000), or drops it if already picked
+   (1004), or refuses (1008, never: fn_44027b allows every feature). Stops sound
+   g_4b15b6 first, and redraws the panel's third button if the Zoombini's
+   completeness changes. */
+/* @zoombi32 0x0043ecbb */
+void netButtonClicked(short button)
+{
+    ShortRect rect;
+    short group;
+    short chosen;
+
+    if (leaveNetIfAsked())
+        return;
+    if (g_4b15b6 && isSoundPlaying(g_4b15b6, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+        stopSounds(g_4b15b6, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+        g_4b15b6 = 0;
+    }
+    rect = g_4a2efc[button].rect;
+    group = 0;
+    while (button >= 6) {
+        button -= 5;
+        group++;
+    }
+    chosen = g_4b1484.features[group];
+    if (chosen && button == chosen) {
+        queueViewSound(1004, 0);
+        chosen += group * 5;
+        fn_43f856(chosen, 0, &rect);
+        showRect(&rect);
+        g_4b1484.features[group] = 0;
+    } else if (fn_44027b(group, button - 1)) {
+        if (chosen) {
+            chosen += group * 5;
+            fn_43f856(chosen, 0, &rect);
+            showRect(&rect);
+        }
+        queueViewSound(1000, 0);
+        fn_43f856(group * 5 + button, 1, &rect);
+        showRect(&rect);
+        g_4b1484.features[group] = button;
+    } else {
+        queueViewSound(1008, 0);
+    }
+    short allowed = zoombiniMadeAllowed();
+
+    if (allowed != g_4b15aa) {
+        g_4b15aa = allowed;
+        drawNetPanel(3, 1, 1);
+    }
     g_4b15ac = 1;
 }
