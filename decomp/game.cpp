@@ -2863,3 +2863,167 @@ void fn_4508db()
     g_4b26b4 = 0;
     fillMemory(&g_4b2776[1], 0, 12);
 }
+
+/* Adds `count` Zoombini views of one kind to the scene (1: random ones at
+   g_4a44cc, one of them with the features set in g_4b263c; 2: dealt ones;
+   3: the puzzle's rows; 4 and 5: empty ones), recording them in that
+   kind's list. */
+/* @zoombi32 0x00452857 */
+void fn_452857(short kind, short count)
+{
+    View *view;
+    short chosen;
+    Snoid snoid;
+    Snoid *made = &snoid;
+    short i;
+    short j;
+
+    chosen = randomBetween(0, count - 1);
+    for (i = 0; i < count; i++) {
+        switch (kind) {
+        case 1:
+            for (j = 0; j < 4; j++)
+                made->features[j] = randomBetween(1, 5);
+            made->unknownF1 = 1;
+            *(Point *)&made->body.x = g_4a44cc[i];
+            if (i == chosen) {
+                if (g_4b263c[0])
+                    made->features[0] = g_4b263c[0];
+                else
+                    made->features[0] = randomBetween(1, 5);
+                if (g_4b263c[1])
+                    made->features[1] = g_4b263c[1];
+                else
+                    made->features[1] = randomBetween(1, 5);
+                if (g_4b263c[2])
+                    made->features[2] = g_4b263c[2];
+                else
+                    made->features[2] = randomBetween(1, 5);
+                if (g_4b263c[3])
+                    made->features[3] = g_4b263c[3];
+                else
+                    made->features[3] = randomBetween(1, 5);
+            }
+            made->unknownF8 = 0;
+            made->unknownF5 = 0;
+            made->unknownF4 = 4;
+            break;
+        case 2:
+            fn_452258(made, i);
+            made->unknownF8 = 0;
+            made->unknownF5 = 0;
+            made->unknownF4 = 4;
+            break;
+        case 3:
+            fn_452d5d(made, i + 1);
+            if (i + 1 < 7)
+                made->unknownF1 = 7;
+            else if (i + 1 == 7)
+                made->unknownF1 = 5;
+            if (i + 1 == 8)
+                made->unknownF1 = 3;
+            *(Point *)&made->body.x = g_4a44f0[i + 1];
+            made->unknownF4 = 4;
+            break;
+        case 4:
+            for (j = 0; j < 4; j++)
+                made->features[j] = 0;
+            if (i == 0) {
+                made->unknownF1 = 8;
+                *(Point *)&made->body.x = g_4a4524[i];
+            }
+            if (i == 1) {
+                made->unknownF1 = 5;
+                *(Point *)&made->body.x = g_4a4524[i];
+            }
+            made->unknownF8 = 0;
+            made->unknownF5 = 0;
+            made->unknownF4 = 4;
+            break;
+        case 5:
+            for (j = 0; j < 4; j++)
+                made->features[j] = 0;
+            *(Point *)&made->body.x = g_4a462c[i];
+            if (!i)
+                made->unknownF1 = 5;
+            else
+                made->unknownF1 = 3;
+            made->unknownF8 = 0;
+            made->unknownF5 = 0;
+            made->unknownF4 = 4;
+            break;
+        default:
+            made->features[1] = 1;
+            made->body.x = 10;
+            made->body.y = 10;
+            made->unknownF1 = 0;
+            made->unknownF8 = 0;
+            made->unknownF5 = 0;
+            break;
+        }
+        made->unknownC2[0] = 1;
+        made->unknownC2[1] = 22;
+        made->unknownC2[2] = 43;
+        made->unknownC2[3] = 43;
+        made->unknownC2[4] = 22;
+        made->unknownC2[5] = 1;
+        made->unknownC2[6] = 1;
+        made->unknownC2[7] = 22;
+        made->unknownC2[8] = 43;
+        made->unknownF2 = 0;
+        made->name[0] = 0;
+        made->home = *(Point *)&made->body.x;
+        *(Point *)&made->body.unknownAa = *(Point *)&made->body.x;
+        *(Point *)&made->targetX = *(Point *)&made->body.x;
+        made->unknownEa = 0;
+        made->unknownEb = 0;
+        made->unknownEc = 0;
+        made->unknownEe = 0;
+        made->unknownF0 = 0;
+        made->unknownF7 = 0;
+        j = fn_454165(made);
+        if (j) {
+            view = findView(j);
+            if (view)
+                view->flags = 0x4000002;
+            switch (kind) {
+            case 1:
+                g_4b2672[g_4b2660] = j;
+                g_4b2660++;
+                moveView(j, 0, g_4b258e);
+                break;
+            case 2:
+                g_4b269a[g_4b2664] = j;
+                g_4b2664++;
+                moveView(j, 1, g_4b2590);
+                break;
+            case 3:
+                g_4b26ba[g_4b2662] = j;
+                g_4b2662++;
+                moveView(j, 0, g_4b258e);
+                if (g_4b2662 == 8 && g_4b2630 >= 3) {
+                    fn_450c24(g_4b26ba[7], 7);
+                    fn_450d00(g_4b26ba[7], 7);
+                    g_4b26b0 = 1;
+                }
+                if (g_4b2662 == 9 && g_4b2630 >= 3)
+                    fn_450c24(g_4b26ba[8], 8);
+                break;
+            case 4:
+                g_4b26a6[g_4b2666] = j;
+                g_4b2666++;
+                moveView(j, 1, g_4b258e);
+                break;
+            case 5:
+                g_4b26ac[g_4b2668] = j;
+                g_4b2668++;
+                moveView(j, 1, g_4b258c);
+                if (view) {
+                    view->body.running = 0;
+                    view->changed = 1;
+                }
+                break;
+            }
+        }
+    }
+}
