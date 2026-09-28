@@ -857,3 +857,93 @@ void fn_4489ce(View *view)
             cel++;
     }
 }
+
+/* Puts the next Zoombini of the party (from the end of g_4b2430) two cells
+   from `cell` in direction `dir` (0-5 straight on, 6-9 turning), if it
+   shares no feature with the Zoombini on `cell` among the features tried
+   (from a random one): the cell between records the feature it was tried
+   on (state 501, 510-513) and the far cell takes it (state 507). Returns
+   its place in g_4b2430, or -1. */
+/* @zoombi32 0x00449cfc */
+short fn_449cfc(short cell, short dir)
+{
+    short via;
+    short to;
+    short feet;
+    short hair;
+    short eyes;
+    short nose;
+    short otherFeet;
+    short otherEyes;
+    short otherNose;
+    Snoid *snoid;
+    short otherHair;
+    short feature;
+    short different;
+    short tries;
+
+    feature = randomUpTo(3);
+    if (dir <= 5) {
+        via = g_4b1aea[cell].links[dir];
+        to = g_4b1aea[via].links[dir];
+    } else {
+        switch (dir) {
+        case 6:
+            via = g_4b1aea[cell].links[0];
+            to = g_4b1aea[via].links[1];
+            break;
+        case 7:
+            via = g_4b1aea[cell].links[2];
+            to = g_4b1aea[via].links[1];
+            break;
+        case 8:
+            via = g_4b1aea[cell].links[5];
+            to = g_4b1aea[via].links[4];
+            break;
+        case 9:
+            via = g_4b1aea[cell].links[3];
+            to = g_4b1aea[via].links[4];
+            break;
+        }
+    }
+    snoid = (Snoid *)&findView(g_4b1aea[cell].snoid)->body;
+    hair = snoid->features[0];
+    eyes = snoid->features[1];
+    nose = snoid->features[2];
+    feet = snoid->features[3];
+    different = 1;
+    for (dir = g_4b2414 - 1; dir >= 0; dir--) {
+        if (g_4b2430[dir] == -1)
+            continue;
+        snoid = (Snoid *)&findView(partyViews[g_4b2430[dir]])->body;
+        otherHair = snoid->features[0];
+        otherEyes = snoid->features[1];
+        otherNose = snoid->features[2];
+        otherFeet = snoid->features[3];
+        tries = 4;
+        do {
+            if (feature == 0 && otherHair == hair)
+                different = 0;
+            if (feature == 1 && eyes == otherEyes)
+                different = 0;
+            if (feature == 2 && nose == otherNose)
+                different = 0;
+            if (feature == 3 && feet == otherFeet)
+                different = 0;
+            if (different) {
+                tries--;
+                if (++feature > 3)
+                    feature = 0;
+            }
+        } while (different && tries);
+        if (!different) {
+            g_4b1aea[to].state = 507;
+            g_4b1aea[to].snoid = partyViews[g_4b2430[dir]];
+            g_4b1aea[via].state = 501;
+            g_4b1aea[via].snoid = feature + 510;
+            g_4b2430[dir] = -1;
+            return dir;
+        }
+    }
+    return -1;
+}

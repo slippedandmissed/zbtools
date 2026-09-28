@@ -56,4 +56,6 @@ extern short g_4b1a3a; /* @data 0x4b1a3a: the facing to take (from 1) */
 void fn_44986f();
 short fn_449f96(short a, short b);
 
+short fn_449cfc(short cell, short dir);
+
 #endif
