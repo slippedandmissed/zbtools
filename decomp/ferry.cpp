@@ -381,3 +381,72 @@ void resetScene13()
         g_4abdb4 = 60;
     g_4b755a = g_4b755c = 0;
 }
+
+/* The script (4000 on) for a Zoombini (by its feet and its place,
+   unknownF0) doing `which` (1-14). */
+/* @zoombi32 0x0042339f */
+short ferryScript(View *view, short which)
+{
+    short script = 0;
+    Snoid *snoid = viewSnoid(view);
+    short feet = snoid->features[3];
+    short spot = snoid->unknownF0;
+
+    switch (which) {
+    case 1:
+        script = 4000;
+        break;
+    case 2:
+        script = 4000;
+        break;
+    case 3:
+        script = 4001;
+        break;
+    case 4:
+        script = 4002;
+        break;
+    case 5:
+        script = 4003;
+        break;
+    case 6:
+        if (spot <= 16)
+            script = spot + 4004;
+        else
+            script = spot + 4000;
+        break;
+    case 7:
+    case 8:
+        if (spot >= 17 && spot <= 19) {
+            script = (spot - 17) * 2 + 4020;
+            if (which == 8)
+                script++;
+        }
+        break;
+    case 9:
+    case 10:
+    case 11:
+        script = feet + 4025;
+        if (which == 10)
+            script += 5;
+        if (which == 11)
+            script += 10;
+        break;
+    case 12:
+        script = feet + 4040;
+        break;
+    case 13:
+        script = feet + 4045;
+        break;
+    case 14:
+        if (spot <= 3)
+            script = 4058;
+        else if (spot <= 11)
+            script = 4057;
+        else if (spot <= 16)
+            script = 4056;
+        else
+            script = feet + 4050;
+        break;
+    }
+    return script;
+}
