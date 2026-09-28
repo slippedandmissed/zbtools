@@ -3918,7 +3918,7 @@ extern unsigned long g_4a78dc; /* @data 0x4a78dc */
 extern short g_4afb30; /* @data 0x4afb30 */
 extern short g_4b807e; /* @data 0x4b807e */
 extern short g_4abafc; /* @data 0x4abafc */
-extern long g_4abb00; /* @data 0x4abb00 */
+extern unsigned long g_4abb00; /* @data 0x4abb00: slots used (allocateSlot) for the ferry's routes (scene 10) */
 extern short g_4afb86; /* @data 0x4afb86 */
 
 #endif

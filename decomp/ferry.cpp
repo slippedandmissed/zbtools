@@ -11,6 +11,7 @@
 #include "focus.h"
 #include "graphics.h"
 #include "module_4623b8.h"
+#include "net.h"
 #include "snoids.h"
 #include "sound.h"
 #include "view.h"
@@ -719,4 +720,116 @@ void openScene10()
             g_4b966e = 20073;
         break;
     }
+}
+
+/* Scene 10's frame: once everyone has crossed (g_4abaf4), Captain Cajun
+   leaves (1608-1609) and so does the scene; leaves when asked; plays a
+   remark due (g_4abaa0) or picks one now and then (g_4a13f0); starts the
+   ferry's two views (g_4abaa4); sends the next Zoombini to a free place
+   (g_4abaa2, fn_420f85, some routes needing places free on the right);
+   and greets once the sound 997 ends. */
+/* @zoombi32 0x0041ff89 */
+void scene10Frame()
+{
+    short spot;
+    short again;
+    short i;
+    View *view;
+
+    if (g_4a1574 || !g_4abaac)
+        return;
+    g_4a1574 = 1;
+    if (g_4abaf4 && !g_4abaa2 && !g_4aba90) {
+        g_4abaf4 = 0;
+        deleteView(g_4abab2);
+        g_4abab2 = 0;
+        deleteView(g_4abab6);
+        deleteView(g_4abab8);
+        startView(g_4abab4, randomBetween(1608, 1609), fn_42113f, 0);
+        loadViewSounds(g_4abab4, 1);
+        g_4abaa6 = groupViews(g_4abab4, g_4abab4, 0, 0, 0, 0);
+        g_4b0d52 = 11;
+    }
+    updateViews();
+    if (g_4b0d52) {
+        if (!g_4b9688 || g_4b9688 == 3) {
+            if (g_4b9688 == 3 && !g_4b754a)
+                chooseSnoids(0, 0);
+            if (viewsLocked || !groupLeader[g_4abaa6]) {
+                g_4b0d50 = g_4b0d52;
+                g_4b0d52 = 0;
+                fn_46be2e(0);
+                closeScene10();
+                g_4a1574 = 0;
+                return;
+            }
+        } else if (g_4b9688 == 2) {
+            g_4b9688 = 0;
+            g_4b0d52 = 0;
+        }
+    }
+    if (g_4abaa0) {
+        i = g_4abaa0;
+        g_4abaa0 = 0;
+        if (g_4abab2) {
+            startView(g_4abab4, i, 0, 0);
+            loadViewSounds(g_4abab4, 1);
+            g_4abb12 = groupViews(g_4abab4, g_4abab4, 0, 0, 0, 0);
+        }
+    } else if (g_4abaa4) {
+        g_4abaa4 = 0;
+        startView(g_4ababa, 0, fn_420a60, 0);
+        startView(g_4ababc, 0, fn_420a60, 0);
+        groupViews(g_4ababa, g_4ababc, 0, 0, 0, 0);
+    } else if (g_4abaa2) {
+        if (!groupLeader[g_4abb12]) {
+            g_4abaa2 = 0;
+            findFerryPlace(&spot);
+            for (again = 1; again;) {
+                again = 0;
+                g_4abaee = allocateSlot(&g_4abb00, 10, 0);
+                switch (g_4abaee) {
+                case 0:
+                    if (sortedIds[12] || sortedIds[14])
+                        again = 1;
+                    break;
+                case 7:
+                case 8:
+                case 9:
+                    again = 1;
+                    for (i = 19; again && i >= 11; i -= 2)
+                        if (!sortedIds[i]) {
+                            if (!sortedIds[i - 1] && !sortedIds[i - 3]) {
+                                again = 0;
+                                spot = i;
+                            }
+                        } else {
+                            i = 0;
+                        }
+                    break;
+                }
+            }
+            g_4aba8c = ferryPlaces[spot];
+            fn_420f85(g_4abaee);
+        }
+    } else if (viewClock() > g_4aba84) {
+        resetViewClock();
+        g_4abaa0 = g_4a13f0[allocateSlot(&g_4a13fc, 5, 0)];
+        g_4aba84 = randomBetween(5400, 10800);
+    }
+    if (g_4abb06) {
+        view = idleSnoidView(g_4abb06);
+        if (view) {
+            viewSnoid(view)->unknownF5 = g_4abb04;
+            g_4abb04 = 0;
+            g_4abb06 = 0;
+        }
+    }
+    if (!g_4abab0 && !g_4b755a && !isSoundPlaying(997, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+        g_4abab0 = 1;
+        startView(g_4abab4, 0, 0, 0);
+        loadViewSounds(g_4abab4, 1);
+    }
+    playAmbientSound();
+    g_4a1574 = 0;
 }
