@@ -2944,3 +2944,68 @@ void closeLillyPuzzle()
         fn_4624fc();
     }
 }
+
+/* Told of a Zoombini's script's events on the puzzle. */
+/* @zoombi32 0x004276d0 */
+void fn_4276d0(View *view, short event)
+{
+    Snoid *snoid = viewSnoid(view);
+    View *other;
+
+    switch (event) {
+    case 250:
+    case 251:
+    case 252:
+    case 253:
+        setSnoidFacing(snoid, event - 250);
+        break;
+    case 240:
+    case 241:
+    case 242:
+    case 243:
+        g_4ac13e = event - 239;
+        break;
+    case 0:
+        snoid->unknownF2 = !snoid->unknownF2;
+        if (g_4ac13e) {
+            setSnoidFacing(snoid, g_4ac13e - 1);
+            g_4ac13e = 0;
+        }
+        break;
+    case 15:
+        moveView(g_4ac136, 0, g_4ac0bc);
+        other = findView(g_4ac136);
+        if (other)
+            other->flags |= 0x4008000;
+        view->body.clipped = 1;
+        view->body.clip = g_4ac514;
+        break;
+    case -1:
+        other = findView(g_4ac136);
+        if (other) {
+            Point place;
+            short script;
+
+            if (g_4ac0d8 < 3)
+                place.x = g_4a1788[g_4ac0ec].x - 23;
+            else
+                place.x = g_4a17f0[g_4ac0ec].x - 15;
+            if (g_4ac0d8 != 3) {
+                place.y = g_4ac0ec / 5 * 5 + 410;
+                script = g_4ac0ec + 14000;
+            } else {
+                short row = g_4ac0ec % 25;
+
+                row = row / 5;
+                place.y = g_4ac0ec / 25 * 5 + 410;
+                script = g_4ac0ec % 5 + row * 5 + 14025;
+            }
+            startSnoidScript(viewSnoid(other), script, &place, 0);
+            other->nextUpdate = 0;
+            other->notify = fn_4276d0;
+            clearWay(place.x);
+            g_4ac0ce = 0;
+        }
+        break;
+    }
+}
