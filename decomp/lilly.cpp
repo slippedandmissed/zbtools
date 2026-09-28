@@ -2883,3 +2883,64 @@ void startPlan(LillyActor *actor)
     followGrid(actor, actor->unknownD6);
     actor->grid[actor->row][actor->column] = actor->unknownD7;
 }
+
+/* Closes the other puzzle. */
+/* @zoombi32 0x00428cb7 */
+void closeOtherPuzzle()
+{
+    if (g_4af368) {
+        g_4af368 = 0;
+        short saved = fn_46bee9(1);
+
+        fn_465175();
+        setSnoidsRunning(1);
+        clearViews();
+        fn_46c602(&g_4a1b48);
+        fn_46c602(&g_4a1b44);
+        freeLockedResources(g_4af108, g_4af278, 91);
+        freeResourcePair(g_4ac928);
+        freeResourcePair(g_4ac938);
+        freeResourcePair(g_4ac930);
+        freeLockedResource(&g_4ac98c, &g_4ac994);
+        freeLockedResource(&g_4ac998, &g_4ac9a0);
+        freeLockedResource(&g_4ac9a4, &g_4ac9ac);
+        fn_46c602(&g_4a1be8);
+        unloadSounds();
+        fn_46bee9(saved);
+        fn_46ca9c(&g_4af364);
+        fadeOutViews();
+        fn_4624fc();
+    }
+}
+
+/* Closes the puzzle. */
+/* @zoombi32 0x00424a53 */
+void closeLillyPuzzle()
+{
+    if (g_4abec0) {
+        g_4abec0 = 0;
+        short saved = fn_46bee9(1);
+
+        clearViews();
+        unloadSounds();
+        fn_46c602(&g_4ac144);
+        fn_46c602(&g_4ac148);
+        fn_46c602(&g_4ac14c);
+        fn_46c602(&g_4ac150);
+        fn_46c602(&g_4ac170);
+        fn_46c602(&g_4ac174);
+        fn_46c602(&g_4ac154);
+        fn_46c602(&g_4ac158);
+        fn_46c602(&g_4ac160);
+        fn_46c602(&g_4ac164);
+        fn_46c602(&g_4ac168);
+        fn_46c602(&g_4ac16c);
+        fn_46c602(&g_4ac154);
+        fn_46c602(&g_4ac158);
+        useAltSnoids(1);
+        fn_46bee9(saved);
+        fn_46ca9c(&g_4abebc);
+        fadeOutViews();
+        fn_4624fc();
+    }
+}

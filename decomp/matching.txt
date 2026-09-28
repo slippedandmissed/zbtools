@@ -307,6 +307,7 @@
 0x0042492b fn_42492b
 0x004249c4 drawButtons
 0x004249e1 fn_4249e1
+0x00424a53 closeLillyPuzzle
 0x00426831 lillyKey
 0x00426aff fn_426aff
 0x00426c33 darkenPalette
@@ -325,6 +326,7 @@
 0x00428b8f fn_428b8f
 0x00428c28 drawOtherButtons
 0x00428c45 fn_428c45
+0x00428cb7 closeOtherPuzzle
 0x00429d94 hopNotify
 0x0042a077 fn_42a077
 0x0042a163 placeHopper
