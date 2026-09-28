@@ -1076,6 +1076,12 @@ inline short &savedScene()
 {
     return *(short *)(g_4a4ba0 + 0xcc);
 }
+/* How many Zoombinis of each kind there are (by hair, eyes, nose and feet,
+   each 0-4). */
+inline char (*zoombiniCounts())[5][5][5]
+{
+    return (char (*)[5][5][5])(g_4a4ba0 + 0xab94);
+}
 inline Party *party()
 {
     return (Party *)(g_4a4ba0 + 0xa92e);
@@ -5703,3 +5709,12 @@ void fn_43c94f(short a, short b, short c, short n);
 void drawNetButton(short which, short lit, short show);
 void drawNetButtons(View *);
 void updateNetButtons(View *, short region);
+extern Snoid g_4b1484; /* the Zoombini being made */
+extern short g_4b15a6;
+extern short g_4b15aa;
+extern short g_4b15ac;
+extern short g_4b15b6;
+extern short g_4b15b8;
+void fn_43e620();
+short fn_43fa67();
+void fn_43ff1d(short keep);

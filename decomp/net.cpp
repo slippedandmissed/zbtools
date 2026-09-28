@@ -334,3 +334,91 @@ void updateNetButtons(View *, short region)
         unionRgnRect(region, &g_4a288a[2].rect);
     }
 }
+
+/* Resets the Zoombini being made (g_4b1484): no features, a new name. */
+/* @zoombi32 0x0043e620 */
+void fn_43e620()
+{
+    short i;
+
+    g_4b755e = 60;
+    g_4b15a6 = g_4b15aa = g_4b15ac = 0;
+    g_4b0d52 = 0;
+    g_4b15b0 = g_4b15b2 = g_4b15b6 = 0;
+    for (i = 0; i < 4; i++)
+        g_4b1484.features[i] = 0;
+    g_4b1484.name[0] = 0;
+    makeName(g_4b1484.name, 10);
+    for (i = 0; i < 16; i++)
+        g_4b75ee[i] = 0;
+    g_4b15b8 = 0;
+    g_4b755c = g_4b755a = 0;
+}
+
+/* Whether the Zoombini being made is complete (its features valid, any
+   out of range cleared) and fewer than two of its kind exist yet. */
+/* @zoombi32 0x0043fa67 */
+short fn_43fa67()
+{
+    short i;
+    short hair;
+    short eyes;
+    short nose;
+    short feet;
+
+    for (i = 0; i < 4; i++) {
+        if (g_4b1484.features[i] < 0 || g_4b1484.features[i] > 5)
+            g_4b1484.features[i] = 0;
+        if (!g_4b1484.features[i])
+            return 0;
+    }
+    hair = g_4b1484.features[0] - 1;
+    eyes = g_4b1484.features[1] - 1;
+    nose = g_4b1484.features[2] - 1;
+    feet = g_4b1484.features[3] - 1;
+    if (zoombiniCounts()[hair][eyes][nose][feet] >= 2)
+        return 0;
+    return 1;
+}
+
+/* Shows the two views g_4b15b0 and g_4b15b2 by the setting at game state
+   +0x26 (0-3), stepping it on unless `keep`. */
+/* @zoombi32 0x0043ff1d */
+void fn_43ff1d(short keep)
+{
+    View *first;
+    View *second;
+    short a;
+    short b;
+
+    first = findView(g_4b15b0);
+    second = findView(g_4b15b2);
+    if (first && second) {
+        if (!keep)
+            (*(short *)(g_4a4ba0 + 0x26))++;
+        if (*(short *)(g_4a4ba0 + 0x26) > 3)
+            *(short *)(g_4a4ba0 + 0x26) = 0;
+        switch (*(short *)(g_4a4ba0 + 0x26)) {
+        case 0:
+            a = 1;
+            b = 1;
+            break;
+        case 1:
+            a = 0;
+            b = 0;
+            break;
+        case 2:
+            a = 1;
+            b = 0;
+            break;
+        case 3:
+            a = 0;
+            b = 1;
+            break;
+        }
+        first->body.running = a;
+        first->body.group = 0;
+        second->body.running = b;
+        second->body.group = 0;
+    }
+}
