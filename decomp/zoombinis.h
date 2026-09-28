@@ -5987,3 +5987,11 @@ extern short g_4b1608;
 extern short g_4b165e;
 void fn_4458c3();
 void fn_4459b3();
+extern short g_4b15da;
+extern short g_4b15d8;
+extern Point g_4a3d44; /* where the Zoombini at the pizza stands */
+extern short g_4b15fa;
+extern short g_4b15ee;
+extern short g_4b171e;
+void drawPizzaButtonsView(View *);
+void fn_445789();

@@ -391,3 +391,54 @@ void fn_4459b3()
         *step = 0;
     }
 }
+
+/* The view drawing the two buttons. */
+/* @zoombi32 0x0044110a */
+void drawPizzaButtonsView(View *)
+{
+    drawPizzaButton(1, 0, 0);
+    drawPizzaButton(2, 0, 0);
+}
+
+/* Brings the next of the party (g_4b15d6) up to the pizza spot (g_4a3d44)
+   when the last one's done (g_4b15da), unless busy; counts in g_4b165a
+   once they've all been. */
+/* Not exact: BCC keeps g_4b15d6's address in esi (see docs/findings.md on
+   cached global addresses); the original addresses it directly. */
+/* @zoombi32 0x00445789 */
+void fn_445789()
+{
+    View *view;
+
+    if (!g_4b165a && !g_4b1662 && (g_4b15d6 == -1 || g_4b15da)) {
+        g_4b15da = 0;
+        if (++g_4b15d6 >= g_4b15d4) {
+            g_4b165a++;
+            return;
+        }
+        g_4b15d8 = 0;
+        if (g_4b15d6 < 0) {
+            g_4b15d6 = 0;
+        } else {
+            view = findView(partyViews[g_4b15d6]);
+            if (view->body.x == g_4a3d44.x) {
+                g_4a3d42 = view->id;
+                return;
+            }
+        }
+        if (g_4b15d6 < g_4b15d4) {
+            view = findView(partyViews[g_4b15d6]);
+            if (!view)
+                return;
+            setSnoidAction((Snoid *)&view->body, 7, 0);
+            *(Point *)&((Snoid *)&view->body)->targetX = g_4a3d44;
+            view->interval = 2;
+            g_4a3d42 = view->id;
+            g_4b15fa = groupViews(g_4a3d42, g_4a3d42, 0, 0, 0, 0);
+            if (g_4b15ee)
+                g_4b171e++;
+        } else {
+            g_4b165a++;
+        }
+    }
+}
