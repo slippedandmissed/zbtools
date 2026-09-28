@@ -5547,7 +5547,7 @@ extern short g_4b0d38;
 extern short g_4b0d3c;
 extern short g_4afc2e;
 extern ImageBank *g_4afbc0;
-void fn_43a7a6(Snoid *snoid);
+void layOutMazeCels(Snoid *snoid);
 void fn_436045(View *, short event);
 void fn_43606d(View *, short event);
 void fn_43692b(View *view);

@@ -505,7 +505,7 @@ void fn_43692b(View *view)
 }
 
 /* The scene's Zoombini views' update: lays the Zoombini out again
-   (fn_43a7a6) unless it's in state 1. */
+   (layOutMazeCels) unless it's in state 1. */
 /* @zoombi32 0x00436994 */
 void fn_436994(View *view, short region)
 {
@@ -524,7 +524,7 @@ void fn_436994(View *view, short region)
         }
         if (changed) {
             unionRgnRect(region, &view->body.bounds);
-            fn_43a7a6(snoid);
+            layOutMazeCels(snoid);
             view->changed = 1;
         }
     }
@@ -1370,7 +1370,7 @@ void fn_436d39(Snoid *snoid)
             break;
         }
         parts[43] = 0;
-        fn_43a7a6(made);
+        layOutMazeCels(made);
         view->flags = 0x4188000;
         view->nextUpdate = 0;
     }

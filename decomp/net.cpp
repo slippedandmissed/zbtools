@@ -4,6 +4,138 @@
 
 #include "zoombinis.h"
 
+/*
+ * Lays out a maze Zoombini's cels (unless it's in state 1; 3 and others
+ * become 1), by its move (word 30), placed by the hot spots in
+ * g_4afbd0/g_4afbd4: its body (from word 40), with the ways open (words
+ * 34-37) and its direction (38), and a helper part (words 41, 42); or a
+ * turn (1: word 38 cycling 0-3), a spin (5: word 38 cycling 0-5), or
+ * falling (6, 7: then, in state 2, one of four more frames by word 46,
+ * back to state 1 after). Then its bounds from the images in g_4afbc0.
+ */
+/* @zoombi32 0x0043a7a6 */
+void layOutMazeCels(Snoid *snoid)
+{
+    short k;
+    ShortRect rect;
+    Point where;
+    short *cel;
+    short *parts;
+    short part;
+    ImageBank *bank;
+
+    snoid->body.bounds.left = 0;
+    snoid->body.bounds.top = 0;
+    snoid->body.bounds.right = 0;
+    snoid->body.bounds.bottom = 0;
+    parts = cel = (short *)snoid->body.cels;
+    switch (snoid->unknownF4) {
+    case 1:
+        return;
+    case 2:
+        break;
+    case 3:
+        snoid->unknownF4 = 1;
+        break;
+    default:
+        snoid->unknownF4 = 1;
+        break;
+    }
+    where = *(Point *)&snoid->body.x;
+    switch (cel[30]) {
+    case 2:
+    case 3:
+    case 4:
+        part = parts[40];
+        *cel++ = part;
+        *cel++ = where.x - g_4afbd0[part];
+        *cel++ = where.y - g_4afbd4[part];
+        for (k = 1; k < 5; k++)
+            if (parts[33 + k]) {
+                part = parts[40] + k;
+                *cel++ = part;
+                *cel++ = where.x - g_4afbd0[part];
+                *cel++ = where.y - g_4afbd4[part];
+            }
+        part = parts[40] + parts[38] + 5;
+        *cel++ = part;
+        *cel++ = where.x - g_4afbd0[part];
+        *cel++ = where.y - g_4afbd4[part];
+        if (parts[41]) {
+            part = parts[41] * 5 + parts[42] + 5;
+            *cel++ = part;
+            *cel++ = where.x - g_4afbd0[part];
+            *cel++ = where.y - g_4afbd4[part];
+        }
+        break;
+    case 1:
+        parts[38]++;
+        if (parts[38] > 3)
+            parts[38] = 0;
+        part = parts[38] + 2;
+        *cel++ = part;
+        *cel++ = where.x - g_4afbd0[part];
+        *cel++ = where.y - g_4afbd4[part];
+        break;
+    case 5:
+        parts[38]++;
+        if (parts[38] > 5)
+            parts[38] = 0;
+        part = parts[40] + parts[38] + 9;
+        *cel++ = part;
+        *cel++ = where.x - g_4afbd0[part];
+        *cel++ = where.y - g_4afbd4[part];
+        break;
+    case 6:
+        part = parts[40] + 19;
+        *cel++ = part;
+        *cel++ = where.x - g_4afbd0[part];
+        *cel++ = where.y - g_4afbd4[part];
+        if (snoid->unknownF4 == 2) {
+            if (parts[46] >= 0 && parts[46] < 4) {
+                part = parts[40] + parts[46] + 15;
+                *cel++ = part;
+                *cel++ = where.x - g_4afbd0[part];
+                *cel++ = where.y - g_4afbd4[part];
+                parts[46]++;
+            } else {
+                snoid->unknownF4 = 1;
+            }
+        }
+        break;
+    case 7:
+        part = parts[40] + 20;
+        *cel++ = part;
+        *cel++ = where.x - g_4afbd0[part];
+        *cel++ = where.y - g_4afbd4[part];
+        if (snoid->unknownF4 == 2) {
+            if (parts[46] >= 0 && parts[46] < 4) {
+                part = parts[40] + parts[46] + 15;
+                *cel++ = part;
+                *cel++ = where.x - g_4afbd0[part];
+                *cel++ = where.y - g_4afbd4[part];
+                parts[46]++;
+            } else {
+                snoid->unknownF4 = 1;
+            }
+        }
+        break;
+    }
+    *cel = 0;
+    cel = (short *)snoid->body.cels;
+    bank = g_4afbc0;
+    while (*cel && *cel <= bank->count) {
+        unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
+
+        cel++;
+        rect.left = *cel++;
+        rect.top = *cel++;
+        rect.right = swapShort(image[0]) + rect.left;
+        rect.bottom = swapShort(image[1]) + rect.top;
+        unionRect(&snoid->body.bounds, &rect);
+    }
+}
+
 /* Splices a list in after another. */
 /* @zoombi32 0x0043a772 */
 void spliceList(Link *other, Link *list)

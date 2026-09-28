@@ -452,6 +452,7 @@
 0x0043a5f6 fn_43a5f6
 0x0043a69a fn_43a69a
 0x0043a772 spliceList
+0x0043a7a6 layOutMazeCels
 0x0043af02 sceneGroup
 0x0043af6b playAmbientSound
 0x0043b6f8 drawNetButton
