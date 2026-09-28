@@ -12,6 +12,7 @@
 #include "graphics.h"
 #include "module_4623b8.h"
 #include "net.h"
+#include "platform.h"
 #include "random.h"
 #include "slides.h"
 #include "snoids.h"
@@ -1960,4 +1961,270 @@ short scene12Key(unsigned short key)
         return 1;
     }
     return 0;
+}
+
+/* Scene 12's clicks: button 1 asks whether to keep the party; button 2
+   (once there's something to check) shows the answer: the cells lit and
+   the Zoombinis on them cheer, and the group starts across; otherwise a
+   Zoombini is dragged onto a listed cell (lighting the path, fn_448f02) or
+   off it (unlighting what it lit), by the level's rules, and a Zoombini
+   dropped elsewhere walks to the marked spot (fn_44b0fc). */
+/* @zoombi32 0x00447528 */
+void scene12Clicked(short which)
+{
+    View *view;
+    ShortRect unused1; /* never used: the original's frame has room for two */
+    ShortRect unused2;
+    Point where;
+    short i;
+    short first;
+    View *cellView;
+    Snoid *snoid;
+    short dropped;
+    short place;
+    short moved;
+    short x;
+    short y;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeScene12();
+        return;
+    }
+    if (g_4b2526 != -1) {
+        for (i = 0; i < g_4b2414; i++) {
+            cellView = findView(partyViews[i]);
+            cellView->flags = g_4b2526;
+        }
+        g_4b2526 = -1;
+    }
+    switch (which) {
+    case 1:
+        queueViewSound(999, 0);
+        drawSlidesButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawSlidesButton(which, 0, 1);
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (!g_4b1932 || g_4b2528)
+            break;
+        if (g_4b2540)
+            fn_44e0e2();
+        drawSlidesButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawSlidesButton(which, 0, 1);
+        g_4b2528++;
+        first = 1;
+        fn_44943b();
+        fn_44ddc9();
+        for (i = 0; i < 117; i++) {
+            if (g_4b1aea[i].state == 502 || g_4b1aea[i].state == 508 || g_4b1aea[i].state == g_4b2512) {
+                cellView = findView(g_4b1aea[i].view);
+                setViewScript(cellView, 7002, 1);
+                cellView->placed = fn_448d9d;
+                if (first) {
+                    g_4b251a = groupViews(g_4b1aea[i].view, g_4b1aea[i].view, 0, 0, 0, 0);
+                    first = 0;
+                }
+            }
+            if (g_4b1aea[i].state == 508) {
+                cellView = findView(g_4b1aea[i].snoid);
+                startSnoidScript((Snoid *)&cellView->body, 13000, 0, 0);
+                groupViews(g_4b1aea[i].snoid, g_4b1aea[i].view, 0, 0, 0, 0);
+            }
+        }
+        g_4b1a40++;
+        queueViewSound(7000, 0);
+        moveView(g_4b1936[1], 0, g_4b1aea[9].view);
+        moveView(g_4b1936[2], 0, g_4b1aea[27].view);
+        moveView(g_4b1936[3], 0, g_4b1aea[45].view);
+        moveView(g_4b1936[4], 0, g_4b1aea[63].view);
+        moveView(g_4b1936[5], 0, g_4b1aea[81].view);
+        moveView(g_4b1936[6], 0, g_4b1aea[99].view);
+        fn_44aa79();
+        break;
+    case 3:
+        if (g_4b1a40)
+            break;
+        if (g_4b2540) {
+            fn_44e0e2();
+            break;
+        }
+        if (g_4b755a > 0 || g_4b1a3e || g_4b251a)
+            break;
+        getCursorPosition(&where);
+        view = viewAt(where, 1, 1);
+        if (view)
+            view = idleSnoidView(view->id);
+        g_4b1a42 = fn_44b261();
+        g_4b1a46 = g_4b1a44;
+        if (g_4b1934 <= 1) {
+            if (!view)
+                break;
+            dropped = dragSnoid(view, where, 0, 0);
+            place = heldPlaceNumber();
+            snoid = (Snoid *)&view->body;
+            moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
+            if (!place && dropped && moved)
+                fn_44b3ee((Point *)&snoid->targetX);
+            g_4b2410 = place;
+            if (g_4b2410) {
+                for (i = 1; i <= g_4b240e; i++) {
+                    if (g_4b1aea[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
+                        g_4b1aea[g_4b1ab4[i]].snoid = 0;
+                        g_4b1aea[g_4b1ab4[i]].state = 506;
+                        cellView = findView(g_4b1aea[g_4b1ab4[i]].view);
+                        setViewScript(cellView, 7000, 1);
+                        cellView->placed = fn_4489ce;
+                        if (g_4b1aea[g_4b1ab4[i] - 1].state == 502) {
+                            g_4b1aea[g_4b1ab4[i] - 1].state = 501;
+                            cellView = findView(g_4b1aea[g_4b1ab4[i] - 1].view);
+                            setViewScript(cellView, 7000, 1);
+                            cellView->placed = fn_4489ce;
+                        }
+                        for (dropped = 1; dropped < 6; dropped++) {
+                            if (g_4b1aea[g_4b1ab4[i] + dropped].state == 500)
+                                break;
+                            if (g_4b1aea[g_4b1ab4[i] + dropped].state == 502
+                                || g_4b1aea[g_4b1ab4[i] + dropped].state == 508) {
+                                if (g_4b1aea[g_4b1ab4[i] + dropped].state == 508)
+                                    g_4b1aea[g_4b1ab4[i] + dropped].state = 507;
+                                else
+                                    g_4b1aea[g_4b1ab4[i] + dropped].state = 501;
+                                cellView = findView(g_4b1aea[g_4b1ab4[i] + dropped].view);
+                                setViewScript(cellView, 7000, 1);
+                                cellView->placed = fn_4489ce;
+                            }
+                        }
+                        break;
+                    }
+                }
+                g_4b1aea[g_4b1ab4[g_4b2410]].snoid = view->id;
+                fn_448f02();
+                fn_44b2a4();
+                fn_44e092();
+            } else {
+                for (i = 1; i <= g_4b240e; i++) {
+                    if (g_4b1aea[g_4b1ab4[i]].snoid == view->id) {
+                        g_4b1aea[g_4b1ab4[i]].snoid = 0;
+                        g_4b1aea[g_4b1ab4[i]].state = 506;
+                        cellView = findView(g_4b1aea[g_4b1ab4[i]].view);
+                        setViewScript(cellView, 7000, 1);
+                        cellView->placed = fn_4489ce;
+                        if (g_4b1aea[g_4b1ab4[i] - 1].state == 502) {
+                            g_4b1aea[g_4b1ab4[i] - 1].state = 501;
+                            cellView = findView(g_4b1aea[g_4b1ab4[i] - 1].view);
+                            setViewScript(cellView, 7000, 1);
+                            cellView->placed = fn_4489ce;
+                        }
+                        for (dropped = 1; dropped < 6; dropped++) {
+                            if (g_4b1aea[g_4b1ab4[i] + dropped].state == 500)
+                                break;
+                            if (g_4b1aea[g_4b1ab4[i] + dropped].state == 502
+                                || g_4b1aea[g_4b1ab4[i] + dropped].state == 508) {
+                                if (g_4b1aea[g_4b1ab4[i] + dropped].state == 508)
+                                    g_4b1aea[g_4b1ab4[i] + dropped].state = 507;
+                                else
+                                    g_4b1aea[g_4b1ab4[i] + dropped].state = 501;
+                                cellView = findView(g_4b1aea[g_4b1ab4[i] + dropped].view);
+                                setViewScript(cellView, 7000, 1);
+                                cellView->placed = fn_4489ce;
+                            }
+                        }
+                    }
+                }
+                x = view->body.x;
+                y = view->body.y;
+                g_4b1a38 = view->id;
+                fn_44b0fc(x, y);
+                fn_44b2a4();
+            }
+        } else if (g_4b1934 == 2) {
+            if (!view)
+                break;
+            dropped = dragSnoid(view, where, 0, 0);
+            place = heldPlaceNumber();
+            snoid = (Snoid *)&view->body;
+            moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
+            if (!place && dropped && moved)
+                fn_44b3ee((Point *)&snoid->targetX);
+            g_4b2410 = place;
+            if (g_4b2410) {
+                for (i = 1; i <= g_4b240e; i++)
+                    if (g_4b1aea[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
+                        g_4b1aea[g_4b1ab4[i]].snoid = 0;
+                        g_4b1aea[g_4b1ab4[i]].state = 506;
+                        cellView = findView(g_4b1aea[g_4b1ab4[i]].view);
+                        setViewScript(cellView, 7000, 1);
+                        cellView->placed = fn_4489ce;
+                    }
+                g_4b1aea[g_4b1ab4[g_4b2410]].snoid = view->id;
+                g_4b1aea[g_4b1ab4[g_4b2410]].state = 507;
+                fn_44a422();
+                fn_44b2a4();
+            } else {
+                for (i = 1; i < 117; i++)
+                    if ((g_4b1aea[i].state == 507 || g_4b1aea[i].state == 508) && g_4b1aea[i].snoid == view->id) {
+                        g_4b1aea[i].state = 506;
+                        g_4b1aea[i].snoid = -1;
+                        cellView = findView(g_4b1aea[i].view);
+                        setViewScript(cellView, 7000, 1);
+                        cellView->placed = fn_4489ce;
+                        fn_44a422();
+                        break;
+                    }
+                x = view->body.x;
+                y = view->body.y;
+                g_4b1a38 = view->id;
+                fn_44b0fc(x, y);
+                fn_44b2a4();
+            }
+        } else {
+            if (!view)
+                break;
+            dropped = dragSnoid(view, where, 0, 0);
+            place = heldPlaceNumber();
+            snoid = (Snoid *)&view->body;
+            moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
+            if (!place && dropped && moved)
+                fn_44b3ee((Point *)&snoid->targetX);
+            g_4b2410 = place;
+            if (g_4b2410) {
+                for (i = 1; i <= g_4b240e; i++)
+                    if (g_4b1aea[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
+                        g_4b1aea[g_4b1ab4[i]].snoid = 0;
+                        g_4b1aea[g_4b1ab4[i]].state = 506;
+                        cellView = findView(g_4b1aea[g_4b1ab4[i]].view);
+                        setViewScript(cellView, 7000, 1);
+                        cellView->placed = fn_4489ce;
+                    }
+                g_4b1aea[g_4b1ab4[g_4b2410]].snoid = view->id;
+                g_4b1aea[g_4b1ab4[g_4b2410]].state = 507;
+                fn_44a422();
+                fn_44b2a4();
+            } else {
+                for (i = 1; i < 117; i++)
+                    if ((g_4b1aea[i].state == 507 || g_4b1aea[i].state == 508) && g_4b1aea[i].snoid == view->id) {
+                        g_4b1aea[i].state = 506;
+                        g_4b1aea[i].snoid = -1;
+                        cellView = findView(g_4b1aea[i].view);
+                        setViewScript(cellView, 7000, 1);
+                        cellView->placed = fn_4489ce;
+                        fn_44a422();
+                        break;
+                    }
+                x = view->body.x;
+                y = view->body.y;
+                g_4b1a38 = view->id;
+                fn_44b0fc(x, y);
+                fn_44b2a4();
+            }
+        }
+        break;
+    }
+    fn_449475();
 }

@@ -101,4 +101,6 @@ extern Point g_4b1a4c[27]; /* @data 0x4b1a4c: where the listed cells' views go *
 extern GroupList slidesGroups[1]; /* @data 0x4a3fa4 */
 void openScene12();
 
+void scene12Clicked(short which);
+
 #endif
