@@ -2,11 +2,14 @@
  * tunnels (0x45e2d8-0x4623b8): Stone Cold Caves (scene 8), 'Tunnels.MHK'
  */
 
+#include <stdlib.h>
+
 #include "zoombinis.h"
 #include "basecamp.h"
 #include "e2memory.h"
 #include "features.h"
 #include "graphics.h"
+#include "loading.h"
 #include "module_4623b8.h"
 #include "snoids.h"
 #include "sound.h"
@@ -665,4 +668,137 @@ void fn_460021(short *spot, short side)
         if (!sortedIds[k])
             found = k;
     *spot = found;
+}
+
+/* Picks the pair of masks (of `n`; `pairs` is n * n) that best splits the
+   chosen Zoombinis four ways: by whether each matches the first mask in some
+   feature, and the second. Pairs leaving a way empty drop out; of the rest,
+   those splitting most evenly tie, and one is picked at random. */
+/* @zoombi32 0x00461e1a */
+void fn_461e1a(ChosenSnoids *chosen, unsigned long *masks, unsigned long *pair, short pairs, short n)
+{
+    char *score;
+    char *both;
+    char *firstOnly;
+    char *secondOnly;
+    char *neither;
+    unsigned long row;
+    long ties;
+    unsigned long j;
+    long pick;
+    unsigned long i;
+    unsigned long features;
+    unsigned long col;
+    unsigned long most;
+    unsigned long count;
+
+    both = (char *)newPtr(pairs);
+    if (!both)
+        fatalError(msgOutOfMemory);
+    firstOnly = (char *)newPtr(pairs);
+    if (!firstOnly) {
+        disposePtr(both);
+        fatalError(msgOutOfMemory);
+    }
+    secondOnly = (char *)newPtr(pairs);
+    if (!secondOnly) {
+        disposePtr(both);
+        disposePtr(firstOnly);
+        fatalError(msgOutOfMemory);
+    }
+    neither = (char *)newPtr(pairs);
+    if (!neither) {
+        disposePtr(both);
+        disposePtr(firstOnly);
+        disposePtr(secondOnly);
+        fatalError(msgOutOfMemory);
+    }
+    score = (char *)newPtr(pairs);
+    if (!score) {
+        disposePtr(both);
+        disposePtr(firstOnly);
+        disposePtr(secondOnly);
+        disposePtr(neither);
+        fatalError(msgOutOfMemory);
+    }
+    for (i = 0; i < pairs; i++) {
+        both[i] = 0;
+        firstOnly[i] = 0;
+        secondOnly[i] = 0;
+        neither[i] = 0;
+    }
+    for (j = 0; j < chosen->count; j++) {
+        features = swapLong(*(unsigned long *)chosen->features[j]);
+        for (i = 0; i < pairs; i++) {
+            row = i / n;
+            col = i % n;
+            if (col == row)
+                continue;
+            if ((features & 0xf) == (masks[row] & 0xf) || (features & 0xf00) == (masks[row] & 0xf00)
+                || (features & 0xf0000) == (masks[row] & 0xf0000)
+                || (features & 0xf000000) == (masks[row] & 0xf000000)) {
+                if ((features & 0xf) == (masks[col] & 0xf) || (features & 0xf00) == (masks[col] & 0xf00)
+                    || (features & 0xf0000) == (masks[col] & 0xf0000)
+                    || (features & 0xf000000) == (masks[col] & 0xf000000))
+                    both[i]++;
+                else
+                    firstOnly[i]++;
+            } else if ((features & 0xf) == (masks[col] & 0xf) || (features & 0xf00) == (masks[col] & 0xf00)
+                       || (features & 0xf0000) == (masks[col] & 0xf0000)
+                       || (features & 0xf000000) == (masks[col] & 0xf000000))
+                secondOnly[i]++;
+            else
+                neither[i]++;
+        }
+    }
+    most = 0;
+    for (i = 0; i < pairs; i++) {
+        count = 0;
+        if (both[i])
+            count++;
+        if (firstOnly[i])
+            count++;
+        if (secondOnly[i])
+            count++;
+        if (neither[i])
+            count++;
+        score[i] = count;
+        if (count > most)
+            most = count;
+    }
+    for (i = 0; i < pairs; i++)
+        if (score[i] < most)
+            both[i] = -1;
+    ties = 0;
+    features = 32000; /* now the best score */
+    for (i = 0; i < pairs; i++) {
+        score[i] = -1;
+        if (both[i] == -1)
+            continue;
+        score[i] = abs(both[i] - firstOnly[i]) + abs(both[i] - secondOnly[i]) + abs(both[i] - neither[i])
+                   + abs(firstOnly[i] - secondOnly[i]) + abs(firstOnly[i] - neither[i])
+                   + abs(secondOnly[i] - neither[i]);
+        if (score[i] < features)
+            features = score[i];
+    }
+    for (i = 0; i < pairs; i++)
+        if (score[i] == features)
+            ties++;
+    pick = randomBetween(1, ties);
+    for (i = 0; i < pairs; i++)
+        if (score[i] == features) {
+            pick--;
+            if (!pick) {
+                row = i / n;
+                col = i % n;
+                pair[0] = masks[row];
+                pair[1] = masks[col];
+                i = pairs;
+            }
+        }
+    disposePtr(both);
+    disposePtr(firstOnly);
+    disposePtr(secondOnly);
+    disposePtr(neither);
+    disposePtr(score);
 }
