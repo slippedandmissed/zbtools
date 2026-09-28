@@ -1668,3 +1668,77 @@ void fn_438396()
     }
     g_4b00be++;
 }
+/* Another way of choosing the maze's sequence of values (the first one
+   three times; the largest count when few are left). */
+/* @zoombi32 0x00438626 */
+void fn_438626()
+{
+    short value;
+    short rows;
+    short other;
+
+    g_4b00be = 0;
+    g_4b00c0 = 0;
+    g_4b00c2 = 0;
+    fn_437089();
+    rows = fn_4371b3(0);
+    fn_43824f();
+    if (!fn_438280())
+        fn_43836f();
+    if (rows >= 3) {
+        g_4b0096[g_4b00be] = fn_437b23(2, 5);
+        if (!g_4b0096[g_4b00be]) {
+            g_4b0096[g_4b00be] = fn_437b23(6, 9);
+            if (!g_4b0096[g_4b00be]) {
+                g_4b0096[g_4b00be] = fn_437b23(10, 16);
+                if (!g_4b0096[g_4b00be])
+                    g_4b0096[g_4b00be] = fn_437b23(1, 16);
+            }
+        }
+    } else {
+        g_4b0096[g_4b00be] = fn_437b23(1, 2);
+    }
+    if (!g_4b0096[g_4b00be])
+        g_4b0096[g_4b00be] = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+    g_4b0096[g_4b00be + 1] = g_4b0096[g_4b00be];
+    g_4b00be++;
+    g_4b0096[g_4b00be + 1] = g_4b0096[g_4b00be];
+    g_4b00be++;
+    value = fn_4371b3(g_4b0096[g_4b00be]);
+    g_4b00be++;
+    if (fn_4381bb() > 4) {
+        g_4b0096[g_4b00be] = fn_437b23(1, g_4a2666[value]);
+        if (!g_4b0096[g_4b00be]) {
+            g_4b0096[g_4b00be] = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+            rows = 0;
+        } else {
+            rows = fn_437acb(g_4b0096[g_4b00be]);
+        }
+        fn_4371b3(g_4b0096[g_4b00be]);
+        g_4b00be++;
+        g_4b0096[g_4b00be] = fn_4381da(g_4b0096[g_4b00be - 1], 1, g_4a2666[value]);
+        if (!g_4b0096[g_4b00be]) {
+            g_4b0096[g_4b00be] = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+            other = 0;
+        } else {
+            other = fn_437acb(g_4b0096[g_4b00be]);
+        }
+    } else {
+        g_4b0096[g_4b00be] = indexOfLargestExcept(0);
+        if (!g_4b0096[g_4b00be]) {
+            g_4b0096[g_4b00be] = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+            rows = 0;
+        } else {
+            rows = fn_437acb(g_4b0096[g_4b00be]);
+        }
+        g_4b00be++;
+        g_4b0096[g_4b00be] = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+        other = 0;
+    }
+    if (rows > other) {
+        rows = g_4b0096[g_4b00be - 1];
+        g_4b0096[g_4b00be - 1] = g_4b0096[g_4b00be];
+        g_4b0096[g_4b00be] = rows;
+    }
+    g_4b00be++;
+}
