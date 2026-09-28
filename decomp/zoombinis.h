@@ -6170,7 +6170,7 @@ void fn_41e273();
 extern short g_4ab872;
 extern short g_4a0ff0;
 extern short *g_4aba6c;
-void fn_41d9f2(short which, short image, long);
+void fn_41d9f2(short which, short image, View *);
 extern short g_4ab870;
 extern short g_4aba64;
 extern short g_4ab86c;
@@ -6192,3 +6192,9 @@ extern Point g_4aba14[20]; /* @data 0x4aba14: a stack of points, g_4aba64 of the
 void fn_41d1b1(View *view, short event);
 extern short g_4a1018; /* @data 0x4a1018 */
 void fn_41e0f3();
+extern short rosterPlaced[11]; /* @data 0x4ab840: an image is placed at place 1-10 */
+extern short rosterPlaceImages[11]; /* @data 0x4ab856: the image placed there */
+void fn_41db60(View *view);
+void fn_41dadf(View *);
+void fn_41eaf1();
+void fn_41f5d0();

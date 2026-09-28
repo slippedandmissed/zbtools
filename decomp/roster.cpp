@@ -478,7 +478,7 @@ void fn_41d30b(View *, short event)
    and sizes) at place `which` (1-10), centred across it and raised by
    g_4aba6c. */
 /* @zoombi32 0x0041d9f2 */
-void fn_41d9f2(short which, short image, long)
+void fn_41d9f2(short which, short image, View *)
 {
     short xs[11] = {0, 326, 348, 375, 397, 423, 324, 347, 373, 395, 422};
     short ys[11] = {0, 36, 39, 42, 44, 46, 77, 80, 83, 86, 90};
@@ -496,6 +496,73 @@ void fn_41d9f2(short which, short image, long)
     y = ys[which] - g_4aba6c[which];
     drawImageData(data, x, y, 8);
     unlockHandle(handle);
+}
+
+/* Draws the images placed (rosterPlaced) at each of the ten places,
+   after adding g_4a11ac to the region to redraw. */
+/* @zoombi32 0x0041db60 */
+void fn_41db60(View *view)
+{
+    short i;
+
+    unionRgnRect(removedRgn, &g_4a11ac);
+    for (i = 1; i < 11; i++)
+        if (rosterPlaced[i])
+            fn_41d9f2(i, rosterPlaceImages[i], view);
+}
+
+/* Draws the images placed at the ten places, except at place g_4ab86c
+   when g_4ab878 is 1 and it's one of the first five. */
+/* @zoombi32 0x0041dadf */
+void fn_41dadf(View *)
+{
+    short i;
+
+    if (g_4ab878 == 1 && g_4ab86c < 6) {
+        for (i = 1; i < 11; i++)
+            if (rosterPlaced[i] && i != g_4ab86c)
+                fn_41d9f2(i, rosterPlaceImages[i], 0);
+    } else {
+        for (i = 1; i < 11; i++)
+            if (rosterPlaced[i])
+                fn_41d9f2(i, rosterPlaceImages[i], 0);
+    }
+}
+
+/* Resets the screen for g_4ab878 (fn_41dfe3) and shows the frame before
+   the first (or the first, 6003) of the view g_4ab9f8 if it's not
+   running. */
+/* @zoombi32 0x0041eaf1 */
+void fn_41eaf1()
+{
+    View *view;
+
+    fn_41dfe3(g_4ab878);
+    view = findView(g_4ab9f8);
+    if (view && !view->body.running) {
+        if (g_4a1000 > 6003)
+            setViewScript(view, g_4a1000 - 1, 1);
+        else
+            setViewScript(view, g_4a1000, 1);
+    }
+}
+
+/* Reads the roster file (into g_4a4ba0) unless the user file is the
+   default one (ZBUser.txt), checks its version (107) and applies its
+   settings. */
+/* @zoombi32 0x0041f5d0 */
+void fn_41f5d0()
+{
+    char name[32] = "ZBUser";
+
+    strcat(name, ".txt");
+    if (strncmp(userFile, name, strlen(userFile))) {
+        readWriteRoster(g_4a4ba0, 1);
+        if (swapShort(*(unsigned short *)g_4a4ba0) != 107)
+            reportRosterError("Invalid user file, delete and try again: ");
+        applyPlayerSettings();
+        g_4b0d54 = 0;
+    }
 }
 
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to

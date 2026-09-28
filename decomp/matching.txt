@@ -313,6 +313,8 @@
 0x0041d9e4 fn_41d9e4
 0x0041d9eb fn_41d9eb
 0x0041d9f2 fn_41d9f2
+0x0041dadf fn_41dadf
+0x0041db60 fn_41db60
 0x0041dbab fn_41dbab
 0x0041dccb fn_41dccb
 0x0041dce6 fn_41dce6
@@ -321,11 +323,13 @@
 0x0041e0f3 fn_41e0f3
 0x0041e273 fn_41e273
 0x0041e8f3 fn_41e8f3
+0x0041eaf1 fn_41eaf1
 0x0041ed59 fn_41ed59
 0x0041f100 openRosterFile
 0x0041f195 reportRosterError
 0x0041f1da readWriteRoster
 0x0041f514 fn_41f514
+0x0041f5d0 fn_41f5d0
 0x0041f668 applyPlayerSettings
 0x0042492b fn_42492b
 0x004249c4 drawButtons
