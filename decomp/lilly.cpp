@@ -89,9 +89,8 @@ void freeResourcePair(long *resources)
     fn_46c602(resources + 1);
 }
 
-/* Not exact: the original tests `event` with 16-bit operations. */
 /* @zoombi32 0x0042b258 */
-short fn_42b258(short event)
+short fn_42b258(unsigned short event)
 {
     switch (event) {
     case 367:
@@ -2760,5 +2759,110 @@ void addLillyViews()
         g_4b755e = 10;
         for (i = 0; i < g_4ac0ee; i++)
             placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 10025, 6, &g_4a17f0[i], 0, 0);
+    }
+}
+
+/* Draws both buttons, unlit. */
+/* @zoombi32 0x004249c4 */
+void drawButtons(short)
+{
+    fn_42492b(1, 0, 0);
+    fn_42492b(2, 0, 0);
+}
+
+/* Draws the other set's buttons, unlit. */
+/* @zoombi32 0x00428c28 */
+void drawOtherButtons(short)
+{
+    fn_428b8f(1, 0, 0);
+    fn_428b8f(2, 0, 0);
+}
+
+/* Flashes square (g_4af34a, g_4af348) until g_4af352 reaches g_4af350. */
+/* @zoombi32 0x0042c52f */
+void flashSquare(View *view)
+{
+    if (view->body.running) {
+        if (g_4af352 >= g_4af350) {
+            view->body.running = 0;
+            unionRgnRect(removedRgn, &g_4acff4[g_4af34a][g_4af348].rect);
+        } else {
+            if (clockTime() >= view->nextUpdate) {
+                view->nextUpdate = clockTime() + view->interval;
+                g_4a1e3a++;
+                if (g_4a1e3a > 1)
+                    g_4a1e3a = 0;
+            }
+            fn_42c3b6(g_4af34a, g_4af348, g_4a1e3a);
+        }
+    }
+}
+
+/* The puzzle's keys (debugging ones only while debugging messages are on). */
+/* @zoombi32 0x00426831 */
+short lillyKey(unsigned short key)
+{
+    if (!g_4b8803 && key != 367)
+        return 0;
+    switch (key) {
+    case 367:
+        fn_466b93();
+        return 1;
+    case 'A':
+    case 'a':
+        drawFeatureLabels();
+        return 1;
+    case 'H':
+    case 'h':
+        if (!g_4ac0d6)
+            g_4ac0d6 = 1;
+        return 1;
+    case 'I':
+    case 'i':
+        if (!g_4ac0d6)
+            g_4ac0d6 = 0;
+        else
+            g_4ac0d6++;
+        return 1;
+    case 'R':
+        g_4abec4 = 1;
+        return 1;
+    case 'W':
+    case 'w': {
+        if (++g_4ac0c4 > 9)
+            g_4ac0c4 = 0;
+        View *view = findView(g_4ac0ba);
+
+        if (view) {
+            setViewScript(view, g_4ac0c4 + 7000, 1);
+        } else {
+            g_4ac0ba = addView(0x8108000, drawCels, runViewScript, g_4ac0c4 + 7000, 6, 0, 0, 0);
+            view = findView(g_4ac0ba);
+        }
+        return 1;
+    }
+    case 'E':
+    case 'e': {
+        if (++g_4ac0c6 > 17)
+            g_4ac0c6 = 10;
+        View *view = findView(g_4ac0ba);
+
+        if (view) {
+            setViewScript(view, g_4ac0c6 + 7000, 1);
+        } else {
+            g_4ac0ba = addView(0x8108000, drawCels, runViewScript, g_4ac0c6 + 7000, 6, 0, 0, 0);
+            view = findView(g_4ac0ba);
+        }
+        return 1;
+    }
+    case ' ':
+        g_4ac0fe = g_4ac102;
+        g_4ac100 = g_4ac104;
+        if (g_4ac0d8 != 3)
+            startView(g_4ac0fa, g_4ac0fe + 6000, 0, 0);
+        fadePalette(g_4ac51c, 10, 236, 0, 0, 0);
+        return 1;
+    default:
+        return 0;
     }
 }
