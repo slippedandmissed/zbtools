@@ -338,3 +338,61 @@ void fn_41e273()
         }
     }
 }
+
+/* The notify of the view g_4ab9f8's frames (fn_41dd37): 10 sets g_4ab872
+   to 2; 20 notes the view done and, on its last frame, remarks (now and
+   then) if not all are chosen, and sets g_4a0ff0; 21 likewise, ending the
+   walk when g_4b754a. */
+/* @zoombi32 0x0041d30b */
+void fn_41d30b(View *, short event)
+{
+    switch (event) {
+    case 10:
+        g_4ab872 = 2;
+        break;
+    case 20:
+        g_4ab874 = 0;
+        if (rosterButtons[0].rect.right == rosterButtons[0].rect.top) {
+            if (countChosenSnoids() < g_4a1014) {
+                if (randomBetween(0, 4) > g_4ab878 - 1 || (*(short *)(g_4a4ba0 + 0x40) & 0xfff) <= 3)
+                    queueViewSound(randomBetween(20045, 20048), 0);
+            }
+            g_4a0ff0 = 1;
+        } else {
+            g_4a0ff0 = 0;
+        }
+        break;
+    case 21:
+        g_4ab874 = 0;
+        g_4a0ff0 = 1;
+        if (g_4b754a) {
+            g_4b755a = 0;
+            g_4b755c = 1;
+        }
+        break;
+    }
+}
+
+/* Draws image `image` (from the resource g_4a0fd4; big-endian offsets
+   and sizes) at place `which` (1-10), centred across it and raised by
+   g_4aba6c. */
+/* @zoombi32 0x0041d9f2 */
+void fn_41d9f2(short which, short image, long)
+{
+    short xs[11] = {0, 326, 348, 375, 397, 423, 324, 347, 373, 395, 422};
+    short ys[11] = {0, 36, 39, 42, 44, 46, 77, 80, 83, 86, 90};
+    short handle;
+    ImageBank *bank;
+    unsigned short *data;
+    short x;
+    short y;
+
+    handle = fn_46beac(g_4a0fd4);
+    lockHandle(handle);
+    bank = (ImageBank *)handleData(handle);
+    data = (unsigned short *)(swapLong(bank->offsets[image]) + (char *)bank);
+    x = xs[which] - swapShort(data[0]) / 2;
+    y = ys[which] - g_4aba6c[which];
+    drawImageData(data, x, y, 8);
+    unlockHandle(handle);
+}

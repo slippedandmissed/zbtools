@@ -304,12 +304,14 @@
 0x00419f1a fn_419f1a
 0x0041c9ed closeRoster
 0x0041d167 fn_41d167
+0x0041d30b fn_41d30b
 0x0041d80e fn_41d80e
 0x0041d8bc drawRosterButton
 0x0041d955 drawRosterButtonsView
 0x0041d972 fn_41d972
 0x0041d9e4 fn_41d9e4
 0x0041d9eb fn_41d9eb
+0x0041d9f2 fn_41d9f2
 0x0041dbab fn_41dbab
 0x0041dccb fn_41dccb
 0x0041dce6 fn_41dce6

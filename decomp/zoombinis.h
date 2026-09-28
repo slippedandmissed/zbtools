@@ -6166,3 +6166,7 @@ extern short g_4a1014;
 void drawRosterButtonsView(View *);
 void closeRoster();
 void fn_41e273();
+extern short g_4ab872;
+extern short g_4a0ff0;
+extern short *g_4aba6c;
+void fn_41d9f2(short which, short image, long);
