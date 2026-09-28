@@ -123,7 +123,7 @@ void queueViewSound(short sound, char streamed)
             return;
         }
     if (soundTests)
-        fn_462749(sound, "Que overflow id: ", 0, 0, 1);
+        debugMessage(sound, "Que overflow id: ", 0, 0, 1);
 }
 
 /* Removes the first of a list of cels. */
@@ -382,7 +382,7 @@ void runViewScript(View *view, short region)
             cel = cels;
             do {
                 if (*cel > bank->count) {
-                    fn_462749(bank->count, " ixy[].Part > ", &view->id, "Feature id ", 1);
+                    debugMessage(bank->count, " ixy[].Part > ", &view->id, "Feature id ", 1);
                     *cel = 0;
                 }
                 cel += 3;

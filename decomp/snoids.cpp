@@ -672,7 +672,7 @@ void updateSnoidView(View *view, short region)
         return;
     unionRgnRect(region, &view->body.bounds);
     if (snoid->unknownF4 == 4) {
-        fn_45ab97(snoid, 0);
+        layOutSnoid(snoid, 0);
     } else if (snoid->body.lastFrame > 1) {
         if (snoid->body.frame >= snoid->body.lastFrame) {
             switch (snoid->unknownF4) {
@@ -716,7 +716,7 @@ void updateSnoidView(View *view, short region)
             }
         }
         {
-            short sound = fn_45ab97(snoid, &event);
+            short sound = layOutSnoid(snoid, &event);
 
             if (sound)
                 queueViewSound(sound, 0);
@@ -793,7 +793,7 @@ void updateSnoidView(View *view, short region)
             }
         }
     } else {
-        fn_45ab97(snoid, 0);
+        layOutSnoid(snoid, 0);
     }
     view->changed = 1;
 }
@@ -1991,7 +1991,7 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
     }
     unionRgnRect(currentViewRgn, &snoid->body.bounds);
     setSnoidFacing(snoid, script);
-    fn_45ab97(snoid, 0);
+    layOutSnoid(snoid, 0);
     unionRgnRect(currentViewRgn, &snoid->body.bounds);
 }
 
@@ -2596,4 +2596,234 @@ short campHint(short *visits)
         hint = 5;
     }
     return hint;
+}
+
+/*
+ * Lays out a Zoombini's cels for its script's current frame: each of the
+ * frame's parts (up to 6, or 16 in state 9) is a feature layer (unknownC2)
+ * added to the part's image, mirrored when facing left (unknownF2), placed
+ * by the image's hot spot. A negative word ends the frame: its low byte
+ * goes in *event (and then the script moves on), and one below -0x100 is
+ * followed by a sound, returned.
+ */
+/* Not exact: in the dead check, the original computes the view's id's
+   address (`sub eax, 0x16`) before loading bank->count. */
+/* @zoombi32 0x0045ab97 */
+short layOutSnoid(Snoid *snoid, short *event)
+{
+    short *layers;
+    short *hotX;
+    short *hotY;
+    short sound;
+    short *script;
+    short last;
+    short offsetX;
+    short offsetY;
+    ShortRect rect;
+    short *cel;
+    short *at;
+    ImageBank *bank;
+    short i;
+    short word;
+
+    sound = 0;
+    if (event)
+        *event = 0;
+    snoid->body.bounds.left = 0;
+    snoid->body.bounds.top = 0;
+    snoid->body.bounds.right = 0;
+    snoid->body.bounds.bottom = 0;
+    cel = (short *)snoid->body.cels;
+    layers = snoid->unknownC2;
+    switch (snoid->unknownF4) {
+    default:
+        last = 5;
+        script = baseSnoidScripts[snoid->body.script];
+        at = script + snoid->body.frameOffset;
+        layers++;
+        offsetX = snoid->body.x;
+        offsetY = snoid->body.y;
+        hotX = snoidTables[0];
+        hotY = snoidTables[1];
+        break;
+    case 8:
+        last = 5;
+        script = snoidScripts[snoid->body.script];
+        at = script + snoid->body.frameOffset;
+        layers++;
+        offsetY = -snoid->body.unknownAc;
+        if (*at > 0) {
+            offsetX = -snoid->body.unknownAa;
+            snoid->body.x = at[1] + offsetX;
+            snoid->body.y = at[2] + offsetY;
+        }
+        hotX = snoidTables[0];
+        hotY = snoidTables[1];
+        break;
+    case 9:
+        last = 15;
+        script = snoidScripts[snoid->body.script];
+        at = script + snoid->body.frameOffset;
+        if (*at <= 18)
+            layers++;
+        offsetY = -snoid->body.unknownAc;
+        if (*at > 0) {
+            offsetX = -snoid->body.unknownAa;
+            snoid->body.x = at[1] + offsetX;
+            snoid->body.y = at[2] + offsetY;
+        }
+        hotX = snoidTables[2];
+        hotY = snoidTables[3];
+        break;
+    }
+    i = 0;
+    if (!snoid->unknownF2) {
+        for (; i <= last; i++) {
+            word = *at++;
+            if (!word) {
+                at += 2;
+                *cel++ = 0;
+                *cel++ = 0;
+                *cel++ = 0;
+            } else if (word > 0) {
+                word = (word + layers[i]) * 2 - 1;
+                *cel++ = word;
+                *cel++ = offsetX + *at++ - hotX[word];
+                *cel++ = offsetY + *at++ - hotY[word];
+            } else {
+                if (word < -0x100)
+                    sound = *at++;
+                if (event)
+                    *event = word & 0xff;
+                if (i)
+                    *cel = 0;
+                i = last + 1;
+            }
+        }
+    } else {
+        for (; i <= last; i++) {
+            word = *at++;
+            if (!word) {
+                at += 2;
+                *cel++ = 0;
+                *cel++ = 0;
+                *cel++ = 0;
+            } else if (word > 0) {
+                word = (word + layers[i]) * 2;
+                *cel++ = word;
+                *cel++ = offsetX + *at++ - hotX[word];
+                *cel++ = offsetY + *at++ - hotY[word];
+            } else {
+                if (word < -0x100)
+                    sound = *at++;
+                if (event)
+                    *event = word & 0xff;
+                if (i)
+                    *cel = 0;
+                i = last + 1;
+            }
+        }
+    }
+    cel = (short *)snoid->body.cels;
+    bank = snoid->unknownF4 == 9 ? snoidImages2 : snoidImages;
+    if (0) {
+        for (short *check = cel; *check; check += 3)
+            if (*check > bank->count) {
+                debugMessage(bank->count, " ixy[].Part > ", &snoidView(snoid)->id, "Snoid id ", 1);
+                *check = 1;
+            }
+    }
+    while (*cel && *cel <= bank->count) {
+        unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
+
+        cel++;
+        rect.left = *cel++;
+        rect.top = *cel++;
+        rect.right = swapShort(image[0]) + rect.left;
+        rect.bottom = swapShort(image[1]) + rect.top;
+        unionRect(&snoid->body.bounds, &rect);
+    }
+    if (snoid->body.clipped)
+        sectRect(&snoid->body.bounds, &snoid->body.clip);
+    if (event) {
+        snoid->body.frameOffset = at - script;
+        snoid->body.frame++;
+    }
+    return sound;
+}
+
+/*
+ * Starts a Zoombini on snoid script `id` (state 9 or 8 by its group),
+ * placed so that its first positioned frame is at `anchor`, if given.
+ */
+/* @zoombi32 0x0045a4f2 */
+void startSnoidScript(Snoid *snoid, short id, Point *anchor, char unknownF8)
+{
+    short frame;
+    short group;
+    short index;
+    short originX;
+    short originY;
+    short facing;
+    short found;
+    short *data;
+
+    found = 0;
+    groupLeader[snoid->body.group] = 0;
+    snoid->body.group = 0;
+    findSnoidScript(id, &group, &index);
+    if (index < 0) {
+        debugMessage(id, "bogus snoid script id", 0, 0, 0);
+        return;
+    }
+    unionRgnRect(removedRgn, &snoid->body.bounds);
+    snoid->unknownC0 = -1;
+    switch (group) {
+    case 0:
+        snoid->unknownF4 = 9;
+        break;
+    case 1:
+        snoid->unknownF4 = 8;
+        break;
+    }
+    snoid->body.frame = 0;
+    snoid->body.frameOffset = 2;
+    snoid->unknownF5 = 0;
+    snoid->body.script = index;
+    snoid->body.running = 1;
+    if (!snoidScripts[index])
+        snoidScripts[index] = loadSwappedResource(&snoidScriptResources[index], id, RESOURCE_TYPE('S', 'C', 'R', 'S'));
+    data = snoidScripts[index];
+    snoid->body.lastFrame = data[0];
+    facing = data[1];
+    snoid->unknownF8 = unknownF8;
+    originX = snoid->body.x;
+    originY = snoid->body.y;
+    if (anchor) {
+        short n = -1;
+
+        while (!found) {
+            frame = n;
+            short *at = data + scriptFrameOffset(data, &frame, 1);
+
+            if (*at > 0) {
+                originX = anchor->x;
+                originY = anchor->y;
+                found = 1;
+                data = at;
+            }
+            n--;
+            if (abs(n) > snoid->body.lastFrame)
+                found = 1;
+        }
+    } else {
+        data += 2;
+    }
+    if (*data > 0) {
+        snoid->body.unknownAa = data[1] - originX;
+        snoid->body.unknownAc = data[2] - originY;
+    }
+    setSnoidFacing(snoid, facing);
+    layOutSnoid(snoid, 0);
+    unionRgnRect(removedRgn, &snoid->body.bounds);
 }

@@ -419,6 +419,12 @@ inline Snoid *viewSnoid(View *view)
     return (Snoid *)&view->body;
 }
 
+/* A Zoombini's view. */
+inline View *snoidView(Snoid *snoid)
+{
+    return (View *)((char *)snoid - 0x30);
+}
+
 
 /* A button in the camp (0x24 bytes). */
 struct CampButton
@@ -4117,7 +4123,8 @@ void fn_469669();
 void showNameTag(const char *text, unsigned long duration, short large); /* 0x4589ce */
 void fn_459c84(short, short);
 void freePaths();
-void fn_462749(short value, const char *after, short *number, const char *before, short level);
+void debugMessage(short value, const char *after, short *number, const char *before, short wait);
+extern ShortRect debugRect; /* @data 0x4a79cc */
 void fn_466c95();
 void closeViews();
 void clearViews();
@@ -4242,7 +4249,7 @@ extern SoundChannels viewSounds; /* @data 0x4b8a0c */
 extern SoundChannels viewSounds2; /* @data 0x4b8a8e */
 extern long g_4b7b4c; /* the sounds' map */
 extern long g_4b7b50; /* the MIDI map */
-extern char g_4b8803;
+extern char g_4b8803; /* debugging messages are on (debugMessage) */
 extern short fillViews; /* @data 0x4a7b78: debugging: fill the game area first */
 extern short labelActorsOnly; /* @data 0x4a7b7a: drawViewLabels only labels Zoombinis */
 extern short labelIds; /* @data 0x4a7b7c: drawViewLabels shows ids */
@@ -4627,6 +4634,7 @@ void claimPlacedView(short n, short id); /* 0x45802e */
 void markPlacedSnoids();
 void sendSnoids(short x, short y, unsigned long interval);
 void drawPaths();
+void startSnoidScript(Snoid *snoid, short id, Point *anchor, char unknownF8);
 void findSpot(View *view, ShortRect *area, short walk, short radius);
 void pickFreePlace(Point *result, Point *places, short count, short radius);
 extern Point g_4a4d1c;
@@ -4642,7 +4650,7 @@ void drawCamp(View *);
 void noteCampSlot(short slot);
 void initSnoid(Snoid *snoid); /* 0x45bf41 */
 void setSnoidFacing(Snoid *snoid, short facing);
-short fn_45ab97(Snoid *snoid, short *event);
+short layOutSnoid(Snoid *snoid, short *event);
 short campSlotsUsed();
 void insertCampRow();
 void compactCamp();

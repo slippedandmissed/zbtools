@@ -1403,7 +1403,7 @@ void drawCamp(View *)
             snoid.body.x = x;
             snoid.body.y = y;
             setSnoidFacing(&snoid, 0);
-            fn_45ab97(&snoid, 0);
+            layOutSnoid(&snoid, 0);
             camp->slots[index].rect = snoid.body.bounds;
             drawSnoid(&snoid);
         }

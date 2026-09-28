@@ -708,7 +708,7 @@ View *startView(short id, short script, ViewNotify notify, char notifyEnd)
 void setViewScript(View *view, short script, short running)
 {
     if (!view) {
-        fn_462749(script, "Reset NULL viewPtr with script id", 0, 0, 0);
+        debugMessage(script, "Reset NULL viewPtr with script id", 0, 0, 0);
         return;
     }
     if (!script)
@@ -764,7 +764,7 @@ void setViewScript(View *view, short script, short running)
         view->body.scriptGroup = 0;
         view->body.frame = 0;
         view->body.frameOffset = 1;
-        fn_462749(script, "with bogus script ", &view->id, "Set Ftr id ", 1);
+        debugMessage(script, "with bogus script ", &view->id, "Set Ftr id ", 1);
     }
 }
 
@@ -1379,7 +1379,7 @@ short playViewSounds(SoundChannels *channels, short played, short pick)
                             channels->state[i] = 2;
                         if (g_4b8803) {
                             if (!ok)
-                                fn_462749(last, "Could not Get/Start s-sound ", 0, 0, 1);
+                                debugMessage(last, "Could not Get/Start s-sound ", 0, 0, 1);
                             else if (soundTests)
                                 noteSoundTest(last, 2);
                         }
@@ -1388,7 +1388,7 @@ short playViewSounds(SoundChannels *channels, short played, short pick)
                         playSoundOn(last, type, -1);
                         if (g_4b8803) {
                             if (!playSoundOn(last, type, -1))
-                                fn_462749(last, "Could not Get/Start sound ", 0, 0, 1);
+                                debugMessage(last, "Could not Get/Start sound ", 0, 0, 1);
                             else if (soundTests)
                                 noteSoundTest(last, 1);
                         }

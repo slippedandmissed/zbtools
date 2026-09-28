@@ -416,6 +416,7 @@
 0x0045a44c setSnoidsRunning
 0x0045a477 markPlacedSnoids
 0x0045a4b2 runSnoid
+0x0045a4f2 startSnoidScript
 0x0045a6e0 nearPlacedView
 0x0045a75b setSnoidAction
 0x0045aaff fn_45aaff
@@ -437,6 +438,7 @@
 0x0045bfc0 setArrivalHook
 0x0045bfcf drawFeature
 0x004623b8 mainLoopUpdate
+0x00462749 debugMessage
 0x0046310c initViews
 0x004632af closeViews
 0x00463359 clearViews
