@@ -13,6 +13,40 @@
 #include "tunnels.h"
 #include "view.h"
 
+/* Resets scene 8's state (the rules, the entries, the counts; the pace
+   g_4b80a0 by g_4b2b00) and picks g_4b7fbc at random. */
+/* @zoombi32 0x0045e2d8 */
+void resetScene8()
+{
+    short i;
+
+    g_4b7fee = g_4b8088 = g_4b808a = 0;
+    g_4b7fe4 = g_4b8092 = g_4b8096 = 0;
+    g_4b755e = 40;
+    g_4b0d52 = g_4b7ff0.count = 0;
+    g_4b7fd4 = g_4b966e = g_4b8094 = 0;
+    g_4b7fd2 = g_4b7fd0 = g_4b7fce = 0;
+    g_4b7fda = g_4b7fdc = g_4b808e = 0;
+    g_4b8080 = g_4b8082 = g_4b8084 = g_4b8086 = g_4b808c = g_4b8090 = 0;
+    for (i = 0; i < 4; i++)
+        g_4b7fe6[i] = 0;
+    g_4b7564 = 1;
+    for (i = 0; i < 16; i++)
+        g_4b7f34[i] = g_4b7f54[i] = g_4b7f74[i] = g_4b7f94[i] = 0;
+    g_4b8098 = g_4b809a = 0;
+    g_4b809c = g_4b80a4 = 0;
+    if (g_4b2b00)
+        g_4b80a0 = 120;
+    else
+        g_4b80a0 = 60;
+    fillMemory(&g_4b7f18, 0, 28);
+    if (g_4b754a) {
+        g_4b7548 = 0;
+        g_4b7544 = 0;
+    }
+    g_4b7fbc = randomBetween(0, 1);
+}
+
 /* Closes scene 8. */
 /* @zoombi32 0x0045ea2b */
 void closeScene8()

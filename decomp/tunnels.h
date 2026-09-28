@@ -22,6 +22,24 @@ struct TunnelList
     TunnelEntry entries[5];
 };
 
+/* One of the caves' two rules (13 bytes): how many features, the features
+   and their values; the rest isn't known yet. */
+struct TunnelRule
+{
+    unsigned char count; /* +0 */
+    unsigned char features[5]; /* +1 */
+    unsigned char values[5]; /* +6 */
+    short unknownB; /* +0xb */
+};
+
+/* The caves' rules (0x4b7f18). */
+struct TunnelRules
+{
+    short unknown0;
+    short unknown2;
+    TunnelRule rules[2]; /* +4 */
+};
+
 extern long g_4b7fb4; /* @data 0x4b7fb4: Tunnels.MHK */
 extern short g_4b7fb8; /* @data 0x4b7fb8: the scene is open */
 extern long g_4a7708; /* @data 0x4a7708 */
@@ -49,5 +67,33 @@ void fn_45faa3(View *, short event);
 void fn_45e9b9(View *, short region);
 void drawTunnelsButton(short which, short lit, short show);
 void fn_4622f5();
+extern TunnelRules g_4b7f18; /* @data 0x4b7f18 */
+extern short g_4b808a; /* @data 0x4b808a */
+extern short g_4b8088; /* @data 0x4b8088 */
+extern short g_4b8096; /* @data 0x4b8096 */
+extern short g_4b8092; /* @data 0x4b8092 */
+extern short g_4b7fe4; /* @data 0x4b7fe4 */
+extern short g_4b7fce; /* @data 0x4b7fce */
+extern short g_4b808e; /* @data 0x4b808e */
+extern short g_4b8090; /* @data 0x4b8090 */
+extern short g_4b808c; /* @data 0x4b808c */
+extern short g_4b8086; /* @data 0x4b8086 */
+extern short g_4b8084; /* @data 0x4b8084 */
+extern short g_4b8082; /* @data 0x4b8082 */
+extern short g_4b8080; /* @data 0x4b8080 */
+extern short g_4b7fe6[4]; /* @data 0x4b7fe6 */
+extern short g_4b7f94[16]; /* @data 0x4b7f94 */
+extern short g_4b7f74[16]; /* @data 0x4b7f74 */
+extern short g_4b7f54[16]; /* @data 0x4b7f54 */
+extern short g_4b7f34[16]; /* @data 0x4b7f34 */
+extern short g_4b809a; /* @data 0x4b809a */
+extern short g_4b8098; /* @data 0x4b8098 */
+extern long g_4b80a4; /* @data 0x4b80a4 */
+extern long g_4b809c; /* @data 0x4b809c */
+extern long g_4b80a0; /* @data 0x4b80a0 */
+extern short g_4b7548; /* @data 0x4b7548 */
+extern long g_4b7544; /* @data 0x4b7544 */
+extern short g_4b7fbc; /* @data 0x4b7fbc */
+void resetScene8();
 
 #endif
