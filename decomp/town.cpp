@@ -3,6 +3,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "zoombinis.h"
 #include "basecamp.h"
@@ -258,5 +259,84 @@ void fn_45d715(Point *where)
             g_4b7eb8 = g_4a7582[i] + 1003;
             g_4b7eb6 = i + 1;
             g_4b7eb4 = 1;
+        }
+}
+
+/* Scene 0's keys: Ctrl-Q quits; any other key clicks. */
+/* @zoombi32 0x0045c0f4 */
+short scene0Key(unsigned short key)
+{
+    switch (key) {
+    case 0x1b:
+    case ' ':
+    default:
+        scene0Clicked(1);
+        return 1;
+    case 0x11:
+        closeScene0();
+        g_4b80e0 = -1;
+        return 1;
+    }
+}
+
+/* Resets scene 6's state; the pace g_4b7f08 by g_4b2b00. */
+/* @zoombi32 0x0045c3ec */
+void resetScene6()
+{
+    short i;
+
+    g_4b7eba = 0;
+    for (i = 0; i < 4; i++)
+        g_4b7e08[i] = 0;
+    g_4b7f00 = g_4b7f02 = g_4b7f10 = 0;
+    g_4b7f04 = 0;
+    g_4b7f0c = 0;
+    if (g_4b2b00)
+        g_4b7f08 = 600;
+    else
+        g_4b7f08 = 120;
+    g_4b7ec8 = g_4b7eca = g_4b7ecc = 0;
+    g_4b7eb6 = g_4b7eb8 = g_4b7ec4 = g_4b7ec6 = 0;
+    g_4a74dc = -1;
+    g_4b7ef8 = 0;
+    g_4b7ec0 = 0;
+    for (i = 0; i <= 19; i++)
+        g_4b7ece[i] = 0;
+    g_4b7efc = 0;
+    fn_45c4c9();
+    g_4b7ef6 = 0;
+    g_4b7f12 = 0;
+}
+
+/* A view draw: draws the button, unlit. */
+/* @zoombi32 0x0045cf79 */
+void drawTownButtons(View *)
+{
+    drawTownButton(1, 0, 0);
+}
+
+/* Moves the Zoombinis who arrived (the travellers, fn_4572bf of them) into
+   the town's free slots, up to 625. */
+/* @zoombi32 0x0045dfb1 */
+void settleTravellers()
+{
+    short arrived;
+    short found;
+    short i;
+    short j;
+
+    arrived = fn_4572bf();
+    found = 0;
+    for (i = 624; !found && i >= 0; i--)
+        if (townSlots->slots[i].zoombini)
+            found = 1;
+    if (found)
+        ;
+    for (j = 0, i = 0; j < arrived && i < 625 && townSlots->count < 625; i++)
+        if (!townSlots->slots[i].zoombini) {
+            townSlots->count++;
+            townSlots->slots[i].zoombini = travellers()[j].zoombini;
+            strcpy(townSlots->slots[i].name, travellers()[j].name);
+            j++;
         }
 }

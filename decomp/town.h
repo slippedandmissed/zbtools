@@ -32,7 +32,28 @@ extern short g_4b7eb4; /* @data 0x4b7eb4: the cursor is on one */
 extern short g_4b7eb6; /* @data 0x4b7eb6: its number (from 1) */
 extern short g_4b7eb8; /* @data 0x4b7eb8: a script for it */
 
+extern Camp *townSlots; /* @data 0x4b7e04: the town's Zoombinis */
+extern short g_4b7e08[4]; /* @data 0x4b7e08 */
+extern short g_4b7eba; /* @data 0x4b7eba */
+extern unsigned long g_4b7ec0; /* @data 0x4b7ec0 */
+extern short g_4b7ec4; /* @data 0x4b7ec4 */
+extern short g_4b7ec6; /* @data 0x4b7ec6 */
+extern short g_4b7ec8; /* @data 0x4b7ec8 */
+extern short g_4b7eca; /* @data 0x4b7eca */
+extern short g_4b7ecc; /* @data 0x4b7ecc */
+extern short g_4b7ef6; /* @data 0x4b7ef6 */
+extern short g_4b7ef8; /* @data 0x4b7ef8 */
+extern short g_4b7f00; /* @data 0x4b7f00 */
+extern unsigned long g_4b7f04; /* @data 0x4b7f04 */
+extern unsigned long g_4b7f08; /* @data 0x4b7f08 */
+extern unsigned long g_4b7f0c; /* @data 0x4b7f0c */
+extern short g_4b7f12; /* @data 0x4b7f12 */
+
 void openScene0();
+short scene0Key(unsigned short key);
+void resetScene6();
+void drawTownButtons(View *);
+void settleTravellers();
 void closeScene0();
 void scrollTown(short left);
 void drawTownButton(short which, short lit, short show);
