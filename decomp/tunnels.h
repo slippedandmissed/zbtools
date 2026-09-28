@@ -104,7 +104,7 @@ extern short g_4b7fc6; /* @data 0x4b7fc6 */
 extern short g_4b7fc8; /* @data 0x4b7fc8 */
 extern short g_4b7fca; /* @data 0x4b7fca */
 extern short g_4b80a8; /* @data 0x4b80a8: the script last shown (debugging) */
-void fn_460642(short rule);
+void fn_460642(short kind);
 short scene8Key(unsigned short key);
 void drawTunnelsButtons(View *);
 short removeTunnelEntry(TunnelList *list, short view);

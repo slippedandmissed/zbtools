@@ -6,6 +6,7 @@
 
 #include "zoombinis.h"
 #include "basecamp.h"
+#include "debug.h"
 #include "e2memory.h"
 #include "features.h"
 #include "graphics.h"
@@ -210,7 +211,7 @@ void fn_4622f5()
 }
 
 /* Scene 8's keys (with debugging on, g_4b8803, or else only 0x16f): t, T,
-   w (W also sets g_4b807e) and e pick a rule (fn_460642), a shows the rules,
+   w (W also sets g_4b807e) and e queue a remark (fn_460642), a shows the rules,
    C, F, I and O step the views g_4b7fc4-g_4b7fca through their scripts, H
    adds 4 to g_4b8098. Returns whether the key was used. */
 /* @zoombi32 0x0045f63a */
@@ -801,4 +802,282 @@ void fn_461e1a(ChosenSnoids *chosen, unsigned long *masks, unsigned long *pair, 
     disposePtr(secondOnly);
     disposePtr(neither);
     disposePtr(score);
+}
+
+/* Queues a remark of the given kind for the cave's four characters (the
+   views g_4b7fc4-g_4b7fca) to say: one speaker's script (and one to follow
+   it), then perhaps another speaker's reply (and its follow-up), picked with
+   allocateSlot so that each comes round before any repeats. Kind 1 has a
+   shorter set once W has been pressed (g_4b807e); kind 3 depends on
+   g_4b7fd0 and on whether every chosen Zoombini is on screen. */
+/* @zoombi32 0x00460642 */
+void fn_460642(short kind)
+{
+    short first;
+    short line;
+    short second;
+    short then;
+    short reply;
+    short replyThen;
+    TunnelEntry entry;
+
+    entry.view = 0;
+    entry.unknown4 = 0;
+    first = second = line = then = reply = replyThen = 0;
+    switch (kind) {
+    case 0:
+        switch (allocateSlot(&g_4a78c4, 10, 0)) {
+                case 0:
+                    first = g_4b7fc6;
+                    line = 0x1202;
+                    second = g_4b7fc8;
+                    reply = 0x1078;
+                    break;
+                case 1:
+                    first = g_4b7fc8;
+                    line = 0x1079;
+                    break;
+                case 2:
+                    first = g_4b7fc8;
+                    line = 0x107a;
+                    break;
+                case 3:
+                    first = g_4b7fc8;
+                    line = 0x107b;
+                    break;
+                case 4:
+                    first = g_4b7fc8;
+                    line = 0x107c;
+                    break;
+                case 5:
+                    first = g_4b7fc4;
+                    line = 0xfb5;
+                    second = g_4b7fca;
+                    reply = 0x1138;
+                    break;
+                case 6:
+                    first = g_4b7fc4;
+                    line = 0xfb6;
+                    second = g_4b7fca;
+                    reply = 0x1138;
+                    break;
+                case 7:
+                    first = g_4b7fca;
+                    line = 0x1132;
+                    second = g_4b7fc4;
+                    reply = 0xfb7;
+                    replyThen = 0xfbd;
+                    break;
+                case 8:
+                    first = g_4b7fca;
+                    line = 0x1132;
+                    second = g_4b7fc4;
+                    reply = 0xfb7;
+                    replyThen = 0xfbe;
+                    break;
+                case 9:
+                    first = g_4b7fca;
+                    line = 0x1143;
+        }
+        break;
+    case 1:
+        if (g_4b807e != 1) {
+            switch (allocateSlot(&g_4a78c8, 8, 0)) {
+                    case 0:
+                        first = g_4b7fc6;
+                        line = 0x1203;
+                        second = g_4b7fc4;
+                        reply = 0xfba;
+                        break;
+                    case 1:
+                        first = g_4b7fc6;
+                        line = 0x1203;
+                        second = g_4b7fc8;
+                        reply = 0x1080;
+                        break;
+                    case 2:
+                        first = g_4b7fca;
+                        line = 0x113b;
+                        second = g_4b7fc6;
+                        reply = 0x1204;
+                        break;
+                    case 3:
+                        first = g_4b7fc6;
+                        line = 0x1205;
+                        second = g_4b7fc8;
+                        reply = 0x107f;
+                        break;
+                    case 4:
+                        first = g_4b7fc6;
+                        line = 0x1205;
+                        second = g_4b7fc8;
+                        reply = 0x107e;
+                        break;
+                    case 5:
+                        first = g_4b7fca;
+                        line = 0x113a;
+                        second = g_4b7fc8;
+                        reply = 0x107e;
+                        break;
+                    case 6:
+                        first = g_4b7fc4;
+                        line = 0xfbb;
+                        second = g_4b7fca;
+                        reply = 0x113c;
+                        break;
+                    case 7:
+                        first = g_4b7fc4;
+                        line = 0xfbc;
+                        second = g_4b7fc8;
+                        reply = 0x107f;
+            }
+        } else {
+            switch (allocateSlot(&g_4a78c8, 4, 0)) {
+                    case 0:
+                        first = g_4b7fc8;
+                        line = 0x107d;
+                        break;
+                    case 1:
+                        first = g_4b7fc4;
+                        line = 0xfb8;
+                        then = 0xfb9;
+                        break;
+                    case 2:
+                        first = g_4b7fc6;
+                        line = 0x1206;
+                        break;
+                    case 3:
+                        first = g_4b7fca;
+                        line = 0x1139;
+            }
+        }
+        break;
+    case 2:
+        switch (allocateSlot(&g_4a78d0, 3, 0)) {
+                case 0:
+                    first = g_4b7fca;
+                    line = 0x1144;
+                    break;
+                case 1:
+                    first = g_4b7fca;
+                    line = 0x1145;
+                    break;
+                case 2:
+                    first = g_4b7fca;
+                    line = 0x1146;
+        }
+        break;
+    case 3:
+        if (g_4b7fd0) {
+            switch (allocateSlot(&g_4a78dc, 7, 0)) {
+                    case 0:
+                        first = g_4b7fc4;
+                        line = 0xfc3;
+                        break;
+                    case 1:
+                        first = g_4b7fca;
+                        line = 0x1147;
+                        break;
+                    case 2:
+                        first = g_4b7fc4;
+                        line = 0xfc2;
+                        break;
+                    case 3:
+                        first = g_4b7fc4;
+                        line = 0xfc4;
+                        break;
+                    case 4:
+                        first = g_4b7fc4;
+                        line = 0xfc5;
+                        break;
+                    case 5:
+                        first = g_4b7fc4;
+                        line = 0xfc0;
+                        break;
+                    case 6:
+                        first = g_4b7fc4;
+                        line = 0xfc1;
+            }
+        } else if (countSnoidViews() == countChosenSnoids()) {
+            switch (allocateSlot(&g_4a78d4, 8, 0)) {
+                    case 0:
+                        first = g_4b7fc4;
+                        line = 0xfbf;
+                        break;
+                    case 1:
+                        first = g_4b7fc6;
+                        line = 0x1209;
+                        break;
+                    case 2:
+                        first = g_4b7fc4;
+                        line = 0xfc6;
+                        break;
+                    case 3:
+                        first = g_4b7fc4;
+                        line = 0xfc2;
+                        break;
+                    case 4:
+                        first = g_4b7fc4;
+                        line = 0xfc4;
+                        break;
+                    case 5:
+                        first = g_4b7fc4;
+                        line = 0xfc5;
+                        break;
+                    case 6:
+                        first = g_4b7fc4;
+                        line = 0xfc0;
+                        break;
+                    case 7:
+                        first = g_4b7fc4;
+                        line = 0xfc1;
+            }
+        } else {
+            switch (allocateSlot(&g_4a78d8, 9, 0)) {
+                    case 0:
+                        first = g_4b7fc8;
+                        line = 0x1081;
+                        break;
+                    case 1:
+                        first = g_4b7fc8;
+                        line = 0x1082;
+                        break;
+                    case 2:
+                        first = g_4b7fc6;
+                        line = 0x1207;
+                        break;
+                    case 3:
+                        first = g_4b7fc6;
+                        line = 0x1208;
+                        break;
+                    case 4:
+                        first = g_4b7fc4;
+                        line = 0xfc2;
+                        break;
+                    case 5:
+                        first = g_4b7fc4;
+                        line = 0xfc4;
+                        break;
+                    case 6:
+                        first = g_4b7fc4;
+                        line = 0xfc5;
+                        break;
+                    case 7:
+                        first = g_4b7fc4;
+                        line = 0xfc0;
+                        break;
+                    case 8:
+                        first = g_4b7fc4;
+                        line = 0xfc1;
+            }
+        }
+        break;
+    }
+    entry.unknownC[1] = first;
+    entry.unknownC[2] = line;
+    entry.unknownC[3] = then;
+    entry.unknownC[4] = second;
+    entry.unknownC[5] = reply;
+    entry.unknownC[6] = replyThen;
+    fn_460527(&g_4b7ff0, entry);
 }
