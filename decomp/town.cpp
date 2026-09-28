@@ -7,9 +7,16 @@
 #include "zoombinis.h"
 #include "basecamp.h"
 #include "debug.h"
+#include "e2memory.h"
+#include "events.h"
 #include "features.h"
 #include "focus.h"
 #include "game.h"
+#include "graphics.h"
+#include "module_4623b8.h"
+#include "platform.h"
+#include "snoids.h"
+#include "sound.h"
 #include "town.h"
 #include "view.h"
 
@@ -77,13 +84,13 @@ void fn_45ccca(short running)
     }
 }
 
-/* A view update: once reset, adds g_4a7428 to `region`. */
+/* A view update: once reset, adds the button to `region`. */
 /* @zoombi32 0x0045cf8b */
 void fn_45cf8b(View *view, short region)
 {
     if (view->reset) {
         view->reset = 0;
-        unionRgnRect(region, &g_4a7428);
+        unionRgnRect(region, &townButtons[0].rect);
     }
 }
 
@@ -127,5 +134,129 @@ void fn_45e29e(View *view, short)
             g_4b7ece[i] = -g_4b7ece[i];
             g_4b7f10++;
             break;
+        }
+}
+
+/* Closes scene 0, leaving its palette and clip for the next scene, and
+   reloads the Zoombinis and dialogs. */
+/* @zoombi32 0x0045c175 */
+void closeScene0()
+{
+    if (g_4b7cf4) {
+        g_4b7cf4 = 0;
+        short saved = fn_46bee9(1);
+
+        fn_455273(1);
+        viewsShown = 1;
+        setTakeStatic(1);
+        realizePalette(getPortPalette(), 1);
+        setClipRect(gameRect);
+        discardEvents(3);
+        fn_46bee9(saved);
+        fadeOutViews();
+        fn_4624fc();
+        loadSnoids(0);
+        loadDialogs();
+        g_4b2aea = 1;
+        showCursor();
+    }
+}
+
+/* Moves every view with flag 2 a screen (320) left or right, wrapping
+   round the town's 1920 pixels; a Zoombini's anchor (unknownAa) keeps its
+   place relative to it. */
+/* @zoombi32 0x0045ce80 */
+void scrollTown(short left)
+{
+    View *view;
+    Snoid *snoid;
+    short x;
+    short old;
+
+    for (view = viewListEnd(1); view; view = view->next)
+        if (view->flags & 2) {
+            snoid = viewSnoid(view);
+            x = snoid->body.x;
+            old = x;
+            if (left) {
+                x -= 320;
+                if (x < -320)
+                    x += 1920;
+            } else {
+                x += 320;
+                if (x > 1599)
+                    x -= 1920;
+            }
+            snoid->body.x = x;
+            if (snoid->features[0])
+                snoid->body.unknownAa += old - x;
+            snoid->unknownF5 = -1;
+            view->nextUpdate = 0;
+        }
+}
+
+/* Draws button `which` (only 1), lit or not, and shows it if asked. */
+/* @zoombi32 0x0045ceff */
+void drawTownButton(short which, short lit, short show)
+{
+    short image = 0;
+
+    switch (which) {
+    case 1:
+        image = 5;
+        break;
+    }
+    if (image) {
+        if (lit)
+            image++;
+        drawImageData((unsigned short *)(g_4a74c8->offsets[image] + (char *)g_4a74c8), townButtons[which - 1].rect.left,
+                      townButtons[which - 1].rect.top, 8);
+        if (show)
+            showRect(&townButtons[which - 1].rect);
+    }
+}
+
+/* Closes scene 6. */
+/* @zoombi32 0x0045cfae */
+void closeScene6()
+{
+    if (g_4b7e00) {
+        g_4b7e00 = 0;
+        short saved = fn_46bee9(1);
+
+        useAltSnoids(1);
+        if (!viewsLocked) {
+            viewsLocked = 1;
+            *(short *)(g_4a4ba0 + 0xa92e) = 0;
+            *(short *)(g_4a4ba0 + 0xa930) = 1;
+            *(short *)(g_4a4ba0 + 0xa932) = 1;
+        }
+        clearViews();
+        unloadSounds();
+        fn_46c602(&g_4a74c4);
+        fn_46bee9(saved);
+        fn_46ca9c(&g_4b7dfc);
+        fadeOutViews();
+        fn_4624fc();
+        g_4a74dc = -1;
+    }
+}
+
+/* Finds the hotspot under the cursor (into *where): the first of the
+   g_4b7eb2 non-empty rectangles g_4b7e12 holding it sets g_4b7eb4, its
+   number (g_4b7e92, from 1) in g_4b7eb6 and a script by it in g_4b7eb8. */
+/* @zoombi32 0x0045d715 */
+void fn_45d715(Point *where)
+{
+    short i;
+
+    getCursorPosition(where);
+    g_4b7eb4 = 0;
+    for (i = 0; !g_4b7eb4 && i < g_4b7eb2; i++)
+        if (!emptyRect(&g_4b7e12[i]) && ptInRect(&g_4b7e12[i], *where)) {
+            i = g_4b7e92[i];
+            g_4b7eb8 = g_4a7582[i] + 1003;
+            g_4b7eb6 = i + 1;
+            g_4b7eb4 = 1;
         }
 }
