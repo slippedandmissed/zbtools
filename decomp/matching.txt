@@ -302,6 +302,12 @@
 0x004184cd returnToCamp
 0x004196a8 fn_4196a8
 0x00419f1a fn_419f1a
+0x0041a404 startBridgeTimer
+0x0041a40f bridgeTimer
+0x0041a41b resetScene7
+0x0041a8af drawBridgeButton
+0x0041a965 fn_41a965
+0x0041a9d7 closeScene7
 0x0041c9ed closeRoster
 0x0041ca44 rosterFrame
 0x0041cf14 fn_41cf14

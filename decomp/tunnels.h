@@ -34,22 +34,6 @@ struct TunnelList
 
 /* One of the caves' two rules (13 bytes): how many features, the features
    and their values; the rest isn't known yet. */
-struct TunnelRule
-{
-    short side; /* which way it sends a Zoombini that passes (the first rule:
-                   left, else right; the second: top, else bottom) */
-    unsigned char count; /* +2: of features */
-    unsigned char features[5]; /* +3 */
-    unsigned char values[5]; /* +8 */
-};
-
-/* The caves' rules (0x4b7f18): one or two. */
-struct TunnelRules
-{
-    short count;
-    TunnelRule rules[2]; /* +2 */
-};
-
 extern long g_4b7fb4; /* @data 0x4b7fb4: Tunnels.MHK */
 extern short g_4b7fb8; /* @data 0x4b7fb8: the scene is open */
 extern long g_4a7708; /* @data 0x4a7708 */
@@ -75,7 +59,7 @@ void fn_45faa3(View *, short event);
 void fn_45e9b9(View *, short region);
 void drawTunnelsButton(short which, short lit, short show);
 void fn_4622f5();
-extern TunnelRules g_4b7f18; /* @data 0x4b7f18 */
+extern FeatureRules g_4b7f18; /* @data 0x4b7f18 */
 extern short g_4b808a; /* @data 0x4b808a */
 extern short g_4b8088; /* @data 0x4b8088 */
 extern short g_4b8096; /* @data 0x4b8096 */
@@ -109,7 +93,7 @@ short scene8Key(unsigned short key);
 void drawTunnelsButtons(View *);
 short removeTunnelEntry(TunnelList *list, short view);
 
-short fn_460c41(TunnelRules *rules, short door, Snoid *snoid, unsigned short *first);
+short fn_460c41(FeatureRules *rules, short door, Snoid *snoid, unsigned short *first);
 
 void fn_460e3d();
 extern Point tunnelPlaces[16]; /* @data 0x4a7730: where the Zoombinis wait */

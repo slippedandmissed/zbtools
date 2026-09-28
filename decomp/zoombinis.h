@@ -327,6 +327,24 @@ struct ViewBody
     ShortRect clip; /* +0xb4 */
 };
 
+/* A rule about the Zoombinis' features (tunnels, bridge). */
+struct FeatureRule
+{
+    unsigned short side; /* which way it sends a Zoombini that passes (the first rule:
+                   left, else right; the second: top, else bottom) */
+    unsigned char count; /* +2: of features */
+    unsigned char features[5]; /* +3 */
+    unsigned char values[5]; /* +8 */
+};
+
+/* A puzzle's rules, one or two (the caves' at 0x4b7f18, the cliffs' at
+   0x4ab804). */
+struct FeatureRules
+{
+    short count;
+    FeatureRule rules[2]; /* +2 */
+};
+
 /* A Zoombini on screen (the snoids module), 0x103 bytes: a view's body
    and more. Partly known. */
 struct Snoid

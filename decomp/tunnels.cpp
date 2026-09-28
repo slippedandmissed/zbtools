@@ -397,7 +397,7 @@ short removeTunnelEntry(TunnelList *list, short view)
 /* Not exact: register allocation (the original keeps `door`, `a`, `b` and
    `passes` on the stack and `snoid` in esi, using ebx and ecx as scratch). */
 /* @zoombi32 0x00460c41 */
-short fn_460c41(TunnelRules *rules, short door, Snoid *snoid, unsigned short *first)
+short fn_460c41(FeatureRules *rules, short door, Snoid *snoid, unsigned short *first)
 {
     unsigned short passes;
     unsigned short a;

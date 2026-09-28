@@ -1,0 +1,48 @@
+/*
+ * bridge's functions and globals: the declarations only its code and its
+ * callers need (shared types and the rest are in zoombinis.h).
+ */
+
+#ifndef BRIDGE_H
+#define BRIDGE_H
+
+extern SceneButton bridgeButtons[2]; /* @data 0x4a0d88 */
+extern long g_4a0e24; /* @data 0x4a0e24 */
+extern short g_4a0f08; /* @data 0x4a0f08: button 2 is drawn lit */
+extern short g_4a0f0a; /* @data 0x4a0f0a: button 1 is drawn */
+extern long g_4ab784; /* @data 0x4ab784: bridge.mhk */
+extern short g_4ab788; /* @data 0x4ab788: the scene is open */
+extern short g_4ab78a; /* @data 0x4ab78a: button 2 is live */
+extern short g_4ab78c; /* @data 0x4ab78c */
+extern short g_4ab78e; /* @data 0x4ab78e */
+extern short g_4ab792[16]; /* @data 0x4ab792 */
+extern short g_4ab7b2[16]; /* @data 0x4ab7b2 */
+extern unsigned long g_4ab7d4; /* @data 0x4ab7d4: when the timer started (clockTime) */
+extern short g_4ab7d8; /* @data 0x4ab7d8 */
+extern short g_4ab7e6; /* @data 0x4ab7e6 */
+extern short g_4ab7ea; /* @data 0x4ab7ea */
+extern short g_4ab7ee; /* @data 0x4ab7ee */
+extern short g_4ab7f0; /* @data 0x4ab7f0 */
+extern short g_4ab7f2; /* @data 0x4ab7f2 */
+extern short g_4ab800; /* @data 0x4ab800 */
+extern short g_4ab802; /* @data 0x4ab802 */
+extern FeatureRules bridgeRules; /* @data 0x4ab804 */
+extern ImageBank *g_4ab820; /* @data 0x4ab820: the buttons' images */
+extern short g_4ab824; /* @data 0x4ab824 */
+extern short g_4ab826; /* @data 0x4ab826 */
+extern short g_4ab828; /* @data 0x4ab828 */
+extern short g_4ab82a; /* @data 0x4ab82a */
+extern short g_4ab82c; /* @data 0x4ab82c */
+extern unsigned long g_4ab830; /* @data 0x4ab830 */
+extern unsigned long g_4ab834; /* @data 0x4ab834 */
+extern unsigned long g_4ab838; /* @data 0x4ab838 */
+
+void startBridgeTimer();
+unsigned long bridgeTimer();
+void resetScene7();
+void drawBridgeButton(short which, short lit, short show);
+void fn_41a965(View *, short region);
+void closeScene7();
+short turnedBack(FeatureRules *rules, short edge, Snoid *snoid);
+
+#endif
