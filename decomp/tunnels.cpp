@@ -367,16 +367,16 @@ short removeTunnelEntry(TunnelList *list, short view)
             for (; i < list->count - 1; i++) {
                 list->entries[i].view = list->entries[i + 1].view;
                 list->entries[i].unknown2 = list->entries[i + 1].unknown2;
-                list->entries[i].unknown4 = list->entries[i + 1].unknown4;
+                list->entries[i].step = list->entries[i + 1].step;
                 list->entries[i].unknown6 = list->entries[i + 1].unknown6;
                 list->entries[i].unknown8 = list->entries[i + 1].unknown8;
-                list->entries[i].unknownC[0] = list->entries[i + 1].unknownC[0];
-                list->entries[i].unknownC[1] = list->entries[i + 1].unknownC[1];
-                list->entries[i].unknownC[2] = list->entries[i + 1].unknownC[2];
-                list->entries[i].unknownC[3] = list->entries[i + 1].unknownC[3];
-                list->entries[i].unknownC[4] = list->entries[i + 1].unknownC[4];
-                list->entries[i].unknownC[5] = list->entries[i + 1].unknownC[5];
-                list->entries[i].unknownC[6] = list->entries[i + 1].unknownC[6];
+                list->entries[i].unknownC = list->entries[i + 1].unknownC;
+                list->entries[i].speaker = list->entries[i + 1].speaker;
+                list->entries[i].line = list->entries[i + 1].line;
+                list->entries[i].lineThen = list->entries[i + 1].lineThen;
+                list->entries[i].replier = list->entries[i + 1].replier;
+                list->entries[i].reply = list->entries[i + 1].reply;
+                list->entries[i].replyThen = list->entries[i + 1].replyThen;
                 list->entries[i].kind = list->entries[i + 1].kind;
             }
             list->count--;
@@ -813,70 +813,70 @@ void fn_461e1a(ChosenSnoids *chosen, unsigned long *masks, unsigned long *pair, 
 /* @zoombi32 0x00460642 */
 void fn_460642(short kind)
 {
-    short first;
+    short speaker;
     short line;
-    short second;
-    short then;
+    short replier;
+    short lineThen;
     short reply;
     short replyThen;
     TunnelEntry entry;
 
     entry.view = 0;
-    entry.unknown4 = 0;
-    first = second = line = then = reply = replyThen = 0;
+    entry.step = 0;
+    speaker = replier = line = lineThen = reply = replyThen = 0;
     switch (kind) {
     case 0:
         switch (allocateSlot(&g_4a78c4, 10, 0)) {
                 case 0:
-                    first = g_4b7fc6;
+                    speaker = g_4b7fc6;
                     line = 0x1202;
-                    second = g_4b7fc8;
+                    replier = g_4b7fc8;
                     reply = 0x1078;
                     break;
                 case 1:
-                    first = g_4b7fc8;
+                    speaker = g_4b7fc8;
                     line = 0x1079;
                     break;
                 case 2:
-                    first = g_4b7fc8;
+                    speaker = g_4b7fc8;
                     line = 0x107a;
                     break;
                 case 3:
-                    first = g_4b7fc8;
+                    speaker = g_4b7fc8;
                     line = 0x107b;
                     break;
                 case 4:
-                    first = g_4b7fc8;
+                    speaker = g_4b7fc8;
                     line = 0x107c;
                     break;
                 case 5:
-                    first = g_4b7fc4;
+                    speaker = g_4b7fc4;
                     line = 0xfb5;
-                    second = g_4b7fca;
+                    replier = g_4b7fca;
                     reply = 0x1138;
                     break;
                 case 6:
-                    first = g_4b7fc4;
+                    speaker = g_4b7fc4;
                     line = 0xfb6;
-                    second = g_4b7fca;
+                    replier = g_4b7fca;
                     reply = 0x1138;
                     break;
                 case 7:
-                    first = g_4b7fca;
+                    speaker = g_4b7fca;
                     line = 0x1132;
-                    second = g_4b7fc4;
+                    replier = g_4b7fc4;
                     reply = 0xfb7;
                     replyThen = 0xfbd;
                     break;
                 case 8:
-                    first = g_4b7fca;
+                    speaker = g_4b7fca;
                     line = 0x1132;
-                    second = g_4b7fc4;
+                    replier = g_4b7fc4;
                     reply = 0xfb7;
                     replyThen = 0xfbe;
                     break;
                 case 9:
-                    first = g_4b7fca;
+                    speaker = g_4b7fca;
                     line = 0x1143;
         }
         break;
@@ -884,70 +884,70 @@ void fn_460642(short kind)
         if (g_4b807e != 1) {
             switch (allocateSlot(&g_4a78c8, 8, 0)) {
                     case 0:
-                        first = g_4b7fc6;
+                        speaker = g_4b7fc6;
                         line = 0x1203;
-                        second = g_4b7fc4;
+                        replier = g_4b7fc4;
                         reply = 0xfba;
                         break;
                     case 1:
-                        first = g_4b7fc6;
+                        speaker = g_4b7fc6;
                         line = 0x1203;
-                        second = g_4b7fc8;
+                        replier = g_4b7fc8;
                         reply = 0x1080;
                         break;
                     case 2:
-                        first = g_4b7fca;
+                        speaker = g_4b7fca;
                         line = 0x113b;
-                        second = g_4b7fc6;
+                        replier = g_4b7fc6;
                         reply = 0x1204;
                         break;
                     case 3:
-                        first = g_4b7fc6;
+                        speaker = g_4b7fc6;
                         line = 0x1205;
-                        second = g_4b7fc8;
+                        replier = g_4b7fc8;
                         reply = 0x107f;
                         break;
                     case 4:
-                        first = g_4b7fc6;
+                        speaker = g_4b7fc6;
                         line = 0x1205;
-                        second = g_4b7fc8;
+                        replier = g_4b7fc8;
                         reply = 0x107e;
                         break;
                     case 5:
-                        first = g_4b7fca;
+                        speaker = g_4b7fca;
                         line = 0x113a;
-                        second = g_4b7fc8;
+                        replier = g_4b7fc8;
                         reply = 0x107e;
                         break;
                     case 6:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfbb;
-                        second = g_4b7fca;
+                        replier = g_4b7fca;
                         reply = 0x113c;
                         break;
                     case 7:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfbc;
-                        second = g_4b7fc8;
+                        replier = g_4b7fc8;
                         reply = 0x107f;
             }
         } else {
             switch (allocateSlot(&g_4a78c8, 4, 0)) {
                     case 0:
-                        first = g_4b7fc8;
+                        speaker = g_4b7fc8;
                         line = 0x107d;
                         break;
                     case 1:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfb8;
-                        then = 0xfb9;
+                        lineThen = 0xfb9;
                         break;
                     case 2:
-                        first = g_4b7fc6;
+                        speaker = g_4b7fc6;
                         line = 0x1206;
                         break;
                     case 3:
-                        first = g_4b7fca;
+                        speaker = g_4b7fca;
                         line = 0x1139;
             }
         }
@@ -955,15 +955,15 @@ void fn_460642(short kind)
     case 2:
         switch (allocateSlot(&g_4a78d0, 3, 0)) {
                 case 0:
-                    first = g_4b7fca;
+                    speaker = g_4b7fca;
                     line = 0x1144;
                     break;
                 case 1:
-                    first = g_4b7fca;
+                    speaker = g_4b7fca;
                     line = 0x1145;
                     break;
                 case 2:
-                    first = g_4b7fca;
+                    speaker = g_4b7fca;
                     line = 0x1146;
         }
         break;
@@ -971,114 +971,114 @@ void fn_460642(short kind)
         if (g_4b7fd0) {
             switch (allocateSlot(&g_4a78dc, 7, 0)) {
                     case 0:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc3;
                         break;
                     case 1:
-                        first = g_4b7fca;
+                        speaker = g_4b7fca;
                         line = 0x1147;
                         break;
                     case 2:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc2;
                         break;
                     case 3:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc4;
                         break;
                     case 4:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc5;
                         break;
                     case 5:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc0;
                         break;
                     case 6:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc1;
             }
         } else if (countSnoidViews() == countChosenSnoids()) {
             switch (allocateSlot(&g_4a78d4, 8, 0)) {
                     case 0:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfbf;
                         break;
                     case 1:
-                        first = g_4b7fc6;
+                        speaker = g_4b7fc6;
                         line = 0x1209;
                         break;
                     case 2:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc6;
                         break;
                     case 3:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc2;
                         break;
                     case 4:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc4;
                         break;
                     case 5:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc5;
                         break;
                     case 6:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc0;
                         break;
                     case 7:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc1;
             }
         } else {
             switch (allocateSlot(&g_4a78d8, 9, 0)) {
                     case 0:
-                        first = g_4b7fc8;
+                        speaker = g_4b7fc8;
                         line = 0x1081;
                         break;
                     case 1:
-                        first = g_4b7fc8;
+                        speaker = g_4b7fc8;
                         line = 0x1082;
                         break;
                     case 2:
-                        first = g_4b7fc6;
+                        speaker = g_4b7fc6;
                         line = 0x1207;
                         break;
                     case 3:
-                        first = g_4b7fc6;
+                        speaker = g_4b7fc6;
                         line = 0x1208;
                         break;
                     case 4:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc2;
                         break;
                     case 5:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc4;
                         break;
                     case 6:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc5;
                         break;
                     case 7:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc0;
                         break;
                     case 8:
-                        first = g_4b7fc4;
+                        speaker = g_4b7fc4;
                         line = 0xfc1;
             }
         }
         break;
     }
-    entry.unknownC[1] = first;
-    entry.unknownC[2] = line;
-    entry.unknownC[3] = then;
-    entry.unknownC[4] = second;
-    entry.unknownC[5] = reply;
-    entry.unknownC[6] = replyThen;
+    entry.speaker = speaker;
+    entry.line = line;
+    entry.lineThen = lineThen;
+    entry.replier = replier;
+    entry.reply = reply;
+    entry.replyThen = replyThen;
     fn_460527(&g_4b7ff0, entry);
 }
 
@@ -1371,6 +1371,103 @@ void fn_461bec()
         if ((pair[i] & 0xff000000) && f < 2) {
             g_4b7f18.rules[i].features[f] = 1;
             g_4b7f18.rules[i].values[f] = (pair[i] >> 24) & 0xf;
+        }
+    }
+}
+
+/* Drops the first entry of `list`, if any. */
+/* @zoombi32 0x00460556 */
+void dropFirstTunnelEntry(TunnelList *list)
+{
+    if (list->count)
+        removeTunnelEntry(list, list->entries[0].view);
+}
+
+/* Says the next part of the remark first in g_4b7ff0 (its step: the
+   speaker's line, the reply, the speaker's second line, the second reply;
+   a part with no view or script is skipped), ending with fn_45fa56; when
+   there's nothing left to say, drops the remark. */
+/* @zoombi32 0x00460571 */
+void sayTunnelRemark()
+{
+    short view = 0;
+    short script;
+
+    g_4b7ff0.entries[0].step++;
+    switch (g_4b7ff0.entries[0].step) {
+    case 1:
+        view = g_4b7ff0.entries[0].speaker;
+        script = g_4b7ff0.entries[0].line;
+        break;
+    case 2:
+        view = g_4b7ff0.entries[0].replier;
+        script = g_4b7ff0.entries[0].reply;
+        if (!view || !script) {
+            g_4b7ff0.entries[0].step++;
+            view = g_4b7ff0.entries[0].speaker;
+            script = g_4b7ff0.entries[0].lineThen;
+        }
+        break;
+    case 3:
+        view = g_4b7ff0.entries[0].speaker;
+        script = g_4b7ff0.entries[0].lineThen;
+        if (!view || !script) {
+            g_4b7ff0.entries[0].step++;
+            view = g_4b7ff0.entries[0].replier;
+            script = g_4b7ff0.entries[0].replyThen;
+        }
+        break;
+    case 4:
+        view = g_4b7ff0.entries[0].replier;
+        script = g_4b7ff0.entries[0].replyThen;
+        break;
+    }
+    if (view && script) {
+        startView(view, script, fn_45fa56, 1);
+        loadViewSounds(view, 1);
+        g_4b7fd2 = 1;
+    } else {
+        dropFirstTunnelEntry(&g_4b7ff0);
+    }
+    resetViewClock();
+}
+
+/* A notify: at the end (-1), drops the remark said and clears g_4b7fd2. */
+/* @zoombi32 0x0045fa80 */
+void fn_45fa80(View *, short event)
+{
+    switch (event) {
+    case -1:
+        dropFirstTunnelEntry(&g_4b7ff0);
+        g_4b7fd2 = 0;
+        break;
+    }
+}
+
+/* Sends up to four waiting Zoombinis (the first entries of g_4b7ff0) off
+   through their doors (the entry's kind, 1-4), freeing the four places by
+   the doors. */
+/* @zoombi32 0x0045f9c9 */
+void fn_45f9c9()
+{
+    short doorX[4] = {141, 198, 426, 479};
+    short i;
+    View *view;
+    Snoid *snoid;
+
+    for (i = 0; i < 4; i++) {
+        claimPlacedView(i + 1, 0);
+        if (g_4b7ff0.count) {
+            view = findView(g_4b7ff0.entries[0].view);
+            if (view) {
+                snoid = (Snoid *)&view->body;
+                snoid->targetX = doorX[g_4b7ff0.entries[0].kind - 1];
+                snoid->targetY = 460;
+                snoid->unknownF7 = 0;
+                view->flags &= ~0x4000000;
+                setSnoidAction(snoid, 7, 0);
+            }
+            dropFirstTunnelEntry(&g_4b7ff0);
         }
     }
 }

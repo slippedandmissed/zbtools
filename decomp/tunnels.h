@@ -12,10 +12,16 @@ struct TunnelEntry
 {
     short view;
     short unknown2;
-    short unknown4;
+    short step; /* +4: of a remark, the part being said (fn_460571) */
     short unknown6;
     long unknown8;
-    short unknownC[7];
+    short unknownC;
+    short speaker; /* +0xe: a remark: the view saying `line` then `lineThen` */
+    short line;
+    short lineThen;
+    short replier; /* +0x14: and the one replying (0 for none) */
+    short reply;
+    short replyThen;
     short kind; /* +0x1a */
 };
 
@@ -114,6 +120,10 @@ short fn_460c41(TunnelRules *rules, short door, Snoid *snoid, unsigned short *fi
 void fn_460e3d();
 extern Point tunnelPlaces[16]; /* @data 0x4a7730: where the Zoombinis wait */
 void fn_460021(short *spot, short side);
+void dropFirstTunnelEntry(TunnelList *list);
+void sayTunnelRemark();
+void fn_45fa80(View *, short event);
+void fn_45f9c9();
 void fn_461135();
 void fn_461bec();
 void fn_4612b1();
