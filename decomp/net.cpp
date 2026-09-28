@@ -646,3 +646,83 @@ void fn_43f856(short which, short lit, ShortRect *bounds)
     if (bounds)
         *bounds = rect;
 }
+
+/* Stops a maze Zoombini (state 2) and moves on the Zoombinis in its
+   line's list (by its word 33): those in pose 4 turn to their next
+   direction (word 38) with a way open (words 34-37); those in pose 5 with
+   a partner (word 43) list it in g_4b0930. */
+/* @zoombi32 0x00439e55 */
+void fn_439e55(short id)
+{
+    View *view = findView(id);
+    short *list;
+    short n;
+
+    if (view) {
+        ((Snoid *)&view->body)->unknownF4 = 2;
+        short *parts = (short *)&view->body;
+
+        parts[46] = 0;
+        switch (parts[33]) {
+        case 1:
+            list = g_4b0a10;
+            n = 0;
+            break;
+        case 2:
+            list = g_4b0b6e;
+            n = g_4b0d00;
+            break;
+        case 3:
+            list = g_4b0ba0;
+            n = g_4b0d02;
+            break;
+        case 4:
+            list = g_4b0bd2;
+            n = g_4b0d04;
+            break;
+        case 5:
+            list = g_4b0c04;
+            n = g_4b0d06;
+            break;
+        case 6:
+            list = g_4b0c36;
+            n = g_4b0d08;
+            break;
+        case 7:
+            list = g_4b0c68;
+            n = g_4b0d0a;
+            break;
+        case 8:
+            list = g_4b0c9a;
+            n = g_4b0d0c;
+            break;
+        default:
+            list = g_4b0a10;
+            n = 0;
+            break;
+        }
+        while (n) {
+            n--;
+            view = findView(list[n]);
+            if (view) {
+                parts = (short *)&view->body;
+                if (parts[30] == 4) {
+                    parts[38]++;
+                    if (parts[38] > 3)
+                        parts[38] = 0;
+                    while (!parts[34 + parts[38]]) {
+                        parts[38]++;
+                        if (parts[38] > 3)
+                            parts[38] = 0;
+                    }
+                    ((Snoid *)&view->body)->unknownF4 = 3;
+                }
+                if (parts[30] == 5 && parts[43]) {
+                    g_4b0930[g_4b09fe] = parts[43];
+                    g_4b09fe++;
+                    parts[43] = 0;
+                }
+            }
+        }
+    }
+}

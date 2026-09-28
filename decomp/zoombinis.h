@@ -5745,3 +5745,4 @@ extern SceneButton g_4a2efc[21]; /* [0] isn't a button */
 extern char g_4b1540[4];
 extern ImageBank *g_4b1598;
 void fn_43f856(short which, short lit, ShortRect *bounds);
+void fn_439e55(short id);
