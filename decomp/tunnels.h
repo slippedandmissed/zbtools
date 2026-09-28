@@ -95,5 +95,12 @@ extern short g_4b7548; /* @data 0x4b7548 */
 extern long g_4b7544; /* @data 0x4b7544 */
 extern short g_4b7fbc; /* @data 0x4b7fbc */
 void resetScene8();
+extern short g_4b7fc4; /* @data 0x4b7fc4 */
+extern short g_4b7fc6; /* @data 0x4b7fc6 */
+extern short g_4b7fc8; /* @data 0x4b7fc8 */
+extern short g_4b7fca; /* @data 0x4b7fca */
+extern short g_4b80a8; /* @data 0x4b80a8: the script last shown (debugging) */
+void fn_460642(short rule);
+short scene8Key(unsigned short key);
 
 #endif

@@ -205,3 +205,136 @@ void fn_4622f5()
             }
     }
 }
+
+/* Scene 8's keys (with debugging on, g_4b8803, or else only 0x16f): t, T,
+   w (W also sets g_4b807e) and e pick a rule (fn_460642), a shows the rules,
+   C, F, I and O step the views g_4b7fc4-g_4b7fca through their scripts, H
+   adds 4 to g_4b8098. Returns whether the key was used. */
+/* @zoombi32 0x0045f63a */
+short scene8Key(unsigned short key)
+{
+    short used = 0;
+    ShortRect area = {0, 0, 350, 100};
+    ShortRect spot = {225, 0, 350, 100};
+    short first;
+    short tops[2] = {20, 70};
+    short n;
+    short i;
+    short script;
+
+    if (!g_4b8803 && key != 0x16f)
+        return 0;
+    switch (key) {
+    case 0x16f:
+        fn_466b93();
+        used = 1;
+        break;
+    case 'H':
+        g_4b8098 += 4;
+        break;
+    case 'a':
+        unionRgnRect(removedRgn, &area);
+        updateViews();
+        if (g_4b7f18.unknown0 == 1) {
+            if (g_4b7f18.unknown2)
+                n = 5;
+            else
+                n = 4;
+        } else if (g_4b7f18.unknown2) {
+            if (g_4b7f18.rules[0].unknownB)
+                n = 1;
+            else
+                n = 0;
+        } else if (g_4b7f18.rules[0].unknownB) {
+            n = 3;
+        } else {
+            n = 2;
+        }
+        switch (n) {
+        case 0:
+            debugMessage(-1, "Left / Bottom accept:", 0, 0, 0);
+            break;
+        case 1:
+            debugMessage(-1, "Left / Top accept:", 0, 0, 0);
+            break;
+        case 2:
+            debugMessage(-1, "Right / Bottom accept:", 0, 0, 0);
+            break;
+        case 3:
+            debugMessage(-1, "Right / Top accept:", 0, 0, 0);
+            break;
+        case 4:
+            debugMessage(-1, "Right accepts:", 0, 0, 0);
+            break;
+        case 5:
+            debugMessage(-1, "Left accepts:", 0, 0, 0);
+            break;
+        }
+        setClipRect(gameRect);
+        for (i = 0; i < 2; i++) {
+            spot.left = 250;
+            for (n = 0; n < g_4b7f18.rules[i].count; n++) {
+                script = spot.left;
+                spot.top = tops[i];
+                drawFeature(g_4b7f18.rules[i].features[n], g_4b7f18.rules[i].values[n], &spot);
+                spot.left = script + 30;
+            }
+        }
+        break;
+    case 'C':
+    case 'F':
+    case 'I':
+    case 'O':
+        switch (key) {
+        case 'C':
+            n = g_4b7fc4;
+            first = 4000;
+            i = 4038;
+            break;
+        case 'F':
+            n = g_4b7fc8;
+            first = 4200;
+            i = 4226;
+            break;
+        case 'I':
+            n = g_4b7fca;
+            first = 4400;
+            i = 4423;
+            break;
+        case 'O':
+            n = g_4b7fc6;
+            first = 4600;
+            i = 4617;
+            break;
+        }
+        {
+            View *view = findView(n);
+
+            if (view) {
+                script = g_4b80a8 + 1;
+                if (script < first || script > i)
+                    script = first;
+                setViewScript(view, script, 1);
+                loadViewSounds(n, 1);
+                g_4b80a8 = script;
+                debugMessage(script, "SCRB n:", 0, 0, 0);
+            }
+        }
+        break;
+    case 'W':
+        g_4b807e = 1;
+    case 'w':
+        fn_460642(1);
+        break;
+    case 't':
+        fn_460642(0);
+        break;
+    case 'T':
+        fn_460642(2);
+        break;
+    case 'e':
+        fn_460642(3);
+        break;
+    }
+    return used;
+}
