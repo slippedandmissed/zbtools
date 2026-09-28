@@ -1434,56 +1434,49 @@ short netKey(unsigned short key)
  * g_4b143e), in the order g_4b1178 (levels 0-1) or g_4b1468 (from level 2)
  * says; -1 if none.
  */
-/* Not exact: the original keeps all four table pointers in registers (edx,
-   ecx, esi, edi) with no stack frame; BCC leaves one on the stack, in any
-   declaration order. */
 /* @zoombi32 0x0043dbf3 */
 short findCodeEntry()
 {
-    short *count = &g_4b142e;
-    short *first = g_4b0e78;
-    short *code = &g_4b1446;
-    short *second = g_4b0f72;
     short i;
 
     switch (g_4b12ac) {
     case 0:
     case 1:
         if (g_4b1178 == 2) {
-            for (i = 0; i < *count; i++)
-                if (first[i] == *code && second[i] == g_4b1442)
+            for (i = 0; i < g_4b142e; i++)
+                if (g_4b0e78[i] == g_4b1446 && g_4b0f72[i] == g_4b1442)
                     return i;
         } else {
-            for (i = 0; i < *count; i++)
-                if (second[i] == *code && first[i] == g_4b1442)
+            for (i = 0; i < g_4b142e; i++)
+                if (g_4b0f72[i] == g_4b1446 && g_4b0e78[i] == g_4b1442)
                     return i;
         }
         break;
     case 2:
     case 3:
         if (g_4b1468 == 0) {
-            for (i = 0; i < *count; i++)
-                if (first[i] == *code && second[i] == g_4b1442 && g_4b106c[i] == g_4b143e)
+            for (i = 0; i < g_4b142e; i++)
+                if (g_4b0e78[i] == g_4b1446 && g_4b0f72[i] == g_4b1442 && g_4b106c[i] == g_4b143e)
                     return i;
         } else if (g_4b1468 == 1) {
-            for (i = 0; i < *count; i++)
-                if (first[i] == g_4b1442 && second[i] == *code && g_4b106c[i] == g_4b143e)
+            for (i = 0; i < g_4b142e; i++)
+                if (g_4b0e78[i] == g_4b1442 && g_4b0f72[i] == g_4b1446 && g_4b106c[i] == g_4b143e)
                     return i;
         } else if (g_4b1468 == 2) {
-            for (i = 0; i < *count; i++)
-                if (first[i] == g_4b143e && second[i] == *code && g_4b106c[i] == g_4b1442)
+            for (i = 0; i < g_4b142e; i++)
+                if (g_4b0e78[i] == g_4b143e && g_4b0f72[i] == g_4b1446 && g_4b106c[i] == g_4b1442)
                     return i;
         } else if (g_4b1468 == 3) {
-            for (i = 0; i < *count; i++)
-                if (first[i] == *code && second[i] == g_4b143e && g_4b106c[i] == g_4b1442)
+            for (i = 0; i < g_4b142e; i++)
+                if (g_4b0e78[i] == g_4b1446 && g_4b0f72[i] == g_4b143e && g_4b106c[i] == g_4b1442)
                     return i;
         } else if (g_4b1468 == 4) {
-            for (i = 0; i < *count; i++)
-                if (first[i] == g_4b1442 && second[i] == g_4b143e && g_4b106c[i] == *code)
+            for (i = 0; i < g_4b142e; i++)
+                if (g_4b0e78[i] == g_4b1442 && g_4b0f72[i] == g_4b143e && g_4b106c[i] == g_4b1446)
                     return i;
         } else if (g_4b1468 == 5) {
-            for (i = 0; i < *count; i++)
-                if (first[i] == g_4b143e && second[i] == g_4b1442 && g_4b106c[i] == *code)
+            for (i = 0; i < g_4b142e; i++)
+                if (g_4b0e78[i] == g_4b143e && g_4b0f72[i] == g_4b1442 && g_4b106c[i] == g_4b1446)
                     return i;
         }
         break;
@@ -1576,17 +1569,12 @@ void playAmbientSound()
  * ambient sound 15 seconds off, clips to the game's area and opens the
  * scene.
  */
-/* Not exact: the original keeps `scene` in esi, `next` in edi and `viaMap`
-   in ebx; BCC rotates them (ebx, esi, edi) whatever the declaration
-   order. */
 /* @zoombi32 0x0043ac20 */
 void enterNextScene()
 {
-    short *scene = &currentScene;
-    short *next = &g_4b0d50;
     short viaMap = 0;
 
-    if (*next == -1)
+    if (g_4b0d50 == -1)
         return;
     if (!g_4b754a) {
         short level = sceneLevel();
@@ -1596,27 +1584,27 @@ void enterNextScene()
         level &= 3;
         short bit = 1 << level;
 
-        switch (*scene) {
+        switch (currentScene) {
         case 9:
-            if (*next == 4) {
+            if (g_4b0d50 == 4) {
                 g_4b0d4c = 9;
                 g_4a4ba0[0x50] |= bit;
             }
             break;
         case 12:
-            if (*next == 5) {
+            if (g_4b0d50 == 5) {
                 g_4b0d4c = 12;
                 *(short *)(g_4a4ba0 + 0x52) |= (char)bit;
             }
             break;
         case 15:
-            if (*next == 5) {
+            if (g_4b0d50 == 5) {
                 g_4b0d4c = 15;
                 *(short *)(g_4a4ba0 + 0x52) |= bit << 4;
             }
             break;
         case 18:
-            if (*next == 6) {
+            if (g_4b0d50 == 6) {
                 g_4b0d4c = 18;
                 g_4a4ba0[0x51] |= bit;
             }
@@ -1625,10 +1613,10 @@ void enterNextScene()
     }
     if (g_4b754a) {
         viaMap = 0;
-        if (*scene != 1 && *next != 3 && *next != 0)
-            *next = 1;
-    } else if (*scene != 1 && *scene != 2 && *scene != 6 && *next != 1) {
-        switch (*scene) {
+        if (currentScene != 1 && g_4b0d50 != 3 && g_4b0d50 != 0)
+            g_4b0d50 = 1;
+    } else if (currentScene != 1 && currentScene != 2 && currentScene != 6 && g_4b0d50 != 1) {
+        switch (currentScene) {
         case 0:
             viaMap = 0;
             break;
@@ -1663,22 +1651,22 @@ void enterNextScene()
             break;
         }
     }
-    *(short *)(g_4a4ba0 + 0xca) = *scene;
-    if (*next != 0 && *next != 2)
-        savedScene() = *next;
+    *(short *)(g_4a4ba0 + 0xca) = currentScene;
+    if (g_4b0d50 != 0 && g_4b0d50 != 2)
+        savedScene() = g_4b0d50;
     if (g_4b7562 || g_4b0d4a)
         viaMap = 0;
     if (g_4a7e68)
         viaMap = 1;
     if (viaMap) {
-        g_4b0d56 = *scene;
-        g_4b0d54 = *next;
-        *scene = 2;
-        *next = -1;
+        g_4b0d56 = currentScene;
+        g_4b0d54 = g_4b0d50;
+        currentScene = 2;
+        g_4b0d50 = -1;
     } else {
-        g_4b0d56 = *scene;
-        *scene = *next;
-        *next = -1;
+        g_4b0d56 = currentScene;
+        currentScene = g_4b0d50;
+        g_4b0d50 = -1;
         g_4b0d54 = -1;
     }
     if (g_4b754a) {
@@ -1686,7 +1674,7 @@ void enterNextScene()
     } else {
         if (!viewsLocked)
             g_4afb32 = 1;
-        switch (*scene) {
+        switch (currentScene) {
         case 7:
         case 10:
         case 13:
@@ -1699,8 +1687,8 @@ void enterNextScene()
     viewsPaused = fillViews = 0;
     ambientSoundTime = clockTime() + 900;
     setClipRect(gameRect);
-    if (scenes[*scene]->open)
-        scenes[*scene]->open();
+    if (scenes[currentScene]->open)
+        scenes[currentScene]->open();
 }
 
 /*
@@ -1924,12 +1912,9 @@ void fn_43de4d(View *view, short event)
  * and picks the order of the codes (g_4b1178-g_4b117c, distinct from
  * level 3) and, from level 3, g_4b1468.
  */
-/* Not exact: the original keeps `row` (and later `image`) in esi and `i`
-   in ebx; BCC swaps them, whatever the declaration order. */
 /* @zoombi32 0x0043c9e2 */
 void fn_43c9e2()
 {
-    short *row;
     volatile short m;
     volatile short ok;
     volatile short scriptBase;
@@ -1948,7 +1933,6 @@ void fn_43c9e2()
     short distinct;
     short image;
 
-    row = g_4b1166;
     fillMemory(g_4b11aa, 0, 250);
     for (i = 0; i < 5; i++) {
         columns[i] = 0;
@@ -1998,16 +1982,16 @@ void fn_43c9e2()
     case 1:
         shifts = randomUpTo(1) + 2;
         for (j = 0; j < 5; j++)
-            row[j] = g_4b0f72[j];
+            g_4b1166[j] = g_4b0f72[j];
         for (k = 1; k < 5; k++) {
             for (i = 0; i < shifts; i++) {
-                saved = row[4];
+                saved = g_4b1166[4];
                 for (j = 4; j > 0; j--)
-                    row[j] = row[j - 1];
-                row[0] = saved;
+                    g_4b1166[j] = g_4b1166[j - 1];
+                g_4b1166[0] = saved;
             }
             for (j = 0; j < 5; j++)
-                g_4b0f72[k * 5 + j] = row[j];
+                g_4b0f72[k * 5 + j] = g_4b1166[j];
         }
         break;
     case 3:
@@ -2018,28 +2002,28 @@ void fn_43c9e2()
             for (i = 0; i < 5; i++)
                 for (k = 1; k < 5; k++) {
                     for (j = 0; j < 5; j++)
-                        row[j] = g_4b0e78[k + i * 5 + j * 25 - 1];
+                        g_4b1166[j] = g_4b0e78[k + i * 5 + j * 25 - 1];
                     for (m = 0; m < shifts; m++) {
-                        saved = row[4];
+                        saved = g_4b1166[4];
                         for (j = 4; j > 0; j--)
-                            row[j] = row[j - 1];
-                        row[0] = saved;
+                            g_4b1166[j] = g_4b1166[j - 1];
+                        g_4b1166[0] = saved;
                     }
                     for (j = 0; j < 5; j++)
-                        g_4b0e78[i * 5 + k + j * 25] = row[j];
+                        g_4b0e78[i * 5 + k + j * 25] = g_4b1166[j];
                 }
         } else {
             for (k = 5; k < g_4b142e; k += 5) {
                 for (j = 0; j < 5; j++)
-                    row[j] = g_4b106c[k + j - 5];
+                    g_4b1166[j] = g_4b106c[k + j - 5];
                 for (i = 0; i < shifts; i++) {
-                    saved = row[4];
+                    saved = g_4b1166[4];
                     for (j = 4; j > 0; j--)
-                        row[j] = row[j - 1];
-                    row[0] = saved;
+                        g_4b1166[j] = g_4b1166[j - 1];
+                    g_4b1166[0] = saved;
                 }
                 for (j = 0; j < 5; j++)
-                    g_4b106c[k + j] = row[j];
+                    g_4b106c[k + j] = g_4b1166[j];
             }
         }
         break;
@@ -2220,14 +2204,10 @@ void fn_43d0b4(short which, short value)
  * waiting Zoombinis fidgeting (13046 on) now and then, and repeats the
  * net's prompt (10018) after 12 seconds, or 2 minutes when idle.
  */
-/* Not exact: the original keeps `done` in edi and `tries` in esi; BCC
-   swaps them, whatever the declaration order. */
 /* @zoombi32 0x0043b86d */
 void netFrame()
 {
     short done;
-    short *waiting = &g_4b145a;
-    short *leaders = groupLeader;
     View *view;
     short column;
     short i;
@@ -2260,7 +2240,7 @@ void netFrame()
             g_4b0d52 = 0;
         }
     }
-    if (g_4b1406 && g_4b142a && !leaders[g_4b142a]) {
+    if (g_4b1406 && g_4b142a && !groupLeader[g_4b142a]) {
         if (++g_4b1408 < g_4b140a) {
             startView(g_4b13c6, g_4b1408 + 7000, 0, 0);
             g_4b142a = groupViews(g_4b13c6, g_4b13c6, 0, 0, 0, 0);
@@ -2273,17 +2253,17 @@ void netFrame()
             g_4b1416 = 1;
         }
     }
-    if (g_4b141e && !leaders[g_4b141e]) {
+    if (g_4b141e && !groupLeader[g_4b141e]) {
         g_4b141e = 0;
         fn_43c9e2();
     }
     if (g_4b1464) {
-        if (!leaders[g_4b1464]) {
+        if (!groupLeader[g_4b1464]) {
             g_4b1464 = 0;
             if (--g_4b140a < 0) {
                 g_4b142c++;
                 if (randomBetween(0, 4) > g_4b12ac || (*(short *)(g_4a4ba0 + 0x3c) & 0xfff) <= 3) {
-                    if (*waiting < 1) {
+                    if (g_4b145a < 1) {
                         if (g_4b0e6c >= 1 && g_4b0e6c < g_4b0e66)
                             queueViewSound(randomBetween(20045, 20048), 0);
                     } else if (g_4b0e68 < g_4b0e66) {
@@ -2291,10 +2271,10 @@ void netFrame()
                     }
                 }
             }
-            if (*waiting >= 1)
+            if (g_4b145a >= 1)
                 g_4b1458++;
             else
-                *waiting = 0;
+                g_4b145a = 0;
         }
     } else if (g_4b1410 && !g_4b142c) {
         if ((g_4b12ac <= 1 && g_4b1442 >= 0 && g_4b1446 >= 0) || (g_4b143e >= 0 && g_4b1442 >= 0 && g_4b1446 >= 0)) {
@@ -2321,7 +2301,7 @@ void netFrame()
             }
         }
     } else if (g_4b141c) {
-        if (!leaders[g_4b141c]) {
+        if (!groupLeader[g_4b141c]) {
             g_4b141c = 0;
             fn_43cfc3();
             view = startView(g_4b12b6, 7025, 0, 0);
@@ -2331,7 +2311,7 @@ void netFrame()
             }
         }
     } else if (g_4b1420) {
-        if (!leaders[g_4b1420]) {
+        if (!groupLeader[g_4b1420]) {
             g_4b1420 = 0;
             view = startView(g_4b12b6, 7026, 0, 0);
             if (view) {
@@ -2342,7 +2322,7 @@ void netFrame()
             }
         }
     } else if (g_4b1422) {
-        if (!leaders[g_4b1422]) {
+        if (!groupLeader[g_4b1422]) {
             g_4b1422 = g_4b11a4 = 0;
             if (g_4b12ac <= 1) {
                 g_4b1424 = 0;
@@ -2367,7 +2347,7 @@ void netFrame()
             }
         }
     } else if (g_4b1424) {
-        if (!leaders[g_4b1424]) {
+        if (!groupLeader[g_4b1424]) {
             g_4b1424 = 0;
             if (g_4b1418) {
                 startView(g_4b13fe, 10017, 0, 0);
@@ -2381,12 +2361,12 @@ void netFrame()
             }
         }
     }
-    if (g_4b1458 && *waiting) {
+    if (g_4b1458 && g_4b145a) {
         g_4b1458 = 0;
         if (g_4b0e68 >= g_4b0e66)
             g_4b145c = 0;
-        if (--*waiting <= 0) {
-            *waiting = 0;
+        if (--g_4b145a <= 0) {
+            g_4b145a = 0;
             if (g_4b0d5c < 0 && g_4b145c)
                 fn_43cfc3();
         }
@@ -2401,7 +2381,7 @@ void netFrame()
         g_4b1466++;
         g_4b1470 = clockTime();
     } else if (g_4b145e) {
-        if (!leaders[g_4b145e]) {
+        if (!groupLeader[g_4b145e]) {
             g_4b145e = 0;
             g_4b119a = 0;
             for (i = 0; i < 3; i++)
@@ -2416,14 +2396,14 @@ void netFrame()
             }
         }
     } else if (g_4b1460) {
-        if (!leaders[g_4b1460]) {
+        if (!groupLeader[g_4b1460]) {
             g_4b1460 = 0;
-            if (*waiting)
+            if (g_4b145a)
                 g_4b1458++;
             else
                 g_4b144a++;
-            if (g_4b0e6c >= g_4b0e66 && !*waiting)
-                *waiting = g_4b1458 = 0;
+            if (g_4b0e6c >= g_4b0e66 && !g_4b145a)
+                g_4b145a = g_4b1458 = 0;
         }
     } else if (g_4b0d5c >= 0 && !g_4b142c && g_4b0d5c < g_4b0e66) {
         view = idleSnoidView(partyViews[g_4b0d5c]);
@@ -2443,10 +2423,10 @@ void netFrame()
         fn_43cfc3();
     if (g_4b147c && g_4b147a < g_4b1478) {
         if (clockTime() - g_4b146c > 30) {
-            tries = 0;
             done = 0;
+            tries = 0;
+            g_4b146c = clockTime();
             do {
-                g_4b146c = clockTime();
                 i = allocateSlot(&g_4b1474, g_4b0e66, 0);
                 if (partyViews[i] != g_4b1438[0] && partyViews[i] != g_4b1438[1] && partyViews[i] != g_4b1438[2]) {
                     g_4b0d60 = idleSnoidView(partyViews[i]);

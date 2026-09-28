@@ -456,6 +456,7 @@
 0x0043a69a fn_43a69a
 0x0043a772 spliceList
 0x0043a7a6 layOutMazeCels
+0x0043ac20 enterNextScene
 0x0043af02 sceneGroup
 0x0043af6b playAmbientSound
 0x0043b20c openNet
@@ -463,16 +464,19 @@
 0x0043b791 drawNetButtons
 0x0043b7ae updateNetButtons
 0x0043b820 closeNet
+0x0043b86d netFrame
 0x0043c48b fn_43c48b
 0x0043c655 netKey
 0x0043c6df fn_43c6df
 0x0043c94f fn_43c94f
+0x0043c9e2 fn_43c9e2
 0x0043cfc3 fn_43cfc3
 0x0043d0b4 fn_43d0b4
 0x0043d524 fn_43d524
 0x0043d6e2 fn_43d6e2
 0x0043d70d markerPlaced
 0x0043da30 fn_43da30
+0x0043dbf3 findCodeEntry
 0x0043de4d fn_43de4d
 0x0043e435 fn_43e435
 0x0043e5a7 fn_43e5a7
