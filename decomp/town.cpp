@@ -679,3 +679,92 @@ void setTownFrames(short frame)
         }
     }
 }
+
+/* Scene 6's keys (with debugging on, g_4b8803): z and x (once the last
+   group has a record) step the plaque shown by cheat (g_4b7eba, 0-16) and
+   space reports it; F toggles the townspeople; . records the next group
+   passed (g_4a7592 counting through the groups and levels) now; 0 clears
+   the records; 0x125 and 0x127 raise and lower the highest cel shown
+   (g_4b7e10, 25-81). Returns whether the key was used. */
+/* @zoombi32 0x0045d7a9 */
+short scene6Key(unsigned short key)
+{
+    char hour;
+    char minute;
+    short used = 0;
+    View *view;
+
+    if (!g_4b8803)
+        return used;
+    switch (key) {
+    case 'x':
+    case 'z':
+        if (recordGroups()[15]) {
+            if (key == 'z')
+                g_4b7eba++;
+            if (key == 'x')
+                g_4b7eba--;
+            if (g_4a74dc > 0) {
+                view = findView(g_4a74dc);
+                if (view) {
+                    view->interval = g_4b7eb6;
+                    view->changed = 1;
+                }
+            }
+        }
+    case ' ':
+        if (g_4b7eba > 16)
+            g_4b7eba = 16;
+        if (g_4b7eba < 0)
+            g_4b7eba = 0;
+        if (g_4b7eba)
+            debugMessage(g_4b7eba, "Cheat Text:", 0, 0, 0);
+        else
+            debugMessage(-1, "Cheat Text OFF", 0, 0, 0);
+        break;
+    case 'F':
+        if (!g_4b7f12)
+            g_4b7f12 = 100;
+        else
+            g_4b7f12 = 0;
+        break;
+    case '.':
+        for (used = 0; used < 16; used++)
+            if (!recordGroups()[used]) {
+                getDateTime(&recordYears()[used], &recordMonths()[used], &recordDays()[used], &hour, &minute);
+                recordGroups()[used] = ((g_4a7592 / 4) & 3) + 1;
+                recordLevels()[used] = (g_4a7592 & 3) + 1;
+                used = 16;
+                setTownFrames(*(short *)(g_4a4ba0 + 0x1e));
+                g_4a7592++;
+            }
+        used = 1;
+        break;
+    case 0x125:
+    case 0x127:
+        switch (key) {
+        case 0x125:
+            g_4b7e10 += 5;
+            break;
+        case 0x127:
+            g_4b7e10 -= 5;
+            break;
+        }
+        if (g_4b7e10 > 80)
+            g_4b7e10 = 81;
+        if (g_4b7e10 < 24)
+            g_4b7e10 = 25;
+        setTownFrames(*(short *)(g_4a4ba0 + 0x1e));
+        used = 1;
+        break;
+    case '0':
+        g_4a7592 = 0;
+        for (used = 0; used < 16; used++)
+            recordGroups()[used] = 0;
+        setTownFrames(*(short *)(g_4a4ba0 + 0x1e));
+        g_4b7ef8 = 0;
+        used = 1;
+        break;
+    }
+    return used;
+}

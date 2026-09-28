@@ -63,7 +63,10 @@ extern short plaqueLines[6]; /* @data 0x4a7594: the plaque's lines' tops */
 
 extern short g_4b7e0e; /* @data 0x4b7e0e */
 
+extern char g_4a7592; /* @data 0x4a7592: the next record the . key makes */
+
 void openScene0();
+short scene6Key(unsigned short key);
 void addTownsperson();
 void setTownFrames(short frame);
 void drawPlaque(View *view);
