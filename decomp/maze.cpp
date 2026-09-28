@@ -1024,6 +1024,227 @@ short fn_4371b3(short id)
     return count;
 }
 
+/*
+ * The maze's frame: leaves once asked to (and sound 996 is done); unless
+ * paused, works through the Zoombinis waiting for each step: ones placed
+ * to start (fn_43573e), stopped (fn_439cb4), moving in front, reaching
+ * the gates, falling (15090 on), gates to close (g_4b0a0a/c), ones done
+ * walking off to their row's exit (by the next of 20 spots in g_4a2406),
+ * ones reaching a square (by its kind in g_4b061a: 0 stops, 1 a turn, 2
+ * and 3-4 a turning square, 5 a straight one, 6 a blocked one (sound
+ * 5103), 20-23 a pose), and pairs meeting; and starts waiting Zoombinis
+ * fidgeting now and then while g_4b0d3c (its test of a view's flags is
+ * always true: `==` binds before `|`).
+ */
+/* @zoombi32 0x0043490e */
+void mazeFrame()
+{
+    short *placed = &g_4b0a04;
+    short *stopped = &g_4b09fe;
+    short *moving = &g_4b09fc;
+    View *view;
+    short *parts;
+    short *spot;
+    short done;
+    short i;
+    short n;
+    View *other;
+    Snoid *snoid;
+
+    if (g_4a25c8 || !g_4afc68)
+        return;
+    g_4a25c8 = 1;
+    updateViews();
+    if (g_4b0d52) {
+        if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+            g_4a25c8 = 0;
+            return;
+        }
+        if (!g_4b9688 || g_4b9688 == 3) {
+            if (g_4b9688 == 3)
+                chooseSnoids(0, 0);
+            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
+                g_4b0d50 = g_4b0d52;
+                g_4b0d52 = 0;
+                fn_46be2e(0);
+                closeMaze();
+                g_4a25c8 = 0;
+                return;
+            }
+        } else if (g_4b9688 == 2) {
+            g_4b9688 = 0;
+            g_4b0d52 = 0;
+        }
+    } else if (g_4b9684) {
+        playAmbientSound();
+        g_4a25c8 = 0;
+        return;
+    } else {
+        while (*placed)
+            fn_43573e(g_4b09a8[--*placed]);
+        while (*stopped) {
+            view = findView(g_4b0930[--*stopped]);
+            if (view)
+                fn_439cb4(view);
+        }
+        while (*moving) {
+            view = findView(g_4b0908[--*moving]);
+            if (view)
+                moveView(view->id, 0, g_4afc2a);
+        }
+        while (g_4b09fa) {
+            view = findView(g_4b08b8[--g_4b09fa]);
+            if (view) {
+                parts = (short *)&view->body;
+                moveView(view->id, 0, g_4afd8c[parts[32]]);
+            }
+        }
+        while (g_4b0a06) {
+            view = findView(g_4b09d0[--g_4b0a06]);
+            if (view) {
+                snoid = (Snoid *)&view->body;
+                startSnoidScript((Snoid *)&view->body, snoid->features[3] + 15090, 0, 0);
+                view->notifyEnd = 1;
+                view->notify = fn_435c57;
+            }
+        }
+        if (g_4b0a0a) {
+            g_4b0a0a = 0;
+            view = findView(g_4afd8c[0]);
+            if (view)
+                fn_43a5f6(view, g_4a2548);
+        }
+        if (g_4b0a0c) {
+            g_4b0a0c = 0;
+            view = findView(g_4afd8c[0]);
+            if (view)
+                fn_43a5f6(view, g_4a254c);
+        }
+        while (g_4b0a00) {
+            view = findView(g_4b0958[--g_4b0a00]);
+            if (view) {
+                spot = 0;
+                parts = (short *)&view->body;
+                switch (parts[35]) {
+                case 0:
+                    spot = &g_4afe52;
+                    view->flags = 1;
+                    moveView(view->id, 1, g_4afd8c[10]);
+                    break;
+                case 1:
+                    spot = &g_4afe54;
+                    view->flags = 0x8001;
+                    moveView(view->id, 0, g_4afd8c[1]);
+                    break;
+                case 2:
+                    spot = &g_4afe56;
+                    view->flags = 1;
+                    moveView(view->id, 1, g_4afd8c[11]);
+                    break;
+                case 3:
+                    spot = &g_4afe58;
+                    view->flags = 0x4008001;
+                    if (countChosenSnoids() == g_4afc36) {
+                        g_4b0d3c = 1;
+                        queueViewSound(randomBetween(20055, 20063), 0);
+                    }
+                    moveView(view->id, 0, g_4afd8c[parts[34]]);
+                    break;
+                }
+                if (spot) {
+                    snoid = (Snoid *)&view->body;
+                    snoid->unknownF1 = 0;
+                    setSnoidAction((Snoid *)&view->body, 7, 0);
+                    *(Point *)&((Snoid *)&view->body)->targetX = g_4a2406[parts[35]][(*spot)++];
+                    if (*spot > 19)
+                        *spot = 0;
+                }
+            }
+        }
+        while (g_4b09f8) {
+            view = findView(g_4b08e0[--g_4b09f8]);
+            if (view) {
+                parts = (short *)&view->body;
+                if (parts[34] != parts[32]) {
+                    moveView(view->id, 0, g_4afd8c[parts[34]]);
+                    moveView(parts[41], 1, view->id);
+                }
+                if (g_4b00d2[parts[33]][parts[34]][1] == view->id) {
+                    g_4b00d2[parts[33]][parts[34]][0] = 0;
+                    g_4b00d2[parts[33]][parts[34]][1] = 0;
+                }
+                switch (g_4b061a[parts[33]][parts[34]]) {
+                case 0:
+                    fn_439cb4(view);
+                    break;
+                case 1:
+                    fn_439fc3(view, g_4b04c8[parts[33]][parts[34]]);
+                    break;
+                case 2:
+                    fn_43a0e8(view, g_4b04c8[parts[33]][parts[34]]);
+                    break;
+                case 3:
+                case 4:
+                    fn_43a2c8(view, g_4b04c8[parts[33]][parts[34]]);
+                    break;
+                case 5:
+                    fn_43a510(view, g_4b04c8[parts[33]][parts[34]]);
+                    break;
+                case 6:
+                    queueViewSound(5103, 0);
+                    fn_439e55(g_4b04c8[parts[33]][parts[34]]);
+                    fn_439cb4(view);
+                    break;
+                case 20:
+                case 21:
+                case 22:
+                case 23:
+                    fn_4350be(view, g_4b061a[parts[33]][parts[34]]);
+                    break;
+                default:
+                    fn_439cb4(view);
+                    break;
+                }
+            }
+        }
+        while (g_4b0a02 > 1) {
+            view = findView(g_4b0980[--g_4b0a02]);
+            if (view) {
+                g_4b0980[g_4b0a02] = 0;
+                other = findView(g_4b0980[--g_4b0a02]);
+                if (other) {
+                    g_4b0980[g_4b0a02] = 0;
+                    mazeZoombinisMeet(view, other);
+                }
+            }
+        }
+        if (g_4b0d3c && g_4b0d3a < g_4b0d38) {
+            if (clockTime() - g_4b0d30 > 30) {
+                done = 0;
+                g_4b0d30 = clockTime();
+                for (i = 0; i < g_4afc36 && !done; i++) {
+                    n = allocateSlot(&g_4b0d34, g_4afc36, 0);
+                    if (partyViews[n]) {
+                        view = idleSnoidView(partyViews[n]);
+                        if (view && view->body.running && (view->flags == 0x8000 | 0x4000001)) {
+                            snoid = (Snoid *)&view->body;
+                            startSnoidScript((Snoid *)&view->body, snoid->features[3] + 15090, 0, 0);
+                            view->notifyEnd = 1;
+                            view->notify = fn_436045;
+                            g_4b0d3a++;
+                            done = 1;
+                        }
+                    }
+                }
+            }
+        } else if (g_4b0d3a >= g_4b0d38) {
+            g_4b0d3a = g_4b0d3c = g_4b0d30 = g_4b0d34 = 0;
+        }
+    }
+    playAmbientSound();
+    g_4a25c8 = 0;
+}
+
 /* Puts a Zoombini in the maze in pose `pose` - 20 on its square (from
    g_4afbf0), with its helper view (word 41: script 10040) and a shadow
    view it adds (word 42: script 10041), grouped; the first to reach pose

@@ -5924,3 +5924,8 @@ extern ShortRect g_4a2554[];
 extern unsigned long g_4a2548;
 extern unsigned long g_4a254c;
 void mazeButtonClicked(short button);
+extern short g_4a25c8; /* the maze's frame is running */
+extern Point g_4a2406[4][20]; /* each row's spots to walk off by */
+extern unsigned long g_4b0d30;
+extern unsigned long g_4b0d34;
+void mazeFrame();
