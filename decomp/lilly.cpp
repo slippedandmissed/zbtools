@@ -1785,3 +1785,71 @@ void placeJumperAt(View *view)
         break;
     }
 }
+
+/* Adds the lilly actors (g_4af102 of them), each dealt a random entry of
+   g_4a1dcc/g_4a1de4. */
+/* @zoombi32 0x0042b857 */
+void addLillyActors()
+{
+    LillyActor actor;
+    short i;
+
+    g_4af5a6 = 11;
+    for (i = 0; i < g_4af5a6 + 1; i++)
+        g_4a1db2[i] = i;
+    for (i = 0; i < g_4af102; i++) {
+        actor.unknownBc = 0;
+        actor.unknownBe = i;
+        actor.unknownC0 = 0;
+        actor.column = 0;
+        actor.row = 0;
+        actor.unknownC5 = 0;
+        actor.unknownC6 = 0;
+        actor.unknownC7 = 0;
+        actor.unknownC8 = 0;
+        actor.unknownD7 = 0;
+        actor.unknownD5 = 1;
+        actor.unknownD6 = 11;
+        actor.unknownDc = 0;
+        actor.unknownDb = 0;
+        actor.unknownC2 = 0;
+        actor.unknownE1 = 0;
+        actor.unknownE2 = 0;
+        actor.unknownE3 = 0;
+        actor.unknownE4 = 0;
+        actor.body.celsEnd = 0;
+        actor.body.running = 1;
+        actor.unknownC9 = 0;
+        actor.unknownCb = 0;
+        actor.targetX = 0;
+        actor.targetY = 0;
+        actor.body.x = 0;
+        actor.body.y = 0;
+        actor.body.unknownAa = 0;
+        actor.body.unknownAc = 0;
+        for (short row = 0; row < 12; row++)
+            for (short column = 0; column < 12; column++)
+                actor.grid[row][column] = 0;
+        short k = randomBetween(0, g_4af5a6);
+
+        actor.unknownDe = g_4a1dcc[g_4a1db2[k]];
+        actor.unknownDf = g_4a1de4[g_4a1db2[k]];
+        actor.unknownE0 = g_4a1db2[k];
+        g_4ac95a[i] = actor.unknownDe;
+        g_4ac972[i] = actor.unknownDf;
+        for (; k < g_4af5a6 + 1; k++)
+            g_4a1db2[k] = g_4a1db2[k + 1];
+        g_4af5a6--;
+        g_4aed64[i] = addView(0x180002, drawCels, runViewScript, i + 10043, 7, &actor, randomBetween(3, 6), 0);
+        View *view = findView(g_4aed64[i]);
+
+        if (view) {
+            short *parts = (short *)&view->body;
+
+            parts[20] = i;
+            setViewScript(view, i + 10043, 1);
+            view->flags = 0x980002;
+            view->placed = fn_42f192;
+        }
+    }
+}
