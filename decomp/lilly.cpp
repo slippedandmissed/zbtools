@@ -2537,3 +2537,138 @@ short fn_427217(short a, short b, short c, short n)
                 return 0;
     return 1;
 }
+
+/*
+ * Sends the Zoombini `id` onto square g_4ac0ec: works out where it stands
+ * (g_4ac510/g_4ac512) and the area it covers (g_4ac514), and starts its
+ * script (by the level, the square and its feet).
+ */
+/* Not exact: register allocation (the original keeps `lift` on the stack
+   and the column in ecx). */
+/* @zoombi32 0x0042790a */
+void fn_42790a(short id)
+{
+    Point place;
+    short extra;
+    short lift;
+    short script;
+    View *view = findView(id);
+
+    if (g_4ac0d8 != 3)
+        place = g_4a1788[g_4ac0ec];
+    else
+        place = g_4a17f0[g_4ac0ec];
+    if (g_4ac0d8 != 3) {
+        place.x += 24;
+        place.y -= 7;
+        g_4ac512 = place.y - 2;
+        if (!g_4ac0d8) {
+            if (g_4ac0ec == 4)
+                g_4ac510 = place.x - 5;
+            else if (g_4ac0ec == 9)
+                g_4ac510 = place.x - 7;
+            else if (g_4ac0ec == 14)
+                g_4ac510 = place.x - 3;
+            else if (g_4ac0ec == 19)
+                g_4ac510 = place.x - 3;
+            else if (g_4ac0ec == 24)
+                g_4ac510 = place.x - 3;
+        } else {
+            if (g_4ac0ec <= 4)
+                g_4ac510 = place.x - 8;
+            else if (g_4ac0ec <= 9)
+                g_4ac510 = place.x - 6;
+            else if (g_4ac0ec <= 14)
+                g_4ac510 = place.x - 5;
+            else if (g_4ac0ec <= 19)
+                g_4ac510 = place.x - 4;
+            else if (g_4ac0ec <= 24)
+                g_4ac510 = place.x - 5;
+        }
+        if (!g_4abdc0[g_4ac0ec] || g_4abdc0[g_4ac0ec] % 3 == 1) {
+            g_4ac510 -= 8;
+            g_4ac512 = g_4abdc0[g_4ac0ec] + g_4ac512 - 1;
+        } else if (g_4abdc0[g_4ac0ec] % 3 == 2) {
+            g_4ac510--;
+            g_4ac512 = g_4abdc0[g_4ac0ec] + g_4ac512 - 1;
+        } else {
+            g_4ac510 += 6;
+            g_4ac512 = g_4abdc0[g_4ac0ec] + g_4ac512 - 1;
+        }
+    } else {
+        place.x += 5;
+        place.y -= 15;
+        g_4ac510 = place.x;
+        g_4ac512 = place.y - 2;
+        if (g_4abdc0[g_4ac0ec] > 1) {
+            g_4ac510 -= (g_4abdc0[g_4ac0ec] - 1) * 2;
+            g_4ac512 -= g_4abdc0[g_4ac0ec] - 1;
+        }
+    }
+    if (view) {
+        switch (g_4ac0d8) {
+        case 0:
+        case 1:
+        case 2:
+            if (g_4ac0ec < 10) {
+                script = 13030;
+                lift = 3;
+            } else if (g_4ac0ec < 15) {
+                script = 13035;
+                lift = 0;
+            } else {
+                script = 13040;
+                lift = 5;
+            }
+            g_4ac514.left = g_4a1788[g_4ac0ec].x - 16;
+            g_4ac514.top = g_4a1788[g_4ac0ec].y - 30;
+            g_4ac514.right = g_4ac514.left + 52;
+            g_4ac514.bottom = g_4ac514.top + 82;
+            if (g_4ac0d8 == 1 || g_4ac0d8 == 2) {
+                short column = g_4ac0ec % 5;
+
+                if (column <= 2)
+                    g_4ac514.top -= lift;
+            }
+            break;
+        case 3: {
+            script = g_4ac0ec % 5 * 5 + 13045;
+            g_4ac514.left = g_4ac190[g_4ac0ec / 5 + 1] + g_4a1a04[g_4ac0ec % 5];
+            g_4ac514.top = g_4ac194[g_4ac0ec / 5 + 1] + g_4a1a0e[g_4ac0ec % 5];
+            g_4ac514.right = g_4ac514.left + 22;
+            g_4ac514.bottom = g_4ac514.top + 72;
+            short row = g_4ac0ec % 25 / 5;
+
+            if (g_4ac0ec % 25 == 1)
+                g_4ac514.left += 5;
+            else if (g_4ac0ec % 25 == 3)
+                g_4ac514.left += 3;
+            else
+                g_4ac514.left += 4;
+            if (g_4ac0ec % 5 >= 3) {
+                extra = 1;
+                if (g_4ac0ec % 5 == 3) {
+                    g_4ac514.left--;
+                    extra++;
+                }
+                g_4ac514.left += extra;
+                g_4ac514.right += extra;
+            }
+            if (g_4ac0ec % 5 == 4)
+                g_4ac514.left--;
+            else if (g_4ac0ec % 5 == 3 && row)
+                g_4ac514.left--;
+            break;
+        }
+        }
+        script = script + viewSnoid(view)->features[3] - 1;
+        if (g_4ac0d8 <= 2)
+            startSnoidScript(viewSnoid(view), script, 0, 0);
+        else
+            startSnoidScript(viewSnoid(view), script, &place, 0);
+        view->notify = fn_4276d0;
+        view->notifyEnd = 0;
+        g_4ac0ea = view->id;
+        g_4ac0f8 = groupViews(g_4ac0ea, g_4ac0ea, 0, 0, 0, 0);
+    }
+}
