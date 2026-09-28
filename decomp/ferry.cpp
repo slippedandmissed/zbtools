@@ -3,6 +3,7 @@
  */
 
 #include "zoombinis.h"
+#include "basecamp.h"
 #include "e2memory.h"
 #include "features.h"
 #include "ferry.h"
@@ -449,4 +450,47 @@ short ferryScript(View *view, short which)
         break;
     }
     return script;
+}
+
+/* A notify for the ferry's views: 0 turns (and puts g_4abb30 back after
+   g_4abb24 the first time), 1 starts g_4abb20 once, 2 and 140 move
+   g_4abb30 after or before g_4abb32, 218 a random sound (4100-4124); 137
+   and the end (-1) stop the script. */
+/* @zoombi32 0x00423512 */
+void fn_423512(View *view, short event)
+{
+    Snoid *snoid;
+
+    switch (event) {
+    case 0:
+        if (g_4abb42 && view->id == g_4abb30) {
+            g_4abb42 = 0;
+            moveView(g_4abb30, 0, g_4abb24);
+        }
+        snoid = viewSnoid(view);
+        snoid->unknownF2 = !snoid->unknownF2;
+        break;
+    case 1:
+        if (!g_4abb2e) {
+            moveView(g_4abb30, 0, g_4abb20);
+            g_4abb2e = 1;
+            startView(g_4abb20, 0, fn_4234c9, 1);
+        }
+        break;
+    case 2:
+        moveView(g_4abb30, 1, g_4abb32);
+        break;
+    case 137:
+        view->body.running = 0;
+        break;
+    case 140:
+        moveView(g_4abb30, 0, g_4abb32);
+        break;
+    case 218:
+        queueViewSound(randomBetween(4100, 4124), 0);
+        break;
+    case -1:
+        view->body.running = 0;
+        break;
+    }
 }

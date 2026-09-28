@@ -54,7 +54,11 @@ extern unsigned long g_4abdb4; /* @data 0x4abdb4 */
 extern unsigned long g_4abdb8; /* @data 0x4abdb8 */
 
 void fn_42403b(View *view, short event);
+extern short g_4abb20; /* @data 0x4abb20 */
+extern short g_4abb24; /* @data 0x4abb24 */
+
 void resetScene13();
+void fn_423512(View *view, short event);
 short ferryScript(View *view, short which);
 void drawFerryButton(short which, short lit, short show);
 void closeScene13();

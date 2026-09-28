@@ -355,6 +355,7 @@
 0x0042258a loadFerryScript
 0x0042339f ferryScript
 0x004234c9 fn_4234c9
+0x00423512 fn_423512
 0x00423cf1 ferrySnoidScript
 0x00423d9d fn_423d9d
 0x00423e2c fn_423e2c
