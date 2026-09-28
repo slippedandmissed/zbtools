@@ -6082,3 +6082,4 @@ extern short g_4a3da0;
 extern short g_4a3da2;
 extern short g_4b1634;
 short pizzaKey(unsigned short key);
+void fn_442ea2();

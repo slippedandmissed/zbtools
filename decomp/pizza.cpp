@@ -2038,3 +2038,171 @@ short pizzaKey(unsigned short key)
     }
     return 0;
 }
+
+/*
+ * Shares the toppings picked (fn_44410b) out among the trolls there (at
+ * random; from level 2 each troll gets at least one, taken from the troll
+ * with more), then, at level 1 or 3, shows four pizzas made from two
+ * toppings the troll with the fewest wants and one each the others want.
+ */
+/* @zoombi32 0x00442ea2 */
+void fn_442ea2()
+{
+    short shyler;
+    short a;
+    short b;
+    short c;
+    short d;
+    short i;
+    short arno;
+    short willa;
+    short fewest;
+
+    fillMemory(arnoWants, 0, 16);
+    fillMemory(willaWants, 0, 16);
+    fillMemory(shylerWants, 0, 16);
+    fn_44410b();
+    arno = 0;
+    willa = 0;
+    shyler = 0;
+    a = b = c = d = -1;
+    switch (g_4b161e) {
+    case 0:
+        for (i = 0; i < g_4b1624; i++)
+            arnoWants[i] = g_4b1676[i];
+        break;
+    case 1:
+        for (i = 0; i < g_4b1624; i++)
+            if (g_4b1676[i]) {
+                if (!randomUpTo(1)) {
+                    arnoWants[i] = 1;
+                    arno++;
+                } else {
+                    willaWants[i] = 1;
+                    willa++;
+                }
+            }
+        if (!arno && !willa) {
+            i = randomUpTo(g_4b1624 - 1);
+            if (randomUpTo(1000) < 500)
+                willaWants[i] = 1;
+            else
+                arnoWants[i] = 1;
+        }
+        break;
+    case 2:
+    case 3:
+        for (i = 0; i < g_4b1624; i++)
+            if (g_4b1676[i]) {
+                short r = randomUpTo(2);
+
+                if (!r) {
+                    arnoWants[i] = 1;
+                    arno++;
+                } else if (r == 1) {
+                    willaWants[i] = 1;
+                    willa++;
+                } else {
+                    shylerWants[i] = 1;
+                    shyler++;
+                }
+            }
+        do {
+            if (!arno) {
+                if (willa > shyler) {
+                    do
+                        i = randomUpTo(g_4b1624 - 1);
+                    while (!willaWants[i]);
+                    willaWants[i] = 0;
+                    willa--;
+                    arnoWants[i] = 1;
+                    arno = 1;
+                } else {
+                    do
+                        i = randomUpTo(g_4b1624 - 1);
+                    while (!shylerWants[i]);
+                    shylerWants[i] = 0;
+                    shyler--;
+                    arnoWants[i] = 1;
+                    arno = 1;
+                }
+            }
+            if (!willa) {
+                if (arno > shyler) {
+                    do
+                        i = randomUpTo(g_4b1624 - 1);
+                    while (!arnoWants[i]);
+                    arnoWants[i] = 0;
+                    arno--;
+                    willaWants[i] = 1;
+                    willa = 1;
+                } else {
+                    do
+                        i = randomUpTo(g_4b1624 - 1);
+                    while (!shylerWants[i]);
+                    shylerWants[i] = 0;
+                    shyler--;
+                    willaWants[i] = 1;
+                    willa = 1;
+                }
+            }
+            if (!shyler) {
+                if (arno > willa) {
+                    do
+                        i = randomUpTo(g_4b1624 - 1);
+                    while (!arnoWants[i]);
+                    arnoWants[i] = 0;
+                    arno--;
+                    shylerWants[i] = 1;
+                    shyler = 1;
+                } else {
+                    do
+                        i = randomUpTo(g_4b1624 - 1);
+                    while (!willaWants[i]);
+                    willaWants[i] = 0;
+                    willa--;
+                    shylerWants[i] = 1;
+                    shyler = 1;
+                }
+            }
+        } while (!arno || !willa || !shyler);
+        if (g_4b161e == 2)
+            break;
+        fewest = 0;
+        if (willa > arno) {
+            fewest = 1;
+            if (willa < shyler)
+                fewest = 2;
+        } else if (arno < shyler) {
+            fewest = 2;
+        }
+        switch (fewest) {
+        case 0:
+            a = fn_443316(0);
+            do
+                c = fn_443316(0);
+            while (c == a);
+            b = fn_443316(1);
+            d = fn_443316(2);
+            break;
+        case 1:
+            a = fn_443316(1);
+            do
+                c = fn_443316(1);
+            while (c == a);
+            b = fn_443316(0);
+            d = fn_443316(2);
+            break;
+        case 2:
+            a = fn_443316(2);
+            do
+                c = fn_443316(2);
+            while (c == a);
+            b = fn_443316(0);
+            d = fn_443316(1);
+            break;
+        }
+        fn_446487(a, b, c, d);
+        break;
+    }
+}
