@@ -924,6 +924,64 @@ void fn_41e326(short kind)
             }
 }
 
+/* Draws the roster's feature table: for each feature asked about, its
+   letter and the pictures of its values, and under the first, how many of
+   the chosen Zoombinis have each (g_4ab892). */
+/* @zoombi32 0x0041edf7 */
+void fn_41edf7()
+{
+    ShortRect firstName = {120, 360, 260, 386};
+    ShortRect firstValues = {120, 390, 260, 416};
+    ShortRect firstCounts = {120, 420, 260, 446};
+    ShortRect secondName = {275, 360, 395, 386};
+    ShortRect secondValues = {275, 390, 395, 416};
+    ShortRect all = {120, 360, 395, 446};
+    ShortRect rect;
+    char letters[4][2] = {"H", "E", "N", "F"};
+    char numbers[21][3] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+                           "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
+    Color saved;
+    short i;
+    short j;
+
+    saved = setForeColor(Color(11));
+    for (i = 0; i < g_4a0ff4; i++) {
+        if (!i)
+            rect = firstName;
+        else
+            rect = secondName;
+        fillPortRect(rect, Color(14), 0);
+        frameRect(rect);
+        drawText(rect, 0x22, letters[rosterFeatures[i]], 0xffff);
+        if (!i)
+            rect = firstValues;
+        else
+            rect = secondValues;
+        rect.top += 5;
+        for (j = 0; j < g_4a0ff2; j++) {
+            fn_41ed59(rosterFeatures[i] + 1, rosterValues[i][j], rect);
+            rect.left += 30;
+            rect.right = rect.left + 25;
+        }
+        if (!i) {
+            rect = firstCounts;
+            fillPortRect(rect, Color(14), 0);
+            rect.left += 10;
+            rect.top += 5;
+            for (j = 0; j < g_4a0ff2; j++) {
+                if (g_4ab892[0][rosterValues[i][j]])
+                    drawText(rect, 1, numbers[g_4ab892[0][rosterValues[i][j]]], 0xffff);
+                else
+                    drawText(rect, 1, numbers[0], 0xffff);
+                rect.left += 30;
+                rect.right = rect.left + 25;
+            }
+        }
+    }
+    setForeColor(saved);
+    showRect(&all);
+}
+
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to
    the roster file next to the program (userFile). */
 /* @zoombi32 0x0041f1da */
