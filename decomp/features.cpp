@@ -870,7 +870,7 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
             savedGameList = (SavedGameList *)newPtr(0x646);
             if (!savedGameList)
                 fn_41f195("Out of Memory.");
-            fn_41f2c8((long)savedGameList, 2);
+            readWriteSavedGames(savedGameList, 2);
             g_4b9806 = addView(0x4001000, drawDialogPart, updateDialogPart, script, 0, 0, 0, 0);
             g_4b9808 = addView(0x4000000, drawDialogPart, updateDialogPart, script + 1, 11, 0, 0, 0);
             g_4b980a = addView(0x4000000, drawDialogPart, updateDialogPart, script + 2, 13, 0, 0, 0);
@@ -1800,7 +1800,7 @@ void placeDialogList(View *view)
                                     g_4b2aea = 0;
                                     strandParty();
                                     g_4b2aea = 1;
-                                    fn_41f2c8((long)savedGameList, 3);
+                                    readWriteSavedGames(savedGameList, 3);
                                     break;
                                 }
                                 if (i) {

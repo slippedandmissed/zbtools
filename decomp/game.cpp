@@ -135,7 +135,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
 
     fn_415910();
     fn_446962(g_4b29d4, rosterFileName);
-    fn_41f2c8(0, 0);
+    readWriteSavedGames(0, 0);
     strcat(userFileName, ".txt");
     fn_446962(moduleFileName, userFileName);
     findGameData();

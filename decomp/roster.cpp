@@ -695,6 +695,83 @@ void fn_41f6fc(short reset)
         *(short *)(g_4a4ba0 + 0xcc) = g_4b0d54;
 }
 
+/* Reads or writes the list of saved games (the file rosterFileName in the
+   directory g_4b29d4) into or from `list` (or a list of its own): creates
+   it if it's new; `mode` 0 reads the count of games, 1 writes it
+   (savedGames), 2 reads the count and the next id, 3 writes the list. */
+/* @zoombi32 0x0041f2c8 */
+void readWriteSavedGames(SavedGameList *list, short mode)
+{
+    long size;
+    char path[256];
+    SavedGameList own;
+    SavedGameList *games;
+    short result;
+    short error;
+
+    if (!list)
+        games = &own;
+    else
+        games = list;
+    size = sizeof(SavedGameList);
+    result = 3;
+    strcpy(path, g_4b29d4);
+    strcat(path, rosterFileName);
+    result = openRosterFile(path, result);
+    if (result == 2)
+        reportRosterError("Could not Open/Create Roster file.");
+    if (result == 2)
+        return;
+    if (result == 1) {
+        fillMemory(games, 0, size);
+        games->version = 107;
+        if (writeFile(g_4aba7c, games, &size))
+            reportRosterError("Problem writing file: disk may be full");
+    } else {
+        if (seekFile(g_4aba7c, 0, 0) == -1)
+            reportRosterError("Seek Error");
+        switch (mode) {
+        case 0:
+            error = readFile(g_4aba7c, games, &size);
+            if (error && error != 10303)
+                reportRosterError("Problem reading file");
+            else if (games->version == 107)
+                savedGames = games->count;
+            else
+                reportRosterError("Delete the file 'Zoombini.who' and try again!");
+            break;
+        case 1:
+            error = readFile(g_4aba7c, games, &size);
+            if (error && error != 10303)
+                reportRosterError("Problem reading file");
+            else if (games->version == 107) {
+                if (seekFile(g_4aba7c, 0, 0) == -1)
+                    reportRosterError("Seek Error");
+                games->count = savedGames;
+                if (writeFile(g_4aba7c, games, &size))
+                    reportRosterError("Problem writing file: disk may be full");
+            } else
+                reportRosterError("Delete the file 'Zoombini.who' and try again!");
+            break;
+        case 2:
+            error = readFile(g_4aba7c, games, &size);
+            if (error && error != 10303)
+                reportRosterError("Problem reading file");
+            else if (games->version == 107) {
+                savedGames = games->count;
+                nextSaveId = games->nextId;
+            } else
+                reportRosterError("Delete the file 'Zoombini.who' and try again!");
+            break;
+        case 3:
+            if (writeFile(g_4aba7c, games, &size))
+                reportRosterError("Problem writing file: disk may be full");
+            break;
+        }
+    }
+    closeFile(g_4aba7c, 0);
+}
+
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to
    the roster file next to the program (userFile). */
 /* @zoombi32 0x0041f1da */

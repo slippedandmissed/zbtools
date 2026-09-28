@@ -330,6 +330,7 @@
 0x0041f100 openRosterFile
 0x0041f195 reportRosterError
 0x0041f1da readWriteRoster
+0x0041f2c8 readWriteSavedGames
 0x0041f514 newSaveFileName
 0x0041f5d0 fn_41f5d0
 0x0041f668 applyPlayerSettings

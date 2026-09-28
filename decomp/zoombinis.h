@@ -381,7 +381,7 @@ struct SavedGame
 /* The saved games, as the load and save dialogs list them. */
 struct SavedGameList
 {
-    short unknown0;
+    short version; /* 107 */
     short nextId;
     short count;
     SavedGame games[50];
@@ -1397,7 +1397,6 @@ void fn_464d7d();
 unsigned long fn_464d88();
 void __cdecl debugPrintf(const char *format, ...); /* 0x46db93: to the debugger */
 void fn_41f195(const char *message);
-void fn_41f2c8(long, long);
 void fn_41f668();
 void fn_44695c();
 void fn_454c8e();
@@ -6219,3 +6218,4 @@ extern short g_4b807e; /* @data 0x4b807e */
 extern short g_4abafc; /* @data 0x4abafc */
 extern long g_4abb00; /* @data 0x4abb00 */
 void fn_41f6fc(short reset);
+void readWriteSavedGames(SavedGameList *list, short mode);
