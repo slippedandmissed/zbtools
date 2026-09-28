@@ -96,5 +96,10 @@ extern short g_4afbac[6]; /* @data 0x4afbac: the targets' views */
 void fn_432eff(View *view);
 
 short fn_431ea0();
+extern short g_4afb6c; /* @data 0x4afb6c */
+extern short g_4afb6e; /* @data 0x4afb6e */
+extern short g_4afb70; /* @data 0x4afb70 */
+extern short g_4afbba; /* @data 0x4afbba: targets started */
+short fn_4330f3(short kind, short preset);
 
 #endif

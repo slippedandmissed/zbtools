@@ -893,3 +893,128 @@ short fn_431ea0()
     }
     return n;
 }
+
+/* Starts a target in a free slot of the six (g_4afb94, g_4afbac): of kind
+   1-4 (script 1000, 1016, 1021 or 1026 on, and 1005 otherwise, plus 0-4;
+   3 and 4 fly fast one way), at a random speed and direction from a random
+   edge, or where g_4afb6c-g_4afb70 say when `preset`. Returns its view (0
+   if there's no free slot). */
+/* @zoombi32 0x004330f3 */
+short fn_4330f3(short kind, short preset)
+{
+    short dx;
+    short dy;
+    short speed;
+    short x;
+    short y;
+    View *view;
+    DriftingBody *body;
+    short slot;
+    short i;
+    short direction;
+    short script;
+
+    slot = 0;
+    for (i = 0; !slot && i < 6; i++)
+        if (!g_4afb94[i])
+            slot = i + 1;
+    if (!slot)
+        return 0;
+    slot--;
+    g_4afbac[slot] = 0;
+    g_4afb94[slot] = 0;
+    switch (randomBetween(1, 10)) {
+    case 1:
+    case 2:
+        speed = 8;
+        break;
+    case 9:
+    case 10:
+        speed = 16;
+        break;
+    default:
+        speed = 12;
+        break;
+    }
+    direction = randomBetween(0, 7);
+    script = randomBetween(0, 4);
+    switch (kind) {
+    case 4:
+        script += 1026;
+        direction = 2;
+        speed = 20;
+        break;
+    case 3:
+        script += 1021;
+        direction = 6;
+        speed = 20;
+        break;
+    case 2:
+        script += 1016;
+        break;
+    case 1:
+        script += 1000;
+        break;
+    default:
+        script += 1005;
+        break;
+    }
+    if (preset) {
+        x = g_4afb6c;
+        y = g_4afb6e;
+        direction = g_4afb70;
+    } else if (direction == 0 || direction == 4) {
+        x = randomBetween(20, 620);
+        y = -10;
+    } else {
+        x = -10;
+        y = randomBetween(20, 460);
+    }
+    dy = 0;
+    dx = 0;
+    switch (direction) {
+    case 0:
+        dy = -speed;
+        break;
+    case 1:
+        dy = -speed;
+        dx = speed;
+        break;
+    case 2:
+        dx = speed;
+        break;
+    case 3:
+        dy = speed;
+        dx = speed;
+        break;
+    case 4:
+        dy = speed;
+        break;
+    case 5:
+        dy = speed;
+        dx = -speed;
+        break;
+    case 6:
+        dx = -speed;
+        break;
+    case 7:
+        dy = -speed;
+        dx = -speed;
+        break;
+    }
+    g_4afbac[slot] = addView(0, drawCels, runViewCels, script, 5, 0, 0, 0);
+    view = findView(g_4afbac[slot]);
+    if (view) {
+        body = (DriftingBody *)&view->body;
+        body->unknown28 = 0;
+        body->x = x;
+        body->y = y;
+        body->dx = dx;
+        body->dy = dy;
+        body->unknown32 = direction;
+        view->placed = driftView;
+        g_4afb94[slot] = &view->body.bounds;
+        g_4afbba++;
+    }
+    return g_4afbac[slot];
+}
