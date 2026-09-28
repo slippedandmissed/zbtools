@@ -31,6 +31,7 @@ classes = "zbtools.rtti:app"
 worklist = "zbtools.worklist:app"
 report = "zbtools.report:app"
 modules = "zbtools.modules:app"
+includes = "zbtools.includes:app"
 unpack-isz = "zbtools.unpack_isz:app"
 
 [build-system]

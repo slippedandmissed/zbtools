@@ -88,6 +88,16 @@ def globals_in(text: str) -> list[Global]:
     return found
 
 
+def extern_names_in(text: str) -> list[str]:
+    """The names of the globals declared (addressed or not)."""
+    found = []
+    for line in text.splitlines():
+        match = _EXTERN_FUNCTION_POINTER.match(line.strip()) or _EXTERN.match(line.strip())
+        if match:
+            found.append(match.group(1) if match.re is _EXTERN_FUNCTION_POINTER else match.group(2))
+    return found
+
+
 def structs_as_c(text: str) -> str:
     """The header's structs as C, with byte packing like Borland's default."""
     structs = [m.group(0) for m in _STRUCT.finditer(text)]

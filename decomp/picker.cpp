@@ -4,6 +4,7 @@
 
 #include "zoombinis.h"
 #include "basecamp.h"
+#include "debug.h"
 #include "e2memory.h"
 #include "features.h"
 #include "module_4623b8.h"
@@ -623,4 +624,53 @@ void fn_430b31(ShortRect *rect)
         line.bottom += 14;
     }
     setForeColor(saved);
+}
+
+/* Scene 20's buttons: 1 leaves (g_4b0d50 = 1). */
+/* @zoombi32 0x004328e2 */
+void fn_4328e2(short which)
+{
+    switch (which) {
+    case 1:
+        g_4b0d50 = 1;
+        fn_46be2e(0);
+        closeScene20();
+        break;
+    }
+}
+
+/* A view's update: while running, runs its script when it's to be redrawn;
+   stopped, a second after its last update (unless g_4b9684), redraws it and
+   picks no hotspot (fn_430030). */
+/* @zoombi32 0x0043108f */
+void fn_43108f(View *view, volatile short region)
+{
+    if (view->body.running) {
+        if (view->reset) {
+            runViewScript(view, region);
+            unionRgnRect(region, &view->body.bounds);
+            view->body.running = 1;
+            view->reset = 1;
+        }
+    } else if (!g_4b9684 && !view->reset && clockTime() > view->nextUpdate + 60) {
+        unionRgnRect(region, &view->body.bounds);
+        view->reset = 1;
+        fn_430030(-1);
+    }
+}
+
+/* Draws the levels' list view once (while its kind is positive, which it
+   then negates): its cels and the list (fn_430b31), straight to the
+   screen. */
+/* @zoombi32 0x0043160a */
+void fn_43160a(View *view)
+{
+    if (view->kind > 0) {
+        view->body.running = 1;
+        drawCels(view);
+        fn_430b31(&view->body.bounds);
+        copyPortBits(viewPort, workPort, view->body.bounds, view->body.bounds, 0);
+        view->kind = view->kind * -1;
+        view->body.running = 0;
+    }
 }

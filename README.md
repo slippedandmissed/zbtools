@@ -144,6 +144,8 @@ Whether a function matches is measured, not declared: `decomp/matching.txt` reco
 
 `match` compiles each file with Borland C++ 4.5 and the game's usual options (`-p -k-`; a file can set its own with a `/* @flags ... */` comment, as some modules were built differently, and another release with `/* @release 5.02 */`; `--release` and `--flags` override every file's, to experiment) and compares every marked function byte for byte with the original, ignoring the fields the linker fills in (addresses and call targets); a call to another marked function in the same file must go to that function's address in the game. Mismatches are shown as side-by-side disassembly; the command exits with status 1 if anything differs. Compiled objects are cached in `build/match-cache/`, keyed on each source, the headers it includes, its options and the release, so reruns (and `uv run report`) only recompile what changed; `--no-cache` recompiles everything. It needs `uv run extract-game` and `uv run toolchain setup` first.
 
+Declarations are split so that cache stays useful: `decomp/zoombinis.h` has the types and what several modules share, and each game module's functions (and the globals and types only it uses) are declared in `decomp/<module>.h`, which its own source and its callers' include. Adding a declaration to a module's header then recompiles only the sources including it. `uv run includes` updates each source's module-header includes to what it uses (run it after adding a call into another module; give it files to update just those).
+
 ### Choosing what to decompile, and tracking progress
 
 ```sh

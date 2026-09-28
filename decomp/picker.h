@@ -82,5 +82,8 @@ void fn_430dc0(View *view);
 extern char *levelTexts[6]; /* @data 0x4a530c: "terrain key", "choose a level", then the levels */
 void fn_4312e2(char *open);
 void fn_430b31(ShortRect *rect);
+void fn_4328e2(short which);
+void fn_43108f(View *view, volatile short region);
+void fn_43160a(View *view);
 
 #endif
