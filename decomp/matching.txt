@@ -449,7 +449,11 @@
 0x0043a69a fn_43a69a
 0x0043a772 spliceList
 0x0043af02 sceneGroup
+0x0043b6f8 drawNetButton
+0x0043b791 drawNetButtons
+0x0043b7ae updateNetButtons
 0x0043b820 closeNet
+0x0043c94f fn_43c94f
 0x0043d6e2 fn_43d6e2
 0x0043f985 fn_43f985
 0x00440218 fn_440218

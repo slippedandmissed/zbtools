@@ -234,3 +234,103 @@ void fn_440218()
     if (!g_4b15b2)
         g_4b15b2 = addView(0x8008000, drawCels, runViewScript, 4105, 9, 0, 0, 0);
 }
+
+/* Fills column n % 5 of g_4b0e78 with `a` and row n / 5 of g_4b0f72 with
+   `b` (5 by 5). */
+/* Not exact: the original keeps `n` in esi and `row` in edi; BCC puts `n`
+   in ecx and `row` in esi. */
+/* @zoombi32 0x0043c8e2 */
+void fn_43c8e2(short a, short b, short n)
+{
+    short row;
+    short rowStart;
+    short column;
+    short i;
+
+    row = n / 5;
+    rowStart = n - n % 5;
+    column = n - row * 5;
+    for (i = 0; i < 5; i++) {
+        g_4b0e78[column + i * 5] = a;
+        g_4b0f72[rowStart + i] = b;
+    }
+}
+
+/* The same for cube n (5 by 5 by 5): its row in g_4b0e78 and g_4b0f72,
+   and `c` in g_4b106c by its column. */
+/* @zoombi32 0x0043c94f */
+void fn_43c94f(short a, short b, short c, short n)
+{
+    short rest;
+    short plane;
+    short column;
+    short i;
+
+    plane = n / 25;
+    rest = n % 25;
+    plane *= 5;
+    rest /= 5;
+    column = n % 5;
+    for (i = 0; i < 5; i++) {
+        g_4b0e78[rest + i * 5] = a;
+        g_4b0f72[plane + i] = b;
+    }
+    g_4b106c[column] = c;
+}
+
+/* Draws button 1 (image 5 or 6) or 2 (2 or 3, or 1 or 2 without
+   g_4b12aa), lit or not, and with `show` shows it. */
+/* @zoombi32 0x0043b6f8 */
+void drawNetButton(short which, short lit, short show)
+{
+    short image = 0;
+
+    switch (which) {
+    case 1:
+        image = 5;
+        break;
+    case 2:
+        image = 2;
+        if (!g_4b12aa) {
+            lit = 0;
+            image = 1;
+        }
+        break;
+    }
+    if (image) {
+        if (lit)
+            image++;
+        drawImageData((unsigned short *)(g_4a2e60->offsets[image] + (char *)g_4a2e60), g_4a288a[which].rect.left,
+                      g_4a288a[which].rect.top, 8);
+        if (show)
+            showRect(&g_4a288a[which].rect);
+    }
+}
+
+/* A view's drawing: buttons 1 and 2, unlit. */
+/* @zoombi32 0x0043b791 */
+void drawNetButtons(View *)
+{
+    drawNetButton(1, 0, 0);
+    drawNetButton(2, 0, 0);
+}
+
+/* A view's update: adds buttons 3 (when g_4b12aa changes) and 2 (the
+   first time) to the region to redraw. */
+/* @zoombi32 0x0043b7ae */
+void updateNetButtons(View *, short region)
+{
+    if (g_4b12aa) {
+        if (!g_4a2ea4) {
+            g_4a2ea4 = 1;
+            unionRgnRect(region, &g_4a288a[3].rect);
+        }
+    } else if (g_4a2ea4) {
+        g_4a2ea4 = 0;
+        unionRgnRect(region, &g_4a288a[3].rect);
+    }
+    if (!g_4a2ea6) {
+        g_4a2ea6 = 1;
+        unionRgnRect(region, &g_4a288a[2].rect);
+    }
+}
