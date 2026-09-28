@@ -3,6 +3,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "zoombinis.h"
 
@@ -394,4 +395,77 @@ void fn_41d9f2(short which, short image, long)
     y = ys[which] - g_4aba6c[which];
     drawImageData(data, x, y, 8);
     unlockHandle(handle);
+}
+
+/* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to
+   the roster file next to the program (userFile). */
+/* @zoombi32 0x0041f1da */
+void readWriteRoster(void *data, short read)
+{
+    long size;
+    char path[256];
+    short result;
+
+    if (!data)
+        reportRosterError("Invalid Data Pointer");
+    size = 0xae05;
+    result = 3;
+    strcpy(path, moduleFileName);
+    strcat(path, userFile);
+    result = openRosterFile(path, result);
+    if (result == 2)
+        reportRosterError("Could not Open/Create Roster file.");
+    if (result != 2) {
+        if (seekFile(g_4aba7c, 0, 0) == -1)
+            reportRosterError("Seek Error");
+        if (read) {
+            if (readFile(g_4aba7c, data, &size))
+                reportRosterError("Problem reading file");
+        } else if (writeFile(g_4aba7c, data, &size)) {
+            reportRosterError("Problem writing file: disk may be full");
+        }
+        closeFile(g_4aba7c, 0);
+    }
+}
+
+/* Resets the roster screen's state for mode `which` (1-4: the frames
+   g_4a1000-g_4a1002 it shows). */
+/* @zoombi32 0x0041dfe3 */
+void fn_41dfe3(short which)
+{
+    g_4ab870 = 0;
+    g_4ab872 = 0;
+    g_4aba64 = 0;
+    g_4ab874 = 0;
+    g_4ab86c = 0;
+    g_4ab86e = 0;
+    g_4a100e = 0;
+    g_4a1010 = 0;
+    g_4a1012 = 0;
+    g_4a0ff2 = 5;
+    g_4a0ff4 = 1;
+    g_4a101a = 0;
+    g_4a0ffa = 0;
+    g_4a0ff8 = 0;
+    g_4a1004 = 0;
+    g_4a0fe4 = 0;
+    g_4a0ff0 = 0;
+    switch (which) {
+    case 1:
+        g_4a1002 = 4;
+        g_4a1000 = 6006;
+        break;
+    case 2:
+        g_4a1002 = 5;
+        g_4a1000 = 6005;
+        break;
+    case 3:
+        g_4a1002 = 6;
+        g_4a1000 = 6004;
+        break;
+    case 4:
+        g_4a1002 = 7;
+        g_4a1000 = 6003;
+        break;
+    }
 }
