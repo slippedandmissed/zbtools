@@ -835,6 +835,14 @@
 0x0045bf41 initSnoid
 0x0045bfc0 setArrivalHook
 0x0045bfcf drawFeature
+0x0045c12e openScene0
+0x0045c391 scene0Clicked
+0x0045c4c9 fn_45c4c9
+0x0045ccca fn_45ccca
+0x0045cf8b fn_45cf8b
+0x0045d04c fn_45d04c
+0x0045daf7 fn_45daf7
+0x0045e29e fn_45e29e
 0x0045e2d8 resetScene8
 0x0045e441 openScene8
 0x0045e903 drawTunnelsButton
