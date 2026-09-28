@@ -5868,3 +5868,6 @@ extern short g_4b1478;
 extern short g_4b144c;
 extern short g_4a28d0;
 void fn_43de4d(View *view, short event);
+extern short g_4b1166[5];
+extern short g_4b12cc[];
+void fn_43c9e2();

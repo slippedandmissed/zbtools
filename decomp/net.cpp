@@ -2212,3 +2212,189 @@ void fn_43de4d(View *view, short event)
         break;
     }
 }
+
+/*
+ * Sets up the codes: picks for each of five rows a column value and a row
+ * value (and from level 2 a third) that no row has yet (levels 0-1: only
+ * the first two must be new, tested together), and fills the tables with
+ * them: g_4b0e78 and g_4b0f72 (5 by 5), or from level 2 g_4b0e78, g_4b0f72
+ * and g_4b106c (5 by 5 by 5). At levels 1 and 3 the rows are then rotated
+ * by 2-3 places each (level 3's other way, rotating g_4b106c, is never
+ * taken). Then places the party's Zoombinis (g_4b1182) at random free
+ * entries of g_4b11aa, adds a view for each (script 9000 on, or 9025 on),
+ * and picks the order of the codes (g_4b1178-g_4b117c, distinct from
+ * level 3) and, from level 3, g_4b1468.
+ */
+/* Not exact: the original keeps `row` (and later `image`) in esi and `i`
+   in ebx; BCC swaps them, whatever the declaration order. */
+/* @zoombi32 0x0043c9e2 */
+void fn_43c9e2()
+{
+    short *row;
+    volatile short m;
+    volatile short ok;
+    volatile short scriptBase;
+    short columns[5];
+    short rows[5];
+    short thirds[5];
+    short y;
+    short shifts;
+    short saved;
+    short i;
+    short j;
+    short k;
+    short x;
+    short z;
+    short mode;
+    short distinct;
+    short image;
+
+    row = g_4b1166;
+    fillMemory(g_4b11aa, 0, 250);
+    for (i = 0; i < 5; i++) {
+        columns[i] = 0;
+        rows[i] = 0;
+        thirds[i] = 0;
+    }
+    for (i = 0; i < 5; i++) {
+        ok = 0;
+        do {
+            x = randomUpTo(4);
+            y = randomUpTo(4);
+            z = randomUpTo(4);
+            if (g_4b12ac < 2) {
+                if (!columns[x] & !rows[y])
+                    ok = 1;
+            } else if (!columns[x] && !rows[y] && !thirds[z]) {
+                ok = 1;
+            }
+            if (ok) {
+                columns[x]++;
+                rows[y]++;
+                thirds[z]++;
+            }
+        } while (!ok);
+        switch (g_4b12ac) {
+        case 0:
+        case 1:
+            for (j = 0; j < 5; j++) {
+                g_4b0e78[i * 5 + j] = x;
+                g_4b0f72[j * 5 + i] = y;
+            }
+            break;
+        case 2:
+        case 3:
+            for (j = 0; j < 25; j++)
+                g_4b0e78[i * 25 + j] = x;
+            for (j = 0; j < 5; j++)
+                for (k = 0; k < 5; k++)
+                    g_4b0f72[i * 5 + j * 25 + k] = y;
+            for (j = 0; j < 5; j++)
+                for (k = 0; k < 5; k++)
+                    g_4b106c[j * 5 + k * 25 + i] = y;
+            break;
+        }
+    }
+    switch (g_4b12ac) {
+    case 1:
+        shifts = randomUpTo(1) + 2;
+        for (j = 0; j < 5; j++)
+            row[j] = g_4b0f72[j];
+        for (k = 1; k < 5; k++) {
+            for (i = 0; i < shifts; i++) {
+                saved = row[4];
+                for (j = 4; j > 0; j--)
+                    row[j] = row[j - 1];
+                row[0] = saved;
+            }
+            for (j = 0; j < 5; j++)
+                g_4b0f72[k * 5 + j] = row[j];
+        }
+        break;
+    case 3:
+        shifts = randomUpTo(1) + 2;
+        mode = randomUpTo(1);
+        mode = 0;
+        if (!mode) {
+            for (i = 0; i < 5; i++)
+                for (k = 1; k < 5; k++) {
+                    for (j = 0; j < 5; j++)
+                        row[j] = g_4b0e78[k + i * 5 + j * 25 - 1];
+                    for (m = 0; m < shifts; m++) {
+                        saved = row[4];
+                        for (j = 4; j > 0; j--)
+                            row[j] = row[j - 1];
+                        row[0] = saved;
+                    }
+                    for (j = 0; j < 5; j++)
+                        g_4b0e78[i * 5 + k + j * 25] = row[j];
+                }
+        } else {
+            for (k = 5; k < g_4b142e; k += 5) {
+                for (j = 0; j < 5; j++)
+                    row[j] = g_4b106c[k + j - 5];
+                for (i = 0; i < shifts; i++) {
+                    saved = row[4];
+                    for (j = 4; j > 0; j--)
+                        row[j] = row[j - 1];
+                    row[0] = saved;
+                }
+                for (j = 0; j < 5; j++)
+                    g_4b106c[k + j] = row[j];
+            }
+        }
+        break;
+    }
+    scriptBase = 0;
+    if (g_4b12ac > 1)
+        scriptBase = 25;
+    for (i = 0; i < g_4b0e76; i++) {
+        do {
+            if (g_4b12ac < 2)
+                k = randomUpTo(24);
+            else
+                k = randomUpTo(124);
+        } while (g_4b11aa[k]);
+        g_4b11aa[k] = g_4b1182[i];
+    }
+    for (i = 0; i < g_4b142e; i++) {
+        g_4b12cc[i] = 0;
+        if (g_4b11aa[i]) {
+            g_4b12cc[i] = addView(0x4188000, drawCels, runViewScript, scriptBase + i + 9000, 6, 0, 0, 0);
+            image = g_4b11aa[i] + 150;
+            if (g_4b12ac > 1)
+                image += 3;
+            View *view = findView(g_4b12cc[i]);
+
+            if (view) {
+                view->placed = fn_43d6e2;
+                short *parts = (short *)&view->body;
+
+                parts[20] = image;
+            }
+            moveView(g_4b12cc[i], 0, g_4b12ba[0]);
+        }
+    }
+    if (g_4b12ac <= 2) {
+        if (randomUpTo(1)) {
+            g_4b1178 = 2;
+            g_4b117a = 1;
+            g_4b117c = 0;
+        } else {
+            g_4b1178 = 1;
+            g_4b117a = 2;
+            g_4b117c = 0;
+        }
+    } else {
+        distinct = 0;
+        do {
+            g_4b1178 = randomUpTo(2);
+            g_4b117a = randomUpTo(2);
+            g_4b117c = randomUpTo(2);
+            if (g_4b1178 != g_4b117a && g_4b117a != g_4b117c && g_4b117c != g_4b1178)
+                distinct++;
+        } while (!distinct);
+    }
+    if (g_4b12ac >= 3)
+        g_4b1468 = randomUpTo(5);
+}
