@@ -65,7 +65,14 @@ extern short g_4b7e0e; /* @data 0x4b7e0e */
 
 extern char g_4a7592; /* @data 0x4a7592: the next record the . key makes */
 
+/* Which of the town's six screens is shown (0-5). */
+inline short &townScreen()
+{
+    return *(short *)(g_4a4ba0 + 0x1e);
+}
+
 void openScene0();
+void scene6Clicked(short which);
 short scene6Key(unsigned short key);
 void addTownsperson();
 void setTownFrames(short frame);

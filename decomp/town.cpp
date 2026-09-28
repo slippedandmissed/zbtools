@@ -343,7 +343,7 @@ void settleTravellers()
 }
 
 /* The clock's view (two cels, its hands): hidden while g_4a74dc is set
-   and unless g_4b7ef8 and g_4a4ba0's +0x1e is 1 or 2. Shows the time
+   and unless g_4b7ef8 and on screen 1 or 2 (townScreen). Shows the time
    (fn_45c4c9), or with g_4b7ef6 winds the hands round that many times
    (faster, from where they are). */
 /* @zoombi32 0x0045cd27 */
@@ -358,7 +358,7 @@ void drawClock(View *view)
     }
     if (g_4b7ef8 <= 0)
         return;
-    if (*(short *)(g_4a4ba0 + 0x1e) != 1 && *(short *)(g_4a4ba0 + 0x1e) != 2)
+    if (townScreen() != 1 && townScreen() != 2)
         return;
     if (g_4b7ef6) {
         if (g_4b7ef6 < 0) {
@@ -389,7 +389,7 @@ void drawClock(View *view)
     cels[0].image = clockMinute + 1;
     cels[1].image = clockHour + 13;
     cels[0].y = cels[1].y = 218;
-    if (*(short *)(g_4a4ba0 + 0x1e) == 1)
+    if (townScreen() == 1)
         cels[0].x = cels[1].x = 626;
     else
         cels[0].x = cels[1].x = 307;
@@ -735,7 +735,7 @@ short scene6Key(unsigned short key)
                 recordGroups()[used] = ((g_4a7592 / 4) & 3) + 1;
                 recordLevels()[used] = (g_4a7592 & 3) + 1;
                 used = 16;
-                setTownFrames(*(short *)(g_4a4ba0 + 0x1e));
+                setTownFrames(townScreen());
                 g_4a7592++;
             }
         used = 1;
@@ -754,17 +754,95 @@ short scene6Key(unsigned short key)
             g_4b7e10 = 81;
         if (g_4b7e10 < 24)
             g_4b7e10 = 25;
-        setTownFrames(*(short *)(g_4a4ba0 + 0x1e));
+        setTownFrames(townScreen());
         used = 1;
         break;
     case '0':
         g_4a7592 = 0;
         for (used = 0; used < 16; used++)
             recordGroups()[used] = 0;
-        setTownFrames(*(short *)(g_4a4ba0 + 0x1e));
+        setTownFrames(townScreen());
         g_4b7ef8 = 0;
         used = 1;
         break;
     }
     return used;
+}
+
+/* Scene 6's clicks: any click closes an open plaque. 1 leaves; 2 (the
+   town) winds the clock when on its view (g_4b7ece[0]), drags a Zoombini
+   (who stays where dropped on the ground, y 410-475), opens the plaque
+   of the hotspot under the cursor, or at the sides scrolls to the next or
+   previous of the six screens. */
+/* @zoombi32 0x0045d468 */
+void scene6Clicked(short which)
+{
+    Point where;
+    View *view;
+    Snoid *snoid;
+
+    if (g_4a74dc > 0) {
+        deleteView(g_4a74dc);
+        g_4a74dc = -1;
+        fn_45ccca(1);
+        g_4b7eb4 = 0;
+        return;
+    }
+    switch (which) {
+    case 1:
+        queueViewSound(999, 0);
+        drawTownButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawTownButton(which, 0, 1);
+        g_4b0d50 = 1;
+        fn_46be2e(0);
+        closeScene6();
+        break;
+    case 2:
+        getCursorPosition(&where);
+        view = viewAt(where, 0x808002, 1);
+        if (view && view->id == g_4b7ece[0] && !g_4b7ef6)
+            g_4b7ef6 = -1;
+        view = viewAt(where, 2, 1);
+        if (view && view->flags == 2) {
+            setDragCursor(0);
+            g_4b7eca = 1;
+            dragSnoid(view, where, 0, 0);
+            g_4b7552 = 0;
+            g_4b7eca = 0;
+            snoid = viewSnoid(view);
+            if (snoid->body.y >= 410 && snoid->body.y <= 475)
+                *(long *)&snoid->targetX = *(long *)&snoid->body.x;
+        } else if (!g_4b7eb4) {
+            if (where.y > 30 && where.y < 450 && where.x > 3 && where.x < 637) {
+                if (where.x > 560) {
+                    queueViewSound(999, 0);
+                    townScreen()++;
+                    if (townScreen() > 5)
+                        townScreen() = 0;
+                    setTownFrames(townScreen());
+                    scrollTown(1);
+                    g_4b7ef8 = 0;
+                } else if (where.x < 80) {
+                    queueViewSound(999, 0);
+                    townScreen()--;
+                    if (townScreen() < 0)
+                        townScreen() = 5;
+                    setTownFrames(townScreen());
+                    scrollTown(0);
+                    g_4b7ef8 = 0;
+                }
+            }
+        } else if (g_4a74dc == -1) {
+            g_4a74dc = 0;
+            setDragCursor(0);
+            queueViewSound(999, 0);
+            updateViews();
+            updateViews();
+            g_4a74dc = addView(0x5000, drawPlaque, runViewCels, g_4b7eb8, g_4b7eb6, 0, 0, 0);
+            fn_45ccca(0);
+            waitForEventFor(0, 2, 0, 1);
+        }
+        break;
+    }
 }

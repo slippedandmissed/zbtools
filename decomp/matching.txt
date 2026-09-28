@@ -850,6 +850,7 @@
 0x0045cf8b fn_45cf8b
 0x0045cfae closeScene6
 0x0045d04c fn_45d04c
+0x0045d468 scene6Clicked
 0x0045d715 fn_45d715
 0x0045d7a9 scene6Key
 0x0045da4e setTownFrames
