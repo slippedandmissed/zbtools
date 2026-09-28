@@ -5582,7 +5582,8 @@ extern short g_4afc6c[];
 void fn_43596d(View *view, short group, ViewNotify, char unknownF8);
 extern short g_4afd8c[];
 void fn_43638b(View *view, short event);
-extern short g_4b0770[40][4]; /* the rows taken (and from 20, a copy) */
+extern short g_4b0770[20][4]; /* the rows taken */
+extern short g_4b0810[20][4]; /* and a copy */
 extern short g_4b00d0; /* how many */
 short fn_43780d(short exclude);
 short fn_437b7b(short low, short high);
@@ -5606,3 +5607,4 @@ extern short g_4a25e0[][2];
 extern short g_4b0096[];
 extern short g_4b00c2;
 void fn_436d39(Snoid *snoid);
+short fn_437416(short exclude, short whole);

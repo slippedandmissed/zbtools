@@ -1149,7 +1149,7 @@ short fn_43780d(short exclude)
  * Picks the value (1-20) with the most counts in g_4aff9a, between `low`
  * and `high`, for which some row of g_4afe5a has that feature in a column
  * where no row already taken (g_4b0770) has the same one; takes the rows
- * with the value (into g_4b0770 and its copy from 20), clears them,
+ * with the value (into g_4b0770 and the copy g_4b0810), clears them,
  * recounts g_4aff9a, and returns the value (0: none).
  */
 /* Not exact: the original copies `v` to `best` through dx; this uses ax
@@ -1188,10 +1188,10 @@ short fn_437b7b(short low, short high)
             for (column = 0; column < 4; column++)
                 if (g_4afe5a[row][column] && g_4afe5a[row][column] + g_4a2634[column] == best) {
                     if (g_4b00d0 < 20) {
-                        g_4b0770[g_4b00d0 + 20][0] = g_4afe5a[row][0];
-                        g_4b0770[g_4b00d0 + 20][1] = g_4afe5a[row][1];
-                        g_4b0770[g_4b00d0 + 20][2] = g_4afe5a[row][2];
-                        g_4b0770[g_4b00d0 + 20][3] = g_4afe5a[row][3];
+                        g_4b0810[g_4b00d0][0] = g_4afe5a[row][0];
+                        g_4b0810[g_4b00d0][1] = g_4afe5a[row][1];
+                        g_4b0810[g_4b00d0][2] = g_4afe5a[row][2];
+                        g_4b0810[g_4b00d0][3] = g_4afe5a[row][3];
                         g_4b0770[g_4b00d0][0] = g_4afe5a[row][0];
                         g_4b0770[g_4b00d0][1] = g_4afe5a[row][1];
                         g_4b0770[g_4b00d0][2] = g_4afe5a[row][2];
@@ -1213,14 +1213,14 @@ short fn_437b7b(short low, short high)
 }
 
 /* As fn_437b7b, checking a Zoombini's features against the rows already
-   taken only in the copy (g_4b0770 from 20), and taking the rows into the
+   taken only in the copy (g_4b0810), and taking the rows into the
    copy alone. */
 /* Not exact: BCC caches g_4afe5a's address in esi, where the original
    keeps `column` there (see findings.md on address caching). */
 /* @zoombi32 0x00437ea2 */
 short fn_437ea2(short low, short high)
 {
-    short (*copies)[4] = g_4b0770 + 20;
+    short (*copies)[4] = g_4b0810;
     short v;
     short best;
     short most;
@@ -1374,4 +1374,82 @@ void fn_436d39(Snoid *snoid)
         view->flags = 0x4188000;
         view->nextUpdate = 0;
     }
+}
+
+/*
+ * As fn_43780d (up to three rows taken, not `exclude`), remembering the
+ * column too: with `whole` 0 it takes just that feature (and the whole row
+ * into the copy), else the whole row into both; then clears the row and
+ * recounts g_4aff9a. Returns the value (0: none).
+ */
+/* @zoombi32 0x00437416 */
+short fn_437416(short exclude, short whole)
+{
+    short v;
+    short best;
+    short least;
+    short fresh;
+    short bestRow;
+    short bestColumn;
+    short row;
+    short column;
+    short k;
+
+    for (v = 1, best = 0, bestRow = -1, bestColumn = 0, least = 21; v < 21; v++)
+        if (g_4aff9a[v] > 0 && g_4aff9a[v] <= least && exclude != v)
+            for (row = 0; row < g_4afc36; row++)
+                for (column = 0; column < 4; column++) {
+                    fresh = 1;
+                    if (g_4afe5a[row][column] > 0 && g_4afe5a[row][column] + g_4a2634[column] == v) {
+                        for (k = 0; k < 20 && g_4b00d0 < 3; k++)
+                            if (g_4b0770[k][0] > 0 && g_4b0770[k][0] == g_4afe5a[row][0])
+                                fresh = 0;
+                            else if (g_4b0770[k][1] > 0 && g_4b0770[k][1] == g_4afe5a[row][1])
+                                fresh = 0;
+                            else if (g_4b0770[k][2] > 0 && g_4b0770[k][2] == g_4afe5a[row][2])
+                                fresh = 0;
+                            else if (g_4b0770[k][3] > 0 && g_4b0770[k][3] == g_4afe5a[row][3])
+                                fresh = 0;
+                        if (fresh) {
+                            best = v;
+                            bestRow = row;
+                            bestColumn = column;
+                            least = g_4aff9a[v];
+                            row = g_4afc36;
+                        }
+                        column = 4;
+                    }
+                }
+    if (best) {
+        if (g_4b00d0 < 4) {
+            if (!whole) {
+                g_4b0770[g_4b00d0][bestColumn] = g_4afe5a[bestRow][bestColumn];
+                g_4b0810[g_4b00d0][0] = g_4afe5a[bestRow][0];
+                g_4b0810[g_4b00d0][1] = g_4afe5a[bestRow][1];
+                g_4b0810[g_4b00d0][2] = g_4afe5a[bestRow][2];
+                g_4b0810[g_4b00d0][3] = g_4afe5a[bestRow][3];
+                g_4b00d0++;
+            } else {
+                g_4b0810[g_4b00d0][0] = g_4afe5a[bestRow][0];
+                g_4b0810[g_4b00d0][1] = g_4afe5a[bestRow][1];
+                g_4b0810[g_4b00d0][2] = g_4afe5a[bestRow][2];
+                g_4b0810[g_4b00d0][3] = g_4afe5a[bestRow][3];
+                g_4b0770[g_4b00d0][0] = g_4afe5a[bestRow][0];
+                g_4b0770[g_4b00d0][1] = g_4afe5a[bestRow][1];
+                g_4b0770[g_4b00d0][2] = g_4afe5a[bestRow][2];
+                g_4b0770[g_4b00d0][3] = g_4afe5a[bestRow][3];
+                g_4b00d0++;
+            }
+        }
+        g_4afe5a[bestRow][0] = 0;
+        g_4afe5a[bestRow][1] = 0;
+        g_4afe5a[bestRow][2] = 0;
+        g_4afe5a[bestRow][3] = 0;
+        fillMemory(g_4aff9a, 0, 42);
+        for (row = 0; row < g_4afc36; row++)
+            if (g_4afe5a[row][0])
+                for (column = 0; column < 4; column++)
+                    g_4aff9a[g_4afe5a[row][column] + g_4a2634[column]]++;
+    }
+    return best;
 }
