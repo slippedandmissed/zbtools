@@ -390,6 +390,7 @@
 0x0042fc89 fn_42fc89
 0x004320da fn_4320da
 0x004334f0 fn_4334f0
+0x00433510 openMaze
 0x0043462b loadMazeTable
 0x004346ad freeMazeTable
 0x004346dc drawMazeButton

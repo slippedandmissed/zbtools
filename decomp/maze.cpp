@@ -5,12 +5,12 @@
 #include "zoombinis.h"
 
 /* @zoombi32 0x0043595f */
-void fn_43595f(long)
+void fn_43595f(View *)
 {
 }
 
 /* @zoombi32 0x00435966 */
-void fn_435966(long, long)
+void fn_435966(View *, short)
 {
 }
 
@@ -1307,48 +1307,48 @@ void fn_436d39(Snoid *snoid)
         *(Point *)&made->body.x = (g_4afbf0 + parts[32])[parts[31] * 13];
         switch (parts[33]) {
         case 1:
-            g_4b0a10[g_4b0cfe[0]] = id;
-            g_4b0cfe[0]++;
+            g_4b0a10[g_4b0cfe] = id;
+            g_4b0cfe++;
             parts[40] = g_4b0d10[1];
             break;
         case 2:
-            g_4b0b6e[g_4b0cfe[1]] = id;
-            g_4b0cfe[1]++;
+            g_4b0b6e[g_4b0d00] = id;
+            g_4b0d00++;
             parts[40] = g_4b0d10[2];
             break;
         case 3:
-            g_4b0ba0[g_4b0cfe[2]] = id;
-            g_4b0cfe[2]++;
+            g_4b0ba0[g_4b0d02] = id;
+            g_4b0d02++;
             parts[40] = g_4b0d10[3];
             break;
         case 4:
-            g_4b0bd2[g_4b0cfe[3]] = id;
-            g_4b0cfe[3]++;
+            g_4b0bd2[g_4b0d04] = id;
+            g_4b0d04++;
             parts[40] = g_4b0d10[4];
             break;
         case 5:
-            g_4b0c04[g_4b0cfe[4]] = id;
-            g_4b0cfe[4]++;
+            g_4b0c04[g_4b0d06] = id;
+            g_4b0d06++;
             parts[40] = g_4b0d10[5];
             break;
         case 6:
-            g_4b0c36[g_4b0cfe[5]] = id;
-            g_4b0cfe[5]++;
+            g_4b0c36[g_4b0d08] = id;
+            g_4b0d08++;
             parts[40] = g_4b0d10[6];
             break;
         case 7:
-            g_4b0c68[g_4b0cfe[6]] = id;
-            g_4b0cfe[6]++;
+            g_4b0c68[g_4b0d0a] = id;
+            g_4b0d0a++;
             parts[40] = g_4b0d10[7];
             break;
         case 8:
-            g_4b0c9a[g_4b0cfe[7]] = id;
-            g_4b0cfe[7]++;
+            g_4b0c9a[g_4b0d0c] = id;
+            g_4b0d0c++;
             parts[40] = g_4b0d10[8];
             break;
         default:
-            g_4b0a10[g_4b0cfe[0]] = id;
-            g_4b0cfe[0]++;
+            g_4b0a10[g_4b0cfe] = id;
+            g_4b0cfe++;
             parts[40] = g_4b0d10[1];
             break;
         }
@@ -2107,4 +2107,334 @@ void fn_436abf(short level)
         break;
     }
     fn_436c71(g_4b08b0);
+}
+
+/*
+ * Opens the maze (Maze2.MHK): resets its state, loads its images, scripts
+ * and tables, picks the level (sceneLevel; level 3 with fewer than five
+ * Zoombinis plays as 4) and its layout (fn_436a00), adds the views of the
+ * layout's pieces and lines, sets the puzzle up (fn_436abf) and brings the
+ * Zoombinis in.
+ */
+/* @zoombi32 0x00433510 */
+void openMaze()
+{
+    Point unused[1];
+    Point places[20] = {{287, 394}, {260, 426}, {224, 447}, {188, 441}, {157, 455}, {263, 384}, {219, 397}, {184, 388}, {155, 402}, {121, 417}, {226, 354}, {189, 349}, {156, 354}, {131, 375}, {85, 394}, {164, 311}, {125, 324}, {79, 352}, {29, 318}, {15, 285}};
+    short i;
+    short kind;
+    View *view;
+
+    g_4a7d40 = 0;
+    g_4b0d52 = 0;
+    g_4afc68 = 0;
+    g_4afc6a = 0;
+    g_4afc3c = 1;
+    g_4afc3e = 0;
+    g_4afc40 = 0;
+    g_4afc38 = 0;
+    g_4afc3a = 0;
+    g_4b0d26 = 0;
+    g_4b00c6 = 0;
+    g_4b00c8 = 0;
+    g_4afc2e = 0;
+    g_4afc48 = 0;
+    g_4afc46 = 0;
+    g_4afc44 = 0;
+    g_4b00d0 = 0;
+    g_4afc2c = 0;
+    g_4a2116 = 0;
+    g_4b00ce = 0;
+    fillMemory(g_4b0770, 0, 160);
+    fillMemory(g_4b0810, 0, 160);
+    fillMemory(g_4afe5a, 0, 160);
+    fillMemory(g_4aff9a, 0, 42);
+    fillMemory(g_4b0096, 0, 20);
+    fillMemory(g_4b00aa, 0, 20);
+    fillMemory(g_4b0042, 0, 42);
+    fillMemory(g_4b0018, 0, 42);
+    g_4b00be = 0;
+    g_4b00c0 = 0;
+    g_4b00c2 = 0;
+    g_4a2550 = 0;
+    g_4a2552 = 0;
+    fillMemory(g_4b04c8, 0, 338);
+    fillMemory(g_4b061a, 0, 338);
+    g_4afc60 = 0;
+    g_4b08b0 = 0;
+    g_4b076c = 0;
+    g_4b08b0 = 0;
+    g_4b08b2 = 0;
+    g_4b08b4 = 1;
+    g_4afe52 = 16;
+    g_4afe54 = 0;
+    g_4afe56 = 0;
+    g_4afe58 = 0;
+    g_4b966e = 0;
+    fillMemory(g_4afc6c, 0, 30);
+    fillMemory(g_4b08b8, 0, 40);
+    fillMemory(g_4b08e0, 0, 40);
+    fillMemory(g_4b0908, 0, 40);
+    fillMemory(g_4b0930, 0, 40);
+    fillMemory(g_4b0958, 0, 40);
+    fillMemory(g_4b09a8, 0, 40);
+    g_4b09f8 = 0;
+    g_4b09fa = 0;
+    g_4b09fc = 0;
+    g_4b09fe = 0;
+    g_4b0a00 = 0;
+    g_4b0a02 = 0;
+    g_4b0a04 = 0;
+    g_4b0a06 = 0;
+    g_4b0d3a = 0;
+    g_4b0d38 = 0;
+    g_4b0d3c = 0;
+    g_4b0a08 = 0;
+    g_4b0a0a = 0;
+    g_4b0a0c = 0;
+    fillMemory(g_4b00d2, 0, 1014);
+    fillMemory(g_4b09d0, 0, 40);
+    fillMemory(g_4afd8c, 0, 32);
+    fillMemory(g_4b0980, 0, 40);
+    fillMemory(g_4afd26, 0, 6);
+    fillMemory(g_4afdac, 0, 6);
+    fillMemory(g_4afd2c, 0, 28);
+    fillMemory(g_4afd48, 0, 28);
+    fillMemory(g_4afc92, 0, 28);
+    fillMemory(g_4b0a10, 0, 350);
+    fillMemory(g_4b0b6e, 0, 50);
+    fillMemory(g_4b0ba0, 0, 50);
+    fillMemory(g_4b0bd2, 0, 50);
+    fillMemory(g_4b0c04, 0, 50);
+    fillMemory(g_4b0c36, 0, 50);
+    fillMemory(g_4b0c68, 0, 50);
+    fillMemory(g_4b0c9a, 0, 50);
+    fillMemory(g_4b0ccc, 0, 50);
+    g_4b0cfe = 0;
+    g_4b0d00 = 0;
+    g_4b0d02 = 0;
+    g_4b0d04 = 0;
+    g_4b0d06 = 0;
+    g_4b0d08 = 0;
+    g_4b0d0a = 0;
+    g_4b0d0c = 0;
+    g_4b0d0e = 0;
+    fillMemory(g_4b0d10, 0, 22);
+    for (i = 0; i < 11; i++)
+        g_4afc4a[i] = 0;
+    openGameFile(&g_4afc64, "Maze2.MHK");
+    fn_46be2e(g_4afc64);
+    loadTerrain(100);
+    drawBackdrop(5000);
+    loadFeatureGroup(7000, 0, 0);
+    loadFeatureGroup(8000, 1, 0);
+    loadFeatureGroup(9000, 2, 0);
+    loadFeatureGroup(10000, 3, 0);
+    loadFeatureGroup(12000, 4, 0);
+    loadScripts(7000, 28);
+    addScripts(8000, 14, 0);
+    addScripts(9000, 8, 0);
+    addScripts(10000, 44, 0);
+    addScripts(12000, 2, 0);
+    setArrivalHook(fn_435f03);
+    loadSnoidScripts(14000, 8, 0);
+    addSnoidScripts(15000, 96, 0);
+    g_4afbd8 = 0;
+    g_4afbf0 = (Point *)loadShortTable(16000, &g_4afbd8);
+    loadMazeTable(&g_4afc18, &g_4afc20, 16501, &g_4afc24);
+    g_4afbe8 = loadShortTable(17000, &g_4afbe0);
+    g_4afbec = loadShortTable(17001, &g_4afbe4);
+    g_4afbc0 = loadImageBank(5100, &g_4afbc4);
+    g_4afbd0 = loadShortTable(18000, &g_4afbc8);
+    g_4afbd4 = loadShortTable(18001, &g_4afbcc);
+    fadeOutViews();
+    fn_4148da(10, 236);
+    g_4afc2a = addView(0x4188000, drawCels, runViewScript, 12001, 7, 0, 0, 0);
+    setViewPlaces(20, places, 1);
+    makePartySnoids(0);
+    g_4afc36 = listChosenSnoids()->count;
+    g_4b0d38 = g_4afc36 - 1;
+    g_4afc32 = sceneLevel();
+    if (g_4afc32 == 3 && g_4afc36 < 5)
+        g_4afc32++;
+    g_4b076c = fn_436a00(g_4afc32);
+    for (i = 1; i < 10; i++) {
+        kind = g_4b076c[i];
+        if (kind) {
+            kind--;
+            switch (g_4a22ec[kind]) {
+            case 1:
+                g_4afd26[g_4a22ec[kind]] = addView(0x4188000, drawCels, runViewScript, g_4a22ec[kind] + 9005, 7, 0, 0, 0);
+                break;
+            }
+        }
+    }
+    for (i = 0; i < 16; i++)
+        placedViews[i] = 0;
+    for (i = 1; i < 10; i++) {
+        kind = g_4b076c[i];
+        if (kind) {
+            kind--;
+            g_4afc92[kind] = addView(0x4108000, drawCels, runViewScript, kind + 7000, 6, 0, 0, 0);
+        }
+    }
+    for (i = 1; i < 10; i++) {
+        kind = g_4b076c[i];
+        if (kind) {
+            kind--;
+            placedViewCount = kind;
+            placedViews[kind] = addView(0x508a000, drawCels, runViewScript, kind + 7014, 7, &g_4a21f0[kind], 0, 0);
+        } else if (!placedViews[i]) {
+            g_4b83e4[i] = -10;
+        }
+    }
+    for (i = 1; i < 10; i++) {
+        kind = g_4b076c[i];
+        if (kind >= 7 && kind <= 9) {
+            kind--;
+            switch (kind) {
+            case 6:
+                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                addView(0x4008000, drawCels, runViewScript, 8006, 0, 0, 0, 0);
+                g_4afc44 = g_4afd2c[kind];
+                break;
+            case 7:
+                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                addView(0x4008000, drawCels, runViewScript, 8007, 0, 0, 0, 0);
+                g_4afc44 = g_4afd2c[kind];
+                break;
+            case 8:
+                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                g_4afc44 = g_4afd2c[kind];
+                break;
+            default:
+                g_4afd2c[kind] = 0;
+                break;
+            }
+            view = findView(g_4afd2c[kind]);
+            if (view) {
+                short *parts = (short *)&view->body;
+
+                parts[45] = g_4a22ec[kind];
+            }
+            if (g_4a22d0[kind])
+                g_4afd48[kind] = addView(0x5988000, drawCels, runViewScript, g_4a2308[kind] + 1, 7, &g_4a232a[kind], 0, 0);
+        }
+    }
+    if (g_4afc44) {
+        i = addView(0x4008000, drawCels, runViewScript, 8005, 0, 0, 0, 0);
+        moveView(i, 1, g_4afc44);
+        g_4afc44 = i;
+    } else {
+        addView(0x4008000, drawCels, runViewScript, 8010, 0, 0, 0, 0);
+    }
+    g_4afd26[0] = addView(0x4180000, drawCels, runViewScript, 9005, 7, 0, 0, 0);
+    if (g_4afc36 > 0) {
+        g_4b08b0 = g_4b076c[0];
+        fn_436abf(g_4afc32);
+    }
+    for (i = 0; i < 3; i++)
+        g_4afd8c[i] = addView(0x4008000, fn_43595f, fn_435966, 8011, 0, 0, 0, 0);
+    for (i = 3; i < 11; i++)
+        g_4afd8c[i] = addView(0x4008000, fn_43595f, fn_435966, 8011, 0, 0, 0, 0);
+    for (i = 1; i < 10; i++) {
+        kind = g_4b076c[i];
+        if (kind) {
+            kind--;
+            switch (g_4a22ec[kind]) {
+            case 2:
+                g_4afd26[g_4a22ec[kind]] = addView(0x180000, drawCels, runViewScript, g_4a22ec[kind] + 9005, 7, 0, 0, 0);
+                break;
+            }
+        }
+    }
+    for (i = 1; i < 10; i++) {
+        kind = g_4b076c[i];
+        if (kind && (kind < 7 || kind > 9)) {
+            kind--;
+            switch (kind) {
+            case 3:
+                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                addView(0x4008000, drawCels, runViewScript, 8002, 0, 0, 0, 0);
+                g_4afc46 = g_4afd2c[kind];
+                break;
+            case 4:
+                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                addView(0x4008000, drawCels, runViewScript, 8003, 0, 0, 0, 0);
+                g_4afc46 = g_4afd2c[kind];
+                break;
+            case 5:
+                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                g_4afc46 = g_4afd2c[kind];
+                break;
+            case 12:
+                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                addView(0x4000000, drawCels, runViewScript, 8009, 0, 0, 0, 0);
+                g_4afc48 = g_4afd2c[kind];
+                break;
+            case 13:
+                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                g_4afc48 = g_4afd2c[kind];
+                break;
+            default:
+                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                break;
+            }
+            view = findView(g_4afd2c[kind]);
+            if (view) {
+                short *parts = (short *)&view->body;
+
+                parts[45] = g_4a22ec[kind];
+            }
+            if (g_4a22d0[kind])
+                g_4afd48[kind] = addView(0x5980000, drawCels, runViewScript, g_4a2308[kind] + 1, 7, &g_4a232a[kind], 0, 0);
+        }
+    }
+    if (g_4afc46) {
+        i = addView(0x4008000, drawCels, runViewScript, 8001, 0, 0, 0, 0);
+        moveView(i, 1, g_4afc46);
+        g_4afc46 = i;
+    }
+    if (g_4afc48) {
+        i = addView(0x4008000, drawCels, runViewScript, 8008, 0, 0, 0, 0);
+        moveView(i, 1, g_4afc48);
+        g_4afc48 = i;
+    }
+    addView(0x4008000, drawCels, runViewScript, 8011, 0, 0, 0, 0);
+    addView(0x4000000, drawCels, runViewScript, 8004, 0, 0, 0, 0);
+    addView(0x4000000, drawCels, runViewScript, 8000, 0, 0, 0, 0);
+    for (i = 11; i < 12; i++)
+        g_4afd8c[i] = addView(0x4008000, fn_43595f, fn_435966, 8011, 0, 0, 0, 0);
+    loadShape(&g_4a21b4, 6000, "Map/Go Buttons");
+    addView(0x1000, drawMazeButtons, updateMazeButtons, 0, 0, 0, 0, 0);
+    fadeOutViews();
+    fn_4148da(10, 236);
+    enterSnoids(0);
+    updateViews();
+    staggerSnoids(45, 30);
+    chooseSnoids(0, 0);
+    setGroupLists(&g_4a2194, 1, -0x4000);
+    drawMazeButton(1, 0, 0);
+    drawMazeButton(2, 0, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    queueViewSound(997, 0);
+    chooseSnoids(0, 0);
+    resetViewClock();
+    g_4a7d40 = 1;
+    g_4afc68 = 1;
+    addSoundRange(996, 997, 0);
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(11000, 11000, 0);
+    addSoundRange(5104, 5104, 0);
+    addSoundRange(10000, 10000, 0);
+    addSoundRange(10002, 10004, 0);
+    addSoundRange(9000, 9001, 0);
+    addSoundRange(5100, 5103, 0);
+    addSoundRange(12000, 12000, 0);
+    addSoundRange(10001, 10001, 0);
+    queueViewSound(sceneLevel() + 30035, 0);
+    campHint((short *)(g_4a4ba0 + 0x44));
+    g_4b966e = 20068;
+    fn_465175();
 }

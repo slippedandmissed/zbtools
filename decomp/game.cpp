@@ -3361,7 +3361,7 @@ void fn_44e494()
         fn_4527be(g_4b2630);
     }
     if (g_4b2630 < 3)
-        g_4b80f6 = addView(0x108a000, drawCels, runViewScript, 11001, 7, &g_4a44b4, 0, 0);
+        placedViews[0] = addView(0x108a000, drawCels, runViewScript, 11001, 7, &g_4a44b4, 0, 0);
     fadeOutViews();
     fn_4148da(10, 236);
     updateViews();
