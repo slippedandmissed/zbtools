@@ -5871,3 +5871,4 @@ void fn_43de4d(View *view, short event);
 extern short g_4b1166[5];
 extern short g_4b12cc[];
 void fn_43c9e2();
+void mazeZoombinisMeet(View *a, View *b);

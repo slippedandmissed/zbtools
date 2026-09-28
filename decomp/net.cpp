@@ -136,6 +136,239 @@ void layOutMazeCels(Snoid *snoid)
     }
 }
 
+/*
+ * Two maze Zoombinis meeting (`a` and `b`): by the directions they face
+ * (word 20) picks each one's script (15035 on, from word 45) and its
+ * helper view's (10004 on), which also gets an extra view (by the square's
+ * g_4afc24) until its script ends (fn_435e8a); clears a's square in
+ * g_4b00d2 and regroups each with its helper.
+ */
+/* @zoombi32 0x00439666 */
+void mazeZoombinisMeet(View *a, View *b)
+{
+    View *volatile helperB;
+    Point where;
+    volatile short aExtraScript;
+    volatile short bExtraScript;
+    volatile short offset;
+    volatile short aHelperScript;
+    volatile short aScript;
+    volatile short bHelperScript;
+    volatile short bScript;
+    short *partsA = (short *)&a->body;
+    short *partsB = (short *)&b->body;
+    View *helperA;
+
+    aExtraScript = 0;
+    bExtraScript = 0;
+    aScript = 0;
+    aHelperScript = 0;
+    bScript = 0;
+    bHelperScript = 0;
+    short direction = partsA[20];
+
+    switch (direction) {
+    case 0:
+        switch (partsB[20]) {
+        case 0:
+            aScript = 15045;
+            aHelperScript = 10006;
+            bScript = 15035;
+            bHelperScript = 10004;
+            aExtraScript = 10018;
+            bExtraScript = 10012;
+            break;
+        case 1:
+            aScript = 15050;
+            aHelperScript = 10008;
+            bScript = 15045;
+            bHelperScript = 10006;
+            aExtraScript = 10027;
+            bExtraScript = 10018;
+            break;
+        case 2:
+            aScript = 15045;
+            aHelperScript = 10006;
+            bScript = 15035;
+            bHelperScript = 10004;
+            aExtraScript = 10018;
+            bExtraScript = 10012;
+            break;
+        case 3:
+            aScript = 15040;
+            aHelperScript = 10010;
+            bScript = 15045;
+            bHelperScript = 10006;
+            aExtraScript = 10024;
+            bExtraScript = 10018;
+            break;
+        }
+        break;
+    case 1:
+        switch (partsB[20]) {
+        case 0:
+            aScript = 15045;
+            aHelperScript = 10006;
+            bScript = 15050;
+            bHelperScript = 10008;
+            aExtraScript = 10018;
+            bExtraScript = 10027;
+            break;
+        case 1:
+            aScript = 15040;
+            aHelperScript = 10010;
+            bScript = 15050;
+            bHelperScript = 10009;
+            aExtraScript = 10024;
+            bExtraScript = 10027;
+            break;
+        case 2:
+            aScript = 15035;
+            aHelperScript = 10004;
+            bScript = 15050;
+            bHelperScript = 10008;
+            aExtraScript = 10012;
+            bExtraScript = 10027;
+            break;
+        case 3:
+            aScript = 15040;
+            aHelperScript = 10005;
+            bScript = 15050;
+            bHelperScript = 10007;
+            aExtraScript = 10021;
+            bExtraScript = 10015;
+            break;
+        }
+        break;
+    case 2:
+        switch (partsB[20]) {
+        case 0:
+            aScript = 15045;
+            aHelperScript = 10006;
+            bScript = 15035;
+            bHelperScript = 10004;
+            aExtraScript = 10018;
+            bExtraScript = 10012;
+            break;
+        case 1:
+            aScript = 15050;
+            aHelperScript = 10008;
+            bScript = 15035;
+            bHelperScript = 10004;
+            aExtraScript = 10027;
+            bExtraScript = 10012;
+            break;
+        case 2:
+            aScript = 15045;
+            aHelperScript = 10006;
+            bScript = 15035;
+            bHelperScript = 10004;
+            aExtraScript = 10018;
+            bExtraScript = 10012;
+            break;
+        case 3:
+            aScript = 15040;
+            aHelperScript = 10011;
+            bScript = 15035;
+            bHelperScript = 10004;
+            aExtraScript = 10024;
+            bExtraScript = 10012;
+            break;
+        }
+        break;
+    case 3:
+        switch (partsB[20]) {
+        case 0:
+            aScript = 15045;
+            aHelperScript = 10006;
+            bScript = 15040;
+            bHelperScript = 10010;
+            aExtraScript = 10018;
+            bExtraScript = 10024;
+            break;
+        case 1:
+            aScript = 15040;
+            aHelperScript = 10005;
+            bScript = 15050;
+            bHelperScript = 10007;
+            aExtraScript = 10021;
+            bExtraScript = 10015;
+            break;
+        case 2:
+            aScript = 15040;
+            aHelperScript = 10011;
+            bScript = 15035;
+            bHelperScript = 10004;
+            aExtraScript = 10024;
+            bExtraScript = 10012;
+            break;
+        case 3:
+            aScript = 15040;
+            aHelperScript = 10010;
+            bScript = 15050;
+            bHelperScript = 10009;
+            aExtraScript = 10024;
+            bExtraScript = 10027;
+            break;
+        }
+        break;
+    }
+    helperA = findView(partsA[41]);
+    if (helperA && aHelperScript) {
+        helperA->flags = 0x988000;
+        setViewScript(helperA, aHelperScript, 1);
+        *(Point *)&helperA->body.x = *(Point *)&a->body.x;
+        helperA->placed = fn_436321;
+        offset = (g_4afc24 + partsA[33] * 12)[partsA[34]];
+        where = *(Point *)&helperA->body.x;
+        partsA[42] = addView(0x4988000, drawCels, runViewScript, aExtraScript + offset, 7, &where, 0, 0);
+        helperA = findView(partsA[42]);
+        if (helperA) {
+            short *its = (short *)&helperA->body;
+
+            its[50] = a->id;
+            setViewScript(helperA, aExtraScript + offset, 1);
+            helperA->placed = fn_436321;
+            helperA->notify = fn_435e8a;
+            runViewScript(helperA, removedRgn);
+        }
+    }
+    helperB = findView(partsB[41]);
+    if (helperB && bHelperScript) {
+        helperB->flags = 0x988000;
+        setViewScript(helperB, bHelperScript, 1);
+        *(Point *)&helperB->body.x = *(Point *)&b->body.x;
+        helperB->placed = fn_436321;
+        offset = (g_4afc24 + partsB[33] * 12)[partsB[34]];
+        where = *(Point *)&helperB->body.x;
+        partsB[42] = addView(0x4988000, drawCels, runViewScript, bExtraScript + offset, 7, &where, 0, 0);
+        helperB = findView(partsB[42]);
+        if (helperB) {
+            short *its = (short *)&helperB->body;
+
+            its[50] = b->id;
+            setViewScript(helperB, bExtraScript + offset, 1);
+            helperB->placed = fn_436321;
+            helperB->notify = fn_435e8a;
+            runViewScript(helperB, removedRgn);
+        }
+    }
+    g_4b00d2[partsA[33]][partsA[34]][0] = 0;
+    g_4b00d2[partsA[33]][partsA[34]][1] = 0;
+    if (aScript)
+        startSnoidScript((Snoid *)&a->body, aScript + partsA[45], 0, 1);
+    if (bScript)
+        startSnoidScript((Snoid *)&b->body, bScript + partsB[45], 0, 1);
+    moveView(b->id, 0, g_4afd8c[partsB[34]]);
+    moveView(partsB[41], 1, b->id);
+    moveView(a->id, 0, g_4afd8c[partsA[34]]);
+    moveView(partsA[41], 1, a->id);
+    if (helperA)
+        groupViews(partsA[41], a->id, partsA[42], 0, 0, 0);
+    if (helperB)
+        groupViews(partsB[41], b->id, partsB[42], 0, 0, 0);
+}
+
 /* Splices a list in after another. */
 /* @zoombi32 0x0043a772 */
 void spliceList(Link *other, Link *list)
