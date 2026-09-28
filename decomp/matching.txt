@@ -322,6 +322,7 @@
 0x0041dccb fn_41dccb
 0x0041dce6 fn_41dce6
 0x0041dd37 fn_41dd37
+0x0041dd83 rosterKey
 0x0041dfe3 fn_41dfe3
 0x0041e0e3 fn_41e0e3
 0x0041e0f3 fn_41e0f3

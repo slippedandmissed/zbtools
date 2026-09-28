@@ -480,7 +480,7 @@ void fn_41d30b(View *, short event)
    and sizes) at place `which` (1-10), centred across it and raised by
    g_4aba6c. */
 /* @zoombi32 0x0041d9f2 */
-void fn_41d9f2(short which, short image, View *)
+void fn_41d9f2(short which, short image, long)
 {
     short xs[11] = {0, 326, 348, 375, 397, 423, 324, 347, 373, 395, 422};
     short ys[11] = {0, 36, 39, 42, 44, 46, 77, 80, 83, 86, 90};
@@ -501,16 +501,17 @@ void fn_41d9f2(short which, short image, View *)
 }
 
 /* Draws the images placed (rosterPlaced) at each of the ten places,
-   after adding g_4a11ac to the region to redraw. */
+   after adding g_4a11ac to the region to redraw (`unused` is passed on to
+   fn_41d9f2, which ignores it). */
 /* @zoombi32 0x0041db60 */
-void fn_41db60(View *view)
+void fn_41db60(long unused)
 {
     short i;
 
     unionRgnRect(removedRgn, &g_4a11ac);
     for (i = 1; i < 11; i++)
         if (rosterPlaced[i])
-            fn_41d9f2(i, rosterPlaceImages[i], view);
+            fn_41d9f2(i, rosterPlaceImages[i], unused);
 }
 
 /* Draws the images placed at the ten places, except at place g_4ab86c
@@ -1410,6 +1411,95 @@ void rosterFrame()
         playAmbientSound();
         g_4a1208 = 0;
     }
+}
+
+/* The roster screen's keys (with debugging on, g_4b8803, or else only
+   0x16f): 1-4 set the level (g_4ab878) and show it, L shows it, space
+   resets the frames (fn_41eaf1), 0x171 walks the Zoombinis to their spots,
+   0x173-0x176 change the first feature, 0x16f (below level 4) calls
+   fn_466b93. Returns whether the key was used. */
+/* @zoombi32 0x0041dd83 */
+short rosterKey(unsigned short key)
+{
+    Color saved;
+    char digits[32] = "01234";
+    char level[32] = "Level x ";
+    short shown = 0;
+    ShortRect rect = {275, 0, 375, 18};
+    short used;
+
+    if (!g_4b8803 && key != 0x16f)
+        return 0;
+    switch (key) {
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+        g_4ab878 = key - '0';
+        fn_41e920(-1);
+        fn_41db60(1);
+        if (g_4a101a)
+            fn_41edf7();
+    case 'L':
+        level[6] = digits[g_4ab878];
+        shown = 1;
+        used = 1;
+        break;
+    case ' ':
+        fn_41eaf1();
+        used = 1;
+        break;
+    case 0x170:
+        used = 1;
+        break;
+    case 0x171:
+        fn_41ec69();
+        used = 1;
+        break;
+    case 0x172:
+        used = 1;
+        break;
+    case 0x173:
+        fn_41e920(0);
+        fn_41edf7();
+        fn_41db60(1);
+        used = 1;
+        break;
+    case 0x174:
+        fn_41e920(1);
+        fn_41edf7();
+        fn_41db60(1);
+        used = 1;
+        break;
+    case 0x175:
+        fn_41e920(2);
+        fn_41edf7();
+        fn_41db60(1);
+        used = 1;
+        break;
+    case 0x176:
+        fn_41e920(3);
+        fn_41edf7();
+        fn_41db60(1);
+        used = 1;
+        break;
+    case 0x16f:
+        if (g_4ab878 < 4)
+            fn_466b93();
+        used = 1;
+        break;
+    default:
+        used = 0;
+        break;
+    }
+    if (shown) {
+        saved = setForeColor(Color(11));
+        fillPortRect(rect, Color(14), 0);
+        drawText(rect, 0x22, level, 0xffff);
+        showRect(&rect);
+        setForeColor(saved);
+    }
+    return used;
 }
 
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to

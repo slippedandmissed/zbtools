@@ -6167,7 +6167,7 @@ void fn_41e273();
 extern short g_4ab872;
 extern short g_4a0ff0;
 extern short *g_4aba6c;
-void fn_41d9f2(short which, short image, View *);
+void fn_41d9f2(short which, short image, long);
 extern short g_4ab870;
 extern short g_4aba64;
 extern short g_4ab86c;
@@ -6191,7 +6191,7 @@ extern short g_4a1018; /* @data 0x4a1018 */
 void fn_41e0f3();
 extern short rosterPlaced[11]; /* @data 0x4ab840: an image is placed at place 1-10 */
 extern short rosterPlaceImages[11]; /* @data 0x4ab856: the image placed there */
-void fn_41db60(View *view);
+void fn_41db60(long unused);
 void fn_41dadf(View *);
 void fn_41eaf1();
 extern short g_4a100c; /* @data 0x4a100c */
@@ -6252,3 +6252,4 @@ extern unsigned long g_4aba00; /* @data 0x4aba00: slots used (allocateSlot) */
 extern short g_4aba04; /* @data 0x4aba04: how many cheer */
 extern short g_4aba06; /* @data 0x4aba06: how many have */
 void rosterFrame();
+short rosterKey(unsigned short key);
