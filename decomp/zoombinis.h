@@ -6253,3 +6253,14 @@ extern short g_4aba04; /* @data 0x4aba04: how many cheer */
 extern short g_4aba06; /* @data 0x4aba06: how many have */
 void rosterFrame();
 short rosterKey(unsigned short key);
+extern long g_4afb10; /* @data 0x4afb10: Picker.MHK */
+extern short g_4afb14; /* @data 0x4afb14: the scene is open */
+extern short g_4afbb8; /* @data 0x4afbb8 */
+extern basePort **g_4afb28; /* @data 0x4afb28 */
+extern short g_4afb34; /* @data 0x4afb34 */
+extern short g_4afb3a; /* @data 0x4afb3a */
+extern short g_4af8ac; /* @data 0x4af8ac */
+extern ShortRect g_4a1f74; /* @data 0x4a1f74 */
+void closeScene19();
+void closeScene20();
+void fn_431e5e(View *, short event);
