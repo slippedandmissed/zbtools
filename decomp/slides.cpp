@@ -207,3 +207,116 @@ void fn_448bf5()
     colors[first] = last;
     setColors(&colors[10], 10, 236);
 }
+
+/* Clears the party's features (partyHair to g_4b24f2, g_4b2452, g_4b2430) and
+   reads each Zoombini's (g_4b2414 of them, partyViews) into partyHair to partyFeet. */
+/* @zoombi32 0x00449b40 */
+void fn_449b40()
+{
+    Snoid *snoid;
+    short i;
+
+    fillMemory(partyHair, 0, 32);
+    fillMemory(partyEyes, 0, 32);
+    fillMemory(partyNoses, 0, 32);
+    fillMemory(partyFeet, 0, 32);
+    fillMemory(g_4b24f2, 0, 32);
+    fillMemory(g_4b2452, 0, 32);
+    fillMemory(g_4b2430, 0, 32);
+    g_4b2450 = 0;
+    for (i = 0; i < g_4b2414; i++) {
+        snoid = (Snoid *)&findView(partyViews[i])->body;
+        partyHair[i] = snoid->features[0];
+        partyEyes[i] = snoid->features[1];
+        partyNoses[i] = snoid->features[2];
+        partyFeet[i] = snoid->features[3];
+    }
+}
+
+/* Orders the party (into g_4b2430) by how many others share a feature with
+   each, most first. */
+/* @zoombi32 0x00449c18 */
+void fn_449c18()
+{
+    short alike[16];
+    short i;
+    short j;
+    short best;
+    short most;
+
+    fillMemory(alike, 0, sizeof alike);
+    for (i = 0; i < g_4b2414; i++)
+        for (j = 0; j < g_4b2414; j++)
+            if (partyHair[i] == partyHair[j] || partyEyes[i] == partyEyes[j]
+                || partyNoses[i] == partyNoses[j] || partyFeet[i] == partyFeet[j])
+                alike[i]++;
+    for (i = 0; i < g_4b2414; i++) {
+        most = best = 0;
+        for (j = 0; j < g_4b2414; j++)
+            if (most < alike[j]) {
+                most = alike[j];
+                best = j;
+            }
+        g_4b2430[i] = best;
+        alike[best] = -1;
+    }
+}
+
+/* A cell's placed callback: moves its cels into place and drops the
+   images 4-24 for the directions its cell (g_4b1ab4, by the view's place)
+   has no link in (g_4b2324's bits). */
+/* @zoombi32 0x00448c81 */
+void fn_448c81(View *view)
+{
+    ViewCel *cel;
+    short cell;
+    short removed;
+
+    cell = g_4b1ab4[(short)(view->id - placedViews[0]) + 1];
+    cel = view->body.cels;
+    while (cel->image) {
+        removed = 0;
+        cel->x += -22;
+        cel->y += 6;
+        switch (cel->image) {
+        case 4:
+            if (!(g_4b2324[cell] & 1)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 8:
+            if (!(g_4b2324[cell] & 2)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 12:
+            if (!(g_4b2324[cell] & 4)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 16:
+            if (!(g_4b2324[cell] & 8)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 20:
+            if (!(g_4b2324[cell] & 0x10)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 24:
+            if (!(g_4b2324[cell] & 0x20)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        }
+        if (!removed)
+            cel++;
+    }
+}

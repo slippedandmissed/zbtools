@@ -31,5 +31,10 @@ extern ChosenSnoids *g_4b192c; /* @data 0x4b192c: the party */
 void drawSlidesButton(short which, short lit, short show);
 void fn_4488e8();
 void fn_448bf5();
+extern short g_4b2450; /* @data 0x4b2450 */
+extern short g_4b2452[16]; /* @data 0x4b2452 */
+void fn_449b40();
+void fn_449c18();
+void fn_448c81(View *view);
 
 #endif

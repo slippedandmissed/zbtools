@@ -1929,46 +1929,46 @@ void fn_44d974(short neighbour, short index, short cell)
         switch (randomUpTo(3)) {
         case 0:
             other = g_4b1aea[neighbour].snoid;
-            if (snoidFeatures[0][index] == snoidFeatures[0][other])
+            if (partyHair[index] == partyHair[other])
                 g_4b1aea[cell].snoid = 510;
-            else if (snoidFeatures[1][index] == snoidFeatures[1][other])
+            else if (partyEyes[index] == partyEyes[other])
                 g_4b1aea[cell].snoid = 511;
-            else if (snoidFeatures[2][index] == snoidFeatures[2][other])
+            else if (partyNoses[index] == partyNoses[other])
                 g_4b1aea[cell].snoid = 512;
-            else if (snoidFeatures[3][index] == snoidFeatures[3][other])
+            else if (partyFeet[index] == partyFeet[other])
                 g_4b1aea[cell].snoid = 513;
             break;
         case 1:
             other = g_4b1aea[neighbour].snoid;
-            if (snoidFeatures[1][index] == snoidFeatures[1][other])
+            if (partyEyes[index] == partyEyes[other])
                 g_4b1aea[cell].snoid = 511;
-            else if (snoidFeatures[2][index] == snoidFeatures[2][other])
+            else if (partyNoses[index] == partyNoses[other])
                 g_4b1aea[cell].snoid = 512;
-            else if (snoidFeatures[3][index] == snoidFeatures[3][other])
+            else if (partyFeet[index] == partyFeet[other])
                 g_4b1aea[cell].snoid = 513;
-            else if (snoidFeatures[0][index] == snoidFeatures[0][other])
+            else if (partyHair[index] == partyHair[other])
                 g_4b1aea[cell].snoid = 510;
             break;
         case 2:
             other = g_4b1aea[neighbour].snoid;
-            if (snoidFeatures[2][index] == snoidFeatures[2][other])
+            if (partyNoses[index] == partyNoses[other])
                 g_4b1aea[cell].snoid = 512;
-            else if (snoidFeatures[3][index] == snoidFeatures[3][other])
+            else if (partyFeet[index] == partyFeet[other])
                 g_4b1aea[cell].snoid = 513;
-            else if (snoidFeatures[0][index] == snoidFeatures[0][other])
+            else if (partyHair[index] == partyHair[other])
                 g_4b1aea[cell].snoid = 510;
-            else if (snoidFeatures[1][index] == snoidFeatures[1][other])
+            else if (partyEyes[index] == partyEyes[other])
                 g_4b1aea[cell].snoid = 511;
             break;
         case 3:
             other = g_4b1aea[neighbour].snoid;
-            if (snoidFeatures[3][index] == snoidFeatures[3][other])
+            if (partyFeet[index] == partyFeet[other])
                 g_4b1aea[cell].snoid = 513;
-            else if (snoidFeatures[0][index] == snoidFeatures[0][other])
+            else if (partyHair[index] == partyHair[other])
                 g_4b1aea[cell].snoid = 510;
-            else if (snoidFeatures[1][index] == snoidFeatures[1][other])
+            else if (partyEyes[index] == partyEyes[other])
                 g_4b1aea[cell].snoid = 511;
-            else if (snoidFeatures[2][index] == snoidFeatures[2][other])
+            else if (partyNoses[index] == partyNoses[other])
                 g_4b1aea[cell].snoid = 512;
             break;
         }

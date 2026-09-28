@@ -3763,7 +3763,7 @@ struct HexCell
 extern HexCell g_4b1aea[117];
 extern short g_4b2324[117]; /* each cell's link bits, one per direction */
 extern short g_4b2414;
-extern short g_4b2430[];
+extern short g_4b2430[16]; /* the party, most alike first (fn_449c18) */
 extern short g_4b2540;
 extern short g_4b2542;
 extern short g_4b26cc[8][4]; /* the features of the Zoombini in each slot */
@@ -3799,7 +3799,13 @@ long __cdecl cmgr_0e(long controller, RECT *bounds, long, long);
 extern short g_4b2512;
 extern ShortRect g_4a4584[3][3];
 extern ShortRect g_4a45cc[3][3];
-extern short snoidFeatures[4][16]; /* @data 0x4b2472: the Zoombinis' hair, eyes, nose and feet (1-5) */
+/* The party's features (1-5), one array each (the original addresses them
+   separately). */
+extern short partyHair[16]; /* @data 0x4b2472 */
+extern short partyEyes[16]; /* @data 0x4b2492 */
+extern short partyNoses[16]; /* @data 0x4b24b2 */
+extern short partyFeet[16]; /* @data 0x4b24d2 */
+extern short g_4b24f2[16]; /* @data 0x4b24f2 */
 extern short g_4b2754;
 extern short g_4b2736;
 extern short g_4b2746;
