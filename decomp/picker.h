@@ -79,5 +79,8 @@ short fn_43297f();
 extern char g_4afb4a[17]; /* @data 0x4afb4a: the hotspots open (from 1) */
 void fn_430cb3(View *view);
 void fn_430dc0(View *view);
+extern char *levelTexts[6]; /* @data 0x4a530c: "terrain key", "choose a level", then the levels */
+void fn_4312e2(char *open);
+void fn_430b31(ShortRect *rect);
 
 #endif

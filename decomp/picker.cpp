@@ -3,6 +3,7 @@
  */
 
 #include "zoombinis.h"
+#include "basecamp.h"
 #include "e2memory.h"
 #include "features.h"
 #include "module_4623b8.h"
@@ -527,4 +528,99 @@ void fn_430dc0(View *view)
         } else {
             removeFirstCel(cel);
         }
+}
+
+/* Fills `open` (17 bytes, one per hotspot from 0) with what the roster says
+   is open, level by level: each group of hotspots is at its level's count
+   plus one if the roster has one (+0xc2-+0xc8), else at the flags in the
+   roster's low or high nibbles. With g_4b754a, all are at that level. */
+/* @zoombi32 0x004312e2 */
+void fn_4312e2(char *open)
+{
+    short i;
+    short count;
+
+    if (g_4b754a) {
+        for (i = 0; i <= 16; i++)
+            open[i] = (char)g_4b754a;
+        return;
+    }
+    open[0] = 1;
+    count = *(short *)(g_4a4ba0 + 0xc2);
+    if (!count) {
+        for (i = 1; i <= 3; i++)
+            open[i] = g_4a4ba0[i + 0x55] & 0xf;
+        open[4] = g_4a4ba0[0x50] & 0xf;
+    } else {
+        for (i = 1; i <= 4; i++)
+            open[i] = count + 1;
+    }
+    count = *(short *)(g_4a4ba0 + 0xc4);
+    if (!count) {
+        for (i = 5; i <= 7; i++)
+            open[i] = g_4a4ba0[i + 0x54] & 0xf;
+        open[11] = g_4a4ba0[0x52] & 0xf;
+    } else {
+        for (i = 5; i <= 7; i++)
+            open[i] = count + 1;
+        open[11] = count + 1;
+    }
+    count = *(short *)(g_4a4ba0 + 0xc6);
+    if (!count) {
+        for (i = 8; i <= 10; i++)
+            open[i] = g_4a4ba0[i + 0x54] & 0xf;
+        open[16] = (short)(*(short *)(g_4a4ba0 + 0x52) & 0xf0) >> 4;
+    } else {
+        for (i = 8; i <= 10; i++)
+            open[i] = count + 1;
+        open[16] = count + 1;
+    }
+    count = *(short *)(g_4a4ba0 + 0xc8);
+    if (!count) {
+        for (i = 12; i <= 14; i++)
+            open[i] = g_4a4ba0[i + 0x53] & 0xf;
+        open[15] = g_4a4ba0[0x51] & 0xf;
+    } else {
+        for (i = 12; i <= 14; i++)
+            open[i] = count + 1;
+        open[15] = count + 1;
+    }
+}
+
+/* Draws the levels' list in `rect`: a title ("terrain key", or with
+   g_4b754a "choose a level") and the four levels, the current one
+   (g_4b754a) outlined. */
+/* @zoombi32 0x00430b31 */
+void fn_430b31(ShortRect *rect)
+{
+    Color saved;
+    ShortRect line;
+    ShortRect title;
+    short outlines[4] = {236, 234, 232, 238};
+    short i;
+
+    saved = setForeColor(Color(45));
+    title.left = rect->left;
+    title.right = rect->right;
+    title.top = rect->top + 3;
+    title.bottom = title.top + 18;
+    line.top = rect->top + 22;
+    line.bottom = line.top + 14;
+    line.left = rect->left + 36;
+    line.right = rect->right;
+    i = 0;
+    if (g_4b754a)
+        i = 1;
+    drawText(title, 0x22, levelTexts[i], 0xffff);
+    for (i = 2; i <= 5; i++) {
+        if (i - 1 == g_4b754a) {
+            drawOutlinedText(outlines[i - 2], 45, line, 1, levelTexts[i]);
+        } else {
+            setForeColor(Color(45));
+            drawText(line, 1, levelTexts[i], 0xffff);
+        }
+        line.top += 14;
+        line.bottom += 14;
+    }
+    setForeColor(saved);
 }
