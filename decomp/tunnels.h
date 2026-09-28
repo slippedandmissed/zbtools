@@ -103,10 +103,6 @@ extern short g_4b7548; /* @data 0x4b7548 */
 extern long g_4b7544; /* @data 0x4b7544 */
 extern short g_4b7fbc; /* @data 0x4b7fbc */
 void resetScene8();
-extern short g_4b7fc4; /* @data 0x4b7fc4 */
-extern short g_4b7fc6; /* @data 0x4b7fc6 */
-extern short g_4b7fc8; /* @data 0x4b7fc8 */
-extern short g_4b7fca; /* @data 0x4b7fca */
 extern short g_4b80a8; /* @data 0x4b80a8: the script last shown (debugging) */
 void fn_460642(short kind);
 short scene8Key(unsigned short key);
@@ -133,6 +129,10 @@ extern short g_4a7888; /* @data 0x4a7888: scene8Frame is running */
 extern short g_4b7fc0; /* @data 0x4b7fc0: Zoombinis still to go through */
 extern short g_4b7fc2; /* @data 0x4b7fc2 */
 extern unsigned long g_4b7fe0; /* @data 0x4b7fe0: when to make the next idle remark (view ticks) */
+extern short tunnelsSpeakers[4]; /* @data 0x4b7fc4: the four views that make the remarks (fn_460642) */
+extern short g_4b7fcc; /* @data 0x4b7fcc: the buttons' view */
+extern GroupList tunnelsGroups[1]; /* @data 0x4a76e8 */
+void openScene8();
 void fn_461135();
 void fn_461bec();
 void fn_4612b1();

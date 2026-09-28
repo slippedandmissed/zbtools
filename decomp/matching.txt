@@ -836,6 +836,7 @@
 0x0045bfc0 setArrivalHook
 0x0045bfcf drawFeature
 0x0045e2d8 resetScene8
+0x0045e441 openScene8
 0x0045e903 drawTunnelsButton
 0x0045e99c drawTunnelsButtons
 0x0045e9b9 fn_45e9b9

@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "e2memory.h"
 #include "features.h"
+#include "focus.h"
 #include "graphics.h"
 #include "loading.h"
 #include "module_4623b8.h"
@@ -214,7 +215,7 @@ void fn_4622f5()
 
 /* Scene 8's keys (with debugging on, g_4b8803, or else only 0x16f): t, T,
    w (W also sets g_4b807e) and e queue a remark (fn_460642), a shows the rules,
-   C, F, I and O step the views g_4b7fc4-g_4b7fca through their scripts, H
+   C, F, I and O step the views tunnelsSpeakers through their scripts, H
    adds 4 to g_4b8098. Returns whether the key was used. */
 /* @zoombi32 0x0045f63a */
 short scene8Key(unsigned short key)
@@ -293,22 +294,22 @@ short scene8Key(unsigned short key)
     case 'O':
         switch (key) {
         case 'C':
-            n = g_4b7fc4;
+            n = tunnelsSpeakers[0];
             first = 4000;
             i = 4038;
             break;
         case 'F':
-            n = g_4b7fc8;
+            n = tunnelsSpeakers[2];
             first = 4200;
             i = 4226;
             break;
         case 'I':
-            n = g_4b7fca;
+            n = tunnelsSpeakers[3];
             first = 4400;
             i = 4423;
             break;
         case 'O':
-            n = g_4b7fc6;
+            n = tunnelsSpeakers[1];
             first = 4600;
             i = 4617;
             break;
@@ -807,7 +808,7 @@ void fn_461e1a(ChosenSnoids *chosen, unsigned long *masks, unsigned long *pair, 
 }
 
 /* Queues a remark of the given kind for the cave's four characters (the
-   views g_4b7fc4-g_4b7fca) to say: one speaker's script (and one to follow
+   views tunnelsSpeakers) to say: one speaker's script (and one to follow
    it), then perhaps another speaker's reply (and its follow-up), picked with
    allocateSlot so that each comes round before any repeats. Kind 1 has a
    shorter set once W has been pressed (g_4b807e); kind 3 depends on
@@ -830,55 +831,55 @@ void fn_460642(short kind)
     case 0:
         switch (allocateSlot(&g_4a78c4, 10, 0)) {
                 case 0:
-                    speaker = g_4b7fc6;
+                    speaker = tunnelsSpeakers[1];
                     line = 0x1202;
-                    replier = g_4b7fc8;
+                    replier = tunnelsSpeakers[2];
                     reply = 0x1078;
                     break;
                 case 1:
-                    speaker = g_4b7fc8;
+                    speaker = tunnelsSpeakers[2];
                     line = 0x1079;
                     break;
                 case 2:
-                    speaker = g_4b7fc8;
+                    speaker = tunnelsSpeakers[2];
                     line = 0x107a;
                     break;
                 case 3:
-                    speaker = g_4b7fc8;
+                    speaker = tunnelsSpeakers[2];
                     line = 0x107b;
                     break;
                 case 4:
-                    speaker = g_4b7fc8;
+                    speaker = tunnelsSpeakers[2];
                     line = 0x107c;
                     break;
                 case 5:
-                    speaker = g_4b7fc4;
+                    speaker = tunnelsSpeakers[0];
                     line = 0xfb5;
-                    replier = g_4b7fca;
+                    replier = tunnelsSpeakers[3];
                     reply = 0x1138;
                     break;
                 case 6:
-                    speaker = g_4b7fc4;
+                    speaker = tunnelsSpeakers[0];
                     line = 0xfb6;
-                    replier = g_4b7fca;
+                    replier = tunnelsSpeakers[3];
                     reply = 0x1138;
                     break;
                 case 7:
-                    speaker = g_4b7fca;
+                    speaker = tunnelsSpeakers[3];
                     line = 0x1132;
-                    replier = g_4b7fc4;
+                    replier = tunnelsSpeakers[0];
                     reply = 0xfb7;
                     replyThen = 0xfbd;
                     break;
                 case 8:
-                    speaker = g_4b7fca;
+                    speaker = tunnelsSpeakers[3];
                     line = 0x1132;
-                    replier = g_4b7fc4;
+                    replier = tunnelsSpeakers[0];
                     reply = 0xfb7;
                     replyThen = 0xfbe;
                     break;
                 case 9:
-                    speaker = g_4b7fca;
+                    speaker = tunnelsSpeakers[3];
                     line = 0x1143;
         }
         break;
@@ -886,70 +887,70 @@ void fn_460642(short kind)
         if (g_4b807e != 1) {
             switch (allocateSlot(&g_4a78c8, 8, 0)) {
                     case 0:
-                        speaker = g_4b7fc6;
+                        speaker = tunnelsSpeakers[1];
                         line = 0x1203;
-                        replier = g_4b7fc4;
+                        replier = tunnelsSpeakers[0];
                         reply = 0xfba;
                         break;
                     case 1:
-                        speaker = g_4b7fc6;
+                        speaker = tunnelsSpeakers[1];
                         line = 0x1203;
-                        replier = g_4b7fc8;
+                        replier = tunnelsSpeakers[2];
                         reply = 0x1080;
                         break;
                     case 2:
-                        speaker = g_4b7fca;
+                        speaker = tunnelsSpeakers[3];
                         line = 0x113b;
-                        replier = g_4b7fc6;
+                        replier = tunnelsSpeakers[1];
                         reply = 0x1204;
                         break;
                     case 3:
-                        speaker = g_4b7fc6;
+                        speaker = tunnelsSpeakers[1];
                         line = 0x1205;
-                        replier = g_4b7fc8;
+                        replier = tunnelsSpeakers[2];
                         reply = 0x107f;
                         break;
                     case 4:
-                        speaker = g_4b7fc6;
+                        speaker = tunnelsSpeakers[1];
                         line = 0x1205;
-                        replier = g_4b7fc8;
+                        replier = tunnelsSpeakers[2];
                         reply = 0x107e;
                         break;
                     case 5:
-                        speaker = g_4b7fca;
+                        speaker = tunnelsSpeakers[3];
                         line = 0x113a;
-                        replier = g_4b7fc8;
+                        replier = tunnelsSpeakers[2];
                         reply = 0x107e;
                         break;
                     case 6:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfbb;
-                        replier = g_4b7fca;
+                        replier = tunnelsSpeakers[3];
                         reply = 0x113c;
                         break;
                     case 7:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfbc;
-                        replier = g_4b7fc8;
+                        replier = tunnelsSpeakers[2];
                         reply = 0x107f;
             }
         } else {
             switch (allocateSlot(&g_4a78c8, 4, 0)) {
                     case 0:
-                        speaker = g_4b7fc8;
+                        speaker = tunnelsSpeakers[2];
                         line = 0x107d;
                         break;
                     case 1:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfb8;
                         lineThen = 0xfb9;
                         break;
                     case 2:
-                        speaker = g_4b7fc6;
+                        speaker = tunnelsSpeakers[1];
                         line = 0x1206;
                         break;
                     case 3:
-                        speaker = g_4b7fca;
+                        speaker = tunnelsSpeakers[3];
                         line = 0x1139;
             }
         }
@@ -957,15 +958,15 @@ void fn_460642(short kind)
     case 2:
         switch (allocateSlot(&g_4a78d0, 3, 0)) {
                 case 0:
-                    speaker = g_4b7fca;
+                    speaker = tunnelsSpeakers[3];
                     line = 0x1144;
                     break;
                 case 1:
-                    speaker = g_4b7fca;
+                    speaker = tunnelsSpeakers[3];
                     line = 0x1145;
                     break;
                 case 2:
-                    speaker = g_4b7fca;
+                    speaker = tunnelsSpeakers[3];
                     line = 0x1146;
         }
         break;
@@ -973,103 +974,103 @@ void fn_460642(short kind)
         if (g_4b7fd0) {
             switch (allocateSlot(&g_4a78dc, 7, 0)) {
                     case 0:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc3;
                         break;
                     case 1:
-                        speaker = g_4b7fca;
+                        speaker = tunnelsSpeakers[3];
                         line = 0x1147;
                         break;
                     case 2:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc2;
                         break;
                     case 3:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc4;
                         break;
                     case 4:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc5;
                         break;
                     case 5:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc0;
                         break;
                     case 6:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc1;
             }
         } else if (countSnoidViews() == countChosenSnoids()) {
             switch (allocateSlot(&g_4a78d4, 8, 0)) {
                     case 0:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfbf;
                         break;
                     case 1:
-                        speaker = g_4b7fc6;
+                        speaker = tunnelsSpeakers[1];
                         line = 0x1209;
                         break;
                     case 2:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc6;
                         break;
                     case 3:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc2;
                         break;
                     case 4:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc4;
                         break;
                     case 5:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc5;
                         break;
                     case 6:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc0;
                         break;
                     case 7:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc1;
             }
         } else {
             switch (allocateSlot(&g_4a78d8, 9, 0)) {
                     case 0:
-                        speaker = g_4b7fc8;
+                        speaker = tunnelsSpeakers[2];
                         line = 0x1081;
                         break;
                     case 1:
-                        speaker = g_4b7fc8;
+                        speaker = tunnelsSpeakers[2];
                         line = 0x1082;
                         break;
                     case 2:
-                        speaker = g_4b7fc6;
+                        speaker = tunnelsSpeakers[1];
                         line = 0x1207;
                         break;
                     case 3:
-                        speaker = g_4b7fc6;
+                        speaker = tunnelsSpeakers[1];
                         line = 0x1208;
                         break;
                     case 4:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc2;
                         break;
                     case 5:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc4;
                         break;
                     case 6:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc5;
                         break;
                     case 7:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc0;
                         break;
                     case 8:
-                        speaker = g_4b7fc4;
+                        speaker = tunnelsSpeakers[0];
                         line = 0xfc1;
             }
         }
@@ -1814,4 +1815,115 @@ void scene8Frame()
         } while (!id && aside < 16);
     }
     g_4a7888 = 0;
+}
+
+/* Opens scene 8: its level's number of Zoombinis to go through (16-22)
+   and rules (fn_460e3d, fn_461135, fn_4612b1, fn_461bec), Tunnels.MHK,
+   the backdrop, images and scripts, the views (the four placed at the
+   doors, the characters, the buttons), the party, and a first remark. */
+/* @zoombi32 0x0045e441 */
+void openScene8()
+{
+    Point places[4] = {{98, 424}, {178, 415}, {453, 421}, {533, 430}};
+    short i;
+
+    g_4b7fb8 = g_4b7fba = 0;
+    resetScene8();
+    g_4b807e++;
+    g_4b7fbe = sceneLevel();
+    switch (g_4b7fbe) {
+    case 0:
+        g_4b7fc0 = 16;
+        break;
+    case 1:
+        g_4b7fc0 = 18;
+        break;
+    case 2:
+        g_4b7fc0 = 20;
+        break;
+    case 3:
+        g_4b7fc0 = 22;
+        break;
+    }
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(4000, 4699, 1);
+    addSoundRange(7000, 7099, 1);
+    addSoundRange(425, 499, 0);
+    addSoundRange(4700, 4799, 1);
+    addSoundRange(6000, 6099, 1);
+    addSoundRange(175, 199, 0);
+    addSoundRange(99, 99, 0);
+    addSoundRange(8500, 8599, 0);
+    openGameFile(&g_4b7fb4, "Tunnels.MHK");
+    fn_46be2e(g_4b7fb4);
+    loadPaths(1000);
+    loadTerrain(100);
+    drawBackdrop(300);
+    g_4a770c = loadImageBank(400, &g_4a7708);
+    loadFeatureGroup(5000, 0, 0);
+    loadFeatureGroup(6000, 1, 0);
+    loadFeatureGroup(7000, 2, 0);
+    loadFeatureGroup(9000, 3, 0);
+    loadFeatureGroup(4000, 4, 0);
+    loadFeatureGroup(4200, 5, 0);
+    loadFeatureGroup(4400, 6, 0);
+    loadFeatureGroup(4600, 7, 0);
+    loadScripts(5000, 4);
+    addScripts(6000, 12, 0);
+    addScripts(7000, 5, 0);
+    addScripts(9000, 7, 0);
+    loadSnoidScripts(8000, 8, 0);
+    addSnoidScripts(8500, 65, 5);
+    addScripts(4000, 39, 2);
+    addScripts(4200, 27, 2);
+    addScripts(4400, 24, 2);
+    addScripts(4600, 18, 2);
+    g_4b808c = addView(0x8000, drawCels, runViewScript, 9000, 0, 0, 0, 0);
+    for (i = 0; i < 4; i++)
+        placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 5000, 6, &places[i], 0, 0);
+    g_4b8092 = addView(0xc180000, drawCels, runViewScript, 7001, 6, 0, 0, 0);
+    {
+        short order[4] = {1, 2, 0, 3};
+
+        for (i = 0; i < 4; i++)
+            tunnelsSpeakers[order[i]] = addView(0xc180000, drawCels, runViewScript, order[i] + 6000, 6, 0, 0, 0);
+    }
+    for (i = 9001; i <= 9006; i++)
+        addView(0, drawCels, runViewScript, i, 6, 0, 0, 0);
+    g_4b7fc2 = addView(0xd181000, drawCels, runViewScript, 7000, 6, 0, 0, 0);
+    fn_4148da(10, 236);
+    g_4b7fcc = addView(0x1000, drawTunnelsButtons, fn_45e9b9, 0, 0, 0, 0, 0);
+    moveView(g_4b7fc2, 0, g_4b7fcc);
+    setViewPlaces(16, tunnelPlaces, 1);
+    makePartySnoids(0);
+    enterSnoids(100);
+    updateViews();
+    staggerSnoids(45, 30);
+    switch (g_4b7fbe) {
+    case 0:
+        fn_460e3d();
+        break;
+    case 1:
+        fn_461135();
+        break;
+    case 2:
+        fn_4612b1();
+        break;
+    case 3:
+        fn_461bec();
+        break;
+    }
+    setGroupLists(tunnelsGroups, 1, (short)0xc000);
+    drawTunnelsButton(1, 0, 0);
+    drawTunnelsButton(2, 0, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    chooseSnoids(0, 0);
+    resetViewClock();
+    g_4b7fb8 = 1;
+    g_4b8094 = countSnoidViews();
+    campHint((short *)(g_4a4ba0 + 0x2c));
+    g_4b966e = randomBetween(20069, 20070);
+    fn_460642(1);
+    g_4b7fe0 = randomBetween(5400, 10800);
 }
