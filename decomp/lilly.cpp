@@ -1482,3 +1482,153 @@ void placeJumper(View *view)
         break;
     }
 }
+
+/*
+ * Deals out the twelve squares' contents: three sets (3, 4 and 5 entries,
+ * copied from g_4a1e3c, g_4a1e56 and g_4a1b1e), each square taking one of
+ * its set's remaining entries at random.
+ */
+/* Not exact: register allocation (the original caches g_4af5b0's address
+   in edi and keeps the square in esi). */
+/* @zoombi32 0x0042ca39 */
+void dealSquares()
+{
+    short left1;
+    short left2;
+    short left3;
+    short *left;
+    short i;
+
+    for (i = 0; i < 3; i++) {
+        g_4af5bc[i] = g_4a1e3c[i];
+        g_4af5c4[i] = g_4a1e56[i];
+        g_4af5cc[i] = g_4a1b1e[i];
+    }
+    for (i = 3; i < 7; i++) {
+        g_4af5d4[i - 3] = g_4a1e3c[i];
+        g_4af5de[i - 3] = g_4a1e56[i];
+        g_4af5e8[i - 3] = g_4a1b1e[i];
+    }
+    for (i = 7; i < 12; i++) {
+        g_4af5f2[i - 7] = g_4a1e3c[i];
+        g_4af5fe[i - 7] = g_4a1e56[i];
+        g_4af60a[i - 7] = g_4a1b1e[i];
+    }
+    left1 = 2;
+    left2 = 3;
+    left3 = 4;
+    for (short n = 1; n < 13; n++) {
+        switch (n) {
+        case 1:
+        case 2:
+        case 3:
+            g_4af5b0[0] = g_4af5bc;
+            g_4af5b0[1] = g_4af5c4;
+            g_4af5b0[2] = g_4af5cc;
+            left = &left1;
+            break;
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            g_4af5b0[0] = g_4af5d4;
+            g_4af5b0[1] = g_4af5de;
+            g_4af5b0[2] = g_4af5e8;
+            left = &left2;
+            break;
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+        case 12:
+            g_4af5b0[0] = g_4af5f2;
+            g_4af5b0[1] = g_4af5fe;
+            g_4af5b0[2] = g_4af60a;
+            left = &left3;
+            break;
+        }
+        short k = randomBetween(0, *left);
+
+        g_4af616[n].a = g_4af5b0[0][k];
+        g_4af616[n].b = g_4af5b0[1][k];
+        g_4af616[n].c = g_4af5b0[2][k];
+        for (; k < *left + 1; k++) {
+            g_4af5b0[0][k] = g_4af5b0[0][k + 1];
+            g_4af5b0[1][k] = g_4af5b0[1][k + 1];
+            g_4af5b0[2][k] = g_4af5b0[2][k + 1];
+        }
+        (*left)--;
+    }
+}
+
+/*
+ * A lilly view's update: when reset, lays out the first frame of its script
+ * ('SCRB' by its kind), offset by where it stands if it has flag 0x800000,
+ * and sets its bounds. The original stores each cel's y in the rectangle's
+ * right edge rather than its top, which is kept as written.
+ */
+/* Not exact: register allocation (the original keeps `left` in edi and
+   reads `view` from the stack each time). */
+/* @zoombi32 0x00426fd3 */
+void layOutLillyView(View *view, short region)
+{
+    ShortRect rect;
+    ShortRect bounds;
+    unsigned short *image;
+    short offsetX;
+    short offsetY;
+    long resource;
+    short *at;
+    short *cel;
+    short left;
+    short word;
+
+    resource = 0;
+    if (view->reset) {
+        view->changed = 1;
+        view->reset = 0;
+        at = loadSwappedResource(&resource, view->kind, RESOURCE_TYPE('S', 'C', 'R', 'B')) + 1;
+        if (view->flags & 0x800000) {
+            view->body.unknownAa = at[1];
+            view->body.unknownAc = at[2];
+            offsetX = view->body.x - view->body.unknownAa;
+            offsetY = view->body.y - view->body.unknownAc;
+        } else {
+            offsetX = offsetY = 0;
+        }
+        cel = (short *)&view->body;
+        left = 24;
+        bounds.left = bounds.right = bounds.top = bounds.bottom = 0;
+        do {
+            left--;
+            word = *at++;
+            if (!word) {
+                at += 2;
+                *cel++ = 0;
+                *cel++ = 0;
+                *cel++ = 0;
+            } else if (word > 0) {
+                *cel++ = word;
+                if (g_4ac0d8 == 2) {
+                    image = (unsigned short *)((char *)g_4ac178 + g_4ac178->offsets[word]);
+                    *cel++ = rect.left = offsetX + *at++ - g_4ac1a0[word];
+                    *cel++ = rect.right = offsetY + *at++ - g_4ac1a4[word];
+                } else if (g_4ac0d8 == 3) {
+                    image = (unsigned short *)((char *)g_4ac17c + g_4ac17c->offsets[word]);
+                    *cel++ = rect.left = offsetX + *at++;
+                    *cel++ = rect.right = offsetY + *at++;
+                }
+                rect.right = swapShort(image[0]) + rect.left;
+                rect.bottom = swapShort(image[1]) + rect.top;
+                unionRect(&bounds, &rect);
+            } else {
+                if (word < -0x100)
+                    at++;
+                if (left)
+                    *cel = left = 0;
+            }
+        } while (left);
+        view->body.bounds = bounds;
+        fn_46c602(&resource);
+    }
+}

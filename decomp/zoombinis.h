@@ -4801,6 +4801,30 @@ void drawSquare(short row, short column);
 void drawBoard(short);
 void drawCursorSquare(View *view);
 void placeJumper(View *view);
+void dealSquares();
+void layOutLillyView(View *view, short region);
+extern short g_4a1e3c[12];
+extern short g_4a1e56[12];
+extern short *g_4af5b0[3];
+extern short g_4af5bc[4];
+extern short g_4af5c4[4];
+extern short g_4af5cc[4];
+extern short g_4af5d4[5];
+extern short g_4af5de[5];
+extern short g_4af5e8[5];
+extern short g_4af5f2[6];
+extern short g_4af5fe[6];
+extern short g_4af60a[6];
+/* What a square is dealt (by dealSquares). */
+struct LillyDeal
+{
+    short a;
+    short b;
+    short c;
+};
+extern LillyDeal g_4af616[13];
+extern short *g_4ac1a0;
+extern short *g_4ac1a4;
 void searchStep(short attribute, short layer, short row, short column);
 extern short g_4a1e16[];
 extern short g_4a1e28[4];
