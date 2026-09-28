@@ -3,6 +3,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "zoombinis.h"
@@ -487,4 +488,107 @@ void scene0Frame()
         }
     }
     g_4a7412 = 0;
+}
+
+/* A monument's plaque (a view draw; its interval holds the record shown,
+   from 1, or g_4b7eba the one picked): its cels, then five lines about the
+   record: the building's dedication, the group's feat, "when traveling
+   was", the level, and the date, in colours by the plaque (its kind,
+   1004-1007). */
+/* Not exact: the original draws each cel with
+   drawImageData(image, *cel++, *cel++, 8), which relies on BCC's
+   left-to-right argument order (unspecified in C++), so the loop here
+   indexes and then steps; and the original keeps `i` in edi (as `bank`
+   was), not on the stack. */
+/* @zoombi32 0x0045dc5b */
+void drawPlaque(View *view)
+{
+    Font *oldFont;
+    Color saved;
+    ShortRect rect;
+    short building;
+    short level;
+    short dy;
+    short outline;
+    short color;
+    char text[256];
+    short i;
+    short line;
+
+    if (!view->interval)
+        return;
+    oldFont = setFont(fonts[1]);
+    saved = setForeColor(Color(10));
+    switch (view->kind) {
+    case 1004:
+    default:
+        dy = 20;
+        outline = 199;
+        color = 45;
+        break;
+    case 1005:
+        dy = 22;
+        outline = 199;
+        color = 45;
+        break;
+    case 1006:
+        dy = 14;
+        outline = 212;
+        color = 45;
+        break;
+    case 1007:
+        dy = 14;
+        outline = 45;
+        color = 205;
+        break;
+    }
+    {
+        short *cel = (short *)view->body.cels;
+        ImageBank *bank = groupBanks[view->body.scriptGroup];
+
+        while (*cel && bank->count >= *cel) {
+            drawImageData(bankImage(bank, cel[0]), cel[1], cel[2], 8);
+            cel += 3;
+        }
+    }
+    i = (view->interval - 1) & 0xf;
+    building = monumentBuildings[i];
+    if (g_4b7eba) {
+        i = g_4b7eba - 1;
+        building = monumentBuildings[g_4b7eb6 - 1];
+    }
+    rect.left = view->body.bounds.left;
+    rect.right = view->body.bounds.right;
+    level = recordLevels()[i];
+    for (line = 0; line < 5; line++) {
+        rect.top = view->body.bounds.top + dy + plaqueLines[line];
+        rect.bottom = view->body.bounds.top + dy + plaqueLines[line + 1];
+        switch (line) {
+        case 0:
+            drawOutlinedText(outline, color, rect, 0x22, monumentTexts[building]);
+            break;
+        case 1:
+            setFont(fonts[2]);
+            drawOutlinedText(outline, color, rect, 0x22,
+                             featTexts[((recordGroups()[i] - 1) * 4 + recordLevels()[i] - 1) & 0xf]);
+            break;
+        case 2:
+            setFont(fonts[1]);
+            drawOutlinedText(outline, color, rect, 0x22, levelTexts[23]);
+            break;
+        case 3:
+            setFont(fonts[2]);
+            drawOutlinedText(outline, color, rect, 0x22, levelTexts[level + 1]);
+            break;
+        case 4:
+            setFont(fonts[1]);
+            sprintf(text, "%s %d, %d", levelTexts[(unsigned char)recordMonths()[i] + 10],
+                    (short)(unsigned char)recordDays()[i], recordYears()[i]);
+            drawOutlinedText(outline, color, rect, 0x22, text);
+            break;
+        }
+    }
+    view->interval = 0;
+    setForeColor(saved);
+    setFont(oldFont);
 }

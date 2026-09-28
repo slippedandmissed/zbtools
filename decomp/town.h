@@ -56,7 +56,13 @@ extern unsigned char g_4b7f15; /* @data 0x4b7f15: and hour hand */
 extern short g_4a7412; /* @data 0x4a7412: scene0Frame is running */
 extern char logoPath[]; /* @data 0x4b7cfa */
 
+extern char monumentBuildings[16]; /* @data 0x4a536c: the building for each record */
+extern char *monumentTexts[16]; /* @data 0x4a537c: "this monument was made to honor the zoombinis who:", ... */
+extern char *featTexts[16]; /* @data 0x4a53bc: by group and level: "ambled past allergic cliffs, ...", ... */
+extern short plaqueLines[6]; /* @data 0x4a7594: the plaque's lines' tops */
+
 void openScene0();
+void drawPlaque(View *view);
 void scene0Frame();
 void drawClock(View *view);
 void fn_45db25(View *view);
