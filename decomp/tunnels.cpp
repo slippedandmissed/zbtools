@@ -554,3 +554,115 @@ void fn_460e3d()
         g_4b7f18.rules[0].values[0] = (picked >> 24) & 0xf;
     }
 }
+
+/* Finds a free waiting place (of tunnelPlaces, noting which Zoombini is
+   nearest each in sortedIds) for a Zoombini coming from `side`: one of the
+   two by that side's door if free; otherwise moves Zoombinis along the
+   row toward it to free one, and takes the first free place, into
+   *spot. */
+/* @zoombi32 0x00460021 */
+void fn_460021(short *spot, short side)
+{
+    short nearRight[2] = {15, 10};
+    short nearLeft[2] = {11, 6};
+    short third;
+    Point none = {0, 0};
+    Snoid *snoid;
+    short moving;
+    short i;
+    short k;
+    short skip;
+    short found;
+    short j;
+    short second;
+
+    spotTaken(&none, 0, 500);
+    for (k = 0; k < 16; k++) {
+        skip = 0;
+        found = spotNear(&tunnelPlaces[k], 500, skip);
+        for (j = 0; found && j < k; j++)
+            if (found == sortedIds[j]) {
+                skip++;
+                found = spotNear(&tunnelPlaces[k], 500, skip);
+                j = 0;
+            }
+        sortedIds[k] = found;
+    }
+    found = -1;
+    if (side) {
+        for (j = 0; found == -1 && j < 2; j++)
+            if (!sortedIds[nearRight[j]])
+                found = nearRight[j];
+    } else {
+        for (j = 0; found == -1 && j < 2; j++)
+            if (!sortedIds[nearLeft[j]])
+                found = nearLeft[j];
+    }
+    if (found != -1) {
+        *spot = found;
+        return;
+    }
+    for (k = 0; k < 15; k++) {
+        i = k;
+        if (k >= 11 && !side)
+            k = 26 - k;
+        if (!sortedIds[k]) {
+            skip = second = third = 0;
+            if (k == 0) {
+                skip = 6;
+            } else if (k == 5 || k == 6) {
+                skip = 5;
+            } else if (k <= 4) {
+                skip = 5;
+                second = 6;
+            } else if (k <= 10) {
+                skip = 4;
+                second = 5;
+            } else if (side) {
+                if (k < 15)
+                    skip = 1;
+                if (k < 14)
+                    second = 2;
+                if (k < 13)
+                    third = 3;
+            } else {
+                if (k > 11)
+                    skip = -1;
+                if (k > 12)
+                    second = -2;
+                if (k > 13)
+                    third = -3;
+            }
+            for (moving = 1; skip && moving;) {
+                if (sortedIds[k + skip]) {
+                    snoid = findSnoid(sortedIds[k + skip], 1);
+                    if (snoid) {
+                        *(Point *)&snoid->targetX = tunnelPlaces[k];
+                        setSnoidAction(snoid, 7, 0);
+                        sortedIds[k] = sortedIds[k + skip];
+                        sortedIds[k + skip] = 0;
+                        moving = 0;
+                    }
+                }
+                skip = second;
+                second = third;
+                third = 0;
+            }
+        }
+        k = i;
+    }
+    found = -1;
+    if (side) {
+        for (j = 0; found == -1 && j < 2; j++)
+            if (!sortedIds[nearRight[j]])
+                found = nearRight[j];
+    } else {
+        for (j = 0; found == -1 && j < 2; j++)
+            if (!sortedIds[nearLeft[j]])
+                found = nearLeft[j];
+    }
+    for (k = 0; found == -1 && k < 16; k++)
+        if (!sortedIds[k])
+            found = k;
+    *spot = found;
+}
