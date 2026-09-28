@@ -196,7 +196,7 @@ short mazeKey(unsigned short key)
    is the Zoombini's view): the entry of its own table (words 37 on) at its
    index (word 36), moving it into `group`. */
 /* @zoombi32 0x0043583c */
-void fn_43583c(View *view, short group, short, char unknownF8)
+void fn_43583c(View *view, short group, ViewNotify, char unknownF8)
 {
     short *parts = (short *)&view->body;
     View *other = findView(parts[50]);
@@ -213,7 +213,7 @@ void fn_43583c(View *view, short group, short, char unknownF8)
 /* The same, nudging the Zoombini by its pose (word 20) first and starting
    script 14000 on by its index. */
 /* @zoombi32 0x00435882 */
-void fn_435882(View *view, short group, short, char unknownF8)
+void fn_435882(View *view, short group, ViewNotify, char unknownF8)
 {
     short *parts = (short *)&view->body;
     View *other = findView(parts[50]);
@@ -249,7 +249,7 @@ void fn_435882(View *view, short group, short, char unknownF8)
 
 /* The same with script 14003, the paired view assumed to exist. */
 /* @zoombi32 0x00435925 */
-void fn_435925(View *view, short group, short, char unknownF8)
+void fn_435925(View *view, short group, ViewNotify, char unknownF8)
 {
     short *parts = (short *)&view->body;
     View *other = findView(parts[50]);
@@ -918,4 +918,84 @@ void fn_4350be(View *view, short pose)
         groupViews(parts[41], view->id, parts[42], 0, 0, 0);
     else if (helper)
         groupViews(parts[41], view->id, 0, 0, 0, 0);
+}
+
+/* The maze views' notify: 50 starts the view's second view (g_4afd26, by
+   its word 45); 61, 62, 71, 72, 81 and 82 start its paired Zoombini's
+   scripts; 65, 75 and 85 fn_43596d; 64, 74 and 84 list the Zoombini's view
+   in g_4b08b8 (74 also forgets it); 66, 76 and 86 free its place. */
+/* @zoombi32 0x00436092 */
+void fn_436092(View *view, short event)
+{
+    short *parts;
+    View *other;
+
+    switch (event) {
+    case 50:
+        parts = (short *)&view->body;
+        other = findView(g_4afd26[parts[45]]);
+        if (other) {
+            setViewScript(other, g_4a2324[parts[45]], 1);
+            groupViews(other->id, other->id, 0, 0, 0, 0);
+        }
+        break;
+    case 61:
+        fn_43583c(view, view->body.group, fn_436092, 0);
+        break;
+    case 62:
+        fn_435882(view, view->body.group, fn_436092, 0);
+        break;
+    case 64:
+        parts = (short *)&view->body;
+        g_4b08b8[g_4b09fa] = parts[50];
+        g_4b09fa++;
+        break;
+    case 65:
+        fn_43596d(view, view->body.group, fn_436092, 1);
+        break;
+    case 66:
+        parts = (short *)&view->body;
+        claimPlacedView(parts[44], 0);
+        g_4afc6c[parts[44]] = 0;
+        break;
+    case 71:
+        fn_43583c(view, view->body.group, fn_436092, 0);
+        break;
+    case 72:
+        fn_435882(view, view->body.group, fn_436092, 1);
+        break;
+    case 74:
+        parts = (short *)&view->body;
+        g_4b08b8[g_4b09fa] = parts[50];
+        g_4b09fa++;
+        parts[50] = 0;
+        break;
+    case 75:
+        fn_43596d(view, view->body.group, fn_436092, 0);
+        break;
+    case 76:
+        parts = (short *)&view->body;
+        claimPlacedView(parts[44], 0);
+        g_4afc6c[parts[44]] = 0;
+        break;
+    case 81:
+        fn_43583c(view, view->body.group, fn_436092, 0);
+        break;
+    case 82:
+        fn_435882(view, view->body.group, fn_436092, 1);
+        break;
+    case 84:
+        parts = (short *)&view->body;
+        g_4b08b8[g_4b09fa] = parts[50];
+        g_4b09fa++;
+        break;
+    case 85:
+        fn_43596d(view, view->body.group, fn_436092, 0);
+        break;
+    case 86:
+        parts = (short *)&view->body;
+        claimPlacedView(parts[44], 0);
+        g_4afc6c[parts[44]] = 0;
+        break;
+    }
 }

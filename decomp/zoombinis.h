@@ -5503,9 +5503,9 @@ void closeMaze();
 short mazeKey(unsigned short key);
 extern short *g_4afbe8; /* hot spots: x */
 extern short *g_4afbec; /* and y */
-void fn_43583c(View *view, short group, short, char unknownF8);
-void fn_435882(View *view, short group, short, char unknownF8);
-void fn_435925(View *view, short group, short, char unknownF8);
+void fn_43583c(View *view, short group, ViewNotify, char unknownF8);
+void fn_435882(View *view, short group, ViewNotify, char unknownF8);
+void fn_435925(View *view, short group, ViewNotify, char unknownF8);
 void fn_436321(View *view);
 void fn_436356(View *view);
 extern short g_4b0a0a;
@@ -5574,3 +5574,9 @@ short fn_4371b3(short id);
 extern short g_4b0d26;
 extern Point *g_4afbf0; /* where each square is (13 to a row) */
 void fn_4350be(View *view, short pose);
+extern short g_4afd26[];
+extern short g_4a2324[];
+extern short g_4b08b8[];
+extern short g_4b09fa;
+extern short g_4afc6c[];
+void fn_43596d(View *view, short group, ViewNotify, char unknownF8);
