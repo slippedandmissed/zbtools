@@ -475,6 +475,103 @@ void fn_43e370()
     }
 }
 
+/*
+ * Steps a maze Zoombini on a square in its direction (word 20, set from
+ * word 38 of the view `other`, which, if its word 39 is set, first turns
+ * to its next open way (words 34-37; sound 5101/5102 in turn) and gets
+ * pose 3). Lands on a square of kind 5 (g_4b061a): that square's view
+ * gives up its partner (word 43, listed in g_4b0930), which takes the
+ * direction. Then places it and starts its walking script (from word 21)
+ * with its helper view's (script 10000 on), grouped. Reads `other`'s words
+ * even when there's no such view.
+ */
+/* Not exact: the original keeps `other` in eax from the start (loading it
+   before `view`), and evaluates startSnoidScript's script number before
+   the Snoid's address; otherwise the same. */
+/* @zoombi32 0x0043a2c8 */
+void fn_43a2c8(View *view, short other)
+{
+    short *parts = (short *)&view->body;
+    View *paired = findView(other);
+    short *its;
+    View *helper;
+
+    if (paired)
+        its = (short *)&paired->body;
+    parts[20] = its[38];
+    if (its[39]) {
+        queueViewSound(g_4a2116 + 5101, 0);
+        g_4a2116++;
+        if (g_4a2116 > 1)
+            g_4a2116 = 0;
+        its[38]++;
+        if (its[38] > 3)
+            its[38] = 0;
+        while (!its[34 + its[38]]) {
+            its[38]++;
+            if (its[38] > 3)
+                its[38] = 0;
+        }
+        ((Snoid *)&paired->body)->unknownF4 = 3;
+    }
+    parts[31] = parts[33];
+    parts[32] = parts[34];
+    switch (parts[20]) {
+    case 0:
+        parts[34]--;
+        if (parts[34] < 0)
+            parts[34] = 0;
+        break;
+    case 1:
+        parts[33]++;
+        if (parts[33] > 12)
+            parts[33] = 12;
+        break;
+    case 2:
+        parts[34]++;
+        if (parts[34] > 12)
+            parts[34] = 12;
+        break;
+    case 3:
+        parts[33]--;
+        if (parts[33] < 0)
+            parts[33] = 0;
+        break;
+    }
+    short kind = g_4b061a[parts[33]][parts[34]];
+
+    if (kind == 5) {
+        paired = findView(g_4b04c8[parts[33]][parts[34]]);
+        if (paired) {
+            its = (short *)&paired->body;
+            if (its[43]) {
+                g_4b0930[g_4b09fe] = its[43];
+                g_4b09fe++;
+                paired = findView(its[43]);
+                its[43] = 0;
+                if (paired) {
+                    its = (short *)&paired->body;
+                    its[20] = parts[20];
+                }
+            }
+        }
+    }
+    *(Point *)&view->body.x = (g_4afbf0 + parts[32])[parts[31] * 13];
+    view->body.x += 4;
+    view->body.y += -38;
+    helper = findView(parts[41]);
+    if (helper) {
+        setViewScript(helper, parts[20] + 10000, 1);
+        helper->body.x = view->body.x;
+        helper->body.y = view->body.y;
+        helper->placed = fn_436321;
+    }
+    startSnoidScript((Snoid *)&view->body, parts[21 + parts[20]], 0, 0);
+    view->notify = fn_43638b;
+    if (helper)
+        groupViews(view->id, helper->id, 0, 0, 0, 0);
+}
+
 /* Moves a maze Zoombini on to the square it's heading for (words 33 and
    34), pairs the view `other` with it, and starts its script for its pose
    (from words 25 on) with its helper view's (script 10036 on), grouped. */
@@ -1497,4 +1594,67 @@ void netButtonClicked(short button)
         drawNetPanel(3, 1, 1);
     }
     g_4b15ac = 1;
+}
+
+/*
+ * Which entry (of g_4b142e) of the tables g_4b0e78 and g_4b0f72 (and, from
+ * level 2 (g_4b12ac), g_4b106c) holds the codes g_4b1446 and g_4b1442 (and
+ * g_4b143e), in the order g_4b1178 (levels 0-1) or g_4b1468 (from level 2)
+ * says; -1 if none.
+ */
+/* Not exact: the original keeps all four table pointers in registers (edx,
+   ecx, esi, edi) with no stack frame; BCC leaves one on the stack, in any
+   declaration order. */
+/* @zoombi32 0x0043dbf3 */
+short findCodeEntry()
+{
+    short *count = &g_4b142e;
+    short *first = g_4b0e78;
+    short *code = &g_4b1446;
+    short *second = g_4b0f72;
+    short i;
+
+    switch (g_4b12ac) {
+    case 0:
+    case 1:
+        if (g_4b1178 == 2) {
+            for (i = 0; i < *count; i++)
+                if (first[i] == *code && second[i] == g_4b1442)
+                    return i;
+        } else {
+            for (i = 0; i < *count; i++)
+                if (second[i] == *code && first[i] == g_4b1442)
+                    return i;
+        }
+        break;
+    case 2:
+    case 3:
+        if (g_4b1468 == 0) {
+            for (i = 0; i < *count; i++)
+                if (first[i] == *code && second[i] == g_4b1442 && g_4b106c[i] == g_4b143e)
+                    return i;
+        } else if (g_4b1468 == 1) {
+            for (i = 0; i < *count; i++)
+                if (first[i] == g_4b1442 && second[i] == *code && g_4b106c[i] == g_4b143e)
+                    return i;
+        } else if (g_4b1468 == 2) {
+            for (i = 0; i < *count; i++)
+                if (first[i] == g_4b143e && second[i] == *code && g_4b106c[i] == g_4b1442)
+                    return i;
+        } else if (g_4b1468 == 3) {
+            for (i = 0; i < *count; i++)
+                if (first[i] == *code && second[i] == g_4b143e && g_4b106c[i] == g_4b1442)
+                    return i;
+        } else if (g_4b1468 == 4) {
+            for (i = 0; i < *count; i++)
+                if (first[i] == g_4b1442 && second[i] == g_4b143e && g_4b106c[i] == *code)
+                    return i;
+        } else if (g_4b1468 == 5) {
+            for (i = 0; i < *count; i++)
+                if (first[i] == g_4b143e && second[i] == g_4b1442 && g_4b106c[i] == *code)
+                    return i;
+        }
+        break;
+    }
+    return -1;
 }
