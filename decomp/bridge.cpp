@@ -8,6 +8,7 @@
 #include "debug.h"
 #include "e2memory.h"
 #include "features.h"
+#include "focus.h"
 #include "graphics.h"
 #include "loading.h"
 #include "module_4623b8.h"
@@ -692,4 +693,84 @@ void makeBridgeRule()
     }
     disposePtr(masks);
     disposePtr(counts);
+}
+
+/* A view draw: draws both buttons, unlit. */
+/* @zoombi32 0x0041a948 */
+void drawBridgeButtons(View *)
+{
+    drawBridgeButton(1, 0, 0);
+    drawBridgeButton(2, 0, 0);
+}
+
+/* Opens scene 7: bridge.mhk, its sounds, images and scripts, the two
+   placed spots at the bridges' ends, the views, the party, and the rule
+   for the level (makeBridgeRule). */
+/* @zoombi32 0x0041a506 */
+void openScene7()
+{
+    Point places[16] = {{176, 304}, {169, 327}, {144, 283}, {147, 355}, {124, 318}, {119, 379},
+                        {108, 284}, {99, 345}, {88, 414}, {69, 262}, {79, 303}, {78, 370},
+                        {61, 346}, {45, 301}, {36, 359}, {30, 404}};
+    Point ends[2] = {{116, 104}, {128, 203}};
+    short i;
+
+    g_4ab788 = g_4ab78a = 0;
+    resetScene7();
+    g_4ab790 = sceneLevel();
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(1200, 1201, 1);
+    addSoundRange(1000, 1099, 1);
+    addSoundRange(1216, 1226, 1);
+    addSoundRange(1202, 1213, 1);
+    addSoundRange(1214, 1215, 1);
+    addSoundRange(175, 199, 0);
+    openGameFile(&g_4ab784, "bridge.mhk");
+    fn_46be2e(g_4ab784);
+    loadTerrain(1600);
+    drawBackdrop(1000);
+    loadFeatureGroup(1100, 0, 0);
+    loadFeatureGroup(1200, 1, 0);
+    loadFeatureGroup(1300, 2, 0);
+    loadScripts(1100, 7);
+    addScripts(1200, 49, 10);
+    addScripts(1300, 2, 0);
+    loadSnoidScripts(1000, 20, 20);
+    addSnoidScripts(2000, 25, 5);
+    g_4ab820 = loadImageBank(1400, &g_4a0e24);
+    fn_4148da(10, 236);
+    for (i = 0; i < 2; i++)
+        placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 1300, 7, &ends[i], 0, 0);
+    g_4ab7e2 = addView(0x91c8000, drawCels, runViewScript, 1105, 6, 0, 0, 0);
+    g_4ab7da = 0;
+    i = g_4ab7da + 1202;
+    g_4ab7de = addView(0x8108000, drawCels, runViewScript, i, 6, 0, 0, 0);
+    g_4ab7dc = addView(0x8108000, drawCels, runViewScript, 1201, 6, 0, 0, 0);
+    g_4ab7e0 = addView(0x8108000, drawCels, runViewScript, 1200, 6, 0, 0, 0);
+    for (i = 1100; i <= 1105; i++)
+        if (i == 1103)
+            g_4ab7e4 = addView(0x100000, drawCels, runViewScript, i, 0, 0, 0, 0);
+        else
+            addView(0, drawCels, runViewScript, i, 0, 0, 0, 0);
+    addView(0x8000, drawCels, runViewScript, 1106, 0, 0, 0, 0);
+    addView(0x1000, drawBridgeButtons, fn_41a965, 0, 0, 0, 0, 0);
+    setViewPlaces(16, places, 1);
+    makePartySnoids(0);
+    enterSnoids(0);
+    updateViews();
+    staggerSnoids(45, 0);
+    makeBridgeRule();
+    setGroupLists(bridgeGroups, 1, (short)0xc000);
+    drawBridgeButton(1, 0, 0);
+    drawBridgeButton(2, 0, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    chooseSnoids(0, 0);
+    resetViewClock();
+    startBridgeTimer();
+    g_4ab788 = 1;
+    g_4ab82e = countSnoidViews();
+    queueViewSound(997, 0);
+    switch (campHint((short *)(g_4a4ba0 + 0x2a))) {
+    }
 }

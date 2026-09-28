@@ -6,6 +6,7 @@
 #ifndef BRIDGE_H
 #define BRIDGE_H
 
+extern GroupList bridgeGroups[1]; /* @data 0x4a0e04 */
 extern SceneButton bridgeButtons[2]; /* @data 0x4a0d88 */
 extern long g_4a0e24; /* @data 0x4a0e24 */
 extern Point upperPlaces[16]; /* @data 0x4a0e28: where the Zoombinis across the upper bridge stand */
@@ -27,6 +28,8 @@ extern short g_4ab7d8; /* @data 0x4ab7d8 */
 extern short g_4ab7da; /* @data 0x4ab7da: Zoombinis sent back (up to 6) */
 extern short g_4ab7dc; /* @data 0x4ab7dc */
 extern short g_4ab7e0; /* @data 0x4ab7e0 */
+extern short g_4ab7de; /* @data 0x4ab7de */
+extern short g_4ab7e2; /* @data 0x4ab7e2 */
 extern short g_4ab7e4; /* @data 0x4ab7e4 */
 extern short g_4ab7e6; /* @data 0x4ab7e6 */
 extern short g_4ab7ea; /* @data 0x4ab7ea */
@@ -51,6 +54,8 @@ extern unsigned long g_4ab838; /* @data 0x4ab838 */
 void startBridgeTimer();
 unsigned long bridgeTimer();
 void resetScene7();
+void drawBridgeButtons(View *);
+void openScene7();
 void drawBridgeButton(short which, short lit, short show);
 void fn_41a965(View *, short region);
 void closeScene7();

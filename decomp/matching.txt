@@ -305,7 +305,9 @@
 0x0041a404 startBridgeTimer
 0x0041a40f bridgeTimer
 0x0041a41b resetScene7
+0x0041a506 openScene7
 0x0041a8af drawBridgeButton
+0x0041a948 drawBridgeButtons
 0x0041a965 fn_41a965
 0x0041a9d7 closeScene7
 0x0041b203 scene7Key
