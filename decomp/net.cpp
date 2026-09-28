@@ -171,3 +171,66 @@ void fn_43a5f6(View *after, unsigned long flags)
             spliceList((Link *)after, (Link *)fn_43a69a(first));
     }
 }
+
+/* A view's placing: a second cel, from its word 20, where the first is. */
+/* @zoombi32 0x0043d6e2 */
+void fn_43d6e2(View *view)
+{
+    short *parts = (short *)&view->body;
+
+    parts[3] = parts[20];
+    parts[4] = parts[1];
+    parts[5] = parts[2];
+    parts[6] = 0;
+}
+
+/* Sets g_4b15a8 if there are Zoombinis chosen and either at least
+   g_4b15ae of them or 625 counted in the game (the whole population). */
+/* @zoombi32 0x00440286 */
+void fn_440286()
+{
+    g_4b15a8 = 0;
+    short count = countChosenSnoids();
+
+    if (count)
+        g_4b15a8 = count >= g_4b15ae || *(short *)(g_4a4ba0 + 0x48) >= 625;
+}
+
+/* Closes the scene. */
+/* @zoombi32 0x0043b820 */
+void closeNet()
+{
+    if (g_4b12a8) {
+        g_4b12a8 = 0;
+        short saved = fn_46bee9(1);
+
+        clearViews();
+        unloadSounds();
+        fn_46c602(&g_4a2e54);
+        fn_46bee9(saved);
+        fn_46ca9c(&g_4b12a4);
+        fadeOutViews();
+        fn_4624fc();
+    }
+}
+
+/* Draws image `which` of the bank g_4b159c at (x, y) by its hot spot
+   (g_4a3386, g_4a339c). */
+/* @zoombi32 0x0043f985 */
+void fn_43f985(short which, short x, short y)
+{
+    if (which)
+        drawImageData((unsigned short *)(g_4b159c->offsets[which] + (char *)g_4b159c), x - g_4a3386[which],
+                      y - g_4a339c[which], 8);
+}
+
+/* Adds the views g_4b15b0 (script 4104) and g_4b15b2 (4105) if they
+   aren't there. */
+/* @zoombi32 0x00440218 */
+void fn_440218()
+{
+    if (!g_4b15b0)
+        g_4b15b0 = addView(0x800c000, drawCels, runViewScript, 4104, 7, 0, 0, 0);
+    if (!g_4b15b2)
+        g_4b15b2 = addView(0x8008000, drawCels, runViewScript, 4105, 9, 0, 0, 0);
+}

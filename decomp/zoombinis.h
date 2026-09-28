@@ -5675,3 +5675,18 @@ void openMaze();
 void fn_439560(Snoid *snoid);
 View *fn_43a69a(View *list);
 void fn_43a5f6(View *after, unsigned long flags);
+extern short g_4b15a8;
+extern short g_4b15ae;
+extern short g_4b12a8; /* the scene is open */
+extern long g_4a2e54;
+extern long g_4b12a4;
+extern ImageBank *g_4b159c;
+extern char g_4a3386[];
+extern char g_4a339c[];
+extern short g_4b15b0;
+extern short g_4b15b2;
+void fn_43d6e2(View *view);
+void fn_440286();
+void closeNet();
+void fn_43f985(short which, short x, short y);
+void fn_440218();
