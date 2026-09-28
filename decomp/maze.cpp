@@ -1079,3 +1079,68 @@ void fn_43596d(View *view, short group, ViewNotify, char unknownF8)
         }
     }
 }
+
+/*
+ * Picks the value (1-20, not `exclude`) with the fewest (non-zero) counts
+ * in g_4aff9a for which some row of g_4afe5a has that feature in a column
+ * where no row already taken (g_4b0770) has the same one; takes that row
+ * (into g_4b0770, up to 20), clears the rows with the value, recounts
+ * g_4aff9a, and returns the value (0: none).
+ */
+/* Not exact: the original tests the outer loop's condition before its
+   first pass (BCC drops that test for a constant start however the loop is
+   written), and copies `v` to `best` through dx rather than ax. */
+/* @zoombi32 0x0043780d */
+short fn_43780d(short exclude)
+{
+    short v;
+    short best;
+    short least;
+    short fresh;
+    short bestRow;
+    short row;
+    short column;
+    short k;
+
+    for (v = 1, best = 0, bestRow = -1, least = 21; v < 21; v++) {
+        if (g_4aff9a[v] > 0 && g_4aff9a[v] <= least && exclude != v)
+            for (row = 0; row < g_4afc36; row++)
+                for (column = 0; column < 4; column++) {
+                    fresh = 1;
+                    if (g_4afe5a[row][column] > 0 && g_4afe5a[row][column] + g_4a2634[column] == v) {
+                        for (k = 0; k < 20 && g_4b00d0 < 4; k++)
+                            if (g_4b0770[k][column] > 0 && g_4b0770[k][column] == g_4afe5a[row][column])
+                                fresh = 0;
+                        if (fresh) {
+                            best = v;
+                            bestRow = row;
+                            least = g_4aff9a[v];
+                            row = g_4afc36;
+                        }
+                        column = 4;
+                    }
+                }
+    }
+    if (best) {
+        fillMemory(g_4aff9a, 0, 42);
+        if (g_4b00d0 < 20) {
+            g_4b0770[g_4b00d0][0] = g_4afe5a[bestRow][0];
+            g_4b0770[g_4b00d0][1] = g_4afe5a[bestRow][1];
+            g_4b0770[g_4b00d0][2] = g_4afe5a[bestRow][2];
+            g_4b0770[g_4b00d0][3] = g_4afe5a[bestRow][3];
+            g_4b00d0++;
+        }
+        for (row = 0; row < g_4afc36; row++) {
+            for (column = 0; column < 4; column++)
+                if (g_4afe5a[row][column] && g_4afe5a[row][column] + g_4a2634[column] == best) {
+                    column = 4;
+                    for (v = 0; v < 4; v++)
+                        g_4afe5a[row][v] = 0;
+                }
+            if (g_4afe5a[row][0] > 0)
+                for (column = 0; column < 4; column++)
+                    g_4aff9a[g_4afe5a[row][column] + g_4a2634[column]]++;
+        }
+    }
+    return best;
+}

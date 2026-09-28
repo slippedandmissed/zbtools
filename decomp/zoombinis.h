@@ -5582,3 +5582,6 @@ extern short g_4afc6c[];
 void fn_43596d(View *view, short group, ViewNotify, char unknownF8);
 extern short g_4afd8c[];
 void fn_43638b(View *view, short event);
+extern short g_4b0770[20][4]; /* the rows taken */
+extern short g_4b00d0; /* how many */
+short fn_43780d(short exclude);
