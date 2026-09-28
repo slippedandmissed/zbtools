@@ -590,7 +590,7 @@ void fn_4312e2(char *open)
 
 /* Draws the levels' list in `rect`: a title ("terrain key", or with
    g_4b754a "choose a level") and the four levels, the current one
-   (g_4b754a) outlined. */
+   (g_4b754a) outlined (levelTexts 0-5). */
 /* @zoombi32 0x00430b31 */
 void fn_430b31(ShortRect *rect)
 {
@@ -672,5 +672,48 @@ void fn_43160a(View *view)
         copyPortBits(viewPort, workPort, view->body.bounds, view->body.bounds, 0);
         view->kind = view->kind * -1;
         view->body.running = 0;
+    }
+}
+
+/* Draws the names of the terrains with a hotspot open (all with
+   g_4b754a) outlined, straight to the screen. */
+/* @zoombi32 0x00431111 */
+void fn_431111()
+{
+    Color saved;
+    short shown[4];
+    short i;
+
+    saved = setForeColor(Color(45));
+    for (i = 0; i < 4; i++)
+        shown[i] = g_4b754a != 0;
+    for (i = 0; !g_4b754a && i <= 15; i++)
+        if (g_4afb4a[i]) {
+            if (i >= 1 && i <= 3)
+                shown[0] = 1;
+            if (i >= 5 && i <= 7)
+                shown[1] = 1;
+            if (i >= 8 && i <= 10)
+                shown[2] = 1;
+            if (i >= 12 && i <= 14)
+                shown[3] = 1;
+        }
+    for (i = 0; i < 4; i++)
+        if (shown[i])
+            drawOutlinedText(45, 10, g_4a1f54[i], 0x22, levelTexts[6 + i]);
+    setForeColor(saved);
+    for (i = 0; i < 4; i++) {
+        unionRgnRect(removedRgn, &g_4a1f54[i]);
+        if (shown[i]) {
+            g_4a1f54[i].left--;
+            g_4a1f54[i].top--;
+            g_4a1f54[i].right++;
+            g_4a1f54[i].bottom++;
+            copyPortBits(viewPort, workPort, g_4a1f54[i], g_4a1f54[i], 0);
+            g_4a1f54[i].left++;
+            g_4a1f54[i].top++;
+            g_4a1f54[i].right--;
+            g_4a1f54[i].bottom--;
+        }
     }
 }

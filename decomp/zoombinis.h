@@ -1061,6 +1061,10 @@ inline Traveller *travellers()
     return (Traveller *)(g_4a4ba0 + 0xa934);
 }
 extern char msgOutOfMemory[]; /* @data 0x4a5063 */
+/* Texts drawn on the map screens: 0 "terrain key", 1 "choose a level",
+   2-5 the levels, 6-9 the terrains, 10 "zoombiniville\rpopulation ",
+   11-22 the months, 23 "when traveling was". */
+extern char *levelTexts[24]; /* @data 0x4a530c */
 extern unsigned long lastClickTime; /* @data 0x4a79c4 */
 extern short viewsSorted; /* @data 0x4a7b94: sort the views on the next update */
 extern long g_4a7f58;
