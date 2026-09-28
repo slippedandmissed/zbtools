@@ -422,3 +422,55 @@ void fn_43ff1d(short keep)
         second->body.group = 0;
     }
 }
+
+/* Splits the g_4b0e66 Zoombinis into groups (g_4b1182, g_4b0e76 of them)
+   of three, two and one in turn, then evens out the overshoot by taking
+   one from groups of two or more; if that can't be done, one each. */
+/* Not exact: the original caches g_4b0e76's address in edi, and negates
+   `left` through a 32-bit copy (movsx eax, dx / mov edx, eax / neg eax /
+   mov edx, eax), perhaps an inline function's parameter. */
+/* @zoombi32 0x0043e370 */
+void fn_43e370()
+{
+    short i;
+    short size;
+    short n;
+    short left;
+
+    for (i = 0; i < 12; i++)
+        g_4b1182[i] = 0;
+    left = g_4b0e66;
+    size = 4;
+    n = 0;
+    do {
+        size--;
+        if (size < 1)
+            size = 3;
+        g_4b1182[n] = size;
+        n++;
+        left -= size;
+    } while (left > 0);
+    g_4b0e76 = n;
+    if (left) {
+        left = -left;
+        do {
+            for (i = 0; i < g_4b0e76; i++)
+                if (g_4b1182[i] >= 2 && left) {
+                    g_4b1182[i]--;
+                    left--;
+                }
+            if (left) {
+                n = 0;
+                for (i = 0; i < g_4b0e76; i++)
+                    if (g_4b11aa[i] > 1)
+                        n++;
+                if (!n) {
+                    g_4b0e76 = g_4b0e66;
+                    for (i = 0; i < g_4b0e76; i++)
+                        g_4b1182[i] = 1;
+                    left = 0;
+                }
+            }
+        } while (left);
+    }
+}

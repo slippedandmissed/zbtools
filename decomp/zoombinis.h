@@ -5718,3 +5718,8 @@ extern short g_4b15b8;
 void fn_43e620();
 short fn_43fa67();
 void fn_43ff1d(short keep);
+extern short g_4b1182[20];
+extern short g_4b11aa[];
+extern short g_4b0e76;
+extern short g_4b0e66;
+void fn_43e370();
