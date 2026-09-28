@@ -76,4 +76,6 @@ void fn_44abce(short cell);
 extern short g_4b2410; /* @data 0x4b2410: the start, in g_4b1ab4 */
 void fn_448f02();
 
+void linkCells();
+
 #endif

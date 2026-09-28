@@ -1442,3 +1442,153 @@ void fn_448f02()
         }
     } while (!done);
 }
+
+/* Links the board's cells to their neighbours (links[0-5], -1 for none),
+   where each cell's bits in g_4b2324 allow: the board is 13 rows of 9,
+   odd rows set half a cell right, so a neighbour's number depends on the
+   row and on the edges. Empty cells (state 0) get no links. */
+/* @zoombi32 0x0044833d */
+void linkCells()
+{
+    short top;
+    short bottom;
+    short leftEven;
+    short rightEven;
+    short leftOdd;
+    short i;
+    short rightOdd;
+    short cell;
+
+    for (cell = 0; cell < 117; cell++) {
+        for (i = 0; i < 6; i++)
+            g_4b1aea[cell].links[i] = -1;
+        top = bottom = leftEven = rightOdd = leftOdd = rightEven = 0;
+        if (cell <= 8)
+            top++;
+        else if (cell >= 108)
+            bottom++;
+        else if (cell % 9 == 0) {
+            if (cell % 18 == 0)
+                leftEven++;
+            else
+                leftOdd++;
+        } else if (cell % 9 == 8) {
+            if (cell % 18 == 8)
+                rightEven++;
+            else
+                rightOdd++;
+        }
+        if (!g_4b1aea[cell].state)
+            continue;
+        if (top) {
+            if (cell == 0) {
+                if (g_4b2324[cell] & 0x10)
+                    g_4b1aea[cell].links[4] = 1;
+                if (g_4b2324[cell] & 8)
+                    g_4b1aea[cell].links[3] = 9;
+            }
+            if (cell == 8) {
+                if (g_4b2324[cell] & 2)
+                    g_4b1aea[cell].links[1] = 7;
+                if (g_4b2324[cell] & 4)
+                    g_4b1aea[cell].links[2] = 16;
+                if (g_4b2324[cell] & 8)
+                    g_4b1aea[cell].links[3] = 17;
+            } else {
+                if (g_4b2324[cell] & 2)
+                    g_4b1aea[cell].links[1] = cell - 1;
+                if (g_4b2324[cell] & 4)
+                    g_4b1aea[cell].links[2] = cell + 8;
+                if (g_4b2324[cell] & 8)
+                    g_4b1aea[cell].links[3] = cell + 9;
+                if (g_4b2324[cell] & 0x10)
+                    g_4b1aea[cell].links[4] = cell + 1;
+            }
+        } else if (bottom) {
+            if (cell == 108) {
+                if (g_4b2324[cell] & 0x10)
+                    g_4b1aea[cell].links[4] = 109;
+                if (g_4b2324[cell] & 0x20)
+                    g_4b1aea[cell].links[5] = 99;
+            } else if (cell == 116) {
+                if (g_4b2324[cell] & 1)
+                    g_4b1aea[cell].links[0] = 106;
+                if (g_4b2324[cell] & 2)
+                    g_4b1aea[cell].links[1] = 115;
+                if (g_4b2324[cell] & 0x20)
+                    g_4b1aea[cell].links[5] = 107;
+            } else {
+                if (g_4b2324[cell] & 1)
+                    g_4b1aea[cell].links[0] = cell - 10;
+                if (g_4b2324[cell] & 2)
+                    g_4b1aea[cell].links[1] = cell - 1;
+                if (g_4b2324[cell] & 0x10)
+                    g_4b1aea[cell].links[4] = cell + 1;
+                if (g_4b2324[cell] & 0x20)
+                    g_4b1aea[cell].links[5] = cell - 9;
+            }
+        } else if (rightOdd) {
+            if (g_4b2324[cell] & 1)
+                g_4b1aea[cell].links[0] = cell - 9;
+            if (g_4b2324[cell] & 2)
+                g_4b1aea[cell].links[1] = cell - 1;
+            if (g_4b2324[cell] & 4)
+                g_4b1aea[cell].links[2] = cell + 9;
+        } else if (rightEven) {
+            if (g_4b2324[cell] & 1)
+                g_4b1aea[cell].links[0] = cell - 10;
+            if (g_4b2324[cell] & 2)
+                g_4b1aea[cell].links[1] = cell - 1;
+            if (g_4b2324[cell] & 4)
+                g_4b1aea[cell].links[2] = cell + 8;
+            if (g_4b2324[cell] & 8)
+                g_4b1aea[cell].links[3] = cell + 9;
+            if (g_4b2324[cell] & 0x20)
+                g_4b1aea[cell].links[5] = cell - 9;
+        } else if (leftEven) {
+            if (g_4b2324[cell] & 8)
+                g_4b1aea[cell].links[3] = cell + 9;
+            if (g_4b2324[cell] & 0x10)
+                g_4b1aea[cell].links[4] = cell + 1;
+            if (g_4b2324[cell] & 0x20)
+                g_4b1aea[cell].links[5] = cell - 9;
+        } else if (leftOdd) {
+            if (g_4b2324[cell] & 1)
+                g_4b1aea[cell].links[0] = cell - 9;
+            if (g_4b2324[cell] & 4)
+                g_4b1aea[cell].links[2] = cell + 9;
+            if (g_4b2324[cell] & 8)
+                g_4b1aea[cell].links[3] = cell + 10;
+            if (g_4b2324[cell] & 0x10)
+                g_4b1aea[cell].links[4] = cell + 1;
+            if (g_4b2324[cell] & 0x20)
+                g_4b1aea[cell].links[5] = cell - 8;
+        } else if (cell % 18 <= 8) {
+            if (g_4b2324[cell] & 1)
+                g_4b1aea[cell].links[0] = cell - 10;
+            if (g_4b2324[cell] & 2)
+                g_4b1aea[cell].links[1] = cell - 1;
+            if (g_4b2324[cell] & 4)
+                g_4b1aea[cell].links[2] = cell + 8;
+            if (g_4b2324[cell] & 8)
+                g_4b1aea[cell].links[3] = cell + 9;
+            if (g_4b2324[cell] & 0x10)
+                g_4b1aea[cell].links[4] = cell + 1;
+            if (g_4b2324[cell] & 0x20)
+                g_4b1aea[cell].links[5] = cell - 9;
+        } else {
+            if (g_4b2324[cell] & 1)
+                g_4b1aea[cell].links[0] = cell - 9;
+            if (g_4b2324[cell] & 2)
+                g_4b1aea[cell].links[1] = cell - 1;
+            if (g_4b2324[cell] & 4)
+                g_4b1aea[cell].links[2] = cell + 9;
+            if (g_4b2324[cell] & 8)
+                g_4b1aea[cell].links[3] = cell + 10;
+            if (g_4b2324[cell] & 0x10)
+                g_4b1aea[cell].links[4] = cell + 1;
+            if (g_4b2324[cell] & 0x20)
+                g_4b1aea[cell].links[5] = cell - 8;
+        }
+    }
+}
