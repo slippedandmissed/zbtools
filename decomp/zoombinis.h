@@ -4737,8 +4737,7 @@ extern LillyButton g_4a16c4[3];
 struct LillyCell
 {
     ShortRect rect;
-    char unknown8;
-    char unknown9[4];
+    char attributes[5]; /* 0: taken; 2: its image; 4: an overlay's image */
 };
 extern LillyCell g_4acff4[13][13];
 void fn_42a7b6(View *view, short event);
@@ -4790,6 +4789,21 @@ void drawIdBox(short id);
 void mirrorGrid(short (*grid)[12], short how);
 void clearWay(short x);
 extern ShortRect g_4a1ae6;
+short fn_426aff(short a, short b, short n);
+void fn_42e542(short id, short row, short column);
+extern short g_4abec4;
+extern short *g_4ac948;
+extern short *g_4ac94c;
+void fn_42c3b6(short row, short column, char offset);
+short fn_42f7a5(View *view);
+extern short g_4a1e20[];
+extern ImageBank *g_4af5a0;
+extern short g_4acec6[];
+extern short g_4acfe6;
+extern char g_4aece8;
+extern short g_4a1b1e[];
+extern short g_4a1b38[];
+extern short g_4aebae[12][13];
 void fn_42a077(View *view, short event);
 extern short g_4ac9e6[];
 extern short g_4acb06;

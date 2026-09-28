@@ -306,6 +306,7 @@
 0x0041d9eb fn_41d9eb
 0x0042492b fn_42492b
 0x004249e1 fn_4249e1
+0x00426aff fn_426aff
 0x00426c33 darkenPalette
 0x00426cef countFeatureValues
 0x0042756d fn_42756d
@@ -333,6 +334,7 @@
 0x0042c0d9 fn_42c0d9
 0x0042c10b fn_42c10b
 0x0042c112 fn_42c112
+0x0042c3b6 fn_42c3b6
 0x0042c6cb fn_42c6cb
 0x0042d616 loadTablePair
 0x0042d64c freeResourcePair
@@ -340,6 +342,7 @@
 0x0042d875 mirrorGrid
 0x0042d996 freeLockedResource
 0x0042e4b6 fn_42e4b6
+0x0042e542 fn_42e542
 0x0042e693 fn_42e693
 0x0042e69a fn_42e69a
 0x0042e6b5 fn_42e6b5

@@ -17,10 +17,16 @@ struct LillyActor
     char row; /* +0xc4 */
     char unknownC5[17];
     char unknownD6;
-    char unknownD7[9];
+    char unknownD7[2];
+    short unknownD9; /* +0xd9 */
+    char unknownDB[3];
+    char unknownDE;
+    char unknownDF;
     char unknownE0; /* +0xe0: added to its second part's image */
     char unknownE1[2];
     char unknownE3; /* +0xe3: added to its third part's image */
+    char unknownE4[14];
+    short grid[12][13]; /* +0xf2 */
 };
 
 /* @zoombi32 0x00427e1a */
@@ -374,7 +380,7 @@ void fn_42a7b6(View *view, short event)
         actor->body.y = body->cels[0].y;
         actor->body.unknownAa = body->cels[0].x;
         actor->body.unknownAc = body->cels[0].y;
-        g_4acff4[actor->row][actor->column + 1].unknown8 = 0;
+        g_4acff4[actor->row][actor->column + 1].attributes[0] = 0;
         g_4acdf4[g_4ace1c] = view->id;
         g_4ace1c++;
         g_4acfee = 0;
@@ -707,7 +713,7 @@ void fn_42aaba(View *view, short event)
         actor->body.y = body->cels[0].y;
         actor->body.unknownAa = body->cels[0].x;
         actor->body.unknownAc = body->cels[0].y;
-        g_4acff4[actor->row][actor->column + 1].unknown8 = 0;
+        g_4acff4[actor->row][actor->column + 1].attributes[0] = 0;
         g_4acff2 = g_4acff0;
         for (short i = 0; i < 13; i++)
             if (g_4aed64[i] == g_4acff2) {
@@ -769,7 +775,7 @@ void fn_42a6fa(View *view, short event)
         actor->body.y = g_4ac954[body->cels[0].image] + body->cels[0].y;
         actor->body.unknownAa = g_4ac950[body->cels[0].image] + body->cels[0].x;
         actor->body.unknownAc = g_4ac954[body->cels[0].image] + body->cels[0].y;
-        g_4acff4[actor->row][actor->column + 1].unknown8 = 0;
+        g_4acff4[actor->row][actor->column + 1].attributes[0] = 0;
         g_4ace1e[g_4ace46] = view->id;
         g_4ace46++;
         break;
@@ -864,7 +870,7 @@ void fn_42a077(View *view, short event)
         g_4acb06++;
         break;
     case 80:
-        g_4acff4[actor->row][actor->column].unknown8 = 0;
+        g_4acff4[actor->row][actor->column].attributes[0] = 0;
         g_4aed80[g_4af0e0] = view->id;
         g_4af0e0++;
         for (short i = 0; i < g_4af0e6; i++)
@@ -962,4 +968,128 @@ void clearWay(short x)
             }
         }
     }
+}
+
+/* @zoombi32 0x00426aff */
+short fn_426aff(short a, short b, short n)
+{
+    short i;
+
+    if (g_4abec4)
+        return 1;
+    if (!g_4ac1a8[n] && !g_4ac1da[n]) {
+        for (i = 0; i < g_4ac0ee; i++) {
+            if (b == g_4ac1da[i])
+                return 0;
+            if (a == g_4ac1a8[i])
+                return 0;
+        }
+        return 1;
+    }
+    if (a == g_4ac1a8[n] && b == g_4ac1da[n])
+        return 1;
+    if (g_4ac1a8[n] && a != g_4ac1a8[n])
+        return 0;
+    if (g_4ac1da[n] && b != g_4ac1da[n])
+        return 0;
+    if (a == g_4ac1a8[n] && !g_4ac1da[n]) {
+        for (i = 0; i < g_4ac0ee; i++)
+            if (b == g_4ac1da[i])
+                return 0;
+        return 1;
+    }
+    if (b == g_4ac1da[n] && !g_4ac1a8[n]) {
+        for (i = 0; i < g_4ac0ee; i++)
+            if (a == g_4ac1a8[i])
+                return 0;
+        return 1;
+    }
+    return 0;
+}
+
+/* Places the view `id` on the board's square (row, column), by the
+   square's image's hot spot. */
+/* @zoombi32 0x0042e542 */
+void fn_42e542(short id, short row, short column)
+{
+    View *view = findView(id);
+
+    if (view) {
+        view->body.running = 0;
+        view->body.bounds.left = g_4acff4[row][column].rect.left - g_4ac948[g_4acff4[row][column].attributes[2] + 1];
+        view->body.bounds.top = g_4acff4[row][column].rect.top - g_4ac94c[g_4acff4[row][column].attributes[2] + 1];
+        view->body.bounds.right = g_4acff4[row][column].rect.right - g_4ac948[g_4acff4[row][column].attributes[2] + 1];
+        view->body.bounds.bottom = g_4acff4[row][column].rect.bottom - g_4ac94c[g_4acff4[row][column].attributes[2] + 1];
+        unionRgnRect(removedRgn, &view->body.bounds);
+    }
+}
+
+/* Draws the board's square (row, column): its image (offset by `offset`)
+   and its overlay, by their hot spots. */
+/* @zoombi32 0x0042c3b6 */
+void fn_42c3b6(short row, short column, char offset)
+{
+    LillyCell *cell = &g_4acff4[row][column];
+    short image = g_4a1e20[g_4acff4[row][column].attributes[2]] + offset;
+    unsigned short *data;
+    short x;
+    short y;
+
+    if (image > 0 && image < 36) {
+        data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+        x = cell->rect.left - g_4ac948[g_4acff4[row][column].attributes[2] + 1];
+        y = cell->rect.top - g_4ac94c[g_4acff4[row][column].attributes[2] + 1];
+        drawImageData(data, x, y, 8);
+    }
+    image = g_4acff4[row][column].attributes[4];
+    if (image > 0 && image < 36) {
+        data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+        x = cell->rect.left - g_4ac948[g_4acff4[row][column].attributes[4]];
+        y = cell->rect.top - g_4ac94c[g_4acff4[row][column].attributes[4]];
+        drawImageData(data, x, y, 8);
+    }
+}
+
+/* Moves a lilly actor down a row if it can: the script to run next, or 0. */
+/* Not exact: register allocation (the original keeps the view in edx and
+   the actor in eax). */
+/* @zoombi32 0x0042f7a5 */
+short fn_42f7a5(View *view)
+{
+    short *body = (short *)&view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+    short blocked;
+    char row;
+    char column;
+
+    if (body[26]) {
+        g_4acec6[g_4acfe6] = view->id;
+        g_4acfe6++;
+        body[25] = 0;
+        body[26] = 0;
+        return 0;
+    }
+    row = actor->row;
+    column = actor->column;
+    blocked = 0;
+    row++;
+    if (row > 11) {
+        row = 11;
+        blocked = 1;
+    }
+    if (!blocked) {
+        if (!g_4acff4[row][column].attributes[0]) {
+            actor->unknownDE = g_4aece8;
+            actor->unknownDF = g_4acff4[row][column].attributes[actor->unknownDE];
+            actor->unknownE0 = g_4a1b1e[g_4a1b38[actor->unknownDE]] + actor->unknownDF;
+            actor->grid[row][column] = 1;
+            body[26] = 1;
+        } else if (g_4aebae[row][column] != 1 && !g_4aebae[row][column]) {
+            return 0;
+        }
+    }
+    if (blocked)
+        return actor->unknownD9 = 10069;
+    g_4acff4[row][column].attributes[0] = 1;
+    return actor->unknownD9 = 10073;
 }
