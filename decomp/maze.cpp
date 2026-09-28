@@ -1211,3 +1211,69 @@ short fn_437b7b(short low, short high)
     }
     return best;
 }
+
+/* As fn_437b7b, checking a Zoombini's features against the rows already
+   taken only in the copy (g_4b0770 from 20), and taking the rows into the
+   copy alone. */
+/* Not exact: BCC caches g_4afe5a's address in esi, where the original
+   keeps `column` there (see findings.md on address caching). */
+/* @zoombi32 0x00437ea2 */
+short fn_437ea2(short low, short high)
+{
+    short (*copies)[4] = g_4b0770 + 20;
+    short v;
+    short best;
+    short most;
+    short fresh;
+    short row;
+    short column;
+    short k;
+
+    for (v = 1, best = 0, most = 0; v < 21; v++)
+        if (g_4aff9a[v] > most && g_4aff9a[v] >= low && g_4aff9a[v] <= high)
+            for (row = 0; row < g_4afc36; row++)
+                for (column = 0; column < 4; column++) {
+                    fresh = 1;
+                    if (g_4afe5a[row][column] > 0 && g_4afe5a[row][column] + g_4a2634[column] == v) {
+                        for (k = 0; k < 20; k++)
+                            if (copies[k][0] > 0 && copies[k][0] == g_4afe5a[row][0])
+                                fresh = 0;
+                            else if (copies[k][1] > 0 && copies[k][1] == g_4afe5a[row][1])
+                                fresh = 0;
+                            else if (copies[k][2] > 0 && copies[k][2] == g_4afe5a[row][2])
+                                fresh = 0;
+                            else if (copies[k][3] > 0 && copies[k][3] == g_4afe5a[row][3])
+                                fresh = 0;
+                        if (fresh) {
+                            best = v;
+                            most = g_4aff9a[v];
+                            row = g_4afc36;
+                        }
+                        column = 4;
+                    }
+                }
+    if (best) {
+        fillMemory(g_4aff9a, 0, 42);
+        for (row = 0; row < g_4afc36; row++) {
+            for (column = 0; column < 4; column++)
+                if (g_4afe5a[row][column] && g_4afe5a[row][column] + g_4a2634[column] == best) {
+                    if (g_4b00d0 < 20) {
+                        copies[g_4b00d0][0] = g_4afe5a[row][0];
+                        copies[g_4b00d0][1] = g_4afe5a[row][1];
+                        copies[g_4b00d0][2] = g_4afe5a[row][2];
+                        copies[g_4b00d0][3] = g_4afe5a[row][3];
+                        g_4b00d0++;
+                    }
+                    g_4afe5a[row][0] = 0;
+                    g_4afe5a[row][1] = 0;
+                    g_4afe5a[row][2] = 0;
+                    g_4afe5a[row][3] = 0;
+                    column = 4;
+                }
+            if (g_4afe5a[row][0] > 0)
+                for (column = 0; column < 4; column++)
+                    g_4aff9a[g_4afe5a[row][column] + g_4a2634[column]]++;
+        }
+    }
+    return best;
+}
