@@ -4,6 +4,18 @@
 
 #include "zoombinis.h"
 
+/* A lilly actor's view body (flag 2, a large body). Partly known. */
+struct LillyActor
+{
+    ViewBody body;
+    char unknownBc[6];
+    char unknownC2;
+    char column; /* +0xc3 */
+    char row; /* +0xc4 */
+    char unknownC5[17];
+    char unknownD6;
+};
+
 /* @zoombi32 0x00427e1a */
 void fn_427e1a(Flagged *object, short code)
 {
@@ -269,15 +281,15 @@ void fn_4249e1(View *view, short region)
     if (g_4abec2) {
         if (!g_4a1aac) {
             g_4a1aac = 1;
-            unionRgnRect(region, &g_4a170c);
+            unionRgnRect(region, &g_4a16c4[2].rect);
         }
     } else if (g_4a1aac) {
         g_4a1aac = 0;
-        unionRgnRect(region, &g_4a170c);
+        unionRgnRect(region, &g_4a16c4[2].rect);
     }
     if (!g_4a1aae) {
         g_4a1aae = 1;
-        unionRgnRect(region, &g_4a16e8);
+        unionRgnRect(region, &g_4a16c4[1].rect);
     }
 }
 
@@ -287,15 +299,15 @@ void fn_428c45(View *view, short region)
     if (g_4af36a) {
         if (!g_4a1d6c) {
             g_4a1d6c = 1;
-            unionRgnRect(region, &g_4a1b70);
+            unionRgnRect(region, &g_4a1b28[2].rect);
         }
     } else if (g_4a1d6c) {
         g_4a1d6c = 0;
-        unionRgnRect(region, &g_4a1b70);
+        unionRgnRect(region, &g_4a1b28[2].rect);
     }
     if (!g_4a1d6e) {
         g_4a1d6e = 1;
-        unionRgnRect(region, &g_4a1b4c);
+        unionRgnRect(region, &g_4a1b28[1].rect);
     }
 }
 
@@ -340,5 +352,261 @@ void loadLockedTable(long *resource, short *handle, short id, short **locked)
     for (unsigned long size = handleSize(*handle); size; size -= 2) {
         *at = swapShort(*at);
         at++;
+    }
+}
+
+/* @zoombi32 0x0042a7b6 */
+void fn_42a7b6(View *view, short event)
+{
+    ViewBody *body = &view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+
+    switch (event) {
+    case 60:
+        actor->body.x = body->cels[0].x;
+        actor->body.y = body->cels[0].y;
+        actor->body.unknownAa = body->cels[0].x;
+        actor->body.unknownAc = body->cels[0].y;
+        g_4acff4[actor->row][actor->column + 1].unknown8 = 0;
+        g_4acdf4[g_4ace1c] = view->id;
+        g_4ace1c++;
+        g_4acfee = 0;
+        break;
+    }
+}
+
+/* @zoombi32 0x0042adb5 */
+void fn_42adb5(View *view, short event)
+{
+    ViewBody *body = &view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+
+    switch (event) {
+    case 49:
+        actor->body.x = body->cels[0].x;
+        actor->body.y = body->cels[0].y;
+        actor->body.unknownAa = body->cels[0].x;
+        actor->body.unknownAc = body->cels[0].y;
+        actor->unknownC2 = 0;
+        view->flags = 0x980002;
+        g_4acfe8 = view->id;
+        break;
+    }
+}
+
+/* @zoombi32 0x00427644 */
+void fn_427644(short id)
+{
+    View *view = findView(id);
+
+    if (view) {
+        short script;
+
+        if (g_4ac0d8 < 3)
+            script = g_4ac0ec + 13000;
+        else
+            script = g_4ac0ec % 5 + 13025;
+        startSnoidScript(viewSnoid(view), script, 0, 0);
+        view->notifyEnd = 1;
+        view->notify = fn_4276d0;
+        view->interval = 3;
+        g_4ac0d0 = groupViews(g_4abec6[g_4ac0ec], view->id, 0, 0, 0, 0);
+    }
+}
+
+/* Shows the view `id` at the board's square (row, column). */
+/* @zoombi32 0x0042e4b6 */
+void fn_42e4b6(short id, short row, short column)
+{
+    View *view = findView(id);
+
+    if (view) {
+        view->body.running = 1;
+        view->body.bounds.left = g_4acff4[row][column].rect.left;
+        view->body.bounds.top = g_4acff4[row][column].rect.top;
+        view->body.bounds.right = view->body.bounds.left + 20;
+        view->body.bounds.bottom = view->body.bounds.top + 15;
+    }
+}
+
+/* Not exact: the original keeps `region` in esi. */
+/* @zoombi32 0x0042c9aa */
+void fn_42c9aa(View *view, short region)
+{
+    ShortRect rect;
+
+    if (!g_4b9684) {
+        if (view->reset) {
+            view->reset = 0;
+            view->nextUpdate = 0;
+            view->body.running = 0;
+            unionRgnRect(region, &g_4a1e32);
+        }
+        if (view->body.running) {
+            rect.left = view->body.bounds.left - 17;
+            rect.top = view->body.bounds.top - 14;
+            rect.right = view->body.bounds.right;
+            rect.bottom = view->body.bounds.bottom;
+            unionRgnRect(region, &rect);
+            view->changed = 1;
+        }
+    }
+}
+
+/* Draws button `which` (1, 2), lit or not, and shows it if asked. */
+/* @zoombi32 0x0042492b */
+void fn_42492b(short which, short lit, short show)
+{
+    short image = 0;
+
+    switch (which) {
+    case 1:
+        image = 5;
+        break;
+    case 2:
+        image = 2;
+        if (!g_4abec2) {
+            lit = 0;
+            image = 1;
+        }
+        break;
+    }
+    if (image) {
+        if (lit)
+            image++;
+        drawImageData((unsigned short *)((char *)g_4a1a18 + g_4a1a18->offsets[image]), g_4a16c4[which].rect.left,
+                      g_4a16c4[which].rect.top, 8);
+        if (show)
+            showRect(&g_4a16c4[which].rect);
+    }
+}
+
+/* Draws button `which` (1, 2) of the other set, lit or not, and shows it if asked. */
+/* @zoombi32 0x00428b8f */
+void fn_428b8f(short which, short lit, short show)
+{
+    short image = 0;
+
+    switch (which) {
+    case 1:
+        image = 5;
+        break;
+    case 2:
+        image = 2;
+        if (!g_4af36a) {
+            lit = 0;
+            image = 1;
+        }
+        break;
+    }
+    if (image) {
+        if (lit)
+            image++;
+        drawImageData((unsigned short *)((char *)g_4a1d68 + g_4a1d68->offsets[image]), g_4a1b28[which].rect.left,
+                      g_4a1b28[which].rect.top, 8);
+        if (show)
+            showRect(&g_4a1b28[which].rect);
+    }
+}
+
+/* Functional: the original reads each cel's words as it pushes them
+   (`drawImageData(image(*cel++), *cel++, *cel++, 8)`, relying on BCC's
+   left-to-right evaluation); this reads them first. */
+/* @zoombi32-functional 0x00426f38 */
+void fn_426f38(View *view)
+{
+    if (view->body.running) {
+        short *cel = (short *)view->body.cels;
+
+        if (g_4ac0d8 == 2) {
+            while (*cel) {
+                unsigned short *image = (unsigned short *)(g_4ac178->offsets[*cel++] + (char *)g_4ac178);
+                short x = *cel++;
+                short y = *cel++;
+
+                drawImageData(image, x, y, 8);
+            }
+        } else if (g_4ac0d8 == 3) {
+            while (*cel) {
+                unsigned short *image = (unsigned short *)(g_4ac17c->offsets[*cel++] + (char *)g_4ac17c);
+                short x = *cel++;
+                short y = *cel++;
+
+                drawImageData(image, x, y, 8);
+            }
+        }
+    }
+}
+
+/* @zoombi32 0x00427e34 */
+void fn_427e34()
+{
+    short i;
+
+    if (!g_4ac0d8) {
+        for (i = 4; i < g_4ac0ee; i += 5) {
+            startView(g_4abec6[i], i + 6063, 0, 0);
+            View *view = findView(g_4abec6[i]);
+
+            view->notify = (ViewNotify)fn_427e1a;
+            view->interval = 1;
+        }
+    } else if (g_4ac0d8 <= 2) {
+        for (i = 0; i < g_4ac0ee; i++) {
+            startView(g_4abec6[i], i + 6063, 0, 0);
+            View *view = findView(g_4abec6[i]);
+
+            view->notify = (ViewNotify)fn_427e1a;
+            view->interval = 1;
+        }
+    }
+}
+
+/* @zoombi32 0x0042e6b5 */
+void fn_42e6b5()
+{
+    short count = g_4af0ea;
+
+    for (short i = 0; i < g_4af102; i++) {
+        View *view = findView(g_4aed64[i]);
+
+        if (view) {
+            LillyActor *actor = (LillyActor *)&view->body;
+
+            if (actor->unknownC2 && actor->unknownD6 == 11) {
+                count++;
+                short *parts = (short *)&view->body;
+                View *rider = findView(parts[13]);
+
+                if (rider)
+                    viewSnoid(rider)->unknownF7 = 1;
+            }
+        }
+    }
+    if (count < g_4af0e8)
+        if (randomBetween(0, 4) > g_4a1b1c - 1 || (*(short *)(g_4a4ba0 + 0x34) & 0xfff) <= 3)
+            queueViewSound(randomBetween(20045, 20048), 0);
+}
+
+/* Not exact: the original keeps `region` in esi. */
+/* @zoombi32 0x0042c306 */
+void fn_42c306(View *view, short region)
+{
+    if (!g_4b9684) {
+        if (view->reset) {
+            view->body.running = 0;
+            view->nextUpdate = 0;
+            view->reset = 0;
+            unionRgnRect(region, &g_4a1e32);
+        }
+        if (view->body.running) {
+            LillyCell *cell = &g_4acff4[g_4af346][g_4af344];
+
+            g_4af5a8.left = cell->rect.left - 18;
+            g_4af5a8.top = cell->rect.top - 15;
+            g_4af5a8.right = cell->rect.right - 17;
+            g_4af5a8.bottom = cell->rect.bottom - 14;
+            unionRgnRect(region, &g_4af5a8);
+        }
     }
 }

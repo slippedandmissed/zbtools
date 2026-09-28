@@ -4726,13 +4726,59 @@ extern short g_4af0f8;
 extern short g_4abec2;
 extern short g_4a1aac;
 extern short g_4a1aae;
-extern ShortRect g_4a170c;
-extern ShortRect g_4a16e8;
+/* A lilly button (36 bytes). Partly known. */
+struct LillyButton
+{
+    ShortRect rect;
+    char unknown8[28];
+};
+extern LillyButton g_4a16c4[3];
+/* A square of the lilly board (13 bytes). Partly known. */
+struct LillyCell
+{
+    ShortRect rect;
+    char unknown8;
+    char unknown9[4];
+};
+extern LillyCell g_4acff4[13][13];
+void fn_42a7b6(View *view, short event);
+void fn_42adb5(View *view, short event);
+void fn_427644(short id);
+void fn_4276d0(View *view, short event);
+void fn_42e4b6(short id, short row, short column);
+void fn_42c9aa(View *view, short region);
+void fn_42492b(short which, short lit, short show);
+extern short g_4acdf4[20];
+extern short g_4ace1c;
+extern short g_4acfee;
+extern short g_4acfe8;
+extern short g_4ac0d8;
+extern short g_4ac0ec;
+extern short g_4abec6[];
+extern short g_4ac0d0;
+extern ShortRect g_4a1e32;
+extern ImageBank *g_4a1a18;
+void fn_428b8f(short which, short lit, short show);
+void fn_426f38(View *view);
+void fn_427e34();
+void fn_42e6b5();
+void fn_42c306(View *view, short region);
+extern LillyButton g_4a1b28[3];
+extern ImageBank *g_4a1d68;
+extern ImageBank *g_4ac178;
+extern ImageBank *g_4ac17c;
+extern short g_4ac0ee;
+extern short g_4af0ea;
+extern short g_4af102;
+extern short g_4aed64[];
+extern short g_4af0e8;
+extern short g_4a1b1c;
+extern short g_4af344;
+extern short g_4af346;
+extern ShortRect g_4af5a8;
 extern short g_4af36a;
 extern short g_4a1d6c;
 extern short g_4a1d6e;
-extern ShortRect g_4a1b70;
-extern ShortRect g_4a1b4c;
 extern short g_4ace72[20];
 extern short g_4ace9a;
 extern short g_4ace9c[20];
