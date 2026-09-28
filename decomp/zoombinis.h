@@ -5403,6 +5403,11 @@ extern short g_4b28aa[4];
 extern short g_4b28b2[4];
 extern short g_4b28ba[4];
 void fn_452d5d(Snoid *snoid, short n);
+extern short g_4b2768[8]; /* where each of views 1-6 stands (g_4a44f0) */
+extern short g_4b2662;
+extern Point g_4a44f0[8];
+extern Point g_4a4530;
+void fn_4508db();
 void fn_44f066(short which, short lit, short show);
 short fn_44d102();
 void fn_44d5ad(short cell);

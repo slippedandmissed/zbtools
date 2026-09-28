@@ -2807,3 +2807,59 @@ void fn_452d5d(Snoid *snoid, short n)
         snoid->unknownF5 = 0;
     }
 }
+
+/* Sets out the scene's Zoombinis: shuffles the places of views 1-6 (unless
+   cheating), makes the puzzle's rows (fn_452d5d) and gives each view its
+   row's features and place, then fills slot 7 and slot 0. */
+/* @zoombi32 0x004508db */
+void fn_4508db()
+{
+    short values[8];
+    short i;
+    short last;
+    short pick;
+    View *view;
+    Snoid *snoid;
+
+    for (i = 0; i < 8; i++) {
+        values[i] = i;
+        g_4b2768[i] = i;
+    }
+    if (!g_4b2798) {
+        last = 6;
+        for (i = 1; i < 7; i++) {
+            pick = randomBetween(1, last);
+            g_4b2768[i] = values[pick];
+            for (; pick < last + 1; pick++)
+                values[pick] = values[pick + 1];
+            last--;
+        }
+    }
+    for (i = 1; i < g_4b2662; i++) {
+        view = findView(g_4b26ba[i]);
+        if (view) {
+            snoid = (Snoid *)&view->body;
+            fn_452d5d(snoid, i);
+            if (i < 7) {
+                snoid->unknownF1 = 7;
+                *(Point *)&snoid->body.x = g_4a44f0[g_4b2768[i]];
+            } else if (i == 7) {
+                snoid->unknownF1 = 0;
+                *(Point *)&snoid->body.x = g_4a4528;
+            }
+            if (i == 8) {
+                snoid->unknownF1 = 2;
+                *(Point *)&snoid->body.x = g_4a4530;
+            }
+            snoid->unknownF4 = 4;
+        }
+    }
+    fn_450c24(g_4b26ba[7], 7);
+    fn_450d00(g_4b26ba[7], 7);
+    g_4b26b2 = g_4b2604[g_4b2734];
+    fn_450c24(g_4b26b2, 0);
+    fn_450d00(g_4b26b2, 0);
+    g_4b26b6 = 0;
+    g_4b26b4 = 0;
+    fillMemory(&g_4b2776[1], 0, 12);
+}
