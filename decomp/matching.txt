@@ -333,6 +333,7 @@
 0x0042ae14 fn_42ae14
 0x0042afbe fn_42afbe
 0x0042b003 fn_42b003
+0x0042b276 fn_42b276
 0x0042b708 drawNumberBox
 0x0042b7e7 fn_42b7e7
 0x0042b857 addLillyActors

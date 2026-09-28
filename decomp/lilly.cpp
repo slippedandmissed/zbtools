@@ -2090,3 +2090,151 @@ void hopNotify(View *view, short event)
         break;
     }
 }
+
+/*
+ * Picks a lilly actor's next square by its grid of visits: the least
+ * visited neighbour that's free and of its kind, trying directions from
+ * the one it faces; off the right edge it jumps (4) if it can. Claims the
+ * square, notes the visit and returns the script to run (0: none).
+ */
+/* @zoombi32 0x0042b276 */
+short fn_42b276(LillyActor *actor)
+{
+    char direction;
+    char tries;
+    short blocked;
+    short best;
+    short value;
+    short current;
+    short bestColumn;
+    short bestRow;
+    short i;
+
+    if (actor->grid[actor->row][actor->column] >= 10000) {
+        for (i = 0; i < 12; i++)
+            for (short j = 0; j < 12; j++)
+                actor->grid[i][j] = 0;
+        actor->grid[actor->row][actor->column] = 1;
+    }
+    value = actor->grid[actor->row][actor->column];
+    if (!value) {
+        value = 1;
+        actor->grid[actor->row][actor->column] = 1;
+    }
+    current = value;
+    direction = actor->unknownD5;
+    blocked = 0;
+    tries = 0;
+    best = 5;
+    char c;
+    char r;
+
+    while (tries < 4 && !blocked) {
+        short open = 1;
+
+        c = actor->column;
+        r = actor->row;
+        switch (direction) {
+        case 0:
+            r--;
+            if (r < 0) {
+                r = 0;
+                open = 0;
+            }
+            break;
+        case 1:
+            c++;
+            if (c > 11) {
+                c = 11;
+                open = 0;
+                blocked = 1;
+            }
+            break;
+        case 2:
+            r++;
+            if (r > 11) {
+                r = 11;
+                open = 0;
+            }
+            break;
+        case 3:
+            c--;
+            if (c < 0) {
+                c = 0;
+                open = 0;
+            }
+            break;
+        }
+        if (open) {
+            if (!g_4acff4[r][c].attributes[0]) {
+                switch (actor->unknownDe) {
+                case 1:
+                    if (g_4acff4[r][c].attributes[1] != actor->unknownDf)
+                        open = 0;
+                    break;
+                case 2:
+                    if (g_4acff4[r][c].attributes[2] != actor->unknownDf)
+                        open = 0;
+                    break;
+                case 3:
+                    if (g_4acff4[r][c].attributes[3] != actor->unknownDf)
+                        open = 0;
+                    break;
+                }
+            } else {
+                open = 0;
+            }
+            if (open && actor->grid[r][c] < value) {
+                best = direction;
+                value = actor->grid[r][c];
+                bestColumn = c;
+                bestRow = r;
+            }
+        }
+        direction++;
+        if (direction > 3)
+            direction = 0;
+        tries++;
+    }
+    if (blocked) {
+        if (!g_4acff4[r][c + 1].attributes[0]) {
+            best = 4;
+            g_4acff4[r][c + 1].attributes[0] = 1;
+        } else {
+            best = 5;
+        }
+    }
+    switch (best) {
+    case 0:
+        actor->unknownD5 = 0;
+        actor->unknownD9 = g_4a1d8a[0][actor->unknownD5];
+        actor->grid[actor->row - 1][actor->column] = current + 1;
+        g_4acff4[bestRow][bestColumn].attributes[0] = 1;
+        return actor->unknownD9;
+    case 1:
+        actor->unknownD5 = 1;
+        actor->unknownD9 = g_4a1d8a[1][actor->unknownD5];
+        actor->grid[actor->row][actor->column + 1] = current + 1;
+        g_4acff4[bestRow][bestColumn].attributes[0] = 1;
+        return actor->unknownD9;
+    case 2:
+        actor->unknownD5 = 2;
+        actor->unknownD9 = g_4a1d8a[2][actor->unknownD5];
+        actor->grid[actor->row + 1][actor->column] = current + 1;
+        g_4acff4[bestRow][bestColumn].attributes[0] = 1;
+        return actor->unknownD9;
+    case 3:
+        actor->unknownD5 = 3;
+        actor->unknownD9 = g_4a1d8a[3][actor->unknownD5];
+        actor->grid[actor->row][actor->column - 1] = current + 1;
+        g_4acff4[bestRow][bestColumn].attributes[0] = 1;
+        return actor->unknownD9;
+    case 4:
+        actor->unknownD5 = 1;
+        actor->unknownD9 = 10031;
+        return actor->unknownD9;
+    default:
+        return 0;
+    }
+    return 0;
+}

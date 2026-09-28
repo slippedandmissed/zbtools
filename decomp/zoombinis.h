@@ -4806,6 +4806,7 @@ void placeLander(View *view);
 void addLillyActors();
 short fn_42f506(View *view);
 void hopNotify(View *view, short event);
+extern short g_4a1d8a[4][4];
 extern short *g_4ac940;
 extern short *g_4ac944;
 extern short g_4a1d70[12];
