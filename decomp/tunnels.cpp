@@ -380,3 +380,64 @@ short removeTunnelEntry(TunnelList *list, short view)
         }
     return 0;
 }
+
+/* Whether `snoid` is turned back at door `door` (1-4; others count as 1)
+   under `rules`: whether it matches the first rule (any of its features'
+   values; inverted unless unknown2) and the second (when unknown0 is 2;
+   inverted unless the first rule's unknownB), combined by the door. The
+   first rule's result (for doors 3 and 4, inverted) goes in *first. */
+/* Not exact: register allocation (the original keeps `door`, `a`, `b` and
+   `passes` on the stack and `snoid` in esi, using ebx and ecx as scratch). */
+/* @zoombi32 0x00460c41 */
+short fn_460c41(TunnelRules *rules, short door, Snoid *snoid, unsigned short *first)
+{
+    unsigned short passes;
+    unsigned short a;
+    unsigned short b;
+    short i;
+
+    if (door < 1 || door > 4)
+        door = 1;
+    a = b = 0;
+    for (i = 0; i < rules->rules[0].count; i++)
+        if (snoid->features[rules->rules[0].features[i] - 1] == rules->rules[0].values[i])
+            a = 1;
+    for (i = 0; rules->unknown0 == 2 && i < rules->rules[1].count; i++)
+        if (snoid->features[rules->rules[1].features[i] - 1] == rules->rules[1].values[i])
+            b = 1;
+    if (!rules->unknown2)
+        a = !a;
+    if (!rules->rules[0].unknownB)
+        b = !b;
+    switch (door) {
+    case 1:
+        *first = a;
+        if (rules->unknown0 == 1)
+            passes = a;
+        else
+            passes = a && b;
+        break;
+    case 2:
+        *first = a;
+        if (rules->unknown0 == 1)
+            passes = a;
+        else
+            passes = a && !b;
+        break;
+    case 3:
+        *first = !a;
+        if (rules->unknown0 == 1)
+            passes = !a;
+        else
+            passes = !a && !b;
+        break;
+    case 4:
+        *first = !a;
+        if (rules->unknown0 == 1)
+            passes = !a;
+        else
+            passes = !a && b;
+        break;
+    }
+    return !passes;
+}

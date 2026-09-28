@@ -109,4 +109,6 @@ short scene8Key(unsigned short key);
 void drawTunnelsButtons(View *);
 short removeTunnelEntry(TunnelList *list, short view);
 
+short fn_460c41(TunnelRules *rules, short door, Snoid *snoid, unsigned short *first);
+
 #endif
