@@ -871,3 +871,51 @@ short fn_4371b3(short id)
     }
     return count;
 }
+
+/* Puts a Zoombini in the maze in pose `pose` - 20 on its square (from
+   g_4afbf0), with its helper view (word 41: script 10040) and a shadow
+   view it adds (word 42: script 10041), grouped; the first to reach pose
+   3 turns the go button on. */
+/* @zoombi32 0x004350be */
+void fn_4350be(View *view, short pose)
+{
+    Snoid *snoid = (Snoid *)&view->body;
+    short *parts = (short *)&view->body;
+    View *helper;
+    View *shadow;
+    Point where;
+
+    if ((parts[35] = pose - 20) == 3) {
+        snoid->unknownF7 = 1;
+        if (++g_4b0d26 == 1) {
+            g_4afc6a = 1;
+            unionRgnRect(removedRgn, &g_4a20f4[2].rect);
+        }
+    }
+    *(Point *)&view->body.x = (g_4afbf0 + parts[34])[parts[33] * 13];
+    view->body.x += 4;
+    view->body.y += -38;
+    helper = findView(parts[41]);
+    if (helper) {
+        setViewScript(helper, 10040, 1);
+        *(Point *)&helper->body.x = *(Point *)&view->body.x;
+        helper->placed = fn_436356;
+        helper->notify = fn_435da5;
+        where = *(Point *)&helper->body.x;
+        parts[42] = addView(0x900000, drawCels, runViewScript, 10041, 7, &where, 0, 0);
+        shadow = findView(parts[42]);
+        if (shadow) {
+            shadow->placed = fn_436321;
+            runViewScript(shadow, removedRgn);
+        }
+    }
+    short script = snoid->features[3] + 15075;
+
+    startSnoidScript((Snoid *)&view->body, script, 0, 0);
+    moveView(parts[41], 1, view->id);
+    moveView(parts[42], 0, view->id);
+    if (shadow)
+        groupViews(parts[41], view->id, parts[42], 0, 0, 0);
+    else if (helper)
+        groupViews(parts[41], view->id, 0, 0, 0, 0);
+}

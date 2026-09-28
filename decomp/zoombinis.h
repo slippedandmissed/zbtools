@@ -5571,3 +5571,6 @@ void fn_43573e(short n);
 extern short g_4b09d0[];
 extern short g_4b0a06;
 short fn_4371b3(short id);
+extern short g_4b0d26;
+extern Point *g_4afbf0; /* where each square is (13 to a row) */
+void fn_4350be(View *view, short pose);
