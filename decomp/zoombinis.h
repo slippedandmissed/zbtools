@@ -5794,3 +5794,14 @@ extern short g_4b142a;
 void fn_43c6df();
 extern Point g_4a3324[16];
 void fn_43ffd5(Point *where, short *slot);
+short fn_43ec8c(unsigned short event);
+short leaveNetIfAsked();
+extern short netBusy; /* @data 0x4a336c */
+void netIdle();
+void drawZoombiniParts(Snoid *snoid);
+extern short g_4b140a;
+extern short g_4b140c;
+extern short g_4b140e;
+extern short g_4b1410;
+extern short g_4b142c;
+short netKey(unsigned short key);

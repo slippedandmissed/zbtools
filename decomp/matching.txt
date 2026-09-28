@@ -457,6 +457,7 @@
 0x0043b791 drawNetButtons
 0x0043b7ae updateNetButtons
 0x0043b820 closeNet
+0x0043c655 netKey
 0x0043c6df fn_43c6df
 0x0043c94f fn_43c94f
 0x0043cfc3 fn_43cfc3
@@ -467,8 +468,12 @@
 0x0043e5a7 fn_43e5a7
 0x0043e620 fn_43e620
 0x0043eb13 fn_43eb13
+0x0043ebf4 netIdle
+0x0043ec8c fn_43ec8c
+0x0043ee2a leaveNetIfAsked
 0x0043f856 fn_43f856
 0x0043f985 fn_43f985
+0x0043f9d3 drawZoombiniParts
 0x0043fa67 fn_43fa67
 0x0043fc9a fn_43fc9a
 0x0043ff1d fn_43ff1d

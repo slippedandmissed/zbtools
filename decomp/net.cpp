@@ -1171,3 +1171,104 @@ void fn_43ffd5(Point *where, short *slot)
     updateViews();
     g_4b7564 = 0;
 }
+
+/* The scene's event hook (the scene record's +0x20): event 23 brings back
+   the two views g_4b15b0 and g_4b15b2 (adding them first if the game state's
+   +0x20 is set). Returns whether it handled the event. */
+/* @zoombi32 0x0043ec8c */
+short fn_43ec8c(unsigned short event)
+{
+    short handled = 0;
+
+    switch (event) {
+    case 23:
+        if (*(short *)(g_4a4ba0 + 0x20))
+            fn_440218();
+        fn_43ff1d(0);
+        handled = 1;
+        break;
+    }
+    return handled;
+}
+
+/* Leaves the scene if asked to (g_4b0d52 names where to): returns whether
+   it did. */
+/* @zoombi32 0x0043ee2a */
+short leaveNetIfAsked()
+{
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        fn_43eb13();
+        return 1;
+    }
+    return 0;
+}
+
+/* The scene's idle work: leaving once asked to (g_4b0d52) and sound 996 is
+   done; g_4b15b8 is cleared while g_4b755a isn't set. */
+/* @zoombi32 0x0043ebf4 */
+void netIdle()
+{
+    if (!netBusy && g_4b15a4) {
+        netBusy = 1;
+        updateViews();
+        if (g_4b0d52) {
+            if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+                netBusy = 0;
+                return;
+            }
+            if (viewsLocked || !g_4b755a || g_4b755c >= 1)
+                leaveNetIfAsked();
+        }
+        if (!g_4b755a && g_4b15b8)
+            g_4b15b8 = 0;
+        netBusy = 0;
+    }
+}
+
+/* Draws a Zoombini from its parts in the bank g_4b159c where it stands:
+   feet, body, eyes, nose, then hair. */
+/* @zoombi32 0x0043f9d3 */
+void drawZoombiniParts(Snoid *snoid)
+{
+    short x = snoid->body.x;
+    short y = snoid->body.y;
+
+    if (snoid->features[3])
+        fn_43f985(snoid->features[3] + 16, x, y);
+    fn_43f985(1, x, y);
+    if (snoid->features[1])
+        fn_43f985(snoid->features[1] + 6, x, y);
+    if (snoid->features[2])
+        fn_43f985(snoid->features[2] + 11, x, y);
+    if (snoid->features[0])
+        fn_43f985(snoid->features[0] + 1, x, y);
+}
+
+/* The scene's keys (debugging ones only while debugging messages are on). */
+/* @zoombi32 0x0043c655 */
+short netKey(unsigned short key)
+{
+    if (!g_4b8803 && key != 367)
+        return 0;
+    switch (key) {
+    case 367:
+        fn_466b93();
+        return 1;
+    case 'L':
+    case 'l':
+        fn_43d524();
+        return 1;
+    case ' ':
+        g_4b140a = g_4b140e;
+        g_4b140c = 17 - g_4b140a;
+        if (g_4b142c) {
+            g_4b142c = 0;
+            g_4b1410++;
+        }
+        return 1;
+    }
+    return 0;
+}
