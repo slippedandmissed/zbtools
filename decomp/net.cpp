@@ -820,3 +820,50 @@ void fn_43e5a7(View *view, short region)
     runViewCels(view, region);
     waitForEventFor(0, 2, 0, 1);
 }
+
+/* Lands the flying marker for place n: shows it (script 7023, or 7024 at
+   the higher levels) there, and counts that place's group (g_4b11aa, by
+   g_4b119e) into g_4b0e6c; a place with none counts in g_4b144e. */
+/* @zoombi32 0x0043da30 */
+void fn_43da30(short n)
+{
+    View *view;
+
+    if (n >= 0) {
+        if (g_4b12ac <= 1) {
+            g_4b1452 = g_4a2b7e[n].x;
+            g_4b1454 = g_4a2b7e[n].y;
+        } else {
+            g_4b1452 = g_4a2be2[n].x;
+            g_4b1454 = g_4a2be2[n].y;
+        }
+        g_4b1450++;
+        view = findView(g_4b13cc[g_4b13ca]);
+        if (view) {
+            if (g_4b12ac < 2)
+                setViewScript(view, 7023, 1);
+            else
+                setViewScript(view, 7024, 1);
+        } else {
+            if (g_4b12ac < 2)
+                g_4b13cc[g_4b13ca] = addView(0x4108000, drawCels, runViewScript, 7023, 6, 0, 0, 0);
+            else
+                g_4b13cc[g_4b13ca] = addView(0x4108000, drawCels, runViewScript, 7024, 6, 0, 0, 0);
+            view = findView(g_4b13cc[g_4b13ca]);
+        }
+        if (view) {
+            view->placed = fn_43d70d;
+            moveView(g_4b13cc[g_4b13ca], 0, g_4b12ba);
+        }
+        g_4b144e = 0;
+        if ((g_4b145a = g_4b11aa[g_4b119e]) < 1) {
+            g_4b145a = 0;
+            g_4b1466 = 0;
+            g_4b144e++;
+        } else {
+            g_4b147c++;
+        }
+        g_4b0e6c += g_4b145a;
+        g_4b11aa[n] = -1;
+    }
+}
