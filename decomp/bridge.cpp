@@ -239,3 +239,167 @@ short scene7Key(unsigned short key)
     }
     return used;
 }
+
+/*
+ * A Zoombini's notify at the cliffs: 10 starts its crossing script by how
+ * it's going (g_4ab802: 1000-1016, at the upper or lower bridge by
+ * g_4ab7ec); 1-2 and 4-5 set g_4ab7f2; 3 (lower) and 6 (upper) mean it
+ * got across: it walks to the next place on that side (g_4ab7b2/g_4ab792),
+ * stacked among the others, counts toward g_4ab82a (more as the chosen run
+ * out) and a cheer when all are over; 20 means it was sent back (g_4ab7da,
+ * up to 6); at the end (-1) it finds a spot back by its bridge.
+ */
+/* @zoombi32 0x0041b453 */
+void fn_41b453(View *view, short event)
+{
+    Point anchor;
+    View *other;
+    short script;
+    short after;
+    short n;
+
+    switch (event) {
+    case 10:
+        other = findView(view->id);
+        if (!other || !g_4ab802)
+            break;
+        switch (g_4ab802) {
+        case 0:
+        case 1:
+        case 6:
+        default:
+            script = 1016;
+            break;
+        case 2:
+            script = 1012;
+            break;
+        case 3:
+            script = 1008;
+            break;
+        case 4:
+            script = 1000;
+            break;
+        case 5:
+            script = 1004;
+            break;
+        }
+        switch (g_4ab7ec) {
+        case 1:
+            script += 2;
+            anchor.x = 38;
+            anchor.y = 106;
+            break;
+        default:
+            anchor.x = 56;
+            anchor.y = 205;
+            break;
+        }
+        script += randomBetween(0, 1);
+        unionRgnRect(currentViewRgn, &other->body.bounds);
+        startSnoidScript(viewSnoid(other), script, &anchor, 0);
+        g_4ab826 = script;
+        g_4ab828 = g_4ab802;
+        other->body.group = g_4ab7f0;
+        loadViewSounds(view->id, 1);
+        g_4ab802 = 0;
+        break;
+    case 2:
+    case 5:
+        g_4ab7f2 = g_4ab7dc;
+        break;
+    case 1:
+    case 4:
+        g_4ab7f2 = g_4ab7e0;
+        break;
+    case 3:
+    case 6:
+        g_4ab7ee--;
+        view->notifyEnd = 0;
+        setSnoidAction(viewSnoid(view), 7, 0);
+        view->flags |= 0x4008000;
+        if (event == 6) {
+            g_4ab792[g_4ab78c] = view->id;
+            *(Point *)&viewSnoid(view)->targetX = upperPlaces[g_4ab78c];
+            switch (g_4ab78c) {
+            case 0:
+                after = 0;
+                break;
+            case 5:
+            case 6:
+                after = g_4ab792[g_4ab78c - 1];
+                script = 1;
+                break;
+            default:
+                after = g_4ab792[g_4ab78c - 1];
+                script = 0;
+                break;
+            case 7:
+                after = g_4ab792[0];
+                script = 1;
+                break;
+            case 10:
+                after = g_4ab792[7];
+                script = 1;
+                break;
+            case 15:
+                after = g_4ab792[9];
+                script = 0;
+                break;
+            }
+            g_4ab78c++;
+        } else {
+            g_4ab7b2[g_4ab78e] = view->id;
+            *(Point *)&viewSnoid(view)->targetX = lowerPlaces[g_4ab78e];
+            switch (g_4ab78e) {
+            case 0:
+                after = 0;
+                break;
+            default:
+                after = g_4ab7b2[g_4ab78e - 1];
+                script = 0;
+                break;
+            }
+            g_4ab78e++;
+        }
+        if (after)
+            moveView(view->id, script, after);
+        n = countChosenSnoids();
+        if (!g_4ab78a)
+            g_4ab78a = n;
+        switch (n) {
+        case 10:
+            g_4ab82a++;
+            break;
+        case 12:
+            g_4ab82a++;
+            break;
+        case 14:
+            g_4ab82a += 2;
+            break;
+        }
+        if (n == g_4ab82e)
+            g_4ab82a += 2;
+        g_4b7566 = 1;
+        viewSnoid(view)->unknownF7 = 2;
+        if (n == g_4ab82e && !g_4ab7ee)
+            queueViewSound(randomBetween(20055, 20063), 0);
+        break;
+    case 20:
+        g_4ab7ee--;
+        if (g_4ab7da < 6)
+            g_4ab7da++;
+        g_4ab824 = 1;
+        break;
+    case -1:
+        view->notifyEnd = 0;
+        g_4ab824 = 0;
+        if (g_4ab7ea)
+            g_4ab7ea = 0;
+        {
+            ShortRect *area = g_4ab7ec == 1 ? &g_4a0ea8 : &g_4a0eb0;
+
+            findSpot(view, area, 1, 36);
+        }
+        break;
+    }
+}

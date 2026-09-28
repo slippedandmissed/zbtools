@@ -310,6 +310,7 @@
 0x0041a9d7 closeScene7
 0x0041b203 scene7Key
 0x0041b357 fn_41b357
+0x0041b453 fn_41b453
 0x0041c9ed closeRoster
 0x0041ca44 rosterFrame
 0x0041cf14 fn_41cf14
