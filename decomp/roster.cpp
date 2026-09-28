@@ -125,3 +125,62 @@ void fn_41dce6()
             g_4aba70[i] = 0;
         }
 }
+
+/* A view's update: redraws g_4a1048 when g_4a0fe8 changes, and g_4a1024
+   once. */
+/* @zoombi32 0x0041d972 */
+void fn_41d972(View *, short region)
+{
+    if (g_4a0fe8) {
+        if (!g_4a120a) {
+            g_4a120a = 1;
+            unionRgnRect(region, &g_4a1048);
+        }
+    } else if (g_4a120a) {
+        g_4a120a = 0;
+        unionRgnRect(region, &g_4a1048);
+    }
+    if (!g_4a120c) {
+        g_4a120c = 1;
+        unionRgnRect(region, &g_4a1024);
+    }
+}
+
+/* Applies the player's settings from the game state: click time (stored
+   big-endian), sound and music, the drag options, debugging messages,
+   and the scenes. */
+/* @zoombi32 0x0041f668 */
+void applyPlayerSettings()
+{
+    clickTime = swapShort(*(unsigned short *)(g_4a4ba0 + 2));
+    g_4b87fe = g_4a4ba0[4];
+    g_4b87ff = g_4a4ba0[5];
+    clickToDragOption = g_4a4ba0[6];
+    hideDragCursor = g_4a4ba0[7];
+    g_4b8803 = g_4a4ba0[8];
+    dragClicks = g_4a4ba0[9];
+    g_4b0d4a = *(short *)(g_4a4ba0 + 0xa);
+    g_4b0d52 = *(short *)(g_4a4ba0 + 0xcc);
+    g_4b0d56 = *(short *)(g_4a4ba0 + 0xca);
+}
+
+/* Opens the roster file `path` (mode `mode`) as g_4aba7c, making its
+   directory first if need be: 0 if it opened, 1 if it did after making
+   the directory, 2 if it didn't. */
+/* @zoombi32 0x0041f100 */
+short openRosterFile(const char *path, short mode)
+{
+    fileSpec spec(path);
+    short result = 0;
+
+    g_4aba7c = openFile(&spec, mode);
+    if (!g_4aba7c) {
+        createPath(spec, 0);
+        g_4aba7c = openFile(&spec, mode);
+        if (!g_4aba7c)
+            result = 2;
+        else
+            result = 1;
+    }
+    return result;
+}

@@ -6137,3 +6137,12 @@ void fn_41d167(short group, short script, ViewNotify notify, char f8);
 void fn_41dd37(volatile short n);
 void fn_41d30b(View *view, short event);
 void fn_41dce6();
+extern short g_4a0fe8;
+extern short g_4a120a;
+extern short g_4a120c;
+extern ShortRect g_4a1024;
+extern ShortRect g_4a1048;
+extern long g_4aba7c; /* the roster file */
+void fn_41d972(View *, short region);
+void applyPlayerSettings();
+short openRosterFile(const char *path, short mode);
