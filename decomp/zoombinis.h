@@ -5360,6 +5360,16 @@ void fn_44d974(short neighbour, short index, short cell);
 extern short *g_4b2658; /* the scene's Zoombini images' hot spots: x */
 extern short *g_4b265c; /* and y */
 void fn_454374(Snoid *snoid);
+extern short g_4b27ac[5];
+extern short g_4b27b6[6];
+extern short g_4b27c2;
+extern short g_4b27c4;
+extern short g_4b27c6;
+extern short g_4b27c8;
+extern short g_4b279c[4];
+extern short g_4b27a4[4];
+extern Point g_4a4514[4];
+void fn_452258(Snoid *snoid, short n);
 void fn_44f066(short which, short lit, short show);
 short fn_44d102();
 void fn_44d5ad(short cell);

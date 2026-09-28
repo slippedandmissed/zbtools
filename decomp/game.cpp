@@ -2070,3 +2070,127 @@ void fn_454374(Snoid *snoid)
         unionRect(&snoid->body.bounds, &rect);
     }
 }
+
+/*
+ * Gives a Zoombini (for slot n, 0-3) one or two random features, drawing
+ * features (g_4b27ac) and values (g_4b27b6) without repeats: for slots 0
+ * and 1 values unlike the ones already chosen (g_4b279c), recorded in slot
+ * n + 1; for 2 and 3, mostly the chosen ones (else those set in g_4b263c),
+ * recorded in slot n + 2 and g_4b27a4. Then updates g_4b263c, and places
+ * the Zoombini at g_4a4514[n].
+ */
+/* @zoombi32 0x00452258 */
+void fn_452258(Snoid *snoid, short n)
+{
+    short *order = g_4b27ac;
+    short left;
+    short r;
+    short start;
+    short i;
+    short j;
+    short k;
+
+    for (j = 0; j < 4; j++)
+        snoid->features[j] = 0;
+    for (i = 0; i < 5; i++)
+        order[i] = i;
+    for (i = 0; i < 6; i++)
+        g_4b27b6[i] = i + 1;
+    g_4b27c6 = 0;
+    g_4b27c8 = 3;
+    g_4b27c2 = 0;
+    g_4b27c4 = 4;
+    if (!n)
+        for (j = 0; j < 4; j++) {
+            g_4b279c[j] = 0;
+            g_4b27a4[j] = 0;
+        }
+    left = randomBetween(1, 2);
+    start = left;
+    for (i = 0; i < 4 && left > 0; i++) {
+        g_4b27c2 = randomBetween(0, g_4b27c4);
+        g_4b27c6 = randomBetween(0, g_4b27c8);
+        switch (n) {
+        case 0:
+        case 1:
+            snoid->unknownF1 = 0;
+            if (g_4b279c[order[g_4b27c6]] != g_4b27b6[g_4b27c2]) {
+                snoid->features[order[g_4b27c6]] = g_4b27b6[g_4b27c2];
+                g_4b26cc[n + 1][order[g_4b27c6]] = g_4b27b6[g_4b27c2];
+                g_4b279c[order[g_4b27c6]] = g_4b27b6[g_4b27c2];
+                left--;
+            }
+            break;
+        case 2:
+            snoid->unknownF1 = 2;
+            k = randomBetween(0, 3);
+            if (g_4b279c[k]) {
+                if ((r = randomBetween(0, 100)) > 65 || start == left && i == 3) {
+                    snoid->features[k] = g_4b279c[k];
+                    g_4b26cc[n + 2][k] = g_4b279c[k];
+                    g_4b27a4[k] = g_4b279c[k];
+                    left--;
+                }
+            } else {
+                snoid->features[k] = g_4b263c[k];
+                g_4b26cc[n + 2][k] = g_4b263c[k];
+                g_4b27a4[k] = g_4b263c[k];
+                left--;
+            }
+            break;
+        case 3:
+            snoid->unknownF1 = 2;
+            k = randomBetween(0, 3);
+            if (g_4b279c[k]) {
+                if ((r = randomBetween(0, 100)) > 65 || start == left && i == 3) {
+                    snoid->features[k] = g_4b279c[k];
+                    g_4b26cc[n + 2][k] = g_4b279c[k];
+                    g_4b27a4[k] = g_4b279c[k];
+                    left--;
+                }
+            } else {
+                snoid->features[k] = g_4b263c[k];
+                g_4b26cc[n + 2][k] = g_4b263c[k];
+                g_4b27a4[k] = g_4b263c[k];
+                left--;
+            }
+            break;
+        }
+        for (j = g_4b27c6; j < g_4b27c8 + 1; j++)
+            order[j] = order[j + 1];
+        g_4b27c8--;
+        for (j = g_4b27c2; j < g_4b27c4 + 1; j++)
+            g_4b27b6[j] = g_4b27b6[j + 1];
+        g_4b27c4--;
+    }
+    if (g_4b279c[0])
+        g_4b263c[0] = g_4b279c[0];
+    if (g_4b279c[1])
+        g_4b263c[1] = g_4b279c[1];
+    if (g_4b279c[2])
+        g_4b263c[2] = g_4b279c[2];
+    if (g_4b279c[3])
+        g_4b263c[3] = g_4b279c[3];
+    if (n == 3) {
+        for (j = 5; j > 3; j--) {
+            if (g_4b26cc[j][0])
+                g_4b27a4[0] = g_4b26cc[j][0];
+            if (g_4b26cc[j][1])
+                g_4b27a4[1] = g_4b26cc[j][1];
+            if (g_4b26cc[j][2])
+                g_4b27a4[2] = g_4b26cc[j][2];
+            if (g_4b26cc[j][3])
+                g_4b27a4[3] = g_4b26cc[j][3];
+        }
+        if (g_4b263c[0] == g_4b27a4[0])
+            g_4b263c[0] = 0;
+        if (g_4b263c[1] == g_4b27a4[1])
+            g_4b263c[1] = 0;
+        if (g_4b263c[2] == g_4b27a4[2])
+            g_4b263c[2] = 0;
+        if (g_4b263c[3] == g_4b27a4[3])
+            g_4b263c[3] = 0;
+    }
+    *(Point *)&snoid->body.x = g_4a4514[n];
+    snoid->unknownF4 = 4;
+}
