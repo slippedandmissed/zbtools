@@ -5620,3 +5620,4 @@ void fn_438396();
 void fn_438626();
 extern short g_4afc32;
 void fn_4388d8();
+void fn_438d67();
