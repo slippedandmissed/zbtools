@@ -1812,3 +1812,73 @@ void fn_44a180(short cell)
         }
     }
 }
+
+/* Turns every lit cell back (508 to 507, 502 to 501) and lights the path
+   again from the start (cell 54 on level 3, fn_44a180; else fn_44a359). */
+/* @zoombi32 0x0044a422 */
+void fn_44a422()
+{
+    View *view;
+    short i;
+
+    for (i = 0; i < 117; i++) {
+        if (g_4b1aea[i].state == 508) {
+            g_4b1aea[i].state = 507;
+            view = findView(g_4b1aea[i].view);
+            setViewScript(view, 7000, 1);
+            view->placed = fn_4489ce;
+        } else if (g_4b1aea[i].state == 502) {
+            g_4b1aea[i].state = 501;
+            view = findView(g_4b1aea[i].view);
+            setViewScript(view, 7000, 1);
+            view->placed = fn_4489ce;
+        }
+    }
+    if (g_4b1934 == 3)
+        fn_44a180(54);
+    else
+        fn_44a359();
+}
+
+/* Scene 12's keys (with debugging on, g_4b8803, or else only 0x16f): typing
+   "solve" (g_4b2412 counts the letters) solves level 3. */
+/* @zoombi32 0x00448231 */
+short scene12Key(unsigned short key)
+{
+    if (!g_4b8803 && key != 0x16f)
+        return 0;
+    switch (key) {
+    case 0x16f:
+        fn_466b93();
+        return 1;
+    case 's':
+        if (!g_4b2412)
+            g_4b2412 = 1;
+        return 1;
+    case 'o':
+        if (g_4b2412 == 1)
+            g_4b2412 = 2;
+        return 1;
+    case 'v':
+        if (g_4b2412 == 2)
+            g_4b2412 = 3;
+        return 1;
+    case 'l':
+        if (g_4b2412 == 3)
+            g_4b2412 = 4;
+        return 1;
+    case 'e':
+        if (g_4b2412 == 4) {
+            g_4b2412 = 5;
+            if (g_4b1934 == 3) {
+                fn_44e161();
+                fn_44a422();
+                g_4b1932 = 1;
+                g_4b2540++;
+            }
+            return 1;
+        }
+        return 1;
+    }
+    return 0;
+}

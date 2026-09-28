@@ -86,5 +86,8 @@ extern short g_4a41e6[31]; /* @data 0x4a41e6: cells (g_4a4224 of them) */
 extern short g_4a4224; /* @data 0x4a4224 */
 void fn_44a359();
 void fn_44a180(short cell);
+extern short g_4b2412; /* @data 0x4b2412: letters of the cheat "solve" typed */
+void fn_44a422();
+short scene12Key(unsigned short key);
 
 #endif
