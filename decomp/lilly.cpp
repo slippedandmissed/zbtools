@@ -3207,3 +3207,103 @@ void fn_42b08e(View *view, short event)
         break;
     }
 }
+
+/*
+ * Sets up the puzzle: picks which features its rows, columns (and layers)
+ * sort by, so that the chosen Zoombinis fit, and at level 2 places some
+ * pieces at random in squares no Zoombini can take.
+ */
+/* @zoombi32 0x00425dde */
+void setUpLillyPuzzle()
+{
+    short k;
+    short usedA[5];
+    short usedB[5];
+    short second;
+    Point place;
+    short counts[125];
+    short empty[125];
+    short ok;
+    short i;
+    short n;
+
+    countFeatureValues();
+    ok = 0;
+    do {
+        g_4ac0de = randomUpTo(3);
+        g_4ac0e0 = randomUpTo(3);
+        g_4ac0e2 = randomUpTo(3);
+        if (g_4ac0d8 < 2) {
+            if (g_4ac106[g_4ac0de] == 5 && g_4ac106[g_4ac0e0] == 5 && g_4ac0de != g_4ac0e0)
+                ok++;
+            else if ((g_4ac106[0] < 5) + (g_4ac106[1] < 5) + (g_4ac106[2] < 5) + (g_4ac106[3] < 5) >= 3) {
+                if (g_4ac0de != g_4ac0e0)
+                    ok++;
+            } else if (g_4ac0de != g_4ac0e0 && g_4ac106[g_4ac0de] >= 4 && g_4ac106[g_4ac0e0] >= 4)
+                ok++;
+        } else if (g_4ac0d8 == 2) {
+            if ((g_4ac106[0] < 4) + (g_4ac106[1] < 4) + (g_4ac106[2] < 4) + (g_4ac106[3] < 4) >= 3) {
+                if (g_4ac0de != g_4ac0e0)
+                    ok++;
+            } else if (g_4ac0de != g_4ac0e0 && g_4ac106[g_4ac0de] >= 4 && g_4ac106[g_4ac0e0] >= 4)
+                ok++;
+        } else if (g_4ac0d8 == 3) {
+            if (g_4ac0de != g_4ac0e0 && g_4ac0e0 != g_4ac0e2 && g_4ac0de != g_4ac0e2)
+                ok++;
+        }
+    } while (!ok);
+    if (g_4ac0d8 == 2) {
+        fillMemory(counts, 0, sizeof counts);
+        for (i = 0; i < 5; i++) {
+            usedA[i] = 0;
+            usedB[i] = 0;
+        }
+        for (i = 0; i < 5; i++) {
+            do
+                ok = randomUpTo(4);
+            while (usedA[ok]);
+            usedA[ok]++;
+            do
+                k = randomUpTo(4);
+            while (usedB[k]);
+            usedB[k]++;
+            fn_426a92(++ok, k + 1, i * 6);
+        }
+        for (i = 0; i < g_4ac0e8; i++) {
+            short first = g_4ac508->features[i][g_4ac0de];
+
+            second = g_4ac508->features[i][g_4ac0e0];
+            for (n = 0; n < 5; n++)
+                for (ok = 0; ok < 5; ok++)
+                    if (first == g_4ac1a8[n * 5 + ok] && g_4ac1da[n * 5 + ok] == second)
+                        counts[n * 5 + ok]++;
+        }
+        n = 0;
+        for (i = 0; i < 25; i++)
+            if (!counts[i])
+                empty[n++] = i;
+        k = randomUpTo(n - 1) + 1;
+        if (k > 8)
+            k = 8;
+        if (n < k)
+            k = n;
+        for (i = 0; i < k; i++) {
+            do
+                ok = randomUpTo(n - 1);
+            while (g_4abdc0[empty[ok]] < 0);
+            g_4abdc0[empty[ok]] = -1;
+            g_4ac10e[i] = randomUpTo(3);
+        }
+    }
+    if (g_4ac0d8 == 2) {
+        ok = 0;
+        for (i = 0; i < g_4ac0ee; i++)
+            if (g_4abdc0[i] == -1) {
+                place.x = g_4ac180[i + 1];
+                place.y = g_4ac184[i + 1];
+                g_4ac216[i] = addView(0x808000, fn_426f38, layOutLillyView, g_4ac10e[ok++] + 11000, 0, &place, 0, 0);
+            }
+    }
+    fillMemory(g_4ac1a8, 0, 50);
+    fillMemory(g_4ac1da, 0, 50);
+}
