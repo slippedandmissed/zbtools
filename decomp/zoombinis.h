@@ -6031,3 +6031,6 @@ void fn_4441a8(View *view, short event);
 void fn_442c6c(View *view);
 void fn_444c62();
 void fn_444391();
+extern short g_4b15f4;
+extern short g_4b15f6;
+void fn_444e0c(View *view, short event);

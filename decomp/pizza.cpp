@@ -97,15 +97,14 @@ void fn_4423d7()
 void fn_4468eb()
 {
     Point where;
-    Point *places = g_4a3d54;
     short i;
     View *view;
     Snoid *snoid;
 
     g_4b1820 = 0;
     for (i = 0; i < g_4b15d4; i++) {
-        where.x = places[i].x;
-        where.y = places[i].y;
+        where.x = g_4a3d54[i].x;
+        where.y = g_4a3d54[i].y;
         if ((view = findView(partyViews[i])) != 0 && ((Snoid *)&view->body)->unknownF7 == 1) {
             snoid = (Snoid *)&view->body;
             setSnoidAction(snoid, 0, &where);
@@ -1202,4 +1201,190 @@ void fn_444391()
         view->placed = fn_444a93;
     }
     g_4b15ec = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+}
+
+/* A view's placing: fn_442a9f with the troll's images (156-191, and 212
+   when g_4b1618 is 3) for the toppings on the pizza (g_4b16da). */
+/* @zoombi32 0x00442c6c */
+void fn_442c6c(View *view)
+{
+    short dx;
+    short dy;
+    short *cel = (short *)&view->body;
+    short removed;
+    short first = 1;
+
+    while (*cel) {
+        removed = 0;
+        switch (*cel) {
+        case 156:
+        case 157:
+        case 158:
+        case 159:
+            if (!g_4b16da[4]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 160:
+        case 161:
+        case 162:
+        case 163:
+            if (!g_4b16da[3]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 164:
+        case 165:
+        case 166:
+        case 167:
+            if (!g_4b16da[2]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 168:
+        case 169:
+        case 170:
+        case 171:
+            if (!g_4b16da[1]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 172:
+        case 173:
+        case 174:
+        case 175:
+            if (!g_4b16da[0]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 176:
+        case 177:
+        case 178:
+        case 179:
+            if (!g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 188:
+        case 189:
+        case 190:
+        case 191:
+            if (!g_4b16da[5] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 184:
+        case 185:
+        case 186:
+        case 187:
+            if (!g_4b16da[6] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 180:
+        case 181:
+        case 182:
+        case 183:
+            if (!g_4b16da[7] || g_4b161e != 3) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 212:
+            if (g_4b1618 == 3) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        }
+        if (!removed) {
+            if (!g_4b1630) {
+                cel[1] += g_4b1666;
+                cel[2] += g_4b1668;
+            } else {
+                if (first) {
+                    dx = cel[1];
+                    dy = cel[2];
+                    first = 0;
+                }
+                cel[1] += g_4b1666 - dx;
+                cel[2] += g_4b1668 - dy;
+            }
+            cel += 3;
+        }
+    }
+}
+
+/*
+ * Willa's notify: 32 puts the pizza up (g_4b1664, script 12000) in front;
+ * 60 has the Zoombini at the pizza step (13000 on, by its feet); 99 puts
+ * her in front of Arno; when her script ends, the Zoombini reacts (13005,
+ * 13010 or 13015 on, by the troll up; notify fn_444e0c) and the pizza with
+ * it (12001, 12006 or 12011 on).
+ */
+/* @zoombi32 0x004441a8 */
+void fn_4441a8(View *, short event)
+{
+    View *view;
+    short feet;
+    short script;
+
+    switch (event) {
+    case 32:
+        view = findView(g_4b1664);
+        if (view) {
+            setViewScript(view, 12000, 1);
+        } else {
+            g_4b1664 = addView(0x108000, drawCels, runViewScript, 12000, 6, 0, 0, 0);
+            view = findView(g_4b1664);
+            moveView(g_4b1616, 1, g_4b1664);
+        }
+        view->placed = fn_442a9f;
+        fn_446035();
+        g_4b15f4 = groupViews(g_4b1664, g_4b1664, 0, 0, 0, 0);
+        fn_4423d7();
+        break;
+    case 60:
+        view = findView(g_4a3d42);
+        feet = ((Snoid *)&view->body)->features[3] - 1;
+        startSnoidScript((Snoid *)&view->body, feet + 13000, 0, 0);
+        view->notifyEnd = 1;
+        view->notify = fn_4441a8;
+        break;
+    case 99:
+        if (g_4b1618 == 1)
+            moveView(g_4b1610, 0, g_4b160e);
+        break;
+    case -1:
+        view = findView(g_4a3d42);
+        feet = ((Snoid *)&view->body)->features[3] - 1;
+        if (g_4b1618 == 1) {
+            script = feet + 13005;
+            feet += 12001;
+        } else if (g_4b161a == 1) {
+            script = feet + 13010;
+            feet += 12006;
+        } else {
+            script = feet + 13015;
+            feet += 12011;
+        }
+        startSnoidScript((Snoid *)&view->body, script, 0, 0);
+        view->notifyEnd = 0;
+        view->notify = fn_444e0c;
+        view = findView(g_4b1664);
+        setViewScript(view, feet, 1);
+        view->placed = fn_442a9f;
+        fn_446035();
+        g_4b15f6 = groupViews(g_4b1664, g_4a3d42, 0, 0, 0, 0);
+        fn_4423d7();
+        break;
+    }
 }
