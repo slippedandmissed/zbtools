@@ -1481,3 +1481,82 @@ void fn_455023(short clear)
         showRect(&g_4a498e);
     }
 }
+
+/* A view's drawing: buttons 1 and 2, unlit. */
+/* @zoombi32 0x0044f163 */
+void fn_44f163(View *)
+{
+    fn_44f066(1, 0, 0);
+    fn_44f066(2, 0, 0);
+}
+
+/* Lets the movie play (cmgr_09; MCIdle?); once it has stopped (flag 0x40
+   clear; mcInfoIsPlaying?), closes it and returns 1. 0: still playing;
+   -1: no movie. */
+/* @zoombi32 0x00455229 */
+short fn_455229()
+{
+    long flags;
+
+    if (!g_4b2adc)
+        return -1;
+    cmgr_05(g_4b2adc, &flags);
+    cmgr_09(g_4b2adc);
+    if (flags & 0x40)
+        return 0;
+    fn_455273(0);
+    return 1;
+}
+
+/* Sets the Zoombinis' features from the slots (fn_4513ac; g_4b2740 if the
+   two differ) and starts the views g_4b2590 and g_4b2592 (11018, 11019),
+   grouped. */
+/* @zoombi32 0x00451315 */
+void fn_451315()
+{
+    View *first;
+    View *second;
+
+    g_4b273c = fn_4513ac();
+    g_4b2740 = 0;
+    if (g_4b273c)
+        g_4b2740 = 1;
+    first = findView(g_4b2590);
+    if (first) {
+        setViewScript(first, 11018, 1);
+        first->notify = fn_45174e;
+    }
+    second = findView(g_4b2592);
+    if (second) {
+        setViewScript(second, 11019, 1);
+        second->notify = fn_45174e;
+    }
+    if (first && second)
+        groupViews(first->id, second->id, 0, 0, 0, 0);
+}
+
+/* Fills the free cells of a set of 20 with waiting Zoombinis, while any
+   are left. */
+/* Its loop runs to 22, past the end of the cells, and each Zoombini's view
+   is read after its entry in g_4b2430 is cleared (partyViews[-1]); both as
+   in the original. */
+/* @zoombi32 0x0044d5f5 */
+void fn_44d5f5()
+{
+    short cells[20] = {55, 57, 59, 61, 38, 74, 40, 76, 42, 78, 44, 80, 21, 93, 23, 95, 25, 97, 4, 112};
+    short i;
+    short j;
+
+    for (i = 0; i < 22; i++)
+        if (g_4b1aea[cells[i]].state != 507) {
+            g_4b1aea[cells[i]].state = 507;
+            for (j = 0; j < g_4b2414; j++)
+                if (g_4b2430[j] != -1) {
+                    g_4b2430[j] = -1;
+                    g_4b1aea[cells[i]].snoid = partyViews[g_4b2430[j]];
+                    break;
+                }
+            if (!fn_44d102())
+                break;
+        }
+}

@@ -5326,6 +5326,15 @@ extern ShortRect g_4a48b2;
 extern short g_4b2798; /* cheating */
 short fn_450a58(unsigned short key);
 short fn_44d3b8(short cell, short direction);
+extern short g_4b2740;
+extern short g_4b2590;
+extern short g_4b2592;
+long __cdecl cmgr_05(long controller, long *flags);
+long __cdecl cmgr_09(long controller);
+void fn_44f163(View *);
+short fn_455229();
+void fn_451315();
+void fn_44d5f5();
 void fn_44f066(short which, short lit, short show);
 short fn_44d102();
 void fn_44d5ad(short cell);
