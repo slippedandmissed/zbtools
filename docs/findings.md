@@ -148,6 +148,7 @@ Details that depend on how the source is written, found while matching:
 - An argument the original computes before an earlier, simpler one (a script number before `lea edx, [view+0x30]`) was a local assigned first: `script = ...; startSnoidScript((Snoid *)&view->body, script, 0, 0);` (`fn_43de4d`, `0x43de4d`, where `script = features[3] - 1; script = script * 3 + ...` also gives the `movsx eax, ax` between the two steps). Similarly `++x > N` compiles to `inc`/`mov ax`/`cmp ax`, while the original's `inc [x]`/`cmp [x], N` is `x++; if (x > N)`.
 - Locals the original keeps on the stack above arrays (not after them, where losing register candidates go) are `volatile`: `markerPlaced` (`0x43d70d`).
 - Comparing two register variables, BCC emits `cmp` with the right operand first: `i != skip` gives `cmp si, bx` (skip in esi, i in ebx), in `fn_44410b` (`0x44410b`) and `featureButtonClicked` (`0x43ecbb`).
+- A switch's jump table (and the address of its index bytes) sits in the function and is relocated, so masking relocations would hide cases that lead to the wrong code: `fn_442a9f` (`0x442a9f`) first "matched" with two cases' bodies swapped. `match` now requires every absolute address into the function itself to point to the same offset as the original's. BCC lays case bodies out in source order but numbers the table's entries its own way, so the order of `case` labels in the source has to follow the original's code layout.
 
 ### The Pascal calling convention (`-p`)
 

@@ -32,9 +32,11 @@ names, using the game's usual options
 `--flags` override them for every file (to explore: the record of what
 matches only applies without `--release`). Every marked function is
 compared with the original, ignoring the bytes the linker fills in
-(relocated addresses and call targets). Calls the compiler resolves itself,
-to other marked functions in the same file, must reach the function at the
-callee's marker address. Mismatches are shown side by side.
+(relocated addresses and call targets), except that addresses into the
+function itself (a switch's jump table) must point to the same place in it.
+Calls the compiler resolves itself, to other marked functions in the same
+file, must reach the function at the callee's marker address. Mismatches are
+shown side by side.
 """
 
 import difflib
@@ -292,6 +294,33 @@ def _local_calls(
     return found
 
 
+def _misplaced_self_references(
+    compiled: bytes,
+    original: bytes,
+    fixups: list[omf.Fixup],
+    *,
+    at: tuple[str, int, int],
+    address: int,
+) -> set[int]:
+    """Absolute addresses into the function itself (a switch's jump table and
+    the address of its index bytes) that don't point to the same place in it
+    as the original's: the linker fills them in, so they're otherwise masked,
+    and a switch whose cases lead to the wrong code would still match.
+    Returns the offsets of their bytes. `at` is the function's (segment,
+    start, end) in the object, `address` where the original is."""
+    segment, start, end = at
+    found: set[int] = set()
+    for f in fixups:
+        if f.self_relative or f.size != 4 or f.target != segment:
+            continue
+        offset = f.offset - start
+        ours = f.displacement + int.from_bytes(compiled[offset : offset + 4], "little")
+        theirs = int.from_bytes(original[offset : offset + 4], "little")
+        if start <= ours < end and ours - start != theirs - address:
+            found.update(range(offset, offset + 4))
+    return found
+
+
 def compare(
     target: Target,
     obj: omf.ObjectFile,
@@ -323,6 +352,9 @@ def compare(
             offset = f.offset - start
             if target.address + offset not in exe.relocations:
                 mismatches.update(range(offset, offset + 4))
+    mismatches |= _misplaced_self_references(
+        compiled, original, fixups, at=(public.segment, start, end), address=target.address
+    )
     relocated = frozenset(
         i
         for i in range(len(original))

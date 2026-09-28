@@ -526,7 +526,8 @@ void fn_446198()
 }
 
 /* A view's placing: drops the cels of toppings not on the pizza
-   (g_4b16da; images 5-24 by topping, 25-40 by level too) and moves the
+   (g_4b16da; images 5-24 by topping, 25-40 by level too: 29-32 only at
+   level 3) and moves the
    rest by (g_4b1666, g_4b1668), or, while g_4b1630, to there from where
    the first one was. */
 /* @zoombi32 0x00442a9f */
@@ -595,10 +596,10 @@ void fn_442a9f(View *view)
                 removed++;
             }
             break;
-        case 29:
-        case 30:
-        case 31:
-        case 32:
+        case 37:
+        case 38:
+        case 39:
+        case 40:
             if (!g_4b16da[5] || !g_4b161e) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
@@ -613,10 +614,10 @@ void fn_442a9f(View *view)
                 removed++;
             }
             break;
-        case 37:
-        case 38:
-        case 39:
-        case 40:
+        case 29:
+        case 30:
+        case 31:
+        case 32:
             if (!g_4b16da[7] || g_4b161e != 3) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;

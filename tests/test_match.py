@@ -9,6 +9,7 @@ from zbtools.match import (
     Sibling,
     Target,
     _local_calls,
+    _misplaced_self_references,
     _silent,
     cache_key,
     find_targets,
@@ -19,6 +20,7 @@ from zbtools.match import (
     release_for,
     write_baseline,
 )
+from zbtools.omf import Fixup
 
 
 def _call(source: int, destination: int) -> bytes:
@@ -167,3 +169,35 @@ def test_silent_compile_failures_are_told_apart() -> None:
     )
     assert _silent(RuntimeError("compiling a.cpp failed:\n" + banner))
     assert not _silent(RuntimeError(banner + "Error R:\\a.cpp 3: Undefined symbol 'x'\n"))
+
+
+def _table(*entries: int) -> bytes:
+    return b"".join(e.to_bytes(4, "little") for e in entries)
+
+
+def test_jump_table_entries_must_lead_to_the_same_code() -> None:
+    # A function at offset 0x100 of CODE (0x40 bytes) and at 0x401000 in the
+    # original, whose jump table (at +0x10) lists two cases.
+    fixups = [
+        Fixup(offset=0x110, size=4, self_relative=False, target="CODE"),
+        Fixup(offset=0x114, size=4, self_relative=False, target="CODE"),
+    ]
+    compiled = bytes(0x10) + _table(0x120, 0x130) + bytes(0x28)
+    same = bytes(0x10) + _table(0x401020, 0x401030) + bytes(0x28)
+    swapped = bytes(0x10) + _table(0x401030, 0x401020) + bytes(0x28)
+    at = ("CODE", 0x100, 0x140)
+    assert _misplaced_self_references(compiled, same, fixups, at=at, address=0x401000) == set()
+    assert _misplaced_self_references(compiled, swapped, fixups, at=at, address=0x401000) == set(
+        range(0x10, 0x18)
+    )
+
+
+def test_references_elsewhere_are_left_to_the_linker() -> None:
+    fixups = [
+        Fixup(offset=0x110, size=4, self_relative=False, target="DATA"),
+        Fixup(offset=0x114, size=4, self_relative=False, target="CODE", displacement=0x200),
+    ]
+    compiled = bytes(0x10) + _table(0x10, 0x0) + bytes(0x28)
+    original = bytes(0x10) + _table(0x4A0000, 0x402000) + bytes(0x28)
+    at = ("CODE", 0x100, 0x140)
+    assert _misplaced_self_references(compiled, original, fixups, at=at, address=0x401000) == set()

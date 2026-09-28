@@ -32,6 +32,7 @@ class Fixup:
     size: int  # bytes the linker patches
     self_relative: bool  # e.g. a call's rel32 operand, vs an absolute address
     target: str  # symbol, segment or group name
+    displacement: int = 0  # added to the target (besides what's in the data)
 
 
 @dataclass
@@ -258,8 +259,9 @@ class _Parser:
             method, index = self.target_threads[fixdat & 3]
         else:
             method, index = fixdat & 3, r.index()
+        displacement = 0
         if not fixdat & 0x04:  # target displacement present
-            r.offset()
+            displacement = r.offset()
         if method == 0 and index & _VIRTUAL:  # a virtual segment, named by its COMDEF
             method, index = 2, index & ~_VIRTUAL
         names = {0: [s.name for s in self.segments], 1: self.groups, 2: self.externals}.get(method)
@@ -272,6 +274,7 @@ class _Parser:
                 size=_LOCATION_SIZES[(locat >> 10) & 0xF],
                 self_relative=not locat & 0x4000,
                 target=names[index - 1],
+                displacement=displacement,
             )
         )
 
