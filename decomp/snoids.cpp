@@ -308,7 +308,7 @@ short addSnoidView(Snoid *snoid, short placed)
                     action = 0;
                 else
                     action = 7;
-                fn_45a75b(viewSnoid(view), action, 0);
+                setSnoidAction(viewSnoid(view), action, 0);
                 view->nextUpdate = 0;
             }
         }
@@ -513,14 +513,14 @@ void updateSnoidView(View *view, short region)
     snoid = viewSnoid(view);
     switch (snoid->unknownF4) {
     case 7:
-        fn_4595c2(snoid, (Point *)&snoid->targetX);
-        fn_4591f8(snoid);
+        choosePath(snoid, (Point *)&snoid->targetX);
+        stepAlongPath(snoid);
         snoid->unknownF4 = 0x70;
     case 0x70:
         dx = snoid->body.unknownAa - snoid->body.x;
         dy = snoid->body.y - snoid->body.unknownAc;
         moving = 1;
-        if (!dx && !dy && !fn_4591f8(snoid)) {
+        if (!dx && !dy && !stepAlongPath(snoid)) {
             ShortRect rect;
             short found;
             short i;
@@ -528,7 +528,7 @@ void updateSnoidView(View *view, short region)
             moving = 0;
             unionRgnRect(currentViewRgn, &snoid->body.bounds);
             snoid->unknownF8 = 0;
-            fn_45a75b(snoid, g_4b756a, 0);
+            setSnoidAction(snoid, g_4b756a, 0);
             if (g_4b755a > 0) {
                 g_4b755a--;
                 g_4b755c++;
@@ -627,7 +627,7 @@ void updateSnoidView(View *view, short region)
             snoid->unknownF8 = 0;
             if (!g_4a4cea && randomBetween(0, 100) < 10) {
                 snoid->unknownF5 = randomBetween(0, 7);
-                fn_45a75b(snoid, 6, 0);
+                setSnoidAction(snoid, 6, 0);
                 changed = 1;
             }
         }
@@ -641,7 +641,7 @@ void updateSnoidView(View *view, short region)
         } else {
             view->interval = 6;
             snoid->unknownF8 = 0;
-            fn_45a75b(snoid, g_4b756a, 0);
+            setSnoidAction(snoid, g_4b756a, 0);
         }
         break;
     case 8:
@@ -658,13 +658,13 @@ void updateSnoidView(View *view, short region)
             }
             snoid->unknownF5++;
         } else {
-            fn_45a75b(snoid, 0, 0);
+            setSnoidAction(snoid, 0, 0);
             snoid->unknownF8 = 0;
         }
         view->changed = 1;
         return;
     case 10:
-        fn_45a75b(snoid, 7, 0);
+        setSnoidAction(snoid, 7, 0);
         g_4b755a++;
         return;
     }
@@ -700,7 +700,7 @@ void updateSnoidView(View *view, short region)
                     snoid->body.frameOffset = 2;
                 } else {
                     unionRgnRect(currentViewRgn, &snoid->body.bounds);
-                    fn_45a75b(snoid, 0, 0);
+                    setSnoidAction(snoid, 0, 0);
                 }
                 if (view->notifyEnd && view->notify)
                     view->notify(view, -1);
@@ -709,7 +709,7 @@ void updateSnoidView(View *view, short region)
                 return;
             default:
                 unionRgnRect(currentViewRgn, &snoid->body.bounds);
-                fn_45a75b(snoid, 0, 0);
+                setSnoidAction(snoid, 0, 0);
                 view->notify = 0;
                 view->changed = 1;
                 return;
@@ -859,7 +859,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
     start = *(Point *)&snoid->body.x;
     unionRgnRect(removedRgn, &snoid->body.bounds);
     if (!g_4b7552)
-        fn_45a75b(snoid, 5, 0);
+        setSnoidAction(snoid, 5, 0);
     unionRgnRect(currentViewRgn, &snoid->body.bounds);
     last = current;
     dx = current.x - start.x;
@@ -997,9 +997,9 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
     if (!g_4b7552) {
         if (g_4b7556) {
             snoid->unknownF2 = 0;
-            fn_45a75b(snoid, 0, 0);
+            setSnoidAction(snoid, 0, 0);
         } else {
-            fn_45a75b(snoid, 4, 0);
+            setSnoidAction(snoid, 4, 0);
         }
     }
     dragged->id = id;
@@ -1124,11 +1124,11 @@ void loadPaths(short id)
 {
     short handle;
 
-    pathNodes = loadSwappedResource(&pathNodesResource, id, RESOURCE_TYPE('N', 'O', 'D', 'E'));
+    pathNodes = (PathNodes *)loadSwappedResource(&pathNodesResource, id, RESOURCE_TYPE('N', 'O', 'D', 'E'));
     fn_46c4fe(&pathsResource, RESOURCE_TYPE('P', 'A', 'T', 'H'), id, 0, 1);
     handle = fn_46beac(pathsResource);
-    paths = (unsigned short *)fn_48ea00(handle);
-    swapInPlace(*paths);
+    paths = (Paths *)fn_48ea00(handle);
+    swapInPlace(paths->count);
 }
 
 /* @zoombi32 0x004591cc */
@@ -1589,4 +1589,408 @@ void sortSnoids(short running)
                 sortedCount++;
             }
         }
+}
+
+/*
+ * Picks the path a Zoombini takes toward `target`: of the paths through the
+ * node nearest `target`, the node nearest the Zoombini (its path in
+ * unknownEb, the node's place in it, from 1, in unknownEa, and which way
+ * to walk it in unknownF0). Without paths it heads straight there.
+ */
+/* @zoombi32 0x004595c2 */
+void choosePath(Snoid *snoid, Point *target)
+{
+    short nodeCount;
+    short pathCount;
+    short nearest;
+    Point at;
+    PathNodes *nodes;
+    long best;
+    long dx;
+    long dy;
+    long distance;
+
+    if (!paths || !pathNodes || g_4b7564) {
+        *(Point *)&snoid->body.unknownAa = *(Point *)&snoid->targetX;
+        return;
+    }
+    at = *(Point *)&snoid->body.x;
+    nodes = pathNodes;
+    Paths *list = paths;
+    nodeCount = nodes->count;
+    nearest = 0;
+    best = 999999;
+    for (short i = 0; i < nodeCount; i++) {
+        dx = nodes->nodes[i].x - target->x;
+        dy = nodes->nodes[i].y - target->y;
+        distance = dx * dx + dy * dy;
+        if (distance <= best) {
+            best = distance;
+            nearest = i + 1;
+        }
+    }
+    pathCount = list->count;
+    best = 999999;
+    for (short path = 0; path < pathCount; path++)
+        for (short j = 0; j < 24; j++)
+            if (list->nodes[path][j] == nearest) {
+                for (short k = 0; k < 24; k++)
+                    if (list->nodes[path][k]) {
+                        dx = nodes->nodes[list->nodes[path][k] - 1].x - at.x;
+                        dy = nodes->nodes[list->nodes[path][k] - 1].y - at.y;
+                        distance = dx * dx + dy * dy;
+                        if (distance <= best) {
+                            best = distance;
+                            snoid->unknownEa = k + 1;
+                            snoid->unknownEb = path;
+                            snoid->unknownF0 = 1;
+                            if (j && j <= k)
+                                snoid->unknownF0 = -1;
+                        }
+                    }
+                j = 24;
+            }
+}
+
+/*
+ * Steps a walking Zoombini toward its next waypoint (unknownAa: along its
+ * path, or its target once that's nearer than the path's next node),
+ * setting its step (unknownEc, unknownEe) and, if its heading changes, its
+ * walk script. Whether it has anywhere to go.
+ */
+/* @zoombi32 0x004591f8 */
+short stepAlongPath(Snoid *snoid)
+{
+    Point next;
+    short oldHeading;
+    short stepX;
+    short stepY;
+    short moving;
+    long toNode;
+    short dx;
+    short dy;
+    short steps;
+
+    moving = 0;
+    if (paths && pathNodes && !g_4b7564) {
+        short arrived;
+
+        if (snoid->unknownEa >= 0) {
+            arrived = 0;
+            PathNodes *nodes = pathNodes;
+            Paths *list = paths;
+            char node = list->nodes[snoid->unknownEb][snoid->unknownEa];
+
+            snoid->unknownEa += snoid->unknownF0;
+            if (node) {
+                long ex;
+                long ey;
+
+                next.x = nodes->nodes[node - 1].x;
+                next.y = nodes->nodes[node - 1].y;
+                ex = snoid->body.x - next.x;
+                ey = snoid->body.y - next.y;
+                toNode = ex * ex + ey * ey;
+                ex = snoid->body.x - snoid->targetX;
+                ey = snoid->body.y - snoid->targetY;
+                ex = ex * ex + ey * ey;
+                if (ex <= toNode)
+                    arrived = 1;
+            } else {
+                arrived = 1;
+            }
+        } else {
+            arrived = 1;
+        }
+        if (arrived)
+            *(Point *)&snoid->body.unknownAa = *(Point *)&snoid->targetX;
+        else
+            *(Point *)&snoid->body.unknownAa = next;
+    }
+    dx = snoid->body.unknownAa - snoid->body.x;
+    dy = snoid->body.y - snoid->body.unknownAc;
+    if (dx || dy) {
+        short slope;
+
+        oldHeading = snoid->unknownF5;
+        if (dx)
+            slope = (dy * 1024) / abs(dx);
+        else if (dy < 0)
+            slope = -1410;
+        else
+            slope = 1410;
+        if (slope <= -1409)
+            snoid->unknownF5 = 0;
+        else if (slope <= -332)
+            snoid->unknownF5 = 1;
+        else if (slope < 332)
+            snoid->unknownF5 = 2;
+        else if (slope < 1409)
+            snoid->unknownF5 = 3;
+        else
+            snoid->unknownF5 = 4;
+        switch (snoid->unknownF5) {
+        case 0:
+            stepX = 5;
+            stepY = -15;
+            break;
+        case 1:
+            stepX = 13;
+            stepY = -10;
+            break;
+        case 2:
+            stepX = 16;
+            stepY = 8;
+            break;
+        case 3:
+            stepX = 13;
+            stepY = 10;
+            break;
+        case 4:
+            stepX = 5;
+            stepY = 15;
+            break;
+        }
+        if (abs(stepX) >= abs(stepY)) {
+            snoid->unknownEc = stepX;
+            steps = abs(dx) / abs(stepX);
+            if (steps)
+                snoid->unknownEe = dy / steps;
+            else
+                snoid->unknownEe = dy;
+            if (!snoid->unknownEe && dy)
+                snoid->unknownEe = dy / abs(dy);
+        } else {
+            snoid->unknownEe = stepY;
+            steps = abs(dy) / abs(stepY);
+            if (steps)
+                snoid->unknownEc = dx / steps;
+            else
+                snoid->unknownEc = dx;
+            if (!snoid->unknownEc && dx)
+                snoid->unknownEc = dx / abs(dx);
+        }
+        moving = 1;
+        if (oldHeading != snoid->unknownF5) {
+            short *script;
+
+            snoid->body.script = snoid->features[3] * 5 + snoid->unknownF5;
+            script = baseSnoidScripts[snoid->body.script];
+            snoid->body.frameOffset = scriptFrameOffset(script, &snoid->body.frame, 1);
+            setSnoidFacing(snoid, script[1]);
+        }
+    }
+    return moving;
+}
+
+/*
+ * Sets the images a Zoombini is drawn with (unknownC2: its features', and
+ * 0 for its body) for which way it faces (0-2), in the order they overlap.
+ */
+/* @zoombi32 0x0045b06a */
+void setSnoidFacing(Snoid *snoid, short facing)
+{
+    if (facing != snoid->unknownC0) {
+        snoid->unknownC0 = facing;
+        short *layers = snoid->unknownC2;
+
+        if (snoid->unknownF4 == 9) {
+            switch (facing) {
+            case 0:
+                layers[1] = altFeetImages[snoid->features[3]];
+                layers[2] = 0;
+                layers[3] = altNoseImages[snoid->features[2]];
+                layers[4] = altEyesImages[snoid->features[1]];
+                layers[5] = altHairImages[snoid->features[0]];
+                break;
+            case 1:
+                layers[1] = altFeetImages[snoid->features[3]];
+                layers[2] = altNoseImages[snoid->features[2]];
+                layers[3] = 0;
+                layers[4] = altEyesImages[snoid->features[1]];
+                layers[5] = altHairImages[snoid->features[0]];
+                break;
+            case 2:
+                layers[1] = 0;
+                layers[2] = altEyesImages[snoid->features[1]];
+                layers[3] = altNoseImages[snoid->features[2]];
+                layers[4] = altFeetImages[snoid->features[3]];
+                layers[5] = altHairImages[snoid->features[0]];
+                break;
+            }
+        } else {
+            switch (facing) {
+            case 0:
+                layers[1] = feetImages[snoid->features[3]];
+                layers[2] = 0;
+                layers[3] = noseImages[snoid->features[2]];
+                layers[4] = eyesImages[snoid->features[1]];
+                layers[5] = hairImages[snoid->features[0]];
+                break;
+            case 1:
+                layers[1] = feetImages[snoid->features[3]];
+                layers[2] = noseImages[snoid->features[2]];
+                layers[3] = 0;
+                layers[4] = eyesImages[snoid->features[1]];
+                layers[5] = hairImages[snoid->features[0]];
+                break;
+            case 2:
+                layers[1] = 0;
+                layers[2] = eyesImages[snoid->features[1]];
+                layers[3] = noseImages[snoid->features[2]];
+                layers[4] = feetImages[snoid->features[3]];
+                layers[5] = hairImages[snoid->features[0]];
+                break;
+            }
+        }
+    }
+}
+
+/*
+ * Starts a Zoombini doing `action` (0-10; its state, unknownF4), at `where`
+ * if given: picks its script and starts it.
+ */
+/* @zoombi32 0x0045a75b */
+void setSnoidAction(Snoid *snoid, short action, Point *where)
+{
+    short frame;
+    short which;
+    short sound;
+    short script;
+
+    frame = 0;
+    if (action < 0 || action > 10)
+        action = 0;
+    groupLeader[snoid->body.group] = 0;
+    snoid->body.group = 0;
+    switch (action) {
+    case 3:
+        if (!snoid->unknownF4) {
+            if (snoid->unknownF1 != 1)
+                snoid->unknownF1 = 1;
+            short mask = snoid->unknownF5; /* features to show changed (8: feet ... 1: hair) */
+            for (short i = 0; i <= 4; i++) {
+                short image = 0;
+
+                switch (i) {
+                case 0:
+                    if (mask & 8)
+                        image = snoid->features[3] + 435;
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    if (mask & 4)
+                        image = snoid->features[2] + 440;
+                    break;
+                case 3:
+                    if (mask & 2)
+                        image = snoid->features[1] + 430;
+                    break;
+                case 4:
+                    if (mask & 1)
+                        image = snoid->features[0] + 425;
+                    break;
+                }
+                if (!image) {
+                    snoid->body.cels[i + 10].image = snoid->body.cels[i].image;
+                } else {
+                    image = image * 2 - 1;
+                    if (snoid->unknownF2)
+                        image++;
+                    snoid->body.cels[i + 10].image = image;
+                }
+            }
+            snoid->unknownF5 = 0;
+            snoid->unknownF4 = 3;
+            return;
+        }
+        /* fall through */
+    case 0:
+    case 1:
+    case 2:
+    case 10:
+        script = snoid->unknownF1;
+        break;
+    case 4:
+        snoid->unknownF0 = 0;
+        script = snoid->unknownF1;
+        break;
+    case 5:
+        script = snoid->features[3] + 45;
+        switch (snoid->unknownF1) {
+        case 0:
+        default:
+            frame = 0;
+            break;
+        case 1:
+            frame = 1;
+            break;
+        case 2:
+            frame = 2;
+            break;
+        }
+        if (g_4a4cea) {
+            frame = 0;
+            script = snoid->unknownF1;
+        }
+        break;
+    case 7:
+    case 112:
+        script = snoid->features[3] * 5 + snoid->unknownF5;
+        break;
+    case 6:
+        switch (snoid->unknownF1) {
+        case 0:
+        default:
+            snoid->unknownF1 = 1;
+        case 1:
+            script = snoid->unknownF5 + 30;
+            break;
+        case 2:
+            script = snoid->unknownF5 + 38;
+            break;
+        }
+        if (g_4a4b98 && g_4b87fe) {
+            if (randomBetween(1, 100) <= 50)
+                which = 4;
+            else
+                which = 5;
+            g_4b7bda = ++g_4b7bda % 32;
+            if (!g_4b7bda)
+                for (sound = 100; sound <= 424; sound++)
+                    fn_41158c(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+            queueViewSound(snoidSound(snoid, which), 0);
+        }
+        break;
+    case 8:
+    case 9:
+    default:
+        action = 0;
+        script = snoid->unknownF1;
+        break;
+    }
+    snoid->unknownC0 = -1;
+    snoid->unknownF4 = action;
+    if (!action)
+        snoid->unknownF5 = 1;
+    else
+        snoid->unknownF5 = 0;
+    snoid->body.running = 1;
+    if (where)
+        *(Point *)&snoid->body.x = *where;
+    snoid->body.frame = 0;
+    snoid->body.frameOffset = 2;
+    snoid->body.script = script;
+    short *data = baseSnoidScripts[script];
+    script = data[1];
+    snoid->body.lastFrame = data[0];
+    if (frame) {
+        snoid->body.frameOffset = scriptFrameOffset(data, &frame, 1);
+        snoid->body.frame = frame;
+    }
+    unionRgnRect(currentViewRgn, &snoid->body.bounds);
+    setSnoidFacing(snoid, script);
+    fn_45ab97(snoid, 0);
+    unionRgnRect(currentViewRgn, &snoid->body.bounds);
 }

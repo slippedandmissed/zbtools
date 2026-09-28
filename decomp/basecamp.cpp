@@ -1402,7 +1402,7 @@ void drawCamp(View *)
             snoid.zoombini = camp->slots[index].zoombini;
             snoid.body.x = x;
             snoid.body.y = y;
-            fn_45b06a(&snoid, 0);
+            setSnoidFacing(&snoid, 0);
             fn_45ab97(&snoid, 0);
             camp->slots[index].rect = snoid.body.bounds;
             drawSnoid(&snoid);

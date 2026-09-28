@@ -404,6 +404,8 @@
 0x00458f90 sortSnoids
 0x0045915d loadPaths
 0x004591cc freePaths
+0x004591f8 stepAlongPath
+0x004595c2 choosePath
 0x00459c02 toggleShowPositions
 0x00459c17 listChosenSnoids
 0x0045a3e1 chooseSnoids
@@ -411,8 +413,10 @@
 0x0045a477 markPlacedSnoids
 0x0045a4b2 runSnoid
 0x0045a6e0 nearPlacedView
+0x0045a75b setSnoidAction
 0x0045aaff fn_45aaff
 0x0045ab35 turnSnoid
+0x0045b06a setSnoidFacing
 0x0045b37a idleSnoidView
 0x0045b39a fn_45b39a
 0x0045b3af spotTaken

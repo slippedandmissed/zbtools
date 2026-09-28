@@ -4432,8 +4432,20 @@ View *idleSnoidView(short id);
 Snoid *findSnoid(short id, short wake);
 extern ShortRect nameTagRect; /* @data 0x4a4cc4 */
 extern ShortRect largeNameTagRect; /* @data 0x4a4ccc */
-extern unsigned short *paths; /* @data 0x4a4cd4: 'PATH' */
-extern short *pathNodes; /* @data 0x4a4cd8: 'NODE' */
+/* The points Zoombinis' paths join ('NODE', big-endian), numbered from 1. */
+struct PathNodes
+{
+    short count;
+    Point nodes[1];
+};
+/* The paths: each lists up to 24 nodes (0: none) ('PATH'). */
+struct Paths
+{
+    unsigned short count;
+    char nodes[1][24];
+};
+extern Paths *paths; /* @data 0x4a4cd4 */
+extern PathNodes *pathNodes; /* @data 0x4a4cd8 */
 extern long pathsResource; /* @data 0x4a4cdc */
 extern long pathNodesResource; /* @data 0x4a4ce0 */
 extern short g_4a4b9c;
@@ -4457,6 +4469,10 @@ extern short feetImages[6]; /* @data 0x4a4ba4: by feature value (1-5) */
 extern short noseImages[6]; /* @data 0x4a4bb0 */
 extern short eyesImages[6]; /* @data 0x4a4bbc */
 extern short hairImages[6]; /* @data 0x4a4bc8 */
+extern short altFeetImages[6]; /* @data 0x4a4bd4: the same, when unknownF4 is 9 */
+extern short altNoseImages[6]; /* @data 0x4a4be0 */
+extern short altEyesImages[6]; /* @data 0x4a4bec */
+extern short altHairImages[6]; /* @data 0x4a4bf8 */
 extern short spotRadius; /* @data 0x4a4ce4 */
 extern Point spots[32]; /* @data 0x4b7bdc: where idle Zoombinis stand */
 extern short spotIds[32]; /* @data 0x4b7c5c */
@@ -4482,11 +4498,12 @@ void releaseHeldPlace();
 extern short partyViews[32]; /* @data 0x4b756c */
 void drawSnoidView(View *view);
 void updateSnoidView(View *view, short region); /* 0x4575e6 */
-void fn_45a75b(Snoid *snoid, short action, short);
+void setSnoidAction(Snoid *snoid, short action, Point *where);
+extern short g_4b7bda;
 void fn_45aaff(short);
 void fn_45bbba(short);
-short fn_4591f8(Snoid *snoid);
-void fn_4595c2(Snoid *snoid, Point *target);
+short stepAlongPath(Snoid *snoid);
+void choosePath(Snoid *snoid, Point *target);
 extern short g_4b756a;
 extern short g_4a4cea;
 extern short g_4b7552;
@@ -4587,7 +4604,7 @@ void scrollCamp(View *view, short);
 void drawCamp(View *);
 void noteCampSlot(short slot);
 void initSnoid(Snoid *snoid); /* 0x45bf41 */
-void fn_45b06a(Snoid *snoid, short);
+void setSnoidFacing(Snoid *snoid, short facing);
 short fn_45ab97(Snoid *snoid, short *event);
 short campSlotsUsed();
 void insertCampRow();
