@@ -23,7 +23,10 @@ struct LillyActor
     char unknownC8;
     short unknownC9;
     short unknownCb;
-    char unknownCd[8];
+    short targetX; /* +0xcd */
+    short targetY;
+    short stepX; /* +0xd1 */
+    short stepY;
     char unknownD5;
     char unknownD6;
     short unknownD7;
@@ -1421,4 +1424,61 @@ void searchStep(short attribute, short layer, short row, short column)
                 g_4ad7e0[layer].marks[r][c] = g_4ad7e0[layer].marks[row][column];
             }
         }
+}
+
+/* Places a lilly actor's two parts as it jumps to (targetX, targetY):
+   frames 0-2 where it is, 3-4 part way (by steps that double), 5-9 there. */
+/* @zoombi32 0x0042a4d2 */
+void placeJumper(View *view)
+{
+    LillyActor *actor = (LillyActor *)&view->body;
+    short *cel;
+    short image;
+
+    switch (actor->body.frame) {
+    case 0:
+        actor->targetX = 599;
+        actor->targetY = 55;
+        actor->stepX = (actor->targetX - actor->body.x) / 3;
+        actor->stepY = (actor->targetY - actor->body.y) / 3;
+        /* fall through */
+    case 1:
+    case 2:
+        cel = (short *)&view->body;
+        image = *cel++;
+        *cel++ -= g_4ac950[image];
+        *cel++ -= g_4ac954[image];
+        *cel += actor->unknownE0;
+        image = *cel++;
+        *cel++ -= g_4ac950[image];
+        *cel -= g_4ac954[image];
+        break;
+    case 3:
+    case 4:
+        cel = (short *)&view->body;
+        image = *cel++;
+        *cel++ = actor->body.x + actor->stepX - g_4ac950[image];
+        *cel++ = actor->body.y + actor->stepY - g_4ac954[image];
+        *cel += actor->unknownE0;
+        image = *cel++;
+        *cel++ = actor->body.x + actor->stepX - g_4ac950[image];
+        *cel = actor->body.y + actor->stepY - g_4ac954[image];
+        actor->stepX += actor->stepX;
+        actor->stepY += actor->stepY;
+        break;
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+        cel = (short *)&view->body;
+        image = *cel++;
+        *cel++ = actor->targetX - g_4ac950[image];
+        *cel++ = actor->targetY - g_4ac954[image];
+        *cel += actor->unknownE0;
+        image = *cel++;
+        *cel++ = actor->targetX - g_4ac950[image];
+        *cel = actor->targetY - g_4ac954[image];
+        break;
+    }
 }

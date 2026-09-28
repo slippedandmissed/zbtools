@@ -4800,6 +4800,7 @@ short addLillyActor(short value);
 void drawSquare(short row, short column);
 void drawBoard(short);
 void drawCursorSquare(View *view);
+void placeJumper(View *view);
 void searchStep(short attribute, short layer, short row, short column);
 extern short g_4a1e16[];
 extern short g_4a1e28[4];
