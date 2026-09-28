@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "e2memory.h"
 #include "features.h"
+#include "focus.h"
 #include "game.h"
 #include "graphics.h"
 #include "module_4623b8.h"
@@ -16,6 +17,84 @@
 #include "snoids.h"
 #include "sound.h"
 #include "view.h"
+
+/* Opens scene 12 (Stone Rise): Slides.MHK, the board (all cells empty,
+   500, until fn_44b550 lays it out for the level), the cells' views, the
+   buttons and the party. */
+/* @zoombi32 0x00446bf8 */
+void openScene12()
+{
+    short i;
+
+    g_4b966e = 0;
+    g_4b755a = g_4b755c = 0;
+    g_4b0d52 = g_4b240e = g_4b2410 = 0;
+    g_4b1930 = g_4b1932 = 0;
+    g_4b2524 = g_4b1a34 = g_4b1a3e = g_4b1a40 = 0;
+    g_4b2540 = g_4b2542 = g_4b1a3c = 0;
+    g_4b2526 = -1;
+    openGameFile(&g_4b1928, "Slides.MHK");
+    fn_46be2e(g_4b1928);
+    fillMemory(g_4b1936, 0, 20);
+    fillMemory(g_4b1aea, 0, sizeof g_4b1aea);
+    fillMemory(g_4b2324, 0, sizeof g_4b2324);
+    fillMemory(g_4b194a, 0, sizeof g_4b194a);
+    fillMemory(g_4b241c, 0, 20);
+    for (i = 0; i < 117; i++)
+        g_4b1aea[i].state = 500;
+    g_4b241a = g_4b2518 = g_4b251a = g_4b2528 = g_4b2412 = 0;
+    g_4b1934 = sceneLevel();
+    if (g_4b1934 == 3)
+        loadPaths(1000);
+    loadTerrain(100);
+    drawBackdrop(5000);
+    g_4a3fc4 = loadImageBank(6000, &g_4a3fc8);
+    loadFeatureGroup(7000, 0, 0);
+    loadFeatureGroup(8000, 1, 0);
+    loadScripts(7000, 14);
+    addScripts(8000, 3, 0);
+    addView(0x1000, drawSlidesButtons, fn_4470b2, 0, 0, 0, 0, 0);
+    loadSnoidScripts(14000, 4, 0);
+    addSnoidScripts(13000, 6, 0);
+    setViewPlaces(16, slidesPlaces, 1);
+    fn_4148da(10, 236);
+    makePartySnoids(0);
+    enterSnoids(0);
+    g_4b192c = listChosenSnoids();
+    g_4b253c = g_4b2414 = g_4b192c->count;
+    fn_44b550();
+    moveView(g_4b1936[1], 0, g_4b1aea[9].view);
+    moveView(g_4b1936[2], 0, g_4b1aea[27].view);
+    moveView(g_4b1936[3], 0, g_4b1aea[45].view);
+    moveView(g_4b1936[4], 0, g_4b1aea[63].view);
+    moveView(g_4b1936[5], 0, g_4b1aea[81].view);
+    moveView(g_4b1936[6], 0, g_4b1aea[99].view);
+    for (i = 0; i < g_4b240e; i++) {
+        placedViews[i] = addView(0x188a000, drawCels, runViewScript, 7013, 7, &g_4b1a4c[i], 0, 0);
+        findView(placedViews[i])->placed = fn_448c81;
+    }
+    moveView(g_4b1936[7], 1, placedViews[g_4b240e - 1]);
+    updateViews();
+    staggerSnoids(45, 30);
+    chooseSnoids(0, 0);
+    setGroupLists(slidesGroups, 1, (short)0xc000);
+    drawSlidesButton(1, 0, 0);
+    drawSlidesButton(2, 0, 0);
+    addSoundRange(7001, 7001, 0);
+    addSoundRange(7000, 7000, 0);
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(8000, 8000, 0);
+    addSoundRange(8500, 8599, 0);
+    addSoundRange(425, 499, 0);
+    addSoundRange(7002, 7002, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    unloadSounds();
+    queueViewSound(997, 0);
+    g_4b1930 = 1;
+    campHint((short *)(g_4a4ba0 + 0x36));
+    g_4b966e = 20078;
+}
 
 /* Closes scene 12. */
 /* @zoombi32 0x00447124 */

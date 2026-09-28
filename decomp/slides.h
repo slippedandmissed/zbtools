@@ -46,7 +46,7 @@ extern Point cellPoints[117]; /* @data 0x4a3fcc: where each cell is drawn */
 extern short g_4b1a3e; /* @data 0x4b1a3e: a cell is marked */
 extern short g_4b1a36; /* @data 0x4b1a36: the cell marked */
 extern short g_4b1a34; /* @data 0x4b1a34: the marker's view */
-extern short g_4b1936[8]; /* @data 0x4b1936: views, by row */
+extern short g_4b1936[10]; /* @data 0x4b1936: views, by row */
 void fn_44af15(View *view, short event);
 void drawSlidesButtons(View *);
 void fn_4489a8(View *view, short);
@@ -89,5 +89,16 @@ void fn_44a180(short cell);
 extern short g_4b2412; /* @data 0x4b2412: letters of the cheat "solve" typed */
 void fn_44a422();
 short scene12Key(unsigned short key);
+extern short g_4b1a40; /* @data 0x4b1a40 */
+extern short g_4b2524; /* @data 0x4b2524 */
+extern short g_4b2526; /* @data 0x4b2526 */
+extern short g_4b2528; /* @data 0x4b2528 */
+extern short g_4b2518; /* @data 0x4b2518 */
+extern short g_4b241a; /* @data 0x4b241a */
+extern short g_4b194a[117]; /* @data 0x4b194a */
+extern short g_4b241c[10]; /* @data 0x4b241c */
+extern Point g_4b1a4c[27]; /* @data 0x4b1a4c: where the listed cells' views go */
+extern GroupList slidesGroups[1]; /* @data 0x4a3fa4 */
+void openScene12();
 
 #endif

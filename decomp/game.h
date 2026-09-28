@@ -228,4 +228,6 @@ void fn_45074d();
 void fn_450796();
 void fn_4507bb();
 
+void fn_44b550();
+
 #endif
