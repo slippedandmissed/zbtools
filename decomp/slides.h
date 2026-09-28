@@ -70,4 +70,6 @@ void scene12Frame();
 
 void fn_4494b3();
 
+void fn_44a674(short from, short via, short to);
+
 #endif

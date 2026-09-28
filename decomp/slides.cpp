@@ -1156,3 +1156,101 @@ void fn_4494b3()
             done++;
     } while (!done);
 }
+
+/* A Zoombini's move from cell `from` over `via` to `to`: a plain stone
+   between (state 501, below 510) lights (502) when the Zoombini stands on
+   `from`, and so does `to` (502, or 508 with a Zoombini on it); a feature
+   stone (510-513) lights, with `to` (508), when the Zoombinis on `from` and
+   `to` share that feature; otherwise `to` lights alone (502). */
+/* Not exact: register allocation (the original keeps `from` in eax, as in
+   fn_44b0fc; here it takes esi, which shifts the other variables' registers
+   and stack slots). */
+/* @zoombi32 0x0044a674 */
+void fn_44a674(short from, short via, short to)
+{
+    short feet;
+    short hair;
+    short eyes;
+    short nose;
+    short code;
+    short otherNose;
+    View *view;
+    short otherHair;
+    short otherEyes;
+    short otherFeet;
+    Snoid *snoid;
+
+    if (via == -1)
+        return;
+    if (g_4b1aea[via].state != 501)
+        return;
+    code = g_4b1aea[via].snoid;
+    if (code < 510) {
+        if (g_4b1aea[from].state != 507 && g_4b1aea[from].state != 508 && g_4b1aea[from].state != 502)
+            return;
+        g_4b1aea[via].state = 502;
+        view = findView(g_4b1aea[via].view);
+        setViewScript(view, 7000, 1);
+        view->placed = fn_4489ce;
+        if (to == -1)
+            return;
+        if (g_4b1aea[to].state == 507 || g_4b1aea[to].state == 508) {
+            g_4b1aea[to].state = 508;
+            view = findView(g_4b1aea[to].view);
+            setViewScript(view, 7000, 1);
+            view->placed = fn_4489ce;
+            return;
+        }
+        if (g_4b1aea[to].state == 501) {
+            g_4b1aea[to].state = 502;
+            view = findView(g_4b1aea[to].view);
+            setViewScript(view, 7000, 1);
+            view->placed = fn_4489ce;
+        }
+        return;
+    }
+    if (to != -1 && (g_4b1aea[from].state == 507 || g_4b1aea[from].state == 508)
+        && (g_4b1aea[to].state == 507 || g_4b1aea[to].state == 508)) {
+        snoid = (Snoid *)&findView(g_4b1aea[from].snoid)->body;
+        hair = snoid->features[0];
+        eyes = snoid->features[1];
+        nose = snoid->features[2];
+        feet = snoid->features[3];
+        snoid = (Snoid *)&findView(g_4b1aea[to].snoid)->body;
+        otherHair = snoid->features[0];
+        otherEyes = snoid->features[1];
+        otherNose = snoid->features[2];
+        otherFeet = snoid->features[3];
+        if (code < 510 || g_4b1aea[via].state == 502) {
+            g_4b1aea[to].state = 508;
+            view = findView(g_4b1aea[to].view);
+            setViewScript(view, 7000, 1);
+            view->placed = fn_4489ce;
+            g_4b1aea[via].state = 502;
+            view = findView(g_4b1aea[via].view);
+            setViewScript(view, 7000, 1);
+            view->placed = fn_4489ce;
+        } else if ((code == 510 && otherHair == hair) || (code == 511 && otherEyes == eyes)
+                   || (code == 512 && nose == otherNose) || (code == 513 && otherFeet == feet)) {
+            g_4b1aea[to].state = 508;
+            view = findView(g_4b1aea[to].view);
+            setViewScript(view, 7000, 1);
+            view->placed = fn_4489ce;
+            g_4b1aea[via].state = 502;
+            view = findView(g_4b1aea[via].view);
+            setViewScript(view, 7000, 1);
+            view->placed = fn_4489ce;
+        }
+    } else if (to != -1 && (g_4b1aea[to].state == 502 || g_4b1aea[to].state == 501)) {
+        g_4b1aea[to].state = 502;
+        view = findView(g_4b1aea[to].view);
+        setViewScript(view, 7000, 1);
+        view->placed = fn_4489ce;
+        if (code < 510 && code != 500) {
+            g_4b1aea[via].state = 502;
+            view = findView(g_4b1aea[via].view);
+            setViewScript(view, 7000, 1);
+            view->placed = fn_4489ce;
+        }
+    }
+}
