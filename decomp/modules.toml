@@ -121,6 +121,11 @@ name = "net"
 note = "'Net.MHK'"
 
 [[module]]
+start = 0x43e620
+name = "isle"
+note = "Zoombini Isle (scene 3), where Zoombinis are made: opens 'Picker.MHK' (0x43e6b6); no padding before it, but its data (from the scene's record at 0x4a2f0c) starts right after net's literals 'Net.MHK' and 'PR'"
+
+[[module]]
 start = 0x4402c0
 name = "pizza"
 note = "Pizza Pass: the trolls 'Arno', 'Willa', 'Shyler'"
