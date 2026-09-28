@@ -675,10 +675,10 @@ void loadTerrain(short id)
 
     loadShape(&terrainResource, id, "Terrain");
     handle = fn_46beac(terrainResource);
-    terrain = (unsigned short *)fn_48ea00(handle);
-    terrain[0] = swapShort(terrain[0]);
-    terrain[1] = swapShort(terrain[1]);
-    terrain[2] = swapShort(terrain[2]);
+    terrain = (Terrain *)fn_48ea00(handle);
+    terrain->width = swapShort(terrain->width);
+    terrain->height = swapShort(terrain->height);
+    terrain->rowBytes = swapShort(terrain->rowBytes);
 }
 
 /* @zoombi32 0x004645ab */

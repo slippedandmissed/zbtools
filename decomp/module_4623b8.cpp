@@ -39,8 +39,8 @@ short mainLoopUpdate()
         g_4b80dc = fn_41571f();
     } else {
         getCursorPosition(&cursor);
-        g_4a79c8 = fn_41571f() - g_4a79c4;
-        g_4a79c4 = fn_41571f();
+        g_4a79c8 = fn_41571f() - lastClickTime;
+        lastClickTime = fn_41571f();
         handleMouse(&cursor, 0);
     }
     return 1;

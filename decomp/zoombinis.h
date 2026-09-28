@@ -1030,6 +1030,11 @@ extern unsigned short appActive; /* @data 0x4a4ae4 */
 extern ShortRect g_4a4ae6;
 extern short g_4a4b98;
 extern char *g_4a4ba0;
+/* The level reached in each group of scenes (1-4). */
+inline short *puzzleLevels()
+{
+    return (short *)(g_4a4ba0 + 0xc0);
+}
 inline Party *party()
 {
     return (Party *)(g_4a4ba0 + 0xa92e);
@@ -1064,7 +1069,7 @@ extern char msgNoMidiDevices[]; /* @data 0x4a4f5e */
 extern char msgOutOfMemory[]; /* @data 0x4a5063 */
 extern char configFileName[]; /* @data 0x4a5149 */
 extern short g_4a79c0;
-extern unsigned long g_4a79c4;
+extern unsigned long lastClickTime; /* @data 0x4a79c4 */
 extern unsigned long g_4a79c8;
 extern short viewsSorted; /* @data 0x4a7b94: sort the views on the next update */
 extern long g_4a7f58;
@@ -4176,7 +4181,16 @@ extern short viewsReady; /* @data 0x4a7b86 */
 extern short removedRgn; /* @data 0x4a7b88: gRemovedFeatureBounds */
 extern short currentViewRgn; /* @data 0x4a7b8a: gCurrentViewRgn */
 extern short featureClipRgn; /* @data 0x4a7b8c: gFeatureClipRgn */
-extern unsigned short *terrain; /* @data 0x4a7b90 */
+/* The terrain: a byte per 4 by 4 pixels (1: somewhere to stand). */
+struct Terrain
+{
+    unsigned short width; /* big-endian in the resource, swapped on loading */
+    unsigned short height;
+    short rowBytes;
+    short unknown6;
+    char cells[1];
+};
+extern Terrain *terrain; /* @data 0x4a7b90 */
 extern ShortRect noRect; /* @data 0x4a7b96: all zero */
 extern long terrainResource; /* @data 0x4a7ba0 */
 extern basePort *viewPort; /* @data 0x4a7ba4 */
@@ -4367,7 +4381,7 @@ extern ShortRect dialogButton2Rect; /* @data 0x4b989a */
 extern ShortRect dialogButton1Rect; /* @data 0x4b98a2 */
 extern short caretBlink; /* @data 0x4b9828 */
 extern char buttonPressed[17]; /* @data 0x4b98b2: dialog hot spots shown pressed */
-extern char g_4b8800;
+extern char clickToDragOption; /* @data 0x4b8800: the options' click-to-drag setting */
 extern unsigned short g_4b0d4a;
 extern short g_4a74dc;
 extern short savedGames; /* @data 0x4b95a0 */
@@ -4486,8 +4500,14 @@ extern char consonantPairs[]; /* @data 0x4a4c73: pairs ("bl", "br", ...) */
 extern short sortedCount; /* @data 0x4b75ac */
 extern short sortedX[32]; /* @data 0x4b75ae */
 extern short sortedIds[32]; /* @data 0x4b75ee */
-short fn_45ba1f();
-short fn_458772(View *view);
+short keepDragging();
+extern short dragging; /* @data 0x4a4ce8 */
+extern short dragButtonDown; /* @data 0x4b7c9e */
+extern short clickToDrag; /* @data 0x4b7ca0 */
+extern char hideDragCursor; /* @data 0x4b8801 */
+extern char dragClicks; /* @data 0x4b8802: a quick click starts a click-to-drag */
+extern short clickTime; /* @data 0x4b87fc: ms */
+short settleSnoid(View *view);
 extern unsigned short showPositions; /* @data 0x4a4b9a: show the dragged Zoombini's position (a cheat) */
 extern short dragX; /* @data 0x4b754e */
 extern short dragY; /* @data 0x4b7550 */
@@ -4501,11 +4521,22 @@ void updateSnoidView(View *view, short region); /* 0x4575e6 */
 void setSnoidAction(Snoid *snoid, short action, Point *where);
 extern short g_4b7bda;
 void fn_45aaff(short);
-void fn_45bbba(short);
+void useAltSnoids(short restore);
+extern long altSnoidResources[3]; /* @data 0x4b7ca4 */
+extern ImageBank *savedSnoidImages; /* @data 0x4b7cb0 */
+extern short *savedSnoidTables[2]; /* @data 0x4b7cb4 */
+extern short savedFeetImages[6]; /* @data 0x4b7cbc */
+extern short savedNoseImages[6]; /* @data 0x4b7cc8 */
+extern short savedEyesImages[6]; /* @data 0x4b7cd4 */
+extern short savedHairImages[6]; /* @data 0x4b7ce0 */
+extern short otherFeetImages[6]; /* @data 0x4a4cec: the other look's */
+extern short otherNoseImages[6]; /* @data 0x4a4cf8 */
+extern short otherEyesImages[6]; /* @data 0x4a4d04 */
+extern short otherHairImages[6]; /* @data 0x4a4d10 */
 short stepAlongPath(Snoid *snoid);
 void choosePath(Snoid *snoid, Point *target);
 extern short g_4b756a;
-extern short g_4a4cea;
+extern short altSnoids; /* @data 0x4a4cea: the Zoombinis have their other look (useAltSnoids) */
 extern short g_4b7552;
 extern short g_4b7554;
 extern short g_4b7556;
@@ -4586,7 +4617,8 @@ void loadPaths(short);
 void enterSnoids(short dy);
 void staggerSnoids(unsigned long interval, unsigned long delay);
 extern short g_4b7b86;
-short fn_45bdc4(char *);
+short sceneLevel();
+short campHint(short *visits);
 void campIdle();
 void campButtonClicked(short button);
 void campMouse(short action);
@@ -4637,6 +4669,7 @@ int fn_43691d(long, short value);
 short indexOfLargestExcept(short exclude);
 short fn_437acb(short i);
 short fn_4381bb();
+short sceneGroup(short *last);
 void spliceList(Link *other, Link *list);
 short fn_44027b(long, long);
 void fn_446962(char *, const char *);

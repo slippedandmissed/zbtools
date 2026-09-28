@@ -1207,7 +1207,7 @@ void placeDialogButton(View *view)
                         off = 1;
                     break;
                 case 18:
-                    if (!g_4b8800)
+                    if (!clickToDragOption)
                         off = 1;
                     break;
                 case 21:
@@ -1276,7 +1276,7 @@ void placeDialogButton(View *view)
                     stopSounds(g_4a7d42, RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 break;
             case 7:
-                g_4b8800 = !g_4b8800;
+                clickToDragOption = !clickToDragOption;
                 break;
             case 8:
                 g_4b0d4a = !g_4b0d4a;

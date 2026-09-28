@@ -55,7 +55,7 @@ void closeSnoids()
     }
     if (snoidTablesLoaded)
         snoidTablesLoaded = 0;
-    fn_45bbba(1);
+    useAltSnoids(1);
     freeBaseSnoidScripts();
     freeSnoidTables();
     fn_46c602(&snoidImagesResource);
@@ -625,7 +625,7 @@ void updateSnoidView(View *view, short region)
         }
         if (g_4a4b98 && !g_4b9684 && snoid->unknownF8++ > g_4a4b98) {
             snoid->unknownF8 = 0;
-            if (!g_4a4cea && randomBetween(0, 100) < 10) {
+            if (!altSnoids && randomBetween(0, 100) < 10) {
                 snoid->unknownF5 = randomBetween(0, 7);
                 setSnoidAction(snoid, 6, 0);
                 changed = 1;
@@ -679,7 +679,7 @@ void updateSnoidView(View *view, short region)
             case 5:
                 view->notify = 0;
                 snoid->body.frame = 2;
-                if (g_4a4cea)
+                if (altSnoids)
                     snoid->body.frame = 0;
                 snoid->body.frameOffset =
                     scriptFrameOffset(baseSnoidScripts[snoid->body.script], &snoid->body.frame, 1);
@@ -802,7 +802,7 @@ void updateSnoidView(View *view, short region)
  * Drags a Zoombini with the mouse (from `where`, kept inside `bounds` or
  * the game area, `track` told of each position), lighting up the placed
  * view it's over; on release it heads for that view's place, or (if
- * fn_458772 doesn't place it) back where it was. Returns the placed view
+ * settleSnoid doesn't place it) back where it was. Returns the placed view
  * it started on (from 1).
  */
 /* @zoombi32 0x00458059 */
@@ -889,7 +889,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
     }
     target = 0;
     moved = 1;
-    while (fn_45ba1f()) {
+    while (keepDragging()) {
         getCursorPosition(&current);
         if (track)
             track(current);
@@ -989,7 +989,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
             *(Point *)&snoid->targetX = placedViewPoints[which];
         else if (currentScene == 6)
             *(Point *)&snoid->targetX = start;
-        else if (!fn_458772(dragged))
+        else if (!settleSnoid(dragged))
             *(Point *)&snoid->targetX = start;
     }
     snoid->unknownF8 = 1;
@@ -1930,7 +1930,7 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
             frame = 2;
             break;
         }
-        if (g_4a4cea) {
+        if (altSnoids) {
             frame = 0;
             script = snoid->unknownF1;
         }
@@ -2373,4 +2373,227 @@ void drawPaths()
         g_4a4b9c++;
         setForeColor(saved);
     }
+}
+
+/*
+ * Settles a dropped Zoombini where it stands (if the terrain there is 1:
+ * then it returns 1), moving it on if another is in the way.
+ */
+/* Not exact: the original keeps y in edx; this keeps it on the stack. */
+/* @zoombi32 0x00458772 */
+short settleSnoid(View *view)
+{
+    Snoid *snoid;
+    long x;
+    long y;
+    short settled = 0;
+
+    if (!(view->flags & 1))
+        return settled;
+    snoid = viewSnoid(view);
+    *(Point *)&snoid->targetX = *(Point *)&snoid->body.x;
+    if (terrain) {
+        x = snoid->body.x / 4;
+        y = snoid->body.y / 4;
+        if (x < 0)
+            x = 0;
+        if (x >= terrain->width)
+            x = terrain->width - 1;
+        if (y < 0)
+            y = 0;
+        if (y >= terrain->height)
+            y = terrain->height - 1;
+        if (terrain->cells[terrain->rowBytes * y + x] == 1) {
+            *(Point *)&snoid->targetX = *(Point *)&snoid->body.x;
+            settled = 1;
+        }
+    }
+    if (spotTaken((Point *)&snoid->targetX, view, 36))
+        findSpot(view, 0, 0, 36);
+    return settled;
+}
+
+/*
+ * Whether the drag goes on: while the button is held, or (click to drag)
+ * until it's clicked again; a quick click on a Zoombini turns the drag
+ * into a click-to-drag if dragClicks allows.
+ */
+/* @zoombi32 0x0045ba1f */
+short keepDragging()
+{
+    if (!dragging) {
+        g_4b754c = 0;
+    } else if (g_4b754c == 1) {
+        g_4b754c = 2;
+        if (dragging) {
+            dragging = 0;
+            if (hideDragCursor)
+                showCursor();
+            discardEvents(3);
+            return 0;
+        }
+    }
+    short going = 1;
+
+    if (!dragging) {
+        dragging = 1;
+        dragButtonDown = isButtonStillDown(g_4b80d0);
+        clickToDrag = clickToDragOption;
+        if (hideDragCursor)
+            hideCursor();
+    } else {
+        short down = isButtonStillDown(g_4b80d0);
+
+        if (g_4b7556 && !down) {
+            dragging = 0;
+            if (hideDragCursor)
+                showCursor();
+            going = 0;
+        } else if (clickToDrag) {
+            if (isInputWaiting(2))
+                down = 1;
+            if (dragButtonDown && !down)
+                dragButtonDown = 0;
+            if (!dragButtonDown && down) {
+                going = 0;
+                dragging = 0;
+                if (hideDragCursor)
+                    showCursor();
+            }
+        } else if (!down) {
+            if (dragClicks && clockTime() - lastClickTime < clickTime) {
+                clickToDrag = 1;
+                dragButtonDown = down;
+            } else {
+                going = 0;
+                dragging = 0;
+                if (hideDragCursor)
+                    showCursor();
+            }
+        }
+    }
+    if (!going)
+        discardEvents(3);
+    return going;
+}
+
+/*
+ * Switches the Zoombinis to their other look (feature images 0xc80 and the
+ * alt*Images tables) and back (`restore`).
+ */
+/* @zoombi32 0x0045bbba */
+void useAltSnoids(short restore)
+{
+    short i;
+
+    if (restore) {
+        if (altSnoids) {
+            altSnoids = 0;
+            snoidTables[0] = savedSnoidTables[0];
+            snoidTables[1] = savedSnoidTables[1];
+            snoidImages = savedSnoidImages;
+            for (i = 0; i < 6; i++) {
+                feetImages[i] = savedFeetImages[i];
+                noseImages[i] = savedNoseImages[i];
+                eyesImages[i] = savedEyesImages[i];
+                hairImages[i] = savedHairImages[i];
+            }
+            for (i = 0; i < 3; i++)
+                fn_46c602(&altSnoidResources[i]);
+        }
+    } else if (!altSnoids) {
+        altSnoids = 1;
+        savedSnoidTables[0] = snoidTables[0];
+        savedSnoidTables[1] = snoidTables[1];
+        savedSnoidImages = snoidImages;
+        for (i = 0; i < 6; i++) {
+            savedFeetImages[i] = feetImages[i];
+            savedNoseImages[i] = noseImages[i];
+            savedEyesImages[i] = eyesImages[i];
+            savedHairImages[i] = hairImages[i];
+            feetImages[i] = otherFeetImages[i];
+            noseImages[i] = otherNoseImages[i];
+            eyesImages[i] = otherEyesImages[i];
+            hairImages[i] = otherHairImages[i];
+        }
+        long saved = g_4a7f58;
+
+        fn_46be2e(g_4b7b4c);
+        snoidImages = loadImageBank(0xc80, &altSnoidResources[0]);
+        snoidTables[0] = loadShortTable(0xc80, &altSnoidResources[1]);
+        snoidTables[1] = loadShortTable(0xc81, &altSnoidResources[2]);
+        g_4a7f58 = saved;
+    }
+}
+
+/*
+ * The difficulty level (0-3) of the current scene: g_4b754a's, if set
+ * (1-4), else the level reached in its group of scenes (or the scenes
+ * before them).
+ */
+/* @zoombi32 0x0045b2d1 */
+short sceneLevel()
+{
+    short level = 0;
+
+    if (g_4b754a >= 1 && g_4b754a <= 4) {
+        level = g_4b754a - 1;
+    } else {
+        short last;
+        short group = sceneGroup(&last);
+
+        if (group) {
+            level = puzzleLevels()[group];
+        } else {
+            switch (currentScene) {
+            case 0:
+            case 3:
+            case 4:
+                level = puzzleLevels()[1];
+                break;
+            case 5:
+                level = puzzleLevels()[2];
+                if (level < puzzleLevels()[3])
+                    level = puzzleLevels()[3];
+                break;
+            case 6:
+                level = puzzleLevels()[4];
+                break;
+            }
+        }
+    }
+    return level;
+}
+
+/*
+ * Counts a visit to the camp in *visits (its low 12 bits) and picks the
+ * hint to give: 1 at the first level; at the second, 2 then 12, once each
+ * (flags 0x1000, 0x2000 in *visits); 5 if g_4b754a is set; else 0.
+ */
+/* @zoombi32 0x0045bdc4 */
+short campHint(short *visits)
+{
+    short hint = 0;
+
+    if (!g_4b754a) {
+        if ((*visits & 0xfff) < 0xfff)
+            (*visits)++;
+        switch (sceneLevel()) {
+        case 0:
+            hint = 1;
+            break;
+        case 1:
+            if (!(*visits & 0x1000)) {
+                hint = 2;
+                *visits |= 0x1000;
+            } else if (!(*visits & 0x2000)) {
+                hint = 12;
+                *visits |= 0x2000;
+            }
+            break;
+        }
+    } else {
+        hint = 5;
+    }
+    return hint;
 }

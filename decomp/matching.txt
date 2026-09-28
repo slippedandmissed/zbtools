@@ -320,6 +320,7 @@
 0x00437acb fn_437acb
 0x004381bb fn_4381bb
 0x0043a772 spliceList
+0x0043af02 sceneGroup
 0x0044027b fn_44027b
 0x0044695c fn_44695c
 0x00446962 fn_446962
@@ -420,6 +421,7 @@
 0x0045aaff fn_45aaff
 0x0045ab35 turnSnoid
 0x0045b06a setSnoidFacing
+0x0045b2d1 sceneLevel
 0x0045b37a idleSnoidView
 0x0045b39a setSpotCorner
 0x0045b3af spotTaken
@@ -427,6 +429,9 @@
 0x0045b57a findSpot
 0x0045b8b0 snoidSound
 0x0045b9ef findSnoid
+0x0045ba1f keepDragging
+0x0045bbba useAltSnoids
+0x0045bdc4 campHint
 0x0045be33 pickFreePlace
 0x0045bf41 initSnoid
 0x0045bfc0 setArrivalHook

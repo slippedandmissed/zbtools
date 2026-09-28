@@ -700,7 +700,7 @@ void enterCamp()
     sound = 0;
     reason = -1;
     if (g_4b0d4c) {
-        reason = fn_45bdc4(g_4a4ba0 + 0x30);
+        reason = campHint((short *)(g_4a4ba0 + 0x30));
         g_4b0d4c = 0;
     }
     if (reason == 2 && !*(short *)(g_4a4ba0 + 0x32) && !*(short *)(g_4a4ba0 + 0x38)
