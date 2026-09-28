@@ -5602,7 +5602,7 @@ extern short g_4b0c36[];
 extern short g_4b0c68[];
 extern short g_4b0c9a[];
 extern short g_4b0cfe[8];
-extern short g_4b0d12[8];
+extern short g_4b0d10[11]; /* each line's value */
 extern short g_4a25e0[][2];
 extern short g_4b0096[20]; /* the maze's sequence of values */
 extern short g_4b00c2;
@@ -5623,3 +5623,8 @@ void fn_4388d8();
 void fn_438d67();
 extern short g_4a26aa[];
 void fn_439190();
+extern short g_4a25ca[11];
+extern short g_4a23be[18][2];
+extern short g_4a239a[18];
+extern short g_4b08b0;
+void fn_436abf(short level);

@@ -1309,47 +1309,47 @@ void fn_436d39(Snoid *snoid)
         case 1:
             g_4b0a10[g_4b0cfe[0]] = id;
             g_4b0cfe[0]++;
-            parts[40] = g_4b0d12[0];
+            parts[40] = g_4b0d10[1];
             break;
         case 2:
             g_4b0b6e[g_4b0cfe[1]] = id;
             g_4b0cfe[1]++;
-            parts[40] = g_4b0d12[1];
+            parts[40] = g_4b0d10[2];
             break;
         case 3:
             g_4b0ba0[g_4b0cfe[2]] = id;
             g_4b0cfe[2]++;
-            parts[40] = g_4b0d12[2];
+            parts[40] = g_4b0d10[3];
             break;
         case 4:
             g_4b0bd2[g_4b0cfe[3]] = id;
             g_4b0cfe[3]++;
-            parts[40] = g_4b0d12[3];
+            parts[40] = g_4b0d10[4];
             break;
         case 5:
             g_4b0c04[g_4b0cfe[4]] = id;
             g_4b0cfe[4]++;
-            parts[40] = g_4b0d12[4];
+            parts[40] = g_4b0d10[5];
             break;
         case 6:
             g_4b0c36[g_4b0cfe[5]] = id;
             g_4b0cfe[5]++;
-            parts[40] = g_4b0d12[5];
+            parts[40] = g_4b0d10[6];
             break;
         case 7:
             g_4b0c68[g_4b0cfe[6]] = id;
             g_4b0cfe[6]++;
-            parts[40] = g_4b0d12[6];
+            parts[40] = g_4b0d10[7];
             break;
         case 8:
             g_4b0c9a[g_4b0cfe[7]] = id;
             g_4b0cfe[7]++;
-            parts[40] = g_4b0d12[7];
+            parts[40] = g_4b0d10[8];
             break;
         default:
             g_4b0a10[g_4b0cfe[0]] = id;
             g_4b0cfe[0]++;
-            parts[40] = g_4b0d12[0];
+            parts[40] = g_4b0d10[1];
             break;
         }
         switch (parts[30]) {
@@ -2043,4 +2043,68 @@ void fn_439190()
     g_4b00be++;
     g_4b0096[g_4b00be] = randomBetween(1, 20);
     g_4b00be++;
+}
+
+/* Sets the maze up for a level (0-4): the squares' kinds (g_4b061a, from
+   g_4a23be/g_4a239a), the lines' values shuffled (g_4b0d10), a sequence of
+   values by one of the ways for the level (alternating between two where
+   there are two), and the Zoombinis' views. */
+/* @zoombi32 0x00436abf */
+void fn_436abf(short level)
+{
+    short order[12];
+    short i;
+    short last;
+    short pick;
+
+    for (i = 0; i < 11; i++)
+        order[i] = g_4a25ca[i];
+    for (i = 0; i < 18; i++)
+        g_4b061a[g_4a23be[i][0]][g_4a23be[i][1]] = g_4a239a[i];
+    g_4b0d10[0] = 0;
+    g_4b0d10[10] = 0;
+    g_4b0d10[1] = g_4a25ca[1];
+    for (last = 8, i = 2; i < 9; i++) {
+        pick = randomBetween(2, last);
+        g_4b0d10[i] = order[pick];
+        for (; pick < last + 1; pick++)
+            order[pick] = order[pick + 1];
+        last--;
+    }
+    switch (level) {
+    case 0:
+        fn_438396();
+        g_4a210e[0]++;
+        if (g_4a210e[0] > 1)
+            g_4a210e[0] = 0;
+        break;
+    case 1:
+        if (!g_4a210e[1])
+            fn_438626();
+        else
+            fn_4388d8();
+        g_4a210e[1]++;
+        if (g_4a210e[1] > 1)
+            g_4a210e[1] = 0;
+        break;
+    case 2:
+        if (!g_4a210e[2])
+            fn_4388d8();
+        else
+            fn_438d67();
+        g_4a210e[2]++;
+        if (g_4a210e[2] > 1)
+            g_4a210e[2] = 0;
+        break;
+    case 3:
+        fn_439190();
+        g_4a210e[3] += 2;
+        if (g_4a210e[3] > 2)
+            g_4a210e[3] = 0;
+        break;
+    case 4:
+        fn_438d67();
+        break;
+    }
+    fn_436c71(g_4b08b0);
 }
