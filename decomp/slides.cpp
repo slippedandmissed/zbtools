@@ -523,8 +523,8 @@ void fn_4489a8(View *view, short)
    unless one is already (g_4b1a3e): notes it in g_4b1a36 and shows the
    marker view g_4b1a34 there (script 8000-8002 by row, notify fn_44af15),
    layered with the row. */
-/* Not exact: register allocation (the original keeps `y` in ecx, leaving
-   esi to `kind`; here `y` shares esi with `kind`). */
+/* Not exact: register allocation in the loop's tests (the original keeps
+   `y` in ecx and uses esi for scratch; here `y` shares esi with `kind`). */
 /* @zoombi32 0x0044b0fc */
 void fn_44b0fc(short x, short y)
 {
@@ -552,10 +552,82 @@ void fn_44b0fc(short x, short y)
                 findView(g_4b1a34)->notify = fn_44af15;
                 if (i % 18)
                     moveView(g_4b1a34, 0, g_4b1936[7]);
-                else
-                    moveView(g_4b1a34, 0, g_4b1936[i / 18 + 1]);
+                else {
+                    short row = i / 18 + 1;
+
+                    moveView(g_4b1a34, 0, g_4b1936[row]);
+                }
                 return;
             }
         }
+    }
+}
+
+/* The notify of the Zoombini walking to the marked cell (the view
+   g_4b1a38): 90-92 walk it on (scripts 14000-14002) toward its own place
+   raised 50, 93 off to a random spot (14003, unmarking the cell); 240-243
+   note a facing to take at the end (g_4b1a3a), 250-253 face it at once; the
+   end (0) flips it and takes the noted facing. */
+/* @zoombi32 0x0044af15 */
+void fn_44af15(View *view, short event)
+{
+    Point at;
+    View *walker;
+    Snoid *snoid;
+
+    snoid = viewSnoid(view);
+    walker = findView(g_4b1a38);
+    at.x = walker->body.x;
+    at.y = -50;
+    switch (event) {
+    case 250:
+    case 251:
+    case 252:
+    case 253:
+        setSnoidFacing(snoid, event - 250);
+        break;
+    case 240:
+    case 241:
+    case 242:
+    case 243:
+        g_4b1a3a = event - 239;
+        break;
+    case 0:
+        snoid->unknownF2 = !snoid->unknownF2;
+        if (g_4b1a3a) {
+            setSnoidFacing(snoid, g_4b1a3a - 1);
+            g_4b1a3a = 0;
+        }
+        break;
+    case 90:
+        walker = findView(g_4b1a38);
+        startSnoidScript(viewSnoid(walker), 14000, &at, 0);
+        walker->notifyEnd = 0;
+        walker->notify = fn_44af15;
+        g_4b1a3e = 1;
+        break;
+    case 91:
+        walker = findView(g_4b1a38);
+        startSnoidScript(viewSnoid(walker), 14001, &at, 0);
+        walker->notifyEnd = 0;
+        walker->notify = fn_44af15;
+        g_4b1a3e = 1;
+        break;
+    case 92:
+        walker = findView(g_4b1a38);
+        startSnoidScript(viewSnoid(walker), 14002, &at, 0);
+        walker->notifyEnd = 0;
+        walker->notify = fn_44af15;
+        g_4b1a3e = 1;
+        break;
+    case 93:
+        walker = findView(g_4b1a38);
+        at.x = randomUpTo(42) + 70;
+        at.y = randomUpTo(200) + 152;
+        startSnoidScript(viewSnoid(walker), 14003, &at, 0);
+        walker->notifyEnd = 0;
+        walker->notify = fn_44af15;
+        g_4b1a3e = 0;
+        break;
     }
 }

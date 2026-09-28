@@ -51,5 +51,7 @@ void fn_44af15(View *view, short event);
 void drawSlidesButtons(View *);
 void fn_4489a8(View *view, short);
 void fn_44b0fc(short x, short y);
+extern short g_4b1a38; /* @data 0x4b1a38: the Zoombini walking to the marked cell */
+extern short g_4b1a3a; /* @data 0x4b1a3a: the facing to take (from 1) */
 
 #endif
