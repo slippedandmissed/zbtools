@@ -49,7 +49,13 @@ extern unsigned long g_4b7f08; /* @data 0x4b7f08 */
 extern unsigned long g_4b7f0c; /* @data 0x4b7f0c */
 extern short g_4b7f12; /* @data 0x4b7f12 */
 
+extern Point g_4a74de[16]; /* @data 0x4a74de: the groups' hotspots (fn_45db25) */
+extern unsigned char g_4b7f14; /* @data 0x4b7f14: the clock's minute hand when winding started */
+extern unsigned char g_4b7f15; /* @data 0x4b7f15: and hour hand */
+
 void openScene0();
+void drawClock(View *view);
+void fn_45db25(View *view);
 short scene0Key(unsigned short key);
 void resetScene6();
 void drawTownButtons(View *);

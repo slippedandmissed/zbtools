@@ -340,3 +340,102 @@ void settleTravellers()
             j++;
         }
 }
+
+/* The clock's view (two cels, its hands): hidden while g_4a74dc is set
+   and unless g_4b7ef8 and g_4a4ba0's +0x1e is 1 or 2. Shows the time
+   (fn_45c4c9), or with g_4b7ef6 winds the hands round that many times
+   (faster, from where they are). */
+/* @zoombi32 0x0045cd27 */
+void drawClock(View *view)
+{
+    ViewCel *cels = view->body.cels;
+
+    cels[0].image = 0;
+    if (g_4a74dc > 0) {
+        view->changed = 0;
+        return;
+    }
+    if (g_4b7ef8 <= 0)
+        return;
+    if (*(short *)(g_4a4ba0 + 0x1e) != 1 && *(short *)(g_4a4ba0 + 0x1e) != 2)
+        return;
+    if (g_4b7ef6) {
+        if (g_4b7ef6 < 0) {
+            g_4b7f14 = clockMinute;
+            g_4b7f15 = clockHour;
+            g_4b7ef6 = abs(g_4b7ef6);
+            view->interval = 2;
+        } else {
+            clockMinute++;
+            if (clockMinute > 11) {
+                clockMinute = 0;
+                clockHour++;
+                if (clockHour > 11)
+                    clockHour = 0;
+            }
+            if (g_4b7f14 == clockMinute && g_4b7f15 == clockHour) {
+                g_4b7ef6--;
+                if (!g_4b7ef6) {
+                    view->interval = 6;
+                    g_4b7efc = 0;
+                    fn_45c4c9();
+                }
+            }
+        }
+    } else {
+        fn_45c4c9();
+    }
+    cels[0].image = clockMinute + 1;
+    cels[1].image = clockHour + 13;
+    cels[0].y = cels[1].y = 218;
+    if (*(short *)(g_4a4ba0 + 0x1e) == 1)
+        cels[0].x = cels[1].x = 626;
+    else
+        cels[0].x = cels[1].x = 307;
+}
+
+/* An image's data in a bank. */
+inline unsigned short *bankImage(ImageBank *bank, short image)
+{
+    return (unsigned short *)((char *)bank + bank->offsets[image]);
+}
+
+/* A view's placed callback: its cels 7-22 are the groups' records (by
+   recordGroups): those set become hotspots (g_4b7e12, 56 by 28 about
+   g_4a74de's point for the group plus the cel's; 4 also sets g_4b7ef8),
+   the others are dropped. */
+/* @zoombi32 0x0045db25 */
+void fn_45db25(View *view)
+{
+    ShortRect rect;
+    ImageBank *volatile bank = groupBanks[view->body.scriptGroup];
+    short *cel = (short *)view->body.cels;
+    short n;
+
+    g_4b7eb2 = g_4b7ef8 = 0;
+    while (*cel)
+        if (*cel >= 7 && *cel <= 22) {
+            n = *cel - 7;
+            if (recordGroups()[n]) {
+                g_4b7e92[g_4b7eb2] = n;
+                if (n == 4)
+                    g_4b7ef8 = 1;
+                bankImage(bank, *cel); /* unused, as in the original */
+                cel++;
+                rect.left = g_4a74de[n].x + *cel - 28;
+                cel++;
+                rect.right = rect.left + 56;
+                rect.top = g_4a74de[n].y + *cel - 14;
+                cel++;
+                rect.bottom = rect.top + 28;
+                g_4b7e12[g_4b7eb2] = rect;
+            } else {
+                g_4b7e12[g_4b7eb2] = noRect;
+                g_4b7e92[g_4b7eb2] = -1;
+                removeFirstCel((ViewCel *)cel);
+            }
+            g_4b7eb2++;
+        } else {
+            cel += 3;
+        }
+}
