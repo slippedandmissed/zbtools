@@ -7,9 +7,11 @@
 #include "debug.h"
 #include "e2memory.h"
 #include "features.h"
+#include "graphics.h"
 #include "module_4623b8.h"
 #include "picker.h"
 #include "platform.h"
+#include "roster.h"
 #include "snoids.h"
 #include "sound.h"
 #include "view.h"
@@ -1017,4 +1019,62 @@ short fn_4330f3(short kind, short preset)
         g_4afbba++;
     }
     return g_4afbac[slot];
+}
+
+/* Closes scene 1 (the map). Leaving it for a level (g_4b754a), the first
+   time switches the user file to ZBtemp (keeping the player's in
+   savedUserFile) and saves; then fills the roster's party with 16 (or
+   g_4afb5e) Zoombinis at random (with the 0x800 modifier, all alike by
+   fives). */
+/* @zoombi32 0x0042fca8 */
+void closeScene1()
+{
+    short saved;
+    short i;
+    short j;
+    short alike;
+
+    if (g_4afb14) {
+        g_4afb14 = 0;
+        saved = fn_46bee9(1);
+        if (!g_4b754a && !viewsLocked) {
+            viewsLocked = 1;
+            *(short *)(g_4a4ba0 + 0xa92e) = 0;
+            *(short *)(g_4a4ba0 + 0xa930) = 1;
+            *(short *)(g_4a4ba0 + 0xa932) = 1;
+        }
+        clearViews();
+        if (g_4b754a) {
+            if (!g_4afb30) {
+                strcpy(savedUserFile, userFile);
+                g_4a48e8 = 1;
+                strcpy(userFile, "ZBtemp");
+                viewsLocked = 0;
+                g_4afb32 = 1;
+                fn_41f551();
+                g_4afb30 = 1;
+            }
+            *(short *)(g_4a4ba0 + 0xa92e) = 16;
+            if (g_4afb5e)
+                *(short *)(g_4a4ba0 + 0xa92e) = g_4afb5e;
+            alike = addModifierKeys(0) == 0x800;
+            for (i = 0; i < *(short *)(g_4a4ba0 + 0xa92e); i++) {
+                for (j = 0; j < 4; j++)
+                    if (alike)
+                        (g_4a4ba0 + i * 19)[j + 0xa934] = i % 5 + 1;
+                    else
+                        (g_4a4ba0 + i * 19)[j + 0xa934] = randomBetween(1, 5);
+                g_4a4ba0[i * 19 + 0xa93d] = 0;
+                g_4a4ba0[i * 19 + 0xa93c] = 1;
+                *(short *)(g_4a4ba0 + 0xa930) = 0;
+            }
+        }
+        for (i = 0; i < 6; i++)
+            freeSave(&g_4afb18[i]);
+        unloadSounds();
+        fn_46bee9(saved);
+        fn_46ca9c(&g_4afb10);
+        fadeOutViews();
+        fn_4624fc();
+    }
 }

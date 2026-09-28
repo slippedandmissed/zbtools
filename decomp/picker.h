@@ -61,7 +61,7 @@ void fn_430ff2(View *view);
 
 void fn_4320e3(View *view);
 extern short g_4afb16; /* @data 0x4afb16 */
-extern long g_4afb18[6]; /* @data 0x4afb18 */
+extern MapSave *g_4afb18[6]; /* @data 0x4afb18 */
 extern short g_4afb36; /* @data 0x4afb36 */
 extern short g_4afb38; /* @data 0x4afb38 */
 extern short g_4afb3c; /* @data 0x4afb3c */
@@ -101,5 +101,7 @@ extern short g_4afb6e; /* @data 0x4afb6e */
 extern short g_4afb70; /* @data 0x4afb70 */
 extern short g_4afbba; /* @data 0x4afbba: targets started */
 short fn_4330f3(short kind, short preset);
+extern char savedUserFile[]; /* @data 0x4a1f84: the user file while practising (in ZBtemp) */
+void closeScene1();
 
 #endif
