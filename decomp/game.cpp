@@ -2275,3 +2275,204 @@ void fn_454228(View *view, short region)
         }
     }
 }
+
+/*
+ * The scene's views' notify: its scripts' events move the scene along
+ * (setting flags the scene's idle work picks up, starting the next views'
+ * scripts, handing Zoombinis from view to view); 0 and 251 turn a
+ * Zoombini round.
+ */
+/* @zoombi32 0x0045174e */
+void fn_45174e(View *view, short event)
+{
+    View *other;
+    Snoid *first;
+    Snoid *second;
+    short i;
+
+    switch (event) {
+    case 0:
+        if (view->flags == 1) {
+            Snoid *snoid = (Snoid *)&view->body;
+
+            snoid->unknownF2 = !snoid->unknownF2;
+        }
+        break;
+    case 251:
+        if (view->flags == 1)
+            setSnoidFacing((Snoid *)&view->body, 1);
+        break;
+    case 1:
+        g_4b2644 = 1;
+        break;
+    case 2:
+        fn_451315();
+        break;
+    case 3:
+        if (g_4b2630 > 0 && g_4b2630 < 4)
+            g_4b274a = 1;
+        break;
+    case 4:
+        fn_4514f6();
+        break;
+    case 10:
+    case 11:
+    case 13:
+    case 14:
+        if (g_4b26b2) {
+            other = findView(g_4b26b2);
+            if (other) {
+                Snoid *snoid = (Snoid *)&other->body;
+
+                fn_45170a(g_4b26b2, g_4b271c[g_4b2740] + snoid->features[3], view->body.group, fn_45174e, 1);
+            }
+        }
+        break;
+    case 16:
+        other = findView(g_4b26ac[0]);
+        if (other) {
+            other->nextUpdate = 0;
+            first = (Snoid *)&other->body;
+            first->unknownF4 = 4;
+        }
+        other = findView(g_4b26ac[1]);
+        if (other) {
+            other->nextUpdate = 0;
+            second = (Snoid *)&other->body;
+            second->unknownF4 = 4;
+        }
+        if (g_4b2740) {
+            *(Point *)&first->body.x = g_4a46a4[g_4b2788];
+            *(Point *)&second->body.x = g_4a46e8[g_4b2788];
+        } else {
+            *(Point *)&first->body.x = g_4a4634[g_4b2788];
+            *(Point *)&second->body.x = g_4a466c[g_4b2788];
+        }
+        g_4b2788++;
+        break;
+    case 17:
+        if (g_4b26b2) {
+            for (i = 0; i < g_4b262e; i++)
+                if (g_4b2604[i] == g_4b26b2 && g_4b2630 != 4) {
+                    g_4b2604[i] = 0;
+                    i = g_4b262e;
+                }
+            if (g_4b273c)
+                g_4b26b2 = 0;
+        }
+        fn_45162e(view->body.group);
+        break;
+    case 30:
+        if (g_4b2604[g_4b2734] && g_4b2734 < g_4b262e) {
+            other = findView(g_4b2604[g_4b2734]);
+            if (other) {
+                other->body.running = 0;
+                g_4b26b2 = g_4b2604[g_4b2734];
+                Snoid *snoid = (Snoid *)&other->body;
+
+                *(Point *)&snoid->body.x = g_4a44b0;
+                fn_45170a(g_4b2604[g_4b2734], g_4b272a, view->body.group, fn_45174e, 0);
+                moveView(g_4b2604[g_4b2734], 1, view->id);
+            }
+        }
+        break;
+    case 31:
+        other = findView(g_4b25a6);
+        if (other) {
+            moveView(g_4b25a6, 1, g_4b25a4);
+            other->flags = 0x4108000;
+            setViewScript(other, g_4b2726, 1);
+            other->notify = fn_45174e;
+        }
+        break;
+    case 35:
+        if (g_4b2604[g_4b2734 + 1] && g_4b2734 + 1 < g_4b262e) {
+            other = findView(g_4b2604[g_4b2734 + 1]);
+            if (other) {
+                other->body.running = 0;
+                Snoid *snoid = (Snoid *)&other->body;
+
+                *(Point *)&snoid->body.x = g_4a44b0;
+                fn_45170a(g_4b2604[g_4b2734 + 1], g_4b272c, view->body.group, fn_45174e, 0);
+                moveView(g_4b2604[g_4b2734 + 1], 1, view->id);
+            }
+        }
+        break;
+    case 36:
+        if (g_4b266e) {
+            g_4b266e = 0;
+            fn_450c24(g_4b26b2, 0);
+            fn_450d00(g_4b26b2, 0);
+        }
+        break;
+    case 37:
+        if (g_4b2604[g_4b2734] && g_4b2734 < g_4b262e) {
+            g_4b26b2 = g_4b2604[g_4b2734];
+            fn_45170a(g_4b2604[g_4b2734], g_4b272e, view->body.group, fn_45174e, 0);
+            moveView(g_4b2604[g_4b2734], 1, view->id);
+        }
+        if (g_4b2742) {
+            other = findView(g_4b25a4);
+            if (other) {
+                other->flags = 0x4108000;
+                setViewScript(other, g_4b2726, 1);
+                other->notify = fn_45174e;
+                ViewBody *body = &other->body;
+
+                body->cels[0].image = 0;
+            }
+        } else {
+            other = findView(g_4b25a6);
+            if (other) {
+                other->flags = 0x4108000;
+                setViewScript(other, g_4b2726, 1);
+                other->notify = fn_45174e;
+                ViewBody *body = &other->body;
+
+                body->cels[0].image = 0;
+            }
+        }
+        break;
+    case 38:
+        if (g_4b2630 == 4) {
+            if (g_4b2744 == 3) {
+                if (g_4b26b2) {
+                    fn_450c24(g_4b26b2, 0);
+                    fn_450d00(g_4b26b2, 0);
+                    fn_450d5d();
+                    fn_450e87();
+                    fn_4512ac();
+                    other = findView(g_4b26ba[7]);
+                    if (other) {
+                        first = (Snoid *)&other->body;
+                        ViewBody *body = &first->body;
+
+                        body->cels[0].image = 0;
+                    }
+                    if (g_4b2604[g_4b2734]) {
+                        other = findView(g_4b2594);
+                        if (other) {
+                            setViewScript(other, g_4b2730, 1);
+                            other->notify = fn_451e5d;
+                            g_4a483c = 0;
+                        }
+                    }
+                }
+            } else if (g_4b2744 == 1 && g_4b273a && g_4b266c <= g_4b262e) {
+                g_4b2754 = 1;
+                fn_45062d(11005);
+            }
+        }
+        break;
+    case 50:
+        g_4b2736 = 1;
+        break;
+    case 51:
+        g_4b2746 = 1;
+        break;
+    case 60:
+        g_4b755a = 0;
+        g_4b755c = 1;
+        break;
+    }
+}
