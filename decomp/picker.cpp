@@ -220,3 +220,34 @@ void fn_4320e3(View *view)
     body->cels[4].image = first + tens;
     body->cels[5].image = pickerData.counts.unknown24 - tens * 10 + first;
 }
+
+/* Resets the picker: its counts and state, and the hotspots, 40 by 30
+   around sixteen points, and the whole screen. */
+/* @zoombi32 0x0042f920 */
+void fn_42f920()
+{
+    Point points[16] = {{60, 400},  {170, 343}, {160, 261}, {222, 313}, {236, 269}, {234, 146},
+                        {286, 82},  {362, 185}, {321, 345}, {427, 352}, {484, 325}, {442, 211},
+                        {490, 182}, {487, 95},  {540, 125}, {578, 65}};
+    short i;
+
+    g_4afb16 = 0;
+    g_4afb5e = 0;
+    for (i = 0; i < 6; i++)
+        g_4afb18[i] = 0;
+    g_4b0d52 = 0;
+    g_4afb38 = g_4afb34 = g_4afb5c = 0;
+    g_4afb36 = -1;
+    for (i = 0; i <= 15; i++) {
+        pickerData.hotspots[i].rect.left = points[i].x - 20;
+        pickerData.hotspots[i].rect.right = points[i].x + 20;
+        pickerData.hotspots[i].rect.top = points[i].y - 15;
+        pickerData.hotspots[i].rect.bottom = points[i].y + 15;
+    }
+    pickerData.hotspots[16].rect.left = 0;
+    pickerData.hotspots[16].rect.top = 0;
+    pickerData.hotspots[16].rect.right = 640;
+    pickerData.hotspots[16].rect.bottom = 480;
+    g_4afb3a = g_4afb3c = g_4afb3e = g_4afb40 = 0;
+    g_4afb42 = noRect;
+}

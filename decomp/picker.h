@@ -58,5 +58,16 @@ void fn_432905();
 void fn_430ff2(View *view);
 
 void fn_4320e3(View *view);
+extern short g_4afb16; /* @data 0x4afb16 */
+extern long g_4afb18[6]; /* @data 0x4afb18 */
+extern short g_4afb36; /* @data 0x4afb36 */
+extern short g_4afb38; /* @data 0x4afb38 */
+extern short g_4afb3c; /* @data 0x4afb3c */
+extern short g_4afb3e; /* @data 0x4afb3e */
+extern short g_4afb40; /* @data 0x4afb40 */
+extern ShortRect g_4afb42; /* @data 0x4afb42 */
+extern short g_4afb5c; /* @data 0x4afb5c */
+extern short g_4afb5e; /* @data 0x4afb5e */
+void fn_42f920();
 
 #endif
