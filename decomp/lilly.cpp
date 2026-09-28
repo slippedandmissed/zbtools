@@ -1093,3 +1093,68 @@ short fn_42f7a5(View *view)
     g_4acff4[row][column].attributes[0] = 1;
     return actor->unknownD9 = 10073;
 }
+
+/* Shows which features (H, E, N, F) the puzzle's rows and columns (and
+   layers, at level 3) sort by. */
+/* @zoombi32 0x00426daf */
+void drawFeatureLabels()
+{
+    ShortRect whole = {500, 1, 600, 27};
+    ShortRect left = {500, 1, 549, 27};
+    ShortRect right = {550, 1, 600, 27};
+    Color saved;
+    char names[8] = "H\0E\0N\0F";
+
+    saved = setForeColor(Color(0xb));
+    fillPortRect(Rect(whole), Color(0xe), 0);
+    frameRect(Rect(whole));
+    drawText(Rect(left), 0x22, &names[g_4ac0de * 2], 0xffff);
+    drawText(Rect(whole), 0x22, &names[g_4ac0e0 * 2], 0xffff);
+    if (g_4ac0d8 == 3)
+        drawText(Rect(right), 0x22, &names[g_4ac0e2 * 2], 0xffff);
+    setForeColor(saved);
+    showRect(&whole);
+}
+
+/* Turns a 12 by 12 grid a quarter (`how` 0), half (1) or three quarters
+   (2) round. */
+/* @zoombi32 0x0042d6e9 */
+void turnGrid(short (*grid)[12], short how)
+{
+    short copy[12][12];
+    short lastRow;
+    short lastColumn;
+    short changed;
+    short row;
+    short column;
+
+    for (row = 0; row < 12; row++)
+        for (column = 0; column < 12; column++)
+            copy[row][column] = 0;
+    changed = 0;
+    if (!how) {
+        lastRow = 11;
+        changed = 1;
+        for (row = 0; row < 12; row++)
+            for (column = 0; column < 12; column++)
+                copy[column][lastRow - row] = grid[row][column];
+    } else if (how == 1) {
+        lastRow = 11;
+        lastColumn = 11;
+        changed = 1;
+        for (row = 0; row < 12; row++)
+            for (column = 0; column < 12; column++)
+                copy[lastColumn - row][lastRow - column] = grid[row][column];
+    } else if (how == 2) {
+        lastColumn = 11;
+        changed = 1;
+        for (row = 0; row < 12; row++)
+            for (column = 0; column < 12; column++)
+                copy[lastColumn - column][row] = grid[row][column];
+    } else if (how == 4) {
+    }
+    if (changed)
+        for (row = 0; row < 12; row++)
+            for (column = 0; column < 12; column++)
+                grid[row][column] = copy[row][column];
+}

@@ -309,6 +309,7 @@
 0x00426aff fn_426aff
 0x00426c33 darkenPalette
 0x00426cef countFeatureValues
+0x00426daf drawFeatureLabels
 0x0042756d fn_42756d
 0x004275dc fn_4275dc
 0x00427610 fn_427610
@@ -339,6 +340,7 @@
 0x0042d616 loadTablePair
 0x0042d64c freeResourcePair
 0x0042d667 loadLockedTable
+0x0042d6e9 turnGrid
 0x0042d875 mirrorGrid
 0x0042d996 freeLockedResource
 0x0042e4b6 fn_42e4b6
