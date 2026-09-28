@@ -1592,3 +1592,74 @@ void linkCells()
         }
     }
 }
+
+/* Whether party members `a` and `b` share a feature (fn_449f96), by seating
+   them on cells 1 and 3 for the moment. */
+/* @zoombi32 0x0044b4ec */
+short fn_44b4ec(short a, short b)
+{
+    short first;
+    short third;
+    short shared;
+
+    first = g_4b1aea[1].state;
+    third = g_4b1aea[3].state;
+    g_4b1aea[1].snoid = partyViews[a];
+    g_4b1aea[3].snoid = partyViews[b];
+    g_4b1aea[1].state = 506;
+    g_4b1aea[3].state = 506;
+    shared = fn_449f96(1, 3);
+    g_4b1aea[1].snoid = 0;
+    g_4b1aea[3].snoid = 0;
+    g_4b1aea[1].state = first;
+    g_4b1aea[3].state = third;
+    return shared;
+}
+
+/* Tries the moves from `cell` over each neighbour (fn_44a674) in
+   directions 4, 1 and 5, then from a lit cell reached in direction 5
+   directions 3 and 0; then 3, and from there 5 and 2; then 0 and 2. */
+/* @zoombi32 0x0044a4d9 */
+void fn_44a4d9(short cell)
+{
+    short middle;
+    short via;
+    short to;
+
+    via = g_4b1aea[cell].links[4];
+    to = g_4b1aea[via].links[4];
+    fn_44a674(cell, via, to);
+    via = g_4b1aea[cell].links[1];
+    to = g_4b1aea[via].links[1];
+    fn_44a674(cell, via, to);
+    via = g_4b1aea[cell].links[5];
+    to = g_4b1aea[via].links[5];
+    fn_44a674(cell, via, to);
+    if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+        middle = to;
+        via = g_4b1aea[middle].links[3];
+        to = g_4b1aea[via].links[3];
+        fn_44a674(middle, via, to);
+        via = g_4b1aea[middle].links[0];
+        to = g_4b1aea[via].links[0];
+        fn_44a674(middle, via, to);
+    }
+    via = g_4b1aea[cell].links[3];
+    to = g_4b1aea[via].links[3];
+    fn_44a674(cell, via, to);
+    if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+        middle = to;
+        via = g_4b1aea[middle].links[5];
+        to = g_4b1aea[via].links[5];
+        fn_44a674(middle, via, to);
+        via = g_4b1aea[middle].links[2];
+        to = g_4b1aea[via].links[2];
+        fn_44a674(middle, via, to);
+    }
+    via = g_4b1aea[cell].links[0];
+    to = g_4b1aea[via].links[0];
+    fn_44a674(cell, via, to);
+    via = g_4b1aea[cell].links[2];
+    to = g_4b1aea[via].links[2];
+    fn_44a674(cell, via, to);
+}
