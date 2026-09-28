@@ -1955,3 +1955,86 @@ void fn_442560(short button)
     if (redraw)
         fn_4423d7();
 }
+
+/* The scene's keys (debugging ones only while debugging messages are on):
+   A shows the trolls' wants; R, O, D in turn arm the rest (g_4b15e8), then
+   P makes the trolls eat, N, W and S step Arno, Willa and Shyler through
+   their scripts, and space sets the pizzas left (g_4b1620) to g_4b1634.
+   Notes the time of the key (g_4b1824). */
+/* @zoombi32 0x00442166 */
+short pizzaKey(unsigned short key)
+{
+    g_4b1824 = clockTime();
+    if (!g_4b8803 && key != 367)
+        return 0;
+    switch (key) {
+    case 367:
+        fn_466b93();
+        return 1;
+    case 'A':
+    case 'a':
+        fn_443e2e();
+        return 1;
+    case 'R':
+        if (g_4b15e8 > 2)
+            g_4b15e8++;
+        else
+            g_4b15e8 = 1;
+        return 1;
+    case 'O':
+        if (g_4b15e8 == 1)
+            g_4b15e8++;
+        return 1;
+    case 'D':
+        if (g_4b15e8 == 2)
+            g_4b15e8++;
+        return 1;
+    case 'P':
+    case 'p':
+        if (g_4b15e8 >= 3) {
+            fn_444391();
+            g_4b15ec = 0;
+            return 1;
+        }
+        break;
+    case 'N':
+    case 'n':
+        if (g_4b15e8 >= 3) {
+            if (g_4a3d9e >= 36)
+                g_4a3d9e = 0;
+            setViewScript(findView(g_4b160e), g_4a3d9e++ + 8000, 1);
+            fn_446035();
+            return 1;
+        }
+        break;
+    case 'S':
+    case 's':
+        if (g_4b15e8 >= 3) {
+            if (g_4a3da2 >= 39)
+                g_4a3da2 = 0;
+            setViewScript(findView(g_4b1612), g_4a3da2++ + 10000, 1);
+            fn_446035();
+            return 1;
+        }
+        break;
+    case 'W':
+    case 'w':
+        if (g_4b15e8 >= 3) {
+            if (g_4a3da0 >= 35)
+                g_4a3da0 = 0;
+            setViewScript(findView(g_4b1610), g_4a3da0++ + 9000, 1);
+            fn_446035();
+            return 1;
+        }
+        break;
+    case ' ':
+        if (g_4b15e8 >= 3) {
+            g_4b1620 = g_4b1634;
+            return 1;
+        }
+        break;
+    default:
+        return 0;
+    }
+    return 0;
+}
