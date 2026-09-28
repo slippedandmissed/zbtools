@@ -565,6 +565,93 @@ void fn_41f5d0()
     }
 }
 
+/* Lays out, from place g_4a100c on, which values of the roster's
+   features each of the 21 places wants (g_4ab916): for each value of the
+   first feature as many places as chosen Zoombinis have it (g_4ab892),
+   and for the second feature likewise within them. */
+/* @zoombi32 0x0041e5e1 */
+void fn_41e5e1()
+{
+    short v;
+    short start;
+    short first;
+    short second;
+    short i;
+    short w;
+
+    for (i = 0; i < 21; i++)
+        g_4ab8ec[i] = 0;
+    first = 0;
+    second = 1;
+    start = g_4a100c;
+    for (v = 0; v < g_4a0ff2; v++) {
+        for (i = start; i < g_4ab892[first][rosterValues[first][v]] + start; i++)
+            g_4ab916[first][i] = rosterValues[first][v];
+        start = i;
+    }
+    start = g_4a100c;
+    for (v = 0; v < g_4a0ff2; v++) {
+        for (w = 0; w < g_4a0ff2; w++) {
+            for (i = start; i < g_4ab892[rosterValues[second][w]][rosterValues[first][v]] + start; i++)
+                if (rosterValues[second][w])
+                    g_4ab916[second][i] = rosterValues[second][w];
+            start = i;
+        }
+    }
+}
+
+/* The place (from g_4a100c) for the Zoombini of view `id`: `n` if it's
+   free and wants the Zoombini's values of the roster's features, else a
+   free one that does, at random; 1 if none. */
+/* @zoombi32 0x0041e771 */
+short fn_41e771(short id, short n)
+{
+    short places[21];
+    View *view;
+    short count;
+    short first;
+    short second;
+    short i;
+
+    count = 0;
+    fillMemory(places, 0, sizeof places);
+    view = findView(id);
+    first = 0;
+    second = 0;
+    for (i = 0; i < g_4a0ff2; i++) {
+        if (viewSnoid(view)->features[rosterFeatures[0]] == rosterValues[0][i])
+            first = rosterValues[0][i];
+        if (first)
+            i = g_4a0ff2;
+    }
+    for (i = 0; i < g_4a0ff2; i++) {
+        if (viewSnoid(view)->features[rosterFeatures[1]] == rosterValues[1][i])
+            second = rosterValues[1][i];
+        if (second)
+            i = g_4a0ff2;
+    }
+    for (i = g_4a100c; i < 21; i++)
+        if (first == g_4ab916[0][i] && i == n && !g_4ab8ec[i]) {
+            if (g_4a0ff4 <= 1)
+                return i;
+            if (second != g_4ab916[1][i])
+                continue;
+            return i;
+        }
+    for (i = g_4a100c; i < 21; i++)
+        if (!g_4ab8ec[i] && first == g_4ab916[0][i]) {
+            if (g_4a0ff4 > 1) {
+                if (second == g_4ab916[1][i])
+                    places[count++] = i;
+            } else {
+                places[count++] = i;
+            }
+        }
+    if (count)
+        return places[randomBetween(0, --count)];
+    return 1;
+}
+
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to
    the roster file next to the program (userFile). */
 /* @zoombi32 0x0041f1da */

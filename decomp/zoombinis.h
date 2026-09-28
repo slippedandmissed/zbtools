@@ -6198,3 +6198,7 @@ void fn_41db60(View *view);
 void fn_41dadf(View *);
 void fn_41eaf1();
 void fn_41f5d0();
+extern short g_4a100c; /* @data 0x4a100c */
+extern short g_4ab916[2][21]; /* @data 0x4ab916: the values of the roster's features each place wants */
+void fn_41e5e1();
+short fn_41e771(short id, short n);
