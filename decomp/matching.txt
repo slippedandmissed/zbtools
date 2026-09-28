@@ -330,6 +330,7 @@
 0x00428c28 drawOtherButtons
 0x00428c45 fn_428c45
 0x00428cb7 closeOtherPuzzle
+0x00429943 otherClick
 0x00429d94 hopNotify
 0x0042a077 fn_42a077
 0x0042a163 placeHopper

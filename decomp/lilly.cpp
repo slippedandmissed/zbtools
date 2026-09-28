@@ -3639,3 +3639,117 @@ void openLillyPuzzle()
     getColors(&g_4ac51c[10], 10, 236);
     g_4abec0 = 1;
 }
+
+/* The other puzzle's clicks: 1 the leave button, 2 the other button, 3 a
+   piece picked up and dropped on the board. */
+/* @zoombi32 0x00429943 */
+void otherClick(short action)
+{
+    View *other;
+    ImageBank *bank;
+    Point where;
+    ShortRect rect;
+    View *view;
+    LillyActor *actor;
+    short *cel;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeOtherPuzzle();
+        return;
+    }
+    switch (action) {
+    case 1:
+        queueViewSound(999, 0);
+        fn_428b8f(action, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        fn_428b8f(action, 0, 1);
+        g_4b755c = 1;
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (g_4af36a && !g_4b0d52) {
+            queueViewSound(996, 0);
+            fn_428b8f(action, 1, 1);
+            waitForEventFor(0, 2, 0, 1);
+            fn_428b8f(action, 0, 1);
+            g_4b0d52 = 12;
+            g_4b755a = 0;
+            g_4af360 = 0;
+        }
+        break;
+    case 3:
+        getCursorPosition(&where);
+        view = viewAt(where, 0x980002, 1);
+        if (view && !g_4af360) {
+            actor = (LillyActor *)&view->body;
+            if ((g_4b755a <= 0 || (g_4b755a > 0 && actor->unknownC0 == 2)) && !actor->unknownC2
+                && actor->unknownC0 != 1) {
+                fn_42d9c5(view, where);
+                actor = (LillyActor *)&view->body;
+                cel = (short *)&view->body;
+
+                bank = groupBanks[view->body.scriptGroup];
+                g_4af332 = fn_42e693();
+                if (!actor->unknownC0 && g_4af332 >= 0 && g_4af332 <= 11) {
+                    unionRgnRect(removedRgn, &actor->body.bounds);
+                    actor->body.bounds.left = 0;
+                    actor->body.bounds.right = 0;
+                    actor->body.bounds.top = 0;
+                    actor->body.bounds.bottom = 0;
+                    actor->body.x = g_4acff4[g_4af332][0].rect.left;
+                    actor->body.y = g_4acff4[g_4af332][0].rect.top;
+                    while (*cel) {
+                        cel[1] = actor->body.x - g_4ac950[*cel];
+                        cel[2] = actor->body.y - g_4ac954[*cel];
+                        unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
+
+                        cel++;
+                        rect.left = *cel++;
+                        rect.right = swapShort(image[0]) + rect.left;
+                        rect.top = *cel++;
+                        rect.bottom = swapShort(image[1]) + rect.top;
+                        unionRect(&view->body.bounds, &rect);
+                    }
+                    view->nextUpdate = 0;
+                    view->changed = 1;
+                    fn_42e69a();
+                    g_4acff4[g_4af332][0].attributes[0] = 1;
+                    actor->unknownC2 = 1;
+                    actor->column = 0;
+                    actor->row = g_4af332;
+                    startPlan(actor);
+                    moveView(view->id, 0, g_4aed22[actor->row]);
+                    other = findView(g_4aed3a[g_4af0ec]);
+                    if (other) {
+                        cel = (short *)&other->body;
+                        cel[14] = view->id;
+                        cel[15] = g_4af332;
+                        other->flags = 0x180000;
+                        setViewScript(other, cel[12] + 10109, 1);
+                        other->placed = fn_42afbe;
+                        other->notify = fn_42b003;
+                        actor->unknownE1 = g_4aed3a[g_4af0ec];
+                        g_4af0ec++;
+                        actor->unknownE3 = *(char *)&cel[10];
+                    }
+                    if (g_4af0ec == g_4af0e8) {
+                        if (g_4ac922 == 6)
+                            fn_42e6b5();
+                        g_4b755a = 1;
+                    }
+                } else if (!actor->unknownC0) {
+                    *(Point *)&actor->body.x = g_4a1ca4[cel[20]];
+                    setViewScript(view, cel[20] + 10043, 1);
+                    view->nextUpdate = 0;
+                    view->changed = 1;
+                    fn_42e69a();
+                }
+            }
+        }
+        break;
+    }
+}
