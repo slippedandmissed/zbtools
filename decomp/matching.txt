@@ -456,6 +456,7 @@
 0x0043a7a6 layOutMazeCels
 0x0043af02 sceneGroup
 0x0043af6b playAmbientSound
+0x0043b20c openNet
 0x0043b6f8 drawNetButton
 0x0043b791 drawNetButtons
 0x0043b7ae updateNetButtons

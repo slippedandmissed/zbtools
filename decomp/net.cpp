@@ -604,6 +604,103 @@ void fn_43c94f(short a, short b, short c, short n)
     g_4b106c[column] = c;
 }
 
+/*
+ * Opens the net (scene 15): resets its state, picks three random
+ * codes, loads Net.MHK's backdrop (by level), features, scripts and
+ * images, brings the party in, sets up the codes and the net, and shows
+ * the hint (sound 20064 next).
+ */
+/* @zoombi32 0x0043b20c */
+void openNet()
+{
+    Point places[16] = {{233, 392}, {209, 378}, {196, 390}, {185, 365}, {167, 380}, {160, 408},
+                        {135, 397}, {121, 407}, {115, 368}, {114, 342}, {99, 375},  {97, 394},
+                        {95, 346},  {91, 411},  {79, 355},  {62, 404}};
+
+    g_4b755a = g_4b755c = g_4b966e = 0;
+    g_4b12ac = sceneLevel();
+    g_4b142e = 25;
+    if (g_4b12ac > 1)
+        g_4b142e = 125;
+    g_4b141a = g_4b141c = g_4b1420 = g_4b1422 = 0;
+    g_4b1424 = g_4b1426 = g_4b1428 = g_4b141e = 0;
+    g_4b1410 = g_4b1416 = g_4b142c = g_4b11a0 = 0;
+    g_4b142a = g_4b1408 = g_4b1450 = g_4b13c8 = g_4b1456 = 0;
+    g_4b1466 = g_4b12ae = g_4b1414 = g_4b1412 = 0;
+    g_4b13fe = g_4b1400 = g_4b1402 = g_4b1404 = 0;
+    g_4b13ca = g_4b0d5c = g_4b119e = -1;
+    g_4b11a4 = g_4b1418 = 1;
+    g_4b1440 = g_4b1444 = g_4b1448 = -1;
+    g_4b144c = g_4b144e = g_4b11a6 = 0;
+    g_4b1438[0] = g_4b1438[1] = g_4b1438[2] = g_4b144a = 0;
+    g_4b12b0[0] = g_4b12b0[1] = g_4b12b0[2] = 0;
+    g_4b1430 = g_4b1462 = g_4b11a8 = g_4b147e = 0;
+    g_4b1432 = g_4b1434 = g_4b1436 = 0;
+    g_4b119a = g_4b119c = g_4b0e6a = g_4b0e6c = 0;
+    g_4b145e = g_4b1460 = g_4b1458 = g_4b145a = 0;
+    g_4b1464 = g_4b145c = 0;
+    g_4b1406 = 1;
+    g_4b0d52 = g_4b147c = 0;
+    g_4b12a8 = g_4b12aa = 0;
+    g_4b143e = randomUpTo(4);
+    g_4b1442 = randomUpTo(4);
+    g_4b1446 = randomUpTo(4);
+    fillMemory(g_4b13cc, 0, 50);
+    unloadSounds();
+    openGameFile(&g_4b12a4, "Net.MHK");
+    fn_46be2e(g_4b12a4);
+    drawBackdrop((g_4b12ac >= 2) + 5000);
+    loadFeatureGroup(7000, 0, 1);
+    loadFeatureGroup(8000, 1, 0);
+    loadFeatureGroup(9000, 2, 1);
+    loadFeatureGroup(10000, 3, 0);
+    loadScripts(7000, 48);
+    addScripts(8000, 8, 0);
+    addScripts(9000, 154, 0);
+    addScripts(10000, 19, 0);
+    g_4a2e60 = loadImageBank(6000, &g_4a2e54);
+    loadSnoidScripts(14000, 3, 0);
+    addSnoidScripts(13000, 51, 0);
+    addView(0x1000, drawNetButtons, updateNetButtons, 0, 0, 0, 0, 0);
+    setViewPlaces(16, places, 1);
+    fn_4148da(10, 236);
+    makePartySnoids(0);
+    enterSnoids(0);
+    g_4b0d68 = listChosenSnoids();
+    g_4b0e66 = g_4b0d68->count;
+    g_4b1478 = 3;
+    if (*(short *)(g_4a4ba0 + 0x20))
+        g_4b1478 = 2;
+    g_4b147a = 0;
+    g_4b0e68 = 0;
+    fn_43e370();
+    g_4b140a = (g_4b12ac == 3) + g_4b0e76 + 7;
+    g_4b140e = g_4b140a;
+    g_4b140c = 16 - g_4b140a;
+    fn_43c6df();
+    updateViews();
+    staggerSnoids(30, 0);
+    chooseSnoids(0, 0);
+    setGroupLists(g_4a2e32, 1, (short)0xc000);
+    drawNetButton(1, 0, 0);
+    drawNetButton(2, 0, 0);
+    visitAllItems();
+    addSoundRange(996, 997, 0);
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(300, 324, 0);
+    addSoundRange(425, 499, 0);
+    addSoundRange(8000, 8002, 0);
+    addSoundRange(9000, 10999, 0);
+    addSoundRange(7000, 7999, 0);
+    addSoundRange(10000, 10099, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    g_4b12a8 = 1;
+    setViewsLocked(0);
+    campHint((short *)(g_4a4ba0 + 0x3c));
+    g_4b966e = 20064;
+}
+
 /* Draws button 1 (image 5 or 6) or 2 (2 or 3, or 1 or 2 without
    g_4b12aa), lit or not, and with `show` shows it. */
 /* @zoombi32 0x0043b6f8 */
