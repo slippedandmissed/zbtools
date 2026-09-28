@@ -5608,3 +5608,7 @@ extern short g_4b0096[];
 extern short g_4b00c2;
 void fn_436d39(Snoid *snoid);
 short fn_437416(short exclude, short whole);
+extern short g_4b0980[];
+extern short g_4b0a02;
+extern short g_4b08e0[];
+extern short g_4b09f8;

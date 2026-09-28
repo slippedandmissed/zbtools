@@ -1453,3 +1453,116 @@ short fn_437416(short exclude, short whole)
     }
     return best;
 }
+
+/* The maze Zoombinis' notify: at frame 3 of events 20, 30, 40 and 50 it
+   counts the Zoombini onto its square (g_4b00d2): the first is recorded,
+   a second meeting it lists both in g_4b0980 and clears the square (as
+   more do); 21, 31, 41, 51 and 61 list it in g_4b08e0. */
+/* @zoombi32 0x0043638b */
+void fn_43638b(View *view, short event)
+{
+    short *parts;
+    short count;
+
+    switch (event) {
+    case 20:
+        if (view->body.frame == 3) {
+            parts = (short *)&view->body;
+            count = ++g_4b00d2[parts[33]][parts[34]][0];
+            if (count == 1) {
+                g_4b00d2[parts[33]][parts[34]][1] = view->id;
+            } else if (count == 2) {
+                g_4b0980[g_4b0a02] = g_4b00d2[parts[33]][parts[34]][1];
+                g_4b0a02++;
+                g_4b0980[g_4b0a02] = view->id;
+                g_4b0a02++;
+                g_4b00d2[parts[33]][parts[34]][1] = 0;
+                g_4b00d2[parts[33]][parts[34]][0] = 0;
+            } else if (count > 2) {
+                g_4b00d2[parts[33]][parts[34]][1] = 0;
+                g_4b00d2[parts[33]][parts[34]][0] = 0;
+            }
+        }
+        break;
+    case 21:
+        g_4b08e0[g_4b09f8] = view->id;
+        g_4b09f8++;
+        break;
+    case 30:
+        if (view->body.frame == 3) {
+            parts = (short *)&view->body;
+            count = ++g_4b00d2[parts[33]][parts[34]][0];
+            if (count == 1) {
+                g_4b00d2[parts[33]][parts[34]][1] = view->id;
+            } else if (count == 2) {
+                g_4b0980[g_4b0a02] = g_4b00d2[parts[33]][parts[34]][1];
+                g_4b0a02++;
+                g_4b0980[g_4b0a02] = view->id;
+                g_4b0a02++;
+                g_4b00d2[parts[33]][parts[34]][1] = 0;
+                g_4b00d2[parts[33]][parts[34]][0] = 0;
+            }
+            if (count > 2) {
+                g_4b00d2[parts[33]][parts[34]][1] = 0;
+                g_4b00d2[parts[33]][parts[34]][0] = 0;
+            }
+        }
+        break;
+    case 31:
+        g_4b08e0[g_4b09f8] = view->id;
+        g_4b09f8++;
+        break;
+    case 40:
+        if (view->body.frame == 3) {
+            parts = (short *)&view->body;
+            count = ++g_4b00d2[parts[33]][parts[34]][0];
+            if (count == 1) {
+                g_4b00d2[parts[33]][parts[34]][1] = view->id;
+            } else if (count == 2) {
+                g_4b0980[g_4b0a02] = g_4b00d2[parts[33]][parts[34]][1];
+                g_4b0a02++;
+                g_4b0980[g_4b0a02] = view->id;
+                g_4b0a02++;
+                g_4b00d2[parts[33]][parts[34]][1] = 0;
+                g_4b00d2[parts[33]][parts[34]][0] = 0;
+            }
+            if (count > 2) {
+                g_4b00d2[parts[33]][parts[34]][1] = 0;
+                g_4b00d2[parts[33]][parts[34]][0] = 0;
+            }
+        }
+        break;
+    case 41:
+        g_4b08e0[g_4b09f8] = view->id;
+        g_4b09f8++;
+        break;
+    case 50:
+        if (view->body.frame == 3) {
+            parts = (short *)&view->body;
+            count = ++g_4b00d2[parts[33]][parts[34]][0];
+            if (count == 1) {
+                g_4b00d2[parts[33]][parts[34]][1] = view->id;
+            } else if (count == 2) {
+                g_4b0980[g_4b0a02] = g_4b00d2[parts[33]][parts[34]][1];
+                g_4b0a02++;
+                g_4b0980[g_4b0a02] = view->id;
+                g_4b0a02++;
+                g_4b00d2[parts[33]][parts[34]][1] = 0;
+                g_4b00d2[parts[33]][parts[34]][0] = 0;
+            }
+            if (count > 2) {
+                g_4b00d2[parts[33]][parts[34]][1] = 0;
+                g_4b00d2[parts[33]][parts[34]][0] = 0;
+            }
+        }
+        break;
+    case 51:
+        g_4b08e0[g_4b09f8] = view->id;
+        g_4b09f8++;
+        break;
+    case 61:
+        g_4b08e0[g_4b09f8] = view->id;
+        g_4b09f8++;
+        break;
+    }
+}
