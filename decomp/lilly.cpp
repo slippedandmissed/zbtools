@@ -14,6 +14,10 @@ struct LillyActor
     char row; /* +0xc4 */
     char unknownC5[17];
     char unknownD6;
+    char unknownD7[9];
+    char unknownE0; /* +0xe0: added to its second part's image */
+    char unknownE1[2];
+    char unknownE3; /* +0xe3: added to its third part's image */
 };
 
 /* @zoombi32 0x00427e1a */
@@ -607,6 +611,125 @@ void fn_42c306(View *view, short region)
             g_4af5a8.right = cell->rect.right - 17;
             g_4af5a8.bottom = cell->rect.bottom - 14;
             unionRgnRect(region, &g_4af5a8);
+        }
+    }
+}
+
+/* Places a lilly actor's cels by their hot spots, its second part's image
+   offset by unknownE0. */
+/* @zoombi32 0x0042f3ed */
+void fn_42f3ed(View *view)
+{
+    short *cel = (short *)&view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+    short image;
+
+    image = *cel++;
+    *cel++ -= g_4ac950[image];
+    *cel++ -= g_4ac954[image];
+    if (*cel > 0) {
+        *cel += actor->unknownE0;
+        image = *cel++;
+        *cel++ -= g_4ac950[image];
+        *cel++ -= g_4ac954[image];
+        while (*cel) {
+            image = *cel++;
+            *cel++ -= g_4ac950[image];
+            *cel++ -= g_4ac954[image];
+        }
+    }
+}
+
+/* The same, the second part's image offset by unknownE0 - 7. */
+/* @zoombi32 0x0042f336 */
+void fn_42f336(View *view)
+{
+    short *cel = (short *)&view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+    short image;
+
+    image = *cel++;
+    *cel++ -= g_4ac950[image];
+    *cel++ -= g_4ac954[image];
+    if (*cel > 0) {
+        *cel = actor->unknownE0 + *cel - 7;
+        image = *cel++;
+        *cel++ -= g_4ac950[image];
+        *cel++ -= g_4ac954[image];
+        while (*cel) {
+            image = *cel++;
+            *cel++ -= g_4ac950[image];
+            *cel++ -= g_4ac954[image];
+        }
+    }
+}
+
+/* The same for three parts, the second and third offset by unknownE0 and
+   unknownE3. */
+/* @zoombi32 0x0042f192 */
+void fn_42f192(View *view)
+{
+    short *cel = (short *)&view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+    short image;
+
+    image = *cel++;
+    if (image) {
+        *cel++ -= g_4ac950[image];
+        *cel++ -= g_4ac954[image];
+    }
+    if (*cel > 0) {
+        *cel += actor->unknownE0;
+        image = *cel++;
+        *cel++ -= g_4ac950[image];
+        *cel++ -= g_4ac954[image];
+        if (*cel > 0) {
+            *cel += actor->unknownE3;
+            image = *cel++;
+            *cel++ -= g_4ac950[image];
+            *cel++ -= g_4ac954[image];
+        }
+    }
+}
+
+/* @zoombi32 0x0042aaba */
+void fn_42aaba(View *view, short event)
+{
+    ViewBody *body = &view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+
+    switch (event) {
+    case 54:
+        actor->body.x = body->cels[0].x;
+        actor->body.y = body->cels[0].y;
+        actor->body.unknownAa = body->cels[0].x;
+        actor->body.unknownAc = body->cels[0].y;
+        g_4acff4[actor->row][actor->column + 1].unknown8 = 0;
+        g_4acff2 = g_4acff0;
+        for (short i = 0; i < 13; i++)
+            if (g_4aed64[i] == g_4acff2) {
+                for (; g_4aed64[i]; i++)
+                    g_4aed64[i] = g_4aed64[i + 1];
+                i = 13;
+            }
+        break;
+    }
+}
+
+/* Loads `count` scripts ('SCRB' 10000 on), swapping their words. */
+/* @zoombi32 0x0042bc61 */
+void loadLillyScripts(long *resources, short *handles, short count)
+{
+    for (short i = 0; i < count; i++) {
+        short *at;
+
+        fn_46c4fe(&resources[i], RESOURCE_TYPE('S', 'C', 'R', 'B'), i + 10000L, 0, 1);
+        handles[i] = fn_46beac(resources[i]);
+        fn_48ea00(handles[i]);
+        at = (short *)handleData(handles[i]);
+        for (unsigned long size = handleSize(handles[i]); size; size -= 2) {
+            *at = swapShort(*at);
+            at++;
         }
     }
 }

@@ -352,7 +352,7 @@ short findAndLoad(long *resource, long type, short id)
  * there must be the same one.
  */
 /* @zoombi32 0x0046c4fe */
-void fn_46c4fe(long *resource, long type, short id, const char *what, short required)
+void fn_46c4fe(long *resource, long type, unsigned short id, const char *what, short required)
 {
     char text[20];
     long old = *resource;

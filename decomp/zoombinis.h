@@ -1394,7 +1394,7 @@ void fn_46310c();
 void fn_456c67(long);
 short fn_46beac(long);
 /* Loads resource `id` of type `type` (e.g. 'CURS') into *handle. */
-void fn_46c4fe(long *handle, long type, short id, const char *what, short);
+void fn_46c4fe(long *resource, long type, unsigned short id, const char *what, short required);
 /* Creates the font `name` at `size` into *font. */
 void fn_46cb10(Font **font, const char *name, unsigned short size, unsigned short style);
 /* Initialises the Mohawk OS layer, with a work buffer. */
@@ -4776,6 +4776,12 @@ extern short g_4a1b1c;
 extern short g_4af344;
 extern short g_4af346;
 extern ShortRect g_4af5a8;
+void fn_42f3ed(View *view);
+void fn_42f336(View *view);
+void fn_42aaba(View *view, short event);
+void loadLillyScripts(long *resources, short *handles, short count);
+extern short g_4acff0;
+extern short g_4acff2;
 extern short g_4af36a;
 extern short g_4a1d6c;
 extern short g_4a1d6e;
