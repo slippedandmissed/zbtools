@@ -2482,3 +2482,100 @@ void fn_445eb3(short which)
         break;
     }
 }
+
+/*
+ * The scene's buttons: leaves at once if asked to; 1 asks to leave for the
+ * map (999, keeping the party); 2, once the party is through (g_4b15e6),
+ * sends the Zoombinis on (996) and asks to leave for scene 4; 3 (and 12)
+ * serves the pizza when nothing's going on; 4-11 toggle toppings (8 not
+ * at level 1, 11 only at level 3); 13 (debugging, armed) drags a Zoombini
+ * to the pizza spot. Notes the time (g_4b1824).
+ */
+/* @zoombi32 0x00441e78 */
+void pizzaButtonClicked(short button)
+{
+    Point cursor;
+    View *view;
+
+    g_4b1824 = clockTime();
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closePizza();
+        return;
+    }
+    switch (button) {
+    case 1:
+        queueViewSound(999, 0);
+        drawPizzaButton(button, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawPizzaButton(button, 0, 1);
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (g_4b1820)
+            fn_4468eb();
+        if (g_4b15e6) {
+            queueViewSound(0, 0);
+            drawPizzaButton(button, 1, 1);
+            waitForEventFor(0, 2, 0, 1);
+            drawPizzaButton(button, 0, 1);
+            chooseSnoids(1, 0);
+            g_4b7564 = 0;
+            queueViewSound(996, 0);
+            sendSnoids(690, 250, 45);
+            g_4b0d52 = 4;
+            g_4b15ec = g_4b1820 = 0;
+        }
+        break;
+    case 3:
+    case 12:
+        if (!g_4b171e && !g_4b1660 && !g_4b1662 && !g_4b165a && !g_4b1600 && !g_4b1602 && !g_4b1604 && !g_4b160c
+            && g_4b83e4[0]) {
+            g_4b171e++;
+            g_4b1824 = clockTime();
+            if (g_4b15d6 == -1)
+                fn_445789();
+            memcpy(g_4b16da, g_4b16ca, 16);
+            if (!g_4b165a)
+                fn_442560(3);
+        }
+        break;
+    case 13:
+        if (g_4b15e8 >= 6 && g_4b755a <= 0 && g_4b15d8) {
+            claimPlacedView(1, 0);
+            getCursorPosition(&cursor);
+            view = viewAt(cursor, 1, 1);
+            if (view) {
+                dragSnoid(view, cursor, 0, 0);
+                g_4b1672 = view->id;
+                if (heldPlaceNumber()) {
+                    g_4b15d8 = 0;
+                    g_4a3d42 = view->id;
+                    fn_442560(3);
+                }
+            }
+        }
+        break;
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+        fn_442560(button);
+        break;
+    case 8:
+        if (g_4b161e != 1)
+            fn_442560(button);
+        break;
+    case 9:
+    case 10:
+        fn_442560(button);
+        break;
+    case 11:
+        if (g_4b161e == 3)
+            fn_442560(button);
+        break;
+    }
+}

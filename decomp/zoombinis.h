@@ -6094,3 +6094,5 @@ extern short g_4b181c;
 void fn_443521(short troll, short);
 short fn_445feb(short sound, short keep);
 void fn_445eb3(short which);
+extern short g_4b1672;
+void pizzaButtonClicked(short button);
