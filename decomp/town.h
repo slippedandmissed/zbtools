@@ -65,6 +65,7 @@ extern short g_4b7e0e; /* @data 0x4b7e0e */
 
 void openScene0();
 void addTownsperson();
+void setTownFrames(short frame);
 void drawPlaque(View *view);
 void scene0Frame();
 void drawClock(View *view);

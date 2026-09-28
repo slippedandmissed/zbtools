@@ -653,3 +653,29 @@ void addTownsperson()
             }
         }
 }
+
+/* Shows frame `frame` of the four views g_4b7e08 at once. */
+/* @zoombi32 0x0045da4e */
+void setTownFrames(short frame)
+{
+    short i;
+    View *view;
+    short value;
+
+    for (i = 0; i < 4; i++) {
+        view = findView(g_4b7e08[i]);
+        if (view) {
+            runViewCels(view, removedRgn);
+            value = frame;
+            view->body.frameOffset = scriptFrameOffset(scripts[view->body.script], &value, 0);
+            view->body.frame = value;
+            view->nextUpdate = 0;
+            view->body.running = 1;
+            view->body.lastFrame++;
+            view->changed = 1;
+            runViewCels(view, removedRgn);
+            view->body.lastFrame--;
+            view->body.frame = value;
+        }
+    }
+}
