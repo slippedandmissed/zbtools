@@ -1626,3 +1626,96 @@ short fn_45537f(const char *path)
     }
     return failed;
 }
+
+/* Recomputes the cells' link bits: a cell in state 502, 504, 505 or 508
+   clears its bit for each neighbour in state 501, 506 or 507; one in state
+   501, 506 or 507 for each neighbour in state 502, 508 or g_4b2512. Then
+   starts script 7000 on the views of the cells in state 501, 506 or 507. */
+/* @zoombi32 0x0044ddc9 */
+void fn_44ddc9()
+{
+    short i;
+    View *view;
+    short direction;
+    short state;
+
+    for (i = 0; i < 117; i++)
+        switch (g_4b1aea[i].state) {
+        case 502:
+        case 504:
+        case 505:
+        case 508:
+            for (direction = 0; direction <= 5; direction++) {
+                state = g_4b1aea[g_4b1aea[i].links[direction]].state;
+                if (state == 501 || state == 506 || state == 507)
+                    switch (direction) {
+                    case 0:
+                        g_4b2324[i] |= 1;
+                        g_4b2324[i] ^= 1;
+                        break;
+                    case 1:
+                        g_4b2324[i] |= 2;
+                        g_4b2324[i] ^= 2;
+                        break;
+                    case 2:
+                        g_4b2324[i] |= 4;
+                        g_4b2324[i] ^= 4;
+                        break;
+                    case 3:
+                        g_4b2324[i] |= 8;
+                        g_4b2324[i] ^= 8;
+                        break;
+                    case 4:
+                        g_4b2324[i] |= 0x10;
+                        g_4b2324[i] ^= 0x10;
+                        break;
+                    case 5:
+                        g_4b2324[i] |= 0x20;
+                        g_4b2324[i] ^= 0x20;
+                        break;
+                    }
+            }
+            break;
+        case 501:
+        case 506:
+        case 507:
+            for (direction = 0; direction <= 5; direction++) {
+                state = g_4b1aea[g_4b1aea[i].links[direction]].state;
+                if (state == 502 || state == 508 || state == g_4b2512)
+                    switch (direction) {
+                    case 0:
+                        g_4b2324[i] |= 1;
+                        g_4b2324[i] ^= 1;
+                        break;
+                    case 1:
+                        g_4b2324[i] |= 2;
+                        g_4b2324[i] ^= 2;
+                        break;
+                    case 2:
+                        g_4b2324[i] |= 4;
+                        g_4b2324[i] ^= 4;
+                        break;
+                    case 3:
+                        g_4b2324[i] |= 8;
+                        g_4b2324[i] ^= 8;
+                        break;
+                    case 4:
+                        g_4b2324[i] |= 0x10;
+                        g_4b2324[i] ^= 0x10;
+                        break;
+                    case 5:
+                        g_4b2324[i] |= 0x20;
+                        g_4b2324[i] ^= 0x20;
+                        break;
+                    }
+            }
+            break;
+        }
+    for (i = 0; i < 117; i++)
+        if (g_4b1aea[i].state == 501 || g_4b1aea[i].state == 506 || g_4b1aea[i].state == 507) {
+            view = findView(g_4b1aea[i].view);
+            setViewScript(view, 7000, 1);
+            view->placed = fn_4489ce;
+        }
+    updateViews();
+}
