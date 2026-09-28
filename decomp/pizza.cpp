@@ -1388,3 +1388,105 @@ void fn_4441a8(View *, short event)
         break;
     }
 }
+
+/*
+ * The notify of the Zoombini at the pizza: 0 flips which way it faces
+ * and turns it the way g_4b170c says; 240-243 note a turn to make,
+ * 250-253 turn it; 61 (unless g_4b171a) sends it off along the path to the
+ * troll up (14000, 14002 or 14004 on, the next if it's the last, sound
+ * 8040); when its script ends it walks on to the pizza spot (g_4a3d44), or
+ * if it was the last to go, it's done and the next may come (g_4b15da).
+ */
+/* @zoombi32 0x00444e0c */
+void fn_444e0c(View *view, short event)
+{
+    Point where;
+    Snoid *snoid = (Snoid *)&view->body;
+    short last;
+    View *zoombini;
+
+    switch (event) {
+    case 250:
+    case 251:
+    case 252:
+    case 253:
+        setSnoidFacing(snoid, event - 250);
+        break;
+    case 240:
+    case 241:
+    case 242:
+    case 243:
+        g_4b170c = event - 239;
+        break;
+    case 0:
+        snoid->unknownF2 = !snoid->unknownF2;
+        if (g_4b170c) {
+            setSnoidFacing(snoid, g_4b170c - 1);
+            g_4b170c = 0;
+        }
+        break;
+    case 61:
+        if (g_4b171a) {
+            g_4b171a = 0;
+            break;
+        }
+        where.x = 180;
+        where.y = 327;
+        zoombini = findView(g_4a3d42);
+        last = 0;
+        if (!g_4b1646)
+            last = 1;
+        if (g_4b1618 == 1) {
+            if (!g_4b1646) {
+                where.x = 34;
+                where.y = 59;
+            }
+            startSnoidScript((Snoid *)&zoombini->body, g_4b1646 + 14000, &where, last);
+            queueViewSound(8040, 0);
+        } else if (g_4b161a == 1) {
+            if (!g_4b1646) {
+                where.x = 46;
+                where.y = 46;
+            }
+            startSnoidScript((Snoid *)&zoombini->body, g_4b1646 + 14002, &where, last);
+            queueViewSound(8040, 0);
+        } else {
+            if (!g_4b1646) {
+                where.x = 95;
+                where.y = 27;
+            }
+            startSnoidScript((Snoid *)&zoombini->body, g_4b1646 + 14004, &where, last);
+            queueViewSound(8040, 0);
+        }
+        zoombini->notify = fn_444e0c;
+        if (g_4b1646) {
+            zoombini->notifyEnd = 1;
+            g_4b15e0 = 0;
+        } else {
+            zoombini->notifyEnd = 1;
+            g_4b15e0 = zoombini;
+        }
+        zoombini->interval = 6;
+        break;
+    case -1:
+        if (!g_4b15e0) {
+            zoombini = findView(g_4a3d42);
+            where = g_4a3d44;
+            if (zoombini) {
+                setSnoidAction((Snoid *)&zoombini->body, 7, 0);
+                *(Point *)&((Snoid *)&zoombini->body)->targetX = where;
+            }
+            g_4b15ea = 1;
+            g_4b15da = 0;
+        } else if (g_4b15e0) {
+            g_4b83e4[0] = 0;
+            ((Snoid *)&g_4b15e0->body)->unknownF7 = 0;
+            g_4b15e0->body.running = 0;
+            g_4b15e0 = 0;
+            g_4b15da = 1;
+            g_4b15ee++;
+        }
+        g_4b15d8 = 1;
+        break;
+    }
+}
