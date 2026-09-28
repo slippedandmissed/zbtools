@@ -387,6 +387,21 @@ struct SavedGameList
     SavedGame games[50];
 };
 
+/* The body of a view drifting across the screen (picker, driftView): its
+   cels list has room for its motion after the cels it draws. */
+struct DriftingBody
+{
+    ViewCel cels[6];
+    short unknown24;
+    short unknown26;
+    short unknown28;
+    short x; /* +0x2a */
+    short y;
+    short dx; /* +0x2e */
+    short dy;
+    short unknown32;
+};
+
 struct View;
 typedef void (*ViewDraw)(View *view);
 typedef void (*ViewUpdate)(View *view, short region);
@@ -6264,3 +6279,15 @@ extern ShortRect g_4a1f74; /* @data 0x4a1f74 */
 void closeScene19();
 void closeScene20();
 void fn_431e5e(View *, short event);
+extern short g_4afb7c; /* @data 0x4afb7c */
+extern short g_4afb7e; /* @data 0x4afb7e */
+extern short g_4afb80; /* @data 0x4afb80 */
+extern short g_4afb82; /* @data 0x4afb82 */
+extern short g_4afb84; /* @data 0x4afb84 */
+extern short g_4afb86; /* @data 0x4afb86 */
+extern short g_4afb88; /* @data 0x4afb88 */
+void fn_432cec(View *view);
+void fn_430f8e(View *view);
+void driftView(View *view);
+void fn_432905();
+void fn_430ff2(View *view);

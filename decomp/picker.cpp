@@ -96,3 +96,93 @@ void fn_431e5e(View *, short event)
         break;
     }
 }
+
+/* A view's placed callback: raises cel g_4b754a (1-4) by four images and
+   moves it two pixels up and left. */
+/* @zoombi32 0x00430f8e */
+void fn_430f8e(View *view)
+{
+    ViewBody *body = &view->body;
+
+    switch (g_4b754a) {
+    case 1:
+        body->cels[1].image += 4;
+        body->cels[1].x += -2;
+        body->cels[1].y += -2;
+        break;
+    case 2:
+        body->cels[2].image += 4;
+        body->cels[2].x += -2;
+        body->cels[2].y += -2;
+        break;
+    case 3:
+        body->cels[3].image += 4;
+        body->cels[3].x += -2;
+        body->cels[3].y += -2;
+        break;
+    case 4:
+        body->cels[4].image += 4;
+        body->cels[4].x += -2;
+        body->cels[4].y += -2;
+        break;
+    }
+}
+
+/* A drifting view's placed callback: moves it by its speed, wrapping round
+   the screen (-10 to 650 across, -10 to 490 down), and puts its cel
+   there. */
+/* @zoombi32 0x00433388 */
+void driftView(View *view)
+{
+    DriftingBody *body = (DriftingBody *)&view->body;
+
+    body->x += body->dx;
+    body->y += body->dy;
+    if (body->x > 650)
+        body->x = -10;
+    else if (body->x < -10)
+        body->x = 650;
+    if (body->y > 490)
+        body->y = -10;
+    else if (body->y < -10)
+        body->y = 490;
+    body->cels[0].x = body->x;
+    body->cels[0].y = body->y;
+}
+
+/* Resets g_4afb7e-g_4afb88 (g_4afb82, g_4afb84: the screen's centre) and
+   makes the view g_4afb7c again (script 1010, placed callback
+   fn_432cec). */
+/* @zoombi32 0x00432905 */
+void fn_432905()
+{
+    View *view;
+
+    g_4afb80 = 0;
+    g_4afb82 = 320;
+    g_4afb84 = 240;
+    g_4afb7e = 0;
+    g_4afb86 = g_4afb88 = 0;
+    deleteView(g_4afb7c);
+    g_4afb7c = addView(0, drawCels, runViewCels, 1010, 4, 0, 0, 0);
+    view = findView(g_4afb7c);
+    if (view)
+        view->placed = fn_432cec;
+}
+
+/* Draws a view with its cels and, in colour 45, its text (kept in its
+   body from +0x3c) centred in its bounds, when it's running and to be
+   redrawn. */
+/* @zoombi32 0x00430ff2 */
+void fn_430ff2(View *view)
+{
+    Color saved;
+
+    if (view->body.running && view->reset) {
+        view->reset = 0;
+        drawCels(view);
+        saved = setForeColor(Color(45));
+        drawText(view->body.bounds, 0x22, (char *)&view->body.cels[10], 0xffff);
+        setForeColor(saved);
+    }
+}
