@@ -600,14 +600,14 @@ void fn_44f1f2()
 }
 
 /* A view's drawing: its cels from the bank g_4b2634, while it runs and
-   stands in g_4aa7a8. */
+   stands in the game's area. */
 /* Functional: the original reads each cel's words as it pushes them
    (`drawImageData(image(*cel++), *cel++, *cel++, 8)`, relying on BCC's
    left-to-right evaluation); this reads them first. */
 /* @zoombi32-functional 0x004541bf */
 void fn_4541bf(View *view)
 {
-    if (view->body.running && ptInRect(&g_4aa7a8, *(Point *)&view->body.x)) {
+    if (view->body.running && ptInRect(&gameRect, *(Point *)&view->body.x)) {
         short *cel = (short *)view->body.cels;
         ImageBank *bank = g_4b2634;
 
@@ -1559,4 +1559,70 @@ void fn_44d5f5()
             if (!fn_44d102())
                 break;
         }
+}
+
+/* Clears cells of a line of three (a cell's `snoid` from 510 is a feature
+   marker, below it a Zoombini): all three when both ends hold Zoombinis and
+   the middle is in state 501; otherwise, with the middle in state 507, the
+   second end if both ends hold Zoombinis or only the second does, the first
+   if only the first does. */
+/* @zoombi32 0x0044e21a */
+void fn_44e21a(short first, short second, short middle)
+{
+    if (g_4b1aea[first].snoid < 510 && g_4b1aea[second].snoid < 510 && g_4b1aea[middle].state == 501) {
+        fn_44e314(first);
+        fn_44e314(second);
+        fn_44e314(middle);
+    } else if (g_4b1aea[first].snoid < 510 && g_4b1aea[second].snoid < 510 && g_4b1aea[middle].state == 507) {
+        fn_44e314(second);
+    } else if (g_4b1aea[first].snoid < 510 && g_4b1aea[second].snoid >= 510 && g_4b1aea[middle].state == 507) {
+        fn_44e314(first);
+    } else if (g_4b1aea[first].snoid >= 510 && g_4b1aea[second].snoid < 510 && g_4b1aea[middle].state == 507) {
+        fn_44e314(second);
+    }
+}
+
+/* Plays a QuickTime movie from a file, centred in the window: loads it
+   (fn_4552fd), makes or reuses the movie controller (g_4b2adc; qtim_38 is
+   NewMovieController?), and starts it. Returns 0, or 1 if it failed. */
+/* @zoombi32 0x0045537f */
+short fn_45537f(const char *path)
+{
+    POINT where;
+    Point offset;
+    RECT bounds;
+    short failed;
+    short i;
+
+    failed = 1;
+    g_4b2ad8 = fn_4552fd(path);
+    if (g_4b2ad8) {
+        g_4b2ae4 = getPort();
+        setPort(screenPort);
+        qtim_0f(g_4b2ad8, &bounds);
+        OffsetRect(&bounds, -bounds.left, -bounds.top);
+        offset.x = ((screenRect.right - screenRect.left) - (gameRect.right - gameRect.left)) / 2;
+        offset.y = ((screenRect.bottom - screenRect.top) - (gameRect.bottom - gameRect.top)) / 2;
+        OffsetRect(&bounds, offset.x, offset.y);
+        if (!g_4b2adc) {
+            g_4b2adc = qtim_38(g_4b2ad8, &bounds, 11, mainWindow);
+        } else {
+            where.x = offset.x;
+            where.y = offset.y;
+            cmgr_0d(g_4b2adc, g_4b2ad8, mainWindow, where);
+        }
+        cmgr_0e(g_4b2adc, &bounds, 0, 11);
+        cmgr_00(g_4b2adc, mainWindow, 1);
+        cmgr_01(g_4b2adc, 0x20, 0);
+        qtim_31(g_4b2ad8, 1);
+        qtim_62(0, 0);
+        qtim_2f(g_4b2ad8, 0, 0x10000);
+        for (i = 0; i < 100; i++)
+            cmgr_09(g_4b2adc);
+        cmgr_01(g_4b2adc, 8, 0x10000);
+        failed = 0;
+        g_4b2ad6 = 0;
+        g_4b2ad4 = 1;
+    }
+    return failed;
 }
