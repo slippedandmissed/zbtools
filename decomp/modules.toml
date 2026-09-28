@@ -112,8 +112,8 @@ note = "'Picker.MHK', 'New Game', 'Snoids to practice with = '"
 
 [[module]]
 start = 0x433510
-name = "module_433510"
-note = "'Picker.MHK'"
+name = "maze"
+note = "opens 'Maze2.MHK' (0x433968); 'Picker.MHK' is only the string before its button table"
 
 [[module]]
 start = 0x439560

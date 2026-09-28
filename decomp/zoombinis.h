@@ -5476,3 +5476,28 @@ void fn_4506f0();
 void fn_45074d();
 void fn_450796();
 void fn_4507bb();
+
+/* maze */
+extern short g_4afc6a;
+extern short g_4afc68; /* the scene is open */
+extern long g_4a21b4;
+extern SceneButton g_4a20f4[3]; /* [0] isn't a button: the data before is a string */
+extern short g_4a25c4;
+extern short g_4a25c6;
+extern long g_4afc18;
+extern short g_4afc20;
+extern long g_4afbd8;
+extern long g_4afbdc;
+extern long g_4afbe0;
+extern long g_4afbe4;
+extern long g_4afbc4;
+extern long g_4afbc8;
+extern long g_4afbcc;
+extern long g_4afc64;
+void loadMazeTable(long *resource, short *handle, short id, short **locked);
+void freeMazeTable(long *resource, short *handle);
+void drawMazeButton(short which, short lit, short show);
+void drawMazeButtons(View *);
+void updateMazeButtons(View *, short region);
+void closeMaze();
+short mazeKey(unsigned short key);
