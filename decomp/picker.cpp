@@ -336,3 +336,66 @@ void fn_4333ef(View *view)
     body->cels[5].image = g_4afb72 - counted + first;
     body->cels[6].image = first + g_4afb76;
 }
+
+/* Starts a drifting view (script 1011, placed callback fn_432eff) from the
+   centre view's place (g_4afb82, g_4afb84), moving 14 a step in direction
+   g_4afb7e (0 up, clockwise in eighths), and counts it (g_4afb8c). */
+/* @zoombi32 0x0043297f */
+short fn_43297f()
+{
+    short dx;
+    short dy;
+    short x;
+    short y;
+    short id;
+    View *view;
+    DriftingBody *body;
+
+    dy = 0;
+    dx = 0;
+    switch (g_4afb7e) {
+    case 0:
+        dy = -14;
+        break;
+    case 1:
+        dy = -14;
+        dx = 14;
+        break;
+    case 2:
+        dx = 14;
+        break;
+    case 3:
+        dy = 14;
+        dx = 14;
+        break;
+    case 4:
+        dy = 14;
+        break;
+    case 5:
+        dy = 14;
+        dx = -14;
+        break;
+    case 6:
+        dx = -14;
+        break;
+    case 7:
+        dy = -14;
+        dx = -14;
+        break;
+    }
+    x = g_4afb82 + dx;
+    y = g_4afb84 + dy;
+    id = addView(0, drawCels, runViewCels, 1011, 3, 0, 0, 0);
+    view = findView(id);
+    if (view) {
+        body = (DriftingBody *)&view->body;
+        body->unknown28 = 0;
+        body->x = x;
+        body->y = y;
+        body->dx = dx;
+        body->dy = dy;
+        view->placed = fn_432eff;
+        g_4afb8c++;
+    }
+    return id;
+}

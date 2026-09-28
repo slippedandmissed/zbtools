@@ -73,5 +73,8 @@ extern short g_4afb72; /* @data 0x4afb72 */
 extern short g_4afb76; /* @data 0x4afb76 */
 void fn_430030(short n);
 void fn_4333ef(View *view);
+extern short g_4afb8c; /* @data 0x4afb8c: drifting views started */
+void fn_432eff(View *view);
+short fn_43297f();
 
 #endif
