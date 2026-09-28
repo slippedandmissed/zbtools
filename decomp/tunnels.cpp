@@ -239,17 +239,17 @@ short scene8Key(unsigned short key)
     case 'a':
         unionRgnRect(removedRgn, &area);
         updateViews();
-        if (g_4b7f18.unknown0 == 1) {
-            if (g_4b7f18.unknown2)
+        if (g_4b7f18.count == 1) {
+            if (g_4b7f18.rules[0].side)
                 n = 5;
             else
                 n = 4;
-        } else if (g_4b7f18.unknown2) {
-            if (g_4b7f18.rules[0].unknownB)
+        } else if (g_4b7f18.rules[0].side) {
+            if (g_4b7f18.rules[1].side)
                 n = 1;
             else
                 n = 0;
-        } else if (g_4b7f18.rules[0].unknownB) {
+        } else if (g_4b7f18.rules[1].side) {
             n = 3;
         } else {
             n = 2;
@@ -387,8 +387,8 @@ short removeTunnelEntry(TunnelList *list, short view)
 
 /* Whether `snoid` is turned back at door `door` (1-4; others count as 1)
    under `rules`: whether it matches the first rule (any of its features'
-   values; inverted unless unknown2) and the second (when unknown0 is 2;
-   inverted unless the first rule's unknownB), combined by the door. The
+   values; inverted unless its side) and the second (when there are two;
+   inverted unless its side), combined by the door. The
    first rule's result (for doors 3 and 4, inverted) goes in *first. */
 /* Not exact: register allocation (the original keeps `door`, `a`, `b` and
    `passes` on the stack and `snoid` in esi, using ebx and ecx as scratch). */
@@ -406,38 +406,38 @@ short fn_460c41(TunnelRules *rules, short door, Snoid *snoid, unsigned short *fi
     for (i = 0; i < rules->rules[0].count; i++)
         if (snoid->features[rules->rules[0].features[i] - 1] == rules->rules[0].values[i])
             a = 1;
-    for (i = 0; rules->unknown0 == 2 && i < rules->rules[1].count; i++)
+    for (i = 0; rules->count == 2 && i < rules->rules[1].count; i++)
         if (snoid->features[rules->rules[1].features[i] - 1] == rules->rules[1].values[i])
             b = 1;
-    if (!rules->unknown2)
+    if (!rules->rules[0].side)
         a = !a;
-    if (!rules->rules[0].unknownB)
+    if (!rules->rules[1].side)
         b = !b;
     switch (door) {
     case 1:
         *first = a;
-        if (rules->unknown0 == 1)
+        if (rules->count == 1)
             passes = a;
         else
             passes = a && b;
         break;
     case 2:
         *first = a;
-        if (rules->unknown0 == 1)
+        if (rules->count == 1)
             passes = a;
         else
             passes = a && !b;
         break;
     case 3:
         *first = !a;
-        if (rules->unknown0 == 1)
+        if (rules->count == 1)
             passes = !a;
         else
             passes = !a && !b;
         break;
     case 4:
         *first = !a;
-        if (rules->unknown0 == 1)
+        if (rules->count == 1)
             passes = !a;
         else
             passes = !a && b;
@@ -541,8 +541,8 @@ void fn_460e3d()
             picked = masks[i];
             i = n;
         }
-    g_4b7f18.unknown0 = 1;
-    g_4b7f18.unknown2 = randomBetween(0, 1);
+    g_4b7f18.count = 1;
+    g_4b7f18.rules[0].side = randomBetween(0, 1);
     g_4b7f18.rules[0].count = 1;
     if (picked & 0xff) {
         g_4b7f18.rules[0].features[0] = 4;
@@ -1080,4 +1080,179 @@ void fn_460642(short kind)
     entry.unknownC[5] = reply;
     entry.unknownC[6] = replyThen;
     fn_460527(&g_4b7ff0, entry);
+}
+
+/* Makes a two-rule set (two feature values each): builds the 40 masks of
+   two values of one feature (a byte of a long, a value per nibble, big-endian
+   like the Zoombinis' features), then as fn_461e1a picks the pair of masks
+   that best splits the chosen Zoombinis four ways, and makes each a rule
+   with a random side. */
+/* @zoombi32 0x004612b1 */
+void fn_4612b1()
+{
+    char *both;
+    char *firstOnly;
+    char *secondOnly;
+    char *neither;
+    char *score;
+    ChosenSnoids *chosen;
+    short pairs;
+    unsigned long pair[2];
+    short j;
+    short best;
+    short ties;
+    unsigned long masks[40];
+    unsigned long base[10] = {0x12, 0x13, 0x14, 0x15, 0x23, 0x24, 0x25, 0x34, 0x35, 0x45};
+    short i;
+    unsigned long features;
+    short row;
+    short col;
+    short most;
+    short count;
+    int shift;
+    short k;
+    short pick;
+
+    both = (char *)newPtr(1600);
+    if (!both)
+        fatalError(msgOutOfMemory);
+    firstOnly = (char *)newPtr(1600);
+    if (!firstOnly) {
+        disposePtr(both);
+        fatalError(msgOutOfMemory);
+    }
+    secondOnly = (char *)newPtr(1600);
+    if (!secondOnly) {
+        disposePtr(both);
+        disposePtr(firstOnly);
+        fatalError(msgOutOfMemory);
+    }
+    neither = (char *)newPtr(1600);
+    if (!neither) {
+        disposePtr(both);
+        disposePtr(firstOnly);
+        disposePtr(secondOnly);
+        fatalError(msgOutOfMemory);
+    }
+    score = (char *)newPtr(1600);
+    if (!score) {
+        disposePtr(both);
+        disposePtr(firstOnly);
+        disposePtr(secondOnly);
+        disposePtr(neither);
+        fatalError(msgOutOfMemory);
+    }
+    chosen = listChosenSnoids();
+    for (i = 0; i < 40; i++)
+        masks[i] = 0;
+    for (i = 0; i < 1600; i++) {
+        both[i] = 0;
+        firstOnly[i] = 0;
+        secondOnly[i] = 0;
+        neither[i] = 0;
+    }
+    shift = 0;
+    k = 0;
+    for (j = 0; j < 4; j++) {
+        for (i = 0; i < 10; i++) {
+            masks[k] = base[i] << shift;
+            k++;
+        }
+        shift += 8;
+    }
+    pairs = 1600;
+    for (j = 0; j < chosen->count; j++) {
+        features = swapLong(*(unsigned long *)chosen->features[j]);
+        for (i = 0; i < pairs; i++) {
+            row = i / 40;
+            col = i % 40;
+            if (row == col)
+                continue;
+            if ((features & 0xf) == (masks[row] & 0xf) || (features & 0xf00) == (masks[row] & 0xf00) || (features & 0xf0000) == (masks[row] & 0xf0000) || (features & 0xf000000) == (masks[row] & 0xf000000) || (features & 0xf) == (masks[row] & 0xf0) >> 4 || (features & 0xf00) == (masks[row] & 0xf000) >> 4 || (features & 0xf0000) == (masks[row] & 0xf00000) >> 4 || (features & 0xf000000) == (masks[row] & 0xf0000000) >> 4) {
+                if ((features & 0xf) == (masks[col] & 0xf) || (features & 0xf00) == (masks[col] & 0xf00) || (features & 0xf0000) == (masks[col] & 0xf0000) || (features & 0xf000000) == (masks[col] & 0xf000000) || (features & 0xf) == (masks[col] & 0xf0) >> 4 || (features & 0xf00) == (masks[col] & 0xf000) >> 4 || (features & 0xf0000) == (masks[col] & 0xf00000) >> 4 || (features & 0xf000000) == (masks[col] & 0xf0000000) >> 4)
+                    both[i]++;
+                else
+                    firstOnly[i]++;
+            } else if ((features & 0xf) == (masks[col] & 0xf) || (features & 0xf00) == (masks[col] & 0xf00) || (features & 0xf0000) == (masks[col] & 0xf0000) || (features & 0xf000000) == (masks[col] & 0xf000000) || (features & 0xf) == (masks[col] & 0xf0) >> 4 || (features & 0xf00) == (masks[col] & 0xf000) >> 4 || (features & 0xf0000) == (masks[col] & 0xf00000) >> 4 || (features & 0xf000000) == (masks[col] & 0xf0000000) >> 4)
+                secondOnly[i]++;
+            else
+                neither[i]++;
+        }
+    }
+    most = 0;
+    for (i = 0; i < pairs; i++) {
+        count = 0;
+        if (both[i])
+            count++;
+        if (firstOnly[i])
+            count++;
+        if (secondOnly[i])
+            count++;
+        if (neither[i])
+            count++;
+        score[i] = count;
+        if (count > most)
+            most = count;
+    }
+    for (i = 0; i < pairs; i++)
+        if (score[i] < most)
+            both[i] = -1;
+    ties = 0;
+    best = 9999;
+    for (i = 0; i < pairs; i++) {
+        score[i] = -1;
+        if (both[i] == -1)
+            continue;
+        score[i] = abs(both[i] - firstOnly[i]) + abs(both[i] - secondOnly[i]) + abs(both[i] - neither[i])
+                   + abs(firstOnly[i] - secondOnly[i]) + abs(firstOnly[i] - neither[i])
+                   + abs(secondOnly[i] - neither[i]);
+        if (score[i] < best)
+            best = score[i];
+    }
+    for (i = 0; i < pairs; i++)
+        if (score[i] == best)
+            ties++;
+    pick = randomBetween(1, ties);
+    for (i = 0; i < pairs; i++)
+        if (score[i] == best) {
+            pick--;
+            if (!pick) {
+                row = i / 40;
+                col = i % 40;
+                pair[0] = masks[row];
+                pair[1] = masks[col];
+                i = pairs;
+            }
+        }
+    g_4b7f18.count = 2;
+    for (i = 0; i < 2; i++) {
+        g_4b7f18.rules[i].side = randomBetween(0, 1);
+        g_4b7f18.rules[i].count = 2;
+        if (pair[i] & 0xff) {
+            g_4b7f18.rules[i].features[0] = 4;
+            g_4b7f18.rules[i].values[0] = pair[i] & 0xf;
+            g_4b7f18.rules[i].features[1] = 4;
+            g_4b7f18.rules[i].values[1] = (pair[i] & 0xf0) >> 4;
+        } else if (pair[i] & 0xff00) {
+            g_4b7f18.rules[i].features[0] = 3;
+            g_4b7f18.rules[i].values[0] = (pair[i] >> 8) & 0xf;
+            g_4b7f18.rules[i].features[1] = 3;
+            g_4b7f18.rules[i].values[1] = (pair[i] >> 12) & 0xf;
+        } else if (pair[i] & 0xff0000) {
+            g_4b7f18.rules[i].features[0] = 2;
+            g_4b7f18.rules[i].values[0] = (pair[i] >> 16) & 0xf;
+            g_4b7f18.rules[i].features[1] = 2;
+            g_4b7f18.rules[i].values[1] = (pair[i] >> 20) & 0xf;
+        } else if (pair[i] & 0xff000000) {
+            g_4b7f18.rules[i].features[0] = 1;
+            g_4b7f18.rules[i].values[0] = (pair[i] >> 24) & 0xf;
+            g_4b7f18.rules[i].features[1] = 1;
+            g_4b7f18.rules[i].values[1] = (pair[i] >> 28) & 0xf;
+        }
+    }
+    disposePtr(both);
+    disposePtr(firstOnly);
+    disposePtr(secondOnly);
+    disposePtr(neither);
+    disposePtr(score);
 }

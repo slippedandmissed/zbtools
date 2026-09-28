@@ -30,18 +30,18 @@ struct TunnelList
    and their values; the rest isn't known yet. */
 struct TunnelRule
 {
-    unsigned char count; /* +0 */
-    unsigned char features[5]; /* +1 */
-    unsigned char values[5]; /* +6 */
-    short unknownB; /* +0xb */
+    short side; /* which way it sends a Zoombini that passes (the first rule:
+                   left, else right; the second: top, else bottom) */
+    unsigned char count; /* +2: of features */
+    unsigned char features[5]; /* +3 */
+    unsigned char values[5]; /* +8 */
 };
 
-/* The caves' rules (0x4b7f18). */
+/* The caves' rules (0x4b7f18): one or two. */
 struct TunnelRules
 {
-    short unknown0;
-    short unknown2;
-    TunnelRule rules[2]; /* +4 */
+    short count;
+    TunnelRule rules[2]; /* +2 */
 };
 
 extern long g_4b7fb4; /* @data 0x4b7fb4: Tunnels.MHK */
@@ -114,6 +114,7 @@ short fn_460c41(TunnelRules *rules, short door, Snoid *snoid, unsigned short *fi
 void fn_460e3d();
 extern Point tunnelPlaces[16]; /* @data 0x4a7730: where the Zoombinis wait */
 void fn_460021(short *spot, short side);
+void fn_4612b1();
 void fn_461e1a(ChosenSnoids *chosen, unsigned long *masks, unsigned long *pair, short pairs, short n);
 
 #endif
