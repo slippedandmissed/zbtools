@@ -351,6 +351,7 @@
 0x00421bdf drawFerryButtons
 0x00421bfc fn_421bfc
 0x00421c78 closeScene13
+0x00422192 scene13Clicked
 0x00422491 scene13Key
 0x00422537 loadFerryScripts
 0x0042258a loadFerryScript

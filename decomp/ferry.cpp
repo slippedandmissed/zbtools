@@ -12,6 +12,7 @@
 #include "ferry.h"
 #include "graphics.h"
 #include "module_4623b8.h"
+#include "platform.h"
 #include "snoids.h"
 #include "sound.h"
 #include "view.h"
@@ -1022,4 +1023,108 @@ void boardFerry()
     moveView(views[9], 1, views[8]);
     moveView(views[10], 0, views[8]);
     moveView(views[11], 0, views[10]);
+}
+
+/* Scene 13's clicks: 1 leaves (asking whether to keep the party), 2 sends
+   the ferry off (once all aboard, g_4abb7a and g_4abb7c) with its
+   passengers counted in g_4b755a, 3 (while nothing's moving) drags a
+   Zoombini: one on the shore (unknownF7) freely, one aboard only when its
+   ferry view (g_4abba2) is idle, noting where it was put (g_4abb6e,
+   g_4abb70) or sending it back to a free place; with g_4b754a, a click on a
+   passenger makes its party view jump. */
+/* @zoombi32 0x00422192 */
+void scene13Clicked(short which)
+{
+    Point where;
+    Snoid *snoid;
+    View *view;
+    short id;
+    short ferry;
+    short i;
+    View *other;
+    short moved;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeScene13();
+        return;
+    }
+    switch (which) {
+    case 1:
+        queueViewSound(999, 0);
+        drawFerryButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawFerryButton(which, 0, 1);
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (!g_4abb7a || !g_4abb7c)
+            break;
+        queueViewSound(996, 0);
+        drawFerryButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawFerryButton(which, 0, 1);
+        chooseSnoids(1, 0);
+        g_4abb40 = 1;
+        g_4b755c = 0;
+        g_4b755a = g_4abb46;
+        g_4b0d52 = 14;
+        break;
+    case 3:
+        if (g_4abb80 || g_4b755a > 0 || g_4abb1e >= 3)
+            break;
+        getCursorPosition(&where);
+        view = viewAt(where, 1, 1);
+        if (view)
+            id = viewSnoid(view)->unknownF4;
+        if (view && (!id || id == 6)) {
+            snoid = viewSnoid(view);
+            if (viewSnoid(view)->unknownF7) {
+                if (!g_4abb7e) {
+                    g_4b7556 = 1;
+                    dragSnoid(view, where, 0, 0);
+                }
+            } else {
+                id = view->id;
+                for (i = 0; i < g_4abba0; i++)
+                    if (id == partyViews[i]) {
+                        g_4abbc2[i] = 1;
+                        ferry = g_4abba2[i];
+                        i = g_4abba0;
+                    }
+                other = findView(ferry);
+                if (other && viewSnoid(other)->unknownF7) {
+                    if (id == g_4abb6e)
+                        g_4abb6e = g_4abb70 = 0;
+                    moved = dragSnoid(view, where, 0, 0);
+                    if (heldPlaceNumber()) {
+                        g_4abb6e = id;
+                        g_4abb70 = ferry;
+                    } else if (moved) {
+                        if (snoid->body.x != snoid->targetX || snoid->body.y != snoid->targetY)
+                            pickFreePlace((Point *)&snoid->targetX, viewPlaces, 16, 500);
+                    }
+                }
+            }
+        }
+        if (g_4b754a) {
+            view = viewAt(where, 2, 1);
+            if (view) {
+                moved = view->id;
+                for (i = 0; i < g_4abba0; i++)
+                    if (moved == g_4abba2[i]) {
+                        other = idleSnoidView(partyViews[i]);
+                        if (other) {
+                            viewSnoid(other)->unknownF5 = 15;
+                            setSnoidAction(viewSnoid(other), 3, 0);
+                        }
+                        i = g_4abba0;
+                    }
+            }
+        }
+        break;
+    }
 }

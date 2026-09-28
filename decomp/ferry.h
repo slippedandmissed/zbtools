@@ -70,7 +70,11 @@ extern short g_4abb36; /* @data 0x4abb36 */
 extern short g_4abb38; /* @data 0x4abb38 */
 extern short g_4abdbc; /* @data 0x4abdbc: travellers aboard */
 
+extern short g_4abb6e; /* @data 0x4abb6e: the Zoombini last put down at a place */
+extern short g_4abba0; /* @data 0x4abba0: party views on the ferry */
+
 void resetScene13();
+void scene13Clicked(short which);
 void boardFerry();
 void updateFerrySnoid(View *view, short region);
 short addFerrySnoid(Snoid *snoid);
