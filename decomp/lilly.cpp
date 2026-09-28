@@ -2672,3 +2672,93 @@ void fn_42790a(short id)
         g_4ac0f8 = groupViews(g_4ac0ea, g_4ac0ea, 0, 0, 0, 0);
     }
 }
+
+/* Adds the puzzle's views for the level: the squares' parts, the labels,
+   the pieces already placed (level 2 and up) and the places to put them. */
+/* Not exact: register allocation in the level-3 loops (the original keeps
+   the x offset in edx and the y offset on the stack). */
+/* @zoombi32 0x00425821 */
+void addLillyViews()
+{
+    short count;
+    short offsetY;
+    Point place;
+    short offsetsX[5] = {0, 23, 46, 69, 94};
+    short offsetsY[5] = {0, 10, 16, 20, 23};
+    short i;
+
+    if (!g_4ac0d8) {
+        for (i = 4; i < g_4ac0ee; i += 5)
+            g_4abfc0[i] = addView(0x4188000, drawCels, runViewScript, i + 6013, 6, 0, 0, 0);
+        g_4ac0bc = addView(0x4008000, drawCels, runViewScript, 11504, 6, 0, 0, 0);
+        for (i = 4; i < g_4ac0ee; i += 5)
+            g_4abec6[i] = addView(0xc188000, drawCels, runViewScript, i + 6038, 3, 0, 0, 0);
+    } else if (g_4ac0d8 < 3) {
+        for (i = 0; i < g_4ac0ee; i++)
+            g_4abfc0[i] = addView(0x4188000, drawCels, runViewScript, i + 6013, 6, 0, 0, 0);
+        if (g_4ac0d8 == 2) {
+            count = 0;
+            for (i = 0; i < g_4ac0ee; i++)
+                if (g_4abdc0[i] == -1) {
+                    place.x = g_4ac188[i + 1];
+                    place.y = g_4ac18c[i + 1];
+                    deleteView(g_4ac216[i]);
+                    g_4ac216[i] = addView(0x808000, fn_426f38, layOutLillyView, g_4ac10e[count++] + 11004, 0, &place, 0, 0);
+                }
+        }
+        g_4ac0bc = addView(0x4008000, drawCels, runViewScript, 11503, 6, 0, 0, 0);
+        for (i = 0; i < g_4ac0ee; i++)
+            g_4abec6[i] = addView(0xc188000, drawCels, runViewScript, i + 6038, 3, 0, 0, 0);
+    } else {
+        for (i = 0; i < g_4ac0ee; i++) {
+            short column = i % 5;
+            short row = i / 5 + 1;
+            short offsetX = g_4a1a04[column];
+
+            offsetY = g_4a1a0e[column];
+            place.x = offsetX + g_4ac190[row];
+            place.y = g_4ac194[row] + offsetY;
+            g_4ac310[i] = addView(0x4988000, drawCels, runViewScript, column + 9002, 6, &place, 0, 0);
+        }
+        g_4ac0bc = addView(0x4008000, drawCels, runViewScript, 11505, 6, 0, 0, 0);
+        for (i = 0; i < g_4ac0ee; i++) {
+            short column = i % 5;
+            short row = i / 5 + 1;
+            short offsetX = offsetsX[column];
+
+            offsetY = offsetsY[column];
+            place.x = offsetX + g_4ac198[row];
+            place.y = g_4ac19c[row] + offsetY;
+            g_4ac40a[i] = addView(0xc988000, drawCels, runViewScript, column + 9007, 3, &place, 0, 0);
+        }
+        count = 0;
+        for (i = 0; i < g_4ac0ee; i++)
+            if (g_4abdc0[i] == -1) {
+                short column = i % 5;
+                short row = i / 5 + 1;
+                short offsetX = offsetsX[column];
+
+                offsetY = offsetsY[column];
+                place.x = offsetX + g_4ac190[row];
+                place.y = g_4ac194[row] + offsetY;
+                if (!column)
+                    place.y += 5;
+                if (column == 2)
+                    place.y += 2;
+                g_4ac216[i] = addView(0x808000, fn_426f38, layOutLillyView, g_4ac10e[count++] + 12000, 0, &place, 0, 0);
+            }
+    }
+    if (!g_4ac0d8) {
+        g_4b755e += 10;
+        for (i = 4; i < g_4ac0ee; i += 5)
+            placedViews[(i - 4) / 5] = addView(0x508a000, drawCels, runViewScript, i + 10000, 7, &g_4a1788[i], 0, 0);
+    } else if (g_4ac0d8 < 3) {
+        g_4b755e += 10;
+        for (i = 0; i < g_4ac0ee; i++)
+            placedViews[i] = addView(0x508a000, drawCels, runViewScript, i + 10000, 7, &g_4a1788[i], 0, 0);
+    } else if (g_4ac0d8 == 3) {
+        g_4b755e = 10;
+        for (i = 0; i < g_4ac0ee; i++)
+            placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 10025, 6, &g_4a17f0[i], 0, 0);
+    }
+}
