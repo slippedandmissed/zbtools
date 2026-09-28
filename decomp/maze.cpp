@@ -450,3 +450,132 @@ short fn_437331(short which)
                 return g_4afe5a[row][column] + g_4a2634[column];
     return 0;
 }
+
+/* A view's notify: when its script ends (-1) with g_4b0d3a up to
+   g_4b0d38, clears g_4b0d3c. */
+/* @zoombi32 0x00436045 */
+void fn_436045(View *, short event)
+{
+    switch (event) {
+    case -1:
+        if (g_4b0d3a >= g_4b0d38)
+            g_4b0d3c = 0;
+        break;
+    }
+}
+
+/* A view's notify: event 10 sets g_4afc2e (151-156 do nothing). */
+/* @zoombi32 0x0043606d */
+void fn_43606d(View *, short event)
+{
+    switch (event) {
+    case 10:
+        g_4afc2e = 1;
+        break;
+    case 151:
+    case 152:
+    case 153:
+    case 154:
+    case 155:
+    case 156:
+        break;
+    }
+}
+
+/* A view's drawing: its cels from the bank g_4afbc0, while it runs and
+   stands in the game's area. */
+/* Functional: the original reads each cel's words as it pushes them
+   (`drawImageData(image(*cel++), *cel++, *cel++, 8)`, relying on BCC's
+   left-to-right evaluation); this reads them first. */
+/* @zoombi32-functional 0x0043692b */
+void fn_43692b(View *view)
+{
+    if (view->body.running && ptInRect(&gameRect, *(Point *)&view->body.x)) {
+        short *cel = (short *)view->body.cels;
+        ImageBank *bank = g_4afbc0;
+
+        while (*cel && *cel <= bank->count) {
+            unsigned short *image = (unsigned short *)(bank->offsets[*cel++] + (char *)bank);
+            short x = *cel++;
+            short y = *cel++;
+
+            drawImageData(image, x, y, 8);
+        }
+    }
+}
+
+/* The scene's Zoombini views' update: lays the Zoombini out again
+   (fn_43a7a6) unless it's in state 1. */
+/* @zoombi32 0x00436994 */
+void fn_436994(View *view, short region)
+{
+    Snoid *snoid;
+    short changed = 0;
+
+    if (!g_4b9684 && view->body.running && clockTime() >= view->nextUpdate) {
+        view->nextUpdate = clockTime() + view->interval;
+        snoid = (Snoid *)&view->body;
+        switch (snoid->unknownF4) {
+        case 1:
+            break;
+        default:
+            changed = 1;
+            break;
+        }
+        if (changed) {
+            unionRgnRect(region, &view->body.bounds);
+            fn_43a7a6(snoid);
+            view->changed = 1;
+        }
+    }
+}
+
+/* Copies the chosen Zoombinis' features into the rows of g_4afe5a. */
+/* Not exact: in the second loop the original computes the row's address
+   before the column's index; BCC does it the other way round however the
+   element is written. */
+/* @zoombi32 0x00437089 */
+void fn_437089()
+{
+    short row;
+    short column;
+    ChosenSnoids *chosen;
+
+    for (row = 0; row < g_4afc36; row++)
+        for (column = 0; column < 4; column++)
+            g_4afe5a[row][column] = 0;
+    chosen = listChosenSnoids();
+    for (row = 0; row < g_4afc36; row++)
+        for (column = 0; column < 4; column++)
+            g_4afe5a[row][column] = chosen->features[row][column];
+}
+
+/* Copies into g_4afe5a only the chosen Zoombinis with a feature that is
+   `id` (with g_4a2634's offsets); returns how many. */
+/* @zoombi32 0x004370f8 */
+short fn_4370f8(short id)
+{
+    short count;
+    short row;
+    short column;
+    short found;
+    ChosenSnoids *chosen;
+
+    for (row = 0; row < g_4afc36; row++)
+        for (column = 0; column < 4; column++)
+            g_4afe5a[row][column] = 0;
+    count = 0;
+    chosen = listChosenSnoids();
+    for (row = 0; row < g_4afc36; row++) {
+        found = 0;
+        for (column = 0; column < 4; column++)
+            if (chosen->features[row][column] + g_4a2634[column] == id)
+                found = 1;
+        if (found) {
+            for (column = 0; column < 4; column++)
+                g_4afe5a[row][column] = chosen->features[row][column];
+            count++;
+        }
+    }
+    return count;
+}
