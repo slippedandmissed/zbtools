@@ -1898,3 +1898,60 @@ short fn_453e8c(View *view, Point where)
     dragged->interval = savedInterval;
     return spot;
 }
+
+/* Marks `cell` with a feature (view 510-513) that the Zoombini `index`
+   shares with the one on `neighbour` (if that one is placed, state 507),
+   checking the features from a random one on. */
+/* @zoombi32 0x0044d974 */
+void fn_44d974(short neighbour, short index, short cell)
+{
+    long other;
+
+    if (g_4b1aea[neighbour].state == 507)
+        switch (randomUpTo(3)) {
+        case 0:
+            other = g_4b1aea[neighbour].snoid;
+            if (snoidFeatures[0][index] == snoidFeatures[0][other])
+                g_4b1aea[cell].snoid = 510;
+            else if (snoidFeatures[1][index] == snoidFeatures[1][other])
+                g_4b1aea[cell].snoid = 511;
+            else if (snoidFeatures[2][index] == snoidFeatures[2][other])
+                g_4b1aea[cell].snoid = 512;
+            else if (snoidFeatures[3][index] == snoidFeatures[3][other])
+                g_4b1aea[cell].snoid = 513;
+            break;
+        case 1:
+            other = g_4b1aea[neighbour].snoid;
+            if (snoidFeatures[1][index] == snoidFeatures[1][other])
+                g_4b1aea[cell].snoid = 511;
+            else if (snoidFeatures[2][index] == snoidFeatures[2][other])
+                g_4b1aea[cell].snoid = 512;
+            else if (snoidFeatures[3][index] == snoidFeatures[3][other])
+                g_4b1aea[cell].snoid = 513;
+            else if (snoidFeatures[0][index] == snoidFeatures[0][other])
+                g_4b1aea[cell].snoid = 510;
+            break;
+        case 2:
+            other = g_4b1aea[neighbour].snoid;
+            if (snoidFeatures[2][index] == snoidFeatures[2][other])
+                g_4b1aea[cell].snoid = 512;
+            else if (snoidFeatures[3][index] == snoidFeatures[3][other])
+                g_4b1aea[cell].snoid = 513;
+            else if (snoidFeatures[0][index] == snoidFeatures[0][other])
+                g_4b1aea[cell].snoid = 510;
+            else if (snoidFeatures[1][index] == snoidFeatures[1][other])
+                g_4b1aea[cell].snoid = 511;
+            break;
+        case 3:
+            other = g_4b1aea[neighbour].snoid;
+            if (snoidFeatures[3][index] == snoidFeatures[3][other])
+                g_4b1aea[cell].snoid = 513;
+            else if (snoidFeatures[0][index] == snoidFeatures[0][other])
+                g_4b1aea[cell].snoid = 510;
+            else if (snoidFeatures[1][index] == snoidFeatures[1][other])
+                g_4b1aea[cell].snoid = 511;
+            else if (snoidFeatures[2][index] == snoidFeatures[2][other])
+                g_4b1aea[cell].snoid = 512;
+            break;
+        }
+}

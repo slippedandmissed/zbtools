@@ -409,6 +409,7 @@
 0x0044d3b8 fn_44d3b8
 0x0044d5ad fn_44d5ad
 0x0044d5f5 fn_44d5f5
+0x0044d974 fn_44d974
 0x0044dca0 fn_44dca0
 0x0044dcdc fn_44dcdc
 0x0044ddc9 fn_44ddc9
