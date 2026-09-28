@@ -5930,7 +5930,7 @@ extern unsigned long g_4b0d30;
 extern unsigned long g_4b0d34;
 void mazeFrame();
 /* Pizza Pass (pizza) */
-extern SceneButton pizzaButtons[5]; /* @data 0x4a33c0: 1-4 ([0] isn't one) */
+extern SceneButton pizzaButtons[14]; /* @data 0x4a33c0: 1-13 ([0] isn't one) */
 extern short g_4b15e6;
 extern short g_4a3d98;
 extern short g_4a3d9a;
@@ -6103,3 +6103,17 @@ extern unsigned long g_4b1814;
 extern unsigned long g_4b1818;
 extern short g_4b181e;
 void pizzaFrame();
+/* The pizza scene's buttons at each level (copied into pizzaButtons). */
+extern SceneButton g_4a35b8[13];
+extern SceneButton g_4a378c[13];
+extern SceneButton g_4a3960[13];
+extern SceneButton g_4a3b34[13];
+extern GroupList g_4a3d18[1];
+extern ChosenSnoids *g_4b15dc;
+extern short g_4b1632;
+extern short g_4b166a;
+extern short g_4b170a;
+extern short g_4b162c;
+extern short g_4b1622;
+extern short g_4b162a;
+void openPizza();

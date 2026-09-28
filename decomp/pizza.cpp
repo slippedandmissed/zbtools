@@ -2914,3 +2914,247 @@ void pizzaFrame()
     playAmbientSound();
     g_4a3d9c = 0;
 }
+
+/* Opens Pizza Pass: resets the scene's state, sets up the level's
+   buttons (from the tables g_4a35b8-g_4a3b34), loads Pizza.MHK's backdrop,
+   images, features and scripts, adds the pizza, the topping views and the
+   trolls there at the level, the toppings and what each troll wants
+   (fn_442ea2), brings the party in, and says an introduction. */
+/* @zoombi32 0x004402c0 */
+void openPizza()
+{
+    short saved;
+    short i;
+
+    unloadSounds();
+    g_4b0d52 = g_4b15ee = 0;
+    g_4b15e4 = g_4b15e6 = 0;
+    g_4b1824 = clockTime();
+    g_4b966e = g_4b166e = 0;
+    g_4b15f2 = g_4b162e = g_4b1630 = g_4b1632 = 0;
+    g_4b15f4 = g_4b15f6 = g_4b15ea = g_4b16bc = 0;
+    g_4b1708 = g_4b15d6 = -1;
+    g_4b164a = g_4b164c = g_4b164e = g_4b1650 = g_4b1652 = 0;
+    g_4b166a = g_4b1654 = g_4b1656 = g_4b1658 = g_4b16ea = 0;
+    g_4b1662 = g_4b1600 = g_4b1602 = g_4b1604 = 0;
+    g_4b16b6 = g_4b16b8 = g_4b16ba = g_4b1606 = 0;
+    g_4b16be = g_4b16c0 = g_4b16c2 = g_4b171e = 0;
+    g_4b16c4 = g_4b16c6 = g_4b16c8 = g_4b15e8 = 0;
+    g_4b1614 = g_4b1710 = g_4b1660 = g_4b160a = g_4b15ec = 0;
+    g_4b165a = g_4b165c = g_4b1608 = g_4b160c = 0;
+    g_4b15f8 = g_4b15fa = g_4b15fc = g_4b15fe = 0;
+    g_4b1814 = 0;
+    g_4b1818 = 0;
+    g_4b1820 = g_4b1720 = 0;
+    for (i = 0; i < 3; i++)
+        g_4b1722[i] = g_4b1728[i] = g_4b172e[i] = 0;
+    g_4b15e0 = 0;
+    g_4b15d8 = 1;
+    g_4b165e = g_4b170a = 1;
+    g_4b1712 = g_4b1714 = g_4b1716 = g_4b1718 = g_4b170e = -1;
+    fillMemory(g_4b1734, 0, 224);
+    g_4b161e = sceneLevel();
+    fillMemory(g_4b16da, 0, 16);
+    fillMemory(g_4b16ca, 0, 16);
+    fillMemory(g_4b16ec, 0, 28);
+    if (!g_4b161e)
+        memcpy(&pizzaButtons[1], g_4a35b8, sizeof g_4a35b8);
+    else if (g_4b161e == 1)
+        memcpy(&pizzaButtons[1], g_4a378c, sizeof g_4a378c);
+    else if (g_4b161e == 2)
+        memcpy(&pizzaButtons[1], g_4a3960, sizeof g_4a3960);
+    else if (g_4b161e == 3)
+        memcpy(&pizzaButtons[1], g_4a3b34, sizeof g_4a3b34);
+    openGameFile(&g_4b15d0, "Pizza.MHK");
+    fn_46be2e(g_4b15d0);
+    loadPaths(1000);
+    loadTerrain(100);
+    drawBackdrop(5000);
+    g_4a3d94 = loadImageBank(6000, &g_4a3d3c);
+    loadFeatureGroup(7000, 0, 0);
+    loadFeatureGroup(8000, 1, 0);
+    loadFeatureGroup(12000, 2, 0);
+    loadScripts(7000, 69);
+    addScripts(8000, 36, 0);
+    addScripts(12000, 45, 0);
+    switch (g_4b161e) {
+    case 1:
+        loadFeatureGroup(9000, 3, 0);
+        addScripts(9000, 35, 0);
+        break;
+    case 2:
+    case 3:
+        loadFeatureGroup(9000, 3, 0);
+        loadFeatureGroup(10000, 4, 0);
+        addScripts(9000, 35, 0);
+        addScripts(10000, 39, 0);
+        break;
+    }
+    g_4a3d38 = addView(0x1000, drawPizzaButtonsView, fn_441127, 0, 0, 0, 0, 0);
+    loadSnoidScripts(14000, 6, 0);
+    addSnoidScripts(13000, 40, 0);
+    g_4b166c = g_4b755e;
+    g_4b755e = 25;
+    placedViews[0] = addView(0x108a000, drawCels, runViewScript, 7063, 7, &g_4a3d44, 0, 0);
+    g_4b15f0 = addView(0x188000, drawCels, runViewScript, 7000, 6, 0, 0, 0);
+    loadViewSounds(g_4b15f0, 0);
+    g_4b15f2 = groupViews(g_4b15f0, g_4b15f0, 0, 0, 0, 0);
+    g_4b162c = g_4b161e + 5;
+    g_4b1618 = g_4b161a = g_4b161c = g_4b171a = 0;
+    switch (g_4b161e) {
+    case 0:
+        toppingViews[0] = addView(0x188000, drawCels, runViewScript, 7005, 6, 0, 0, 0);
+        toppingViews[1] = addView(0x188000, drawCels, runViewScript, 7007, 6, 0, 0, 0);
+        toppingViews[2] = addView(0x188000, drawCels, runViewScript, 7009, 6, 0, 0, 0);
+        toppingViews[3] = addView(0x188000, drawCels, runViewScript, 7011, 6, 0, 0, 0);
+        toppingViews[4] = addView(0x188000, drawCels, runViewScript, 7013, 6, 0, 0, 0);
+        g_4b1622 = 1;
+        g_4b1624 = 5;
+        g_4b1628 = 2;
+        g_4b1626 = 500;
+        g_4b162a = 0;
+        g_4b1620 = 6;
+        g_4b1618 = 1;
+        break;
+    case 1:
+        toppingViews[0] = addView(0x188000, drawCels, runViewScript, 7015, 6, 0, 0, 0);
+        toppingViews[1] = addView(0x188000, drawCels, runViewScript, 7017, 6, 0, 0, 0);
+        toppingViews[2] = addView(0x188000, drawCels, runViewScript, 7019, 6, 0, 0, 0);
+        toppingViews[3] = addView(0x188000, drawCels, runViewScript, 7021, 6, 0, 0, 0);
+        toppingViews[5] = addView(0x188000, drawCels, runViewScript, 7023, 6, 0, 0, 0);
+        toppingViews[6] = addView(0x188000, drawCels, runViewScript, 7025, 6, 0, 0, 0);
+        g_4b1622 = 2;
+        g_4b1624 = 7;
+        g_4b1626 = 800;
+        g_4b1628 = 3;
+        g_4b162a = 0;
+        g_4b1620 = 7;
+        g_4b1618 = 1;
+        g_4b161a = 1;
+        break;
+    case 2:
+        toppingViews[0] = addView(0x188000, drawCels, runViewScript, 7027, 6, 0, 0, 0);
+        toppingViews[1] = addView(0x188000, drawCels, runViewScript, 7029, 6, 0, 0, 0);
+        toppingViews[2] = addView(0x188000, drawCels, runViewScript, 7031, 6, 0, 0, 0);
+        toppingViews[3] = addView(0x188000, drawCels, runViewScript, 7033, 6, 0, 0, 0);
+        toppingViews[4] = addView(0x188000, drawCels, runViewScript, 7035, 6, 0, 0, 0);
+        toppingViews[5] = addView(0x188000, drawCels, runViewScript, 7037, 6, 0, 0, 0);
+        toppingViews[6] = addView(0x188000, drawCels, runViewScript, 7039, 6, 0, 0, 0);
+        g_4b1622 = 2;
+        g_4b1624 = 7;
+        g_4b1626 = 1000;
+        g_4b1628 = 3;
+        g_4b162a = 1;
+        g_4b1620 = 7;
+        g_4b1618 = 1;
+        g_4b161a = 1;
+        g_4b161c = 1;
+        break;
+    case 3:
+        toppingViews[0] = addView(0x188000, drawCels, runViewScript, 7041, 6, 0, 0, 0);
+        toppingViews[1] = addView(0x188000, drawCels, runViewScript, 7043, 6, 0, 0, 0);
+        toppingViews[2] = addView(0x188000, drawCels, runViewScript, 7045, 6, 0, 0, 0);
+        toppingViews[3] = addView(0x188000, drawCels, runViewScript, 7047, 6, 0, 0, 0);
+        toppingViews[4] = addView(0x188000, drawCels, runViewScript, 7049, 6, 0, 0, 0);
+        toppingViews[5] = addView(0x188000, drawCels, runViewScript, 7051, 6, 0, 0, 0);
+        toppingViews[6] = addView(0x188000, drawCels, runViewScript, 7053, 6, 0, 0, 0);
+        toppingViews[7] = addView(0x188000, drawCels, runViewScript, 7055, 6, 0, 0, 0);
+        g_4b1622 = 3;
+        g_4b1624 = 8;
+        g_4b1626 = 1000;
+        g_4b1628 = 4;
+        g_4b162a = 2;
+        g_4b1620 = 7;
+        g_4b1618 = 1;
+        g_4b161a = 1;
+        g_4b161c = 1;
+        break;
+    }
+    fn_4148da(10, 236);
+    saved = g_4b87fe;
+    g_4b87fe = 0;
+    g_4b1648 = 0;
+    g_4b1634 = g_4b1620;
+    fn_442ea2();
+    fn_4423d7();
+    setViewPlaces(16, g_4a3d54, 1);
+    makePartySnoids(0);
+    enterSnoids(200);
+    g_4b15dc = listChosenSnoids();
+    g_4b15d4 = g_4b15dc->count;
+    g_4b181c = 3;
+    if (g_4b181c > g_4b15d4)
+        g_4b181c = g_4b15d4 - 1;
+    g_4b181e = 0;
+    staggerSnoids(45, 30);
+    chooseSnoids(0, 0);
+    setGroupLists(g_4a3d18, 1, (short)0xc000);
+    drawPizzaButton(1, 0, 0);
+    drawPizzaButton(2, 0, 0);
+    showRect(&g_4aa7b8);
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(8024, 8029, 1);
+    addSoundRange(15000, 15099, 1);
+    addSoundRange(10000, 10032, 1);
+    addSoundRange(9000, 9025, 1);
+    addSoundRange(8000, 8023, 1);
+    addSoundRange(996, 997, 0);
+    addSoundRange(12000, 12000, 0);
+    addSoundRange(7008, 7009, 0);
+    addSoundRange(12001, 12001, 0);
+    addSoundRange(475, 499, 0);
+    addSoundRange(14000, 14000, 0);
+    addSoundRange(425, 499, 0);
+    addSoundRange(8030, 8999, 1);
+    addSoundRange(9026, 9999, 1);
+    addSoundRange(10033, 10099, 1);
+    addSoundRange(12002, 12002, 0);
+    addSoundRange(7000, 7007, 0);
+    addSoundRange(12003, 12099, 0);
+    addSoundRange(13000, 13099, 0);
+    g_4b87fe = saved;
+    if (!g_4b161e)
+        g_4b966e = 20071;
+    else
+        g_4b966e = 20072;
+    switch (campHint((short *)(g_4a4ba0 + 0x2e))) {
+    case 1:
+        fn_445eb3(0);
+        break;
+    case 5:
+        if (!g_4b161e) {
+            fn_445eb3(0);
+            break;
+        }
+    default: {
+        short r = randomUpTo(100);
+
+        if (r > 75)
+            r = 3;
+        else if (r > 50)
+            r = 2;
+        else if (r > 25)
+            r = 1;
+        else
+            r = 0;
+        fn_445eb3(r);
+        break;
+    }
+    }
+    if (g_4b161a)
+        g_4b1610 = addView(0x188000, drawCels, runViewScript, 9034, 6, 0, 0, 0);
+    g_4b160e = addView(0x188000, drawCels, runViewScript, 8032, 6, 0, 0, 0);
+    if (g_4b161c)
+        g_4b1612 = addView(0x188000, drawCels, runViewScript, 10038, 6, 0, 0, 0);
+    g_4b1616 = addView(0x4108000, drawCels, runViewScript, 8033, 6, 0, 0, 0);
+    saved = g_4b87fe;
+    g_4b87fe = 0;
+    updateViews();
+    fadeInViews();
+    g_4b15e4 = 1;
+    g_4b171e = 1;
+    g_4b87fe = saved;
+    fn_4459b3();
+    setViewsLocked(0);
+    g_4b83e4[0] = 1;
+}
