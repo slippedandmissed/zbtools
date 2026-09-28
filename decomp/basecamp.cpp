@@ -677,10 +677,10 @@ void enterCamp()
         g_4b7562 = 1;
     }
     makePartySnoids(1);
-    fn_458cc1(-20);
+    enterSnoids(-20);
     updateViews();
     if (returned)
-        fn_458f07(0x2d, 0x1e);
+        staggerSnoids(0x2d, 0x1e);
     g_4ab52e = *(short *)(g_4a4ba0 + 0x48) >= 625
                && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0xa1fc) < 16;
     if (g_4ab52e) {
@@ -868,7 +868,7 @@ void campButtonClicked(short button)
                 waitForEventFor(0, 2, 0, 1);
                 drawCampButtons(button, 0, 0, 1);
                 markPlacedSnoids();
-                fn_4590b6(0x2a8, 0x13c, 0x2d);
+                sendSnoids(0x2a8, 0x13c, 0x2d);
                 g_4b0d52 = 10;
             } else {
                 if (g_4ab52e) {
@@ -896,7 +896,7 @@ void campButtonClicked(short button)
                 waitForEventFor(0, 2, 0, 1);
                 drawCampButtons(button, 0, 0, 1);
                 markPlacedSnoids();
-                fn_4590b6(0x2a8, 0x190, 0x2d);
+                sendSnoids(0x2a8, 0x190, 0x2d);
                 g_4b0d52 = 13;
             } else {
                 if (g_4ab52e) {

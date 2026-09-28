@@ -404,9 +404,9 @@ void claimPlacedView(short n, short id)
 }
 
 /* @zoombi32 0x0045b39a */
-void fn_45b39a(short value)
+void setSpotCorner(short value)
 {
-    g_4a4ce6 = value & 3;
+    spotCorner = value & 3;
 }
 
 /* @zoombi32 0x0045bfc0 */
@@ -1993,4 +1993,384 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
     setSnoidFacing(snoid, script);
     fn_45ab97(snoid, 0);
     unionRgnRect(currentViewRgn, &snoid->body.bounds);
+}
+
+/*
+ * Sets the chosen Zoombinis doing action 7 off one by one, right to left:
+ * the first after `delay` ms, then every `interval` ms.
+ */
+/* Not exact: the original keeps `interval` on the stack; this puts it in edi. */
+/* @zoombi32 0x00458f07 */
+void staggerSnoids(unsigned long interval, unsigned long delay)
+{
+    sortSnoids(0);
+    if (sortedCount && g_4b7b86) {
+        g_4b7b86 = 0;
+        unsigned long when = clockTime() + delay;
+
+        for (short i = sortedCount - 1; i >= 0; i--) {
+            View *view = findView(sortedIds[i]);
+            Snoid *snoid = viewSnoid(view);
+
+            if ((snoid->unknownF4 == 7 || snoid->unknownF4 == 112) && snoid->unknownF7) {
+                view->nextUpdate = when;
+                when += interval;
+            }
+        }
+    }
+}
+
+/*
+ * Sends the idle chosen Zoombinis walking (action 10) to (x, y), right to
+ * left, one every `interval` ms.
+ */
+/* @zoombi32 0x004590b6 */
+void sendSnoids(short x, short y, unsigned long interval)
+{
+    unsigned long when;
+
+    g_4b755c = g_4b755a = 0;
+    sortSnoids(0);
+    if (sortedCount) {
+        when = clockTime();
+        for (short i = sortedCount - 1; i >= 0; i--) {
+            View *view = findView(sortedIds[i]);
+            Snoid *snoid = viewSnoid(view);
+
+            if (snoid->unknownF7 && !snoid->unknownF4) {
+                *(Point *)&snoid->body.unknownAa = *(Point *)&snoid->body.x;
+                snoid->targetX = x;
+                snoid->targetY = y;
+                setSnoidAction(snoid, 10, 0);
+                view->nextUpdate = when;
+                when += interval;
+            }
+        }
+    }
+}
+
+/*
+ * Picks a free one of `count` places (none of the idle Zoombinis within
+ * `radius` of it), from the left or the right at random, into *result.
+ */
+/* @zoombi32 0x0045be33 */
+void pickFreePlace(Point *result, Point *places, short count, short radius)
+{
+    short skip;
+    Point place;
+    Point origin;
+    short id;
+    short i;
+
+    origin = g_4a4d1c;
+    spotTaken(&origin, 0, radius);
+    for (i = 0; i < count; i++) {
+        skip = 0;
+        place = places[i];
+        id = spotNear(&place, radius, skip);
+        for (short j = 0; id && j < i; j++)
+            if (id == sortedIds[j]) {
+                skip++;
+                id = spotNear(&place, radius, skip);
+                j = 0;
+            }
+        sortedIds[i] = id;
+    }
+    id = -1;
+    if (randomBetween(1, 100) <= 50) {
+        for (i = count - 1; id == -1 && i >= 0; i--)
+            if (!sortedIds[i])
+                id = i;
+    } else {
+        for (i = 0; id == -1 && i < count; i++)
+            if (!sortedIds[i])
+                id = i;
+    }
+    if (id == -1)
+        id = 0;
+    *result = places[id];
+}
+
+/*
+ * Places the chosen Zoombinis as a scene starts: those already standing on
+ * placed views or view places claim them; unless the game says otherwise,
+ * the last quarter walk in (action 7) from off the left edge to the first
+ * free view places, `dy` below them.
+ */
+/* @zoombi32 0x00458cc1 */
+void enterSnoids(short dy)
+{
+    short i;
+    short count;
+    short placed;
+    short x;
+    short first;
+    ShortRect rect;
+    View *view;
+
+    x = -50;
+    g_4b755c = g_4b755a = 0;
+    if (*(short *)(g_4a4ba0 + 0x20) || g_4b7562) {
+        g_4b7562 = 0;
+        g_4b7b86 = 0;
+    } else {
+        g_4b7b86 = 1;
+    }
+    count = countChosenSnoids();
+    view = nextActorView(1);
+    placed = 0;
+    first = count * 3 / 4;
+    for (i = 0; i < count; i++) {
+        if (view) {
+            Snoid *snoid = viewSnoid(view);
+
+            if (snoid->unknownF7) {
+                if (g_4b7b86 && i >= first) {
+                    if (first + placed < viewPlaceCount) {
+                        snoid->body.x = x;
+                        snoid->body.y = viewPlaces[first + placed].y + dy;
+                        *(Point *)&snoid->targetX = viewPlaces[first + placed];
+                        setSnoidAction(snoid, 7, 0);
+                        view->nextUpdate = 0;
+                        g_4b755a++;
+                        placed++;
+                    }
+                } else {
+                    short found;
+                    short j;
+
+                    rect.left = snoid->body.x - g_4b755e;
+                    rect.right = snoid->body.x + g_4b755e;
+                    rect.top = snoid->body.y - g_4b755e;
+                    rect.bottom = snoid->body.y + g_4b755e;
+                    found = 0;
+                    for (j = 0; !found && j < placedViewCount; j++)
+                        if (!g_4b83e4[j] && ptInRect(&rect, placedViewPoints[j])) {
+                            found = 1;
+                            g_4b83e4[j] = view->id;
+                        }
+                    found = 0;
+                    for (j = 0; !found && j < viewPlaceCount; j++)
+                        if (!g_4b86d4[j] && ptInRect(&rect, viewPlaces[j])) {
+                            found = 1;
+                            g_4b86d4[j] = view->id;
+                        }
+                }
+            }
+        }
+        view = nextActorView(0);
+    }
+}
+
+/*
+ * Finds a Zoombini a spot (its target) away from the idle ones (within
+ * `radius`, squared): in `area`, trying a 5 by 4 grid from spotCorner, else
+ * near where it's going (or, if it's to walk there, where it stands).
+ */
+/* @zoombi32 0x0045b57a */
+void findSpot(View *view, ShortRect *area, short walk, short radius)
+{
+    Snoid *snoid;
+    Point at;
+    Point spot;
+    short column;
+    short row;
+    short width;
+    short height;
+    short stagger;
+    short done;
+    short taken;
+
+    taken = 1;
+    done = 0;
+    spotRadius = radius;
+    at = *(Point *)&view->body.x;
+    if (walk)
+        spotTaken(&at, view, spotRadius);
+    snoid = viewSnoid(view);
+    if (area) {
+        width = area->right - area->left;
+        height = area->bottom - area->top;
+        stagger = width / 10;
+    }
+    switch (spotCorner) {
+    case 0:
+        column = 1;
+        row = 1;
+        break;
+    case 1:
+        column = 5;
+        row = 1;
+        break;
+    case 2:
+        column = 1;
+        row = 4;
+        break;
+    case 3:
+        column = 5;
+        row = 4;
+        break;
+    }
+    while (taken) {
+        if (area) {
+            spot.x = randomBetween(0, 5) + (width * column / 5 + area->left);
+            spot.y = height * row / 4 + area->top;
+            if (!(row & 1))
+                spot.x += stagger;
+        } else {
+            short dx = randomBetween(-5, 5);
+            short dy = 0;
+
+            if (walk) {
+                spot.x = dx * 4 + at.x;
+                spot.y = dy * 4 + at.y;
+            } else {
+                spot.x = snoid->targetX + dx * 4;
+                spot.y = snoid->targetY + dy * 4;
+            }
+        }
+        if (spot.x < 0)
+            spot.x = 0;
+        if (spot.x > 640)
+            spot.x = 640;
+        if (spot.y < 0)
+            spot.y = 0;
+        if (spot.y > 480)
+            spot.y = 480;
+        taken = 0;
+        for (short i = 0; !taken && i < spotCount; i++)
+            if ((unsigned long)((spot.x - spots[i].x) * (spot.x - spots[i].x)
+                                + (spot.y - spots[i].y) * (spot.y - spots[i].y))
+                < spotRadius)
+                taken = 1;
+        if (!taken)
+            *(Point *)&snoid->targetX = spot;
+        switch (spotCorner) {
+        case 0:
+            column++;
+            if (column > 5) {
+                column = 1;
+                row++;
+                if (row > 4) {
+                    row = 1;
+                    done = 1;
+                }
+            }
+            break;
+        case 1:
+            column--;
+            if (column < 1) {
+                column = 5;
+                row++;
+                if (row > 4) {
+                    row = 1;
+                    done = 1;
+                }
+            }
+            break;
+        case 2:
+            column++;
+            if (column > 5) {
+                column = 1;
+                row--;
+                if (row < 1) {
+                    row = 4;
+                    done = 1;
+                }
+            }
+            break;
+        case 3:
+            column--;
+            if (column < 1) {
+                column = 5;
+                row--;
+                if (row < 1) {
+                    row = 4;
+                    done = 1;
+                }
+            }
+            break;
+        }
+        if (done)
+            taken = 0;
+    }
+    if (walk)
+        setSnoidAction(snoid, 10, 0);
+}
+
+/*
+ * Draws the path nodes, numbered, and the next path in turn over them (a
+ * debugging aid).
+ */
+/* @zoombi32 0x00459796 */
+void drawPaths()
+{
+    short pathCount;
+    short node;
+    Paths *list;
+    ShortRect rect;
+    char text[8];
+    Color saved;
+    Color savedLabel;
+    PathNodes *nodes;
+    short nodeCount;
+    short i;
+
+    if (paths && pathNodes) {
+        list = paths;
+        nodes = pathNodes;
+        pathCount = list->count;
+        nodeCount = nodes->count;
+        saved = setForeColor(Color(0xb));
+        for (i = 0; i < nodeCount; i++) {
+            rect.left = nodes->nodes[i].x - 10;
+            rect.top = nodes->nodes[i].y - 10;
+            rect.right = rect.left + 20;
+            rect.bottom = rect.top + 20;
+            fillPortRect(Rect(rect), Color(0xe), 0);
+            frameRect(Rect(rect));
+            intToDecimal(i + 1, text);
+            drawText(Rect(rect), 0x22, text, 0xffff);
+        }
+        setForeColor(saved);
+        if (g_4a4b9c >= pathCount)
+            g_4a4b9c = 0;
+        saved = setForeColor(Color(g_4a4b9c + 0x21));
+        node = list->nodes[g_4a4b9c][0] - 1;
+        moveTo(nodes->nodes[node].x, nodes->nodes[node].y);
+        rect.left = nodes->nodes[node].x - 10;
+        rect.top = nodes->nodes[node].y - 10;
+        rect.right = rect.left + 20;
+        rect.bottom = rect.top + 20;
+        for (i = 1; i < 24; i++) {
+            char next = list->nodes[g_4a4b9c][i];
+
+            if (next) {
+                lineTo(nodes->nodes[next - 1].x, nodes->nodes[next - 1].y);
+                fillPortRect(Rect(rect), Color(g_4a4b9c + 0x21), 0);
+                savedLabel = setForeColor(Color(0xb));
+                frameRect(Rect(rect));
+                intToDecimal(node + 1, text);
+                drawText(Rect(rect), 0x22, text, 0xffff);
+                setForeColor(savedLabel);
+                moveTo(nodes->nodes[next - 1].x, nodes->nodes[next - 1].y);
+                rect.left = nodes->nodes[next - 1].x - 10;
+                rect.top = nodes->nodes[next - 1].y - 10;
+                rect.right = rect.left + 20;
+                rect.bottom = rect.top + 20;
+                node = next - 1;
+            } else {
+                fillPortRect(Rect(rect), Color(g_4a4b9c + 0x21), 0);
+                savedLabel = setForeColor(Color(0xb));
+                frameRect(Rect(rect));
+                intToDecimal(node + 1, text);
+                drawText(Rect(rect), 0x22, text, 0xffff);
+                setForeColor(savedLabel);
+                i = 24;
+            }
+        }
+        showRect(&gameRect);
+        g_4a4b9c++;
+        setForeColor(saved);
+    }
 }

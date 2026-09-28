@@ -1048,7 +1048,7 @@ inline Traveller *travellers()
 {
     return (Traveller *)(g_4a4ba0 + 0xa934);
 }
-extern short g_4a4ce6;
+extern short spotCorner; /* @data 0x4a4ce6: where findSpot starts its grid (0-3) */
 extern char msgRequiresQuickTime[]; /* @data 0x4a4dc7 */
 extern char msgInitOs[]; /* @data 0x4a4e28 */
 extern char msgInitTimer[]; /* @data 0x4a4e40 */
@@ -4448,7 +4448,7 @@ extern Paths *paths; /* @data 0x4a4cd4 */
 extern PathNodes *pathNodes; /* @data 0x4a4cd8 */
 extern long pathsResource; /* @data 0x4a4cdc */
 extern long pathNodesResource; /* @data 0x4a4ce0 */
-extern short g_4a4b9c;
+extern short g_4a4b9c; /* the path drawPaths draws next */
 /* The chosen Zoombinis' features. */
 struct ChosenSnoids
 {
@@ -4583,8 +4583,9 @@ long fn_417906(long);
 void enterCamp();
 void leaveCamp();
 void loadPaths(short);
-void fn_458cc1(short);
-void fn_458f07(short, short);
+void enterSnoids(short dy);
+void staggerSnoids(unsigned long interval, unsigned long delay);
+extern short g_4b7b86;
 short fn_45bdc4(char *);
 void campIdle();
 void campButtonClicked(short button);
@@ -4592,7 +4593,11 @@ void campMouse(short action);
 short heldPlaceNumber(); /* 0x457fbb */
 void claimPlacedView(short n, short id); /* 0x45802e */
 void markPlacedSnoids();
-void fn_4590b6(short, short, short);
+void sendSnoids(short x, short y, unsigned long interval);
+void drawPaths();
+void findSpot(View *view, ShortRect *area, short walk, short radius);
+void pickFreePlace(Point *result, Point *places, short count, short radius);
+extern Point g_4a4d1c;
 void fn_4624fc();
 void fn_43af6b();
 void drawCampButtons(short button, short pressed, short group, short show); /* 0x41790f */
@@ -4675,7 +4680,7 @@ void fn_456a55(void (*callback)(short active));
 short fn_456bf6();
 short fn_4572bf();
 short heldPlaceNumber(); /* 0x457fbb */
-void fn_45b39a(short value);
+void setSpotCorner(short value);
 void setArrivalHook(SnoidArrived hook); /* 0x45bfc0 */
 void fn_465175();
 long fn_46b07b(long);
