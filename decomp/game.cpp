@@ -1955,3 +1955,118 @@ void fn_44d974(short neighbour, short index, short cell)
             break;
         }
 }
+
+/*
+ * Lays out a Zoombini's cels in this scene (unless it's in state 2, which
+ * it's put in unless it's in 3 or 5): a part for its pose (unknownF1), then
+ * its face (layer unknownC2[unknownF1], if all four features are set) and
+ * its features on top, placed by the hot spots in g_4b2658/g_4b265c; then
+ * its bounds from the images in g_4b2634.
+ */
+/* @zoombi32 0x00454374 */
+void fn_454374(Snoid *snoid)
+{
+    short face;
+    short dy;
+    ShortRect rect;
+    Point where;
+    short *cel;
+    short base;
+    short part;
+    ImageBank *bank;
+
+    snoid->body.bounds.left = 0;
+    snoid->body.bounds.top = 0;
+    snoid->body.bounds.right = 0;
+    snoid->body.bounds.bottom = 0;
+    cel = (short *)snoid->body.cels;
+    switch (snoid->unknownF4) {
+    case 2:
+        return;
+    case 3:
+    case 5:
+        break;
+    default:
+        snoid->unknownF4 = 2;
+        break;
+    }
+    if (!snoid->features[3] || !snoid->features[2] || !snoid->features[1] || !snoid->features[0])
+        face = 0;
+    else
+        face = snoid->unknownC2[snoid->unknownF1];
+    base = snoid->unknownC2[snoid->unknownF1];
+    where = *(Point *)&snoid->body.x;
+    dy = 0;
+    switch (snoid->unknownF1) {
+    case 0:
+        part = 0x41;
+        break;
+    case 1:
+        part = 0x40;
+        break;
+    case 2:
+        part = 0x42;
+        break;
+    case 6:
+        part = 0x41;
+        break;
+    case 7:
+        part = 0x45;
+        break;
+    case 8:
+        part = 0x43;
+        break;
+    default:
+        part = 0;
+        break;
+    }
+    if (part) {
+        *cel++ = part;
+        *cel++ = where.x - g_4b2658[part];
+        *cel++ = where.y - g_4b265c[part];
+    }
+    if (face) {
+        *cel++ = base;
+        *cel++ = where.x - g_4b2658[base];
+        *cel++ = where.y - g_4b265c[base] - dy;
+    }
+    if (snoid->features[3]) {
+        part = snoid->features[3] + base + 15;
+        *cel++ = part;
+        *cel++ = where.x - g_4b2658[part];
+        *cel++ = where.y - g_4b265c[part] - dy;
+    }
+    if (snoid->features[1]) {
+        part = snoid->features[1] + base + 5;
+        *cel++ = part;
+        *cel++ = where.x - g_4b2658[part];
+        *cel++ = where.y - g_4b265c[part] - dy;
+    }
+    if (snoid->features[2]) {
+        part = snoid->features[2] + base + 10;
+        *cel++ = part;
+        *cel++ = where.x - g_4b2658[part];
+        *cel++ = where.y - g_4b265c[part] - dy;
+    }
+    if (snoid->features[0]) {
+        part = snoid->features[0] + base;
+        *cel++ = part;
+        *cel++ = where.x - g_4b2658[part];
+        *cel++ = where.y - g_4b265c[part] - dy;
+    }
+    *cel++ = 0;
+    *cel++ = 0;
+    *cel = 0;
+    cel = (short *)snoid->body.cels;
+    bank = g_4b2634;
+    while (*cel && *cel <= bank->count) {
+        unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
+
+        cel++;
+        rect.left = *cel++;
+        rect.top = *cel++;
+        rect.right = swapShort(image[0]) + rect.left;
+        rect.bottom = swapShort(image[1]) + rect.top;
+        unionRect(&snoid->body.bounds, &rect);
+    }
+}

@@ -5357,6 +5357,9 @@ extern ShortRect g_4a45cc[3][3];
 short fn_453e8c(View *view, Point where);
 extern short snoidFeatures[4][16]; /* @data 0x4b2472: the Zoombinis' hair, eyes, nose and feet (1-5) */
 void fn_44d974(short neighbour, short index, short cell);
+extern short *g_4b2658; /* the scene's Zoombini images' hot spots: x */
+extern short *g_4b265c; /* and y */
+void fn_454374(Snoid *snoid);
 void fn_44f066(short which, short lit, short show);
 short fn_44d102();
 void fn_44d5ad(short cell);
