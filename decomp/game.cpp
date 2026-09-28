@@ -3425,3 +3425,320 @@ void fn_44e494()
         fn_45062d(11003);
     }
 }
+
+/*
+ * The scene's clicks: 1 the map button (leave), 2 the go button, 3 a click
+ * on the scene: on the spot button (g_4a4614) it deals a new round or ends
+ * one; otherwise it drags the party's Zoombinis to and from the scene's
+ * slots and snaps them into place, and (levels 1 and 2) the Zoombinis it
+ * deals into the machine's slot, or (levels 3 and 4) the rows' Zoombinis
+ * into the two lines of slots (g_4b2776).
+ */
+/* @zoombi32 0x0044fa57 */
+void fn_44fa57(short action)
+{
+    Point where;
+    short spot;
+    short k;
+    volatile short placed;
+    short result;
+    View *view;
+    Snoid *snoid;
+    short ok;
+    short best;
+    short distance;
+    short m;
+    View *other;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        fn_44f1f2();
+        return;
+    }
+    switch (action) {
+    case 1:
+        queueViewSound(999, 0);
+        fn_44f066(action, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        fn_44f066(action, 0, 1);
+        g_4b755c = 1;
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (g_4b2792) {
+            queueViewSound(0, 0);
+            fn_44f066(action, 1, 1);
+            waitForEventFor(0, 2, 0, 1);
+            fn_44f066(action, 0, 1);
+            g_4b2750 = 1;
+            g_4b755a = 1;
+            g_4b755c = 0;
+            g_4b0d52 = 18;
+        }
+        break;
+    case 3:
+        if (g_4b755a > 0 || g_4b266c >= g_4b262e)
+            break;
+        getCursorPosition(&where);
+        if (g_4b2754 == 1) {
+            if (ptInRect(&g_4a4614, where)) {
+                g_4b2754 = fn_4507e0();
+                fn_450658(11004, 1);
+                fn_465175();
+            }
+            break;
+        }
+        if (!g_4b2754)
+            break;
+        if (ptInRect(&g_4a4614, where) && g_4b2752 == 1) {
+            g_4b2752 = 0;
+            g_4b2754 = 0;
+            fn_450658(11002, 1);
+            g_4b83e4[0] = 0;
+            releaseHeldPlace();
+            claimPlacedView(heldPlaceNumber(), 0);
+            setViewsLocked(0);
+            break;
+        }
+        view = viewAt(where, 1, 1);
+        if (view) {
+            ok = 1;
+            for (k = 0; k < g_4b262e; k++)
+                if (g_4b25dc[k] == view->id || g_4b2630 >= 3) {
+                    ok = 0;
+                    k = g_4b262e;
+                }
+            if (ok && view->body.running) {
+                g_4b2794 = *(long *)&view->body.x;
+                if (view->id == g_4b26b2) {
+                    g_4b83e4[0] = 0;
+                    releaseHeldPlace();
+                    claimPlacedView(heldPlaceNumber(), 0);
+                    g_4b26b2 = 0;
+                    fn_4511c1(0);
+                    fn_451238(0);
+                    g_4b2752 = 0;
+                    fn_4506a9(11002);
+                    fn_450540(&spot);
+                    g_4b2794 = *(long *)&g_4a47ec[spot];
+                }
+                dragSnoid(view, where, 0, 0);
+                if (!heldPlaceNumber() && !ptInRect(&g_4a47d0, *(Point *)&view->body.x)) {
+                    *(long *)&((Snoid *)&view->body)->targetX = g_4b2794;
+                } else if (ptInRect(&g_4a47d0, *(Point *)&view->body.x)) {
+                    best = g_4a47e0[0];
+                    distance = MAGNITUDE(((Snoid *)&view->body)->targetY - g_4a47e0[0]);
+                    for (k = 1; k < 5; k++)
+                        if (MAGNITUDE(((Snoid *)&view->body)->targetY - g_4a47e0[k]) < distance) {
+                            best = g_4a47e0[k];
+                            distance = MAGNITUDE(((Snoid *)&view->body)->targetY - g_4a47e0[k]);
+                        }
+                    ((Snoid *)&view->body)->targetY = best;
+                }
+                if (heldPlaceNumber() && !g_4b26b2) {
+                    g_4b26b2 = view->id;
+                    fn_450c24(g_4b26b2, 0);
+                    fn_450d00(g_4b26b2, 0);
+                    if (g_4b26b0 > 0) {
+                        g_4b2752 = 1;
+                        fn_45062d(11003);
+                    }
+                }
+            }
+        }
+        view = viewAt(where, 2, 1);
+        if (!view)
+            break;
+        switch (g_4b2630) {
+        case 1:
+        case 2:
+            if (ptInRect(&g_4a4534, where)) {
+                if (g_4b26b0) {
+                    g_4b2752 = 0;
+                    fn_4506a9(11002);
+                    fn_451238(7);
+                    fn_4511c1(1);
+                    view = findView(g_4b2672[g_4b26b0 - 1]);
+                    if (g_4b26b0) {
+                        view->changed = 1;
+                        view->body.running = 1;
+                    }
+                    action = g_4b26b0;
+                    g_4b26b0 = 0;
+                    if (fn_453e8c(view, where) == 4) {
+                        g_4b26b0 = action;
+                        fn_450c24(view->id, 1);
+                        fn_450d00(view->id, 7);
+                    } else {
+                        g_4b26b0 = action;
+                        snoid = (Snoid *)&view->body;
+                        *(Point *)&snoid->body.x = g_4a44cc[g_4b26b0 - 1];
+                        snoid->unknownF4 = 4;
+                        g_4b26b0 = 0;
+                    }
+                }
+            } else {
+                for (k = 0; k < g_4b2660; k++)
+                    if (g_4b2672[k] == view->id) {
+                        if (fn_453e8c(view, where) == 4) {
+                            if (!g_4b26b0) {
+                                g_4b26b0 = k + 1;
+                                fn_450c24(view->id, 1);
+                                fn_450d00(view->id, 7);
+                            } else {
+                                snoid = (Snoid *)&view->body;
+                                *(Point *)&snoid->body.x = g_4a44cc[k];
+                                snoid->unknownF4 = 4;
+                            }
+                        } else {
+                            snoid = (Snoid *)&view->body;
+                            *(Point *)&snoid->body.x = g_4a44cc[k];
+                            snoid->unknownF4 = 4;
+                        }
+                        k = g_4b2660;
+                    }
+            }
+            if (g_4b26b0 && g_4b26b2) {
+                g_4b2752 = 1;
+                fn_45062d(11003);
+            }
+            fn_4507bb();
+            break;
+        case 3:
+        case 4:
+            for (k = 1; k < g_4b2662 && k < 7; k++)
+                if (g_4b26ba[k] == view->id) {
+                    fn_450658(11002, 0);
+                    g_4b2752 = 0;
+                    snoid = (Snoid *)&view->body;
+                    snoid->unknownF1 = 7;
+                    if (snoid->unknownF5) {
+                        snoid->unknownF8 = 1;
+                        view->unknown1e = 0;
+                    }
+                    for (m = 0; m < 6; m++)
+                        if (g_4b2776[m + 1] == view->id) {
+                            placed = 0;
+                            g_4b2776[m + 1] = 0;
+                            if (m > 2) {
+                                for (action = m; action <= 5; action++)
+                                    if (action < 5)
+                                        g_4b2776[action + 1] = g_4b2776[action + 2];
+                                    else
+                                        g_4b2776[action + 1] = 0;
+                                g_4b26b6 -= 2;
+                                if (g_4b26b6 < 0)
+                                    g_4b26b6 = 0;
+                                for (action = 3; action <= 5; action++) {
+                                    other = findView(g_4b2776[action + 1]);
+                                    if (other) {
+                                        Snoid *moved = (Snoid *)&other->body;
+
+                                        *(Point *)&moved->body.x = g_4a4560[g_4b26b6][placed];
+                                        moved->unknownF4 = 4;
+                                        placed++;
+                                    }
+                                }
+                                if (placed)
+                                    g_4b26b6++;
+                                fn_450df2();
+                                fn_451020();
+                            } else {
+                                for (action = m; action <= 2; action++)
+                                    if (action < 2)
+                                        g_4b2776[action + 1] = g_4b2776[action + 2];
+                                    else
+                                        g_4b2776[action + 1] = 0;
+                                g_4b26b4 -= 2;
+                                if (g_4b26b4 < 0)
+                                    g_4b26b4 = 0;
+                                for (action = 0; action < 3; action++) {
+                                    other = findView(g_4b2776[action + 1]);
+                                    if (other) {
+                                        Snoid *moved = (Snoid *)&other->body;
+
+                                        *(Point *)&moved->body.x = g_4a453c[g_4b26b4][placed];
+                                        moved->unknownF4 = 4;
+                                        placed++;
+                                    }
+                                }
+                                if (placed)
+                                    g_4b26b4++;
+                                fn_450d5d();
+                                fn_450e87();
+                            }
+                            m = 6;
+                        }
+                    action = view->id;
+                    result = fn_453e8c(view, where);
+                    view = findView(action);
+                    snoid = (Snoid *)&view->body;
+                    if (result >= 0 && result <= 5) {
+                        if (g_4b26b4 < 3 && result < 3 || g_4b26b6 < 3 && result > 2) {
+                            placed = 0;
+                            if (result < 3) {
+                                snoid->unknownF1 = 0;
+                                if (g_4b2776[result + 1])
+                                    for (action = g_4b26b4; action >= result; action--)
+                                        if (action > 0)
+                                            g_4b2776[action + 1] = g_4b2776[action];
+                                g_4b2776[result + 1] = view->id;
+                                for (action = 0; action <= 2; action++) {
+                                    other = findView(g_4b2776[action + 1]);
+                                    if (other) {
+                                        Snoid *moved = (Snoid *)&other->body;
+
+                                        *(Point *)&moved->body.x = g_4a453c[g_4b26b4][placed];
+                                        moved->unknownF4 = 4;
+                                        placed++;
+                                    }
+                                }
+                                g_4b26b4++;
+                                g_4b2776[result + 1] = view->id;
+                                fn_450d5d();
+                                fn_450e87();
+                            } else {
+                                snoid->unknownF1 = 2;
+                                if (g_4b2776[result + 1])
+                                    for (action = g_4b26b6 + 3; action >= result; action--)
+                                        if (action > 3)
+                                            g_4b2776[action + 1] = g_4b2776[action];
+                                g_4b2776[result + 1] = view->id;
+                                for (action = 3; action <= 5; action++) {
+                                    other = findView(g_4b2776[action + 1]);
+                                    if (other) {
+                                        Snoid *moved = (Snoid *)&other->body;
+
+                                        *(Point *)&moved->body.x = g_4a4560[g_4b26b6][placed];
+                                        moved->unknownF4 = 4;
+                                        placed++;
+                                    }
+                                }
+                                g_4b26b6++;
+                                g_4b2776[result + 1] = view->id;
+                                fn_450df2();
+                                fn_451020();
+                            }
+                        }
+                    } else {
+                        snoid = (Snoid *)&view->body;
+                        *(Point *)&snoid->body.x = g_4a44f0[g_4b2768[k]];
+                        snoid->unknownF4 = 4;
+                        if (snoid->unknownF5) {
+                            snoid->unknownF8 = 1;
+                            view->unknown1e = 0;
+                        }
+                    }
+                    k = g_4b2662;
+                }
+            fn_45074d();
+            g_4b2752 = 1;
+            fn_45062d(11003);
+            break;
+        }
+        break;
+    }
+}

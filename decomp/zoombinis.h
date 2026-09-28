@@ -36,6 +36,9 @@ inline unsigned long swapLong(unsigned long value)
            | (unsigned long)(bytes[1] | (unsigned short)bytes[0] << 8) << 16;
 }
 
+/* The magnitude of `x` (as the game writes it, evaluating `x` twice). */
+#define MAGNITUDE(x) ((x) >= 0 ? (x) : -(x))
+
 /* A Mohawk resource type, built Mac-style from its four characters (so
    RESOURCE_TYPE('C','U','R','S') is 0x43555253; C++'s multi-character
    constants put the bytes the other way round in Borland C++). */
@@ -5441,6 +5444,12 @@ extern short g_4b80f6;
 extern Point g_4a44b4;
 extern GroupList g_4a47a8;
 void fn_44e494();
+extern ShortRect g_4a4614;
+extern ShortRect g_4a47d0;
+extern short g_4a47e0[5];
+extern Point g_4a453c[3][3];
+extern Point g_4a4560[3][3];
+void fn_44fa57(short action);
 void fn_44f066(short which, short lit, short show);
 short fn_44d102();
 void fn_44d5ad(short cell);

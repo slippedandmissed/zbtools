@@ -4020,9 +4020,6 @@ void otherClick(short action)
     }
 }
 
-/* The magnitude of `x`. */
-#define MAGNITUDE(x) ((x) >= 0 ? (x) : -(x))
-
 /*
  * Drags a piece of the other puzzle: a new piece (unknownC0 0) onto a row
  * of the board's left edge, lighting up the marker there; the swapping
