@@ -3,10 +3,12 @@
  */
 
 #include "zoombinis.h"
+#include "basecamp.h"
 #include "e2memory.h"
 #include "features.h"
 #include "graphics.h"
 #include "module_4623b8.h"
+#include "random.h"
 #include "slides.h"
 #include "snoids.h"
 #include "sound.h"
@@ -319,4 +321,83 @@ void fn_448c81(View *view)
         if (!removed)
             cel++;
     }
+}
+
+/* Picks a free place for a Zoombini among slidesPlaces (the one nearest
+   each place that's free and not already picked, noted in sortedIds), from
+   one end or the other at random, and gives its point in `where`. */
+/* @zoombi32 0x0044b3ee */
+void fn_44b3ee(Point *where)
+{
+    Point spot = {0, 0};
+    short i;
+    short skip;
+    short id;
+    short j;
+
+    spotTaken(&spot, 0, 500);
+    for (i = 0; i < 16; i++) {
+        skip = 0;
+        id = spotNear(&slidesPlaces[i], 500, skip);
+        for (j = 0; id && j < i; j++)
+            if (id == sortedIds[j]) {
+                skip++;
+                id = spotNear(&slidesPlaces[i], 500, skip);
+                j = 0;
+            }
+        sortedIds[i] = id;
+    }
+    id = -1;
+    if (randomBetween(1, 100) <= 50) {
+        for (i = 15; id == -1 && i >= 0; i--)
+            if (!sortedIds[i])
+                id = i;
+    } else {
+        for (i = 0; id == -1 && i < 16; i++)
+            if (!sortedIds[i])
+                id = i;
+    }
+    if (id == -1)
+        id = 0;
+    *where = slidesPlaces[id];
+}
+
+/* Another Zoombini of the party (not `who`, and not marked in g_4b24f2)
+   with the same value of a feature (g_4b2516, each in turn from a random
+   one); -1 if none. */
+/* @zoombi32 0x00449a21 */
+short fn_449a21(short who)
+{
+    short tries;
+    short i;
+
+    g_4b2516 = randomUpTo(3);
+    tries = 4;
+    do {
+        if (++g_4b2516 > 3)
+            g_4b2516 = 0;
+        for (i = 0; i < g_4b2414; i++) {
+            if (i == who)
+                continue;
+            switch (g_4b2516) {
+            case 0:
+                if (!g_4b24f2[i] && partyHair[who] == partyHair[i])
+                    return i;
+                break;
+            case 1:
+                if (!g_4b24f2[i] && partyEyes[who] == partyEyes[i])
+                    return i;
+                break;
+            case 2:
+                if (!g_4b24f2[i] && partyNoses[who] == partyNoses[i])
+                    return i;
+                break;
+            case 3:
+                if (!g_4b24f2[i] && partyFeet[who] == partyFeet[i])
+                    return i;
+                break;
+            }
+        }
+    } while (--tries);
+    return -1;
 }
