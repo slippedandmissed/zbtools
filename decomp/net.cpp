@@ -867,3 +867,74 @@ void fn_43da30(short n)
         g_4b11aa[n] = -1;
     }
 }
+
+/* Steps a maze Zoombini one square on in its direction (word 20; within
+   the 13 by 13 board); a square of kind 5 there hands its partner on (to
+   g_4b0930, turned the same way). Then puts it there with its helper view
+   (script 10000 on) and starts its script. */
+/* @zoombi32 0x00439cb4 */
+void fn_439cb4(View *view)
+{
+    short *parts = (short *)&view->body;
+    short *its;
+    View *helper;
+
+    parts[31] = parts[33];
+    parts[32] = parts[34];
+    switch (parts[20]) {
+    case 0:
+        parts[34]--;
+        if (parts[34] < 0)
+            parts[34]++;
+        break;
+    case 1:
+        parts[33]++;
+        if (parts[33] > 12)
+            parts[33]--;
+        break;
+    case 2:
+        parts[34]++;
+        if (parts[34] > 12)
+            parts[34]--;
+        break;
+    case 3:
+        parts[33]--;
+        if (parts[33] < 0)
+            parts[33]++;
+        break;
+    }
+    short kind = g_4b061a[parts[33]][parts[34]];
+
+    if (kind == 5) {
+        View *other = findView(g_4b04c8[parts[33]][parts[34]]);
+
+        if (other) {
+            its = (short *)&other->body;
+            if (its[43]) {
+                g_4b0930[g_4b09fe] = its[43];
+                g_4b09fe++;
+                View *partner = findView(its[43]);
+
+                its[43] = 0;
+                if (partner) {
+                    its = (short *)&partner->body;
+                    its[20] = parts[20];
+                }
+            }
+        }
+    }
+    *(Point *)&view->body.x = (g_4afbf0 + parts[32])[parts[31] * 13];
+    view->body.x += 4;
+    view->body.y += -38;
+    helper = findView(parts[41]);
+    if (helper) {
+        setViewScript(helper, parts[20] + 10000, 1);
+        helper->body.x = view->body.x;
+        helper->body.y = view->body.y;
+        helper->placed = fn_436321;
+    }
+    startSnoidScript((Snoid *)&view->body, parts[21 + parts[20]], 0, 0);
+    view->notify = fn_43638b;
+    if (helper)
+        groupViews(view->id, helper->id, 0, 0, 0, 0);
+}

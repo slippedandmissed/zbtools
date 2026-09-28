@@ -5773,3 +5773,4 @@ extern short g_4b145a;
 extern short g_4b1466;
 extern short g_4b147c;
 extern short g_4b0e6c;
+void fn_439cb4(View *view);
