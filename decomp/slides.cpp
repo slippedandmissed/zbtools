@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "e2memory.h"
 #include "features.h"
+#include "game.h"
 #include "graphics.h"
 #include "module_4623b8.h"
 #include "net.h"
@@ -1726,6 +1727,88 @@ void fn_44accc(short cell)
             via = g_4b1aea[middle].links[1];
             to = g_4b1aea[via].links[1];
             fn_44a674(middle, via, to);
+        }
+    }
+}
+
+/* Lights the three starting cells (19, 55, 91) where a Zoombini waits (507
+   to 508) and follows the moves from each (fn_44accc), then fn_44e092. */
+/* @zoombi32 0x0044a359 */
+void fn_44a359()
+{
+    View *view;
+
+    if (g_4b1aea[19].state == 507) {
+        g_4b1aea[19].state = 508;
+        view = findView(g_4b1aea[19].view);
+        setViewScript(view, 7000, 1);
+        view->placed = fn_4489ce;
+        fn_44accc(19);
+    }
+    if (g_4b1aea[55].state == 507) {
+        g_4b1aea[55].state = 508;
+        view = findView(g_4b1aea[55].view);
+        setViewScript(view, 7000, 1);
+        view->placed = fn_4489ce;
+        fn_44accc(55);
+    }
+    if (g_4b1aea[91].state == 507) {
+        g_4b1aea[91].state = 508;
+        view = findView(g_4b1aea[91].view);
+        setViewScript(view, 7000, 1);
+        view->placed = fn_4489ce;
+        fn_44accc(91);
+    }
+    fn_44e092();
+}
+
+/* Lights the cell after `cell` if a Zoombini waits there, then every cell
+   of g_4a41e6 with a Zoombini next to a lit stone, and follows the moves
+   around each lit one (fn_44a4d9); on level 3, with cells 57, 59 and 61
+   lit and four Zoombinis on the listed cells, the colours start cycling
+   (g_4b1a3c) and fn_44dcdc follows. */
+/* @zoombi32 0x0044a180 */
+void fn_44a180(short cell)
+{
+    View *view;
+    short i;
+    short j;
+    short next;
+    short after;
+
+    after = cell + 1;
+    if (g_4b1aea[after].state != 507)
+        return;
+    g_4b1aea[after].state = 508;
+    view = findView(g_4b1aea[after].view);
+    setViewScript(view, 7000, 1);
+    view->placed = fn_4489ce;
+    for (i = 0; i < g_4a4224; i++) {
+        if (g_4b1aea[g_4a41e6[i]].state == 507) {
+            for (j = 0; j <= 5; j++) {
+                next = g_4b1aea[g_4a41e6[i]].links[j];
+                if (next != -1 && g_4b1aea[next].state == 502) {
+                    g_4b1aea[g_4a41e6[i]].state = 508;
+                    break;
+                }
+            }
+        }
+        if (g_4b1aea[g_4a41e6[i]].state == 502 || g_4b1aea[g_4a41e6[i]].state == 508)
+            fn_44a4d9(g_4a41e6[i]);
+    }
+    fn_44e092();
+    if (!g_4b1a3c && g_4b1934 == 3 && g_4b1aea[57].state == 508 && g_4b1aea[59].state == 508
+        && g_4b1aea[61].state == 508) {
+        g_4b1a3c = 0;
+        for (i = 1; i <= g_4b240e; i++)
+            if (g_4b1aea[g_4b1ab4[i]].state == 507 || g_4b1aea[g_4b1ab4[i]].state == 508)
+                g_4b1a3c++;
+        if (g_4b1a3c == 4) {
+            g_4b1a3c = 1;
+            g_4b2534 = clockTime();
+            fn_44dcdc();
+        } else {
+            g_4b1a3c = 0;
         }
     }
 }

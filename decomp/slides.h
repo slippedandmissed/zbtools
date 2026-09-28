@@ -82,5 +82,9 @@ short fn_44b4ec(short a, short b);
 void fn_44a4d9(short cell);
 
 void fn_44accc(short cell);
+extern short g_4a41e6[31]; /* @data 0x4a41e6: cells (g_4a4224 of them) */
+extern short g_4a4224; /* @data 0x4a4224 */
+void fn_44a359();
+void fn_44a180(short cell);
 
 #endif
