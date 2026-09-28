@@ -1439,3 +1439,113 @@ void fn_43145f(short update)
     if (update)
         updateViews();
 }
+
+/* Scene 19's frame: deletes the Zoombinis that have finished crossing
+   (g_4afb60) and, while pickerData.counts.unknown24, now and then (every
+   20-120 ticks) sends new ones, more of them together as
+   pickerData.counts.unknown26 grows. */
+/* @zoombi32 0x0043195a */
+void scene19Frame()
+{
+    short id;
+    short i;
+
+    if (!g_4a2066 && g_4afb14) {
+        g_4a2066 = 1;
+        updateViews();
+        for (i = 0; i < 3; i++)
+            if (idleSnoidView(g_4afb60[i])) {
+                id = g_4afb60[i];
+                g_4afb60[i] = 0;
+                deleteView(id);
+            }
+        if (clockTime() > g_4afb68 && pickerData.counts.unknown24) {
+            for (i = 0; viewsSorted && i < 3; i++) {
+                if (!g_4afb60[i]) {
+                    g_4afb60[i] = fn_431ea0();
+                    g_4afb68 = randomBetween(20, 120) + clockTime();
+                }
+                if (pickerData.counts.unknown26 < 10) {
+                    i = 3;
+                } else if (pickerData.counts.unknown26 < 15) {
+                    if (i == 1)
+                        i = 3;
+                } else if (pickerData.counts.unknown26 < 20) {
+                    if (i == 2)
+                        i = 3;
+                } else if (pickerData.counts.unknown26 < 40) {
+                    if (i == 1)
+                        i = 3;
+                } else if (pickerData.counts.unknown26 < 60) {
+                    i = 3;
+                } else if (pickerData.counts.unknown26 < 80) {
+                    if (i == 1)
+                        i = 3;
+                } else if (pickerData.counts.unknown26 > 80) {
+                    i = 3;
+                }
+            }
+        }
+        g_4a2066 = 0;
+    }
+}
+
+/* Scene 1's frame (the map): shows the name of the open hotspot under the
+   cursor in the view g_4afb3e and picks it (fn_430030), or hides the name;
+   leaves when a choice was made (g_4b0d52). */
+/* @zoombi32 0x0042feaf */
+void scene1Frame()
+{
+    Point where;
+    View *view;
+    short i;
+    short open;
+
+    if (!g_4a2008 && g_4afb14) {
+        g_4a2008 = 1;
+        view = 0;
+        if (!g_4b9684)
+            view = findView(g_4afb3e);
+        if (view && !g_4b9684) {
+            getCursorPosition(&where);
+            for (i = 0; i < 16; i++) {
+                if (i == 11)
+                    open = g_4afb4a[11] || g_4afb4a[16];
+                else
+                    open = g_4afb4a[i];
+                if (open && ptInRect(&pickerData.hotspots[i].rect, where)) {
+                    view->nextUpdate = clockTime();
+                    if (i != g_4afb36) {
+                        view->body.running = 0;
+                        view->reset = 1;
+                        fn_430030(-1);
+                    }
+                    if (!view->body.running && view->reset) {
+                        char *to;
+                        char *from;
+
+                        g_4afb36 = i;
+                        to = (char *)&view->body.cels[10];
+                        from = placeNames[i];
+                        while (*from)
+                            *to++ = *from++;
+                        *to = 0;
+                        view->body.running = 1;
+                        fn_430030(++i);
+                    }
+                    i = 17;
+                }
+            }
+            if (i < 17)
+                view->body.running = 0;
+        }
+        updateViews();
+        if (g_4b0d52) {
+            g_4b0d50 = g_4b0d52;
+            g_4b0d52 = 0;
+            fn_46be2e(0);
+            closeScene1();
+        }
+        g_4a2008 = 0;
+    }
+}

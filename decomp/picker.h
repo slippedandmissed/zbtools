@@ -117,5 +117,11 @@ extern char *mapTexts[21]; /* @data 0x4a52b8 */
 void fn_430878(ShortRect *rect);
 void fn_43157f(View *view);
 void fn_43145f(short update);
+extern short g_4a2008; /* @data 0x4a2008: scene1Frame is running */
+extern short g_4a2066; /* @data 0x4a2066: scene19Frame is running */
+extern short g_4afb60[3]; /* @data 0x4afb60: the Zoombinis crossing */
+extern unsigned long g_4afb68; /* @data 0x4afb68: when to send more */
+void scene19Frame();
+void scene1Frame();
 
 #endif
