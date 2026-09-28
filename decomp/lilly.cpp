@@ -3009,3 +3009,44 @@ void fn_4276d0(View *view, short event)
         break;
     }
 }
+
+/*
+ * Searches layer `layer` of the board from the bottom row up: every square
+ * whose attribute `attribute` is `layer` is a start, and the search spreads
+ * from each (at most 144 squares queued).
+ */
+/* @zoombi32 0x0042e80b */
+void searchLayer(short attribute, short layer)
+{
+    char unused[24];
+    short row;
+    short column;
+
+    for (row = 0; row < 13; row++)
+        for (column = 0; column < 12; column++) {
+            g_4ad7e0[layer].marks[row][column] = 0;
+            g_4ad7e0[layer].ways[row][column] = 44;
+            g_4ad7e0[layer].steps[row][column] = 0;
+        }
+    g_4af8a8 = 0;
+    g_4af8aa = 0;
+    fillMemory(g_4af668, 0, 0x240);
+    for (row = 12; row >= 1; row--) {
+        for (column = 0; column < 12; column++)
+            if (g_4acff4[row - 1][column].attributes[attribute] == layer && !g_4ad7e0[layer].marks[row][column]) {
+                if (g_4af8a8 < 144) {
+                    g_4af668[g_4af8a8].x = column;
+                    g_4af668[g_4af8a8].y = row;
+                    g_4af8a8++;
+                }
+                g_4ad7e0[layer].ways[row][column] = 2;
+                g_4ad7e0[layer].steps[row][column]++;
+                g_4ad7e0[layer].marks[row][column] = row;
+            }
+        for (short i = g_4af8aa; i < g_4af8a8 && g_4af8aa < 144 && i < 144; i++)
+            if (g_4ad7e0[layer].marks[g_4af668[i].y][g_4af668[i].x]) {
+                searchStep(attribute, layer, g_4af668[i].y, g_4af668[i].x);
+                g_4af8aa++;
+            }
+    }
+}

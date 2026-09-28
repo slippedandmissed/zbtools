@@ -4917,6 +4917,8 @@ extern LillyDeal g_4af616[13];
 extern short *g_4ac1a0;
 extern short *g_4ac1a4;
 void searchStep(short attribute, short layer, short row, short column);
+void searchLayer(short attribute, short layer);
+extern short g_4af8aa;
 extern short g_4a1e16[];
 extern short g_4a1e28[4];
 extern short g_4a1e30;
