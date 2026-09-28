@@ -5568,3 +5568,6 @@ extern short g_4b0958[];
 extern short g_4b0a00;
 void fn_436092(View *view, short event);
 void fn_43573e(short n);
+extern short g_4b09d0[];
+extern short g_4b0a06;
+short fn_4371b3(short id);

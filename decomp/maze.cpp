@@ -791,3 +791,83 @@ void fn_435f3d(View *view, short event)
         break;
     }
 }
+
+/* A view's notify: 91 lists a view in pose 3 in g_4b09d0, then (as 92)
+   deletes its helper views, takes it out of g_4afc4a, clears its square
+   and lists it in g_4b0958 unless in pose 3; -1 as fn_435f3d's. */
+/* @zoombi32 0x00435c57 */
+void fn_435c57(View *view, short event)
+{
+    short *parts = (short *)&view->body;
+    short i;
+
+    switch (event) {
+    case 91:
+        if (parts[35] == 3) {
+            g_4b09d0[g_4b0a06] = view->id;
+            g_4b0a06++;
+        }
+    case 92:
+        deleteView(parts[41]);
+        deleteView(parts[42]);
+        for (i = 0; i < 11; i++)
+            if (g_4afc4a[i] == view->id) {
+                for (; g_4afc4a[i]; i++)
+                    g_4afc4a[i] = g_4afc4a[i + 1];
+                i = 11;
+                g_4afc60--;
+            }
+        if (g_4b00d2[parts[33]][parts[34]][1] == view->id) {
+            g_4b00d2[parts[33]][parts[34]][0] = 0;
+            g_4b00d2[parts[33]][parts[34]][1] = 0;
+        }
+        if (parts[35] != 3) {
+            g_4b0958[g_4b0a00] = view->id;
+            g_4b0a00++;
+        }
+        break;
+    case -1:
+        g_4b0958[g_4b0a00] = view->id;
+        g_4b0a00++;
+        if (g_4b0d3a >= g_4b0d38)
+            g_4b0d3c = 0;
+        break;
+    }
+}
+
+/* Clears the rows of g_4afe5a with a feature that is `id`, counts the
+   features of the complete rows left in g_4aff9a (by value, with
+   g_4a2634's offsets), and returns how many complete rows there are. */
+/* @zoombi32 0x004371b3 */
+short fn_4371b3(short id)
+{
+    short count;
+    short keep;
+    short i;
+    short row;
+
+    count = 0;
+    for (i = 0; i < 21; i++)
+        g_4aff9a[i] = 0;
+    for (row = 0; row < g_4afc36; row++) {
+        keep = 1;
+        for (i = 0; i < 4; i++)
+            if (g_4afe5a[row][i] && g_4afe5a[row][i] + g_4a2634[i] == id && id) {
+                keep = 0;
+                for (i = 0; i < 4; i++)
+                    g_4afe5a[row][i] = 0;
+                i = 4;
+            }
+        if (keep)
+            for (i = 0; i < 4; i++)
+                if (g_4afe5a[row][i]) {
+                    g_4aff9a[g_4afe5a[row][i] + g_4a2634[i]]++;
+                } else {
+                    keep = 0;
+                    i = 4;
+                }
+        if (keep)
+            count++;
+    }
+    return count;
+}
