@@ -1355,10 +1355,10 @@ short fn_450a58(unsigned short key)
    one showing the feature (state 501, view 510-513), and returns its
    index. -2: no such cells; -1: none shares a feature. (It reuses `cell`
    as the index.) */
-/* Not exact: the original leaves `direction` on the stack; this gives it
-   edi until `differ` takes it. */
+/* `direction` is volatile only to leave it on the stack, as the original
+   does (BCC would otherwise give it edi until `differ` needs it). */
 /* @zoombi32 0x0044d3b8 */
-short fn_44d3b8(short cell, short direction)
+short fn_44d3b8(short cell, volatile short direction)
 {
     short feature;
     short differ;
@@ -1808,4 +1808,93 @@ void fn_44d127()
         fn_44dca0(61, 5, 0x20);
         fn_44dca0(6, 3, 8);
     }
+}
+
+/*
+ * Drags a Zoombini (from `where`), snapping it to the spot it's over: with
+ * g_4b2630 below 3, the one spot g_4a4534 (4) unless g_4b2704; otherwise
+ * one of the three spots in row g_4b26b4 of g_4a4584 (0-2) or row g_4b26b6
+ * of g_4a45cc (3-5). Returns the spot it was over when released (-1:
+ * none).
+ */
+/* @zoombi32 0x00453e8c */
+short fn_453e8c(View *view, Point where)
+{
+    View *dragged;
+    Snoid *snoid;
+    volatile short dy; /* volatile: on the stack, where the original has it */
+    short id;
+    Point current;
+    ShortRect unused[1];
+    ShortRect rect;
+    unsigned long savedInterval;
+    short dx;
+    short spot;
+    short i;
+    short x;
+    short y;
+
+    setViewsLocked(0);
+    id = view->id;
+    if ((dragged = removeView(id, 0)) == 0)
+        return 0;
+    dragged->id = -3;
+    insertViewAtEnd(dragged);
+    savedInterval = dragged->interval;
+    dragged->interval = 3;
+    snoid = (Snoid *)&dragged->body;
+    current = where;
+    dx = 0;
+    dy = 0;
+    if (g_4b2630 == 3 || g_4b2630 == 4)
+        fn_4506f0();
+    else if (!g_4b26b0)
+        fn_450796();
+    while (keepDragging()) {
+        getCursorPosition(&current);
+        spot = -1;
+        if (g_4b2630 < 3) {
+            if (ptInRect(&g_4a4534, current) && !g_4b2704) {
+                spot = 4;
+                current.x = g_4a4528.x;
+                current.y = g_4a4528.y;
+            }
+        } else {
+            if (g_4b26b4 < 3)
+                for (i = 0; i < 3; i++)
+                    if (ptInRect(&g_4a4584[g_4b26b4][i], current)) {
+                        spot = i;
+                        current.x = g_4a4584[g_4b26b4][i].left + 25;
+                        current.y = g_4a4584[g_4b26b4][i].top + 31;
+                        i = 3;
+                    }
+            if (spot < 0 && g_4b26b6 < 3)
+                for (i = 0; i < 3; i++)
+                    if (ptInRect(&g_4a45cc[g_4b26b6][i], current)) {
+                        spot = i + 3;
+                        current.x = g_4a45cc[g_4b26b6][i].left + 25;
+                        current.y = g_4a45cc[g_4b26b6][i].top + 31;
+                        i = 3;
+                    }
+        }
+        x = current.x - dx;
+        if (x >= gameRect.left && x <= gameRect.right) {
+            snoid->body.x = x;
+            snoid->home.x = x;
+        }
+        y = current.y - dy;
+        if (y >= gameRect.top && y <= gameRect.bottom) {
+            snoid->body.y = y;
+            snoid->home.y = y;
+        }
+        snoid->unknownF4 = 5;
+        mainLoopEvents();
+        resetViewClock();
+    }
+    snoid->unknownF4 = 4;
+    rect = dragged->body.bounds;
+    unionRgnRect(removedRgn, &rect);
+    dragged->id = id;
+    dragged->interval = savedInterval;
+    return spot;
 }
