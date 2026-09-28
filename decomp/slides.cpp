@@ -500,3 +500,62 @@ void fn_448d9d(View *view)
             cel++;
     }
 }
+
+/* The buttons' view's draw callback: draws both buttons, dim. */
+/* @zoombi32 0x00447095 */
+void drawSlidesButtons(View *)
+{
+    drawSlidesButton(1, 0, 0);
+    drawSlidesButton(2, 0, 0);
+}
+
+/* A view's update cycling colours 19-21 at its interval. */
+/* @zoombi32 0x004489a8 */
+void fn_4489a8(View *view, short)
+{
+    if (view->nextUpdate <= updateTime) {
+        view->nextUpdate = updateTime + view->interval;
+        fn_448bf5();
+    }
+}
+
+/* Marks the cell at (x, y) (within 45 by 22 of its point in cellPoints),
+   unless one is already (g_4b1a3e): notes it in g_4b1a36 and shows the
+   marker view g_4b1a34 there (script 8000-8002 by row, notify fn_44af15),
+   layered with the row. */
+/* Not exact: register allocation (the original keeps `y` in ecx, leaving
+   esi to `kind`; here `y` shares esi with `kind`). */
+/* @zoombi32 0x0044b0fc */
+void fn_44b0fc(short x, short y)
+{
+    Point at;
+    Point *points = cellPoints;
+    short i;
+    short kind;
+
+    if (!g_4b1a3e) {
+        for (i = 0; i < 117; i++) {
+            if (y >= points[i].y - 22 && y <= points[i].y && x >= points[i].x
+                && x <= points[i].x + 45) {
+                g_4b1a3e = 1;
+                kind = 0;
+                g_4b1a36 = i;
+                if (i < 36)
+                    kind = 2;
+                else if (i < 89)
+                    kind = 1;
+                at.x = points[i].x + 19;
+                at.y = points[i].y + 24;
+                if (g_4b1a34)
+                    deleteView(g_4b1a34);
+                g_4b1a34 = addView(0x908000, drawCels, runViewScript, kind + 8000, 6, &at, 0, 0);
+                findView(g_4b1a34)->notify = fn_44af15;
+                if (i % 18)
+                    moveView(g_4b1a34, 0, g_4b1936[7]);
+                else
+                    moveView(g_4b1a34, 0, g_4b1936[i / 18 + 1]);
+                return;
+            }
+        }
+    }
+}

@@ -625,9 +625,11 @@
 0x00446969 findGameData
 0x00446b48 preferFirstFile
 0x00446ffc drawSlidesButton
+0x00447095 drawSlidesButtons
 0x004470b2 fn_4470b2
 0x00447124 closeScene12
 0x004488e8 fn_4488e8
+0x004489a8 fn_4489a8
 0x00448bf5 fn_448bf5
 0x00448c81 fn_448c81
 0x00448d9d fn_448d9d

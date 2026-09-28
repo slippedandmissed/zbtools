@@ -42,5 +42,14 @@ short fn_449a21(short who);
 extern short g_4b2514; /* @data 0x4b2514 */
 void fn_44aa79();
 void fn_448d9d(View *view);
+extern Point cellPoints[117]; /* @data 0x4a3fcc: where each cell is drawn */
+extern short g_4b1a3e; /* @data 0x4b1a3e: a cell is marked */
+extern short g_4b1a36; /* @data 0x4b1a36: the cell marked */
+extern short g_4b1a34; /* @data 0x4b1a34: the marker's view */
+extern short g_4b1936[8]; /* @data 0x4b1936: views, by row */
+void fn_44af15(View *view, short event);
+void drawSlidesButtons(View *);
+void fn_4489a8(View *view, short);
+void fn_44b0fc(short x, short y);
 
 #endif
