@@ -5618,3 +5618,5 @@ extern short g_4a2666[];
 void fn_436c71(short count);
 void fn_438396();
 void fn_438626();
+extern short g_4afc32;
+void fn_4388d8();
