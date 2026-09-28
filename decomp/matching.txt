@@ -302,11 +302,15 @@
 0x004184cd returnToCamp
 0x004196a8 fn_4196a8
 0x00419f1a fn_419f1a
+0x0041d167 fn_41d167
 0x0041d9e4 fn_41d9e4
 0x0041d9eb fn_41d9eb
 0x0041dbab fn_41dbab
 0x0041dccb fn_41dccb
+0x0041dce6 fn_41dce6
+0x0041dd37 fn_41dd37
 0x0041e8f3 fn_41e8f3
+0x0041f195 reportRosterError
 0x0041f514 fn_41f514
 0x0042492b fn_42492b
 0x004249c4 drawButtons

@@ -6124,3 +6124,16 @@ void fn_41dccb();
 void fn_41dbab(View *view, short region);
 void fn_41e8f3(short id, short n);
 void fn_41f514(long, char *name, short *counter);
+extern char *rosterError; /* @data 0x4aba80 */
+extern short g_4ab874;
+extern Point *g_4ab8e4;
+extern short g_4ab9f8;
+extern short g_4a1000;
+extern short g_4a1002;
+extern short g_4aba78[2];
+extern long g_4aba70[2];
+void reportRosterError(const char *message);
+void fn_41d167(short group, short script, ViewNotify notify, char f8);
+void fn_41dd37(volatile short n);
+void fn_41d30b(View *view, short event);
+void fn_41dce6();

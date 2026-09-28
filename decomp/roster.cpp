@@ -70,3 +70,58 @@ void fn_41f514(long, char *name, short *counter)
     sprintf(name + 4, "%04d", (*counter)++);
     name[8] = 0;
 }
+
+/* Reports a roster error. */
+/* @zoombi32 0x0041f195 */
+void reportRosterError(const char *message)
+{
+    char none[48] = "";
+
+    joinText(&rosterError, message, none);
+    reportJoinedError(rosterError);
+    freeText((void **)&rosterError);
+}
+
+/* Starts the view g_4ab874's Snoid on script `script` (by g_4ab8e4,
+   unknownF8 `f8`), in group `group`, with notify `notify` if given. */
+/* @zoombi32 0x0041d167 */
+void fn_41d167(short group, short script, ViewNotify notify, char f8)
+{
+    View *view = findView(g_4ab874);
+
+    if (view) {
+        startSnoidScript((Snoid *)&view->body, script, g_4ab8e4, f8);
+        view->body.group = group;
+        if (notify)
+            view->notify = notify;
+    }
+}
+
+/* Shows frame n (up to g_4a1002) of the view g_4ab9f8 (script g_4a1000
+   on), if it's not running, with notify fn_41d30b. */
+/* @zoombi32 0x0041dd37 */
+void fn_41dd37(volatile short n)
+{
+    View *view = findView(g_4ab9f8);
+
+    if (view && !view->body.running && n <= g_4a1002) {
+        setViewScript(view, g_4a1000 + n, 1);
+        view->notify = fn_41d30b;
+    }
+}
+
+/* Releases the two locked handles (g_4aba78) and their resources
+   (g_4aba70). */
+/* @zoombi32 0x0041dce6 */
+void fn_41dce6()
+{
+    short i;
+
+    for (i = 0; i < 2; i++)
+        if (g_4aba78[i]) {
+            unlockHandle(g_4aba78[i]);
+            fn_46c602(&g_4aba70[i]);
+            g_4aba78[i] = 0;
+            g_4aba70[i] = 0;
+        }
+}
