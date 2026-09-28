@@ -128,5 +128,8 @@ extern short g_4afb90; /* @data 0x4afb90: the target hit bursting (negated until
 void scene20Frame();
 
 void fn_430724();
+extern basePort **g_4afb2c; /* @data 0x4afb2c */
+extern ShortRect g_4a1f7c; /* @data 0x4a1f7c */
+short scene1Key(unsigned short key);
 
 #endif

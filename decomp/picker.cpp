@@ -1700,3 +1700,106 @@ void fn_430724()
         strcpy(userFile, savedUserFile);
     }
 }
+
+/* Scene 1's keys (the map): 1-4 pick the practice level while practising,
+   0x10 starts practice (level 1); with debugging on, + and - change how
+   many Zoombinis to practise with (g_4afb5e, 1-16), T asks for a
+   transition, and a-p then shows it (scene 7). Returns whether the level
+   changed. */
+/* @zoombi32 0x0043041f */
+short scene1Key(unsigned short key)
+{
+    short used;
+    short old;
+    View *view;
+    short i;
+    short id;
+
+    used = 0;
+    if (g_4b8803 && g_4afb16) {
+        unionRgnRect(removedRgn, &debugRect);
+        g_4afb16 = 0;
+        g_4a7e68 = 0;
+        if (key >= 'a' && key <= 'p') {
+            g_4a7e68 = key - 0x60;
+            g_4b0d50 = 7;
+            fn_46be2e(0);
+            closeScene1();
+            return 1;
+        }
+    }
+    switch (key) {
+    case '+':
+        if (!g_4b8803)
+            return 0;
+        g_4afb5e += 2;
+    case '-':
+        if (!g_4b8803)
+            return 0;
+        g_4afb5e--;
+        if (g_4afb5e < 1)
+            g_4afb5e = 1;
+        if (g_4afb5e > 16)
+            g_4afb5e = 16;
+        debugMessage(g_4afb5e, "Snoids to practice with = ", 0, 0, 0);
+        break;
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+        if (!g_4b754a)
+            break;
+    case 0x10:
+        old = g_4b754a;
+        if (key == 0x10) {
+            if (g_4b754a)
+                break;
+            g_4b754a = 1;
+        } else {
+            g_4b754a = key - '0';
+        }
+        if (old == g_4b754a)
+            break;
+        if ((!old && g_4b754a) || (old && !g_4b754a)) {
+            for (i = 0; i < 6; i++)
+                copyPortBits(viewPort, g_4afb18[i]->port, g_4a1f54[i], g_4a1f54[i], 0);
+            fn_43145f(0);
+        }
+        if (g_4b754a) {
+            copyPortBits(viewPort, *g_4afb2c, g_4a1f7c, g_4a1f7c, 0);
+            fn_4312e2(g_4afb4a);
+            view = findView(g_4afb38);
+            if (view) {
+                view->kind = abs(view->kind);
+                view->nextUpdate = 0;
+                setViewScript(view, 0, 1);
+                view->reset = 1;
+            }
+        }
+        for (i = 0; i < 2; i++) {
+            switch (i) {
+            case 0:
+                id = g_4afb3c;
+                break;
+            case 1:
+                id = g_4afb3a;
+                break;
+            }
+            startView(id, 0, 0, 0);
+            view = findView(id);
+            if (view) {
+                view->reset = 1;
+                view->nextUpdate = 0;
+            }
+        }
+        used = 1;
+        break;
+    case 'T':
+        if (g_4b8803 && g_4b754a) {
+            debugMessage(-1, "Which Transition (a-p):", 0, 0, 0);
+            g_4afb16 = 1;
+        }
+        break;
+    }
+    return used;
+}
