@@ -3753,3 +3753,258 @@ void otherClick(short action)
         break;
     }
 }
+
+/* The magnitude of `x`. */
+#define MAGNITUDE(x) ((x) >= 0 ? (x) : -(x))
+
+/*
+ * Drags a piece of the other puzzle: a new piece (unknownC0 0) onto a row
+ * of the board's left edge, lighting up the marker there; the swapping
+ * tool (else) to two squares in turn, whose contents it then swaps.
+ */
+/* body and bank are set and never read; the original keeps both stores,
+   which only `volatile` reproduces. */
+/* @zoombi32 0x0042d9c5 */
+void fn_42d9c5(View *piece, Point where0)
+{
+    short id;
+    short lastRow;
+    Point start;
+    Point where;
+    LillyActor *actor;
+    View *view;
+    View *marker;
+    long unused1;
+    ShortRect cell;
+    ShortRect unused2;
+    ShortRect rect;
+    unsigned long interval;
+    short found;
+    short unused3;
+    ShortRect unused4;
+    ViewBody *volatile body;
+    long unused5;
+    long unused6;
+    ImageBank *volatile bank;
+    short hitColumn;
+    short hitRow;
+    short hit;
+    short cancel;
+    short row;
+    short column;
+
+    g_4af35a = 0;
+    id = piece->id;
+    if ((marker = findView(g_4af33c)) != 0 && (view = removeView(id, 0)) != 0) {
+        view->id = -3;
+        insertViewAtEnd(view);
+        view->flags = 0x980002;
+        interval = view->interval;
+        view->nextUpdate = 0;
+        view->interval = 3;
+        actor = (LillyActor *)&view->body;
+        if (!actor->unknownC0) {
+            cancel = 0;
+            g_4af664 = 1;
+            actor->body.unknownAa = (actor->body.bounds.right - actor->body.bounds.left) / 2 + view->body.cels[0].x;
+            actor->body.unknownAc = (actor->body.bounds.bottom - actor->body.bounds.top) / 2 + view->body.cels[0].y;
+        } else {
+            cancel = 0;
+            g_4af664 = 4;
+            g_4af358 = 4;
+            start.x = 38;
+            start.y = 415;
+        }
+        g_4af344 = 0;
+        g_4af346 = -1;
+        lastRow = -1;
+        if (hideDragCursor)
+            hideCursor();
+        body = &view->body;
+        bank = groupBanks[view->body.scriptGroup];
+        while (g_4af664) {
+            if (!actor->unknownC0)
+                g_4af664 = keepDragging();
+            getCursorPosition(&where);
+            short value = where.x;
+
+            if (value >= gameRect.left && value <= gameRect.right)
+                actor->body.x = value;
+            value = where.y;
+            if (value >= gameRect.top && value <= gameRect.bottom)
+                actor->body.y = value;
+            view->nextUpdate = 0;
+            view->body.running = 1;
+            view->body.frame = 0;
+            view->body.frameOffset = 1;
+            view->changed = 1;
+            if (!actor->unknownC0) {
+                found = 0;
+                for (column = 0; column < placedViewCount; column++)
+                    if (ptInRect(&g_4a1cd8[column], where) && !g_4acff4[column][0].attributes[0]) {
+                        switch (actor->unknownDe) {
+                        case 1:
+                            if (g_4acff4[column][0].attributes[1] == actor->unknownDf)
+                                found = 1;
+                            break;
+                        case 2:
+                            if (g_4acff4[column][0].attributes[2] == actor->unknownDf)
+                                found = 1;
+                            break;
+                        case 3:
+                            if (g_4acff4[column][0].attributes[3] == actor->unknownDf)
+                                found = 1;
+                            break;
+                        }
+                        if (found) {
+                            g_4af346 = column;
+                            marker->body.running = 1;
+                            column = placedViewCount;
+                        }
+                    }
+            } else {
+                short down = isButtonStillDown(2);
+
+                if (!down)
+                    down = isButtonStillDown(g_4b80d0);
+                if (down) {
+                    if (g_4af664 != 4) {
+                        short d;
+
+                        if (!ptInRect(&g_4a1dfc, where)) {
+                            cancel = 1;
+                        } else if (g_4af664 == 2) {
+                            if (ptInRect(&g_4a1e04, where)) {
+                                d = MAGNITUDE(123 - where.x);
+                                if (d * 539 / 100 > where.y - 62)
+                                    cancel = 1;
+                                else
+                                    g_4af664 = 3;
+                            } else if (ptInRect(&g_4a1e0c, where)) {
+                                d = where.x - 509;
+                                if (d * 539 / 100 > MAGNITUDE(where.y - 430))
+                                    cancel = 1;
+                                else
+                                    g_4af664 = 3;
+                            } else {
+                                g_4af664 = 3;
+                            }
+                        } else if (ptInRect(&g_4a1e04, where)) {
+                            d = MAGNITUDE(123 - where.x);
+                            if (d * 539 / 100 > where.y - 62)
+                                cancel = 1;
+                        } else if (ptInRect(&g_4a1e0c, where)) {
+                            d = where.x - 509;
+                            if (d * 539 / 100 > MAGNITUDE(where.y - 430))
+                                cancel = 1;
+                        }
+                    }
+                } else if (g_4af664 == 1 || g_4af664 == 4) {
+                    g_4af664 = 2;
+                }
+                if (g_4af664 == 3 && !cancel && g_4ac922 < 6) {
+                    g_4af664 = 1;
+                    if (g_4af358 == 4 || g_4af358 == 5) {
+                        where.x += 27;
+                        where.y += 22;
+                        for (row = 0, hit = 0; row < 12; row++)
+                            for (column = 0; column < 12; column++) {
+                                cell = g_4acff4[row][column].rect;
+                                cell.top += 4;
+                                cell.left += 4;
+                                cell.right -= 4;
+                                cell.bottom -= 4;
+                                if (ptInRect(&cell, where)) {
+                                    hit = 1;
+                                    hitColumn = column;
+                                    hitRow = row;
+                                    row = 12;
+                                    column = 12;
+                                }
+                            }
+                        if (hit && !g_4acff4[hitRow][hitColumn].attributes[0]) {
+                            switch (g_4af358) {
+                            case 4:
+                                g_4af348 = hitColumn;
+                                g_4af34a = hitRow;
+                                queueViewSound(g_4a1f16++ + 12000, 0);
+                                fn_42e4b6(g_4af33e, g_4af34a, g_4af348);
+                                g_4af358 = 5;
+                                g_4af360 = 1;
+                                break;
+                            case 5:
+                                g_4af34c = hitColumn;
+                                g_4af34e = hitRow;
+                                queueViewSound(g_4a1f16++ + 12000, 0);
+                                fn_42e4b6(g_4af340, g_4af34e, g_4af34c);
+                                g_4af358 = 6;
+                                if (g_4af34c != g_4af348 || g_4af34e != g_4af34a)
+                                    if (++g_4ac926 >= g_4ac924 && g_4ac922 < 6) {
+                                        g_4ac922++;
+                                        g_4ac926 = 0;
+                                        setViewScript(view, g_4ac922 + 10078, 1);
+                                        if (g_4ac922 == 6 && g_4af0ec == g_4af0e8)
+                                            fn_42e6b5();
+                                    }
+                                break;
+                            }
+                            if (g_4a1f16 > 3)
+                                g_4a1f16 = 0;
+                        }
+                    }
+                }
+                if (cancel) {
+                    actor->body.x = start.x;
+                    actor->body.y = start.y;
+                    if (g_4af358 == 5)
+                        fn_42e542(g_4af33e, g_4af34a, g_4af348);
+                    g_4af360 = 0;
+                    g_4af664 = 0;
+                }
+            }
+            if (!found) {
+                if (marker->body.running && lastRow >= 0 && lastRow <= 11) {
+                    marker->body.running = 0;
+                    rect.left = g_4acff4[lastRow][g_4af344].rect.left - 17;
+                    rect.top = g_4acff4[lastRow][g_4af344].rect.top - 14;
+                    rect.right = g_4acff4[lastRow][g_4af344].rect.right - 17;
+                    rect.bottom = g_4acff4[lastRow][g_4af344].rect.bottom - 14;
+                    unionRgnRect(removedRgn, &rect);
+                }
+            } else {
+                if (lastRow != g_4af346 && lastRow >= 0 && lastRow <= 11) {
+                    rect.left = g_4acff4[lastRow][g_4af344].rect.left - 17;
+                    rect.top = g_4acff4[lastRow][g_4af344].rect.top - 14;
+                    rect.right = g_4acff4[lastRow][g_4af344].rect.right - 17;
+                    rect.bottom = g_4acff4[lastRow][g_4af344].rect.bottom - 14;
+                    unionRgnRect(removedRgn, &rect);
+                }
+                lastRow = g_4af346;
+            }
+            if (!cancel)
+                mainLoopEvents();
+            resetViewClock();
+        }
+        if (hideDragCursor)
+            showCursor();
+        if (found) {
+            g_4af35a = g_4af346;
+            *(Point *)&actor->targetX = placedViewPoints[g_4af346];
+            if (marker->body.running) {
+                marker->body.running = 0;
+                rect.left = g_4acff4[g_4af346][g_4af344].rect.left - 17;
+                rect.top = g_4acff4[g_4af346][g_4af344].rect.top - 14;
+                rect.right = g_4acff4[g_4af346][g_4af344].rect.right - 17;
+                rect.bottom = g_4acff4[g_4af346][g_4af344].rect.bottom - 14;
+                unionRgnRect(removedRgn, &rect);
+                mainLoopEvents();
+            }
+        } else {
+            g_4af346 = -1;
+            g_4af35a = -1;
+        }
+        view->id = id;
+        view->interval = interval;
+        discardEvents(3);
+    }
+}

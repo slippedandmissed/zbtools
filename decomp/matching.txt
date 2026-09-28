@@ -370,6 +370,7 @@
 0x0042d6e9 turnGrid
 0x0042d875 mirrorGrid
 0x0042d996 freeLockedResource
+0x0042d9c5 fn_42d9c5
 0x0042e4b6 fn_42e4b6
 0x0042e542 fn_42e542
 0x0042e693 fn_42e693
