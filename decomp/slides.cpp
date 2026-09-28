@@ -1254,3 +1254,31 @@ void fn_44a674(short from, short via, short to)
         }
     }
 }
+
+/* Seats the next two Zoombinis of the party (g_4b2430) on `cell` and the
+   cell five on (state 507), then from each places more two cells on
+   (fn_449cfc), turning (directions 8 and 9, 6 and 7). */
+/* @zoombi32 0x0044abce */
+void fn_44abce(short cell)
+{
+    short i;
+
+    for (i = 0; i < g_4b2414; i++)
+        if (g_4b2430[i] != -1) {
+            g_4b1aea[cell].state = 507;
+            g_4b1aea[cell].snoid = partyViews[g_4b2430[i]];
+            g_4b2430[i] = -1;
+            break;
+        }
+    for (i = 0; i < g_4b2414; i++)
+        if (g_4b2430[i] != -1) {
+            g_4b1aea[cell + 5].state = 507;
+            g_4b1aea[cell + 5].snoid = partyViews[g_4b2430[i]];
+            g_4b2430[i] = -1;
+            break;
+        }
+    if (g_4b1aea[cell].state == 507 && fn_449cfc(cell, 8) != -1)
+        fn_449cfc(cell, 9);
+    if (g_4b1aea[cell + 5].state == 507 && fn_449cfc(cell + 5, 6) != -1)
+        fn_449cfc(cell + 5, 7);
+}
