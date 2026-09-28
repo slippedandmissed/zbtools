@@ -767,3 +767,56 @@ void fn_43fc9a(View *, short region)
         unionRgnRect(region, &g_4a2efc[22].rect);
     }
 }
+
+/* Sends a Zoombini's marker flying from its place (g_4a2b7e, or g_4a2be2
+   at the higher levels) to (484, 318) in six steps (fn_43e5a7), unless one
+   is flying already. */
+/* @zoombi32 0x0043e435 */
+void fn_43e435(short n)
+{
+    short scripts[3] = {1, 0, 2};
+
+    if (!g_4b1456) {
+        g_4b119e = n;
+        g_4b1456++;
+        if (g_4b12ac <= 1) {
+            g_4b1452 = g_4a2b7e[n].x;
+            g_4b1454 = g_4a2b7e[n].y;
+        } else {
+            g_4b1452 = g_4a2be2[n].x;
+            g_4b1454 = g_4a2be2[n].y;
+        }
+        g_4b117e = (484 - g_4b1452) / 6;
+        g_4b1180 = (318 - g_4b1454) / 6;
+        g_4b1452 = 484;
+        g_4b1454 = 318;
+        g_4b13ca++;
+        g_4b13cc[g_4b13ca] = addView(0x4100000, drawCels, fn_43e5a7, scripts[g_4a2e58] + 7020, 6, 0, 0, 0);
+        View *view = findView(g_4b13cc[g_4b13ca]);
+
+        if (view) {
+            view->unknown1e = n;
+            g_4b1450++;
+            view->placed = fn_43d70d;
+            view->interval = 3;
+            moveView(g_4b13cc[g_4b13ca], 0, g_4b12b6);
+        }
+    }
+}
+
+/* The flying marker's update: steps it on (g_4b1452/4 by g_4b117e/80),
+   and after five steps (or when the game says) lands it (fn_43da30). */
+/* @zoombi32 0x0043e5a7 */
+void fn_43e5a7(View *view, short region)
+{
+    if (++g_4b1456 > 5 || *(short *)(g_4a4ba0 + 0x20)) {
+        g_4b1456 = 0;
+        view->update = runViewScript;
+        fn_43da30(view->unknown1e);
+    } else {
+        g_4b1452 -= g_4b117e;
+        g_4b1454 -= g_4b1180;
+    }
+    runViewCels(view, region);
+    waitForEventFor(0, 2, 0, 1);
+}
