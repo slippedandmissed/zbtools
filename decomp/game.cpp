@@ -1126,10 +1126,10 @@ void fn_4514f6()
     if (view) {
         view->flags = 0x5188000;
         if (g_4b2630 == 1 || g_4b2630 == 2) {
-            setViewScript(view, g_4b2724, 0);
+            setViewScript(view, g_4b2724[0], 0);
         } else {
             g_4b2742 = !g_4b2742;
-            setViewScript(view, g_4b2726, 0);
+            setViewScript(view, g_4b2724[1], 0);
         }
     }
     first = findView(g_4b258c);
@@ -2381,7 +2381,7 @@ void fn_45174e(View *view, short event)
         if (other) {
             moveView(g_4b25a6, 1, g_4b25a4);
             other->flags = 0x4108000;
-            setViewScript(other, g_4b2726, 1);
+            setViewScript(other, g_4b2724[1], 1);
             other->notify = fn_45174e;
         }
         break;
@@ -2415,7 +2415,7 @@ void fn_45174e(View *view, short event)
             other = findView(g_4b25a4);
             if (other) {
                 other->flags = 0x4108000;
-                setViewScript(other, g_4b2726, 1);
+                setViewScript(other, g_4b2724[1], 1);
                 other->notify = fn_45174e;
                 ViewBody *body = &other->body;
 
@@ -2425,7 +2425,7 @@ void fn_45174e(View *view, short event)
             other = findView(g_4b25a6);
             if (other) {
                 other->flags = 0x4108000;
-                setViewScript(other, g_4b2726, 1);
+                setViewScript(other, g_4b2724[1], 1);
                 other->notify = fn_45174e;
                 ViewBody *body = &other->body;
 
@@ -3161,4 +3161,267 @@ short fn_4507e0()
         break;
     }
     return 2;
+}
+
+/*
+ * Opens the scene: resets its state, picks the level (from sceneLevel, 1-4)
+ * and its scripts, opens Smoke.MHK, adds its views and the Zoombinis'
+ * views, takes the features of the Zoombini (levels 1 and 2: the one picked
+ * at random) or two (levels 3 and 4) of the party that the puzzle is built
+ * from, sets the last two of the party walking in, and starts the
+ * opening scripts and sounds.
+ */
+/* @zoombi32 0x0044e494 */
+void fn_44e494()
+{
+    short *scripts = g_4b2714;
+    short *others = g_4b2724;
+    short pick;
+    short count;
+    short i;
+    short j;
+    View *view;
+    View *other;
+
+    g_4b0d52 = 0;
+    g_4b2790 = 0;
+    g_4b2792 = 0;
+    g_4b2788 = 0;
+    g_4b26b0 = 0;
+    g_4b26b2 = 0;
+    g_4b266e = 1;
+    g_4b2754 = 2;
+    g_4b262e = 0;
+    g_4b26b4 = 0;
+    g_4b26b6 = 0;
+    g_4b2664 = 0;
+    g_4b2666 = 0;
+    g_4b2668 = 0;
+    g_4b266c = 0;
+    g_4b2734 = 0;
+    g_4b2742 = 0;
+    g_4b2744 = 3;
+    g_4b264c = 0;
+    g_4b2670 = 0;
+    g_4b273c = 0;
+    g_4b2736 = 0;
+    g_4b2738 = 0;
+    g_4b2746 = 0;
+    g_4b2748 = 0;
+    g_4b274a = 0;
+    g_4b274c = 0;
+    g_4b273a = 0;
+    g_4b2750 = 0;
+    g_4b966e = 0;
+    g_4b2798 = 0;
+    g_4b2764 = 0;
+    g_4b2758 = 0;
+    g_4b275c = 0;
+    g_4b2760 = 0;
+    g_4b2762 = 0;
+    g_4b274e = g_4b87fe;
+    g_4b87fe = 0;
+    g_4b2794 = g_4a47cc;
+    for (i = 0; i < 8; i++)
+        g_4b2768[i] = i;
+    fillMemory(&g_4b2776[1], 0, 12);
+    fillMemory(&g_4b258a, 0, 42);
+    fillMemory(g_4b25b4, 0, 40);
+    fillMemory(g_4b25dc, 0, 40);
+    fillMemory(g_4b2604, 0, 42);
+    fillMemory(g_4b26ba, 0, 18);
+    g_4b2630 = sceneLevel() + 1;
+    if (g_4b2630 > 4)
+        g_4b2630 = 4;
+    g_4b273e = 0;
+    g_4b2740 = 0;
+    if (g_4b2630 == 1 || g_4b2630 == 2) {
+        scripts[0] = 11024;
+        scripts[1] = 11025;
+        scripts[2] = 11026;
+        scripts[3] = 11027;
+        g_4b271c[0] = 11999;
+        g_4b271c[1] = 12004;
+        others[0] = 11032;
+        others[1] = 0;
+        others[2] = 0;
+        g_4b272a = 0;
+        g_4b272c = 0;
+        g_4b272e = 0;
+    } else {
+        scripts[0] = 11028;
+        scripts[1] = 11029;
+        scripts[2] = 11030;
+        scripts[3] = 11031;
+        g_4b271c[0] = 12009;
+        g_4b271c[1] = 12014;
+        others[0] = 11033;
+        others[1] = 11034;
+        others[2] = 11035;
+        g_4b272a = 12038;
+        g_4b272c = 12039;
+        g_4b272e = 12040;
+    }
+    if (g_4b2630 != 4) {
+        g_4b2730 = 11013;
+        g_4b2732 = 0;
+    } else {
+        g_4b2730 = 11011;
+        g_4b2732 = 11012;
+    }
+    openGameFile(&g_4b278c, "Smoke.MHK");
+    fn_46be2e(g_4b278c);
+    loadTerrain(100);
+    drawBackdrop(5000);
+    loadFeatureGroup(11000, 0, 0);
+    loadScripts(11000, 78);
+    loadSnoidScripts(11999, 1, 0);
+    addSnoidScripts(12000, 50, 0);
+    loadShape(&g_4a47c8, 6000, "Map/Go Buttons");
+    g_4b2594 = addView(0x4188000, drawCels, runViewScript, g_4b2730, 10, 0, 0, 0);
+    if (g_4b2630 == 1 || g_4b2630 == 2)
+        g_4b2588 = addView(0x5188000, drawCels, runViewScript, 11076, 10, 0, 0, 0);
+    g_4b25a8 = addView(0x5188000, drawCels, runViewScript, 11006, 10, 0, 0, 0);
+    g_4b25aa = addView(0x5188000, drawCels, runViewScript, 11007, 10, 0, 0, 0);
+    g_4b258c = addView(0x5188000, drawCels, runViewScript, scripts[g_4b273e], 6, 0, 0, 0);
+    g_4b25a4 = addView(0x4108000, drawCels, runViewScript, others[0], 6, 0, 0, 0);
+    if (g_4b2630 == 3 || g_4b2630 == 4)
+        g_4b25a6 = addView(0x4108000, drawCels, runViewScript, others[1], 6, 0, 0, 0);
+    {
+        View *added = findView(g_4b25a4);
+
+        if (added)
+            added->notify = fn_45174e;
+    }
+    g_4b258e = addView(0xd180000, drawCels, runViewScript, scripts[g_4b273e + 1], 6, 0, 0, 0);
+    g_4b2590 = addView(0x5180000, drawCels, runViewScript, 11018, 6, 0, 0, 0);
+    g_4b2592 = addView(0xd180000, drawCels, runViewScript, 11019, 6, 0, 0, 0);
+    g_4b258a = addView(0x4000000, drawCels, runViewScript, 11009, 6, 0, 0, 0);
+    g_4b25ac = addView(0x5180000, drawCels, runViewScript, 11036, 6, 0, 0, 0);
+    g_4b25ae = addView(0x4100000, drawCels, runViewScript, 11008, 0, 0, 0, 0);
+    g_4b25b0 = addView(0x4180000, drawCels, runViewScript, 11002, 5, 0, 0, 0);
+    g_4b2598 = addView(0x4100000, drawCels, runViewScript, 11077, 0, 0, 0, 0);
+    addView(0x1000, fn_44f163, fn_44f180, 0, 0, 0, 0, 0);
+    g_4b2634 = loadImageBank(10000, &g_4b2638);
+    g_4b2658 = loadShortTable(10000, &g_4b2650);
+    g_4b265c = loadShortTable(10001, &g_4b2654);
+    setViewPlaces(20, g_4a47ec, 1);
+    makePartySnoids(0);
+    g_4b2660 = 0;
+    g_4b2662 = 1;
+    g_4b2664 = 0;
+    g_4b2666 = 0;
+    g_4b2668 = 0;
+    g_4b262e = listChosenSnoids()->count;
+    count = 0;
+    if (g_4b262e > 0) {
+        j = 0;
+        i = 0;
+        pick = randomBetween(0, g_4b262e - 1);
+        for (view = viewListEnd(1); view; view = view->next)
+            if (view->flags == 1) {
+                g_4b2604[i] = view->id;
+                i++;
+                Snoid *snoid = (Snoid *)&view->body;
+
+                if (g_4b2630 < 3) {
+                    if (!pick) {
+                        g_4b263c[j * 4] = snoid->features[0];
+                        g_4b263c[j * 4 + 1] = snoid->features[1];
+                        g_4b263c[j * 4 + 2] = snoid->features[2];
+                        g_4b263c[j * 4 + 3] = snoid->features[3];
+                    }
+                    pick--;
+                    count++;
+                    if (count == g_4b262e - 1 || count == g_4b262e) {
+                        snoid = (Snoid *)&view->body;
+                        snoid->unknownF1 = 0;
+                        setSnoidAction((Snoid *)&view->body, 7, 0);
+                        view->body.y = 79;
+                        ((Snoid *)&view->body)->targetY = 79;
+                        if (count == g_4b262e) {
+                            view->body.x = 45;
+                            ((Snoid *)&view->body)->targetX = 160;
+                        } else {
+                            view->body.x = 110;
+                            ((Snoid *)&view->body)->targetX = 200;
+                        }
+                    }
+                } else {
+                    view->body.running = 0;
+                    if (j < 2) {
+                        g_4b263c[j * 4] = snoid->features[0];
+                        g_4b263c[j * 4 + 1] = snoid->features[1];
+                        g_4b263c[j * 4 + 2] = snoid->features[2];
+                        g_4b263c[j * 4 + 3] = snoid->features[3];
+                        j++;
+                    }
+                }
+            }
+        fn_4527be(g_4b2630);
+    }
+    if (g_4b2630 < 3)
+        g_4b80f6 = addView(0x108a000, drawCels, runViewScript, 11001, 7, &g_4a44b4, 0, 0);
+    fadeOutViews();
+    fn_4148da(10, 236);
+    updateViews();
+    fn_4148da(10, 236);
+    setGroupLists(&g_4a47a8, 1, -0x4000);
+    fn_44f066(1, 0, 0);
+    fn_44f066(2, 0, 0);
+    g_4b87fe = g_4b274e;
+    g_4b2644 = 0;
+    view = findView(g_4b258c);
+    setViewScript(view, 11015, 1);
+    loadViewSounds(view->id, 1);
+    view->notify = fn_45174e;
+    other = findView(g_4b258e);
+    setViewScript(other, 11016, 1);
+    other->notify = fn_45174e;
+    groupViews(view->id, other->id, 0, 0, 0, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    chooseSnoids(0, 0);
+    resetViewClock();
+    g_4b2790 = 1;
+    addSoundRange(996, 997, 0);
+    addSoundRange(20000, 29999, 1);
+    if (g_4b2630 != 3) {
+        addSoundRange(11008, 11009, 0);
+        addSoundRange(11001, 11001, 0);
+        addSoundRange(11013, 11013, 0);
+        addSoundRange(11016, 11016, 0);
+        addSoundRange(125, 149, 0);
+        addSoundRange(450, 474, 0);
+        addSoundRange(11011, 11012, 0);
+        addSoundRange(11014, 11015, 0);
+        addSoundRange(11010, 11010, 0);
+        addSoundRange(11002, 11004, 0);
+        addSoundRange(11007, 11007, 0);
+        addSoundRange(11006, 11006, 0);
+        addSoundRange(11005, 11005, 0);
+        addSoundRange(11000, 11000, 0);
+    } else {
+        addSoundRange(11017, 11017, 0);
+        addSoundRange(11001, 11001, 0);
+        addSoundRange(11013, 11013, 0);
+        addSoundRange(11016, 11016, 0);
+        addSoundRange(125, 149, 0);
+        addSoundRange(450, 474, 0);
+        addSoundRange(11011, 11012, 0);
+        addSoundRange(11014, 11015, 0);
+        addSoundRange(11010, 11010, 0);
+        addSoundRange(11002, 11004, 0);
+        addSoundRange(11007, 11007, 0);
+        addSoundRange(11006, 11006, 0);
+        addSoundRange(11005, 11005, 0);
+        addSoundRange(11000, 11000, 0);
+    }
+    queueViewSound(sceneLevel() + 30030, 0);
+    campHint((short *)(g_4a4ba0 + 0x42));
+    g_4b966e = randomBetween(20066, 20067);
+    if (g_4b2630 == 3 || g_4b2630 == 4) {
+        g_4b2752 = 1;
+        fn_45062d(11003);
+    }
 }
