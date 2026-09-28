@@ -307,6 +307,7 @@
 0x0041d167 fn_41d167
 0x0041d1b1 fn_41d1b1
 0x0041d30b fn_41d30b
+0x0041d3f4 rosterClicked
 0x0041d80e fn_41d80e
 0x0041d8bc drawRosterButton
 0x0041d955 drawRosterButtonsView

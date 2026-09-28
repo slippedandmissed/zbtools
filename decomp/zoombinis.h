@@ -6231,8 +6231,18 @@ extern Point g_4a115c[20]; /* @data 0x4a115c: the chosen Zoombinis' spots on the
 extern short g_4a101c; /* @data 0x4a101c */
 extern short g_4a1016; /* @data 0x4a1016 */
 extern short g_4a0fea; /* @data 0x4a0fea */
-extern short g_4ab96a; /* @data 0x4ab96a */
+extern short g_4ab96a[21]; /* @data 0x4ab96a: views, by place */
 void fn_41e0e3();
 void fn_41ec69();
 void fn_41eb43();
 void fn_41e920(short feature);
+extern Point g_4a10a8[21]; /* @data 0x4a10a8 */
+extern ShortRect g_4a10fc[12]; /* @data 0x4a10fc: the places' areas */
+extern short g_4a11b4[21]; /* @data 0x4a11b4 */
+extern short g_4a11de[21]; /* @data 0x4a11de */
+extern short g_4ab996[20]; /* @data 0x4ab996: g_4ab9be of them */
+extern short g_4ab9be; /* @data 0x4ab9be */
+extern short g_4aba08; /* @data 0x4aba08 */
+extern short g_4ab876; /* @data 0x4ab876 */
+extern Point *g_4ab8e8; /* @data 0x4ab8e8 */
+void rosterClicked(short which);

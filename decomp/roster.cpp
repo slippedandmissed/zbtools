@@ -1019,7 +1019,7 @@ void fn_41ec69()
         g_4b83e4[i - 1] = 0;
     }
     for (i = 0; i < g_4a1016; i++)
-        g_4b83e4[i] = g_4ab96a;
+        g_4b83e4[i] = g_4ab96a[0];
     fn_41eaf1();
     g_4a0fea = 0;
     g_4a0fe8 = 0;
@@ -1080,7 +1080,7 @@ void fn_41eb43()
         else
             g_4b83e4[i] = 0;
     for (i = 0; i < g_4a1016; i++)
-        g_4b83e4[i] = g_4ab96a;
+        g_4b83e4[i] = g_4ab96a[0];
     chooseSnoids(1, 0);
     unionRgnRect(removedRgn, &gameRect);
     mainLoopEvents();
@@ -1136,12 +1136,134 @@ void fn_41e920(short feature)
         else
             g_4b83e4[i - 1] = 0;
     for (i = 0; i < g_4a1016; i++)
-        g_4b83e4[i] = g_4ab96a;
+        g_4b83e4[i] = g_4ab96a[0];
     fn_41e326(g_4ab878);
     view = findView(g_4a101c);
     if (view)
         view->reset = 1;
     unionRgnRect(removedRgn, &rosterButtons[0].rect);
+}
+
+/* The roster screen's clicks: button 1 asks whether to keep the party,
+   button 2 (once any Zoombini is placed) goes on; otherwise a Zoombini
+   not yet placed is dragged to a place (walked to the right one if it
+   doesn't belong there) or, dropped outside the places, walked back. A
+   click after one of the buttons (g_4b0d52) leaves the screen. */
+/* @zoombi32 0x0041d3f4 */
+void rosterClicked(short which)
+{
+    Point where;
+    Point from;
+    View *view;
+    Snoid *snoid;
+    short free;
+    short found;
+    short i;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeRoster();
+        return;
+    }
+    view = 0;
+    getCursorPosition(&where);
+    switch (which) {
+    case 1:
+        queueViewSound(999, 0);
+        drawRosterButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawRosterButton(which, 0, 1);
+        g_4b755c = 1;
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (g_4a0fe8) {
+            if (!g_4ab872) {
+                g_4ab870 = 1;
+                g_4a0ff0 = 1;
+            }
+            drawRosterButton(which, 1, 1);
+            waitForEventFor(0, 2, 0, 1);
+            drawRosterButton(which, 0, 1);
+            markPlacedSnoids();
+            g_4b0d52 = 17;
+        }
+        break;
+    case 3:
+        if (!view)
+            view = viewAt(where, 1, 1);
+        if (view) {
+            free = 1;
+            for (i = 1; i < 21; i++)
+                if (g_4ab8ec[i] == view->id)
+                    free = 0;
+            if (free == 1 && !g_4a0ff0 && g_4b755a <= 0) {
+                from = *(Point *)&view->body.x;
+                dragSnoid(view, where, 0, 0);
+                g_4a1010 = heldPlaceNumber();
+                if (g_4a1010) {
+                    snoid = viewSnoid(view);
+                    snoid->unknownF7 = 1;
+                    view->flags = 0x4008001;
+                    if ((g_4a1012 = fn_41e771(view->id, g_4a1010)) == g_4a1010) {
+                        g_4ab8ec[g_4a1010] = view->id;
+                        snoid->unknownF1 = g_4a11b4[g_4a1010];
+                        snoid->unknownF2 = g_4a11de[g_4a1010];
+                        g_4a100e++;
+                        g_4ab874 = 0;
+                        if (g_4a100e == 1) {
+                            g_4a0fe8 = 1;
+                            unionRgnRect(removedRgn, &rosterButtons[1].rect);
+                            g_4ab996[g_4ab9be] = view->id;
+                            g_4ab9be++;
+                            g_4ab8e8 = &g_4a10a8[g_4a1010];
+                        } else if (g_4a100e == g_4a1014) {
+                            g_4aba08 = 1;
+                            g_4a0ff0 = 1;
+                            queueViewSound(randomBetween(20055, 20063), 0);
+                        } else {
+                            g_4ab996[g_4ab9be] = view->id;
+                            g_4ab9be++;
+                            g_4ab8e8 = &g_4a10a8[g_4a1010];
+                        }
+                        moveView(view->id, 1, g_4ab9c4[g_4a1010]);
+                    } else {
+                        g_4ab8ec[g_4a1012] = view->id;
+                        g_4ab9c2 = view->id;
+                        g_4ab8da = g_4ab96a[g_4a1010];
+                        g_4ab8dc = g_4ab96a[g_4a1012];
+                        g_4a100e++;
+                        g_4a0ff0 = 1;
+                        g_4ab876 = 1;
+                        releaseHeldPlace();
+                        if (g_4a100e == 1) {
+                            g_4a0fe8 = 1;
+                            unionRgnRect(removedRgn, &rosterButtons[1].rect);
+                        } else if (g_4a100e == g_4a1014) {
+                            queueViewSound(randomBetween(20055, 20063), 0);
+                        }
+                    }
+                } else {
+                    for (i = 0, found = 0; i < 12; i++)
+                        if (ptInRect(&g_4a10fc[i], *(Point *)&view->body.x)) {
+                            found = i;
+                            i = 12;
+                        }
+                    if (!found) {
+                        g_4a0ff0 = 1;
+                        g_4ab9c2 = view->id;
+                        g_4aba14[g_4aba64] = from;
+                        g_4aba64++;
+                        fn_41cf14(2);
+                    }
+                }
+            }
+        }
+        break;
+    }
 }
 
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to
