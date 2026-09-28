@@ -2476,3 +2476,334 @@ void fn_45174e(View *view, short event)
         break;
     }
 }
+
+/*
+ * Makes the scene's puzzle (with n 1) and gives the Zoombini for row n its
+ * features. The rows (g_4b27ca, with the second set in g_4b2812) are built
+ * from the features set in g_4b263c: rows 1 and 2 change one or two
+ * features at random, rows 3 and 4 (at g_4b2630 3 and 4) follow on from
+ * them, row 7 (and 8, for the second set) from rows 3 and 4, and rows 5
+ * and 6 differ by level. g_4b285a marks the features a row changes; the
+ * Zoombini's first such feature is the one it changes (unknownF5).
+ */
+/* @zoombi32 0x00452d5d */
+void fn_452d5d(Snoid *snoid, short n)
+{
+    short pick;
+    short last;
+    short once;
+    short count;
+    short chosen;
+    short limit;
+    short row2;
+    short values[8];
+    short i;
+    short row;
+    short j;
+
+    if (n == 1) {
+        for (j = 0; j < 9; j++) {
+            g_4b27ca[j][0] = 0;
+            g_4b27ca[j][1] = 0;
+            g_4b27ca[j][2] = 0;
+            g_4b27ca[j][3] = 0;
+            g_4b2812[j][0] = 0;
+            g_4b2812[j][1] = 0;
+            g_4b2812[j][2] = 0;
+            g_4b2812[j][3] = 0;
+            g_4b285a[j][0] = 0;
+            g_4b285a[j][1] = 0;
+            g_4b285a[j][2] = 0;
+            g_4b285a[j][3] = 0;
+        }
+        g_4b28b2[0] = 0;
+        g_4b28b2[1] = 0;
+        g_4b28b2[2] = 0;
+        g_4b28b2[3] = 0;
+        g_4b28ba[0] = 0;
+        g_4b28ba[1] = 0;
+        g_4b28ba[2] = 0;
+        g_4b28ba[3] = 0;
+        g_4b27ca[0][0] = g_4b263c[0];
+        g_4b27ca[0][1] = g_4b263c[1];
+        g_4b27ca[0][2] = g_4b263c[2];
+        g_4b27ca[0][3] = g_4b263c[3];
+        g_4b28a2[0] = g_4b263c[0];
+        g_4b28a2[1] = g_4b263c[1];
+        g_4b28a2[2] = g_4b263c[2];
+        g_4b28a2[3] = g_4b263c[3];
+        g_4b2812[0][0] = g_4b263c[4];
+        g_4b2812[0][1] = g_4b263c[5];
+        g_4b2812[0][2] = g_4b263c[6];
+        g_4b2812[0][3] = g_4b263c[7];
+        g_4b28aa[0] = g_4b263c[4];
+        g_4b28aa[1] = g_4b263c[5];
+        g_4b28aa[2] = g_4b263c[6];
+        g_4b28aa[3] = g_4b263c[7];
+        for (row = 1; row < 3; row++) {
+            for (j = 0; j < 8; j++)
+                values[j] = j;
+            count = 0;
+            once = 0;
+            last = 5;
+            chosen = randomBetween(0, 4);
+            for (i = 0; i < 4; i++)
+                if (count < 2) {
+                    pick = randomBetween(1, last);
+                    if (i == chosen && randomBetween(0, 100) > 70 && !once) {
+                        once = 1;
+                        if (!g_4b28a2[i])
+                            g_4b27ca[row][i] = g_4b263c[i] + 1;
+                        else
+                            g_4b27ca[row][i] = g_4b28a2[i] + 1;
+                        if (g_4b27ca[row][i] > 5)
+                            g_4b27ca[row][i] = 1;
+                        if (!g_4b28aa[i])
+                            g_4b27ca[row][i] = g_4b263c[i + 4] + 1; /* sic: not g_4b2812 */
+                        else
+                            g_4b2812[row][i] = g_4b28aa[i] + 1;
+                        if (g_4b2812[row][i] > 5)
+                            g_4b2812[row][i] = 1;
+                        g_4b285a[row][i] = g_4b27ca[row][i];
+                    } else if (randomBetween(0, 100) > 40 || i == 3 && count == 0) {
+                        g_4b27ca[row][i] = values[pick];
+                        g_4b2812[row][i] = values[pick];
+                        g_4b285a[row][i] = 0;
+                    }
+                    if (g_4b27ca[row][i]) {
+                        g_4b28a2[i] = g_4b27ca[row][i];
+                        g_4b28aa[i] = g_4b2812[row][i];
+                        count++;
+                        for (j = pick; j < last + 1; j++)
+                            values[j] = values[j + 1];
+                        last--;
+                    }
+                }
+        }
+        limit = 2;
+        if (g_4b2630 == 4 || g_4b2630 == 3) {
+            g_4b28b2[0] = g_4b28a2[0];
+            g_4b28b2[1] = g_4b28a2[1];
+            g_4b28b2[2] = g_4b28a2[2];
+            g_4b28b2[3] = g_4b28a2[3];
+            g_4b28ba[0] = g_4b28aa[0];
+            g_4b28ba[1] = g_4b28aa[1];
+            g_4b28ba[2] = g_4b28aa[2];
+            g_4b28ba[3] = g_4b28aa[3];
+            for (row = 3; row < 5; row++) {
+                for (j = 0; j < 8; j++)
+                    values[j] = j;
+                count = 0;
+                once = 0;
+                last = 5;
+                randomBetween(0, 4);
+                for (i = 0; i < 4; i++)
+                    if (count < limit) {
+                        pick = randomBetween(1, last);
+                        if ((randomBetween(0, 100) > 70 || i == 3 && count == 0) && !once) {
+                            once = 1;
+                            if (row == 3) {
+                                if (g_4b28b2[i]) {
+                                    g_4b27ca[row][i] = g_4b28b2[i];
+                                    g_4b2812[row][i] = g_4b28ba[i];
+                                } else {
+                                    g_4b27ca[row][i] = g_4b263c[i];
+                                    g_4b2812[row][i] = g_4b263c[i + 4];
+                                }
+                            } else if (g_4b285a[row - 1][i]) {
+                                g_4b27ca[row][i] = g_4b28b2[i] - 1;
+                                if (g_4b27ca[row][i] < 1)
+                                    g_4b27ca[row][i] = 5;
+                                g_4b2812[row][i] = g_4b28ba[i] - 1;
+                                if (g_4b2812[row][i] < 1)
+                                    g_4b2812[row][i] = 5;
+                            } else if (g_4b27ca[row - 1][i]) {
+                                g_4b27ca[row][i] = values[pick];
+                                g_4b2812[row][i] = values[pick];
+                            } else if (g_4b28b2[i]) {
+                                g_4b27ca[row][i] = g_4b28b2[i];
+                                g_4b2812[row][i] = g_4b28ba[i];
+                            } else {
+                                g_4b27ca[row][i] = g_4b263c[i];
+                                g_4b2812[row][i] = g_4b263c[i + 4];
+                            }
+                            g_4b285a[row][i] = g_4b27ca[row][i];
+                        } else if (row == 3) {
+                            if (!g_4b285a[2][i] && g_4b27ca[2][i]) {
+                                g_4b27ca[row][i] = g_4b28b2[i];
+                                g_4b2812[row][i] = g_4b28ba[i];
+                            } else if (!g_4b285a[1][i] && g_4b27ca[1][i]) {
+                                g_4b27ca[row][i] = g_4b28b2[i];
+                                g_4b2812[row][i] = g_4b28ba[i];
+                            } else {
+                                g_4b27ca[row][i] = 0;
+                                g_4b2812[row][i] = 0;
+                            }
+                            g_4b285a[row][i] = 0;
+                        } else if (g_4b285a[row - 1][i]) {
+                            if (!once) {
+                                g_4b27ca[row][i] = g_4b28b2[i] - 1;
+                                if (g_4b27ca[row][i] < 1)
+                                    g_4b27ca[row][i] = 5;
+                                g_4b2812[row][i] = g_4b28ba[i] - 1;
+                                if (g_4b2812[row][i] < 1)
+                                    g_4b2812[row][i] = 5;
+                                once = 1;
+                                g_4b285a[row][i] = g_4b27ca[row][i];
+                            } else {
+                                g_4b285a[row][i] = 0;
+                            }
+                        } else if (g_4b27ca[row - 1][i]) {
+                            g_4b27ca[row][i] = values[pick];
+                            g_4b2812[row][i] = values[pick];
+                            g_4b285a[row][i] = 0;
+                        } else if (!g_4b285a[2][i] && g_4b27ca[2][i] || !g_4b285a[1][i] && g_4b27ca[1][i]) {
+                            g_4b27ca[row][i] = g_4b28b2[i];
+                            g_4b2812[row][i] = g_4b28ba[i];
+                            g_4b285a[row][i] = 0;
+                        } else {
+                            g_4b27ca[row][i] = 0;
+                            g_4b2812[row][i] = 0;
+                            g_4b285a[row][i] = 0;
+                        }
+                        if (g_4b27ca[row][i]) {
+                            g_4b28b2[i] = g_4b27ca[row][i];
+                            g_4b28ba[i] = g_4b2812[row][i];
+                            count++;
+                            for (j = pick; j < last + 1; j++)
+                                values[j] = values[j + 1];
+                            last--;
+                        }
+                    }
+            }
+        }
+        row = 7;
+        for (i = 0; i < 4; i++)
+            if (g_4b285a[4][i]) {
+                g_4b27ca[row][i] = g_4b27ca[4][i] - 1;
+                if (g_4b27ca[row][i] < 1)
+                    g_4b27ca[row][i] = 5;
+            } else if (g_4b27ca[4][i]) {
+                g_4b27ca[row][i] = randomBetween(1, 5);
+            } else if (g_4b285a[3][i]) {
+                g_4b27ca[row][i] = g_4b27ca[3][i] - 1;
+                if (g_4b27ca[row][i] < 1)
+                    g_4b27ca[row][i] = 5;
+            } else if (g_4b27ca[3][i]) {
+                g_4b27ca[row][i] = randomBetween(1, 5);
+            } else {
+                g_4b27ca[row][i] = g_4b28b2[i];
+            }
+        if (g_4b263c[4]) {
+            row = 8;
+            for (i = 0; i < 4; i++)
+                if (g_4b285a[4][i]) {
+                    g_4b2812[row][i] = g_4b2812[4][i] - 1;
+                    if (g_4b2812[row][i] < 1)
+                        g_4b2812[row][i] = 5;
+                } else if (g_4b2812[4][i]) {
+                    g_4b2812[row][i] = randomBetween(1, 5);
+                } else if (g_4b285a[3][i]) {
+                    g_4b2812[row][i] = g_4b2812[3][i] - 1;
+                    if (g_4b2812[row][i] < 1)
+                        g_4b2812[row][i] = 5;
+                } else if (g_4b2812[3][i]) {
+                    g_4b2812[row][i] = randomBetween(1, 5);
+                } else {
+                    g_4b2812[row][i] = g_4b28ba[i];
+                }
+        }
+        if (g_4b2630 == 3) {
+            for (row = 5; row < 7; row++) {
+                for (j = 0; j < 8; j++)
+                    values[j] = j;
+                count = 0;
+                last = 5;
+                chosen = randomBetween(0, 3);
+                for (i = 0; i < 4; i++)
+                    if (count < 2) {
+                        pick = randomBetween(1, last);
+                        if (i == chosen && randomBetween(0, 100) > 70) {
+                            g_4b27ca[row][i] = values[pick];
+                            g_4b285a[row][i] = values[pick];
+                        } else if (randomBetween(0, 100) > 40 || i == 3 && count == 0) {
+                            g_4b27ca[row][i] = values[pick];
+                            g_4b285a[row][i] = 0;
+                        }
+                        if (g_4b27ca[row][i]) {
+                            count++;
+                            for (j = pick; j < last + 1; j++)
+                                values[j] = values[j + 1];
+                            last--;
+                        }
+                    }
+            }
+        } else if (g_4b2630 == 4) {
+            if (randomBetween(0, 1)) {
+                row2 = 5;
+                row = randomBetween(1, 2);
+                for (i = 0; i < 4; i++)
+                    if (g_4b285a[row][i]) {
+                        g_4b27ca[row2][i] = g_4b27ca[row][i];
+                        g_4b285a[row2][i] = g_4b27ca[row][i];
+                    } else if (g_4b27ca[row][i]) {
+                        g_4b27ca[row2][i] = g_4b27ca[row][i];
+                        g_4b27ca[row2][i]++;
+                        if (g_4b27ca[row2][i] > 5)
+                            g_4b27ca[row2][i] = 1;
+                        g_4b285a[row2][i] = 0;
+                    }
+                row2 = 6;
+                randomBetween(3, 4);
+                chosen = randomBetween(0, 3);
+                for (i = 0; i < 4; i++)
+                    if (i == chosen) {
+                        g_4b27ca[row2][i] = randomBetween(1, 5);
+                        g_4b285a[row2][i] = 0;
+                    }
+            } else {
+                row2 = 6;
+                row = randomBetween(3, 4);
+                for (i = 0; i < 4; i++)
+                    if (g_4b285a[row][i]) {
+                        g_4b27ca[row2][i] = g_4b27ca[row][i];
+                        g_4b285a[row2][i] = g_4b27ca[row][i];
+                    } else if (g_4b27ca[row][i]) {
+                        g_4b27ca[row2][i] = g_4b27ca[row][i];
+                        g_4b27ca[row2][i]++;
+                        if (g_4b27ca[row2][i] > 5)
+                            g_4b27ca[row2][i] = 1;
+                        g_4b285a[row2][i] = 0;
+                    }
+                row2 = 5;
+                randomBetween(1, 2);
+                chosen = randomBetween(0, 3);
+                for (i = 0; i < 4; i++)
+                    if (i == chosen) {
+                        g_4b27ca[row2][i] = randomBetween(1, 5);
+                        g_4b285a[row2][i] = 0;
+                    }
+            }
+        }
+    }
+    count = 0;
+    for (i = 0; i < 4; i++) {
+        if (n == 8) {
+            if (g_4b263c[4])
+                snoid->features[i] = g_4b2812[n][i];
+            else
+                snoid->features[i] = 0;
+        } else {
+            snoid->features[i] = g_4b27ca[n][i];
+        }
+        if (g_4b285a[n][i])
+            count = i + 1;
+    }
+    if (count) {
+        snoid->unknownF8 = 1;
+        snoid->unknownF5 = count;
+    } else {
+        snoid->unknownF8 = 0;
+        snoid->unknownF5 = 0;
+    }
+}
