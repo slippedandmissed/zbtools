@@ -8,6 +8,7 @@
 #include "e2memory.h"
 #include "features.h"
 #include "ferry.h"
+#include "focus.h"
 #include "graphics.h"
 #include "module_4623b8.h"
 #include "snoids.h"
@@ -625,4 +626,97 @@ void layOutFerryLevel()
         break;
     }
     layOutFerry(n);
+}
+
+/* Opens scene 10: Ferry.MHK, its sounds, images and scripts, Captain
+   Cajun (the first time 1803, then one of g_4a13e4), the views, the
+   places for the level (layOutFerryLevel) and the party, and a hint or
+   greeting. */
+/* @zoombi32 0x0041f97c */
+void openScene10()
+{
+    short i;
+
+    g_4abaac = g_4abaae = 0;
+    resetScene10();
+    g_4abafc++;
+    g_4aba8a = sceneLevel();
+    ferryLinks = (char (*)[8])newPtr(160);
+    soundRanges = 0;
+    addSoundRange(1606, 1607, 1);
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(1800, 1899, 1);
+    addSoundRange(996, 997, 0);
+    addSoundRange(1704, 1705, 0);
+    addSoundRange(425, 499, 0);
+    addSoundRange(1600, 1699, 0);
+    addSoundRange(1900, 1999, 0);
+    addSoundRange(1700, 1799, 0);
+    openGameFile(&g_4abaa8, "Ferry.MHK");
+    fn_46be2e(g_4abaa8);
+    drawBackdrop(1300);
+    g_4a147c = loadImageBank(1400, &g_4a151c);
+    loadFeatureGroup(1500, 0, 0);
+    loadFeatureGroup(1600, 1, 0);
+    loadFeatureGroup(1700, 2, 0);
+    loadFeatureGroup(1800, 3, 0);
+    loadFeatureGroup(1450, 4, 0);
+    loadScripts(1500, 10);
+    addScripts(1600, 10, 0);
+    addScripts(1700, 7, 0);
+    addScripts(1800, 33, 5);
+    addScripts(1450, 3, 0);
+    loadTerrain(100);
+    loadSnoidScripts(1900, 8, 0);
+    addSnoidScripts(1000, 10, 1);
+    g_4abab2 = addView(0xc000, drawCels, runViewScript, 1601, 6, 0, 0, 0);
+    if (g_4abafc == 1)
+        g_4abab4 = 1803;
+    else
+        g_4abab4 = g_4a13e4[allocateSlot(&g_4a13ec, 4, 0)];
+    g_4abab4 = addView(0x188000, drawCels, runViewScript, g_4abab4, 6, 0, 0, 0);
+    g_4abaf2 = g_4abab4;
+    if (!*(short *)(g_4a4ba0 + 0x20)) {
+        g_4abab6 = addView(0x8000, drawCels, runViewScript, 1602, 6, 0, 0, 0);
+        g_4abab8 = addView(0x8000, drawCels, runViewScript, 1603, 6, 0, 0, 0);
+        pairViews(g_4abab6, g_4abab8);
+    }
+    g_4ababa = addView(0x1188000, drawCels, runViewScript, 1704, 6, 0, 0, 0);
+    addView(0, drawCels, runViewScript, 1600, 6, 0, 0, 0);
+    for (i = 0; i < 3; i++)
+        g_4abac4 = addView(0x4000000, drawCels, runViewScript, i + 1450, 0, 0, 0, 0);
+    g_4abac0 = g_4abac2 = 0;
+    addView(0x1000, drawFerryButtons, fn_41fea4, 0, 0, 0, 0, 0);
+    setViewPlaces(20, ferryPlaces, 1);
+    setViewsLocked(0);
+    fn_4148da(10, 236);
+    makePartySnoids(0);
+    layOutFerryLevel();
+    enterSnoids(0);
+    updateViews();
+    linkFerryPlaces(0);
+    staggerSnoids(45, 30);
+    fn_465175();
+    setGroupLists(ferryGroups, 1, (short)0xc000);
+    drawFerryButton(1, 0, 0);
+    drawFerryButton(2, 0, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    queueViewSound(997, 0);
+    chooseSnoids(0, 0);
+    g_4abb0e = countSnoidViews();
+    resetViewClock();
+    g_4aba84 = randomBetween(5400, 10800);
+    g_4abaac = 1;
+    switch (campHint((short *)(g_4a4ba0 + 0x32))) {
+    case 2:
+        g_4b966e = 20074;
+        break;
+    default:
+        if (g_4aba8a)
+            g_4b966e = randomBetween(20073, 20074);
+        else
+            g_4b966e = 20073;
+        break;
+    }
 }

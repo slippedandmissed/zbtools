@@ -347,6 +347,7 @@
 0x0041f668 applyPlayerSettings
 0x0041f6fc fn_41f6fc
 0x0041f8cc resetScene10
+0x0041f97c openScene10
 0x0041fdee drawFerryButton
 0x0041fe87 drawFerryButtons
 0x0041fea4 fn_41fea4

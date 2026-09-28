@@ -7,6 +7,9 @@
 #define FERRY_H
 
 extern short g_4a1440[]; /* @data 0x4a1440: scripts by g_4abaee */
+extern short g_4a13e4[4]; /* @data 0x4a13e4: Captain Cajun's scripts (g_4a13ec picks) */
+extern unsigned long g_4a13ec; /* @data 0x4a13ec: slots used (allocateSlot) */
+extern GroupList ferryGroups[1]; /* @data 0x4a14fc */
 extern short g_4a1424[5]; /* @data 0x4a1424: sounds (g_4a1430 picks) */
 extern unsigned long g_4a1430; /* @data 0x4a1430: slots used (allocateSlot) */
 extern short g_4a1454[10]; /* @data 0x4a1454: scripts by g_4abaee */
@@ -16,6 +19,7 @@ extern SceneButton ferryButtons[2]; /* @data 0x4a1480 */
 extern long g_4a151c; /* @data 0x4a151c */
 extern short g_4a1570; /* @data 0x4a1570: button 2 is drawn lit */
 extern short g_4a1572; /* @data 0x4a1572: button 1 is drawn */
+extern unsigned long g_4aba84; /* @data 0x4aba84: when to make the next idle remark (view ticks) */
 extern short g_4aba88; /* @data 0x4aba88 */
 extern short g_4aba8a; /* @data 0x4aba8a: the level */
 extern Point g_4aba8c; /* @data 0x4aba8c */
@@ -52,12 +56,14 @@ extern short g_4abb06; /* @data 0x4abb06 */
 extern short g_4abb08; /* @data 0x4abb08 */
 extern short g_4abb0a; /* @data 0x4abb0a */
 extern short g_4abb0c; /* @data 0x4abb0c */
+extern short g_4abb0e; /* @data 0x4abb0e */
 extern short g_4abb10; /* @data 0x4abb10 */
 extern short g_4abb14; /* @data 0x4abb14: the script F plays */
 extern short g_4abb16; /* @data 0x4abb16: Captain Cajun's script */
 extern Point ferryPlaces[20]; /* @data 0x4a1520: where the Zoombinis wait */
 
 void resetScene10();
+void openScene10();
 void drawFerryButtons(View *);
 short scene10Key(unsigned short key);
 void layOutFerry(short id);
