@@ -193,3 +193,49 @@ void fn_41b357(View *view, short event)
         break;
     }
 }
+
+/* Scene 7's keys (with debugging on, g_4b8803, or else only 0x16f; case
+   ignored; only while the scene is open and nobody's moving): 0x16f
+   fn_466b93; R reports the script and type g_4ab826/g_4ab828; A shows the
+   rule. Returns whether the key was used. */
+/* @zoombi32 0x0041b203 */
+short scene7Key(unsigned short key)
+{
+    short used = 0;
+    ShortRect area = {225, 0, 350, 70};
+    short x;
+
+    if (!g_4b8803 && key != 0x16f)
+        return 0;
+    if (key >= 'a' && key <= 'z')
+        key -= 32;
+    if (!g_4ab788 || g_4b755a > 0)
+        return 0;
+    switch (key) {
+    case 0x16f:
+        fn_466b93();
+        used = 1;
+        break;
+    case 'R':
+        debugMessage(g_4ab826, "Snoid Script:", &g_4ab828, " Type:", 1);
+        break;
+    case 'A':
+        unionRgnRect(removedRgn, &area);
+        unionRgnRect(removedRgn, &debugRect);
+        updateViews();
+        if (bridgeRules.rules[0].side)
+            debugMessage(-1, "Upper bridge accepts:", 0, 0, 0);
+        else
+            debugMessage(-1, "Lower bridge accepts:", 0, 0, 0);
+        area.left = 250;
+        for (used = 0; used < bridgeRules.rules[0].count; used++) {
+            x = area.left;
+            area.top = 20;
+            drawFeature(bridgeRules.rules[0].features[used], bridgeRules.rules[0].values[used], &area);
+            area.left = x + 30;
+        }
+        used = 1;
+        break;
+    }
+    return used;
+}
