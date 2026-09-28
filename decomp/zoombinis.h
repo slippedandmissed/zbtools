@@ -5792,3 +5792,5 @@ extern short g_4b1446;
 extern short g_4b13c6;
 extern short g_4b142a;
 void fn_43c6df();
+extern Point g_4a3324[16];
+void fn_43ffd5(Point *where, short *slot);

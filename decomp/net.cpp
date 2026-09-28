@@ -1073,3 +1073,101 @@ void fn_43c6df()
     g_4b13c6 = addView(0x4188000, drawCels, runViewScript, 7000, 6, 0, 0, 0);
     g_4b142a = groupViews(g_4b13c6, g_4b13c6, 0, 0, 0, 0);
 }
+
+/*
+ * The queue of places (g_4b75ee, at g_4a3324): with `where`, gives the
+ * first free place and its number; otherwise moves the Zoombinis up into
+ * each free place from up to five places behind (by where the place is
+ * in its row of five), one at a time.
+ */
+/* @zoombi32 0x0043ffd5 */
+void fn_43ffd5(Point *where, short *slot)
+{
+    short d1;
+    short d2;
+    short d3;
+    short d4;
+    short waiting;
+    short i;
+    short step;
+    Snoid *snoid;
+
+    if (where) {
+        for (i = 0; i < 16; i++)
+            if (!g_4b75ee[i]) {
+                *where = g_4a3324[i];
+                *slot = i;
+                return;
+            }
+        return;
+    }
+    g_4b7564 = 1;
+    for (i = 0; i < 15; i++)
+        if (!g_4b75ee[i]) {
+            step = d1 = d2 = d3 = d4 = 0;
+            switch (i) {
+            case 0:
+                step = 1;
+                d1 = 2;
+                d2 = 3;
+                d3 = 4;
+                d4 = 5;
+                break;
+            case 1:
+            case 6:
+            case 11:
+                step = 1;
+                d1 = 2;
+                d2 = 3;
+                d3 = 4;
+                break;
+            case 2:
+            case 7:
+            case 12:
+                step = 1;
+                d1 = 2;
+                d2 = 3;
+                break;
+            case 3:
+            case 8:
+            case 13:
+                step = 1;
+                d1 = 2;
+                break;
+            case 4:
+            case 9:
+            case 14:
+                step = 1;
+                break;
+            }
+            waiting = 1;
+            while (step && waiting) {
+                if (g_4b75ee[i + step]) {
+                    snoid = findSnoid(g_4b75ee[i + step], 1);
+                    if (snoid) {
+                        snoid->unknownEa = -1;
+                        if (i + step < 17) {
+                            *(Point *)&snoid->targetX = g_4a3324[i];
+                            setSnoidAction(snoid, 7, 0);
+                        } else {
+                            snoid->targetX = 326;
+                            snoid->targetY = 390;
+                            setSnoidAction(snoid, 7, 0);
+                            updateSnoidView(snoidView(snoid), removedRgn);
+                            *(Point *)&snoid->targetX = g_4a3324[i];
+                        }
+                        g_4b75ee[i] = g_4b75ee[i + step];
+                        g_4b75ee[i + step] = 0;
+                        waiting = 0;
+                    }
+                }
+                step = d1;
+                d1 = d2;
+                d2 = d3;
+                d3 = d4;
+                d4 = 0;
+            }
+        }
+    updateViews();
+    g_4b7564 = 0;
+}
