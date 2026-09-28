@@ -3151,3 +3151,59 @@ void flashSwap(View *view)
         }
     }
 }
+
+/* @zoombi32 0x0042b08e */
+void fn_42b08e(View *view, short event)
+{
+    View *other;
+    short i;
+
+    switch (event) {
+    case 3:
+        if (g_4a1b1c > 1)
+            for (i = 0; i < g_4af0e8; i++)
+                if (i == g_4af0e8 - 2 || i == g_4af0e8 - 1) {
+                    other = findView(g_4aed3a[i]);
+                    if (other) {
+                        other->body.running = 1;
+                        setViewScript(other, i + 10089, 1);
+                        other->placed = fn_42afbe;
+                        other->notify = fn_42b003;
+                    }
+                }
+        break;
+    case 4:
+        g_4af33a = view->id;
+        other = findView(g_4af354);
+        if (other) {
+            other->flags = 0x980002;
+            LillyActor *actor = (LillyActor *)&other->body;
+
+            actor->body.running = 1;
+        }
+        if (g_4a1b1c > 2)
+            for (i = 0; i < g_4af342; i++)
+                searchLayer(g_4aece8, i);
+        break;
+    case 5:
+        switch (g_4af358) {
+        case 4:
+            g_4af348 = g_4a1d40[g_4af104].x;
+            g_4af34a = g_4a1d54[g_4af104].x;
+            fn_42e4b6(g_4af33e, g_4af34a, g_4af348);
+            g_4af358 = 5;
+            g_4af104++;
+            break;
+        case 5:
+            g_4af34c = g_4a1d40[g_4af104].x;
+            g_4af34e = g_4a1d54[g_4af104].x;
+            fn_42e4b6(g_4af340, g_4af34e, g_4af34c);
+            g_4af358 = 6;
+            g_4af104++;
+            break;
+        }
+        break;
+    case 6:
+        break;
+    }
+}
