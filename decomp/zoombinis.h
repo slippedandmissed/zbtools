@@ -1068,6 +1068,11 @@ inline short *puzzleLevels()
 {
     return (short *)(g_4a4ba0 + 0xc0);
 }
+/* The scene the game is in, as saved. */
+inline short &savedScene()
+{
+    return *(short *)(g_4a4ba0 + 0xcc);
+}
 inline Party *party()
 {
     return (Party *)(g_4a4ba0 + 0xa92e);
@@ -5216,3 +5221,72 @@ void recordReturn(Context *context, unsigned short depth); /* 0x46f771 */
 short setThreadError(short error); /* 0x46f78e */
 
 #endif
+
+/* game */
+/* A cell of the game module's hexagonal board (117 of them). */
+struct HexCell
+{
+    short unknown0;
+    short state; /* +2: 500 empty, 508 ... */
+    short unknown4; /* 0x1fe-0x201 */
+    short links[6]; /* +6: the neighbours in each direction (-1: none) */
+};
+extern HexCell g_4b1aea[117];
+extern short g_4b2324[117]; /* each cell's link bits, one per direction */
+extern short g_4b2414;
+extern short g_4b2430[];
+extern short g_4b2540;
+extern short g_4b2542;
+extern short g_4b26cc[8][4]; /* the features of the Zoombini in each slot */
+extern short g_4a48e8; /* the temporary file (ZBtemp) exists */
+extern short g_4b26a6[];
+extern short g_4b26ac[2];
+extern short g_4b26ba[];
+void fn_45170a(short id, short script, short group, ViewNotify notify, char unknownF8);
+void fn_450d00(short id, short n);
+void fn_454f03();
+void fn_454c8e();
+void fn_4511c1(short n);
+void fn_4512ac();
+extern short g_4b2790; /* the scene is open */
+extern short g_4b2792;
+extern short g_4a483e;
+extern short g_4a4840;
+extern ShortRect g_4a4750;
+extern ShortRect g_4a472c;
+extern long g_4a47c8;
+extern long g_4b2638;
+extern long g_4b2650;
+extern long g_4b2654;
+extern long g_4b278c;
+extern ImageBank *g_4b2634;
+extern ShortRect g_4aa7a8;
+void fn_44f180(View *, short region);
+void fn_44f1f2();
+void fn_4541bf(View *view);
+short fn_454c10();
+short fn_44d102();
+void fn_44d5ad(short cell);
+void fn_44dca0(short cell, short direction, short bit);
+void fn_44e092();
+void fn_44e314(short cell);
+void fn_451238(short n);
+void fn_451276();
+extern Point g_4a4846;
+extern Point g_4a47ec[20];
+extern short g_4b75ee[20];
+extern short g_4b25b0;
+extern short g_4b25a8;
+extern short g_4b25aa;
+extern short g_4b2588;
+extern short g_4b26b4;
+extern short g_4b26b6;
+void fn_45174e(View *view, short event);
+void fn_450540(short *result);
+void fn_45062d(short script);
+void fn_450658(short script, short running);
+void fn_4506a9(short script);
+void fn_4506f0();
+void fn_45074d();
+void fn_450796();
+void fn_4507bb();
