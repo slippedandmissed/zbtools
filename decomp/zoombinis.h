@@ -5978,3 +5978,12 @@ extern short g_4b165a;
 void fn_444556();
 void fn_44509b();
 void fn_445ae1(View *, short);
+extern short g_4b164a[8]; /* toppings shown on the pizza */
+extern short g_4b1660;
+extern short g_4b1600;
+extern short g_4b1602;
+extern short g_4b1604;
+extern short g_4b1608;
+extern short g_4b165e;
+void fn_4458c3();
+void fn_4459b3();

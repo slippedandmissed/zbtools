@@ -273,3 +273,121 @@ void fn_445ae1(View *, short)
         }
     }
 }
+
+/* A view's placing: drops the cels of toppings (images 57-61 and 67-69)
+   not on the pizza (g_4b164a). `i` never moves. */
+/* @zoombi32 0x00442443 */
+void fn_442443(View *view)
+{
+    short *cel = (short *)&view->body;
+    short i = 0;
+    short removed;
+
+    while (cel[i]) {
+        removed = 0;
+        switch (cel[i]) {
+        case 61:
+            if (!g_4b164a[0]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 60:
+            if (!g_4b164a[1]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 59:
+            if (!g_4b164a[2]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 58:
+            if (!g_4b164a[3]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 57:
+            if (!g_4b164a[4]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 67:
+            if (!g_4b164a[5]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 68:
+            if (!g_4b164a[6]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 69:
+            if (!g_4b164a[7]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        }
+        if (!removed)
+            cel += 3;
+    }
+}
+
+/* Starts the troll of the level (g_4b161e: Arno g_4b160e at 0, Willa
+   g_4b1610 at 1, Shyler g_4b1612 from 2) on one of its scripts (8014,
+   9019-9020 or 10001-10008). */
+/* @zoombi32 0x004458c3 */
+void fn_4458c3()
+{
+    View *view;
+
+    g_4b1660 = 1;
+    if (!g_4b161e) {
+        view = findView(g_4b160e);
+        setViewScript(view, 8014, 1);
+        g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+    } else if (g_4b161e == 1) {
+        view = findView(g_4b1610);
+        setViewScript(view, randomUpTo(1) + 9019, 1);
+        g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+    } else if (g_4b161e >= 2) {
+        view = findView(g_4b1612);
+        setViewScript(view, randomUpTo(7) + 10001, 1);
+        g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+    }
+}
+
+/* Steps the trolls' turns on (g_4b165e: 1-4): each of the trolls there
+   are at the level in turn (scripts 8032, 9034, 10038), then back to 0. */
+/* @zoombi32 0x004459b3 */
+void fn_4459b3()
+{
+    short *step = &g_4b165e;
+
+    if (*step == 1) {
+        setViewScript(findView(g_4b160e), 8032, 1);
+        g_4b1608 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+        (*step)++;
+    } else if (!g_4b161e && *step == 2) {
+        *step = 0;
+    } else if (g_4b161e >= 1 && *step == 2) {
+        setViewScript(findView(g_4b1610), 9034, 1);
+        g_4b1608 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+        (*step)++;
+    } else if (g_4b161e == 1 && *step == 3) {
+        *step = 0;
+    } else if (g_4b161e >= 2 && *step == 3) {
+        setViewScript(findView(g_4b1612), 10038, 1);
+        g_4b1608 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+        (*step)++;
+    } else if (g_4b161e >= 2 && *step == 4) {
+        *step = 0;
+    }
+}
