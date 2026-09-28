@@ -4,10 +4,12 @@
 
 #include "zoombinis.h"
 #include "basecamp.h"
+#include "debug.h"
 #include "e2memory.h"
 #include "features.h"
 #include "graphics.h"
 #include "module_4623b8.h"
+#include "net.h"
 #include "random.h"
 #include "slides.h"
 #include "snoids.h"
@@ -946,4 +948,103 @@ short fn_449cfc(short cell, short dir)
         }
     }
     return -1;
+}
+
+/* Scene 12's frame: leaves after a choice (g_4b0d52) once the sound and the
+   Zoombinis are done; cycles colours (g_4b1a3c) every 6 ticks; when the
+   group g_4b251a has arrived, sends the Zoombinis on the finished cells
+   off (by the level, g_4b1934) and ends; and has an idle Zoombini fidget
+   now and then while g_4b2540. */
+/* @zoombi32 0x00447171 */
+void scene12Frame()
+{
+    View *view;
+    short done;
+    short tries;
+
+    if (!g_4a41e4 && g_4b1930) {
+        g_4a41e4 = 1;
+        updateViews();
+        if (g_4b0d52) {
+            if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+                g_4a41e4 = 0;
+                return;
+            }
+            if (!g_4b9688 || g_4b9688 == 3) {
+                if (g_4b9688 == 3)
+                    chooseSnoids(0, 0);
+                if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
+                    g_4b0d50 = g_4b0d52;
+                    g_4b0d52 = 0;
+                    fn_46be2e(0);
+                    closeScene12();
+                    g_4a41e4 = 0;
+                    return;
+                }
+            } else if (g_4b9688 == 2) {
+                g_4b9688 = 0;
+                g_4b0d52 = 0;
+            }
+        }
+        if (g_4b1a3c && clockTime() - g_4b2534 > 6) {
+            fn_448bf5();
+            g_4b2534 = clockTime();
+        }
+        if (g_4b251a && !groupLeader[g_4b251a]) {
+            queueViewSound(7001, 0);
+            updateViews();
+            waitForEventFor(0, 60, 0, 1);
+            queueViewSound(996, 0);
+            g_4b251a = 0;
+            if (g_4b1934 == 3) {
+                chooseSnoids(0, 0);
+                if (g_4b1aea[55].state == 508)
+                    ((Snoid *)&findView(g_4b1aea[55].snoid)->body)->unknownF7 = 1;
+                if (g_4b1aea[38].state == 508 && g_4b1aea[46].state == 502)
+                    ((Snoid *)&findView(g_4b1aea[38].snoid)->body)->unknownF7 = 1;
+                if (g_4b1aea[74].state == 508 && g_4b1aea[64].state == 502)
+                    ((Snoid *)&findView(g_4b1aea[74].snoid)->body)->unknownF7 = 1;
+                sendSnoids(800, 200, 45);
+                fn_44943b();
+            } else if (g_4b1934 <= 1) {
+                sendSnoids(1280, 240, 45);
+            } else {
+                chooseSnoids(0, 0);
+                if (g_4b1aea[19].state == 508)
+                    ((Snoid *)&findView(g_4b1aea[19].snoid)->body)->unknownF7 = 1;
+                if (g_4b1aea[55].state == 508)
+                    ((Snoid *)&findView(g_4b1aea[55].snoid)->body)->unknownF7 = 1;
+                if (g_4b1aea[91].state == 508)
+                    ((Snoid *)&findView(g_4b1aea[91].snoid)->body)->unknownF7 = 1;
+                sendSnoids(800, 200, 45);
+                fn_44943b();
+            }
+            g_4b0d52 = 5;
+        }
+        if (!g_4b2542 && g_4b2540 && g_4b253e < g_4b253c) {
+            g_4b2542++;
+            if (clockTime() - g_4b252c > 30) {
+                done = 0;
+                tries = 0;
+                g_4b252c = clockTime();
+                do {
+                    view = idleSnoidView(partyViews[allocateSlot(&g_4b2538, g_4b2414, 0)]);
+                    if (view && view->body.running && view->flags == 1) {
+                        int script = ((Snoid *)&view->body)->features[3] - 1;
+
+                        script += 13001;
+                        startSnoidScript((Snoid *)&view->body, script, 0, 0);
+                        g_4b253e++;
+                        done = 1;
+                    } else if (++tries > 20) {
+                        done = 1;
+                    }
+                } while (!done);
+            }
+        } else if (g_4b253e >= g_4b253c) {
+            g_4b253e = g_4b2540 = g_4b252c = g_4b2538 = 0;
+        }
+        playAmbientSound();
+        g_4a41e4 = 0;
+    }
 }

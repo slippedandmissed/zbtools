@@ -57,5 +57,15 @@ void fn_44986f();
 short fn_449f96(short a, short b);
 
 short fn_449cfc(short cell, short dir);
+extern short g_4a41e4; /* @data 0x4a41e4: scene12Frame is running */
+extern short g_4b1a3c; /* @data 0x4b1a3c: cycle colours */
+extern unsigned long g_4b2534; /* @data 0x4b2534: when they last cycled */
+extern short g_4b251a; /* @data 0x4b251a: the group whose arrival ends the puzzle */
+extern short g_4b1934; /* @data 0x4b1934: the level */
+extern short g_4b253c; /* @data 0x4b253c: fidgets to do */
+extern short g_4b253e; /* @data 0x4b253e: fidgets done */
+extern unsigned long g_4b252c; /* @data 0x4b252c: when a Zoombini last fidgeted */
+extern unsigned long g_4b2538; /* @data 0x4b2538: slots used (allocateSlot) */
+void scene12Frame();
 
 #endif
