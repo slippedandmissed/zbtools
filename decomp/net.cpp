@@ -618,8 +618,7 @@ void fn_43e370()
  * even when there's no such view.
  */
 /* Not exact: the original keeps `other` in eax from the start (loading it
-   before `view`), and evaluates startSnoidScript's script number before
-   the Snoid's address; otherwise the same. */
+   before `view`); otherwise the same. */
 /* @zoombi32 0x0043a2c8 */
 void fn_43a2c8(View *view, short other)
 {
@@ -698,7 +697,9 @@ void fn_43a2c8(View *view, short other)
         helper->body.y = view->body.y;
         helper->placed = fn_436321;
     }
-    startSnoidScript((Snoid *)&view->body, parts[21 + parts[20]], 0, 0);
+    short script = parts[21 + parts[20]];
+
+    startSnoidScript((Snoid *)&view->body, script, 0, 0);
     view->notify = fn_43638b;
     if (helper)
         groupViews(view->id, helper->id, 0, 0, 0, 0);
@@ -2075,5 +2076,139 @@ void markerPlaced(View *view)
             }
         }
         i += 3;
+    }
+}
+
+/*
+ * The notify of the Zoombinis crossing (g_4b0e6a the one moving): 0 flips
+ * which way it faces and turns it the way g_4b11a2 says (then clears it); 2 runs
+ * fn_43e435; 4 starts the step onto the net (script 14000 on, by the place
+ * g_4b119a) and puts the marker and the three places' views in order;
+ * 20 takes the next Zoombini from place g_4b119a (a walk by its feet,
+ * 13016 on); 30 starts its crossing (13031 on) and stacks it on the one
+ * before (g_4b147e); 240-243 note a turn to make (g_4b11a2), 250-253 turn
+ * it. When a script ends: after a crossing, it walks on to the next spot
+ * of g_4a2dd6, with sounds when the last one's across; else the Zoombini
+ * waiting on the net in the view's place stops, and the net's view starts
+ * (10018) once they're all gone.
+ */
+/* @zoombi32 0x0043de4d */
+void fn_43de4d(View *view, short event)
+{
+    Point anchor;
+    Point onto[3] = {{203, 42}, {242, 35}, {283, 28}};
+    Point across[3] = {{220, 41}, {259, 34}, {300, 27}};
+    Snoid *snoid = (Snoid *)&view->body;
+    short i;
+    short script;
+
+    switch (event) {
+    case 250:
+    case 251:
+    case 252:
+    case 253:
+        setSnoidFacing(snoid, event - 250);
+        break;
+    case 240:
+    case 241:
+    case 242:
+    case 243:
+        g_4b11a2 = event - 239;
+        break;
+    case 0:
+        snoid->unknownF2 = !snoid->unknownF2;
+        if (g_4b11a2) {
+            setSnoidFacing(snoid, g_4b11a2 - 1);
+            g_4b11a2 = 0;
+        }
+        break;
+    case 2:
+        fn_43e435(g_4b119e);
+        break;
+    case 4:
+        view = findView(g_4b0e6a);
+        anchor = onto[g_4b119a];
+        startSnoidScript((Snoid *)&view->body, g_4b119a + 14000, &anchor, 0);
+        view->notifyEnd = 0;
+        view->notify = fn_43de4d;
+        moveView(g_4b12ba[0], 1, g_4b13cc[g_4b13ca]);
+        moveView(g_4b12ba[1], 1, g_4b12ba[0]);
+        moveView(g_4b12ba[2], 1, g_4b12ba[1]);
+        moveView(g_4b0e6a, 1, g_4b12ba[2]);
+        break;
+    case 20:
+        g_4b0e6a = g_4b1438[g_4b119a];
+        view = findView(g_4b0e6a);
+        script = ((Snoid *)&view->body)->features[3] - 1;
+        script = 2 - g_4b119a + script * 3 + 13016;
+        startSnoidScript((Snoid *)&view->body, script, 0, 0);
+        ((Snoid *)&view->body)->unknownF7 = 1;
+        view->notifyEnd = 0;
+        view->notify = fn_43de4d;
+        g_4b0d5c = g_4b0e68;
+        g_4b0e6a = g_4b1438[g_4b119a];
+        g_4b1438[g_4b119a] = 0;
+        if (!g_4b11a0 && g_4b0e68 < g_4b0e66)
+            g_4b145c++;
+        break;
+    case 30:
+        anchor = across[g_4b119a];
+        view = findView(g_4b0e6a);
+        script = ((Snoid *)&view->body)->features[3] - 1;
+        script = script * 3 + g_4b119a + 13031;
+        startSnoidScript((Snoid *)&view->body, script, &anchor, 0);
+        view->notifyEnd = 1;
+        view->notify = fn_43de4d;
+        g_4b1414++;
+        if (g_4b147e)
+            moveView(g_4b0e6a, 0, g_4b147e);
+        g_4b147e = g_4b0e6a;
+        break;
+    case -1:
+        if (!g_4b1414) {
+            for (i = 2; i >= 0; i--)
+                if (g_4b12b0[i] == view->id) {
+                    View *waiting = findView(g_4b12b0[i]);
+
+                    g_4b12b0[i] = 0;
+                    if (waiting) {
+                        setSnoidAction((Snoid *)&waiting->body, 2, 0);
+                        if (!g_4b12b0[0] && !g_4b12b0[1] && !g_4b12b0[2]) {
+                            startView(g_4b13fe, 10018, 0, 0);
+                            g_4b1466 = g_4b144c = 0;
+                        }
+                        return;
+                    }
+                }
+            if (!g_4b145c && !g_4b1438[0])
+                g_4b1466 = g_4b144c = 0;
+        } else {
+            anchor = g_4a2dd6[g_4b11a8];
+            g_4b11a8++;
+            view = findView(g_4b0e6a);
+            setSnoidAction((Snoid *)&view->body, 7, 0);
+            *(Point *)&((Snoid *)&view->body)->targetX = anchor;
+            ((Snoid *)&view->body)->unknownF7 = 1;
+            view->notifyEnd = 0;
+            view->notify = fn_43de4d;
+            g_4b1412 = g_4b0e6a;
+            g_4b12aa = 1;
+            g_4b1414 = 0;
+            if (g_4b0e6c >= g_4b0e66 || g_4b11a0)
+                g_4b1466 = g_4b144c = 0;
+            if (!g_4b145c && !g_4b1438[0] && !g_4b1438[1] && !g_4b1438[2]) {
+                if (g_4b0e6c >= g_4b0e66)
+                    queueViewSound(randomBetween(20055, 20063), 0);
+                g_4b11a6++;
+                g_4b147c++;
+                g_4b1478 = g_4b0e66;
+            }
+            if (g_4a28d0) {
+                g_4a28d0 = 0;
+                if (g_4b0e6c >= 1 && g_4b0e6c < g_4b0e66)
+                    queueViewSound(randomBetween(20045, 20048), 0);
+            }
+        }
+        break;
     }
 }
