@@ -1282,3 +1282,163 @@ void fn_44abce(short cell)
     if (g_4b1aea[cell + 5].state == 507 && fn_449cfc(cell + 5, 6) != -1)
         fn_449cfc(cell + 5, 7);
 }
+
+/* Lights the path: from the listed cell g_4b1ab4[g_4b2410] (taken, 507),
+   finds the cell before the first in state g_4b2512, then walks back along
+   the links: Zoombinis' cells go to 508; a feature stone (510-513) lights
+   when the Zoombinis on either side share its feature; a plain stone
+   lights on level 1 after a Zoombini's cell. The walk ends at an empty or
+   blocked cell, or a stone that doesn't light. */
+/* Not exact: register allocation (the original keeps `view` in esi and the
+   board's address in edi, the other way round, and keeps the first
+   findView's result). */
+/* @zoombi32 0x00448f02 */
+void fn_448f02()
+{
+    short done;
+    short feet;
+    short hair;
+    short eyes;
+    short nose;
+    short otherNose;
+    short back;
+    short ahead;
+    View *view;
+    Snoid *snoid;
+    short cell;
+    short found;
+    short start;
+    short otherHair;
+    short otherEyes;
+    short otherFeet;
+
+    cell = g_4b1ab4[g_4b2410];
+    view = findView(g_4b1aea[cell].snoid);
+    g_4b1aea[cell].state = 507;
+    view = findView(g_4b1aea[cell].view);
+    setViewScript(view, 7000, 1);
+    view->placed = fn_4489ce;
+    found = 0;
+    do {
+        start = cell;
+        if (g_4b1aea[cell].links[0] != -1)
+            cell = g_4b1aea[cell].links[0];
+        else if (g_4b1aea[cell].links[1] != -1)
+            cell = g_4b1aea[cell].links[1];
+        else if (g_4b1aea[cell].links[2] != -1)
+            cell = g_4b1aea[cell].links[2];
+        if (g_4b1aea[cell].state == g_4b2512) {
+            found++;
+            cell = start;
+        }
+    } while (!found);
+    done = 0;
+    do {
+        switch (g_4b1aea[cell].state) {
+        case 500:
+        case 506:
+            done++;
+            break;
+        case 507:
+            g_4b1aea[cell].state = 508;
+            view = findView(g_4b1aea[cell].view);
+            setViewScript(view, 7000, 1);
+            view->placed = fn_4489ce;
+            break;
+        case 501:
+            if (g_4b1aea[cell].snoid >= 510 && g_4b1aea[cell].snoid <= 513) {
+                if (g_4b1aea[cell].links[5] != -1)
+                    back = g_4b1aea[cell].links[5];
+                else if (g_4b1aea[cell].links[4] != -1)
+                    back = g_4b1aea[cell].links[4];
+                else if (g_4b1aea[cell].links[3] != -1)
+                    back = g_4b1aea[cell].links[3];
+                if (g_4b1aea[back].state != 507 && g_4b1aea[back].state != 508) {
+                    done++;
+                    break;
+                }
+                if (g_4b1aea[cell].links[0] != -1)
+                    ahead = g_4b1aea[cell].links[0];
+                else if (g_4b1aea[cell].links[1] != -1)
+                    ahead = g_4b1aea[cell].links[1];
+                else if (g_4b1aea[cell].links[2] != -1)
+                    ahead = g_4b1aea[cell].links[2];
+                if (g_4b1aea[ahead].state != 507 && g_4b1aea[ahead].state != 508) {
+                    done++;
+                    break;
+                }
+                view = findView(g_4b1aea[ahead].snoid);
+                snoid = (Snoid *)&view->body;
+                hair = snoid->features[0];
+                eyes = snoid->features[1];
+                nose = snoid->features[2];
+                feet = snoid->features[3];
+                view = findView(g_4b1aea[back].snoid);
+                snoid = (Snoid *)&view->body;
+                otherHair = snoid->features[0];
+                otherEyes = snoid->features[1];
+                otherNose = snoid->features[2];
+                otherFeet = snoid->features[3];
+                if (g_4b1aea[cell].snoid == 510) {
+                    if (otherHair == hair) {
+                        g_4b1aea[cell].state = 502;
+                        view = findView(g_4b1aea[cell].view);
+                        setViewScript(view, 7000, 1);
+                        view->placed = fn_4489ce;
+                    } else {
+                        done++;
+                    }
+                } else if (g_4b1aea[cell].snoid == 511) {
+                    if (otherEyes == eyes) {
+                        g_4b1aea[cell].state = 502;
+                        view = findView(g_4b1aea[cell].view);
+                        setViewScript(view, 7000, 1);
+                        view->placed = fn_4489ce;
+                    } else {
+                        done++;
+                    }
+                } else if (g_4b1aea[cell].snoid == 512) {
+                    if (nose == otherNose) {
+                        g_4b1aea[cell].state = 502;
+                        view = findView(g_4b1aea[cell].view);
+                        setViewScript(view, 7000, 1);
+                        view->placed = fn_4489ce;
+                    } else {
+                        done++;
+                    }
+                } else if (g_4b1aea[cell].snoid == 513) {
+                    if (otherFeet == feet) {
+                        g_4b1aea[cell].state = 502;
+                        view = findView(g_4b1aea[cell].view);
+                        setViewScript(view, 7000, 1);
+                        view->placed = fn_4489ce;
+                    } else {
+                        done++;
+                    }
+                }
+                if (!done) {
+                    g_4b1aea[cell].state = 502;
+                    view = findView(g_4b1aea[cell].view);
+                    setViewScript(view, 7000, 1);
+                    view->placed = fn_4489ce;
+                }
+            } else if (g_4b1934 == 1 && !g_4b1aea[cell].snoid && g_4b1aea[cell - 1].state == 508) {
+                g_4b1aea[cell].state = 502;
+                view = findView(g_4b1aea[cell].view);
+                setViewScript(view, 7000, 1);
+                view->placed = fn_4489ce;
+            }
+            break;
+        }
+        if (!done) {
+            if (g_4b1aea[cell].links[5] != -1)
+                cell = g_4b1aea[cell].links[5];
+            else if (g_4b1aea[cell].links[4] != -1)
+                cell = g_4b1aea[cell].links[4];
+            else if (g_4b1aea[cell].links[3] != -1)
+                cell = g_4b1aea[cell].links[3];
+            else
+                done++;
+        }
+    } while (!done);
+}
