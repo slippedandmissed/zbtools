@@ -14,7 +14,7 @@ extern short g_4abb32; /* @data 0x4abb32 */
 extern short g_4abb6a; /* @data 0x4abb6a */
 extern short g_4abb7a; /* @data 0x4abb7a */
 extern short g_4abb7c; /* @data 0x4abb7c */
-extern ImageBank *g_4abb94; /* @data 0x4abb94 */
+extern ImageBank *ferryImages; /* @data 0x4abb94: the images of the Zoombinis on the ferry's scripts */
 extern long ferryScriptResources[59]; /* @data 0x4abbd4 */
 extern short *ferryScripts[59]; /* @data 0x4abcc0: the 'SCRS' scripts 4000-4058, as loaded */
 
@@ -65,6 +65,9 @@ extern short *ferryHotX; /* @data 0x4abb98: the ferry's images' hot spots */
 extern short *ferryHotY; /* @data 0x4abb9c */
 
 void resetScene13();
+void updateFerrySnoid(View *view, short region);
+short addFerrySnoid(Snoid *snoid);
+void fn_423ebb(View *view, short event);
 void drawFerryButtons(View *);
 void startFerryScript(View *view, short id, Point *anchor);
 void fn_423f84();
@@ -79,7 +82,7 @@ void fn_423e2c(View *view, short event);
 void fn_424104(View *view, short event);
 void fn_421bfc(View *view, short region);
 short scene13Key(unsigned short key);
-void fn_4224ea(View *view);
+void drawFerrySnoid(View *view);
 void loadFerryScripts();
 void loadFerryScript(short id);
 void fn_4234c9(View *, short event);

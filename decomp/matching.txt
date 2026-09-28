@@ -354,14 +354,17 @@
 0x00422491 scene13Key
 0x00422537 loadFerryScripts
 0x0042258a loadFerryScript
+0x004225cf updateFerrySnoid
 0x00422747 ferryLayOutSnoid
 0x00422c82 startFerryScript
+0x00423327 addFerrySnoid
 0x0042339f ferryScript
 0x004234c9 fn_4234c9
 0x00423512 fn_423512
 0x00423cf1 ferrySnoidScript
 0x00423d9d fn_423d9d
 0x00423e2c fn_423e2c
+0x00423ebb fn_423ebb
 0x00423f84 fn_423f84
 0x0042403b fn_42403b
 0x00424104 fn_424104

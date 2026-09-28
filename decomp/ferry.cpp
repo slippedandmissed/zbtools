@@ -59,17 +59,17 @@ short scene13Key(unsigned short key)
     return used;
 }
 
-/* A view draw: while running, draws its cels from g_4abb94. The original
+/* A view draw: while running, draws its cels from ferryImages. The original
    passes the cel's image, x and y as three `*cel++` arguments, relying on
    BCC's left-to-right evaluation; this indexes, then steps. */
 /* @zoombi32-functional 0x004224ea */
-void fn_4224ea(View *view)
+void drawFerrySnoid(View *view)
 {
     short *cel;
 
     if (view->body.running)
         for (cel = (short *)view->body.cels; *cel; cel += 3)
-            drawImageData((unsigned short *)((char *)g_4abb94 + g_4abb94->offsets[cel[0]]), cel[1], cel[2], 8);
+            drawImageData((unsigned short *)((char *)ferryImages + ferryImages->offsets[cel[0]]), cel[1], cel[2], 8);
 }
 
 /* Clears the scripts 4000-4058 and loads the first four. */
@@ -621,7 +621,7 @@ short ferryLayOutSnoid(Snoid *snoid, short *event)
     }
     cel = (short *)snoid->body.cels;
     while (*cel) {
-        unsigned short *image = (unsigned short *)(g_4abb94->offsets[*cel] + (char *)g_4abb94);
+        unsigned short *image = (unsigned short *)(ferryImages->offsets[*cel] + (char *)ferryImages);
 
         cel++;
         rect.left = *cel++;
@@ -756,4 +756,139 @@ void fn_423f84()
     }
     if (g_4abb46)
         g_4abb46--;
+}
+
+/*
+ * The ferry's updateSnoidView, for a Zoombini on a ferry script: when due,
+ * idles (now and then, by g_4a4b98, fidgeting with 2 or 3) or runs its
+ * script a frame; at the script's end, back to 4000 and tells the notify
+ * (-1).
+ */
+/* @zoombi32 0x004225cf */
+void updateFerrySnoid(View *view, short region)
+{
+    short event;
+    short changed = 0;
+    Snoid *snoid;
+
+    if (!view->body.running || g_4b9684)
+        return;
+    {
+        short due = view->nextUpdate <= updateTime;
+
+        if (!due)
+            return;
+    }
+    view->nextUpdate = updateTime + view->interval;
+    snoid = viewSnoid(view);
+    switch (snoid->unknownF4) {
+    case 0:
+    default:
+        if (snoid->unknownF5) {
+            snoid->unknownF5 = 0;
+            changed = 1;
+        } else if (g_4a4b98 && snoid->unknownF8++ > g_4a4b98 + 16) {
+            short which = randomBetween(1, 100) <= 50 ? 2 : 3;
+            short script = ferryScript(view, which);
+
+            if (script) {
+                startFerryScript(view, script, 0);
+                changed = 1;
+                snoid->unknownF8 = 1;
+            }
+        }
+        break;
+    case 1:
+        changed = 1;
+        break;
+    }
+    if (changed) {
+        unionRgnRect(region, &view->body.bounds);
+        if (snoid->body.lastFrame > 1) {
+            if (snoid->body.frame >= snoid->body.lastFrame) {
+                startFerryScript(view, 0, 0);
+                if (view->notifyEnd && view->notify)
+                    view->notify(view, -1);
+                view->notify = 0;
+                view->changed = 1;
+                return;
+            }
+            short sound = ferryLayOutSnoid(snoid, &event);
+
+            if (sound)
+                queueViewSound(sound, 0);
+            if (view->notify && event)
+                view->notify(view, event - 1);
+        } else {
+            ferryLayOutSnoid(snoid, 0);
+        }
+        view->changed = 1;
+    }
+}
+
+/* Adds a view for a Zoombini (if it has feet) on the ferry's scripts;
+   returns its id (0 for none). */
+/* @zoombi32 0x00423327 */
+short addFerrySnoid(Snoid *snoid)
+{
+    short id = 0;
+    View *view;
+    short i;
+
+    if (snoid->features[3]) {
+        for (i = 0; i < 16; i++)
+            snoid->unknownC2[i] = 0;
+        snoid->unknownC0 = -1;
+        id = addView(1, drawFerrySnoid, updateFerrySnoid, 0, 6, snoid, 0, 0);
+        view = findView(id);
+        if (view) {
+            startFerryScript(view, 0, 0);
+            view->nextUpdate = 0;
+            view->flags = 0x4000002;
+        }
+    }
+    return id;
+}
+
+/* A Zoombini's notify: 250-253 face that way, 240-243 set the facing for
+   when the next turn (0) ends; at 60, starts g_4abb68 on 13; at the end
+   (-1), sets g_4abb3e. */
+/* @zoombi32 0x00423ebb */
+void fn_423ebb(View *view, short event)
+{
+    Snoid *snoid = viewSnoid(view);
+    View *other;
+
+    switch (event) {
+    case 250:
+    case 251:
+    case 252:
+    case 253:
+        setSnoidFacing(snoid, event - 250);
+        break;
+    case 240:
+    case 241:
+    case 242:
+    case 243:
+        g_4abb18 = event - 239;
+        break;
+    case 0:
+        snoid->unknownF2 = !snoid->unknownF2;
+        if (g_4abb18) {
+            setSnoidFacing(snoid, g_4abb18 - 1);
+            g_4abb18 = 0;
+        }
+        break;
+    case 60:
+        other = findView(g_4abb68);
+        if (other) {
+            short script = ferryScript(other, 13);
+
+            startFerryScript(other, script, 0);
+        }
+        break;
+    case -1:
+        g_4abb3e = 1;
+        break;
+    }
 }
