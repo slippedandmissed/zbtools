@@ -641,3 +641,351 @@ void fn_442a9f(View *view)
         }
     }
 }
+
+/* A view's placing: fn_442a9f for the toppings troll 0 wants
+   (images 156-191). */
+/* @zoombi32 0x0044468e */
+void fn_44468e(View *view)
+{
+    short dx;
+    short dy;
+    short *cel = (short *)&view->body;
+    short removed;
+    short first = 1;
+
+    while (*cel) {
+        removed = 0;
+        switch (*cel) {
+        case 156:
+        case 157:
+        case 158:
+        case 159:
+            if (!trollWants[0][4]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 160:
+        case 161:
+        case 162:
+        case 163:
+            if (!trollWants[0][3]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 164:
+        case 165:
+        case 166:
+        case 167:
+            if (!trollWants[0][2]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 168:
+        case 169:
+        case 170:
+        case 171:
+            if (!trollWants[0][1]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 172:
+        case 173:
+        case 174:
+        case 175:
+            if (!trollWants[0][0]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 176:
+        case 177:
+        case 178:
+        case 179:
+            if (!g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 188:
+        case 189:
+        case 190:
+        case 191:
+            if (!trollWants[0][5] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 184:
+        case 185:
+        case 186:
+        case 187:
+            if (!trollWants[0][6] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 180:
+        case 181:
+        case 182:
+        case 183:
+            if (!trollWants[0][7] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        }
+        if (!removed) {
+            if (!g_4b1630) {
+                cel[1] += g_4b1666;
+                cel[2] += g_4b1668;
+            } else {
+                if (first) {
+                    dx = cel[1];
+                    dy = cel[2];
+                    first = 0;
+                }
+                cel[1] += g_4b1666 - dx;
+                cel[2] += g_4b1668 - dy;
+            }
+            cel += 3;
+        }
+    }
+}
+
+/* A view's placing: fn_442a9f for the toppings troll 1 wants
+   (images 156-191, and 212 when g_4b1618 is 3). */
+/* @zoombi32 0x0044485d */
+void fn_44485d(View *view)
+{
+    short dx;
+    short dy;
+    short *cel = (short *)&view->body;
+    short removed;
+    short first = 1;
+
+    while (*cel) {
+        removed = 0;
+        switch (*cel) {
+        case 156:
+        case 157:
+        case 158:
+        case 159:
+            if (!trollWants[1][4]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 160:
+        case 161:
+        case 162:
+        case 163:
+            if (!trollWants[1][3]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 164:
+        case 165:
+        case 166:
+        case 167:
+            if (!trollWants[1][2]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 168:
+        case 169:
+        case 170:
+        case 171:
+            if (!trollWants[1][1]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 172:
+        case 173:
+        case 174:
+        case 175:
+            if (!trollWants[1][0]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 176:
+        case 177:
+        case 178:
+        case 179:
+            if (!g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 188:
+        case 189:
+        case 190:
+        case 191:
+            if (!trollWants[1][5] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 184:
+        case 185:
+        case 186:
+        case 187:
+            if (!trollWants[1][6] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 180:
+        case 181:
+        case 182:
+        case 183:
+            if (!trollWants[1][7] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 212:
+            if (g_4b1618 == 3) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        }
+        if (!removed) {
+            if (!g_4b1630) {
+                cel[1] += g_4b1666;
+                cel[2] += g_4b1668;
+            } else {
+                if (first) {
+                    dx = cel[1];
+                    dy = cel[2];
+                    first = 0;
+                }
+                cel[1] += g_4b1666 - dx;
+                cel[2] += g_4b1668 - dy;
+            }
+            cel += 3;
+        }
+    }
+}
+
+/* A view's placing: fn_442a9f for the toppings troll 2 wants
+   (images 156-191). */
+/* @zoombi32 0x00444a93 */
+void fn_444a93(View *view)
+{
+    short dx;
+    short dy;
+    short *cel = (short *)&view->body;
+    short removed;
+    short first = 1;
+
+    while (*cel) {
+        removed = 0;
+        switch (*cel) {
+        case 156:
+        case 157:
+        case 158:
+        case 159:
+            if (!trollWants[2][4]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 160:
+        case 161:
+        case 162:
+        case 163:
+            if (!trollWants[2][3]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 164:
+        case 165:
+        case 166:
+        case 167:
+            if (!trollWants[2][2]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 168:
+        case 169:
+        case 170:
+        case 171:
+            if (!trollWants[2][1]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 172:
+        case 173:
+        case 174:
+        case 175:
+            if (!trollWants[2][0]) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 176:
+        case 177:
+        case 178:
+        case 179:
+            if (!g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 188:
+        case 189:
+        case 190:
+        case 191:
+            if (!trollWants[2][5] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 184:
+        case 185:
+        case 186:
+        case 187:
+            if (!trollWants[2][6] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        case 180:
+        case 181:
+        case 182:
+        case 183:
+            if (!trollWants[2][7] || !g_4b161e) {
+                removeFirstCel((ViewCel *)cel);
+                removed++;
+            }
+            break;
+        }
+        if (!removed) {
+            if (!g_4b1630) {
+                cel[1] += g_4b1666;
+                cel[2] += g_4b1668;
+            } else {
+                if (first) {
+                    dx = cel[1];
+                    dy = cel[2];
+                    first = 0;
+                }
+                cel[1] += g_4b1666 - dx;
+                cel[2] += g_4b1668 - dy;
+            }
+            cel += 3;
+        }
+    }
+}
