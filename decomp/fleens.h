@@ -54,8 +54,7 @@ extern unsigned long g_4abdb4; /* @data 0x4abdb4 */
 extern unsigned long g_4abdb8; /* @data 0x4abdb8 */
 
 void fn_42403b(View *view, short event);
-extern short g_4abb20; /* @data 0x4abb20 */
-extern short g_4abb24; /* @data 0x4abb24 */
+extern short fleensViews[7]; /* @data 0x4abb20: the backdrop's views (scripts 1200-1206) */
 
 extern short feetLayers[6]; /* @data 0x4a1654: the feature layers by value, for layOutFleen */
 extern short noseLayers[6]; /* @data 0x4a1660 */
@@ -72,9 +71,11 @@ extern short g_4abb6e; /* @data 0x4abb6e: the Zoombini last put down at a place 
 extern short g_4abba0; /* @data 0x4abba0: the Zoombinis' views (fleens are made from as many travellers) */
 
 extern short g_4abb1c; /* @data 0x4abb1c */
-extern short g_4abb26; /* @data 0x4abb26 */
+
+extern GroupList fleensGroups[1]; /* @data 0x4a1630 */
 
 void resetScene13();
+void openScene13();
 void fn_42365a(View *view, short event);
 void fn_424195(View *view, short event);
 void scene13Clicked(short which);

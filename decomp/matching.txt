@@ -347,6 +347,7 @@
 0x0041f668 applyPlayerSettings
 0x0041f6fc fn_41f6fc
 0x0042160c resetScene13
+0x00421738 openScene13
 0x00421b46 drawFleensButton
 0x00421bdf drawFleensButtons
 0x00421bfc fn_421bfc

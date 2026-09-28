@@ -10,6 +10,7 @@
 #include "e2memory.h"
 #include "features.h"
 #include "fleens.h"
+#include "focus.h"
 #include "graphics.h"
 #include "module_4623b8.h"
 #include "platform.h"
@@ -457,7 +458,7 @@ short fleenScript(View *view, short which)
 }
 
 /* A notify for the fleens' views: 0 turns (and puts g_4abb30 back after
-   g_4abb24 the first time), 1 starts g_4abb20 once, 2 and 140 move
+   fleensViews[2] the first time), 1 starts fleensViews[0] once, 2 and 140 move
    g_4abb30 after or before g_4abb32, 218 a random sound (4100-4124); 137
    and the end (-1) stop the script. */
 /* @zoombi32 0x00423512 */
@@ -469,16 +470,16 @@ void fn_423512(View *view, short event)
     case 0:
         if (g_4abb42 && view->id == g_4abb30) {
             g_4abb42 = 0;
-            moveView(g_4abb30, 0, g_4abb24);
+            moveView(g_4abb30, 0, fleensViews[2]);
         }
         snoid = viewSnoid(view);
         snoid->unknownF2 = !snoid->unknownF2;
         break;
     case 1:
         if (!g_4abb2e) {
-            moveView(g_4abb30, 0, g_4abb20);
+            moveView(g_4abb30, 0, fleensViews[0]);
             g_4abb2e = 1;
-            startView(g_4abb20, 0, fn_4234c9, 1);
+            startView(fleensViews[0], 0, fn_4234c9, 1);
         }
         break;
     case 2:
@@ -728,7 +729,7 @@ void startFleenScript(View *view, short id, Point *anchor)
 }
 
 /* Starts the g_4abb46 Zoombinis of g_4abb4a moving on (7021), the last
-   one (8) going ahead of g_4abb24, counted in g_4b755a until it's done
+   one (8) going ahead of fleensViews[2], counted in g_4b755a until it's done
    (fn_42403b); then one fewer. */
 /* @zoombi32 0x00423f84 */
 void fn_423f84()
@@ -744,7 +745,7 @@ void fn_423f84()
                 script = fleensSnoidScript(view, 8);
                 if (script) {
                     g_4b755a++;
-                    moveView(view->id, 0, g_4abb24);
+                    moveView(view->id, 0, fleensViews[2]);
                     startSnoidScript(viewSnoid(view), script, 0, 0);
                     view->notifyEnd = 1;
                     view->notify = fn_42403b;
@@ -1183,7 +1184,7 @@ void fn_42365a(View *view, short event)
         if (g_4abb44 && view->id == g_4abb32) {
             g_4abb44 = 0;
             view->flags |= 0x4000000;
-            moveView(g_4abb32, 0, g_4abb24);
+            moveView(g_4abb32, 0, fleensViews[2]);
         }
         break;
     case 4:
@@ -1259,7 +1260,7 @@ void fn_42365a(View *view, short event)
         break;
     case 8:
         view->flags |= 0x4000000;
-        moveView(view->id, 0, g_4abb20);
+        moveView(view->id, 0, fleensViews[0]);
         break;
     case 132:
         if (!g_4abb6c)
@@ -1377,7 +1378,7 @@ void fn_42365a(View *view, short event)
 /* The extra's notify (fn_42365a's 30): 135 passes on to fn_42365a; at the
    end (-1), frees the views, sets g_4abb7c, picks the Zoombinis, plays a
    cheer when all made it (20055-20063) or now and then a remark
-   (20045-20048), deletes g_4abb26 and sets g_4abb1a by how many are
+   (20045-20048), deletes fleensViews[3] and sets g_4abb1a by how many are
    chosen. */
 /* @zoombi32 0x00424195 */
 void fn_424195(View *view, short event)
@@ -1399,7 +1400,7 @@ void fn_424195(View *view, short event)
             else if (randomBetween(0, 4) > g_4abb6a || (*(short *)(g_4a4ba0 + 0x38) & 0xfff) <= 3)
                 queueViewSound(randomBetween(20045, 20048), 1);
         }
-        deleteView(g_4abb26);
+        deleteView(fleensViews[3]);
         n = countChosenSnoids();
         if (n == 16)
             g_4abb1a = 13;
@@ -1407,4 +1408,109 @@ void fn_424195(View *view, short event)
             g_4abb1a = n - 8;
         break;
     }
+}
+
+/* Opens scene 13: Fleens.MHK, its sounds, images and scripts, the views
+   (the backdrop's seven, g_4abb1c, the placed spot, the buttons), the
+   fleens (addFleens), the party; the first Zoombini walks in (g_4abb30's
+   notify), and a hint or greeting. */
+/* @zoombi32 0x00421738 */
+void openScene13()
+{
+    Point places[16] = {{238, 368}, {185, 417}, {155, 448}, {197, 396}, {160, 357}, {164, 384},
+                        {150, 416}, {116, 357}, {130, 386}, {109, 418}, {117, 448}, {74, 348},
+                        {89, 384}, {67, 418}, {76, 450}, {56, 379}};
+    Point place = {438, 357};
+    short i;
+    unsigned long flags;
+    View *view;
+    short script;
+
+    g_4abb78 = g_4abb7a = 0;
+    resetScene13();
+    g_4abb6a = sceneLevel();
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(1000, 1002, 1);
+    addSoundRange(300, 324, 0);
+    addSoundRange(425, 499, 0);
+    addSoundRange(99, 99, 0);
+    addSoundRange(375, 399, 0);
+    addSoundRange(7000, 7099, 0);
+    addSoundRange(1800, 1899, 0);
+    addSoundRange(1200, 4099, 1);
+    addSoundRange(4100, 4199, 0);
+    addSoundRange(175, 199, 0);
+    addSoundRange(900, 944, 0);
+    openGameFile(&g_4abb74, "Fleens.MHK");
+    fn_46be2e(g_4abb74);
+    drawBackdrop(300);
+    loadTerrain(500);
+    fleenImages = loadImageBank(4000, &g_4abb88);
+    g_4a1650 = loadImageBank(400, &g_4abb84);
+    loadFeatureGroup(1000, 0, 0);
+    loadFeatureGroup(1100, 1, 0);
+    loadFeatureGroup(1200, 2, 0);
+    fleenHotX = loadShortTable(4000, &g_4abb8c);
+    fleenHotY = loadShortTable(4001, &g_4abb90);
+    loadScripts(1000, 7);
+    addScripts(1100, 1, 0);
+    addScripts(1200, 7, 0);
+    loadFleenScripts();
+    loadSnoidScripts(6000, 5, 0);
+    addSnoidScripts(7000, 46, 26);
+    g_4abb1c = addView(0x108000, drawCels, runViewScript, 1000, 6, 0, 0, 0);
+    placedViews[0] = addView(0x108a000, drawCels, runViewScript, 1100, 7, &place, 0, 0);
+    addView(0x1000, drawFleensButtons, fn_421bfc, 0, 0, 0, 0, 0);
+    setViewPlaces(16, places, 1);
+    addFleens();
+    for (i = 1200; i <= 1206; i++) {
+        if (i == 1200)
+            flags = 0x4180000;
+        else
+            flags = 0x4000000;
+        fleensViews[i - 1200] = addView(flags, drawCels, runViewScript, i, 6, 0, 0, 0);
+    }
+    fn_4148da(10, 236);
+    makePartySnoids(0);
+    enterSnoids(0);
+    updateViews();
+    staggerSnoids(45, 200);
+    view = findView(partyViews[0]);
+    if (view) {
+        script = fleensSnoidScript(view, 1);
+        if (script) {
+            Point anchor = {236, 395};
+
+            g_4abb80 = 1;
+            loadSnoidScript(script);
+            startSnoidScript(viewSnoid(view), script, &anchor, 0);
+            view->nextUpdate = 0;
+            view->notify = fn_42365a;
+            view->notifyEnd = 1;
+            if (g_4b755a > 0)
+                g_4b755a--;
+        }
+    }
+    updateViews();
+    setGroupLists(fleensGroups, 1, (short)0xc000);
+    drawFleensButton(1, 0, 0);
+    drawFleensButton(2, 0, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    chooseSnoids(0, 0);
+    resetViewClock();
+    g_4abb78 = 1;
+    switch (campHint((short *)(g_4a4ba0 + 0x38))) {
+    case 2:
+        g_4b966e = 20080;
+        break;
+    default:
+        if (g_4abb6a == 1 || g_4abb6a == 3)
+            g_4b966e = randomBetween(20079, 20080);
+        else
+            g_4b966e = 20079;
+        break;
+    }
+    g_4abba0 = countSnoidViews();
+    g_4abdac = 8;
 }
