@@ -1269,15 +1269,15 @@ void fn_43ffd5(Point *where, short *slot)
     g_4b7564 = 0;
 }
 
-/* The scene's event hook (the scene record's +0x20): event 23 brings back
-   the two views g_4b15b0 and g_4b15b2 (adding them first if the game state's
-   +0x20 is set). Returns whether it handled the event. */
+/* Scene 3's keys: 23 brings back the two views g_4b15b0 and g_4b15b2
+   (adding them first if the game state's +0x20 is set). Returns whether it
+   handled the key. */
 /* @zoombi32 0x0043ec8c */
-short fn_43ec8c(unsigned short event)
+short fn_43ec8c(unsigned short key)
 {
     short handled = 0;
 
-    switch (event) {
+    switch (key) {
     case 23:
         if (*(short *)(g_4a4ba0 + 0x20))
             fn_440218();
@@ -1303,7 +1303,7 @@ short leaveNetIfAsked()
     return 0;
 }
 
-/* The scene's idle work: leaving once asked to (g_4b0d52) and sound 996 is
+/* Scene 3's frame: leaving once asked to (g_4b0d52) and sound 996 is
    done; g_4b15b8 is cleared while g_4b755a isn't set. */
 /* @zoombi32 0x0043ebf4 */
 void netIdle()
@@ -1344,7 +1344,7 @@ void drawZoombiniParts(Snoid *snoid)
         fn_43f985(snoid->features[0] + 1, x, y);
 }
 
-/* The scene's keys (debugging ones only while debugging messages are on). */
+/* Scene 15's keys (debugging ones only while debugging messages are on). */
 /* @zoombi32 0x0043c655 */
 short netKey(unsigned short key)
 {
@@ -1657,4 +1657,216 @@ short findCodeEntry()
         break;
     }
     return -1;
+}
+
+/*
+ * Plays a scene's ambient sounds: every 3-4 seconds, unless the last is
+ * still playing, a random one of the scene's (none in scenes 6 and 14),
+ * not repeating one until all have played; every 16th time, first unloads
+ * sounds 900-944.
+ */
+/* @zoombi32 0x0043af6b */
+void playAmbientSound()
+{
+    unsigned long now;
+    short sound;
+    short i;
+
+    if (g_4b87fe && g_4b87ff) {
+        now = clockTime();
+        if (now >= ambientSoundTime) {
+            if (isSoundPlaying(ambientSound, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+                ambientSoundTime = now + randomBetween(180, 240);
+                return;
+            }
+            ambientSoundTime = now + randomBetween(180, 240);
+            sound = 0;
+            switch (currentScene) {
+            case 7:
+                sound = scene7Sounds[allocateSlot(&scene7SoundsUsed, 9, 0)];
+                break;
+            case 8:
+                sound = scene8Sounds[allocateSlot(&scene8SoundsUsed, 9, 0)];
+                break;
+            case 9:
+                sound = scene9Sounds[allocateSlot(&scene9SoundsUsed, 12, 0)];
+                break;
+            case 4:
+                sound = scene4Sounds[allocateSlot(&scene4SoundsUsed, 15, 0)];
+                break;
+            case 10:
+                sound = scene10Sounds[allocateSlot(&scene10SoundsUsed, 19, 0)];
+                break;
+            case 11:
+                sound = scene11Sounds[allocateSlot(&scene11SoundsUsed, 20, 0)];
+                break;
+            case 12:
+                sound = scene12Sounds[allocateSlot(&scene12SoundsUsed, 13, 0)];
+                break;
+            case 5:
+                sound = scene5Sounds[allocateSlot(&scene5SoundsUsed, 10, 0)];
+                break;
+            case 13:
+                sound = scene13Sounds[allocateSlot(&scene13SoundsUsed, 13, 0)];
+                break;
+            case 15:
+                sound = scene15Sounds[allocateSlot(&scene15SoundsUsed, 17, 0)];
+                break;
+            case 16:
+                sound = scene16Sounds[allocateSlot(&scene16SoundsUsed, 10, 0)];
+                break;
+            case 18:
+                sound = scene18Sounds[allocateSlot(&scene18SoundsUsed, 10, 0)];
+                break;
+            case 17:
+                sound = scene17Sounds[allocateSlot(&scene17SoundsUsed, 10, 0)];
+                break;
+            }
+            if (sound) {
+                ambientSoundCount++;
+                ambientSoundCount %= 16;
+                if (!ambientSoundCount)
+                    for (i = 900; i <= 944; i++)
+                        fn_41158c(i, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                queueViewSound(sound, 0);
+                ambientSound = sound;
+            }
+        }
+    }
+}
+
+/*
+ * Moves on to the next scene (g_4b0d50): leaving a group's last puzzle
+ * (9, 12, 15, 18) for its camp notes the level passed in the game state
+ * (g_4b0d4c: the puzzle left). Whether to go by the map (scene 2) first
+ * depends on the scenes left and entered (not while g_4b754a, g_4b7562 or
+ * g_4b0d4a; always while g_4a7e68). Then unlocks the views, sets the next
+ * ambient sound 15 seconds off, clips to the game's area and opens the
+ * scene.
+ */
+/* Not exact: the original keeps `scene` in esi, `next` in edi and `viaMap`
+   in ebx; BCC rotates them (ebx, esi, edi) whatever the declaration
+   order. */
+/* @zoombi32 0x0043ac20 */
+void enterNextScene()
+{
+    short *scene = &currentScene;
+    short *next = &g_4b0d50;
+    short viaMap = 0;
+
+    if (*next == -1)
+        return;
+    if (!g_4b754a) {
+        short level = sceneLevel();
+
+        if (g_4b7558 && level)
+            level--;
+        level &= 3;
+        short bit = 1 << level;
+
+        switch (*scene) {
+        case 9:
+            if (*next == 4) {
+                g_4b0d4c = 9;
+                g_4a4ba0[0x50] |= bit;
+            }
+            break;
+        case 12:
+            if (*next == 5) {
+                g_4b0d4c = 12;
+                *(short *)(g_4a4ba0 + 0x52) |= (char)bit;
+            }
+            break;
+        case 15:
+            if (*next == 5) {
+                g_4b0d4c = 15;
+                *(short *)(g_4a4ba0 + 0x52) |= bit << 4;
+            }
+            break;
+        case 18:
+            if (*next == 6) {
+                g_4b0d4c = 18;
+                g_4a4ba0[0x51] |= bit;
+            }
+            break;
+        }
+    }
+    if (g_4b754a) {
+        viaMap = 0;
+        if (*scene != 1 && *next != 3 && *next != 0)
+            *next = 1;
+    } else if (*scene != 1 && *scene != 2 && *scene != 6 && *next != 1) {
+        switch (*scene) {
+        case 0:
+            viaMap = 0;
+            break;
+        case 3:
+            viaMap = 1;
+            break;
+        case 7:
+        case 8:
+        case 9:
+            viaMap = 1;
+            break;
+        case 4:
+            viaMap = 1;
+            break;
+        case 10:
+        case 11:
+        case 12:
+            viaMap = 1;
+            break;
+        case 13:
+        case 14:
+        case 15:
+            viaMap = 1;
+            break;
+        case 5:
+            viaMap = 1;
+            break;
+        case 16:
+        case 17:
+        case 18:
+            viaMap = 1;
+            break;
+        }
+    }
+    *(short *)(g_4a4ba0 + 0xca) = *scene;
+    if (*next != 0 && *next != 2)
+        savedScene() = *next;
+    if (g_4b7562 || g_4b0d4a)
+        viaMap = 0;
+    if (g_4a7e68)
+        viaMap = 1;
+    if (viaMap) {
+        g_4b0d56 = *scene;
+        g_4b0d54 = *next;
+        *scene = 2;
+        *next = -1;
+    } else {
+        g_4b0d56 = *scene;
+        *scene = *next;
+        *next = -1;
+        g_4b0d54 = -1;
+    }
+    if (g_4b754a) {
+        *(short *)(g_4a4ba0 + 0x54) = 0;
+    } else {
+        if (!viewsLocked)
+            g_4afb32 = 1;
+        switch (*scene) {
+        case 7:
+        case 10:
+        case 13:
+        case 16:
+            *(short *)(g_4a4ba0 + 0x54) = 1;
+            break;
+        }
+    }
+    viewsLocked = 0;
+    viewsPaused = fillViews = 0;
+    ambientSoundTime = clockTime() + 900;
+    setClipRect(gameRect);
+    if (scenes[*scene]->open)
+        scenes[*scene]->open();
 }

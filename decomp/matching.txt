@@ -453,6 +453,7 @@
 0x0043a69a fn_43a69a
 0x0043a772 spliceList
 0x0043af02 sceneGroup
+0x0043af6b playAmbientSound
 0x0043b6f8 drawNetButton
 0x0043b791 drawNetButtons
 0x0043b7ae updateNetButtons

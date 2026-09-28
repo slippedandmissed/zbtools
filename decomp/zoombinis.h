@@ -628,12 +628,16 @@ struct InputState
     short unknown2E;
 };
 
-/* A scene (a puzzle or screen) of the game; only its frame function is known. */
+typedef short (*KeyCallback)(unsigned short key);
+
+/* A scene (a puzzle or screen) of the game: its functions. */
 struct Scene
 {
-    long unknown0;
-    long unknown4;
+    Callback open; /* on entering it */
+    Callback close;
     Callback frame; /* called every pass of the main loop (gameFrame) */
+    long unknownC;
+    KeyCallback key; /* a key pressed: returns whether it was handled */
 };
 
 /* The display mode WinMain asks for (640x480, 256 colours). */
@@ -1381,7 +1385,8 @@ short allocateSlot(unsigned long *used, short count, unsigned long reserved);
 short randomBelow(short limit);
 void fn_46be3d();
 unsigned long timerTime(); /* the engine's clock, in ms */
-void fn_43ac20();
+void enterNextScene();
+extern short g_4a7e68;
 short playSound(short key, long type, short channel, short eventType, short discard);
 short fn_45590b();
 void fn_455ab0(short type);
@@ -4684,7 +4689,6 @@ void findSpot(View *view, ShortRect *area, short walk, short radius);
 void pickFreePlace(Point *result, Point *places, short count, short radius);
 extern Point g_4a4d1c;
 void fn_4624fc();
-void fn_43af6b();
 void drawSceneButtons(short button, short pressed, short group, short show); /* 0x41790f */
 void drawSceneButtons1(View *);
 void drawSceneButtons2(View *);
@@ -5793,7 +5797,7 @@ extern short g_4b142a;
 void fn_43c6df();
 extern Point g_4a3324[16];
 void fn_43ffd5(Point *where, short *slot);
-short fn_43ec8c(unsigned short event);
+short fn_43ec8c(unsigned short key);
 short leaveNetIfAsked();
 extern short netBusy; /* @data 0x4a336c */
 void netIdle();
@@ -5817,3 +5821,34 @@ void fn_43a2c8(View *view, short other);
 extern short g_4b142e;
 extern short g_4b1468;
 short findCodeEntry();
+/* Each scene's ambient sounds, and which have played (a bit each). */
+extern short scene7Sounds[9]; /* @data 0x4a2740 */
+extern unsigned long scene7SoundsUsed; /* @data 0x4a2754 */
+extern short scene8Sounds[9]; /* @data 0x4a2758 */
+extern unsigned long scene8SoundsUsed; /* @data 0x4a276c */
+extern short scene9Sounds[12]; /* @data 0x4a2770 */
+extern unsigned long scene9SoundsUsed; /* @data 0x4a2788 */
+extern short scene4Sounds[15]; /* @data 0x4a278c */
+extern unsigned long scene4SoundsUsed; /* @data 0x4a27ac */
+extern short scene10Sounds[19]; /* @data 0x4a27b0 */
+extern unsigned long scene10SoundsUsed; /* @data 0x4a27d8 */
+extern short scene11Sounds[20]; /* @data 0x4a27dc */
+extern unsigned long scene11SoundsUsed; /* @data 0x4a2804 */
+extern short scene12Sounds[13]; /* @data 0x4a2808 */
+extern unsigned long scene12SoundsUsed; /* @data 0x4a2824 */
+extern short scene5Sounds[10]; /* @data 0x4a2828 */
+extern unsigned long scene5SoundsUsed; /* @data 0x4a283c */
+extern short scene13Sounds[13]; /* @data 0x4a2840 */
+extern unsigned long scene13SoundsUsed; /* @data 0x4a285c */
+extern short scene15Sounds[17]; /* @data 0x4a2860 */
+extern unsigned long scene15SoundsUsed; /* @data 0x4a2884 */
+extern short scene16Sounds[10]; /* @data 0x4a2888 */
+extern unsigned long scene16SoundsUsed; /* @data 0x4a289c */
+extern short scene18Sounds[10]; /* @data 0x4a28a0 */
+extern unsigned long scene18SoundsUsed; /* @data 0x4a28b4 */
+extern short scene17Sounds[10]; /* @data 0x4a28b8 */
+extern unsigned long scene17SoundsUsed; /* @data 0x4a28cc */
+extern unsigned long ambientSoundTime; /* @data 0x4b0d44: when to try the next */
+extern short ambientSound; /* @data 0x4b0d48: the last one */
+extern short ambientSoundCount; /* @data 0x4b0d58 */
+void playAmbientSound();

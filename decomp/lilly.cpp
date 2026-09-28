@@ -4766,7 +4766,7 @@ void otherIdle()
             g_4b0d52 = 0;
         }
     } else if (g_4b9684) {
-        fn_43af6b();
+        playAmbientSound();
         g_4a1d88 = 0;
         return;
     } else {
@@ -5021,6 +5021,6 @@ void otherIdle()
             g_4af33a = 0;
         }
     }
-    fn_43af6b();
+    playAmbientSound();
     g_4a1d88 = 0;
 }

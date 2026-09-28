@@ -17,7 +17,7 @@ short mainLoopUpdate()
 
     if (g_4a4a10) {
         if (g_4b0d50 != -1)
-            fn_43ac20();
+            enterNextScene();
         if (g_4a4b98 && fn_464d88() > 3600) {
             fn_464d7d();
             g_4a4b98 /= 2;

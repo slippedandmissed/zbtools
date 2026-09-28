@@ -837,7 +837,7 @@ void campIdle()
             }
             setDragCursor(over);
         }
-        fn_43af6b();
+        playAmbientSound();
         campBusy = 0;
     }
 }
