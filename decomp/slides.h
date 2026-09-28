@@ -25,5 +25,11 @@ void fn_44943b();
 void fn_449475();
 short fn_44b261();
 void fn_44b2a4();
+extern ImageBank *g_4a3fc4; /* @data 0x4a3fc4: the buttons' images */
+extern short g_4b251c[4]; /* @data 0x4b251c: how many values of each feature the party shows */
+extern ChosenSnoids *g_4b192c; /* @data 0x4b192c: the party */
+void drawSlidesButton(short which, short lit, short show);
+void fn_4488e8();
+void fn_448bf5();
 
 #endif

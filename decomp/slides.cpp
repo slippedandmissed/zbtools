@@ -5,8 +5,10 @@
 #include "zoombinis.h"
 #include "e2memory.h"
 #include "features.h"
+#include "graphics.h"
 #include "module_4623b8.h"
 #include "slides.h"
+#include "snoids.h"
 #include "sound.h"
 #include "view.h"
 
@@ -132,4 +134,76 @@ void fn_44b2a4()
     } else if (g_4b1a44 != g_4b1a46) {
         queueViewSound(8502, 0);
     }
+}
+
+/* Draws button `which` (1 or 2; 2 is dim unless g_4b1932), lit or not,
+   showing it on screen if `show`. */
+/* @zoombi32 0x00446ffc */
+void drawSlidesButton(short which, short lit, short show)
+{
+    short image = 0;
+
+    switch (which) {
+    case 1:
+        image = 5;
+        break;
+    case 2:
+        image = 2;
+        if (!g_4b1932) {
+            lit = 0;
+            image = 1;
+        }
+        break;
+    }
+    if (image) {
+        if (lit)
+            image++;
+        drawImageData((unsigned short *)(g_4a3fc4->offsets[image] + (char *)g_4a3fc4), slidesButtons[which - 1].rect.left,
+                      slidesButtons[which - 1].rect.top, 8);
+        if (show)
+            showRect(&slidesButtons[which - 1].rect);
+    }
+}
+
+/* Counts, for each feature, how many of its values the chosen Zoombinis
+   (g_4b192c, g_4b2414 of them) show, into g_4b251c. */
+/* @zoombi32 0x004488e8 */
+void fn_4488e8()
+{
+    short counts[4][6];
+    short i;
+    short j;
+
+    g_4b251c[0] = 0;
+    g_4b251c[1] = 0;
+    g_4b251c[2] = 0;
+    g_4b251c[3] = 0;
+    g_4b192c = listChosenSnoids();
+    g_4b2414 = g_4b192c->count;
+    fillMemory(counts, 0, sizeof counts);
+    for (i = 0; i < g_4b2414; i++)
+        for (j = 0; j < 4; j++)
+            counts[j][g_4b192c->features[i][j]]++;
+    for (i = 0; i < 4; i++)
+        for (j = 1; j < 6; j++)
+            if (counts[i][j])
+                g_4b251c[i]++;
+}
+
+/* Cycles palette colours 19-21 by one (the last to the first). */
+/* @zoombi32 0x00448bf5 */
+void fn_448bf5()
+{
+    PALETTEENTRY last;
+    PALETTEENTRY colors[256];
+    short first;
+    short count;
+
+    first = 19;
+    count = 3;
+    getColors(&colors[10], 10, 236);
+    last = colors[first + count - 1];
+    memmove(&colors[first + 1], &colors[first], (count - 1) * sizeof(PALETTEENTRY));
+    colors[first] = last;
+    setColors(&colors[10], 10, 236);
 }
