@@ -5604,7 +5604,7 @@ extern short g_4b0c9a[];
 extern short g_4b0cfe[8];
 extern short g_4b0d12[8];
 extern short g_4a25e0[][2];
-extern short g_4b0096[];
+extern short g_4b0096[20]; /* the maze's sequence of values */
 extern short g_4b00c2;
 void fn_436d39(Snoid *snoid);
 short fn_437416(short exclude, short whole);
@@ -5612,3 +5612,8 @@ extern short g_4b0980[];
 extern short g_4b0a02;
 extern short g_4b08e0[];
 extern short g_4b09f8;
+extern short g_4b00be; /* how many values in g_4b0096 */
+extern short g_4b00c0;
+extern short g_4a2666[];
+void fn_436c71(short count);
+void fn_438396();
