@@ -281,3 +281,60 @@ void fn_41d80e(short x, short y, long interval)
     g_4b755a = 1;
     g_4b755c = 0;
 }
+
+/* The view drawing the two buttons. */
+/* @zoombi32 0x0041d955 */
+void drawRosterButtonsView(View *)
+{
+    drawRosterButton(1, 0, 0);
+    drawRosterButton(2, 0, 0);
+}
+
+/* Closes the roster screen. */
+/* @zoombi32 0x0041c9ed */
+void closeRoster()
+{
+    if (g_4a0fec) {
+        g_4a0fec = 0;
+        short saved = fn_46bee9(1);
+
+        clearViews();
+        fn_41dccb();
+        fn_41dce6();
+        fn_46c602(&g_4a0fd0);
+        unloadSounds();
+        fn_46bee9(saved);
+        fn_46ca9c(&g_4ab83c);
+        fadeOutViews();
+        fn_4624fc();
+    }
+}
+
+/* Counts the chosen Zoombinis (g_4a1014 of them) by feature g_4ab87a, and
+   when there's a second (g_4ab878 above 2), by both it and g_4ab87c, into
+   g_4ab892. */
+/* @zoombi32 0x0041e273 */
+void fn_41e273()
+{
+    short second;
+    ChosenSnoids *chosen = listChosenSnoids();
+    short i;
+    short j;
+    short first;
+
+    if (g_4ab878 > 2)
+        g_4a0ff4 = 2;
+    else
+        g_4a0ff4 = 1;
+    for (i = 0; i < 6; i++)
+        for (j = 0; j < 6; j++)
+            g_4ab892[i][j] = 0;
+    for (j = 0; j < g_4a1014; j++) {
+        first = chosen->features[j][g_4ab87a];
+        g_4ab892[0][first]++;
+        if (g_4a0ff4 > 1) {
+            second = chosen->features[j][g_4ab87c];
+            g_4ab892[second][first]++;
+        }
+    }
+}

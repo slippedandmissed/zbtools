@@ -6154,3 +6154,15 @@ extern short g_4ab8ec[21];
 void drawRosterButton(short which, short lit, short show);
 void fn_41ed59(short kind, short n, ShortRect rect);
 void fn_41d80e(short x, short y, long interval);
+extern short g_4a0fec; /* the roster screen is open */
+extern long g_4a0fd0;
+extern long g_4ab83c;
+extern short g_4ab878;
+extern short g_4a0ff4;
+extern short g_4ab87a;
+extern short g_4ab87c;
+extern short g_4ab892[6][6];
+extern short g_4a1014;
+void drawRosterButtonsView(View *);
+void closeRoster();
+void fn_41e273();

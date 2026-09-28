@@ -302,9 +302,11 @@
 0x004184cd returnToCamp
 0x004196a8 fn_4196a8
 0x00419f1a fn_419f1a
+0x0041c9ed closeRoster
 0x0041d167 fn_41d167
 0x0041d80e fn_41d80e
 0x0041d8bc drawRosterButton
+0x0041d955 drawRosterButtonsView
 0x0041d972 fn_41d972
 0x0041d9e4 fn_41d9e4
 0x0041d9eb fn_41d9eb
@@ -312,6 +314,7 @@
 0x0041dccb fn_41dccb
 0x0041dce6 fn_41dce6
 0x0041dd37 fn_41dd37
+0x0041e273 fn_41e273
 0x0041e8f3 fn_41e8f3
 0x0041ed59 fn_41ed59
 0x0041f100 openRosterFile
