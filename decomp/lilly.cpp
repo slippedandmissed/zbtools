@@ -2,6 +2,8 @@
  * lilly (0x424274-0x42f920): 'Lilly.MHK'; 46 KB, so probably several modules
  */
 
+#include <stdlib.h>
+
 #include "zoombinis.h"
 
 /* A lilly actor's view body (flag 2, a large body). Partly known. */
@@ -731,5 +733,145 @@ void loadLillyScripts(long *resources, short *handles, short count)
             *at = swapShort(*at);
             at++;
         }
+    }
+}
+
+/* Darkens the palette's colours 10-245 (to 88-92% by the level). */
+/* @zoombi32 0x00426c33 */
+void darkenPalette()
+{
+    PALETTEENTRY colors[256];
+    short percent = 92;
+
+    if (!g_4ac0d8)
+        percent = 88;
+    else if (g_4ac0d8 == 2)
+        percent = 90;
+    getColors(&colors[10], 10, 236);
+    for (short i = 10; i < 246; i++) {
+        colors[i].peRed = colors[i].peRed * percent / 100;
+        colors[i].peGreen = colors[i].peGreen * percent / 100;
+        colors[i].peBlue = colors[i].peBlue * percent / 100;
+    }
+    fadePalette(colors, 10, 236, 0, 0, 0);
+}
+
+/* @zoombi32 0x0042a6fa */
+void fn_42a6fa(View *view, short event)
+{
+    ViewBody *body = &view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+
+    switch (event) {
+    case 44:
+        actor->body.x = g_4ac950[body->cels[0].image] + body->cels[0].x;
+        actor->body.y = g_4ac954[body->cels[0].image] + body->cels[0].y;
+        actor->body.unknownAa = g_4ac950[body->cels[0].image] + body->cels[0].x;
+        actor->body.unknownAc = g_4ac954[body->cels[0].image] + body->cels[0].y;
+        g_4acff4[actor->row][actor->column + 1].unknown8 = 0;
+        g_4ace1e[g_4ace46] = view->id;
+        g_4ace46++;
+        break;
+    }
+}
+
+/* Counts how many different values of each feature the chosen Zoombinis have. */
+/* @zoombi32 0x00426cef */
+void countFeatureValues()
+{
+    short counts[4][6];
+
+    g_4ac106[0] = 0;
+    g_4ac106[1] = 0;
+    g_4ac106[2] = 0;
+    g_4ac106[3] = 0;
+    g_4ac508 = listChosenSnoids();
+    g_4ac0e8 = g_4ac508->count;
+    fillMemory(counts, 0, sizeof counts);
+    for (short i = 0; i < g_4ac0e8; i++)
+        for (short j = 0; j < 4; j++)
+            counts[j][g_4ac508->features[i][j]]++;
+    for (short feature = 0; feature < 4; feature++)
+        for (short value = 1; value < 6; value++)
+            if (counts[feature][value])
+                g_4ac106[feature]++;
+}
+
+/* Draws `number` in a box at `rect`. */
+/* @zoombi32 0x0042b708 */
+void drawNumberBox(ShortRect rect, short number)
+{
+    Color saved;
+    char text[8];
+
+    saved = setForeColor(Color(0xb));
+    fillPortRect(Rect(rect), Color(0xe), 0);
+    frameRect(Rect(rect));
+    itoa(number, text, 10);
+    drawText(Rect(rect), 0x22, text, 0xffff);
+    setForeColor(saved);
+    showRect(&rect);
+}
+
+/* Places a lilly actor's cels by their hot spots: its parts showing image
+   0x110 are offset by unknownE0, and all but the first are hidden while
+   its ninth cel's x is set. */
+/* @zoombi32 0x0042f24c */
+void fn_42f24c(View *view)
+{
+    short *cel = (short *)&view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+    short shown = !cel[25];
+    short image;
+
+    image = *cel++;
+    if (image) {
+        *cel++ -= g_4ac950[image];
+        *cel++ -= g_4ac954[image];
+    }
+    while (*cel) {
+        if (*cel == 0x110 && shown) {
+            *cel += actor->unknownE0;
+            image = *cel++;
+            *cel++ -= g_4ac950[image];
+            *cel++ -= g_4ac954[image];
+        } else if (!shown) {
+            *cel++ = 0;
+            cel++;
+            cel++;
+        } else {
+            image = *cel++;
+            *cel++ -= g_4ac950[image];
+            *cel++ -= g_4ac954[image];
+        }
+    }
+}
+
+/* @zoombi32 0x0042a077 */
+void fn_42a077(View *view, short event)
+{
+    ViewBody *body = &view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+
+    switch (event) {
+    case 70:
+        actor->body.x = body->cels[0].x;
+        actor->body.y = body->cels[0].y;
+        actor->body.unknownAa = body->cels[0].x;
+        actor->body.unknownAc = body->cels[0].y;
+        g_4ac9e6[g_4acb06] = view->id;
+        g_4acb06++;
+        break;
+    case 80:
+        g_4acff4[actor->row][actor->column].unknown8 = 0;
+        g_4aed80[g_4af0e0] = view->id;
+        g_4af0e0++;
+        for (short i = 0; i < g_4af0e6; i++)
+            if (g_4aeea0[i] == view->id) {
+                for (; g_4aeea0[i]; i++)
+                    g_4aeea0[i] = g_4aeea0[i + 1];
+                g_4af0e6--;
+            }
+        break;
     }
 }
