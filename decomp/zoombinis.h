@@ -6063,3 +6063,13 @@ extern short g_4b16be;
 extern short g_4b16c4;
 extern short g_4b1710;
 void fn_445b80(short troll, short verdict);
+extern short g_4a3dcc;
+extern short g_4a3d38;
+extern short g_4b1714;
+extern short g_4b1716;
+extern short g_4b1718;
+extern short g_4b1722[3]; /* the three piles' top views */
+extern short g_4b1728[3];
+extern short g_4b172e[3];
+extern short g_4b160c;
+void fn_445307();

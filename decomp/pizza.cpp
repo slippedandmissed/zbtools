@@ -1727,3 +1727,101 @@ void fn_445b80(short troll, short verdict)
         break;
     }
 }
+
+/*
+ * Shows the pizza just judged (g_4b1710: 4 thrown, 5-7 on the pile of
+ * the troll that took it) and records it (g_4b1734): thrown ones cycle
+ * through 16 scripts (12025 on, skipping 13; once they've all been used,
+ * g_4a3dcc, the view already there is reused); piled ones take the next
+ * of three places per pile (12016, 12019 or 12022 on), each in front of
+ * the one it replaces.
+ */
+/* @zoombi32 0x00445307 */
+void fn_445307()
+{
+    short behind;
+    View *view;
+    short i;
+
+    g_4b1712++;
+    g_4b1734[g_4b1712].set = g_4b16ec[g_4b1708];
+    g_4b1734[g_4b1712].unknown4 = g_4b1710;
+    behind = 0;
+    switch (g_4b1710) {
+    case 4:
+        if (++g_4b170e >= 16) {
+            g_4b170e = 0;
+            g_4a3dcc++;
+        } else if (g_4b170e == 13) {
+            g_4b170e = 14;
+        }
+        if (!g_4a3dcc) {
+            g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12025, 6, 0, 0, 0);
+            g_4b1734[g_4b1712].script = g_4b170e + 12025;
+            view = findView(g_4b1734[g_4b1712].view);
+            view->placed = fn_442a9f;
+        } else {
+            for (i = 0; i < 28; i++)
+                if (g_4b1734[i].script == g_4b170e + 12025) {
+                    view = findView(g_4b1734[i].view);
+                    setViewScript(view, g_4b170e + 12025, 1);
+                    view->placed = fn_442a9f;
+                    break;
+                }
+        }
+        break;
+    case 5:
+        if (++g_4b1714 > 2)
+            g_4b1714 = 0;
+        if (g_4b1722[g_4b1714])
+            behind = g_4b1722[g_4b1714];
+        g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1714 + 12016, 6, 0, 0, 0);
+        g_4b1734[g_4b1712].script = g_4b1714 + 12016;
+        view = findView(g_4b1734[g_4b1712].view);
+        view->placed = fn_442a9f;
+        if (behind)
+            moveView(g_4b1734[g_4b1712].view, 1, behind);
+        g_4b1722[g_4b1714] = g_4b1734[g_4b1712].view;
+        g_4b1734[g_4b1712].unknown4 = 5;
+        break;
+    case 6:
+        if (++g_4b1716 > 2)
+            g_4b1716 = 0;
+        if (g_4b1728[g_4b1716])
+            behind = g_4b1728[g_4b1716];
+        g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1716 + 12019, 6, 0, 0, 0);
+        g_4b1734[g_4b1712].script = g_4b1716 + 12019;
+        view = findView(g_4b1734[g_4b1712].view);
+        view->placed = fn_442a9f;
+        if (behind)
+            moveView(g_4b1734[g_4b1712].view, 1, behind);
+        g_4b1728[g_4b1716] = g_4b1734[g_4b1712].view;
+        g_4b1734[g_4b1712].unknown4 = 6;
+        break;
+    case 7:
+        if (++g_4b1718 > 2)
+            g_4b1718 = 0;
+        if (g_4b172e[g_4b1718])
+            behind = g_4b172e[g_4b1718];
+        g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1718 + 12022, 6, 0, 0, 0);
+        g_4b1734[g_4b1712].script = g_4b1718 + 12022;
+        view = findView(g_4b1734[g_4b1712].view);
+        view->placed = fn_442a9f;
+        if (behind)
+            moveView(g_4b1734[g_4b1712].view, 1, behind);
+        g_4b172e[g_4b1718] = g_4b1734[g_4b1712].view;
+        g_4b1734[g_4b1712].unknown4 = 7;
+        break;
+    }
+    view->notifyEnd = 1;
+    view->notify = fn_445ae1;
+    fn_446035();
+    if (g_4b1734[g_4b1712].unknown4 == 4) {
+        moveView(g_4b1734[g_4b1712].view, 1, g_4b1616);
+    } else if (g_4b1734[g_4b1712].unknown4 == 6 && g_4b1728[1]) {
+        moveView(g_4b1728[1], 0, g_4b1610);
+        moveView(g_4b1728[0], 0, g_4b1728[1]);
+    }
+    moveView(g_4a3d38, 0, -1);
+    g_4b160c = groupViews(g_4b1734[g_4b1712].view, g_4b1734[g_4b1712].view, 0, 0, 0, 0);
+}
