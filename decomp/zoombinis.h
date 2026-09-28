@@ -5723,3 +5723,10 @@ extern short g_4b11aa[];
 extern short g_4b0e76;
 extern short g_4b0e66;
 void fn_43e370();
+extern short g_4b15a4; /* the scene is open */
+extern long g_4b1590;
+extern long g_4b158c;
+extern long g_4b1594;
+extern long g_4b1588;
+void fn_43a510(View *view, short other);
+void fn_43eb13();

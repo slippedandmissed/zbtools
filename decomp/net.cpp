@@ -474,3 +474,68 @@ void fn_43e370()
         } while (left);
     }
 }
+
+/* Moves a maze Zoombini on to the square it's heading for (words 33 and
+   34), pairs the view `other` with it, and starts its script for its pose
+   (from words 25 on) with its helper view's (script 10036 on), grouped. */
+/* @zoombi32 0x0043a510 */
+void fn_43a510(View *view, short other)
+{
+    short *parts = (short *)&view->body;
+    View *helper;
+    View *paired;
+
+    parts[31] = parts[33];
+    parts[32] = parts[34];
+    paired = findView(other);
+    if (paired) {
+        short *its = (short *)&paired->body;
+
+        its[43] = view->id;
+    }
+    *(Point *)&view->body.x = (g_4afbf0 + parts[32])[parts[31] * 13];
+    view->body.x += 4;
+    view->body.y += -38;
+    helper = findView(parts[41]);
+    if (helper) {
+        setViewScript(helper, parts[20] + 10036, 1);
+        helper->body.x = view->body.x;
+        helper->body.y = view->body.y;
+        helper->placed = fn_436321;
+    }
+    startSnoidScript((Snoid *)&view->body, parts[25 + parts[20]], 0, 0);
+    view->notify = fn_43638b;
+    if (helper)
+        groupViews(view->id, helper->id, 0, 0, 0, 0);
+}
+
+/* Closes the scene, leaving the party waiting (or, when it's leaving,
+   taking it on). */
+/* @zoombi32 0x0043eb13 */
+void fn_43eb13()
+{
+    if (g_4b15a4) {
+        g_4b15a4 = 0;
+        short saved = fn_46bee9(1);
+
+        clearViews();
+        if (!viewsLocked) {
+            if (g_4a48e6 || g_4b0d50 == 1) {
+                party()->unknown2 = 0;
+                party()->unknown4 = 0;
+                *waitingParties() = *party();
+                party()->count = 0;
+            } else {
+                waitingParties()->count = 0;
+            }
+        }
+        unloadSounds();
+        fn_46c602(&g_4b1590);
+        fn_46c602(&g_4b158c);
+        fn_46c602(&g_4b1594);
+        fn_46bee9(saved);
+        fn_46ca9c(&g_4b1588);
+        fadeOutViews();
+        fn_4624fc();
+    }
+}
