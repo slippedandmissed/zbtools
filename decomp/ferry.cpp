@@ -308,3 +308,76 @@ void fn_424104(View *view, short event)
         break;
     }
 }
+
+/* A Zoombini's notify: 250-253 face that way, 240-243 set the facing for
+   when the next turn (0) ends; at 131, sets g_4abb40 with g_4abb46; at
+   the end (-1), moves one from g_4b755a to g_4b755c. */
+/* @zoombi32 0x0042403b */
+void fn_42403b(View *view, short event)
+{
+    Snoid *snoid = viewSnoid(view);
+
+    switch (event) {
+    case 250:
+    case 251:
+    case 252:
+    case 253:
+        setSnoidFacing(snoid, event - 250);
+        break;
+    case 240:
+    case 241:
+    case 242:
+    case 243:
+        g_4abb18 = event - 239;
+        break;
+    case 0:
+        snoid->unknownF2 = !snoid->unknownF2;
+        if (g_4abb18) {
+            setSnoidFacing(snoid, g_4abb18 - 1);
+            g_4abb18 = 0;
+        }
+        break;
+    case 131:
+        if (g_4abb46)
+            g_4abb40 = 1;
+        break;
+    case -1:
+        if (g_4b755a) {
+            g_4b755a--;
+            g_4b755c++;
+        }
+        break;
+    }
+}
+
+/* Resets scene 13's state; the pace g_4abdb4 by g_4b2b00. */
+/* @zoombi32 0x0042160c */
+void resetScene13()
+{
+    short i;
+
+    g_4b966e = 0;
+    g_4abdac = g_4abb1a = 0;
+    for (i = 0; i < 16; i++)
+        g_4abba2[i] = g_4abbc2[i] = 0;
+    for (i = 0; i < 7; i++) {
+        g_4abb4a[i] = 0;
+        g_4abb58[i] = 0;
+    }
+    g_4abb48 = g_4abb46 = g_4abb66 = g_4abb68 = g_4abb32 = 0;
+    g_4b755e = 100;
+    g_4abb1e = g_4b0d52 = g_4abb70 = 0;
+    g_4abb40 = 0;
+    g_4abb3e = g_4abb3a = g_4abb3c = 0;
+    g_4abb6c = g_4abb7c = 0;
+    g_4abb42 = g_4abb44 = g_4abb7e = 0;
+    g_4abb80 = 0;
+    g_4abb18 = g_4abb2e = 0;
+    g_4abdb0 = 0;
+    g_4abdb8 = 0;
+    if (g_4b2b00)
+        g_4abdb4 = 120;
+    else
+        g_4abdb4 = 60;
+    g_4b755a = g_4b755c = 0;
+}
