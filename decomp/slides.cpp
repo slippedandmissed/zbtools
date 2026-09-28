@@ -773,3 +773,87 @@ short fn_449f96(short a, short b)
     }
     return 0;
 }
+
+/* A cell's placed callback: keeps images 4, 8 and 24 only where the cell
+   has that link (g_4b2324), 73-76 only on a cell whose Zoombini field holds
+   the matching shared feature (513, 510, 512, 511), 103 on cells in state
+   506, and 109 and 110 as fn_448d9d does. */
+/* @zoombi32 0x004489ce */
+void fn_4489ce(View *view)
+{
+    ViewCel *cel;
+    short removed;
+    short cell;
+
+    cell = view->id - g_4b1aea[0].view;
+    cel = view->body.cels;
+    while (cel->image) {
+        removed = 0;
+        switch (cel->image) {
+        case 4:
+            if (!(g_4b2324[cell] & 1)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 8:
+            if (!(g_4b2324[cell] & 2)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 24:
+            if (!(g_4b2324[cell] & 0x20)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 74:
+            if (g_4b1aea[cell].snoid != 510) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 76:
+            if (g_4b1aea[cell].snoid != 511) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 75:
+            if (g_4b1aea[cell].snoid != 512) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 73:
+            if (g_4b1aea[cell].snoid != 513) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 109:
+            if (!((g_4b1aea[cell].state == 502 || g_4b1aea[cell].state == 504 || g_4b1aea[cell].state == 508)
+                  && g_4b2512 != 505)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 110:
+            if (!((g_4b1aea[cell].state == 502 || g_4b1aea[cell].state == 505 || g_4b1aea[cell].state == 508)
+                  && g_4b2512 == 505)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 103:
+            if (g_4b1aea[cell].state != 506) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        }
+        if (!removed)
+            cel++;
+    }
+}
