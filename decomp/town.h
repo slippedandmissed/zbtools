@@ -81,7 +81,12 @@ extern GroupList townGroups6[1]; /* @data 0x4a74a4 */
 extern unsigned long g_4b7ebc; /* @data 0x4b7ebc */
 extern short g_4b7ed0[16]; /* @data 0x4b7ed0: the walkers' views (in g_4b7ece) */
 
+extern short g_4a74cc[5]; /* @data 0x4a74cc: sounds for the town (g_4a74d8 picks) */
+extern unsigned long g_4a74d8; /* @data 0x4a74d8: slots used (allocateSlot) */
+extern short g_4a7580; /* @data 0x4a7580: scene6Frame is running */
+
 void openScene0();
+void scene6Frame();
 void openScene6();
 void scene6Clicked(short which);
 short scene6Key(unsigned short key);

@@ -1090,3 +1090,123 @@ void openScene6()
             g_4b7f12 += 5;
     }
 }
+
+/* Scene 6's frame: deletes the townspeople who have walked off, adds
+   more, leaves when asked (g_4b0d52); every 150-300 ticks after a sound
+   ends plays the next (the greetings 3000-3002 in turn, or at random one
+   of g_4a74cc, not 20093 once over 600 live here); now and then has one
+   of the settled Zoombinis on screen do something (g_4b7f00 times, more
+   as the town grows); and sets the cursor by what it's over (a hotspot,
+   the sides to scroll). */
+/* Not exact: register allocation (the original keeps `n`, the loop
+   index and flags, in esi and `i`, the sound and the tries, in ebx; here
+   they're the other way round, whichever is declared first). */
+/* @zoombi32 0x0045d07e */
+void scene6Frame()
+{
+    Point where;
+    short n;
+    short i;
+    View *view;
+
+    if (g_4a7580 || !g_4b7e00)
+        return;
+    g_4a7580 = 1;
+    updateViews();
+    if (g_4b7f10)
+        for (n = 0; n < 19; n++)
+            if (g_4b7ece[n] < 0) {
+                deleteView(-g_4b7ece[n]);
+                g_4b7ece[n] = 0;
+                if (g_4b7f10 > 0)
+                    g_4b7f10--;
+            }
+    addTownsperson();
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeScene6();
+        g_4a7580 = 0;
+        return;
+    }
+    if (!isSoundPlaying(g_4b7ec4, RESOURCE_TYPE(0, 'S', 'N', 'D')) && !g_4b9684) {
+        if (g_4b7ec8) {
+            g_4b7ec0 = clockTime();
+            g_4b7ebc = randomBetween(150, 300);
+            g_4b7ec8 = 0;
+            if (g_4b7ecc)
+                g_4b7f12 = 40;
+        }
+        if (clockTime() - g_4b7ec0 > g_4b7ebc) {
+            g_4b7ec0 = clockTime();
+            if (!g_4b7ec6 || g_4b7ecc) {
+                if (g_4b7ec4 < 20000) {
+                    g_4b7ec4++;
+                    if (g_4b7ec4 >= 3003)
+                        g_4b7ec4 = 3000;
+                } else {
+                    g_4b7ec4 = fn_45d04c();
+                }
+                g_4b7ec6 = 1;
+                i = g_4b7ec4;
+            } else {
+                g_4b7ec6 = 0;
+                for (n = 1; n;) {
+                    n = 0;
+                    i = g_4a74cc[allocateSlot(&g_4a74d8, 5, 0)];
+                    if (i == 20093 && population() > 600)
+                        n = 1;
+                    g_4b7ec4 = i;
+                }
+            }
+            queueViewSound(i, 0);
+            g_4b7ec8 = 1;
+        }
+    }
+    if (g_4b7f02 && !g_4b9684 && g_4a74dc == -1) {
+        if (g_4b7f00 > 0) {
+            if (clockTime() - g_4b7f04 > g_4b7f08) {
+                n = 0;
+                g_4b7f04 = clockTime();
+                i = 0;
+                do {
+                    i++;
+                    view = idleSnoidView(partyViews[allocateSlot(&g_4b7f0c, g_4b7f02, 0)]);
+                    if (view && (view->flags & 2) && view->body.x > 20 && view->body.x < 620) {
+                        startSnoidScript(viewSnoid(view), viewSnoid(view)->features[3] + 4999, 0, 0);
+                        g_4b7f00--;
+                        n = 1;
+                    }
+                } while (!n && i < 16);
+            }
+        } else if (population() == 625) {
+            g_4b7f00 = 8;
+        } else if (population() > 312) {
+            g_4b7f00 = 6;
+        } else if (population() > 156) {
+            g_4b7f00 = 4;
+        } else if (population() > 156) {
+            g_4b7f00 = 2;
+        } else if (population()) {
+            g_4b7f00 = 1;
+        }
+    }
+    if (!g_4b9684 && !g_4b7eca && g_4a74dc == -1) {
+        fn_45d715(&where);
+        if (!ptInRect(&townButtons[0].rect, where) && where.y > 30 && where.y < 450 && where.x > 3
+            && where.x < 637) {
+            if (g_4b7eb4)
+                setDragCursor(3);
+            else if (where.x > 560)
+                setDragCursor(2);
+            else if (where.x < 80)
+                setDragCursor(1);
+            else
+                setDragCursor(0);
+        } else {
+            setDragCursor(0);
+        }
+    }
+    g_4a7580 = 0;
+}
