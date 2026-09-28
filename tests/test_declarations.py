@@ -2,6 +2,7 @@ from zbtools.declarations import (
     Global,
     Prototype,
     declared_twice,
+    globals_declared_twice,
     globals_in,
     headers,
     prototypes_in,
@@ -124,3 +125,14 @@ def test_declared_twice() -> None:
 
 def test_decomp_declares_each_function_once() -> None:
     assert declared_twice([path.read_text() for path in headers()]) == []
+
+
+def test_globals_declared_twice() -> None:
+    assert globals_declared_twice(["extern short a;\n", "extern long b[4]; /* x */\n"]) == []
+    assert globals_declared_twice(
+        ["extern short a;\n", "extern short a; /* @data 0x4a0000 */\n"]
+    ) == ["a"]
+
+
+def test_decomp_declares_each_global_once() -> None:
+    assert globals_declared_twice([path.read_text() for path in headers()]) == []

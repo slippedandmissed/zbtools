@@ -401,3 +401,102 @@ short fn_449a21(short who)
     } while (--tries);
     return -1;
 }
+
+/* Layers the Zoombinis' views: those on the listed cells (g_4b1ab4) in state
+   507 go behind the next cell's view; the party's Zoombinis on none of them
+   in state 507 or 508 go behind the first cell's. */
+/* @zoombi32 0x0044aa79 */
+void fn_44aa79()
+{
+    short placed[16];
+    View *view;
+    short i;
+    short j;
+
+    setViewsLocked(0);
+    fillMemory(placed, 0, sizeof placed);
+    for (i = 1; i <= g_4b240e; i++) {
+        if (g_4b1aea[g_4b1ab4[i]].state == 507) {
+            view = findView(g_4b1aea[g_4b1ab4[i]].snoid);
+            if (view) {
+                view->flags |= 0x4008000;
+                moveView(g_4b1aea[g_4b1ab4[i]].snoid, 0, g_4b1aea[g_4b1ab4[i] + 1].view);
+            }
+            for (j = 0; j < 16; j++)
+                if (partyViews[j] == g_4b1aea[g_4b1ab4[i]].snoid)
+                    placed[j]++;
+        } else if (g_4b1aea[g_4b1ab4[i]].state == 508) {
+            for (j = 0; j < 16; j++)
+                if (partyViews[j] == g_4b1aea[g_4b1ab4[i]].snoid)
+                    placed[j]++;
+        }
+    }
+    for (i = 0; i < 16; i++)
+        if (!placed[i]) {
+            view = findView(partyViews[i]);
+            if (view) {
+                view->flags |= 0x4008000;
+                moveView(partyViews[i], 0, g_4b1aea[0].view);
+            }
+        }
+}
+
+/* A cell's placed callback: keeps image 109 only on cells in state 502, 504
+   or 508 unless g_4b2512 is 505, and image 110 on cells in state 502, 505
+   or 508 while g_4b2512 is 505; images 4, 8 and 24 only where the cell has
+   that link (g_4b2324), moved on by g_4b2514. */
+/* @zoombi32 0x00448d9d */
+void fn_448d9d(View *view)
+{
+    ViewCel *cel;
+    short removed;
+    short cell;
+
+    cell = view->id - g_4b1aea[0].view;
+    cel = view->body.cels;
+    while (cel->image) {
+        removed = 0;
+        switch (cel->image) {
+        case 109:
+            if (!((g_4b1aea[cell].state == 502 || g_4b1aea[cell].state == 504 || g_4b1aea[cell].state == 508)
+                  && g_4b2512 != 505)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 110:
+            if (!((g_4b1aea[cell].state == 502 || g_4b1aea[cell].state == 505 || g_4b1aea[cell].state == 508)
+                  && g_4b2512 == 505)) {
+                removeFirstCel(cel);
+                removed++;
+            }
+            break;
+        case 4:
+            if (!(g_4b2324[cell] & 1)) {
+                removeFirstCel(cel);
+                removed++;
+            } else {
+                cel->image += g_4b2514;
+            }
+            break;
+        case 8:
+            if (!(g_4b2324[cell] & 2)) {
+                removeFirstCel(cel);
+                removed++;
+            } else {
+                cel->image += g_4b2514;
+            }
+            break;
+        case 24:
+            if (!(g_4b2324[cell] & 0x20)) {
+                removeFirstCel(cel);
+                removed++;
+            } else {
+                cel->image += g_4b2514;
+            }
+            break;
+        }
+        if (!removed)
+            cel++;
+    }
+}

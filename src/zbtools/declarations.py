@@ -174,6 +174,15 @@ def declared_twice(texts: list[str]) -> list[str]:
     )
 
 
+def globals_declared_twice(texts: list[str]) -> list[str]:
+    """Globals declared more than once across headers."""
+    counts: dict[str, int] = {}
+    for text in texts:
+        for name in extern_names_in(text):
+            counts[name] = counts.get(name, 0) + 1
+    return sorted(name for name, count in counts.items() if count > 1)
+
+
 def load() -> tuple[list[Global], str]:
     text = "\n".join(path.read_text() for path in headers())
     return globals_in(text), structs_as_c(text)

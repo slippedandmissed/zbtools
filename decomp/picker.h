@@ -39,7 +39,6 @@ struct PickerData
 
 extern PickerData pickerData; /* @data 0x4af8ac */
 
-extern short g_4afb90;
 void fn_43151e();
 void fn_42fc89(Counters *object);
 long fn_4320da(long);

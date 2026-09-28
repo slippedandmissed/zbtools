@@ -39,5 +39,8 @@ void fn_448c81(View *view);
 extern Point slidesPlaces[16]; /* @data 0x4a41a0: where the Zoombinis wait */
 void fn_44b3ee(Point *where);
 short fn_449a21(short who);
+extern short g_4b2514; /* @data 0x4b2514 */
+void fn_44aa79();
+void fn_448d9d(View *view);
 
 #endif
