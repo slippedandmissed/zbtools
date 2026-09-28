@@ -3027,3 +3027,138 @@ void fn_452857(short kind, short count)
         }
     }
 }
+
+/* Adds the scene's Zoombini views for a level (1-4). */
+/* @zoombi32 0x004527be */
+void fn_4527be(short level)
+{
+    fn_451276();
+    switch (level) {
+    case 1:
+        fn_452857(1, 8);
+        fn_452857(4, 2);
+        fn_452857(5, 2);
+        break;
+    case 2:
+        fn_452857(2, 4);
+        fn_452857(1, 8);
+        fn_452857(4, 2);
+        fn_452857(5, 2);
+        break;
+    case 3:
+        fn_452857(3, 7);
+        fn_452857(4, 1);
+        fn_452857(5, 2);
+        break;
+    case 4:
+        fn_452857(3, 8);
+        fn_452857(4, 1);
+        fn_452857(5, 2);
+        break;
+    }
+}
+
+/* The notify of view g_4b2594's scripts (level 4): 17 and 18 step view
+   g_4b26ba[8]'s Zoombini back along g_4a4524 (18 also empties it and
+   moves the features along); 19 sets out the Zoombinis again. */
+/* @zoombi32 0x00451e5d */
+void fn_451e5d(View *, short event)
+{
+    View *view;
+
+    switch (event) {
+    case 17:
+        view = findView(g_4b26ba[8]);
+        if (view) {
+            Snoid *snoid = (Snoid *)&view->body;
+
+            g_4b2744--;
+            *(Point *)&snoid->body.x = g_4a4524[g_4b2744];
+            snoid->unknownF1 = 4;
+            snoid->unknownF4 = 4;
+        }
+        break;
+    case 18:
+        view = findView(g_4b26ba[8]);
+        if (view) {
+            Snoid *snoid = (Snoid *)&view->body;
+            ViewBody *body = &snoid->body;
+
+            body->cels[0].image = 0;
+            g_4b2744--;
+            *(Point *)&snoid->body.x = g_4a4524[g_4b2744];
+            snoid->unknownF1 = 5;
+            snoid->unknownF4 = 4;
+            fn_450d00(g_4b26ba[8], 7);
+        }
+        fn_450d5d();
+        fn_450e87();
+        fn_450df2();
+        fn_451020();
+        fn_451315();
+        if (g_4a483c)
+            g_4a483c = 0;
+        break;
+    case 19:
+        fn_4508db();
+        g_4b2748 = 1;
+        break;
+    }
+}
+
+/* Starts a round: empties the slot views, and deals new Zoombinis for the
+   level (g_4b2630). */
+/* Not exact: at level 4 the original keeps `snoid` in edx and `body` in
+   eax; this has them the other way round. */
+/* @zoombi32 0x004507e0 */
+short fn_4507e0()
+{
+    View *view;
+    Snoid *snoid;
+    ViewBody *body;
+
+    fn_4511c1(0);
+    if (g_4b2630 == 1 || g_4b2630 == 2)
+        fn_4511c1(1);
+    else
+        fn_4511c1(7);
+    fn_4512ac();
+    fn_451276();
+    switch (g_4b2630) {
+    case 1:
+        fn_4520ec(g_4b273a);
+        break;
+    case 2:
+        fn_45222d();
+        fn_4520ec(g_4b273a);
+        break;
+    case 3:
+        fn_4508db();
+        break;
+    case 4:
+        view = findView(g_4b26ba[7]);
+        if (view) {
+            snoid = (Snoid *)&view->body;
+            body = &snoid->body;
+
+            body->cels[0].image = 0;
+            snoid->unknownF4 = 2;
+        }
+        view = findView(g_4b26ba[8]);
+        if (view) {
+            snoid = (Snoid *)&view->body;
+            body = &snoid->body;
+
+            body->cels[0].image = 0;
+        }
+        view = findView(g_4b2594);
+        if (view) {
+            setViewScript(view, g_4b2732, 1);
+            view->notify = fn_451e5d;
+            g_4a483c = 0;
+        }
+        g_4b2744 = 3;
+        break;
+    }
+    return 2;
+}

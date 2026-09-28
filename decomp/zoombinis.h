@@ -5394,7 +5394,7 @@ extern short g_4b273a;
 extern short g_4b2754;
 extern short g_4b2736;
 extern short g_4b2746;
-void fn_451e5d(View *view, short event);
+void fn_451e5d(View *, short event);
 extern short g_4b27ca[9][4]; /* the puzzle's rows: their features */
 extern short g_4b2812[9][4]; /* and the second set */
 extern short g_4b285a[9][4]; /* the features each row changes */
@@ -5415,6 +5415,10 @@ extern short g_4b2664;
 extern short g_4b2666;
 extern short g_4b2668;
 void fn_452857(short kind, short count);
+extern short g_4b2748;
+extern short g_4b2732;
+void fn_4527be(short level);
+short fn_4507e0();
 void fn_44f066(short which, short lit, short show);
 short fn_44d102();
 void fn_44d5ad(short cell);
