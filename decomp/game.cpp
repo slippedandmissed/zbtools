@@ -1426,3 +1426,58 @@ short fn_44d3b8(short cell, short direction)
         }
     return -1;
 }
+
+/* The memory statistics line (with g_4a48e4): free, purgeable and the
+   least free seen (g_4a48e0), in thousands; with `clear`, unloads the
+   sounds and blanks the line instead. */
+/* Not exact: the original gives `port` esi and `freeThousands` ebx (shared
+   with `available`); this gives them the other way round. */
+/* @zoombi32 0x00455023 */
+void fn_455023(short clear)
+{
+    unsigned long freeUnits;
+    unsigned long freeThousands;
+    unsigned long purgeableUnits;
+    unsigned long purgeableThousands;
+    unsigned long leastUnits;
+    unsigned long leastThousands;
+    Color saved;
+    Font *font;
+    char text[256];
+    unsigned long available;
+    unsigned long purgeable;
+    basePort *port;
+
+    if (clear) {
+        unloadSounds();
+        port = getPort();
+        setPort(workPort);
+        text[0] = 0;
+        drawText(Rect(g_4a498e), 0x11, text, 0xffff);
+        setPort(port);
+    } else if (g_4a48e4) {
+        available = availableVirtualMemory();
+        purgeable = purgeMemory(0, 0);
+        if (available < g_4a48e0)
+            g_4a48e0 = available;
+        freeUnits = available % 1000;
+        freeThousands = available / 1000;
+        purgeableUnits = purgeable % 1000;
+        purgeableThousands = purgeable / 1000;
+        leastUnits = g_4a48e0 % 1000;
+        leastThousands = g_4a48e0 / 1000;
+        port = getPort();
+        setPort(workPort);
+        font = getFont();
+        setFont(fonts[1]);
+        sprintf(text, "Free:%d,%03d  Purg:%d,%03d  Min:%d,%03d", (short)freeThousands, (short)freeUnits,
+                (short)purgeableThousands, (short)purgeableUnits, (short)leastThousands, (short)leastUnits);
+        fillPortRect(Rect(g_4a498e), Color(0xff), 0);
+        saved = setForeColor(Color(0));
+        drawText(Rect(g_4a498e), 0x11, text, 0xffff);
+        setForeColor(saved);
+        setFont(font);
+        setPort(port);
+        showRect(&g_4a498e);
+    }
+}

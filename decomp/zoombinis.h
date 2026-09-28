@@ -1390,7 +1390,10 @@ void fn_44695c();
 void fn_454c8e();
 void fn_454caa();
 void fn_455f66();
-void fn_455023(short);
+void fn_455023(short clear);
+extern short g_4a48e4; /* show the memory statistics */
+extern unsigned long g_4a48e0; /* the least free memory seen */
+extern ShortRect g_4a498e; /* where the memory statistics go */
 short setCursorMode(long mode);
 void fn_4624fc();
 LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
