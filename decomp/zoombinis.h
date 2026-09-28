@@ -5914,3 +5914,13 @@ extern unsigned long g_4b146c;
 extern unsigned long g_4b1474;
 extern View *g_4b0d60;
 void netFrame();
+/* Maze starting places (1-14, from 0): */
+extern short g_4a2228[14];
+extern short g_4a2260[14];
+extern short g_4a227c[14]; /* the direction faced */
+extern short g_4a2298[14];
+extern Point g_4a2362[14]; /* the square */
+extern ShortRect g_4a2554[];
+extern unsigned long g_4a2548;
+extern unsigned long g_4a254c;
+void mazeButtonClicked(short button);

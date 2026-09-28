@@ -398,6 +398,7 @@
 0x004347f6 updateMazeButtons
 0x00434868 closeMaze
 0x004350be fn_4350be
+0x00435264 mazeButtonClicked
 0x0043570e mazeKey
 0x0043573e fn_43573e
 0x0043583c fn_43583c

@@ -176,6 +176,158 @@ void closeMaze()
     }
 }
 
+/*
+ * The maze's buttons: leaves at once if asked to; 1 asks to leave for the
+ * map (999, keeping the party); 2, once allowed (g_4afc6a), asks to leave
+ * for scene 6 (996). 3 is the maze itself, until a Zoombini is on its way:
+ * the first time sets up the Zoombinis' parts; then drags the one under
+ * the cursor (not one already in the maze, and at most 10) onto a free
+ * starting place (1-14), which it takes up: its square, direction and
+ * helper view (by the place's tables). Dropped elsewhere, it goes back to
+ * where it was, and the gate for its row (1 or 3) closes.
+ */
+/* @zoombi32 0x00435264 */
+void mazeButtonClicked(short button)
+{
+    Snoid *snoid;
+    Point cursor;
+    Point where;
+    Point unused[2];
+    Point target;
+    Point at;
+    View *view;
+    short *parts;
+    View *helper;
+    short i;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeMaze();
+        return;
+    }
+    switch (button) {
+    case 1:
+        queueViewSound(999, 0);
+        drawMazeButton(button, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawMazeButton(button, 0, 1);
+        g_4b755c = 1;
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (g_4afc6a) {
+            queueViewSound(996, 0);
+            drawMazeButton(button, 1, 1);
+            waitForEventFor(0, 2, 0, 1);
+            drawMazeButton(button, 0, 1);
+            g_4b0d52 = 6;
+        }
+        break;
+    case 3:
+        if (g_4b755a > 0)
+            break;
+        if (!g_4afc38 && g_4afc36 > 0) {
+            g_4afc38 = 1;
+            for (helper = viewListEnd(1); helper; helper = helper->next)
+                if (helper->flags == 1) {
+                    snoid = (Snoid *)&helper->body;
+                    fn_439560(snoid);
+                }
+        }
+        getCursorPosition(&cursor);
+        view = viewAt(cursor, 1, 1);
+        if (!view)
+            view = viewAt(cursor, 0x8001, 1);
+        if (!view || g_4afc60 >= 10)
+            break;
+        g_4afc3c = 1;
+        for (i = 0; i < 10; i++)
+            if (g_4afc4a[i] == view->id)
+                g_4afc3c = 0;
+        if (g_4afc3c != 1 || g_4afc3e)
+            break;
+        snoid = (Snoid *)&view->body;
+        parts = (short *)snoid;
+        where = *(Point *)&view->body.x;
+        dragSnoid(view, cursor, &g_4a2554[parts[35]], 0);
+        if ((g_4afc40 = heldPlaceNumber()) > 0) {
+            for (i = 0; i < 14; i++)
+                if (g_4afc6c[i] == g_4afc6c[g_4afc40] && g_4afc6c[g_4afc40])
+                    g_4afc3c = 0;
+            if (!g_4afc3c)
+                break;
+            g_4afc40--;
+            view->flags = 0x4008001;
+            g_4afc4a[g_4afc60] = view->id;
+            g_4afc60++;
+            snoid->unknownF1 = g_4a2260[g_4afc40];
+            snoid->unknownF2 = g_4a2228[g_4afc40];
+            snoid->body.x = g_4a21f0[g_4afc40].x;
+            snoid->body.y = g_4a21f0[g_4afc40].y;
+            parts[20] = g_4a227c[g_4afc40];
+            parts[31] = g_4a2362[g_4afc40].x;
+            parts[32] = g_4a2362[g_4afc40].y;
+            switch (parts[20]) {
+            case 0:
+                parts[34] = parts[32] - 1;
+                parts[33] = parts[31];
+                break;
+            case 1:
+                parts[33] = parts[31];
+                parts[34] = parts[32];
+                break;
+            case 2:
+                parts[34] = parts[32] + 1;
+                parts[33] = parts[31];
+                break;
+            case 3:
+                parts[33] = parts[31];
+                parts[34] = parts[32];
+                break;
+            }
+            parts[29] = 0;
+            parts[36] = g_4a2298[g_4afc40];
+            helper = findView(g_4afd2c[g_4afc40]);
+            if (helper) {
+                parts = (short *)&helper->body;
+                parts[50] = view->id;
+                parts[44] = g_4afc40 + 1;
+            }
+            g_4b09a8[g_4b0a04] = g_4afc40;
+            g_4b0a04++;
+            g_4afc6c[g_4afc40 + 1] = g_4afc40 + 1;
+        } else {
+            if (((Snoid *)&view->body)->unknownF4 == 4) {
+                target = *(Point *)&((Snoid *)&view->body)->targetX;
+                at = *(Point *)&view->body.x;
+                if (target.x != at.x || target.y != at.y) {
+                    unionRgnRect(removedRgn, &view->body.bounds);
+                    *(Point *)&((Snoid *)&view->body)->targetX = where;
+                    *(Point *)&view->body.unknownAa = where;
+                    *(Point *)&view->body.x = where;
+                    layOutSnoid(snoid, 0);
+                }
+            }
+            switch (parts[35]) {
+            case 1:
+                helper = findView(g_4afd8c[0]);
+                if (helper)
+                    fn_43a5f6(helper, g_4a2548);
+                break;
+            case 3:
+                helper = findView(g_4afd8c[0]);
+                if (helper)
+                    fn_43a5f6(helper, g_4a254c);
+                break;
+            }
+        }
+        break;
+    }
+}
+
 /* The scene's keys: 0x16f calls fn_466b93 (the only one; the check of
    g_4b8803 for other keys is left from the other scenes' cheat keys).
    Returns whether the key was used. */
