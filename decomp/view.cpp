@@ -1182,7 +1182,7 @@ void loadViewSounds(short id, short now)
 /*
  * The sounds a view's script plays (up to *count; *count becomes how many):
  * those its frames' ends name, and for a Zoombini (flag 1) those its
- * commands 201-217 ask for (fn_45b8b0 picks them for its features).
+ * commands 201-217 ask for (snoidSound picks them for its features).
  */
 /* @zoombi32 0x0046583a */
 void viewSoundList(View *view, short *count, short *sounds)
@@ -1290,7 +1290,7 @@ void viewSoundList(View *view, short *count, short *sounds)
                             break;
                         }
                         if (value && *count < max) {
-                            sounds[*count] = fn_45b8b0(snoid, value);
+                            sounds[*count] = snoidSound(snoid, value);
                             (*count)++;
                         }
                     }

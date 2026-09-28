@@ -786,7 +786,7 @@ void updateSnoidView(View *view, short region)
                     break;
                 }
                 if (i)
-                    queueViewSound(fn_45b8b0(snoid, i), 0);
+                    queueViewSound(snoidSound(snoid, i), 0);
                 event = 0;
             } else if (view->notify) {
                 view->notify(view, event);
@@ -1220,4 +1220,373 @@ Snoid *findSnoid(short id, short wake)
             view->nextUpdate = 0;
     }
     return snoid;
+}
+
+/* Lists the chosen Zoombinis' features (those running with unknownF7 set). */
+/* @zoombi32 0x00459c17 */
+ChosenSnoids *listChosenSnoids()
+{
+    View *view;
+    short n;
+
+    chosenSnoids.count = countChosenSnoids();
+    for (view = nextActorView(1), n = 0; view && n < chosenSnoids.count; view = nextActorView(0))
+        if (view->body.running && viewSnoid(view)->unknownF7) {
+            for (short i = 0; i < 4; i++)
+                chosenSnoids.features[n][i] = viewSnoid(view)->features[i];
+            n++;
+        }
+    return &chosenSnoids;
+}
+
+/*
+ * Sets which Zoombinis are chosen (unknownF7): the first 20 running (all,
+ * first, if `run`).
+ */
+/* @zoombi32 0x0045a3e1 */
+void chooseSnoids(short chosen, short run)
+{
+    short count = 0;
+
+    for (View *view = viewListEnd(1); view; view = view->next)
+        if (view->flags & 1) {
+            if (run)
+                view->body.running = 1;
+            if (count < 20) {
+                if (view->body.running) {
+                    viewSnoid(view)->unknownF7 = chosen;
+                    if (chosen)
+                        count++;
+                } else {
+                    viewSnoid(view)->unknownF7 = 0;
+                }
+            } else {
+                viewSnoid(view)->unknownF7 = 0;
+            }
+        }
+}
+
+/* Whether a placed view is near `where`. */
+/* @zoombi32 0x0045a6e0 */
+short nearPlacedView(Point where)
+{
+    ShortRect rect;
+
+    rect.left = where.x - g_4b755e;
+    rect.right = where.x + g_4b755e;
+    rect.top = where.y - g_4b755e;
+    rect.bottom = where.y + g_4b755e;
+    for (short i = 0; i < placedViewCount; i++)
+        if (ptInRect(&rect, placedViewPoints[i]))
+            return 1;
+    return 0;
+}
+
+/* Told of a Zoombini's script's events: turns it round when it's turning. */
+/* @zoombi32 0x0045ab35 */
+void turnSnoid(View *view, short event)
+{
+    Snoid *snoid = viewSnoid(view);
+
+    switch (snoid->unknownF4) {
+    case 8:
+    case 9:
+        snoid->unknownF2 = !snoid->unknownF2;
+        short *at = snoidScripts[snoid->body.script] + snoid->body.frameOffset;
+        if (*at > 0)
+            snoid->body.unknownAa = at[1] - snoid->body.x;
+        break;
+    }
+}
+
+/* Sets up a new Zoombini. */
+/* @zoombi32 0x0045bf41 */
+void initSnoid(Snoid *snoid)
+{
+    snoid->body.cels[0].image = 0;
+    snoid->body.celsEnd = 0;
+    snoid->body.script = 1;
+    snoid->body.lastFrame = 1;
+    snoid->unknownC0 = -1;
+    snoid->unknownEc = snoid->unknownEe = 0;
+    snoid->unknownF0 = 0;
+    snoid->unknownF1 = 1;
+    snoid->unknownF2 = 0;
+    snoid->unknownF4 = 0;
+    snoid->unknownF5 = 1;
+    snoid->unknownF7 = 1;
+    snoid->unknownF8 = 0;
+    snoid->name[0] = 0;
+}
+
+/*
+ * The sound a Zoombini makes for script command 201 + `which`: most vary
+ * with its hair and nose.
+ */
+/* @zoombi32 0x0045b8b0 */
+short snoidSound(Snoid *snoid, short which)
+{
+    short sound = 0;
+    short varies = 1;
+
+    switch (which) {
+    case 8:
+        sound = 300;
+        break;
+    case 6:
+        sound = 250;
+        break;
+    case 7:
+        sound = 275;
+        break;
+    case 10:
+        sound = 350;
+        break;
+    case 2:
+        sound = 150;
+        break;
+    case 12:
+        sound = 400;
+        break;
+    case 1:
+        sound = 125;
+        break;
+    case 9:
+        sound = 325;
+        break;
+    case 0:
+        sound = 100;
+        break;
+    case 4:
+        sound = 200;
+        break;
+    case 5:
+        sound = 225;
+        break;
+    case 3:
+        sound = 175;
+        break;
+    case 11:
+        sound = 375;
+        break;
+    case 13:
+        sound = 475;
+        break;
+    case 14:
+        sound = 450;
+        break;
+    case 15:
+        sound = 425;
+        break;
+    case 16:
+        sound = randomBetween(1800, 1814);
+        varies = 0;
+        break;
+    case 17:
+        sound = 99;
+        varies = 0;
+        break;
+    }
+    if (sound && varies) {
+        switch (snoid->features[0]) {
+        case 0:
+        case 1:
+            break;
+        case 2:
+            sound += 5;
+            break;
+        case 3:
+            sound += 20;
+            break;
+        case 4:
+            sound += 15;
+            break;
+        case 5:
+            sound += 10;
+            break;
+        }
+        sound = sound + snoid->features[2] - 1;
+    }
+    return sound;
+}
+
+/*
+ * Lists the idle Zoombinis' spots (but `ignore`'s), and whether any is
+ * within `radius` (squared) of `where`.
+ */
+/* @zoombi32 0x0045b3af */
+short spotTaken(Point *where, View *ignore, short radius)
+{
+    short found;
+    short i;
+
+    spotCount = 0;
+    spotRadius = radius;
+    for (View *view = viewListEnd(1); view; view = view->next)
+        if ((view->flags & 1)
+            && (!viewSnoid(view)->unknownF4 || viewSnoid(view)->unknownF4 == 6 || viewSnoid(view)->unknownF4 == 3)
+            && (!ignore || (ignore && ignore->id != view->id))) {
+            spots[spotCount] = *(Point *)&view->body.x;
+            spotIds[spotCount] = view->id;
+            spotCount++;
+        }
+    found = 0;
+    for (i = 0; !found && i < spotCount; i++)
+        if ((unsigned long)((where->x - spots[i].x) * (where->x - spots[i].x)
+                            + (where->y - spots[i].y) * (where->y - spots[i].y))
+            < spotRadius)
+            found = 1;
+    return found;
+}
+
+/*
+ * The Zoombini whose spot (as spotTaken listed them) is within `radius`
+ * (squared) of `where`, after `skip` others (0: none).
+ */
+/* @zoombi32 0x0045b4ca */
+short spotNear(Point *where, short radius, short skip)
+{
+    short found;
+    short i;
+
+    spotRadius = radius;
+    found = 0;
+    for (i = 0; !found && i < spotCount; i++)
+        if ((unsigned long)((where->x - spots[i].x) * (where->x - spots[i].x)
+                            + (where->y - spots[i].y) * (where->y - spots[i].y))
+            < spotRadius) {
+            if (skip)
+                skip--;
+            else
+                found = spotIds[i];
+        }
+    return found;
+}
+
+/* Draws one of a Zoombini's features (1-4: hair, eyes, nose, feet) at `rect`. */
+/* @zoombi32 0x0045bfcf */
+void drawFeature(short feature, short value, ShortRect *rect)
+{
+    short image;
+
+    if (feature >= 1 && feature <= 4 && value >= 1 && value <= 5) {
+        switch (feature) {
+        case 1:
+            image = hairImages[value];
+            break;
+        case 2:
+            image = eyesImages[value];
+            break;
+        case 3:
+            image = noseImages[value];
+            break;
+        case 4:
+            image = feetImages[value];
+            break;
+        }
+        image = image * 2 + 1;
+        if (image <= snoidImages->count) {
+            unsigned short *data = (unsigned short *)((char *)snoidImages + snoidImages->offsets[image]);
+
+            rect->left -= snoidTables[0][image];
+            rect->top -= snoidTables[1][image];
+            drawImageData(data, rect->left, rect->top, 8);
+            rect->right = swapShort(data[0]) + rect->left;
+            rect->bottom = swapShort(data[1]) + rect->top;
+            showRect(rect);
+        }
+    }
+}
+
+/* Makes up a Zoombini's name (of up to `size` - 2 letters) in `name`. */
+/* @zoombi32 0x0045885c */
+void makeName(char *name, short size)
+{
+    short target;
+    short k;
+    short ending;
+    char c;
+    short length;
+    unsigned short vowel;
+    short i;
+
+    for (i = 0; i < size; i++)
+        name[i] = 0;
+    target = randomBetween(4, size - 2);
+    length = 0;
+    vowel = randomBetween(1, 100) < 40;
+    while (length < target) {
+        ending = 0;
+        if (vowel) {
+            vowel = !vowel;
+            k = (randomBetween(1, 31) - 1) * 2;
+            c = vowelSounds[k];
+            if (vowelSounds[k + 1] != ' ') {
+                name[length++] = c;
+                c = vowelSounds[k + 1];
+            }
+        } else {
+            vowel = !vowel;
+            if (length > 1 || randomBetween(1, 100) <= 33) {
+                k = (randomBetween(1, 40) - 1) * 2;
+                c = consonantPairs[k];
+                if (consonantPairs[k + 1] != ' ') {
+                    name[length++] = c;
+                    c = consonantPairs[k + 1];
+                }
+                ending = 1;
+            } else {
+                c = consonants[randomBetween(1, 32) - 1];
+            }
+        }
+        name[length++] = c;
+        if (ending && length >= target)
+            name[length - 1] = nameEndings[randomBetween(1, 6) - 1];
+        if (length == 2 && name[0] == name[1])
+            length = 1;
+    }
+}
+
+/*
+ * Lists the chosen Zoombinis (and the running ones, if `running`) by where
+ * they're heading, left to right.
+ */
+/* @zoombi32 0x00458f90 */
+void sortSnoids(short running)
+{
+    short x;
+    short id;
+
+    sortedCount = 0;
+    for (View *view = viewListEnd(1); view; view = view->next)
+        if (view->flags & 1) {
+            Snoid *snoid = viewSnoid(view);
+            short include = 0;
+
+            if (running && view->body.running)
+                include = 1;
+            if (snoid->unknownF7 || include) {
+                short done;
+                short j;
+
+                x = snoid->targetX;
+                id = view->id;
+                done = 0;
+                for (j = 0; !done && j < sortedCount; j++)
+                    if (sortedX[j] > x) {
+                        for (done = sortedCount; done > j; done--) {
+                            sortedX[done] = sortedX[done - 1];
+                            sortedIds[done] = sortedIds[done - 1];
+                        }
+                        done = 1;
+                        sortedX[j] = x;
+                        sortedIds[j] = id;
+                    }
+                if (!done) {
+                    sortedX[sortedCount] = x;
+                    sortedIds[sortedCount] = id;
+                }
+                sortedCount++;
+            }
+        }
 }

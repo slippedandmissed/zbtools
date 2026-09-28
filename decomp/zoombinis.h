@@ -345,7 +345,7 @@ struct Snoid
     short unknownEe;
     char unknownF0;
     char unknownF1;
-    short unknownF2;
+    unsigned short unknownF2; /* +0xf2: facing left */
     char unknownF4; /* +0xf4: what it is doing */
     short unknownF5; /* +0xf5 */
     char unknownF7;
@@ -4109,7 +4109,6 @@ void fn_415a20(Callback callback);
 /* view */
 void initViews(); /* 0x46310c */
 void fn_469669();
-short fn_45b8b0(Snoid *snoid, short which);
 void showNameTag(const char *text, unsigned long duration, short large); /* 0x4589ce */
 void fn_459c84(short, short);
 void freePaths();
@@ -4438,6 +4437,39 @@ extern short *pathNodes; /* @data 0x4a4cd8: 'NODE' */
 extern long pathsResource; /* @data 0x4a4cdc */
 extern long pathNodesResource; /* @data 0x4a4ce0 */
 extern short g_4a4b9c;
+/* The chosen Zoombinis' features. */
+struct ChosenSnoids
+{
+    short count;
+    char features[20][4];
+};
+extern ChosenSnoids chosenSnoids; /* @data 0x4b7b88 */
+ChosenSnoids *listChosenSnoids();
+void chooseSnoids(short chosen, short run);
+short nearPlacedView(Point where);
+void turnSnoid(View *view, short event);
+void initSnoid(Snoid *snoid);
+short snoidSound(Snoid *snoid, short which);
+short spotTaken(Point *where, View *ignore, short radius);
+short spotNear(Point *where, short radius, short skip);
+void drawFeature(short feature, short value, ShortRect *rect);
+extern short feetImages[6]; /* @data 0x4a4ba4: by feature value (1-5) */
+extern short noseImages[6]; /* @data 0x4a4bb0 */
+extern short eyesImages[6]; /* @data 0x4a4bbc */
+extern short hairImages[6]; /* @data 0x4a4bc8 */
+extern short spotRadius; /* @data 0x4a4ce4 */
+extern Point spots[32]; /* @data 0x4b7bdc: where idle Zoombinis stand */
+extern short spotIds[32]; /* @data 0x4b7c5c */
+extern short spotCount; /* @data 0x4b7c9c */
+void makeName(char *name, short size);
+void sortSnoids(short running);
+extern char vowelSounds[]; /* @data 0x4a4c0c: pairs ("a ", "ee", ...) */
+extern char consonants[]; /* @data 0x4a4c4b */
+extern char nameEndings[]; /* @data 0x4a4c6c: "aeiouy" */
+extern char consonantPairs[]; /* @data 0x4a4c73: pairs ("bl", "br", ...) */
+extern short sortedCount; /* @data 0x4b75ac */
+extern short sortedX[32]; /* @data 0x4b75ae */
+extern short sortedIds[32]; /* @data 0x4b75ee */
 short fn_45ba1f();
 short fn_458772(View *view);
 extern unsigned short showPositions; /* @data 0x4a4b9a: show the dragged Zoombini's position (a cheat) */
