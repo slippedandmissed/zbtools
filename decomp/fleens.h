@@ -1,12 +1,12 @@
 /*
- * ferry's functions and globals: the declarations only its code and its
+ * fleens's functions and globals: the declarations only its code and its
  * callers need (shared types and the rest are in zoombinis.h).
  */
 
-#ifndef FERRY_H
-#define FERRY_H
+#ifndef FLEENS_H
+#define FLEENS_H
 
-extern SceneButton ferryButtons[2]; /* @data 0x4a15b4 */
+extern SceneButton fleensButtons[2]; /* @data 0x4a15b4 */
 extern short g_4a16cc; /* @data 0x4a16cc: button 2 is drawn lit */
 extern short g_4a16ce; /* @data 0x4a16ce: button 1 is drawn */
 extern short g_4abb30; /* @data 0x4abb30 */
@@ -14,9 +14,9 @@ extern short g_4abb32; /* @data 0x4abb32 */
 extern short g_4abb6a; /* @data 0x4abb6a */
 extern short g_4abb7a; /* @data 0x4abb7a */
 extern short g_4abb7c; /* @data 0x4abb7c */
-extern ImageBank *ferryImages; /* @data 0x4abb94: the images of the Zoombinis on the ferry's scripts */
-extern long ferryScriptResources[59]; /* @data 0x4abbd4 */
-extern short *ferryScripts[59]; /* @data 0x4abcc0: the 'SCRS' scripts 4000-4058, as loaded */
+extern ImageBank *fleenImages; /* @data 0x4abb94: the fleens' images */
+extern long fleenScriptResources[59]; /* @data 0x4abbd4 */
+extern short *fleenScripts[59]; /* @data 0x4abcc0: the 'SCRS' scripts 4000-4058, as loaded */
 
 extern ImageBank *g_4a1650; /* @data 0x4a1650: the buttons' images */
 extern short g_4abb18; /* @data 0x4abb18: the facing for after the next turn (from 1) */
@@ -24,7 +24,7 @@ extern short g_4abb1e; /* @data 0x4abb1e */
 extern short g_4abb2e; /* @data 0x4abb2e */
 extern short g_4abb3a; /* @data 0x4abb3a */
 extern short g_4abb3c; /* @data 0x4abb3c */
-extern long g_4abb74; /* @data 0x4abb74: Ferry.MHK */
+extern long g_4abb74; /* @data 0x4abb74: Fleens.MHK */
 extern short g_4abb78; /* @data 0x4abb78: the scene is open */
 extern long g_4abb84; /* @data 0x4abb84 */
 extern long g_4abb88; /* @data 0x4abb88 */
@@ -57,19 +57,19 @@ void fn_42403b(View *view, short event);
 extern short g_4abb20; /* @data 0x4abb20 */
 extern short g_4abb24; /* @data 0x4abb24 */
 
-extern short feetLayers[6]; /* @data 0x4a1654: the feature layers by value, for ferryLayOutSnoid */
+extern short feetLayers[6]; /* @data 0x4a1654: the feature layers by value, for layOutFleen */
 extern short noseLayers[6]; /* @data 0x4a1660 */
 extern short eyesLayers[6]; /* @data 0x4a166c */
 extern short hairLayers[6]; /* @data 0x4a1678 */
-extern short *ferryHotX; /* @data 0x4abb98: the ferry's images' hot spots */
-extern short *ferryHotY; /* @data 0x4abb9c */
+extern short *fleenHotX; /* @data 0x4abb98: the fleens' images' hot spots */
+extern short *fleenHotY; /* @data 0x4abb9c */
 
-extern short g_4a16d2[4]; /* @data 0x4a16d2: the features to swap in (ferry rules 5-7) */
-extern short ferryPicked[3]; /* @data 0x4abb34: the travellers picked to stand out (from 1) */
+extern short g_4a16d2[4]; /* @data 0x4a16d2: the features to swap in (fleen rules 5-7) */
+extern short pickedFleens[3]; /* @data 0x4abb34: the fleens picked to stand apart (from 1) */
 extern short g_4abdbc; /* @data 0x4abdbc: travellers aboard */
 
 extern short g_4abb6e; /* @data 0x4abb6e: the Zoombini last put down at a place */
-extern short g_4abba0; /* @data 0x4abba0: party views on the ferry */
+extern short g_4abba0; /* @data 0x4abba0: the Zoombinis' views (fleens are made from as many travellers) */
 
 extern short g_4abb1c; /* @data 0x4abb1c */
 extern short g_4abb26; /* @data 0x4abb26 */
@@ -78,27 +78,27 @@ void resetScene13();
 void fn_42365a(View *view, short event);
 void fn_424195(View *view, short event);
 void scene13Clicked(short which);
-void boardFerry();
-void updateFerrySnoid(View *view, short region);
-short addFerrySnoid(Snoid *snoid);
+void addFleens();
+void updateFleen(View *view, short region);
+short addFleen(Snoid *snoid);
 void fn_423ebb(View *view, short event);
-void drawFerryButtons(View *);
-void startFerryScript(View *view, short id, Point *anchor);
+void drawFleensButtons(View *);
+void startFleenScript(View *view, short id, Point *anchor);
 void fn_423f84();
-short ferryLayOutSnoid(Snoid *snoid, short *event);
+short layOutFleen(Snoid *snoid, short *event);
 void fn_423512(View *view, short event);
-short ferryScript(View *view, short which);
-void drawFerryButton(short which, short lit, short show);
+short fleenScript(View *view, short which);
+void drawFleensButton(short which, short lit, short show);
 void closeScene13();
-short ferrySnoidScript(View *view, short which);
+short fleensSnoidScript(View *view, short which);
 void fn_423d9d(View *view, short event);
 void fn_423e2c(View *view, short event);
 void fn_424104(View *view, short event);
 void fn_421bfc(View *view, short region);
 short scene13Key(unsigned short key);
-void drawFerrySnoid(View *view);
-void loadFerryScripts();
-void loadFerryScript(short id);
+void drawFleen(View *view);
+void loadFleenScripts();
+void loadFleenScript(short id);
 void fn_4234c9(View *, short event);
 
 #endif

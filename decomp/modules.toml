@@ -92,13 +92,13 @@ note = "Saved players: 'ZBUser', 'Could not Open/Create Roster file.', 'Zoombini
 
 [[module]]
 start = 0x41f8cc
-name = "module_41f8cc"
-note = "'Play FrogMan SCRB id:'"
+name = "ferry"
+note = "Captain Cajun's ferry (scene 10): opens 'Ferry.MHK' (0x41fa59), 'Play FrogMan SCRB id:'"
 
 [[module]]
 start = 0x42160c
-name = "ferry"
-note = "'Ferry.MHK', 'Fleens.MHK' (may be two modules)"
+name = "fleens"
+note = "the Fleens (scene 13): opens 'Fleens.MHK' (0x421841)"
 
 [[module]]
 start = 0x424274

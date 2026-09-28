@@ -1,5 +1,5 @@
 /*
- * ferry (0x42160c-0x424274): Captain Cajun's ferry (scene 13), 'Ferry.MHK'
+ * fleens (0x42160c-0x424274): the Fleens (scene 13), 'Fleens.MHK'
  */
 
 #include <stdlib.h>
@@ -9,7 +9,7 @@
 #include "debug.h"
 #include "e2memory.h"
 #include "features.h"
-#include "ferry.h"
+#include "fleens.h"
 #include "graphics.h"
 #include "module_4623b8.h"
 #include "platform.h"
@@ -25,15 +25,15 @@ void fn_421bfc(View *, short region)
     if (g_4abb7a && g_4abb7c) {
         if (!g_4a16cc) {
             g_4a16cc = 1;
-            unionRgnRect(region, &ferryButtons[1].rect);
+            unionRgnRect(region, &fleensButtons[1].rect);
         }
     } else if (g_4a16cc) {
         g_4a16cc = 0;
-        unionRgnRect(region, &ferryButtons[1].rect);
+        unionRgnRect(region, &fleensButtons[1].rect);
     }
     if (!g_4a16ce) {
         g_4a16ce = 1;
-        unionRgnRect(region, &ferryButtons[0].rect);
+        unionRgnRect(region, &fleensButtons[0].rect);
     }
 }
 
@@ -61,41 +61,41 @@ short scene13Key(unsigned short key)
     return used;
 }
 
-/* A view draw: while running, draws its cels from ferryImages. The original
+/* A view draw: while running, draws its cels from fleenImages. The original
    passes the cel's image, x and y as three `*cel++` arguments, relying on
    BCC's left-to-right evaluation; this indexes, then steps. */
 /* @zoombi32-functional 0x004224ea */
-void drawFerrySnoid(View *view)
+void drawFleen(View *view)
 {
     short *cel;
 
     if (view->body.running)
         for (cel = (short *)view->body.cels; *cel; cel += 3)
-            drawImageData((unsigned short *)((char *)ferryImages + ferryImages->offsets[cel[0]]), cel[1], cel[2], 8);
+            drawImageData((unsigned short *)((char *)fleenImages + fleenImages->offsets[cel[0]]), cel[1], cel[2], 8);
 }
 
 /* Clears the scripts 4000-4058 and loads the first four. */
 /* @zoombi32 0x00422537 */
-void loadFerryScripts()
+void loadFleenScripts()
 {
     short i;
 
     for (i = 0; i < 59; i++) {
-        ferryScriptResources[i] = 0;
-        ferryScripts[i] = 0;
+        fleenScriptResources[i] = 0;
+        fleenScripts[i] = 0;
     }
     for (i = 0; i < 4; i++)
-        ferryScripts[i] = loadSwappedResource(&ferryScriptResources[i], i + 4000, RESOURCE_TYPE('S', 'C', 'R', 'S'));
+        fleenScripts[i] = loadSwappedResource(&fleenScriptResources[i], i + 4000, RESOURCE_TYPE('S', 'C', 'R', 'S'));
 }
 
 /* Loads script `id` (4000-4058). */
 /* @zoombi32 0x0042258a */
-void loadFerryScript(short id)
+void loadFleenScript(short id)
 {
     short n = id - 4000;
 
     if (n >= 0 && n < 59)
-        ferryScripts[n] = loadSwappedResource(&ferryScriptResources[n], n + 4000, RESOURCE_TYPE('S', 'C', 'R', 'S'));
+        fleenScripts[n] = loadSwappedResource(&fleenScriptResources[n], n + 4000, RESOURCE_TYPE('S', 'C', 'R', 'S'));
 }
 
 /* A notify: at event 136, starts g_4abb32's and g_4abb30's scripts. */
@@ -121,7 +121,7 @@ void fn_4234c9(View *, short event)
 /* Draws button `which` (1 or 2; 2 is dim unless g_4abb7a), lit or not,
    and shows it if asked. */
 /* @zoombi32 0x00421b46 */
-void drawFerryButton(short which, short lit, short show)
+void drawFleensButton(short which, short lit, short show)
 {
     short image = 0;
 
@@ -140,10 +140,10 @@ void drawFerryButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)(g_4a1650->offsets[image] + (char *)g_4a1650), ferryButtons[which - 1].rect.left,
-                      ferryButtons[which - 1].rect.top, 8);
+        drawImageData((unsigned short *)(g_4a1650->offsets[image] + (char *)g_4a1650), fleensButtons[which - 1].rect.left,
+                      fleensButtons[which - 1].rect.top, 8);
         if (show)
-            showRect(&ferryButtons[which - 1].rect);
+            showRect(&fleensButtons[which - 1].rect);
     }
 }
 
@@ -168,7 +168,7 @@ void closeScene13()
         fn_46c602(&g_4abb8c);
         fn_46c602(&g_4abb90);
         for (i = 0; i < 59; i++)
-            fn_46c602(&ferryScriptResources[i]);
+            fn_46c602(&fleenScriptResources[i]);
         fn_46bee9(saved);
         fn_46ca9c(&g_4abb74);
         fadeOutViews();
@@ -179,7 +179,7 @@ void closeScene13()
 /* The script for a Zoombini (by its feet) doing `which`: 1-5, 8, 9, 7016
    and 7021 (2 by g_4abb2e and g_4abb1e). */
 /* @zoombi32 0x00423cf1 */
-short ferrySnoidScript(View *view, short which)
+short fleensSnoidScript(View *view, short which)
 {
     short script = 0;
     Snoid *snoid = viewSnoid(view);
@@ -390,7 +390,7 @@ void resetScene13()
 /* The script (4000 on) for a Zoombini (by its feet and its place,
    unknownF0) doing `which` (1-14). */
 /* @zoombi32 0x0042339f */
-short ferryScript(View *view, short which)
+short fleenScript(View *view, short which)
 {
     short script = 0;
     Snoid *snoid = viewSnoid(view);
@@ -456,7 +456,7 @@ short ferryScript(View *view, short which)
     return script;
 }
 
-/* A notify for the ferry's views: 0 turns (and puts g_4abb30 back after
+/* A notify for the fleens' views: 0 turns (and puts g_4abb30 back after
    g_4abb24 the first time), 1 starts g_4abb20 once, 2 and 140 move
    g_4abb30 after or before g_4abb32, 218 a random sound (4100-4124); 137
    and the end (-1) stop the script. */
@@ -500,13 +500,13 @@ void fn_423512(View *view, short event)
 }
 
 /*
- * The ferry's layOutSnoid: lays out a Zoombini's cels for its ferry script's
+ * The fleens' layOutSnoid: lays out a fleen's cels for its fleen script's
  * current frame. The script's second word is the order of its feature
  * layers, set up in unknownC2 when it changes (unknownC0); the rest is as
- * layOutSnoid, with the ferry's hot spots and images.
+ * layOutSnoid, with the fleens' hot spots and images.
  */
 /* @zoombi32 0x00422747 */
-short ferryLayOutSnoid(Snoid *snoid, short *event)
+short layOutFleen(Snoid *snoid, short *event)
 {
     short *layers;
     short sound;
@@ -530,7 +530,7 @@ short ferryLayOutSnoid(Snoid *snoid, short *event)
     cel = (short *)snoid->body.cels;
     layers = snoid->unknownC2;
     last = 5;
-    script = ferryScripts[snoid->body.script];
+    script = fleenScripts[snoid->body.script];
     word = script[1];
     at = script + snoid->body.frameOffset;
     if (word != snoid->unknownC0) {
@@ -585,8 +585,8 @@ short ferryLayOutSnoid(Snoid *snoid, short *event)
             } else if (word > 0) {
                 word = (word + layers[i]) * 2 - 1;
                 *cel++ = word;
-                *cel++ = offsetX + *at++ - ferryHotX[word];
-                *cel++ = offsetY + *at++ - ferryHotY[word];
+                *cel++ = offsetX + *at++ - fleenHotX[word];
+                *cel++ = offsetY + *at++ - fleenHotY[word];
             } else {
                 if (word < -0x100)
                     sound = *at++;
@@ -608,8 +608,8 @@ short ferryLayOutSnoid(Snoid *snoid, short *event)
             } else if (word > 0) {
                 word = (word + layers[i]) * 2;
                 *cel++ = word;
-                *cel++ = offsetX + *at++ - ferryHotX[word];
-                *cel++ = offsetY + *at++ - ferryHotY[word];
+                *cel++ = offsetX + *at++ - fleenHotX[word];
+                *cel++ = offsetY + *at++ - fleenHotY[word];
             } else {
                 if (word < -0x100)
                     sound = *at++;
@@ -623,7 +623,7 @@ short ferryLayOutSnoid(Snoid *snoid, short *event)
     }
     cel = (short *)snoid->body.cels;
     while (*cel) {
-        unsigned short *image = (unsigned short *)(ferryImages->offsets[*cel] + (char *)ferryImages);
+        unsigned short *image = (unsigned short *)(fleenImages->offsets[*cel] + (char *)fleenImages);
 
         cel++;
         rect.left = *cel++;
@@ -641,19 +641,19 @@ short ferryLayOutSnoid(Snoid *snoid, short *event)
 
 /* A view draw: draws both buttons, unlit. */
 /* @zoombi32 0x00421bdf */
-void drawFerryButtons(View *)
+void drawFleensButtons(View *)
 {
-    drawFerryButton(1, 0, 0);
-    drawFerryButton(2, 0, 0);
+    drawFleensButton(1, 0, 0);
+    drawFleensButton(2, 0, 0);
 }
 
 /*
- * The ferry's startSnoidScript: starts a Zoombini's view on ferry script
+ * The fleens' startSnoidScript: starts a fleen's view on fleen script
  * `id` (4000 on: its own scripts, unknownF4 1; others as 0), placed so that
  * its first positioned frame is at `anchor`, if given.
  */
 /* @zoombi32 0x00422c82 */
-void startFerryScript(View *view, short id, Point *anchor)
+void startFleenScript(View *view, short id, Point *anchor)
 {
     Snoid *snoid = viewSnoid(view);
     short index;
@@ -680,9 +680,9 @@ void startFerryScript(View *view, short id, Point *anchor)
     }
     snoid->body.running = 1;
     snoid->body.script = index;
-    if (!ferryScripts[index])
-        ferryScripts[index] = loadSwappedResource(&ferryScriptResources[index], index + 4000, RESOURCE_TYPE('S', 'C', 'R', 'S'));
-    data = ferryScripts[index];
+    if (!fleenScripts[index])
+        fleenScripts[index] = loadSwappedResource(&fleenScriptResources[index], index + 4000, RESOURCE_TYPE('S', 'C', 'R', 'S'));
+    data = fleenScripts[index];
     snoid->body.frame = 0;
     snoid->body.frameOffset = 2;
     snoid->body.lastFrame = data[0];
@@ -722,7 +722,7 @@ void startFerryScript(View *view, short id, Point *anchor)
         snoid->body.unknownAa = data[1] - originX;
         snoid->body.unknownAc = data[2] - originY;
     }
-    ferryLayOutSnoid(snoid, 0);
+    layOutFleen(snoid, 0);
     if (removedRgn)
         unionRgnRect(removedRgn, &snoid->body.bounds);
 }
@@ -741,7 +741,7 @@ void fn_423f84()
         view = findView(g_4abb4a[i]);
         if (view) {
             if (i == g_4abb46 - 1) {
-                script = ferrySnoidScript(view, 8);
+                script = fleensSnoidScript(view, 8);
                 if (script) {
                     g_4b755a++;
                     moveView(view->id, 0, g_4abb24);
@@ -750,7 +750,7 @@ void fn_423f84()
                     view->notify = fn_42403b;
                 }
             } else {
-                script = ferrySnoidScript(view, 7021);
+                script = fleensSnoidScript(view, 7021);
                 if (script)
                     startSnoidScript(viewSnoid(view), script, 0, 0);
             }
@@ -761,13 +761,13 @@ void fn_423f84()
 }
 
 /*
- * The ferry's updateSnoidView, for a Zoombini on a ferry script: when due,
+ * The fleens' updateSnoidView, for a fleen: when due,
  * idles (now and then, by g_4a4b98, fidgeting with 2 or 3) or runs its
  * script a frame; at the script's end, back to 4000 and tells the notify
  * (-1).
  */
 /* @zoombi32 0x004225cf */
-void updateFerrySnoid(View *view, short region)
+void updateFleen(View *view, short region)
 {
     short event;
     short changed = 0;
@@ -791,10 +791,10 @@ void updateFerrySnoid(View *view, short region)
             changed = 1;
         } else if (g_4a4b98 && snoid->unknownF8++ > g_4a4b98 + 16) {
             short which = randomBetween(1, 100) <= 50 ? 2 : 3;
-            short script = ferryScript(view, which);
+            short script = fleenScript(view, which);
 
             if (script) {
-                startFerryScript(view, script, 0);
+                startFleenScript(view, script, 0);
                 changed = 1;
                 snoid->unknownF8 = 1;
             }
@@ -808,30 +808,30 @@ void updateFerrySnoid(View *view, short region)
         unionRgnRect(region, &view->body.bounds);
         if (snoid->body.lastFrame > 1) {
             if (snoid->body.frame >= snoid->body.lastFrame) {
-                startFerryScript(view, 0, 0);
+                startFleenScript(view, 0, 0);
                 if (view->notifyEnd && view->notify)
                     view->notify(view, -1);
                 view->notify = 0;
                 view->changed = 1;
                 return;
             }
-            short sound = ferryLayOutSnoid(snoid, &event);
+            short sound = layOutFleen(snoid, &event);
 
             if (sound)
                 queueViewSound(sound, 0);
             if (view->notify && event)
                 view->notify(view, event - 1);
         } else {
-            ferryLayOutSnoid(snoid, 0);
+            layOutFleen(snoid, 0);
         }
         view->changed = 1;
     }
 }
 
-/* Adds a view for a Zoombini (if it has feet) on the ferry's scripts;
+/* Adds a view for a fleen (if it has feet) on the fleens' scripts;
    returns its id (0 for none). */
 /* @zoombi32 0x00423327 */
-short addFerrySnoid(Snoid *snoid)
+short addFleen(Snoid *snoid)
 {
     short id = 0;
     View *view;
@@ -841,10 +841,10 @@ short addFerrySnoid(Snoid *snoid)
         for (i = 0; i < 16; i++)
             snoid->unknownC2[i] = 0;
         snoid->unknownC0 = -1;
-        id = addView(1, drawFerrySnoid, updateFerrySnoid, 0, 6, snoid, 0, 0);
+        id = addView(1, drawFleen, updateFleen, 0, 6, snoid, 0, 0);
         view = findView(id);
         if (view) {
-            startFerryScript(view, 0, 0);
+            startFleenScript(view, 0, 0);
             view->nextUpdate = 0;
             view->flags = 0x4000002;
         }
@@ -884,9 +884,9 @@ void fn_423ebb(View *view, short event)
     case 60:
         other = findView(g_4abb68);
         if (other) {
-            short script = ferryScript(other, 13);
+            short script = fleenScript(other, 13);
 
-            startFerryScript(other, script, 0);
+            startFleenScript(other, script, 0);
         }
         break;
     case -1:
@@ -895,17 +895,18 @@ void fn_423ebb(View *view, short event)
     }
 }
 
-/* The level's feature rules for the ferry, in the game's state: 0-3 shift
+/* The level's rules for making fleens, in the game's state: 0-3 shift
    each feature's value (1-5), 4-7 (from level 2) move each feature to
    another's place (from 1; 0: stays). */
-inline char *ferryRules()
+inline char *fleenRules()
 {
     return g_4a4ba0 + 0xc;
 }
 
 /*
- * Puts the travellers aboard (g_4abdbc of them): picks up to three to
- * stand out (ferryPicked, placed by table 5000), the others by table
+ * Makes the fleens, one for each traveller (g_4abdbc of them), with its
+ * features changed by the level's rules: picks up to three to stand apart
+ * (pickedFleens, placed by table 5000), the others by table
  * 5001; each gets its features changed by the level's rules (new rules on
  * a new game, g_4abb6a 1 or 3), and the views are stacked in order.
  */
@@ -913,7 +914,7 @@ inline char *ferryRules()
    of the rule loops stops it), where the original loads the pointer at
    each use; the code is otherwise the same. */
 /* @zoombi32 0x00422e90 */
-void boardFerry()
+void addFleens()
 {
     short b;
     short a;
@@ -939,7 +940,7 @@ void boardFerry()
     b = a = 0;
     pickedPlaces = loadShortTable(5000, &pickedResource);
     otherPlaces = loadShortTable(5001, &otherResource);
-    ferryPicked[0] = randomBetween(1, g_4abdbc);
+    pickedFleens[0] = randomBetween(1, g_4abdbc);
     switch (g_4abdbc) {
     case 1:
         g_4abb1e = 2;
@@ -950,11 +951,11 @@ void boardFerry()
         break;
     }
     if (g_4abdbc >= 2)
-        for (ferryPicked[1] = ferryPicked[0]; ferryPicked[1] == ferryPicked[0];)
-            ferryPicked[1] = randomBetween(1, g_4abdbc);
+        for (pickedFleens[1] = pickedFleens[0]; pickedFleens[1] == pickedFleens[0];)
+            pickedFleens[1] = randomBetween(1, g_4abdbc);
     if (g_4abdbc >= 3)
-        for (ferryPicked[2] = ferryPicked[0]; ferryPicked[2] == ferryPicked[0] || ferryPicked[2] == ferryPicked[1];)
-            ferryPicked[2] = randomBetween(1, g_4abdbc);
+        for (pickedFleens[2] = pickedFleens[0]; pickedFleens[2] == pickedFleens[0] || pickedFleens[2] == pickedFleens[1];)
+            pickedFleens[2] = randomBetween(1, g_4abdbc);
     if (!g_4a4ba0[0xc] || g_4abb6a == 1 || g_4abb6a == 3)
         for (j = 0; j < 4; j++)
             g_4a4ba0[0xc + j] = randomBetween(1, 5);
@@ -982,7 +983,7 @@ void boardFerry()
         }
         snoid.unknownF1 = 0;
         snoid.unknownF2 = 0;
-        if (i + 1 == ferryPicked[0] || i + 1 == ferryPicked[1] || i + 1 == ferryPicked[2]) {
+        if (i + 1 == pickedFleens[0] || i + 1 == pickedFleens[1] || i + 1 == pickedFleens[2]) {
             if (*pickedPlaces > a) {
                 snoid.unknownF0 = a + *otherPlaces;
                 snoid.body.x = pickedPlaces[a * 2 + 1];
@@ -1007,7 +1008,7 @@ void boardFerry()
         snoid.unknownEe = 0;
         snoid.unknownF8 = randomBetween(0, 80);
         snoid.unknownF7 = 1;
-        g_4abba2[i] = addFerrySnoid(&snoid);
+        g_4abba2[i] = addFleen(&snoid);
         g_4abbc2[i] = 0;
         if (flag) {
             flag = 0;
@@ -1026,12 +1027,11 @@ void boardFerry()
 }
 
 /* Scene 13's clicks: 1 leaves (asking whether to keep the party), 2 sends
-   the ferry off (once all aboard, g_4abb7a and g_4abb7c) with its
-   passengers counted in g_4b755a, 3 (while nothing's moving) drags a
-   Zoombini: one on the shore (unknownF7) freely, one aboard only when its
-   ferry view (g_4abba2) is idle, noting where it was put (g_4abb6e,
+   the Zoombinis on (once ready, g_4abb7a and g_4abb7c), counted in
+   g_4b755a, 3 (while nothing's moving) drags a Zoombini: one placed
+   (unknownF7) freely, another only when its fleen (g_4abba2) is idle, noting where it was put (g_4abb6e,
    g_4abb70) or sending it back to a free place; with g_4b754a, a click on a
-   passenger makes its party view jump. */
+   fleen makes its Zoombini jump. */
 /* @zoombi32 0x00422192 */
 void scene13Clicked(short which)
 {
@@ -1039,7 +1039,7 @@ void scene13Clicked(short which)
     Snoid *snoid;
     View *view;
     short id;
-    short ferry;
+    short fleen;
     short i;
     View *other;
     short moved;
@@ -1054,9 +1054,9 @@ void scene13Clicked(short which)
     switch (which) {
     case 1:
         queueViewSound(999, 0);
-        drawFerryButton(which, 1, 1);
+        drawFleensButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
-        drawFerryButton(which, 0, 1);
+        drawFleensButton(which, 0, 1);
         g_4b0d52 = 1;
         askKeepParty();
         break;
@@ -1064,9 +1064,9 @@ void scene13Clicked(short which)
         if (!g_4abb7a || !g_4abb7c)
             break;
         queueViewSound(996, 0);
-        drawFerryButton(which, 1, 1);
+        drawFleensButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
-        drawFerryButton(which, 0, 1);
+        drawFleensButton(which, 0, 1);
         chooseSnoids(1, 0);
         g_4abb40 = 1;
         g_4b755c = 0;
@@ -1092,17 +1092,17 @@ void scene13Clicked(short which)
                 for (i = 0; i < g_4abba0; i++)
                     if (id == partyViews[i]) {
                         g_4abbc2[i] = 1;
-                        ferry = g_4abba2[i];
+                        fleen = g_4abba2[i];
                         i = g_4abba0;
                     }
-                other = findView(ferry);
+                other = findView(fleen);
                 if (other && viewSnoid(other)->unknownF7) {
                     if (id == g_4abb6e)
                         g_4abb6e = g_4abb70 = 0;
                     moved = dragSnoid(view, where, 0, 0);
                     if (heldPlaceNumber()) {
                         g_4abb6e = id;
-                        g_4abb70 = ferry;
+                        g_4abb70 = fleen;
                     } else if (moved) {
                         if (snoid->body.x != snoid->targetX || snoid->body.y != snoid->targetY)
                             pickFreePlace((Point *)&snoid->targetX, viewPlaces, 16, 500);
@@ -1130,12 +1130,12 @@ void scene13Clicked(short which)
 }
 
 /*
- * The ferry crew's notify: besides turning (250-253, 240-243, 0), moves
- * views into order (0, 8, 9), sends the picked travellers on or back when
- * the ferry reaches the far side (6), moves the Zoombinis in line along
- * (132), sets the passengers in a range of places off (133-135), adds a
- * random extra (30), and has g_4abb30 act (4, 5, 7: a ferry script, maybe
- * placed at an anchor).
+ * g_4abb30's notify: besides turning (250-253, 240-243, 0), moves
+ * views into order (0, 8, 9), sends the picked fleens on or back by
+ * g_4abb1e when g_4abb30 is in place (6), moves the Zoombinis in line along
+ * (132), stops (137), sets the fleens in a range of places off (133-135),
+ * adds a random extra (30), and has g_4abb30 act (4, 5, 7: a fleen script,
+ * maybe placed at an anchor).
  */
 /* Not exact: in case 30 the original calls randomBetween before pushing
    addView's first three arguments (as for a temporary in eax); a
@@ -1151,7 +1151,7 @@ void fn_42365a(View *view, short event)
     short seat;
     Point at;
     Point *anchor;
-    View *crew = 0;
+    View *actor = 0;
     View *other;
     Snoid *snoid;
     short i;
@@ -1188,9 +1188,9 @@ void fn_42365a(View *view, short event)
         break;
     case 4:
         g_4abb44 = 1;
-        crew = findView(g_4abb30);
-        if (crew) {
-            spot = viewSnoid(crew)->unknownF0;
+        actor = findView(g_4abb30);
+        if (actor) {
+            spot = viewSnoid(actor)->unknownF0;
             if (spot >= 0 && spot <= 16) {
                 which = 5;
                 act = 1;
@@ -1205,10 +1205,10 @@ void fn_42365a(View *view, short event)
         act = 1;
         break;
     case 6:
-        crew = findView(g_4abb30);
-        if (!crew)
+        actor = findView(g_4abb30);
+        if (!actor)
             break;
-        spot = viewSnoid(crew)->unknownF0;
+        spot = viewSnoid(actor)->unknownF0;
         if (spot < 17 || spot > 19)
             break;
         other = findView(g_4abb1c);
@@ -1222,15 +1222,15 @@ void fn_42365a(View *view, short event)
             setViewScript(other, id, 1);
         }
         for (i = 0; i < 3; i++)
-            if (ferryPicked[i] && g_4abba2[ferryPicked[i] - 1] == g_4abb30)
-                ferryPicked[i] = 0;
+            if (pickedFleens[i] && g_4abba2[pickedFleens[i] - 1] == g_4abb30)
+                pickedFleens[i] = 0;
         for (i = 0; i < 3; i++)
-            if (ferryPicked[i]) {
-                other = findView(g_4abba2[ferryPicked[i] - 1]);
+            if (pickedFleens[i]) {
+                other = findView(g_4abba2[pickedFleens[i] - 1]);
                 if (other && g_4abb1e < 3) {
-                    script = ferryScript(other, g_4abb1e + 6);
+                    script = fleenScript(other, g_4abb1e + 6);
                     if (script) {
-                        startFerryScript(other, script, 0);
+                        startFleenScript(other, script, 0);
                         other->notify = fn_423512;
                     }
                 }
@@ -1269,7 +1269,7 @@ void fn_42365a(View *view, short event)
         for (i = 0; i < g_4abb46 - 1; i++) {
             other = findView(g_4abb4a[i]);
             if (other) {
-                script = ferrySnoidScript(other, 7016);
+                script = fleensSnoidScript(other, 7016);
                 if (script)
                     startSnoidScript(viewSnoid(other), script, 0, 0);
                 if (!i && seven) {
@@ -1279,9 +1279,9 @@ void fn_42365a(View *view, short event)
             }
             other = findView(g_4abb58[i]);
             if (other) {
-                script = ferryScript(other, 12);
+                script = fleenScript(other, 12);
                 if (script)
-                    startFerryScript(other, script, 0);
+                    startFleenScript(other, script, 0);
             }
         }
         if (seven) {
@@ -1322,9 +1322,9 @@ void fn_42365a(View *view, short event)
                 other = findView(g_4abba2[i]);
                 if (other && viewSnoid(other)->unknownF0 >= low && viewSnoid(other)->unknownF0 <= high) {
                     g_4abbc2[i] = 2;
-                    script = ferryScript(other, 14);
+                    script = fleenScript(other, 14);
                     if (script) {
-                        startFerryScript(other, script, 0);
+                        startFleenScript(other, script, 0);
                         other->notifyEnd = 1;
                         if (event != 135)
                             other->notify = fn_423512;
@@ -1359,16 +1359,16 @@ void fn_42365a(View *view, short event)
         break;
     }
     if (act) {
-        if (!crew)
-            crew = findView(g_4abb30);
-        if (crew) {
-            viewSnoid(crew)->unknownF7 = 0;
-            script = ferryScript(crew, which);
+        if (!actor)
+            actor = findView(g_4abb30);
+        if (actor) {
+            viewSnoid(actor)->unknownF7 = 0;
+            script = fleenScript(actor, which);
             if (script) {
-                startFerryScript(crew, script, anchor);
-                crew->notify = fn_423512;
+                startFleenScript(actor, script, anchor);
+                actor->notify = fn_423512;
                 if (seat)
-                    viewSnoid(crew)->unknownF0 = 20;
+                    viewSnoid(actor)->unknownF0 = 20;
             }
         }
     }
