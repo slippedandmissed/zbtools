@@ -106,5 +106,8 @@ extern short g_4afb7a; /* @data 0x4afb7a */
 void fn_432cec(View *view);
 
 void fn_4321ac(View *view, short region);
+extern short g_4afbbc; /* @data 0x4afbbc */
+extern short g_4afbbe; /* @data 0x4afbbe */
+short scene20Key(unsigned short key);
 
 #endif

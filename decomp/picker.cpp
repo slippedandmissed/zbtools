@@ -1226,3 +1226,95 @@ void fn_4321ac(View *view, short region)
         }
     }
 }
+
+/* Scene 20's keys (the practice game): space starts again (once the game
+   is over, g_4afb7a) or brings back a burst ship, 5 fires (up to three
+   shots), 4 and 6 turn the ship, 8 pushes it on (up to 12 each way). */
+/* @zoombi32 0x00432a79 */
+short scene20Key(unsigned short key)
+{
+    short id;
+    short i;
+
+    switch (key) {
+    case ' ':
+        if (g_4afb7a) {
+            if (g_4afbbe) {
+                deleteView(g_4afbbe);
+                g_4afbba = 0;
+                g_4afbbe = 0;
+                for (i = 0; i < 6; i++)
+                    g_4afb94[i] = 0;
+            }
+            id = g_4afb7a;
+            g_4afb7a = 0;
+            deleteView(id);
+            g_4afb72 = 0;
+            g_4afb76 = 3;
+            g_4afb74 = 100;
+            g_4afbbc = 0;
+            startView(g_4afb78, 0, 0, 0);
+            fn_432905();
+        } else if (g_4afb80) {
+            fn_432905();
+        }
+        break;
+    case '5':
+        if (g_4afb8c < 3 && !g_4afb80) {
+            fn_43297f();
+            queueViewSound(3002, 0);
+        }
+        break;
+    case '4':
+        if (!g_4afb80)
+            g_4afb7e = (g_4afb7e - 1) & 7;
+        break;
+    case '6':
+        if (!g_4afb80)
+            g_4afb7e = (g_4afb7e + 1) & 7;
+        break;
+    case '8':
+        if (!g_4afb80) {
+            switch (g_4afb7e) {
+            case 0:
+                g_4afb88 += -4;
+                break;
+            case 1:
+                g_4afb88 += -4;
+                g_4afb86 += 4;
+                break;
+            case 2:
+                g_4afb86 += 4;
+                break;
+            case 3:
+                g_4afb88 += 4;
+                g_4afb86 += 4;
+                break;
+            case 4:
+                g_4afb88 += 4;
+                break;
+            case 5:
+                g_4afb88 += 4;
+                g_4afb86 += -4;
+                break;
+            case 6:
+                g_4afb86 += -4;
+                break;
+            case 7:
+                g_4afb88 += -4;
+                g_4afb86 += -4;
+                break;
+            }
+            if (g_4afb88 < -12)
+                g_4afb88 = -12;
+            if (g_4afb88 > 12)
+                g_4afb88 = 12;
+            if (g_4afb86 < -12)
+                g_4afb86 = -12;
+            if (g_4afb86 > 12)
+                g_4afb86 = 12;
+        }
+        break;
+    }
+    return 0;
+}
