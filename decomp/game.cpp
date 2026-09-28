@@ -1719,3 +1719,93 @@ void fn_44ddc9()
         }
     updateViews();
 }
+
+/* Turns cells in state 506 back to 501, lists the placed Zoombinis (state
+   507) in g_4b2544 (each one's view lands in the next entry, as in the
+   original), and for each of a fixed set of cells (or pairs) found in state
+   501, resets it and the cells next to it and cuts the neighbours' links
+   to them. */
+/* @zoombi32 0x0044d127 */
+void fn_44d127()
+{
+    short count = 0;
+    short i;
+
+    for (i = 0; i < 117; i++) {
+        if (g_4b1aea[i].state == 506)
+            g_4b1aea[i].state = 501;
+        if (g_4b1aea[i].state == 507) {
+            g_4b2544[count].cell = i;
+            count++;
+            g_4b2544[count].snoid = g_4b1aea[i].snoid;
+        }
+    }
+    if (g_4b1aea[2].state == 501 && g_4b1aea[19].state == 501) {
+        fn_44d5ad(2);
+        fn_44d5ad(19);
+        fn_44d5ad(10);
+        fn_44d5ad(11);
+        fn_44d5ad(28);
+        fn_44dca0(38, 0, 1);
+        fn_44dca0(21, 0, 1);
+    }
+    if (g_4b1aea[91].state == 501 && g_4b1aea[110].state == 501) {
+        fn_44d5ad(91);
+        fn_44d5ad(110);
+        fn_44d5ad(100);
+        fn_44d5ad(82);
+        fn_44d5ad(101);
+        fn_44dca0(74, 2, 4);
+        fn_44dca0(93, 2, 4);
+    }
+    if (g_4b1aea[112].state == 501) {
+        fn_44d5ad(112);
+        fn_44d5ad(102);
+        fn_44d5ad(103);
+        fn_44dca0(93, 3, 8);
+        fn_44dca0(95, 2, 4);
+    }
+    if (g_4b1aea[114].state == 501) {
+        fn_44d5ad(114);
+        fn_44d5ad(104);
+        fn_44d5ad(105);
+        fn_44dca0(95, 3, 8);
+        fn_44dca0(97, 2, 4);
+    }
+    if (g_4b1aea[4].state == 501) {
+        fn_44d5ad(4);
+        fn_44d5ad(12);
+        fn_44d5ad(13);
+        fn_44dca0(21, 5, 0x20);
+        fn_44dca0(23, 0, 1);
+    }
+    if (g_4b1aea[6].state == 501) {
+        fn_44d5ad(6);
+        fn_44d5ad(14);
+        fn_44d5ad(15);
+        fn_44dca0(23, 5, 0x20);
+        fn_44dca0(25, 0, 1);
+    }
+    if (g_4b1aea[97].state == 501 && g_4b1aea[80].state == 501) {
+        fn_44d5ad(97);
+        fn_44d5ad(80);
+        fn_44d5ad(88);
+        fn_44d5ad(87);
+        fn_44d5ad(70);
+        fn_44d5ad(105);
+        fn_44dca0(78, 3, 8);
+        fn_44dca0(61, 3, 8);
+        fn_44dca0(114, 5, 0x20);
+    }
+    if (g_4b1aea[25].state == 501 && g_4b1aea[44].state == 501) {
+        fn_44d5ad(25);
+        fn_44d5ad(44);
+        fn_44d5ad(34);
+        fn_44d5ad(15);
+        fn_44d5ad(33);
+        fn_44d5ad(52);
+        fn_44dca0(42, 5, 0x20);
+        fn_44dca0(61, 5, 0x20);
+        fn_44dca0(6, 3, 8);
+    }
+}

@@ -5347,6 +5347,7 @@ short fn_45537f(const char *path);
 extern short g_4b2512;
 void fn_4489ce(View *view);
 void fn_44ddc9();
+void fn_44d127();
 void fn_44f066(short which, short lit, short show);
 short fn_44d102();
 void fn_44d5ad(short cell);
