@@ -6073,3 +6073,5 @@ extern short g_4b1728[3];
 extern short g_4b172e[3];
 extern short g_4b160c;
 void fn_445307();
+extern short g_4b15f0;
+void fn_442560(short button);

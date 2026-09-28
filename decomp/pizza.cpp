@@ -1825,3 +1825,133 @@ void fn_445307()
     moveView(g_4a3d38, 0, -1);
     g_4b160c = groupViews(g_4b1734[g_4b1712].view, g_4b1734[g_4b1712].view, 0, 0, 0, 0);
 }
+
+/* A topping button (4-11: the eight toppings, those the level has; 3
+   serves the pizza): toggles the topping on the meal (g_4b16ca) and its
+   view (by level), and redraws the pizza; 3 has the pizza carried off
+   (7057, or 7058 from level 1; 7066) and clears the toppings, without
+   the redraw. */
+/* @zoombi32 0x00442560 */
+void fn_442560(short button)
+{
+    short redraw;
+    View *view;
+
+    if (g_4b15f2)
+        return;
+    redraw = 1;
+    switch (button) {
+    case 3:
+        redraw = 0;
+        view = findView(g_4b162e);
+        if (!g_4b161e)
+            setViewScript(view, 7057, 1);
+        else
+            setViewScript(view, 7058, 1);
+        view = findView(g_4b15f0);
+        setViewScript(view, 7066, 1);
+        g_4b15f2 = groupViews(g_4b15f0, g_4b15f0, 0, 0, 0, 0);
+        view->notify = fn_4441a8;
+        fn_446198();
+        break;
+    case 4:
+        g_4b1652 ^= 1;
+        g_4b16ca[0] = g_4b1652;
+        view = findView(toppingViews[0]);
+        if (!g_4b161e)
+            setViewScript(view, g_4b1652 + 7005, 1);
+        else if (g_4b161e == 1)
+            setViewScript(view, g_4b1652 + 7015, 1);
+        else if (g_4b161e == 2)
+            setViewScript(view, g_4b1652 + 7027, 1);
+        else
+            setViewScript(view, g_4b1652 + 7041, 1);
+        break;
+    case 5:
+        g_4b1650 ^= 1;
+        g_4b16ca[1] = g_4b1650;
+        view = findView(toppingViews[1]);
+        if (!g_4b161e)
+            setViewScript(view, g_4b1650 + 7007, 1);
+        else if (g_4b161e == 1)
+            setViewScript(view, g_4b1650 + 7017, 1);
+        else if (g_4b161e == 2)
+            setViewScript(view, g_4b1650 + 7029, 1);
+        else
+            setViewScript(view, g_4b1650 + 7043, 1);
+        break;
+    case 6:
+        g_4b164e ^= 1;
+        g_4b16ca[2] = g_4b164e;
+        view = findView(toppingViews[2]);
+        if (!g_4b161e)
+            setViewScript(view, g_4b164e + 7009, 1);
+        else if (g_4b161e == 1)
+            setViewScript(view, g_4b164e + 7019, 1);
+        else if (g_4b161e == 2)
+            setViewScript(view, g_4b164e + 7031, 1);
+        else
+            setViewScript(view, g_4b164e + 7045, 1);
+        break;
+    case 7:
+        g_4b164c ^= 1;
+        g_4b16ca[3] = g_4b164c;
+        view = findView(toppingViews[3]);
+        if (!g_4b161e)
+            setViewScript(view, g_4b164c + 7011, 1);
+        else if (g_4b161e == 1)
+            setViewScript(view, g_4b164c + 7021, 1);
+        else if (g_4b161e == 2)
+            setViewScript(view, g_4b164c + 7033, 1);
+        else
+            setViewScript(view, g_4b164c + 7047, 1);
+        break;
+    case 8:
+        g_4b164a ^= 1;
+        g_4b16ca[4] = g_4b164a;
+        view = findView(toppingViews[4]);
+        if (!g_4b161e)
+            setViewScript(view, g_4b164a + 7013, 1);
+        else if (g_4b161e == 2)
+            setViewScript(view, g_4b164a + 7035, 1);
+        else if (g_4b161e == 3)
+            setViewScript(view, g_4b164a + 7049, 1);
+        break;
+    case 9:
+        if (g_4b161e) {
+            g_4b1654 ^= 1;
+            g_4b16ca[5] = g_4b1654;
+            view = findView(toppingViews[5]);
+            if (g_4b161e == 1)
+                setViewScript(view, g_4b1654 + 7023, 1);
+            else if (g_4b161e == 2)
+                setViewScript(view, g_4b1654 + 7037, 1);
+            else
+                setViewScript(view, g_4b1654 + 7051, 1);
+        }
+        break;
+    case 10:
+        if (g_4b161e) {
+            g_4b1656 ^= 1;
+            g_4b16ca[6] = g_4b1656;
+            view = findView(toppingViews[6]);
+            if (g_4b161e == 1)
+                setViewScript(view, g_4b1656 + 7025, 1);
+            else if (g_4b161e == 2)
+                setViewScript(view, g_4b1656 + 7039, 1);
+            else
+                setViewScript(view, g_4b1656 + 7053, 1);
+        }
+        break;
+    case 11:
+        if (g_4b161e == 3) {
+            g_4b1658 ^= 1;
+            g_4b16ca[7] = g_4b1658;
+            view = findView(toppingViews[7]);
+            setViewScript(view, g_4b1658 + 7055, 1);
+        }
+        break;
+    }
+    if (redraw)
+        fn_4423d7();
+}
