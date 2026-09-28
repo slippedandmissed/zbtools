@@ -717,3 +717,74 @@ void fn_431111()
         }
     }
 }
+
+/* A shot's placed callback (fn_43297f): moves it like driftView for 12
+   steps, then shows its burst (images 25-27) and stops it, keeping the
+   first stopped in g_4afb8a. While flying, the first of the six targets
+   (g_4afb94) it touches is hit (g_4afb8e): it scores by the target's kind
+   (g_4afb72; every 100 raises g_4afb76, up to 9) and bursts at once. */
+/* @zoombi32 0x00432eff */
+void fn_432eff(View *view)
+{
+    ShortRect target;
+    short hit;
+    DriftingBody *body;
+    View *other;
+    short i;
+
+    body = (DriftingBody *)&view->body;
+    body->unknown28++;
+    if (body->unknown28 > 15) {
+        body->cels[0].image = 0;
+        if (!g_4afb8a) {
+            view->body.running = 0;
+            g_4afb8a = view->id;
+        }
+        return;
+    }
+    body->x += body->dx;
+    body->y += body->dy;
+    if (body->x > 650)
+        body->x = -10;
+    else if (body->x < -10)
+        body->x = 650;
+    if (body->y > 490)
+        body->y = -10;
+    else if (body->y < -10)
+        body->y = 490;
+    if (body->unknown28 >= 13) {
+        body->cels[0].image = body->unknown28 + 12;
+        body->unknown28++;
+    }
+    hit = !(unsigned short)(body->unknown28 < 13);
+    for (i = 0; !hit && !g_4afb8e && i < 6; i++) {
+        if (!g_4afb94[i])
+            continue;
+        target = *g_4afb94[i];
+        if (!sectRect(&target, &view->body.bounds))
+            continue;
+        body->unknown28 = 12;
+        g_4afb8e = i + 1;
+        hit = 1;
+        queueViewSound(3000, 0);
+        other = findView(g_4afbac[i]);
+        if (other) {
+            if (other->kind >= 1021)
+                g_4afb72 += 15;
+            else if (other->kind >= 1016)
+                g_4afb72++;
+            else if (other->kind >= 1005)
+                g_4afb72 += 10;
+            else if (other->kind >= 1000)
+                g_4afb72 += 5;
+        }
+        if (g_4afb72 >= g_4afb74) {
+            g_4afb74 += 100;
+            if (g_4afb76 < 9)
+                g_4afb76++;
+        }
+        startView(g_4afb78, 0, 0, 0);
+    }
+    body->cels[0].x = body->x;
+    body->cels[0].y = body->y;
+}

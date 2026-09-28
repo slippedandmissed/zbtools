@@ -74,7 +74,6 @@ extern short g_4afb76; /* @data 0x4afb76 */
 void fn_430030(short n);
 void fn_4333ef(View *view);
 extern short g_4afb8c; /* @data 0x4afb8c: drifting views started */
-void fn_432eff(View *view);
 short fn_43297f();
 extern char g_4afb4a[17]; /* @data 0x4afb4a: the hotspots open (from 1) */
 void fn_430cb3(View *view);
@@ -86,5 +85,12 @@ void fn_43108f(View *view, volatile short region);
 void fn_43160a(View *view);
 extern ShortRect g_4a1f54[4]; /* @data 0x4a1f54: where the terrains' names go */
 void fn_431111();
+extern short g_4afb74; /* @data 0x4afb74: the next hundred to score */
+extern short g_4afb78; /* @data 0x4afb78 */
+extern short g_4afb8a; /* @data 0x4afb8a: the first shot stopped */
+extern short g_4afb8e; /* @data 0x4afb8e: the target hit (from 1) */
+extern ShortRect *g_4afb94[6]; /* @data 0x4afb94: the targets' bounds */
+extern short g_4afbac[6]; /* @data 0x4afbac: the targets' views */
+void fn_432eff(View *view);
 
 #endif
