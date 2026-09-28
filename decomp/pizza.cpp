@@ -201,3 +201,75 @@ short fn_44460a()
             return 1;
     return 0;
 }
+
+/* Records the toppings on the pizza (g_4b16da) as a set tried (the next
+   of g_4b16ec). */
+/* @zoombi32 0x00444556 */
+void fn_444556()
+{
+    short *toppings = g_4b16da;
+
+    g_4b1708++;
+    if (toppings[0])
+        g_4b16ec[g_4b1708] |= 1;
+    if (toppings[1])
+        g_4b16ec[g_4b1708] |= 2;
+    if (toppings[2])
+        g_4b16ec[g_4b1708] |= 4;
+    if (toppings[3])
+        g_4b16ec[g_4b1708] |= 8;
+    if (toppings[4])
+        g_4b16ec[g_4b1708] |= 0x10;
+    if (toppings[5])
+        g_4b16ec[g_4b1708] |= 0x20;
+    if (toppings[6])
+        g_4b16ec[g_4b1708] |= 0x40;
+    if (toppings[7])
+        g_4b16ec[g_4b1708] |= 0x80;
+}
+
+/* Starts the view g_4a3d42 over (action 1) and puts it in front of the
+   troll view that's up (g_4b160e, g_4b1610 or g_4b1612, unless
+   g_4b1720), grouped. */
+/* @zoombi32 0x0044509b */
+void fn_44509b()
+{
+    View *view = findView(g_4a3d42);
+
+    view->interval = 6;
+    setSnoidAction((Snoid *)&view->body, 1, 0);
+    if (!g_4b1720) {
+        if (g_4b1618 == 1)
+            moveView(g_4a3d42, 1, g_4b160e);
+        else if (g_4b161a == 1)
+            moveView(g_4a3d42, 1, g_4b1610);
+        else if (g_4b161c == 1)
+            moveView(g_4a3d42, 1, g_4b1612);
+    } else {
+        g_4b1720 = 0;
+    }
+    g_4b15f8 = groupViews(g_4a3d42, g_4a3d42, 0, 0, 0, 0);
+}
+
+/* A view's notify: unless busy (g_4b15f2, g_4b160a, g_4b1662), counts in
+   g_4b165a once all the party is through (g_4b15d6), else shows the view
+   g_4b162e (script 7067, or 7068 from level 1) placed by fn_442443. */
+/* @zoombi32 0x00445ae1 */
+void fn_445ae1(View *, short)
+{
+    View *view;
+
+    if (!g_4b15f2 && !g_4b160a && !g_4b1662) {
+        if (g_4b15d6 >= g_4b15d4) {
+            g_4b165a++;
+        } else {
+            view = findView(g_4b162e);
+            if (!g_4b161e)
+                setViewScript(view, 7067, 1);
+            else
+                setViewScript(view, 7068, 1);
+            g_4b160a = groupViews(g_4b162e, g_4b162e, 0, 0, 0, 0);
+            view->placed = fn_442443;
+        }
+    }
+}
