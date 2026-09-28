@@ -109,5 +109,11 @@ void fn_4321ac(View *view, short region);
 extern short g_4afbbc; /* @data 0x4afbbc */
 extern short g_4afbbe; /* @data 0x4afbbe */
 short scene20Key(unsigned short key);
+extern char *placeNames[16]; /* @data 0x4a5278: the hotspots' names ("zoombini isle", ...) */
+/* The map's box: 0-3 the camps ("zoombini isle", "shelter rock", "shade
+   tree", "zoombiniville"), 4 "practice mode", then from 5, 9, 13 and 17 how
+   to get back to the game from each level. */
+extern char *mapTexts[21]; /* @data 0x4a52b8 */
+void fn_430878(ShortRect *rect);
 
 #endif

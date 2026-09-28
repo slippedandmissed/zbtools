@@ -1318,3 +1318,82 @@ short scene20Key(unsigned short key)
     }
     return 0;
 }
+
+/* Draws the map's box in `rect`: the game's name and how many Zoombinis
+   are still to come (625 less those at the camps) and at each camp; in
+   practice (g_4b754a), "practice mode" and how to get back to the game
+   from the furthest level reached. */
+/* @zoombi32 0x00430878 */
+void fn_430878(ShortRect *rect)
+{
+    Color saved;
+    char number[8];
+    ShortRect line;
+    ShortRect count;
+    ShortRect title;
+    char name[64];
+    short i;
+    short n;
+
+    saved = setForeColor(Color(45));
+    title.left = rect->left;
+    title.right = rect->right;
+    title.top = rect->top + 3;
+    title.bottom = title.top + 18;
+    line.top = count.top = rect->top + 26;
+    line.bottom = count.bottom = line.top + 18;
+    line.left = rect->left + 7;
+    line.right = line.left + 115;
+    count.left = line.right;
+    count.right = rect->right + -7;
+    if (!g_4b754a)
+        strcpy(name, gameName);
+    else
+        strcpy(name, mapTexts[4]);
+    drawText(title, 0x22, name, 0xffff);
+    if (!g_4b754a) {
+        for (i = 0; i < 4; i++) {
+            switch (i) {
+            case 0:
+                n = 625 - (*(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c)
+                           + *(short *)(g_4a4ba0 + 0x4e));
+                break;
+            case 1:
+                n = *(short *)(g_4a4ba0 + 0x4a);
+                break;
+            case 2:
+                n = *(short *)(g_4a4ba0 + 0x4c);
+                break;
+            case 3:
+                n = *(short *)(g_4a4ba0 + 0x4e);
+                break;
+            }
+            drawText(line, 1, mapTexts[i], 0xffff);
+            intToDecimal(n, number);
+            drawText(count, 4, number, 0xffff);
+            count.top += 18;
+            count.bottom += 18;
+            line.top += 18;
+            line.bottom += 18;
+        }
+    } else {
+        if (g_4a4ba0[0x51] & 0xf)
+            n = 17;
+        else if (g_4a4ba0[0x52] & 0xff)
+            n = 13;
+        else if (g_4a4ba0[0x50] & 0xf)
+            n = 9;
+        else
+            n = 5;
+        line.left = rect->left + 5;
+        line.right = rect->right;
+        line.top = rect->top + 26;
+        line.bottom = line.top + 18;
+        for (i = 0; i < 4; i++) {
+            drawText(line, 1, mapTexts[n + i], 0xffff);
+            line.top += 18;
+            line.bottom += 18;
+        }
+    }
+    setForeColor(saved);
+}
