@@ -1490,3 +1490,48 @@ void fn_444e0c(View *view, short event)
         break;
     }
 }
+
+/* A pizza is served: counts down the pizzas left (g_4b1620; g_4b1646 set
+   while some are); the troll up takes it (8022, 9028 or 10032 on) and the
+   Zoombini at the pizza gets its notify, unless it's the last with none
+   left to judge, when the pizza view starts over (fn_44509b). */
+/* @zoombi32 0x00445153 */
+void fn_445153()
+{
+    View *view;
+
+    g_4b165c = 0;
+    g_4b1646 = 0;
+    if (--g_4b1620 >= 0)
+        g_4b1646 = 1;
+    if (!g_4b1620)
+        g_4b1648++;
+    if (g_4b1648 || !g_4b1646) {
+        if (g_4b1618 == 1) {
+            view = findView(g_4b160e);
+            setViewScript(view, g_4b1646 + 8022, 1);
+            if (g_4b1648) {
+                g_4b16bc++;
+                g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            } else {
+                g_4b15fc = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            }
+        } else if (g_4b161a == 1) {
+            view = findView(g_4b1610);
+            setViewScript(view, g_4b1646 + 9028, 1);
+            g_4b15fc = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+        } else if (g_4b161c == 1) {
+            view = findView(g_4b1612);
+            setViewScript(view, g_4b1646 + 10032, 1);
+            g_4b15fc = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+        }
+        view->notifyEnd = 0;
+        view->notify = fn_444e0c;
+        g_4b1648 = g_4b171a = 0;
+    } else {
+        fn_44509b();
+        g_4b171a++;
+        g_4b15fc = 1000;
+    }
+    claimPlacedView(1, 0);
+}

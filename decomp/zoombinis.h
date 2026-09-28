@@ -6039,3 +6039,7 @@ extern short g_4b171a;
 extern short g_4b1646;
 extern View *g_4b15e0;
 extern short g_4b15ea;
+extern short g_4b165c;
+extern short g_4b1648;
+extern short g_4b15fc;
+void fn_445153();
