@@ -12,6 +12,7 @@
 #include "graphics.h"
 #include "loading.h"
 #include "module_4623b8.h"
+#include "net.h"
 #include "snoids.h"
 #include "sound.h"
 #include "tunnels.h"
@@ -370,7 +371,7 @@ short removeTunnelEntry(TunnelList *list, short view)
                 list->entries[i].unknown2 = list->entries[i + 1].unknown2;
                 list->entries[i].step = list->entries[i + 1].step;
                 list->entries[i].unknown6 = list->entries[i + 1].unknown6;
-                list->entries[i].unknown8 = list->entries[i + 1].unknown8;
+                list->entries[i].script = list->entries[i + 1].script;
                 list->entries[i].unknownC = list->entries[i + 1].unknownC;
                 list->entries[i].speaker = list->entries[i + 1].speaker;
                 list->entries[i].line = list->entries[i + 1].line;
@@ -1641,4 +1642,176 @@ void fn_45fb50(View *view, short event)
         }
         break;
     }
+}
+
+/* Scene 8's frame. Leaves the scene when asked (g_4b0d52) unless a
+   character is talking; ends a waiting Zoombini's remark (g_4b8090) when
+   its sound has; says the line set up to follow (g_4b7fd4) or queues the
+   pending sound (g_4b8096) when nobody's talking. While Zoombinis remain
+   to go (g_4b7fc0) it starts the first entry of g_4b7ff0: a Zoombini
+   walks off to its door with its script (and the entry's reply is said),
+   counting down the four remarks for the last Zoombinis to wait
+   (4700-4703); otherwise the entry is a remark to say. With none left,
+   sends the waiting Zoombinis through (fn_45f9c9) and queues a closing
+   remark. Also makes an idle remark now and then (every 5400-10800 view
+   ticks), starts g_4b7fc2's script once (g_4b7fee), and every so often
+   has an idle Zoombini fidget (8559 on), up to g_4b8098 times. */
+/* @zoombi32 0x0045ea81 */
+void scene8Frame()
+{
+    short talking = 0;
+    short aside = 0;
+    short id;
+    View *view;
+    Snoid *snoid;
+
+    if (g_4a7888 || !g_4b7fb8)
+        return;
+    g_4a7888 = 1;
+    if (!g_4b7fc0)
+        g_4b754c = 1;
+    updateViews();
+    if (lastViewSound >= 4000 && lastViewSound <= 4699) {
+        if (isSoundPlaying(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D')))
+            talking = 1;
+    } else if (lastViewSound >= 7000 && lastViewSound <= 7099) {
+        if (isSoundPlaying(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D')))
+            aside = 1;
+    }
+    if (g_4b0d52) {
+        if (talking) {
+            g_4a7888 = 0;
+            return;
+        }
+        if (!g_4b9688 || g_4b9688 == 3) {
+            if (g_4b9688 == 3)
+                chooseSnoids(0, 0);
+            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
+                g_4b0d50 = g_4b0d52;
+                g_4b0d52 = 0;
+                fn_46be2e(0);
+                closeScene8();
+                g_4a7888 = 0;
+                return;
+            }
+        } else if (g_4b9688 == 2) {
+            g_4b9688 = 0;
+            g_4b0d52 = 0;
+        }
+    }
+    if (g_4b8090 && g_4b808e && !isSoundPlaying(g_4b8090, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+        g_4b8090 = 0;
+        g_4b808e = 0;
+    }
+    if (g_4b7fd4) {
+        if (!talking && !aside) {
+            id = g_4b7fd4;
+            g_4b7fd4 = 0;
+            if (g_4b8096) {
+                if (g_4b7fd8)
+                    fn_45fa80(0, -1);
+            } else {
+                if (g_4b7fd8)
+                    startView(id, g_4b7fd6, fn_45fa80, 1);
+                else
+                    startView(id, g_4b7fd6, 0, 1);
+                loadViewSounds(id, 1);
+            }
+        }
+    } else if (g_4b8096 && !talking && !aside) {
+        queueViewSound(g_4b8096, 1);
+        g_4b8096 = 0;
+    }
+    if (g_4b7fc0) {
+        if (!g_4b808e && g_4b7ff0.count && !g_4b7fd2) {
+            if (g_4b7ff0.entries[0].view) {
+                if (!g_4b7ff0.entries[0].step && !talking && !aside) {
+                    view = idleSnoidView(g_4b7ff0.entries[0].view);
+                    if (view) {
+                        g_4b7ff0.entries[0].step = 1;
+                        if (g_4b7ff0.entries[0].reply && g_4b7fe6[g_4b7ff0.entries[0].kind - 1] < 2) {
+                            startView(g_4b7ff0.entries[0].replier, g_4b7ff0.entries[0].reply, 0, 0);
+                            loadViewSounds(g_4b7ff0.entries[0].replier, 1);
+                        }
+                        claimPlacedView(g_4b7ff0.entries[0].kind, 0);
+                        snoid = viewSnoid(view);
+                        view->flags &= ~0x4000000;
+                        if (view->body.cels[20].image < 4) /* +0xa8: not a cel here? */
+                            snoid->unknownF2 = 1;
+                        startSnoidScript(snoid, g_4b7ff0.entries[0].script, 0, 0);
+                        view->notify = fn_45fb50;
+                        view->notifyEnd = 1;
+                        groupViews(id, id, 0, 0, 0, 0);
+                        if (g_4b7ff0.entries[0].unknown2) {
+                            g_4b7fc0--;
+                            switch (g_4b7fc0) {
+                            case 1:
+                                g_4b8090 = 4703;
+                                break;
+                            case 2:
+                                g_4b8090 = 4702;
+                                break;
+                            case 3:
+                                g_4b8090 = 4701;
+                                break;
+                            case 4:
+                                g_4b8090 = 4700;
+                                break;
+                            }
+                        } else {
+                            view->interval = 4;
+                        }
+                        g_4b7fd2 = 1;
+                    }
+                    resetViewClock();
+                }
+            } else {
+                sayTunnelRemark();
+            }
+        }
+    } else if (!g_4b7fce && !g_4b7fd2) {
+        if (!talking) {
+            g_4b7fce = 1;
+            fn_45f9c9();
+            fn_460642(2);
+            g_4b7fee = 1;
+        }
+    } else if (g_4b7ff0.count && !g_4b7fd2 && !g_4b7ff0.entries[0].view && !talking) {
+        sayTunnelRemark();
+    }
+    if (!g_4b7fce && viewClock() > g_4b7fe0) {
+        resetViewClock();
+        fn_460642(0);
+        g_4b7fe0 = randomBetween(5400, 10800);
+    }
+    if (g_4b7fee == 2) {
+        g_4b7fee++;
+        view = findView(g_4b7fc2);
+        if (view) {
+            setViewScript(view, 0, 1);
+            view->flags &= ~0x1000000;
+            view->notifyEnd = 1;
+            view->notify = fn_45faa3;
+            loadViewSounds(g_4b7fc2, 1);
+            setViewsLocked(0);
+        }
+    }
+    playAmbientSound();
+    if (g_4b809a < g_4b8098 && clockTime() - g_4b809c > g_4b80a0) {
+        id = 0;
+        g_4b809c = clockTime();
+        aside = 0; /* now the tries */
+        do {
+            aside++;
+            view = idleSnoidView(partyViews[allocateSlot(&g_4b80a4, g_4b8094, 0)]);
+            if (view && viewSnoid(view)->unknownF7 && (view->flags & 1)) {
+                id = viewSnoid(view)->features[3];
+                id += 8559;
+                startSnoidScript(viewSnoid(view), id, 0, 0);
+                g_4b809a++;
+                id = 1;
+            }
+        } while (!id && aside < 16);
+    }
+    g_4a7888 = 0;
 }

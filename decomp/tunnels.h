@@ -13,8 +13,8 @@ struct TunnelEntry
     short view;
     short unknown2;
     short step; /* +4: of a remark, the part being said (fn_460571) */
-    short unknown6;
-    long unknown8;
+    long unknown6;
+    short script; /* +0xa: a Zoombini's, as it goes to its door */
     short unknownC;
     short speaker; /* +0xe: a remark: the view saying `line` then `lineThen` */
     short line;
@@ -96,7 +96,7 @@ extern short g_4b7f54[16]; /* @data 0x4b7f54 */
 extern short g_4b7f34[16]; /* @data 0x4b7f34 */
 extern short g_4b809a; /* @data 0x4b809a */
 extern short g_4b8098; /* @data 0x4b8098 */
-extern long g_4b80a4; /* @data 0x4b80a4 */
+extern unsigned long g_4b80a4; /* @data 0x4b80a4: slots used (allocateSlot) */
 extern long g_4b809c; /* @data 0x4b809c */
 extern long g_4b80a0; /* @data 0x4b80a0 */
 extern short g_4b7548; /* @data 0x4b7548 */
@@ -128,6 +128,11 @@ extern Point g_4a7770[16]; /* @data 0x4a7770: the places past door 1 */
 extern Point g_4a77b0[16]; /* @data 0x4a77b0: door 4 */
 extern Point g_4a77f0[16]; /* @data 0x4a77f0: door 2 */
 extern Point g_4a7830[16]; /* @data 0x4a7830: door 3 */
+void scene8Frame();
+extern short g_4a7888; /* @data 0x4a7888: scene8Frame is running */
+extern short g_4b7fc0; /* @data 0x4b7fc0: Zoombinis still to go through */
+extern short g_4b7fc2; /* @data 0x4b7fc2 */
+extern unsigned long g_4b7fe0; /* @data 0x4b7fe0: when to make the next idle remark (view ticks) */
 void fn_461135();
 void fn_461bec();
 void fn_4612b1();
