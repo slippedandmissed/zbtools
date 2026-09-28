@@ -3307,3 +3307,181 @@ void setUpLillyPuzzle()
     fillMemory(g_4ac1a8, 0, 50);
     fillMemory(g_4ac1da, 0, 50);
 }
+
+/* The puzzle's clicks: 1 the leave button, 2 the other button, 3 a
+   Zoombini picked up and dropped on a square. */
+/* @zoombi32 0x00426230 */
+void lillyClick(short action)
+{
+    ShortRect bounds;
+    Point where;
+    Point start;
+    short third;
+    short wrong;
+    View *view;
+    Snoid *snoid;
+    short chosen;
+    short i;
+    short first;
+    short second;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeLillyPuzzle();
+        return;
+    }
+    if (g_4ac13a) {
+        if (g_4ac0ba) {
+            fn_4280fd();
+            g_4ac13c++;
+        }
+        return;
+    }
+    switch (action) {
+    case 1:
+        queueViewSound(999, 0);
+        fn_42492b(action, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        fn_42492b(action, 0, 1);
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (g_4abec2) {
+            queueViewSound(0, 0);
+            fn_42492b(action, 1, 1);
+            waitForEventFor(0, 2, 0, 1);
+            fn_42492b(action, 0, 1);
+            queueViewSound(996, 0);
+            fn_4624fc();
+            g_4b0d52 = 15;
+        }
+        break;
+    case 3:
+        if (g_4ac0f2 || g_4ac0f4 || g_4ac0e6 || g_4ac0dc || g_4b755a > 0 || g_4ac0ce)
+            break;
+        chosen = 0;
+        getCursorPosition(&where);
+        view = viewAt(where, 1, 1);
+        if (!view)
+            view = viewAt(where, 0x8001, 1);
+        if (view) {
+            snoid = viewSnoid(view);
+            chosen = snoid->unknownF7;
+            if (snoid->unknownF4 != 9 && snoid->unknownF4 != 8 && snoid->unknownF4 != 7) {
+                start = *(Point *)&view->body.x;
+                if (chosen) {
+                    bounds = snoid->body.bounds;
+                    snoid->body.clipped = 0;
+                    g_4b7556 = 1;
+                    g_4b7560 = 0;
+                    dragSnoid(view, where, 0, 0);
+                    g_4b7560 = 1;
+                    snoid->body.bounds = bounds;
+                    snoid->body.clipped = 1;
+                    break;
+                }
+            }
+        }
+        if (view && !chosen) {
+            for (i = 0; i < placedViewCount; i++)
+                g_4b83e4[i] = 0;
+            dragSnoid(view, where, 0, 0);
+            unloadSounds();
+            g_4ac0d4 = heldPlaceNumber();
+            if (g_4ac0d4 > 5 && !g_4ac0d8)
+                g_4ac0d4 = 0;
+            if (!g_4ac0d8)
+                g_4ac0ec = (g_4ac0d4 - 1) * 5 + 4;
+            else
+                g_4ac0ec = g_4ac0d4 - 1;
+            if (g_4ac0ec < 0 || g_4abdc0[g_4ac0ec] < 0)
+                g_4ac0d4 = 0;
+            if (g_4ac0d4) {
+                g_4ac0dc++;
+                switch (g_4ac0d8) {
+                case 0:
+                    if (g_4ac0da) {
+                        g_4ac1a8[g_4ac0ec] = viewSnoid(view)->features[g_4ac0de];
+                        wrong = g_4ac0da = 0;
+                        g_4ac0fe = g_4ac100;
+                    } else {
+                        wrong = 0;
+                        if (g_4ac1a8[g_4ac0ec]) {
+                            if (g_4ac1a8[g_4ac0ec] != viewSnoid(view)->features[g_4ac0de])
+                                wrong = 1;
+                            else
+                                wrong = 0;
+                        } else {
+                            for (i = 0; i < 5; i++)
+                                if (g_4ac1a8[i * 5 + 4] == viewSnoid(view)->features[g_4ac0de])
+                                    wrong = 1;
+                            if (!wrong)
+                                g_4ac1a8[g_4ac0ec] = viewSnoid(view)->features[g_4ac0de];
+                        }
+                    }
+                    g_4ac504 = view->id;
+                    break;
+                case 1:
+                case 2:
+                    if (g_4ac0da) {
+                        first = viewSnoid(view)->features[g_4ac0de];
+                        second = viewSnoid(view)->features[g_4ac0e0];
+                        fn_426a92(first, second, g_4ac0ec);
+                        wrong = g_4ac0da = 0;
+                        g_4ac0fe = g_4ac100;
+                    } else {
+                        first = viewSnoid(view)->features[g_4ac0de];
+                        second = viewSnoid(view)->features[g_4ac0e0];
+                        switch (fn_426aff(first, second, g_4ac0ec)) {
+                        case 0:
+                            wrong = 1;
+                            break;
+                        case 1:
+                            fn_426a92(first, second, g_4ac0ec);
+                            wrong = 0;
+                            break;
+                        }
+                    }
+                    g_4ac504 = view->id;
+                    break;
+                case 3:
+                    if (g_4ac0da) {
+                        first = viewSnoid(view)->features[g_4ac0de];
+                        second = viewSnoid(view)->features[g_4ac0e0];
+                        third = viewSnoid(view)->features[g_4ac0e2];
+                        fn_42756d(first, second, third, g_4ac0ec);
+                        wrong = g_4ac0da = 0;
+                        g_4ac0fe = g_4ac100;
+                    } else {
+                        first = viewSnoid(view)->features[g_4ac0de];
+                        second = viewSnoid(view)->features[g_4ac0e0];
+                        third = viewSnoid(view)->features[g_4ac0e2];
+                        switch (fn_427217(first, second, third, g_4ac0ec)) {
+                        case 0:
+                            wrong = 1;
+                            break;
+                        case 1:
+                            fn_42756d(first, second, third, g_4ac0ec);
+                            wrong = 0;
+                            break;
+                        }
+                    }
+                    g_4ac504 = view->id;
+                    break;
+                }
+                if (!wrong) {
+                    viewSnoid(view)->unknownF7 = 1;
+                    if (countChosenSnoids() == g_4ac0e8)
+                        queueViewSound(randomUpTo(23) + 175, 0);
+                } else {
+                    g_4ac0ce = 1;
+                    g_4ac0dc = 0;
+                }
+            }
+        }
+        break;
+    }
+}

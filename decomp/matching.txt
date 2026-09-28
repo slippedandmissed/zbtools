@@ -309,6 +309,7 @@
 0x004249e1 fn_4249e1
 0x00424a53 closeLillyPuzzle
 0x00425dde setUpLillyPuzzle
+0x00426230 lillyClick
 0x00426831 lillyKey
 0x00426aff fn_426aff
 0x00426c33 darkenPalette
