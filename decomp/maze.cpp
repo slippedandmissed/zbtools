@@ -370,3 +370,83 @@ void fn_43836f()
     g_4b00c6 = 20;
     g_4b00c8 = 1;
 }
+
+/* The index (1-19) of the largest value in g_4aff9a between `low` and
+   `high` whose kind (g_4a263c) is `kind`'s. */
+/* Not exact: BCC caches g_4aff9a's address in a register here, where the
+   original keeps the parameters in registers instead (see findings.md on
+   address caching). */
+/* @zoombi32 0x004381da */
+short fn_4381da(short kind, short low, short high)
+{
+    short i, best, value;
+
+    for (i = 1, value = 0, best = 0; i < 20; i++)
+        if (g_4a263c[i] == g_4a263c[kind] && g_4aff9a[i] >= low && g_4aff9a[i] <= high && value < g_4aff9a[i]) {
+            value = g_4aff9a[i];
+            best = i;
+        }
+    return best;
+}
+
+/* The index (1-20) of the smallest value in g_4aff9a from `least` on. */
+/* @zoombi32 0x00437ade */
+short fn_437ade(short least)
+{
+    short i, best, value;
+
+    for (i = 0, best = 0, value = 21; i < 20; i++)
+        if (value > g_4aff9a[i + 1] && least <= g_4aff9a[i + 1]) {
+            value = g_4aff9a[i + 1];
+            best = i + 1;
+        }
+    return best;
+}
+
+/* The index (1-20) of the largest value in g_4aff9a between `low` and
+   `high`. */
+/* Not exact: BCC caches g_4aff9a's address in a register here, where the
+   original keeps the parameters in registers instead (see findings.md on
+   address caching). */
+/* @zoombi32 0x00437b23 */
+short fn_437b23(short low, short high)
+{
+    short i, best, value;
+
+    for (i = 1, best = 0, value = 0; i < 21; i++)
+        if (low <= g_4aff9a[i] && high >= g_4aff9a[i] && value < g_4aff9a[i]) {
+            value = g_4aff9a[i];
+            best = i;
+        }
+    return best;
+}
+
+/* The index (1-20) of the smallest positive value in g_4aff9a, ignoring
+   `exclude`. */
+/* @zoombi32 0x004373cd */
+short fn_4373cd(short exclude)
+{
+    short i, best, value;
+
+    for (i = 1, best = 0, value = 20; i < 21; i++)
+        if (value > g_4aff9a[i] && g_4aff9a[i] > 0 && exclude != i) {
+            value = g_4aff9a[i];
+            best = i;
+        }
+    return best;
+}
+
+/* The first entry set in the rows of g_4afe5a (g_4afc36 of them) other
+   than in column `which`, plus that column's offset (g_4a2634); 0 if
+   none. */
+/* @zoombi32 0x00437331 */
+short fn_437331(short which)
+{
+    short row, column;
+
+    for (row = 0; row < g_4afc36; row++)
+        for (column = 0; column < 4; column++)
+            if (column != which && g_4afe5a[row][column])
+                return g_4afe5a[row][column] + g_4a2634[column];
+    return 0;
+}
