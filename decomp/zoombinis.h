@@ -6234,3 +6234,5 @@ extern short g_4a0fea; /* @data 0x4a0fea */
 extern short g_4ab96a; /* @data 0x4ab96a */
 void fn_41e0e3();
 void fn_41ec69();
+void fn_41eb43();
+void fn_41e920(short feature);

@@ -1045,6 +1045,105 @@ void fn_41f551()
     }
 }
 
+/* Gives each Zoombini on the roster screen without a place (from
+   g_4a100c) one (fn_41e771) and walks it there, then claims the places
+   taken and lets the others be chosen again. */
+/* @zoombi32 0x0041eb43 */
+void fn_41eb43()
+{
+    View *view;
+    View *other;
+    short found;
+    short i;
+
+    for (view = viewListEnd(1); view; view = view->next)
+        if (view->flags == 1) {
+            found = 0;
+            for (i = g_4a100c; i < 21; i++)
+                if (g_4ab8ec[i] == view->id) {
+                    found = 1;
+                    i = 21;
+                }
+            if (!found) {
+                g_4a1012 = fn_41e771(view->id, 0);
+                placedViewPoint(&g_4ab8e0, g_4a1012);
+                setSnoidAction(viewSnoid(view), 5, &g_4ab8e0);
+                g_4ab8ec[g_4a1012] = view->id;
+            }
+        }
+    other = findView(g_4a101c);
+    if (other)
+        other->reset = 1;
+    for (i = g_4a100c; i < 21; i++)
+        if (g_4ab8ec[i])
+            claimPlacedView(i, g_4ab8ec[i]);
+        else
+            g_4b83e4[i] = 0;
+    for (i = 0; i < g_4a1016; i++)
+        g_4b83e4[i] = g_4ab96a;
+    chooseSnoids(1, 0);
+    unionRgnRect(removedRgn, &gameRect);
+    mainLoopEvents();
+}
+
+/* Changes the roster's first feature to `feature` (0-3; -1 keeps it; the
+   second moves on if they'd be the same), lays the places out again and
+   walks the Zoombinis that had places to their new ones. */
+/* @zoombi32 0x0041e920 */
+void fn_41e920(short feature)
+{
+    short placed[21];
+    View *view;
+    short i;
+
+    if (feature != -1) {
+        switch (feature) {
+        case 0:
+            rosterFeatures[0] = 0;
+            break;
+        case 1:
+            rosterFeatures[0] = 1;
+            break;
+        case 2:
+            rosterFeatures[0] = 2;
+            break;
+        case 3:
+            rosterFeatures[0] = 3;
+            break;
+        }
+        if (rosterFeatures[0] == rosterFeatures[1])
+            rosterFeatures[1]++;
+        if (rosterFeatures[1] > 3)
+            rosterFeatures[1] = 0;
+    }
+    for (i = g_4a100c; i < 21; i++)
+        placed[i] = g_4ab8ec[i];
+    chooseSnoids(1, 0);
+    fn_41e273();
+    fn_41e5e1();
+    chooseSnoids(0, 0);
+    for (i = g_4a100c; i < 21; i++)
+        if (placed[i]) {
+            g_4a1010 = i;
+            g_4a1012 = fn_41e771(placed[i], g_4a1010);
+            placedViewPoint(&g_4ab8e0, g_4a1012);
+            setSnoidAction((Snoid *)&findView(placed[i])->body, 5, &g_4ab8e0);
+            g_4ab8ec[g_4a1012] = placed[i];
+        }
+    for (i = g_4a100c; i < 21; i++)
+        if (g_4ab8ec[i])
+            claimPlacedView(i, g_4ab8ec[i]);
+        else
+            g_4b83e4[i - 1] = 0;
+    for (i = 0; i < g_4a1016; i++)
+        g_4b83e4[i] = g_4ab96a;
+    fn_41e326(g_4ab878);
+    view = findView(g_4a101c);
+    if (view)
+        view->reset = 1;
+    unionRgnRect(removedRgn, &rosterButtons[0].rect);
+}
+
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to
    the roster file next to the program (userFile). */
 /* @zoombi32 0x0041f1da */
