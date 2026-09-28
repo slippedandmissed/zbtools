@@ -4797,6 +4797,8 @@ extern short *g_4ac94c;
 void fn_42c3b6(short row, short column, char offset);
 void drawFeatureLabels();
 short addLillyActor(short value);
+void drawSquare(short row, short column);
+void drawBoard(short);
 void fn_42ae14(View *view, short event);
 extern short g_4ac91c;
 extern short g_4acdca[];

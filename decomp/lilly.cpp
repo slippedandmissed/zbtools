@@ -1272,3 +1272,55 @@ void fn_42ae14(View *view, short event)
     }
     }
 }
+
+/* Draws the board's square (row, column): its image and its overlay. */
+/* @zoombi32 0x0042bd71 */
+void drawSquare(short row, short column)
+{
+    short image = g_4acff4[row][column].attributes[2] + 1;
+    unsigned short *data;
+    short x;
+    short y;
+
+    if (image > 0 && image < 22) {
+        data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+        x = g_4acff4[row][column].rect.left - g_4ac948[g_4acff4[row][column].attributes[2] + 1];
+        y = g_4acff4[row][column].rect.top - g_4ac94c[g_4acff4[row][column].attributes[2] + 1];
+        drawImageData(data, x, y, 8);
+    }
+    image = g_4acff4[row][column].attributes[4];
+    if (image > 0 && image < 22) {
+        data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+        x = g_4acff4[row][column].rect.left - g_4ac948[g_4acff4[row][column].attributes[4]];
+        y = g_4acff4[row][column].rect.top - g_4ac94c[g_4acff4[row][column].attributes[4]];
+        drawImageData(data, x, y, 8);
+    }
+}
+
+/* Draws the whole board. */
+/* @zoombi32 0x0042bf1b */
+void drawBoard(short)
+{
+    short image;
+    unsigned short *data;
+    short x;
+    short y;
+
+    for (short row = 0; row < 12; row++)
+        for (short column = 0; column < 12; column++) {
+            image = g_4acff4[row][column].attributes[2] + 1;
+            if (image > 0 && image < 22) {
+                data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+                x = g_4acff4[row][column].rect.left - g_4ac948[g_4acff4[row][column].attributes[2] + 1];
+                y = g_4acff4[row][column].rect.top - g_4ac94c[g_4acff4[row][column].attributes[2] + 1];
+                drawImageData(data, x, y, 8);
+            }
+            image = g_4acff4[row][column].attributes[4];
+            if (image > 0 && image < 22) {
+                data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+                x = g_4acff4[row][column].rect.left - g_4ac948[g_4acff4[row][column].attributes[4]];
+                y = g_4acff4[row][column].rect.top - g_4ac94c[g_4acff4[row][column].attributes[4]];
+                drawImageData(data, x, y, 8);
+            }
+        }
+}

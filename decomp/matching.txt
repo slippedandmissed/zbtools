@@ -334,6 +334,8 @@
 0x0042bacf addLillyActor
 0x0042bc61 loadLillyScripts
 0x0042bd19 freeLockedResources
+0x0042bd71 drawSquare
+0x0042bf1b drawBoard
 0x0042c0d9 fn_42c0d9
 0x0042c10b fn_42c10b
 0x0042c112 fn_42c112
