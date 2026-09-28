@@ -1248,3 +1248,181 @@ void fn_450e87()
         }
     }
 }
+
+/* The same from the other side: the views g_4b2776[6-4], from slots 7-5,
+   recording in slots 6-4. */
+/* @zoombi32 0x00451020 */
+void fn_451020()
+{
+    short i;
+    View *view;
+    Snoid *snoid;
+
+    for (i = 5; i > 2; i--) {
+        view = findView(g_4b2776[i + 1]);
+        if (view) {
+            snoid = (Snoid *)&view->body;
+            snoid->unknownF4 = 4;
+            if (snoid->unknownF5) {
+                switch (i) {
+                case 3:
+                    if (g_4b26cc[5][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[5][snoid->unknownF5 - 1] + 1;
+                    else if (g_4b26cc[6][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[6][snoid->unknownF5 - 1] + 1;
+                    else
+                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[7][snoid->unknownF5 - 1] + 1;
+                    break;
+                case 4:
+                    if (g_4b26cc[6][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[6][snoid->unknownF5 - 1] + 1;
+                    else
+                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[7][snoid->unknownF5 - 1] + 1;
+                    break;
+                case 5:
+                    snoid->features[snoid->unknownF5 - 1] = g_4b26cc[7][snoid->unknownF5 - 1] + 1;
+                    break;
+                }
+                if (snoid->features[snoid->unknownF5 - 1] > 5)
+                    snoid->features[snoid->unknownF5 - 1] = 1;
+                g_4b26cc[i + 1][snoid->unknownF5 - 1] = snoid->features[snoid->unknownF5 - 1];
+                view->unknown1e = snoid->features[snoid->unknownF5 - 1];
+                snoid->unknownF8 = 0;
+            }
+        }
+    }
+}
+
+/* The scene's keys (with g_4b8803, the cheat keys; else only 0x16f): L shows
+   the level, 0x172 and 0x173 turn cheating (g_4b2798) on and off, 0x16f
+   calls fn_466b93. Returns whether the key was used. */
+/* Not exact: the original keeps `key` in esi and `show` in ebx (saving esi
+   around the arrays' initial copies); this swaps them. */
+/* @zoombi32 0x00450a58 */
+short fn_450a58(unsigned short key)
+{
+    Color saved;
+    char digits[52] = "01234";
+    char level[52] = "Level x ";
+    short show = 0;
+    ShortRect rect = g_4a48b2;
+    char text[52];
+
+    if (!g_4b8803 && key != 0x16f)
+        return 0;
+    switch (key) {
+    case 'L':
+        level[6] = digits[g_4b2630];
+        strcpy(text, level);
+        show = 1;
+        key = 1;
+        break;
+    case ' ':
+        key = 1;
+        break;
+    case 0x172:
+        strcpy(text, " Cheat on ");
+        show = 1;
+        g_4b2798 = 1;
+        key = 1;
+        break;
+    case 0x173:
+        show = 0;
+        g_4b2798 = 0;
+        key = 1;
+        break;
+    case 0x16f:
+        fn_466b93();
+        key = 1;
+        break;
+    default:
+        key = 0;
+        break;
+    }
+    if (show) {
+        saved = setForeColor(Color(0xb));
+        fillPortRect(Rect(rect), Color(0xe), 0);
+        drawText(Rect(rect), 0x22, text, 0xffff);
+        showRect(&rect);
+        setForeColor(saved);
+    }
+    return key;
+}
+
+/* Looks, two cells from `cell` in `direction`, for a waiting Zoombini
+   (g_4b2430) that shares a feature with the one on `cell` (starting from a
+   random feature); places it on the far cell (state 507) with the middle
+   one showing the feature (state 501, view 510-513), and returns its
+   index. -2: no such cells; -1: none shares a feature. (It reuses `cell`
+   as the index.) */
+/* Not exact: the original leaves `direction` on the stack; this gives it
+   edi until `differ` takes it. */
+/* @zoombi32 0x0044d3b8 */
+short fn_44d3b8(short cell, short direction)
+{
+    short feature;
+    short differ;
+    short next;
+    short further;
+    short feet;
+    short hair;
+    short eyes;
+    short nose;
+    short hair2;
+    short feet2;
+    short eyes2;
+    short nose2;
+    short tries;
+
+    feature = randomUpTo(3);
+    next = g_4b1aea[cell].links[direction];
+    if (next < 0)
+        return -2;
+    further = g_4b1aea[next].links[direction];
+    if (further < 0)
+        return -2;
+    {
+        Snoid *snoid = (Snoid *)&findView(g_4b1aea[cell].snoid)->body;
+
+        hair = snoid->features[0];
+        eyes = snoid->features[1];
+        nose = snoid->features[2];
+        feet = snoid->features[3];
+    }
+    differ = 1;
+    for (cell = 0; cell < g_4b2414; cell++)
+        if (g_4b2430[cell] != -1) {
+            Snoid *snoid = (Snoid *)&findView(partyViews[g_4b2430[cell]])->body;
+
+            hair2 = snoid->features[0];
+            eyes2 = snoid->features[1];
+            nose2 = snoid->features[2];
+            feet2 = snoid->features[3];
+            tries = 4;
+            do {
+                if (feature == 0 && hair2 == hair)
+                    differ = 0;
+                if (feature == 1 && eyes == eyes2)
+                    differ = 0;
+                if (feature == 2 && nose == nose2)
+                    differ = 0;
+                if (feature == 3 && feet == feet2)
+                    differ = 0;
+                if (differ) {
+                    tries--;
+                    feature++;
+                    if (feature > 3)
+                        feature = 0;
+                }
+            } while (differ && tries);
+            if (!differ) {
+                g_4b1aea[further].state = 507;
+                g_4b1aea[further].snoid = partyViews[g_4b2430[cell]];
+                g_4b1aea[next].state = 501;
+                g_4b1aea[next].snoid = feature + 510;
+                g_4b2430[cell] = -1;
+                return cell;
+            }
+        }
+    return -1;
+}

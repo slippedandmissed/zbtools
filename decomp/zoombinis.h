@@ -5318,6 +5318,11 @@ extern short g_4b2672[8];
 extern Point g_4a44cc[8];
 void fn_4520ec(short count);
 void fn_450e87();
+void fn_451020();
+extern ShortRect g_4a48b2;
+extern short g_4b2798; /* cheating */
+short fn_450a58(unsigned short key);
+short fn_44d3b8(short cell, short direction);
 void fn_44f066(short which, short lit, short show);
 short fn_44d102();
 void fn_44d5ad(short cell);
