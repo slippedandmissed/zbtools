@@ -1021,3 +1021,28 @@ void fn_43a0e8(View *view, short other)
     if (helper)
         groupViews(view->id, helper->id, 0, 0, 0, 0);
 }
+
+/* Draws the box at the top right with two codes ("SC", "SH" or "MC", by
+   g_4b1178 and g_4b117a) and a third (by g_4b117c from level 2, else
+   "PR"). */
+/* @zoombi32 0x0043d524 */
+void fn_43d524()
+{
+    ShortRect whole = {500, 1, 600, 27};
+    ShortRect left = {500, 1, 549, 27};
+    ShortRect right = {550, 1, 600, 27};
+    Color saved;
+    char names[3][3] = {"SC", "SH", "MC"};
+
+    saved = setForeColor(Color(0xb));
+    fillPortRect(Rect(whole), Color(0xe), 0);
+    frameRect(Rect(whole));
+    drawText(Rect(left), 0x22, names[g_4b1178], 0xffff);
+    drawText(Rect(whole), 0x22, names[g_4b117a], 0xffff);
+    if (g_4b12ac >= 2)
+        drawText(Rect(right), 0x22, names[g_4b117c], 0xffff);
+    else
+        drawText(Rect(right), 0x22, "PR", 0xffff);
+    setForeColor(saved);
+    showRect(&whole);
+}
