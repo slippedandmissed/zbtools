@@ -5670,3 +5670,8 @@ extern Point g_4a21f0[];
 extern Point g_4a232a[];
 extern GroupList g_4a2194;
 void openMaze();
+
+/* net */
+void fn_439560(Snoid *snoid);
+View *fn_43a69a(View *list);
+void fn_43a5f6(View *after, unsigned long flags);
