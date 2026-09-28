@@ -846,3 +846,247 @@ void scene6Clicked(short which)
         break;
     }
 }
+
+/* Opens scene 6, Zoombiniville: adds the travellers to the population
+   (g_4b7ecc once it reaches 625) and the town's slots, sets up the four
+   town views (the highest cel shown, g_4b7e10, by the population), walkers
+   for every 37 over 20 (up to 16), the last 20 Zoombinis to settle, the
+   button and the clock, scrolls to the screen last shown, and picks the
+   first sound (a hint, a greeting, or 3003 when the town is full) and how
+   many townspeople to add by the population. */
+/* Not exact: register allocation (the original computes `highest` in ebx,
+   the register `i` has later; here it is in ecx, whatever the declaration
+   order or scope). */
+/* @zoombi32 0x0045c52e */
+void openScene6()
+{
+    unsigned long used;
+    short extras;
+    short slot;
+    Snoid snoid;
+    unsigned long highest;
+    short last;
+    short i;
+    View *view;
+    short id;
+
+    g_4b7e00 = 0;
+    resetScene6();
+    soundRanges = 0;
+    addSoundRange(3000, 3003, 1);
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(996, 997, 0);
+    openGameFile(&g_4b7dfc, "Town.MHK");
+    fn_46be2e(g_4b7dfc);
+    useAltSnoids(0);
+    population() += fn_4572bf();
+    if (population() >= 625)
+        g_4b7ecc = 1;
+    townSlots = (Camp *)(g_4a4ba0 + 0x6c42);
+    settleTravellers();
+    party()->count = 0;
+    last = -1;
+    for (i = 0; last < 0 && i < 625; i++)
+        if (!townSlots->slots[i].zoombini)
+            last = i;
+    if (last < 0)
+        last = 0;
+    highest = population() * 56;
+    highest = highest / 625 + 1;
+    if (highest > 56)
+        highest = 56;
+    g_4b7e10 = highest + 24;
+    drawBackdrop(1200);
+    loadFeatureGroup(1000, 0, 0);
+    loadScripts(1000, 8);
+    g_4a74c8 = loadImageBank(1100, &g_4a74c4);
+    loadDragCursors(2000);
+    loadFeatureGroup(4000, 1, 0);
+    addScripts(4000, 8, 0);
+    loadSnoidScripts(4999, 1, 0);
+    addSnoidScripts(5000, 5, 0);
+    loadFeatureGroup(6000, 2, 1);
+    addScripts(6000, 1, 0);
+    loadFeatureGroup(8000, 3, 0);
+    addScripts(8000, 44, 1);
+    g_4b7e08[0] = addView(0x402c000, drawCelsOpaque, runViewCels, 1000, 0, 0, 0, 0);
+    g_4b7e08[1] = addView(0xc02c000, drawCels, runViewCels, 1002, 0, 0, 0, 0);
+    g_4b7e08[2] = addView(0xc02c000, drawCels, runViewCels, 1003, 0, 0, 0, 0);
+    g_4b7e08[3] = addView(0xc02c000, drawCels, runViewCels, 1001, 0, 0, 0, 0);
+    for (i = 1; i <= 3; i++) {
+        view = findView(g_4b7e08[i]);
+        if (view)
+            switch (i) {
+            case 1:
+            case 2:
+                view->placed = fn_45daf7;
+                break;
+            case 3:
+                view->placed = fn_45db25;
+                break;
+            }
+    }
+    {
+        Point places[16] = {{467, 265}, {349, 225}, {777, 291}, {828, 284}, {44, 330}, {283, 152},
+                            {195, 211}, {607, 201}, {1182, 287}, {1299, 228}, {1422, 269}, {1807, 316},
+                            {1048, 309}, {709, 228}, {1740, 284}, {1532, 172}};
+        short walkers[16] = {4000, 4001, 4002, 4003, 4004, 4005, 4006, 4007,
+                             4000, 4001, 4002, 4003, 4004, 4005, 4006, 4007};
+        short n;
+
+        used = 0;
+        n = population() - 20;
+        if (n < 0)
+            n = 0;
+        if (n > 605)
+            n = 605;
+        extras = n / 37;
+        if (extras < 0)
+            extras = 0;
+        if (extras > 16)
+            extras = 16;
+        i = 0;
+        initSnoid(&snoid);
+        snoid.features[0] = 1;
+        snoid.features[1] = 1;
+        snoid.features[2] = 1;
+        snoid.features[3] = 1;
+        if (extras)
+            do {
+                slot = allocateSlot(&used, 16, 0);
+                g_4b7ed0[i] = addView(1, drawCels, runViewScript, walkers[slot], randomBetween(4, 6), &snoid, 0, 0);
+                view = findView(g_4b7ed0[i]);
+                if (view) {
+                    viewSnoid(view)->features[0] = 0;
+                    view->flags = 0x808002;
+                    *(Point *)&view->body.x = places[slot];
+                    *(Point *)&view->body.unknownAa = places[slot];
+                }
+                i++;
+                extras--;
+            } while (extras);
+    }
+    i = townScreen();
+    if (i < 0 || i > 5)
+        townScreen() = i = 0;
+    if (i)
+        do {
+            scrollTown(1);
+            i--;
+        } while (i);
+    g_4b7f02 = 0;
+    last--;
+    if (last >= 0) {
+        initSnoid(&snoid);
+        for (i = 0; last >= 0 && i < 20 && i < population(); last--, i++) {
+            snoid.zoombini = townSlots->slots[last].zoombini;
+            strcpy(snoid.name, townSlots->slots[last].name);
+            snoid.body.x = randomBetween(-320, 1599);
+            snoid.body.y = randomBetween(410, 475);
+            id = addSnoidView(&snoid, 0);
+            view = findView(id);
+            if (view) {
+                partyViews[g_4b7f02] = id;
+                g_4b7f02++;
+                view->flags &= ~1;
+                view->flags |= 2;
+            }
+        }
+    }
+    addView(0x1000, drawTownButtons, fn_45cf8b, 0, 0, 0, 0, 0);
+    setTownFrames(townScreen());
+    g_4b7ece[0] = addView(0x8001, drawCels, runViewCels, 6000, 6, &snoid, 0, 0);
+    view = findView(g_4b7ece[0]);
+    if (view) {
+        view->flags &= ~1;
+        view->flags |= 2;
+        view->placed = drawClock;
+    }
+    fn_4148da(1, 254);
+    updateViews();
+    setGroupLists(townGroups6, 1, (short)0xc000);
+    drawTownButton(1, 0, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    g_4b7e00 = 1;
+    i = 0;
+    if (g_4b0d4c) {
+        g_4b0d4c = 0;
+        i = campHint((short *)(g_4a4ba0 + 0x46));
+        if (i == 2 && population() <= 16) {
+            i = 1;
+            *(short *)(g_4a4ba0 + 0x46) &= 0xcfff;
+        }
+    }
+    switch (i) {
+    case 1:
+        switch (*(short *)(g_4a4ba0 + 0x46)) {
+        case 1:
+            g_4b7ec4 = 20086;
+            break;
+        case 2:
+            g_4b7ec4 = 20087;
+            break;
+        case 3:
+            g_4b7ec4 = 20088;
+            break;
+        default:
+            switch (randomBetween(1, 3)) {
+            case 1:
+                g_4b7ec4 = 20086;
+                break;
+            case 2:
+                g_4b7ec4 = 20087;
+                break;
+            case 3:
+                g_4b7ec4 = 20088;
+                break;
+            }
+            break;
+        }
+        break;
+    case 2:
+    case 12:
+        switch (randomBetween(1, 2)) {
+        case 1:
+            g_4b7ec4 = 20087;
+            break;
+        case 2:
+            g_4b7ec4 = 20088;
+            break;
+        }
+        break;
+    case 5:
+        g_4b7ec4 = 20086;
+        break;
+    default:
+        g_4b7ec4 = fn_45d04c();
+        g_4b7ec6 = 1;
+        break;
+    }
+    if (g_4b7ecc) {
+        g_4b7ec4 = 3003;
+        g_4b7ec6 = 1;
+    }
+    if (g_4b7ec4) {
+        queueViewSound(g_4b7ec4, 0);
+        g_4b7ec8 = 1;
+    }
+    resetViewClock();
+    g_4b7ebc = 0;
+    g_4b7562 = 0;
+    if (g_4b7ecc) {
+        g_4b7f12 = 20;
+    } else {
+        if (population() > 100)
+            g_4b7f12++;
+        if (population() > 200)
+            g_4b7f12 += 2;
+        if (population() > 300)
+            g_4b7f12 += 3;
+        if (population() > 400)
+            g_4b7f12 += 4;
+        if (population() > 500)
+            g_4b7f12 += 5;
+    }
+}

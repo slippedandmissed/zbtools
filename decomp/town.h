@@ -71,7 +71,18 @@ inline short &townScreen()
     return *(short *)(g_4a4ba0 + 0x1e);
 }
 
+/* Zoombiniville's population. */
+inline short &population()
+{
+    return *(short *)(g_4a4ba0 + 0x4e);
+}
+
+extern GroupList townGroups6[1]; /* @data 0x4a74a4 */
+extern unsigned long g_4b7ebc; /* @data 0x4b7ebc */
+extern short g_4b7ed0[16]; /* @data 0x4b7ed0: the walkers' views (in g_4b7ece) */
+
 void openScene0();
+void openScene6();
 void scene6Clicked(short which);
 short scene6Key(unsigned short key);
 void addTownsperson();
