@@ -97,3 +97,32 @@ void debugMessage(short value, const char *after, short *number, const char *bef
                 ;
     }
 }
+
+/* Sets the cursor mode (0: the arrow; else cursor g_4b80c4[mode]):
+   whether it changed. */
+/* @zoombi32 0x0046251c */
+short setCursorMode(long mode)
+{
+    short changed = mode != g_4b80d2;
+
+    if (changed) {
+        if (g_4b80d2 == 1)
+            g_4b80d4 = g_4b80dc = clockTime();
+        discardEvents(3);
+        if (!mode)
+            setCursorShape(0);
+        else
+            setCursorShape((const MacCursor *)handleData(g_4b80c4[mode]));
+        g_4b80d2 = mode;
+    }
+    return changed;
+}
+
+/* @zoombi32 0x004624fc */
+void fn_4624fc()
+{
+    if (setCursorMode(1)) {
+        g_4a79c0 = 1;
+        g_4b80dc = -7202;
+    }
+}

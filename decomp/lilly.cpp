@@ -2866,3 +2866,20 @@ short lillyKey(unsigned short key)
         return 0;
     }
 }
+
+/* Plans a lilly actor's way afresh from where it is. */
+/* @zoombi32 0x0042e760 */
+void startPlan(LillyActor *actor)
+{
+    for (short row = 0; row < 12; row++)
+        for (short column = 0; column < 12; column++)
+            actor->grid[row][column] = 0;
+    actor->unknownC7 = actor->column;
+    actor->unknownC8 = actor->row;
+    actor->unknownD6 = 11;
+    actor->unknownD7 = 1;
+    planWay(actor, actor->unknownD6);
+    planWay(actor, actor->unknownD6);
+    followGrid(actor, actor->unknownD6);
+    actor->grid[actor->row][actor->column] = actor->unknownD7;
+}

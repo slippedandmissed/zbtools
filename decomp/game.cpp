@@ -11,7 +11,7 @@
 /*
  * The game's part of each pass of the main loop (WinMain registers it with
  * fn_415604; mainLoopEvents calls it): runs the current scene's frame
- * function, and every 12 ticks steps through g_4a4976 (fn_46251c; an
+ * function, and every 12 ticks steps through g_4a4976 (setCursorMode; an
  * animated cursor?).
  */
 /* @zoombi32 0x00454f61 */
@@ -33,7 +33,7 @@ void gameFrame()
             g_4b80d4 = now + 12;
             if (g_4b2aee >= 12)
                 g_4b2aee = 0;
-            fn_46251c(g_4a4976[g_4b2aee]);
+            setCursorMode(g_4a4976[g_4b2aee]);
             g_4b2aee++;
         }
     }

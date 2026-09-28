@@ -366,6 +366,7 @@
 0x0042e693 fn_42e693
 0x0042e69a fn_42e69a
 0x0042e6b5 fn_42e6b5
+0x0042e760 startPlan
 0x0042ec2a planWay
 0x0042f192 fn_42f192
 0x0042f24c fn_42f24c
@@ -500,6 +501,8 @@
 0x0045bfc0 setArrivalHook
 0x0045bfcf drawFeature
 0x004623b8 mainLoopUpdate
+0x004624fc fn_4624fc
+0x0046251c setCursorMode
 0x00462749 debugMessage
 0x0046310c initViews
 0x004632af closeViews
