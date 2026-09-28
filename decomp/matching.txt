@@ -346,13 +346,16 @@
 0x0041f5d0 fn_41f5d0
 0x0041f668 applyPlayerSettings
 0x0041f6fc fn_41f6fc
+0x0041f8cc resetScene10
 0x0041fdee drawFerryButton
 0x0041fea4 fn_41fea4
 0x0041ff16 closeScene10
 0x004209b8 fn_4209b8
 0x00420a08 fn_420a08
 0x00420c82 fn_420c82
+0x00420f85 fn_420f85
 0x0042113f fn_42113f
+0x004214ab findFerryPlace
 0x0042160c resetScene13
 0x00421738 openScene13
 0x00421b46 drawFleensButton
