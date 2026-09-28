@@ -905,7 +905,7 @@ inline char *ferryRules()
 
 /*
  * Puts the travellers aboard (g_4abdbc of them): picks up to three to
- * stand out (g_4abb34-g_4abb38, placed by table 5000), the others by table
+ * stand out (ferryPicked, placed by table 5000), the others by table
  * 5001; each gets its features changed by the level's rules (new rules on
  * a new game, g_4abb6a 1 or 3), and the views are stacked in order.
  */
@@ -939,7 +939,7 @@ void boardFerry()
     b = a = 0;
     pickedPlaces = loadShortTable(5000, &pickedResource);
     otherPlaces = loadShortTable(5001, &otherResource);
-    g_4abb34 = randomBetween(1, g_4abdbc);
+    ferryPicked[0] = randomBetween(1, g_4abdbc);
     switch (g_4abdbc) {
     case 1:
         g_4abb1e = 2;
@@ -950,11 +950,11 @@ void boardFerry()
         break;
     }
     if (g_4abdbc >= 2)
-        for (g_4abb36 = g_4abb34; g_4abb36 == g_4abb34;)
-            g_4abb36 = randomBetween(1, g_4abdbc);
+        for (ferryPicked[1] = ferryPicked[0]; ferryPicked[1] == ferryPicked[0];)
+            ferryPicked[1] = randomBetween(1, g_4abdbc);
     if (g_4abdbc >= 3)
-        for (g_4abb38 = g_4abb34; g_4abb38 == g_4abb34 || g_4abb38 == g_4abb36;)
-            g_4abb38 = randomBetween(1, g_4abdbc);
+        for (ferryPicked[2] = ferryPicked[0]; ferryPicked[2] == ferryPicked[0] || ferryPicked[2] == ferryPicked[1];)
+            ferryPicked[2] = randomBetween(1, g_4abdbc);
     if (!g_4a4ba0[0xc] || g_4abb6a == 1 || g_4abb6a == 3)
         for (j = 0; j < 4; j++)
             g_4a4ba0[0xc + j] = randomBetween(1, 5);
@@ -982,7 +982,7 @@ void boardFerry()
         }
         snoid.unknownF1 = 0;
         snoid.unknownF2 = 0;
-        if (i + 1 == g_4abb34 || i + 1 == g_4abb36 || i + 1 == g_4abb38) {
+        if (i + 1 == ferryPicked[0] || i + 1 == ferryPicked[1] || i + 1 == ferryPicked[2]) {
             if (*pickedPlaces > a) {
                 snoid.unknownF0 = a + *otherPlaces;
                 snoid.body.x = pickedPlaces[a * 2 + 1];
@@ -1126,5 +1126,250 @@ void scene13Clicked(short which)
             }
         }
         break;
+    }
+}
+
+/*
+ * The ferry crew's notify: besides turning (250-253, 240-243, 0), moves
+ * views into order (0, 8, 9), sends the picked travellers on or back when
+ * the ferry reaches the far side (6), moves the Zoombinis in line along
+ * (132), sets the passengers in a range of places off (133-135), adds a
+ * random extra (30), and has g_4abb30 act (4, 5, 7: a ferry script, maybe
+ * placed at an anchor).
+ */
+/* Not exact: in case 30 the original calls randomBetween before pushing
+   addView's first three arguments (as for a temporary in eax); a
+   temporary here lands in ebx, and the call inline is evaluated in order. */
+/* @zoombi32 0x0042365a */
+void fn_42365a(View *view, short event)
+{
+    short which;
+    short low;
+    short high;
+    short act;
+    short seven;
+    short seat;
+    Point at;
+    Point *anchor;
+    View *crew = 0;
+    View *other;
+    Snoid *snoid;
+    short i;
+    short script;
+    short spot;
+
+    anchor = 0;
+    seat = act = 0;
+    snoid = viewSnoid(view);
+    switch (event) {
+    case 250:
+    case 251:
+    case 252:
+    case 253:
+        setSnoidFacing(snoid, event - 250);
+        break;
+    case 240:
+    case 241:
+    case 242:
+    case 243:
+        g_4abb18 = event - 239;
+        break;
+    case 0:
+        snoid->unknownF2 = !snoid->unknownF2;
+        if (g_4abb18) {
+            setSnoidFacing(snoid, g_4abb18 - 1);
+            g_4abb18 = 0;
+        }
+        if (g_4abb44 && view->id == g_4abb32) {
+            g_4abb44 = 0;
+            view->flags |= 0x4000000;
+            moveView(g_4abb32, 0, g_4abb24);
+        }
+        break;
+    case 4:
+        g_4abb44 = 1;
+        crew = findView(g_4abb30);
+        if (crew) {
+            spot = viewSnoid(crew)->unknownF0;
+            if (spot >= 0 && spot <= 16) {
+                which = 5;
+                act = 1;
+            }
+        }
+        break;
+    case 5:
+        which = 6;
+        at.x = 429;
+        at.y = 223;
+        anchor = &at;
+        act = 1;
+        break;
+    case 6:
+        crew = findView(g_4abb30);
+        if (!crew)
+            break;
+        spot = viewSnoid(crew)->unknownF0;
+        if (spot < 17 || spot > 19)
+            break;
+        other = findView(g_4abb1c);
+        if (!other)
+            break;
+        if (g_4abb1e < 1 || g_4abb1e > 3)
+            break;
+        {
+            short id = g_4abb1e + 1000;
+
+            setViewScript(other, id, 1);
+        }
+        for (i = 0; i < 3; i++)
+            if (ferryPicked[i] && g_4abba2[ferryPicked[i] - 1] == g_4abb30)
+                ferryPicked[i] = 0;
+        for (i = 0; i < 3; i++)
+            if (ferryPicked[i]) {
+                other = findView(g_4abba2[ferryPicked[i] - 1]);
+                if (other && g_4abb1e < 3) {
+                    script = ferryScript(other, g_4abb1e + 6);
+                    if (script) {
+                        startFerryScript(other, script, 0);
+                        other->notify = fn_423512;
+                    }
+                }
+            }
+        g_4abb7a = g_4abb1e == 3;
+        break;
+    case 7:
+        at.x = 214;
+        at.y = 207;
+        if (!g_4abb2e) {
+            which = 9;
+            anchor = &at;
+        } else if (g_4abb1e == 3) {
+            at.x = -56;
+            at.y = 241;
+            anchor = &at;
+            which = 11;
+        } else {
+            which = 10;
+            anchor = &at;
+        }
+        seat = 1;
+        act = 1;
+        claimPlacedView(1, 0);
+        g_4abb42 = 1;
+        break;
+    case 8:
+        view->flags |= 0x4000000;
+        moveView(view->id, 0, g_4abb20);
+        break;
+    case 132:
+        if (!g_4abb6c)
+            break;
+        g_4abb6c = 0;
+        seven = g_4abb46 == 7;
+        for (i = 0; i < g_4abb46 - 1; i++) {
+            other = findView(g_4abb4a[i]);
+            if (other) {
+                script = ferrySnoidScript(other, 7016);
+                if (script)
+                    startSnoidScript(viewSnoid(other), script, 0, 0);
+                if (!i && seven) {
+                    other->notifyEnd = 1;
+                    other->notify = fn_423d9d;
+                }
+            }
+            other = findView(g_4abb58[i]);
+            if (other) {
+                script = ferryScript(other, 12);
+                if (script)
+                    startFerryScript(other, script, 0);
+            }
+        }
+        if (seven) {
+            g_4abb66 = g_4abb4a[0];
+            g_4abb68 = g_4abb58[0];
+            for (i = 1; i < g_4abb46; i++) {
+                g_4abb4a[i - 1] = g_4abb4a[i];
+                g_4abb58[i - 1] = g_4abb58[i];
+            }
+            g_4abb46--;
+        }
+        break;
+    case 9:
+        moveView(view->id, 0, g_4abb30);
+        break;
+    case 137:
+        view->body.running = 0;
+        break;
+    case 133:
+    case 134:
+    case 135:
+        switch (event) {
+        case 133:
+            low = 0;
+            high = 3;
+            break;
+        case 134:
+            low = 4;
+            high = 16;
+            break;
+        case 135:
+            low = 20;
+            high = 25;
+            break;
+        }
+        for (i = 0; i < 16; i++)
+            if (g_4abbc2[i] < 2) {
+                other = findView(g_4abba2[i]);
+                if (other && viewSnoid(other)->unknownF0 >= low && viewSnoid(other)->unknownF0 <= high) {
+                    g_4abbc2[i] = 2;
+                    script = ferryScript(other, 14);
+                    if (script) {
+                        startFerryScript(other, script, 0);
+                        other->notifyEnd = 1;
+                        if (event != 135)
+                            other->notify = fn_423512;
+                    }
+                }
+            }
+        break;
+    case 28:
+        fn_42365a(view, 8);
+        break;
+    case 30:
+        other = findView(addView(0x100000, drawCels, runViewScript, randomBetween(0, 2) + 1004, 6, 0, 0, 0));
+        if (other) {
+            other->flags |= 0x1000;
+            setViewScript(other, 0, 1);
+            other->notify = fn_424195;
+            other->notifyEnd = 1;
+        }
+        break;
+    case -1:
+        g_4a4b98 = 64;
+        g_4abb80 = 0;
+        g_4abb7e = 0;
+        g_4abb30 = g_4abb32 = 0;
+        break;
+    case 1:
+    case 2:
+    case 3:
+    case 10:
+    case 11:
+    case 19:
+        break;
+    }
+    if (act) {
+        if (!crew)
+            crew = findView(g_4abb30);
+        if (crew) {
+            viewSnoid(crew)->unknownF7 = 0;
+            script = ferryScript(crew, which);
+            if (script) {
+                startFerryScript(crew, script, anchor);
+                crew->notify = fn_423512;
+                if (seat)
+                    viewSnoid(crew)->unknownF0 = 20;
+            }
+        }
     }
 }

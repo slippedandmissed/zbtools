@@ -65,15 +65,17 @@ extern short *ferryHotX; /* @data 0x4abb98: the ferry's images' hot spots */
 extern short *ferryHotY; /* @data 0x4abb9c */
 
 extern short g_4a16d2[4]; /* @data 0x4a16d2: the features to swap in (ferry rules 5-7) */
-extern short g_4abb34; /* @data 0x4abb34: the travellers picked to stand out (from 1) */
-extern short g_4abb36; /* @data 0x4abb36 */
-extern short g_4abb38; /* @data 0x4abb38 */
+extern short ferryPicked[3]; /* @data 0x4abb34: the travellers picked to stand out (from 1) */
 extern short g_4abdbc; /* @data 0x4abdbc: travellers aboard */
 
 extern short g_4abb6e; /* @data 0x4abb6e: the Zoombini last put down at a place */
 extern short g_4abba0; /* @data 0x4abba0: party views on the ferry */
 
+extern short g_4abb1c; /* @data 0x4abb1c */
+
 void resetScene13();
+void fn_42365a(View *view, short event);
+void fn_424195(View *view, short event);
 void scene13Clicked(short which);
 void boardFerry();
 void updateFerrySnoid(View *view, short region);
