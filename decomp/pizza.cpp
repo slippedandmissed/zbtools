@@ -2579,3 +2579,338 @@ void pizzaButtonClicked(short button)
         break;
     }
 }
+
+/*
+ * The scene's frame: leaves once asked to (and sound 996 is done); has a
+ * troll fidget after a minute's quiet; then steps the scene's sequences on
+ * as each group of views finishes (groupLeader): a pizza judged (g_4b15f6:
+ * a set tried before is rejected by the first troll wanting more, else
+ * each troll there in turn takes it), a troll done eating (g_4b1600-
+ * g_4b1604: satisfied trolls step aside and the next comes up), the
+ * trolls' turns, a pizza's reaction and piling, the next Zoombini up;
+ * walks the Zoombini at the pizza to its spot, and sends waiting ones
+ * fidgeting (13035 on) while g_4b1820. Several calls to fn_445ae1 pass
+ * `view` before it's set, as the original does (fn_445ae1 ignores it).
+ */
+/* Not exact: BCC caches groupLeader's address in edi and g_4b165c's in
+   esi; the original the other way round (and `reacted` in edi). */
+/* @zoombi32 0x004411f2 */
+void pizzaFrame()
+{
+    View *view;
+    short reacted;
+    short done;
+    short n;
+    short script;
+    View *waiting;
+
+    if (g_4a3d9c || !g_4b15e4)
+        return;
+    g_4a3d9c = 1;
+    updateViews();
+    if (g_4b0d52) {
+        if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+            g_4a3d9c = 0;
+            return;
+        }
+        if (!g_4b9688 || g_4b9688 == 3) {
+            if (g_4b9688 == 3)
+                chooseSnoids(0, 0);
+            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
+                g_4b0d50 = g_4b0d52;
+                g_4b0d52 = 0;
+                fn_46be2e(0);
+                closePizza();
+                g_4a3d9c = 0;
+                return;
+            }
+        } else if (g_4b9688 == 2) {
+            g_4b9688 = 0;
+            g_4b0d52 = 0;
+        }
+    }
+    if (clockTime() - g_4b1824 > 3600) {
+        g_4b1824 = clockTime();
+        if (!g_4b9684)
+            fn_446745();
+    }
+    if (g_4b15f2 && !groupLeader[g_4b15f2])
+        g_4b15f2 = 0;
+    if (g_4b15f4) {
+        if (!groupLeader[g_4b15f4])
+            g_4b15f4 = 0;
+    } else if (g_4b15f6) {
+        if (!groupLeader[g_4b15f6]) {
+            g_4b1670 = 0;
+            g_4b15f6 = 0;
+            g_4b1674 = fn_44460a();
+            if (!g_4b1674) {
+                if (g_4b1618 == 1)
+                    fn_443521(0, 0);
+                else if (g_4b161a == 1 && !g_4b165c)
+                    fn_443521(1, 1);
+                else if (g_4b161c == 1 && !g_4b165c)
+                    fn_443521(2, 2);
+            } else {
+                reacted = 0;
+                if (g_4b1618 == 1 && fn_44338b(0) == 1) {
+                    fn_445b80(0, 1);
+                    reacted++;
+                }
+                if (g_4b161a == 1 && !reacted && fn_44338b(1) == 1) {
+                    fn_445b80(1, 1);
+                    reacted++;
+                }
+                if (g_4b161c == 1 && !reacted && fn_44338b(2) == 1) {
+                    fn_445b80(2, 1);
+                    reacted++;
+                }
+                if (!reacted)
+                    fn_445b80(2, 0);
+            }
+        }
+    } else if (g_4b1600) {
+        if (!groupLeader[g_4b1600]) {
+            g_4b1600 = g_4b1630 = 0;
+            if (g_4b16bc) {
+                g_4b16bc = 0;
+                g_4b15fc = 1000;
+            } else {
+                if (g_4b1618 == 3) {
+                    if (g_4b1722[0])
+                        moveView(g_4b160e, 0, g_4b1722[0]);
+                    fn_445ae1(view, 0);
+                }
+                if (g_4b1660) {
+                    g_4b1660 = 0;
+                    g_4b7564 = 1;
+                    fn_445ae1(view, 0);
+                } else if (g_4b1618 == 2) {
+                    deleteView(g_4b1664);
+                    g_4b1664 = 0;
+                    view = findView(g_4b160e);
+                    setViewScript(view, 8021, 1);
+                    if (g_4b15d4 - g_4b15ee > 3)
+                        g_4b1820++;
+                    moveView(g_4b160e, 1, g_4b1616);
+                    moveView(g_4a3d42, 1, g_4b160e);
+                    g_4b1618 = 3;
+                    g_4a3d40 = 0;
+                    view->placed = fn_44468e;
+                    g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+                    g_4b1720++;
+                    fn_44509b();
+                    g_4b165c++;
+                    g_4b1614 = 0;
+                    g_4b15fe = 0;
+                } else {
+                if (g_4b1662) {
+                    fn_444391();
+                    g_4b15e6 = 1;
+                } else if (g_4b1674) {
+                    g_4b16ea = 0;
+                } else if (g_4b161a == 1 && !g_4b165c) {
+                    fn_443521(1, 1);
+                } else if (g_4b161c == 1 && !g_4b165c) {
+                    fn_443521(2, 2);
+                } else {
+                    g_4b165c = 0;
+                }
+                g_4b16ea = 0;
+                }
+            }
+        }
+    } else if (g_4b1602) {
+        if (!groupLeader[g_4b1602]) {
+            g_4b1602 = g_4b1630 = 0;
+            if (g_4b161a == 3) {
+                if (g_4b1728[0])
+                    moveView(g_4b1610, 0, g_4b1728[0]);
+                if (g_4b1728[1])
+                    moveView(g_4b1728[1], 1, g_4b1728[0]);
+                if (g_4b1728[2])
+                    moveView(g_4b1728[2], 1, g_4b1728[1]);
+                fn_445ae1(view, 0);
+            }
+            if (g_4b1660) {
+                g_4b1660 = 0;
+                g_4b7564 = 1;
+                fn_445ae1(view, 0);
+            } else if (g_4b161a == 2) {
+                deleteView(g_4b1664);
+                g_4b1664 = 0;
+                view = findView(g_4b1610);
+                setViewScript(view, 9027, 1);
+                if (g_4b15d4 - g_4b15ee > 3)
+                    g_4b1820++;
+                moveView(g_4b1610, 1, g_4b1616);
+                moveView(g_4a3d42, 1, g_4b1610);
+                g_4b161a = 3;
+                g_4a3d40 = 1;
+                g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+                view->placed = fn_44485d;
+                g_4b1720++;
+                fn_44509b();
+                g_4b165c++;
+                g_4b1614 = 0;
+                g_4b15fe = 0;
+            } else {
+                if (g_4b1662) {
+                    fn_444391();
+                    g_4b15e6 = 1;
+                } else if (g_4b1674) {
+                    g_4b16ea = 0;
+                } else if (g_4b161c == 1 && !g_4b165c) {
+                    fn_443521(2, 2);
+                } else {
+                    g_4b165c = 0;
+                }
+                g_4b16ea = 0;
+            }
+        }
+    } else if (g_4b1604) {
+        if (!groupLeader[g_4b1604]) {
+            g_4b1604 = g_4b1630 = 0;
+            if (g_4b161c == 3) {
+                if (g_4b172e[0])
+                    moveView(g_4b1612, 0, g_4b172e[0]);
+                fn_445ae1(view, 0);
+            }
+            if (g_4b1660) {
+                g_4b1660 = 0;
+                g_4b7564 = 1;
+                fn_445ae1(view, 0);
+            } else if (g_4b161c == 2) {
+                deleteView(g_4b1664);
+                g_4b1664 = 0;
+                view = findView(g_4b1612);
+                setViewScript(view, 10031, 1);
+                if (g_4b15d4 - g_4b15ee > 3)
+                    g_4b1820++;
+                moveView(g_4b1612, 1, g_4b1616);
+                g_4b161c = 3;
+                g_4a3d40 = 2;
+                view->placed = fn_444a93;
+                g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+                g_4b1720++;
+                fn_44509b();
+                g_4b165c++;
+                g_4b1614 = 0;
+                g_4b15fe = 0;
+            } else {
+                if (g_4b1662) {
+                    fn_444391();
+                    g_4b15e6 = 1;
+                } else if (g_4b1674) {
+                    g_4b16ea = 0;
+                } else {
+                    g_4b165c = 0;
+                }
+                g_4b16ea = 0;
+            }
+        }
+    } else if (g_4b1608) {
+        if (!groupLeader[g_4b1608]) {
+            g_4b1608 = 0;
+            fn_4459b3();
+            if (!g_4b165e)
+                fn_4458c3();
+        }
+    } else if (g_4b15fc) {
+        if (g_4b15fc == 1000) {
+            g_4b15fc = 0;
+            g_4b1614 = g_4b15fe;
+            g_4b15fe = 0;
+            fn_444c62();
+        } else if (!groupLeader[g_4b15fc]) {
+            g_4b15fc = 0;
+            g_4b1614 = g_4b15fe;
+            g_4b15fe = 0;
+            fn_444c62();
+        }
+    } else if (g_4b15fe) {
+        fn_445153();
+    } else if (g_4b1606) {
+        if (!groupLeader[g_4b1606]) {
+            g_4b1606 = 0;
+            fn_445307();
+        }
+    } else if (g_4b160c) {
+        if (!groupLeader[g_4b160c]) {
+            g_4b160c = 0;
+            if (g_4b1618 == 3)
+                moveView(g_4b160e, 0, g_4b1734[0].view);
+            if (g_4b161a == 3)
+                moveView(g_4b1610, 0, g_4b1734[0].view);
+            if (g_4b161c == 3)
+                moveView(g_4b1612, 0, g_4b1734[0].view);
+        }
+    } else if (g_4b160a) {
+        if (!groupLeader[g_4b160a]) {
+            g_4b171e = g_4b160a = 0;
+            if (g_4b15da) {
+                fn_445789();
+                g_4b166e++;
+            }
+        }
+    } else if (g_4b15ec) {
+        if (!groupLeader[g_4b15ec]) {
+            g_4b15ec = 0;
+            if (!g_4b15ee)
+                queueViewSound(randomBetween(20055, 20063), 0);
+            else
+                queueViewSound(randomBetween(20045, 20048), 0);
+        }
+    }
+    if (g_4b15f8) {
+        if (!groupLeader[g_4b15f8]) {
+            g_4b15f8 = 0;
+            view = findView(g_4a3d42);
+            if (view) {
+                setSnoidAction((Snoid *)&view->body, 7, 0);
+                *(Point *)&((Snoid *)&view->body)->targetX = g_4a3d44;
+                g_4b15fa = groupViews(g_4a3d42, g_4a3d42, 0, 0, 0, 0);
+            }
+        }
+    } else if (g_4b15fa && !g_4b166e) {
+        if (!groupLeader[g_4b15fa]) {
+            g_4b15fa = 0;
+            setSnoidAction((Snoid *)&findView(g_4a3d42)->body, 2, 0);
+            if (g_4b15ee)
+                g_4b171e = 0;
+        }
+    } else {
+        g_4b166e = 0;
+    }
+    if (g_4b1820 && g_4b15d4 - g_4b15ee < 5)
+        g_4b1820 = 0;
+    if (g_4b1820 && g_4b181e < g_4b181c) {
+        if (clockTime() - g_4b1814 > 30) {
+            done = 0;
+            if (g_4b15d4 - g_4b15ee < 4) {
+                g_4b1820 = g_4b171e = 0;
+                fn_445ae1(view, 0);
+            } else {
+                g_4b1814 = clockTime();
+                do {
+                    n = allocateSlot(&g_4b1818, g_4b15d4, 0);
+                    if (partyViews[n] != g_4a3d42) {
+                        waiting = idleSnoidView(partyViews[n]);
+                        if (waiting && waiting->body.running && waiting->flags == 1) {
+                            script = ((Snoid *)&waiting->body)->features[3] - 1 + 13035;
+                            if (script) {
+                                startSnoidScript((Snoid *)&waiting->body, script, 0, 0);
+                                g_4b181e++;
+                                done = 1;
+                            }
+                        }
+                    }
+                } while (!done);
+            }
+        }
+    } else if (g_4b181e >= g_4b181c) {
+        g_4b181e = g_4b1820 = g_4b1814 = g_4b1818 = 0;
+    }
+    playAmbientSound();
+    g_4a3d9c = 0;
+}

@@ -6096,3 +6096,10 @@ short fn_445feb(short sound, short keep);
 void fn_445eb3(short which);
 extern short g_4b1672;
 void pizzaButtonClicked(short button);
+extern short g_4a3d9c; /* the scene's frame is running */
+extern short g_4b1674;
+extern short g_4b166e;
+extern unsigned long g_4b1814;
+extern unsigned long g_4b1818;
+extern short g_4b181e;
+void pizzaFrame();
