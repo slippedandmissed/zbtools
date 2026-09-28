@@ -853,7 +853,7 @@ void fn_43da30(short n)
         }
         if (view) {
             view->placed = fn_43d70d;
-            moveView(g_4b13cc[g_4b13ca], 0, g_4b12ba);
+            moveView(g_4b13cc[g_4b13ca], 0, g_4b12ba[0]);
         }
         g_4b144e = 0;
         if ((g_4b145a = g_4b11aa[g_4b119e]) < 1) {
@@ -1045,4 +1045,31 @@ void fn_43d524()
         drawText(Rect(right), 0x22, "PR", 0xffff);
     setForeColor(saved);
     showRect(&whole);
+}
+
+/* Adds the scene's standing views: five at 8000 on (g_4b12ba), 8005, the
+   guide (9151, or 9153 at the higher levels; grouped), 7018, 10018, the
+   three code views (10002, 10007 and 10012 on, by g_4b143e/42/46; the
+   first from level 2) and 7000 (grouped). */
+/* @zoombi32 0x0043c6df */
+void fn_43c6df()
+{
+    short i;
+
+    for (i = 0; i < 5; i++)
+        g_4b12ba[i] = addView(0x4188000, drawCels, runViewScript, i + 8000, 6, 0, 0, 0);
+    g_4b12b8 = addView(0x4188000, drawCels, runViewScript, 8005, 6, 0, 0, 0);
+    if (g_4b12ac <= 1)
+        g_4b12ca = addView(0x4108000, drawCels, runViewScript, 9151, 6, 0, 0, 0);
+    else
+        g_4b12ca = addView(0x4108000, drawCels, runViewScript, 9153, 6, 0, 0, 0);
+    g_4b141e = groupViews(g_4b12ca, g_4b12ca, 0, 0, 0, 0);
+    g_4b12b6 = addView(0x4181000, drawCels, runViewScript, 7018, 6, 0, 0, 0);
+    g_4b13fe = addView(0x188000, drawCels, runViewScript, 10018, 6, 0, 0, 0);
+    if (g_4b12ac >= 2)
+        g_4b1400 = addView(0x4108000, drawCels, runViewScript, g_4b143e + 10002, 6, 0, 0, 0);
+    g_4b1402 = addView(0x4108000, drawCels, runViewScript, g_4b1442 + 10007, 6, 0, 0, 0);
+    g_4b1404 = addView(0x4108000, drawCels, runViewScript, g_4b1446 + 10012, 6, 0, 0, 0);
+    g_4b13c6 = addView(0x4188000, drawCels, runViewScript, 7000, 6, 0, 0, 0);
+    g_4b142a = groupViews(g_4b13c6, g_4b13c6, 0, 0, 0, 0);
 }
