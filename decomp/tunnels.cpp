@@ -1256,3 +1256,121 @@ void fn_4612b1()
     disposePtr(neither);
     disposePtr(score);
 }
+
+/* Makes a two-rule set of one feature value each: the 20 masks of one
+   value, and the pair of them that best splits the chosen Zoombinis
+   (fn_461e1a), each made a rule with a random side. */
+/* @zoombi32 0x00461135 */
+void fn_461135()
+{
+    ChosenSnoids *chosen;
+    unsigned long pair[2];
+    unsigned long masks[20];
+    short i;
+    unsigned long value;
+    unsigned long step;
+
+    chosen = listChosenSnoids();
+    for (i = 0; i < 20; i++)
+        masks[i] = 0;
+    value = 1;
+    step = 1;
+    for (i = 0; i < 20; i++) {
+        masks[i] = value;
+        switch (value) {
+        case 5:
+            value = step = 0x100;
+            break;
+        case 0x500:
+            value = step = 0x10000;
+            break;
+        case 0x50000:
+            value = step = 0x1000000;
+            break;
+        case 0x5000000:
+            break;
+        default:
+            value += step;
+            break;
+        }
+    }
+    fn_461e1a(chosen, masks, pair, 400, 20);
+    g_4b7f18.count = 2;
+    for (i = 0; i < 2; i++) {
+        g_4b7f18.rules[i].side = randomBetween(0, 1);
+        g_4b7f18.rules[i].count = 1;
+        if (pair[i] & 0xff) {
+            g_4b7f18.rules[i].features[0] = 4;
+            g_4b7f18.rules[i].values[0] = pair[i] & 0xf;
+        } else if (pair[i] & 0xff00) {
+            g_4b7f18.rules[i].features[0] = 3;
+            g_4b7f18.rules[i].values[0] = (pair[i] >> 8) & 0xf;
+        } else if (pair[i] & 0xff0000) {
+            g_4b7f18.rules[i].features[0] = 2;
+            g_4b7f18.rules[i].values[0] = (pair[i] >> 16) & 0xf;
+        } else if (pair[i] & 0xff000000) {
+            g_4b7f18.rules[i].features[0] = 1;
+            g_4b7f18.rules[i].values[0] = (pair[i] >> 24) & 0xf;
+        }
+    }
+}
+
+/* Makes a two-rule set whose rules each name values of two features: the
+   150 masks of a value of each of two features (six pairs of features,
+   `low` and `high` giving each one's place), the pair of them that best
+   splits the chosen Zoombinis (fn_461e1a), each made a rule with a random
+   side. */
+/* @zoombi32 0x00461bec */
+void fn_461bec()
+{
+    ChosenSnoids *chosen;
+    unsigned long pair[2];
+    short i;
+    unsigned long masks[150];
+    unsigned long low[6] = {0x1, 0x1, 0x1, 0x100, 0x100, 0x10000};
+    unsigned long high[6] = {0x100, 0x10000, 0x1000000, 0x10000, 0x1000000, 0x1000000};
+    short n;
+    short k;
+    short f;
+    unsigned long value;
+
+    chosen = listChosenSnoids();
+    for (i = 0; i < 150; i++)
+        masks[i] = 0;
+    k = 0;
+    for (f = 0; f < 6; f++)
+        for (i = 1; i <= 5; i++) {
+            value = high[f] * i + low[f];
+            for (n = 1; n <= 5; n++) {
+                masks[k] = value;
+                k++;
+                value += low[f];
+            }
+        }
+    fn_461e1a(chosen, masks, pair, 22500, 150);
+    g_4b7f18.count = 2;
+    for (i = 0; i < 2; i++) {
+        f = 0;
+        g_4b7f18.rules[i].side = randomBetween(0, 1);
+        g_4b7f18.rules[i].count = 2;
+        if ((pair[i] & 0xff) && f < 2) {
+            g_4b7f18.rules[i].features[f] = 4;
+            g_4b7f18.rules[i].values[f] = pair[i] & 0xf;
+            f++;
+        }
+        if ((pair[i] & 0xff00) && f < 2) {
+            g_4b7f18.rules[i].features[f] = 3;
+            g_4b7f18.rules[i].values[f] = (pair[i] >> 8) & 0xf;
+            f++;
+        }
+        if ((pair[i] & 0xff0000) && f < 2) {
+            g_4b7f18.rules[i].features[f] = 2;
+            g_4b7f18.rules[i].values[f] = (pair[i] >> 16) & 0xf;
+            f++;
+        }
+        if ((pair[i] & 0xff000000) && f < 2) {
+            g_4b7f18.rules[i].features[f] = 1;
+            g_4b7f18.rules[i].values[f] = (pair[i] >> 24) & 0xf;
+        }
+    }
+}

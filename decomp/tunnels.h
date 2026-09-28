@@ -114,6 +114,8 @@ short fn_460c41(TunnelRules *rules, short door, Snoid *snoid, unsigned short *fi
 void fn_460e3d();
 extern Point tunnelPlaces[16]; /* @data 0x4a7730: where the Zoombinis wait */
 void fn_460021(short *spot, short side);
+void fn_461135();
+void fn_461bec();
 void fn_4612b1();
 void fn_461e1a(ChosenSnoids *chosen, unsigned long *masks, unsigned long *pair, short pairs, short n);
 
