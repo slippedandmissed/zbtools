@@ -2419,3 +2419,66 @@ void fn_443521(short troll, short)
     if (g_4b1662)
         g_4b181c = g_4b15d4 - 1;
 }
+
+/* Plays sound `sound` and waits for it (fn_412084); unloads it unless
+   `keep`. Returns whether it was cut short. */
+/* @zoombi32 0x00445feb */
+short fn_445feb(short sound, short keep)
+{
+    short stopped = 0;
+    short played;
+
+    playSoundOn(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'), 0);
+    played = fn_412084(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'), 3, 1);
+    if (!keep)
+        fn_41158c(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    if (!played)
+        stopped++;
+    return stopped;
+}
+
+/* Says one of the scene's introductions (0-4; sounds 15000-15006), if
+   sound is on, stopping when one's cut short. */
+/* @zoombi32 0x00445eb3 */
+void fn_445eb3(short which)
+{
+    short stopped;
+
+    if (!g_4b87fe || which > 4)
+        return;
+    switch (which) {
+    case 0:
+        stopped = fn_445feb(15005, 0);
+        waitForEventFor(0, 60, 0, 1);
+        if (!stopped)
+            fn_445feb(15006, 0);
+        break;
+    case 1:
+        stopped = fn_445feb(15000, 0);
+        if (!stopped)
+            fn_445feb(15001, 0);
+        break;
+    case 2:
+        fn_445feb(15002, 0);
+        break;
+    case 3:
+        stopped = fn_445feb(15003, 0);
+        if (!stopped)
+            fn_445feb(15004, 0);
+        break;
+    case 4:
+        stopped = fn_445feb(15003, 0);
+        if (!stopped) {
+            stopped = fn_445feb(15004, 0);
+            if (!stopped) {
+                waitForEventFor(0, 20, 0, 1);
+                stopped = fn_445feb(15005, 0);
+                if (!stopped) {
+                    waitForEventFor(0, 60, 0, 1);
+                    fn_445feb(15006, 0);
+                }
+            }
+        }
+        break;
+    }
+}

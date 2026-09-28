@@ -6092,3 +6092,5 @@ extern short g_4b16c8;
 extern short g_4a3d40;
 extern short g_4b181c;
 void fn_443521(short troll, short);
+short fn_445feb(short sound, short keep);
+void fn_445eb3(short which);
