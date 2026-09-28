@@ -72,6 +72,7 @@ extern short g_4abb6e; /* @data 0x4abb6e: the Zoombini last put down at a place 
 extern short g_4abba0; /* @data 0x4abba0: party views on the ferry */
 
 extern short g_4abb1c; /* @data 0x4abb1c */
+extern short g_4abb26; /* @data 0x4abb26 */
 
 void resetScene13();
 void fn_42365a(View *view, short event);

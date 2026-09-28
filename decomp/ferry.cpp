@@ -1373,3 +1373,38 @@ void fn_42365a(View *view, short event)
         }
     }
 }
+
+/* The extra's notify (fn_42365a's 30): 135 passes on to fn_42365a; at the
+   end (-1), frees the views, sets g_4abb7c, picks the Zoombinis, plays a
+   cheer when all made it (20055-20063) or now and then a remark
+   (20045-20048), deletes g_4abb26 and sets g_4abb1a by how many are
+   chosen. */
+/* @zoombi32 0x00424195 */
+void fn_424195(View *view, short event)
+{
+    short n;
+
+    switch (event) {
+    case 135:
+        fn_42365a(view, event);
+        break;
+    case -1:
+        setViewsLocked(0);
+        g_4abb7c = 1;
+        chooseSnoids(1, 0);
+        n = countChosenSnoids();
+        if (n) {
+            if (n == g_4abba0)
+                queueViewSound(randomBetween(20055, 20063), 0);
+            else if (randomBetween(0, 4) > g_4abb6a || (*(short *)(g_4a4ba0 + 0x38) & 0xfff) <= 3)
+                queueViewSound(randomBetween(20045, 20048), 1);
+        }
+        deleteView(g_4abb26);
+        n = countChosenSnoids();
+        if (n == 16)
+            g_4abb1a = 13;
+        else if (n > 8)
+            g_4abb1a = n - 8;
+        break;
+    }
+}
