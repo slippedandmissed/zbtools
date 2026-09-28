@@ -835,6 +835,10 @@
 0x0045bf41 initSnoid
 0x0045bfc0 setArrivalHook
 0x0045bfcf drawFeature
+0x0045ea2b closeScene8
+0x0045fa56 fn_45fa56
+0x0045fb10 fn_45fb10
+0x00460527 fn_460527
 0x004623b8 mainLoopUpdate
 0x004624fc fn_4624fc
 0x0046251c setCursorMode
