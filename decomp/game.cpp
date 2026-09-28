@@ -223,21 +223,21 @@ void fn_450540(short *result)
         skip = 0;
         spot = spotNear(&g_4a47ec[i], 500, skip);
         for (j = 0; spot && j < i; j++)
-            if (spot == g_4b75ee[j]) {
+            if (spot == sortedIds[j]) {
                 skip++;
                 spot = spotNear(&g_4a47ec[i], 500, skip);
                 j = 0;
             }
-        g_4b75ee[i] = spot;
+        sortedIds[i] = spot;
     }
     spot = -1;
     if (randomBetween(1, 100) <= 50) {
         for (i = 0; spot == -1 && i <= 19; i++)
-            if (!g_4b75ee[i])
+            if (!sortedIds[i])
                 spot = i;
     } else {
         for (i = 19; spot == -1 && i >= 0; i--)
-            if (!g_4b75ee[i])
+            if (!sortedIds[i])
                 spot = i;
     }
     *result = spot;

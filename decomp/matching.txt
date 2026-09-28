@@ -477,6 +477,7 @@
 0x0043ec8c fn_43ec8c
 0x0043ecbb netButtonClicked
 0x0043ee2a leaveNetIfAsked
+0x0043ee5d netPanelClicked
 0x0043f5ea drawNetPanel
 0x0043f856 fn_43f856
 0x0043f985 fn_43f985

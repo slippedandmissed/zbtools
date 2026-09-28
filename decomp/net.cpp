@@ -715,7 +715,7 @@ void fn_43e620()
     g_4b1484.name[0] = 0;
     makeName(g_4b1484.name, 10);
     for (i = 0; i < 16; i++)
-        g_4b75ee[i] = 0;
+        sortedIds[i] = 0;
     g_4b15b8 = 0;
     g_4b755c = g_4b755a = 0;
 }
@@ -1538,7 +1538,7 @@ void fn_43c6df()
 }
 
 /*
- * The queue of places (g_4b75ee, at g_4a3324): with `where`, gives the
+ * The queue of places (sortedIds, at g_4a3324): with `where`, gives the
  * first free place and its number; otherwise moves the Zoombinis up into
  * each free place from up to five places behind (by where the place is
  * in its row of five), one at a time.
@@ -1557,7 +1557,7 @@ void fn_43ffd5(Point *where, short *slot)
 
     if (where) {
         for (i = 0; i < 16; i++)
-            if (!g_4b75ee[i]) {
+            if (!sortedIds[i]) {
                 *where = g_4a3324[i];
                 *slot = i;
                 return;
@@ -1566,7 +1566,7 @@ void fn_43ffd5(Point *where, short *slot)
     }
     g_4b7564 = 1;
     for (i = 0; i < 15; i++)
-        if (!g_4b75ee[i]) {
+        if (!sortedIds[i]) {
             step = d1 = d2 = d3 = d4 = 0;
             switch (i) {
             case 0:
@@ -1605,8 +1605,8 @@ void fn_43ffd5(Point *where, short *slot)
             }
             waiting = 1;
             while (step && waiting) {
-                if (g_4b75ee[i + step]) {
-                    snoid = findSnoid(g_4b75ee[i + step], 1);
+                if (sortedIds[i + step]) {
+                    snoid = findSnoid(sortedIds[i + step], 1);
                     if (snoid) {
                         snoid->unknownEa = -1;
                         if (i + step < 17) {
@@ -1619,8 +1619,8 @@ void fn_43ffd5(Point *where, short *slot)
                             updateSnoidView(snoidView(snoid), removedRgn);
                             *(Point *)&snoid->targetX = g_4a3324[i];
                         }
-                        g_4b75ee[i] = g_4b75ee[i + step];
-                        g_4b75ee[i + step] = 0;
+                        sortedIds[i] = sortedIds[i + step];
+                        sortedIds[i + step] = 0;
                         waiting = 0;
                     }
                 }
@@ -2630,4 +2630,225 @@ void fn_43c9e2()
     }
     if (g_4b12ac >= 3)
         g_4b1468 = randomUpTo(5);
+}
+
+/*
+ * A panel button clicked (1-7): 1 makes the Zoombini chosen (sound 1005)
+ * and sends it to the queue's first free place, while fewer than 625 have
+ * been made (with Ctrl, debugging, and no Zoombinis about, first makes it
+ * 624); 2 has it say something; 3 renames it (1000); 4 picks another at
+ * random (1006; with Ctrl, fills the queue with random ones); 5 goes to
+ * the map (999); 6 with the party complete sends up to one of places 11,
+ * 12, 6 and 7 off (996) and asks to leave for scene 7, else may remark
+ * (20043 or 20044) on Zoombinis left to make; 7 takes a Zoombini from the
+ * queue back onto the net to remake (1007). Stops sound g_4b15b6 first.
+ */
+/* @zoombi32 0x0043ee5d */
+void netPanelClicked(short button)
+{
+    Point cursor;
+    Point where;
+    short slot;
+    ShortRect rect;
+    short id;
+    unsigned long when;
+    Snoid *snoid;
+    View *view;
+    View *other;
+
+    if (leaveNetIfAsked())
+        return;
+    if (g_4b15b6 && isSoundPlaying(g_4b15b6, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+        stopSounds(g_4b15b6, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+        g_4b15b6 = 0;
+    }
+    rect = g_4a31cc[button].rect;
+    getCursorPosition(&cursor);
+    switch (button) {
+    case 1:
+        if (!g_4b15a8 && g_4b15aa && *(short *)(g_4a4ba0 + 0x48) < 625) {
+            if (g_4b8803 && addModifierKeys(0) == 0x800 && !countSnoidViews()) {
+                *(short *)(g_4a4ba0 + 0x48) = 624;
+                *(short *)(g_4a4ba0 + 0x4e) = 624;
+            }
+            g_4afb32 = 1;
+            g_4b15b8 = 1;
+            g_4b755a++;
+            queueViewSound(1005, 0);
+            drawNetPanel(button, 1, 1);
+            waitForEventFor(0, 2, 0, 1);
+            countZoombiniMade(1);
+            fn_43ffd5(&where, &slot);
+            id = placeSnoid(&g_4b1484, 0, 148, 215, where.x, where.y);
+            sortedIds[slot] = id;
+            (*(short *)(g_4a4ba0 + 0x48))++;
+            drawNetPanel(button, 0, 1);
+            sortViews();
+            fn_440286();
+            makeName(g_4b157d, 10);
+            drawNetPanel(3, 1, 1);
+        }
+        g_4b15aa = zoombiniMadeAllowed();
+        break;
+    case 2:
+        queueViewSound(snoidSound(&g_4b1484, randomBetween(0, 12)), 0);
+        break;
+    case 3:
+        if (g_4b15aa) {
+            queueViewSound(1000, 0);
+            makeName(g_4b157d, 10);
+            drawNetPanel(button, 1, 1);
+        }
+        break;
+    case 4:
+        if (*(short *)(g_4a4ba0 + 0x48) < 625) {
+            queueViewSound(1006, 0);
+            drawNetPanel(button, 1, 1);
+            if (!g_4b15a8 && addModifierKeys(0) == 0x800) {
+                pickZoombiniMade(1);
+                fn_43f856(0, 0, &rect);
+                showRect(&rect);
+                fn_43ffd5(&where, &slot);
+                when = clockTime();
+                while (!g_4b15a8) {
+                    g_4afb32 = 1;
+                    countZoombiniMade(1);
+                    id = placeSnoid(&g_4b1484, when, 148, 215, where.x, where.y);
+                    g_4b15b8 = 1;
+                    g_4b755a++;
+                    sortedIds[slot] = id;
+                    (*(short *)(g_4a4ba0 + 0x48))++;
+                    if (!*(short *)(g_4a4ba0 + 0x20))
+                        when += randomBetween(60, 120);
+                    else
+                        when += randomBetween(120, 180);
+                    fn_440286();
+                    pickZoombiniMade(1);
+                    fn_43ffd5(&where, &slot);
+                }
+                drawNetPanel(3, 1, 1);
+                fn_43f856(0, 0, &rect);
+                showRect(&rect);
+                drawNetPanel(button, 0, 1);
+            } else {
+                waitForEventFor(0, 2, 0, 1);
+                drawNetPanel(button, 0, 1);
+                pickZoombiniMade(g_4b15aa);
+                fn_43f856(0, 0, &rect);
+                showRect(&rect);
+                drawNetPanel(3, 1, 1);
+            }
+            g_4b15aa = zoombiniMadeAllowed();
+        } else {
+            queueViewSound(1008, 0);
+        }
+        break;
+    case 5:
+        queueViewSound(999, 0);
+        drawNetPanel(button, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawNetPanel(button, 0, 1);
+        g_4b0d50 = 1;
+        fn_43eb13();
+        break;
+    case 6:
+        if (g_4b15a8) {
+            short order[4] = {11, 12, 6, 7};
+
+            queueViewSound(996, 0);
+            drawNetPanel(button, 1, 1);
+            waitForEventFor(0, 2, 0, 1);
+            drawNetPanel(button, 0, 1);
+            g_4b755c = g_4b755a = 0;
+            where.x = where.y = 0;
+            for (slot = 0; g_4b755a < 1 && slot < 4; slot++) {
+                id = sortedIds[order[slot]];
+                if (id) {
+                    snoid = findSnoid(id, 1);
+                    if (snoid && !snoid->unknownF4) {
+                        view = findView(id);
+                        view->nextUpdate = clockTime() + g_4b755a * 60;
+                        snoid->unknownEa = -1;
+                        snoid->targetX = 544;
+                        snoid->targetY = 264;
+                        setSnoidAction(snoid, 7, 0);
+                        g_4b755a++;
+                    }
+                }
+            }
+            g_4b0d52 = 7;
+        } else {
+            short made = countSnoidViews();
+            short left = 625 - (*(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c) + *(short *)(g_4a4ba0 + 0x4e))
+                - made;
+
+            if (left > 0 && made < 625) {
+                switch (randomBetween(1, 2)) {
+                case 1:
+                    g_4b15b6 = 20043;
+                    break;
+                case 2:
+                    g_4b15b6 = 20044;
+                    break;
+                }
+                if (g_4b15b6)
+                    queueViewSound(g_4b15b6, 1);
+            }
+        }
+        break;
+    case 7:
+        if (!g_4b15b8) {
+            short grab;
+
+            view = viewAt(cursor, 1, 1);
+            grab = 0;
+            if (view) {
+                grab = ((Snoid *)&view->body)->unknownF4;
+                if (!grab || grab == 6 || grab == 4)
+                    grab = 1;
+                else
+                    grab = 0;
+            }
+            if (grab) {
+                other = findView(g_4b15b4);
+                if (other)
+                    other->flags |= 0x8000;
+                dragSnoid(view, cursor, 0, 0);
+                rect = view->body.bounds;
+                if (heldPlaceNumber()) {
+                    if ((view = removeView(view->id, 0)) != 0) {
+                        for (slot = 0; slot < 16; slot++)
+                            if (sortedIds[slot] == view->id) {
+                                sortedIds[slot] = 0;
+                                slot = 16;
+                            }
+                        g_4afb32 = 1;
+                        claimPlacedView(1, 0);
+                        queueViewSound(1007, 0);
+                        if (*(short *)(g_4a4ba0 + 0x48) > 0)
+                            (*(short *)(g_4a4ba0 + 0x48))--;
+                        for (slot = 0; slot < 4; slot++) {
+                            g_4b1484.features[slot] = ((Snoid *)&view->body)->features[slot];
+                            ((Snoid *)&view->body)->features[slot] = 0;
+                        }
+                        for (slot = 0; slot < 10; slot++)
+                            g_4b157d[slot] = ((Snoid *)&view->body)->name[slot];
+                        countZoombiniMade(0);
+                        fn_43f856(0, 0, &rect);
+                        showRect(&rect);
+                        drawNetPanel(3, 1, 1);
+                        fn_440286();
+                        g_4b15aa = zoombiniMadeAllowed();
+                        g_4b15ac = 1;
+                        fn_43ffd5(0, 0);
+                        if (*(short *)(g_4a4ba0 + 0x48) == 624)
+                            drawNetPanel(button, 0, 1);
+                    }
+                }
+                if (other)
+                    other->flags &= ~0x8000;
+            }
+        }
+        break;
+    }
 }
