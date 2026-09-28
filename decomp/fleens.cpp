@@ -13,6 +13,7 @@
 #include "focus.h"
 #include "graphics.h"
 #include "module_4623b8.h"
+#include "net.h"
 #include "platform.h"
 #include "snoids.h"
 #include "sound.h"
@@ -1513,4 +1514,135 @@ void openScene13()
     }
     g_4abba0 = countSnoidViews();
     g_4abdac = 8;
+}
+
+/*
+ * Scene 13's frame: leaves when asked (once sound 996 ends and the moving
+ * Zoombinis are done); starts a Zoombini put at a place (g_4abb6e,
+ * g_4abb70) walking up to its fleen, counting it in g_4abb4a/g_4abb58 and
+ * in g_4abb1e if the fleen was one picked; or now and then (g_4abdb4)
+ * sends a waiting Zoombini on (5), up to g_4abb1a; starts g_4abb66 on the
+ * script its notifies asked for (3, 9, 4); moves the line on (fn_423f84);
+ * and loads the scripts 4051-4058 one a frame.
+ */
+/* @zoombi32 0x00421d1e */
+void scene13Frame()
+{
+    View *view;
+    short script;
+    short done;
+    short i;
+
+    if (g_4a16d0 || !g_4abb78)
+        return;
+    g_4a16d0 = 1;
+    updateViews();
+    if (g_4b0d52 && !isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+        if (!g_4b9688 || g_4b9688 == 3) {
+            if (g_4b9688 == 3)
+                chooseSnoids(0, 0);
+            if (viewsLocked || !g_4b755a || g_4b755c) {
+                g_4b0d50 = g_4b0d52;
+                g_4b0d52 = 0;
+                fn_46be2e(0);
+                closeScene13();
+                g_4a16d0 = 0;
+                return;
+            }
+        } else if (g_4b9688 == 2) {
+            g_4b9688 = 0;
+            g_4b0d52 = 0;
+        }
+    }
+    if (!g_4abb32) {
+        if (g_4abb70) {
+            view = idleSnoidView(g_4abb6e);
+            if (view && !g_4b7556) {
+                viewSnoid(view)->unknownF7 = 1;
+                g_4abb30 = g_4abb70;
+                g_4abb70 = 0;
+                g_4abb32 = view->id;
+                g_4a4b98 = 0;
+                g_4abb7e = 1;
+                unloadSounds();
+                for (i = 0; i < 3; i++)
+                    if (pickedFleens[i] && g_4abba2[pickedFleens[i] - 1] == g_4abb30)
+                        g_4abb1e++;
+                g_4abb6c = 1;
+                g_4abb4a[g_4abb46] = g_4abb6e;
+                g_4abb58[g_4abb46] = g_4abb30;
+                g_4abb46++;
+                if (g_4abb1e > 2)
+                    g_4b754c = 1;
+                script = fleensSnoidScript(view, 2);
+                if (script) {
+                    if (!g_4abb2e)
+                        loadSnoidScript(script);
+                    startSnoidScript(viewSnoid(view), script, 0, 0);
+                    view->notify = fn_42365a;
+                    view->notifyEnd = 1;
+                }
+            }
+        } else if (g_4abb7c && g_4abb48 < g_4abb1a && clockTime() - g_4abdb0 > g_4abdb4) {
+            done = 0;
+            g_4abdb0 = clockTime();
+            g_4abb32 = 1;
+            do {
+                view = idleSnoidView(partyViews[allocateSlot(&g_4abdb8, g_4abba0, 0)]);
+                if (view && view->body.running && view->flags == 1) {
+                    script = fleensSnoidScript(view, 5);
+                    if (script) {
+                        if (view->body.x <= 270)
+                            startSnoidScript(viewSnoid(view), script, 0, 0);
+                        g_4abb48++;
+                        done = 1;
+                    }
+                }
+            } while (!done);
+            g_4abb32 = 0;
+        }
+    }
+    if (g_4abb3c) {
+        g_4abb3c = 0;
+        view = findView(g_4abb66);
+        if (view) {
+            script = fleensSnoidScript(view, 3);
+            startSnoidScript(viewSnoid(view), script, 0, 0);
+            view->notify = fn_423e2c;
+            view->flags |= 0x4000000;
+            for (i = 0; i < g_4abba0; i++)
+                if (partyViews[i] == g_4abb66) {
+                    moveView(g_4abb66, 1, g_4abba2[i]);
+                    i = g_4abba0;
+                }
+        }
+    } else if (g_4abb3a) {
+        g_4abb3a = 0;
+        view = findView(g_4abb66);
+        if (view) {
+            script = fleensSnoidScript(view, 9);
+            startSnoidScript(viewSnoid(view), script, 0, 0);
+            view->notify = fn_423ebb;
+        }
+    } else if (g_4abb3e) {
+        g_4abb3e = 0;
+        view = findView(g_4abb66);
+        if (view) {
+            script = fleensSnoidScript(view, 4);
+            viewSnoid(view)->unknownF2 = 1;
+            startSnoidScript(viewSnoid(view), script, 0, 0);
+            view->notifyEnd = 1;
+            view->notify = fn_424104;
+        }
+    }
+    if (g_4abb40) {
+        g_4abb40 = 0;
+        fn_423f84();
+    }
+    if (g_4abdac) {
+        loadFleenScript(8 - g_4abdac + 4051);
+        g_4abdac--;
+    }
+    playAmbientSound();
+    g_4a16d0 = 0;
 }

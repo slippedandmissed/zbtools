@@ -43,7 +43,6 @@ extern short g_4abb58[7]; /* @data 0x4abb58 */
 extern short g_4abb66; /* @data 0x4abb66 */
 extern short g_4abb68; /* @data 0x4abb68 */
 extern short g_4abb6c; /* @data 0x4abb6c */
-extern short g_4abb70; /* @data 0x4abb70 */
 extern short g_4abb7e; /* @data 0x4abb7e */
 extern short g_4abb80; /* @data 0x4abb80 */
 extern short g_4abba2[16]; /* @data 0x4abba2 */
@@ -74,7 +73,11 @@ extern short g_4abb1c; /* @data 0x4abb1c */
 
 extern GroupList fleensGroups[1]; /* @data 0x4a1630 */
 
+extern short g_4a16d0; /* @data 0x4a16d0: scene13Frame is running */
+extern short g_4abb70; /* @data 0x4abb70: the fleen of the Zoombini put down (g_4abb6e) */
+
 void resetScene13();
+void scene13Frame();
 void openScene13();
 void fn_42365a(View *view, short event);
 void fn_424195(View *view, short event);
