@@ -5501,3 +5501,10 @@ void drawMazeButtons(View *);
 void updateMazeButtons(View *, short region);
 void closeMaze();
 short mazeKey(unsigned short key);
+extern short *g_4afbe8; /* hot spots: x */
+extern short *g_4afbec; /* and y */
+void fn_43583c(View *view, short group, short, char unknownF8);
+void fn_435882(View *view, short group, short, char unknownF8);
+void fn_435925(View *view, short group, short, char unknownF8);
+void fn_436321(View *view);
+void fn_436356(View *view);

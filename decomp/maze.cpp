@@ -191,3 +191,90 @@ short mazeKey(unsigned short key)
     }
     return 0;
 }
+
+/* Starts the script of the Zoombini paired with `view` (its body's word 50
+   is the Zoombini's view): the entry of its own table (words 37 on) at its
+   index (word 36), moving it into `group`. */
+/* @zoombi32 0x0043583c */
+void fn_43583c(View *view, short group, short, char unknownF8)
+{
+    short *parts = (short *)&view->body;
+    View *other = findView(parts[50]);
+
+    if (other) {
+        short *its = (short *)&other->body;
+        short script = its[37 + its[36]];
+
+        startSnoidScript((Snoid *)&other->body, script, 0, unknownF8);
+        other->body.group = group;
+    }
+}
+
+/* The same, nudging the Zoombini by its pose (word 20) first and starting
+   script 14000 on by its index. */
+/* @zoombi32 0x00435882 */
+void fn_435882(View *view, short group, short, char unknownF8)
+{
+    short *parts = (short *)&view->body;
+    View *other = findView(parts[50]);
+
+    if (other) {
+        ViewBody *body = &other->body;
+
+        parts = (short *)body;
+        switch (parts[20]) {
+        case 0:
+            body->x += 3;
+            body->y += 6;
+            break;
+        case 1:
+            body->x += 7;
+            body->y += 19;
+            break;
+        case 3:
+            body->x += 12;
+            body->y += 21;
+            break;
+        default:
+            body->x += 3;
+            body->y += 6;
+            break;
+        }
+        short script = parts[36] + 14000;
+
+        startSnoidScript((Snoid *)&other->body, script, 0, unknownF8);
+        other->body.group = group;
+    }
+}
+
+/* The same with script 14003, the paired view assumed to exist. */
+/* @zoombi32 0x00435925 */
+void fn_435925(View *view, short group, short, char unknownF8)
+{
+    short *parts = (short *)&view->body;
+    View *other = findView(parts[50]);
+
+    startSnoidScript((Snoid *)&other->body, 14003, 0, unknownF8);
+    other->body.group = group;
+}
+
+/* A view's placing: its first cel by the hot spots in g_4afbe8/g_4afbec,
+   35 below. */
+/* @zoombi32 0x00436321 */
+void fn_436321(View *view)
+{
+    short *cel = (short *)&view->body;
+
+    cel[1] -= g_4afbe8[cel[0]];
+    cel[2] += 35 - g_4afbec[cel[0]];
+}
+
+/* The same, 25 below. */
+/* @zoombi32 0x00436356 */
+void fn_436356(View *view)
+{
+    short *cel = (short *)&view->body;
+
+    cel[1] -= g_4afbe8[cel[0]];
+    cel[2] += 25 - g_4afbec[cel[0]];
+}
