@@ -358,7 +358,7 @@ void fn_43e620()
 /* Whether the Zoombini being made is complete (its features valid, any
    out of range cleared) and fewer than two of its kind exist yet. */
 /* @zoombi32 0x0043fa67 */
-short fn_43fa67()
+short zoombiniMadeAllowed()
 {
     short i;
     short hair;
@@ -615,8 +615,8 @@ void fn_439fc3(View *view, short)
 }
 
 /* Draws the net's buttons (1-20, from the bank g_4b1598; each lit if it's
-   the one chosen in its group of five, g_4b1540), or just button `which`,
-   lit or not; stores the area drawn in *bounds. */
+   the feature chosen in its group of five for the Zoombini being made), or
+   just button `which`, lit or not; stores the area drawn in *bounds. */
 /* @zoombi32 0x0043f856 */
 void fn_43f856(short which, short lit, ShortRect *bounds)
 {
@@ -629,7 +629,7 @@ void fn_43f856(short which, short lit, ShortRect *bounds)
         unionRect(&rect, &g_4a2efc[20].rect);
         for (i = 0; i < 20; i++) {
             image = i + i + 1;
-            if (i % 5 + 1 == g_4b1540[i / 5])
+            if (i % 5 + 1 == g_4b1484.features[i / 5])
                 image++;
             drawImageData((unsigned short *)(g_4b1598->offsets[image] + (char *)g_4b1598), g_4a2efc[i + 1].rect.left,
                           g_4a2efc[i + 1].rect.top, 8);
@@ -1271,4 +1271,169 @@ short netKey(unsigned short key)
         return 1;
     }
     return 0;
+}
+
+/* Draws the panel's buttons (1-7, from the bank g_4b15a0; some lit, some
+   greyed by the scene's state), or just button `which`, lit or not; the
+   second shows the Zoombini being made, the third its name (g_4b157d, if
+   g_4b15aa). Shows the area drawn if `show`. */
+/* @zoombi32 0x0043f5ea */
+void drawNetPanel(short which, short lit, short show)
+{
+    short y;
+    short count;
+    ShortRect rect;
+    ShortRect bounds = g_4a3376;
+    Color saved;
+    short i;
+    short x;
+    short image;
+
+    if (!which) {
+        i = 0;
+        count = 7;
+        bounds = g_4a31cc[1].rect;
+        unionRect(&bounds, &g_4a31cc[7].rect);
+    } else {
+        i = which - 1;
+        count = i + 1;
+        bounds = g_4a31cc[which].rect;
+    }
+    for (; i < count; i++) {
+        x = g_4a31cc[i + 1].rect.left;
+        y = g_4a31cc[i + 1].rect.top;
+        image = 0;
+        switch (i) {
+        case 0:
+            image = 2;
+            if (*(short *)(g_4a4ba0 + 0x48) >= 625 || g_4b15a8 || !g_4b15aa) {
+                lit = 0;
+                image = 1;
+            }
+            break;
+        case 1:
+            drawZoombiniParts(&g_4b1484);
+            break;
+        case 2:
+            if (g_4b9684 & 0x10)
+                return;
+            drawImageData((unsigned short *)(g_4b15a0->offsets[13] + (char *)g_4b15a0), x, y, 8);
+            rect = g_4a31cc[i + 1].rect;
+            saved = setForeColor(Color(45));
+            if (g_4b15aa) {
+                rect.top++;
+                rect.left += 4;
+                drawText(rect, 0x22, g_4b157d, 0xffff);
+                rect.top--;
+                rect.left -= 4;
+            }
+            setForeColor(saved);
+            break;
+        case 3:
+            image = 4;
+            if (!g_4b15a8 && g_4b15a6)
+                image = 6;
+            break;
+        case 4:
+            image = 11;
+            break;
+        case 5:
+            image = 9;
+            if (!g_4b15a8) {
+                lit = 0;
+                image = 8;
+            }
+            break;
+        }
+        if (image) {
+            if (lit)
+                image++;
+            drawImageData((unsigned short *)(g_4b15a0->offsets[image] + (char *)g_4b15a0), x, y, 8);
+        }
+    }
+    if (show)
+        showRect(&bounds);
+}
+
+/* Counts the Zoombini being made (g_4b1484) in or out of the numbers of
+   each kind (at most two), noting in g_4b15aa whether it's complete (and,
+   when adding, not one too many). */
+/* @zoombi32 0x0043fdcc */
+void countZoombiniMade(short add)
+{
+    Snoid *made = &g_4b1484;
+    short i;
+    short hair;
+    short eyes;
+    short nose;
+    short feet;
+
+    if (add) {
+        g_4b15aa = zoombiniMadeAllowed();
+    } else {
+        g_4b15aa = 1;
+        for (i = 0; i < 4; i++)
+            if (!made->features[i])
+                g_4b15aa = 0;
+    }
+    if (g_4b15aa) {
+        hair = made->features[0] - 1;
+        eyes = made->features[1] - 1;
+        nose = made->features[2] - 1;
+        feet = made->features[3] - 1;
+        if (add) {
+            if (zoombiniCounts()[hair][eyes][nose][feet] < 2)
+                zoombiniCounts()[hair][eyes][nose][feet]++;
+        } else if (zoombiniCounts()[hair][eyes][nose][feet] > 0) {
+            zoombiniCounts()[hair][eyes][nose][feet]--;
+        }
+    }
+}
+
+/*
+ * Picks features for the Zoombini being made: random ones (all of them if
+ * `rename`, else those not chosen) until it's a kind with fewer than two,
+ * and after 64 tries the last such kind in order (the search never stops
+ * early: its flag is never set). Names it if `rename` or the first pick
+ * failed.
+ */
+/* @zoombi32 0x0043fb0f */
+void pickZoombiniMade(short rename)
+{
+    short tries = 0;
+    short found;
+    short hair;
+    short eyes;
+    short nose;
+    short feet;
+    short i;
+
+    g_4b15aa = 0;
+    while (!g_4b15aa && tries < 64) {
+        tries++;
+        if (tries >= 64) {
+            found = 0;
+            rename = 1;
+            for (hair = 0; !found && hair < 5; hair++)
+                for (eyes = 0; !found && eyes < 5; eyes++)
+                    for (nose = 0; !found && nose < 5; nose++)
+                        for (feet = 0; !found && feet < 5; feet++)
+                            if (zoombiniCounts()[hair][eyes][nose][feet] < 2) {
+                                g_4b1484.features[0] = hair + 1;
+                                g_4b1484.features[1] = eyes + 1;
+                                g_4b1484.features[2] = nose + 1;
+                                g_4b1484.features[3] = feet + 1;
+                            }
+        } else {
+            for (i = 0; i < 4; i++)
+                if (!g_4b1484.features[i] || rename)
+                    g_4b1484.features[i] = randomBetween(1, 5);
+        }
+        g_4b15aa = zoombiniMadeAllowed();
+        if (!g_4b15aa)
+            rename = 1;
+    }
+    if (rename)
+        makeName(g_4b157d, 10);
+    g_4b15ac = 1;
 }

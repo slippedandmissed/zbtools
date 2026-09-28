@@ -471,11 +471,14 @@
 0x0043ebf4 netIdle
 0x0043ec8c fn_43ec8c
 0x0043ee2a leaveNetIfAsked
+0x0043f5ea drawNetPanel
 0x0043f856 fn_43f856
 0x0043f985 fn_43f985
 0x0043f9d3 drawZoombiniParts
-0x0043fa67 fn_43fa67
+0x0043fa67 zoombiniMadeAllowed
+0x0043fb0f pickZoombiniMade
 0x0043fc9a fn_43fc9a
+0x0043fdcc countZoombiniMade
 0x0043ff1d fn_43ff1d
 0x0043ffd5 fn_43ffd5
 0x00440218 fn_440218

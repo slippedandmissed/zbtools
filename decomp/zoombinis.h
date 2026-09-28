@@ -5716,7 +5716,7 @@ extern short g_4b15ac;
 extern short g_4b15b6;
 extern short g_4b15b8;
 void fn_43e620();
-short fn_43fa67();
+short zoombiniMadeAllowed();
 void fn_43ff1d(short keep);
 extern short g_4b1182[20];
 extern short g_4b11aa[];
@@ -5742,7 +5742,6 @@ void fn_43cfc3();
 void fn_439fc3(View *view, short);
 extern ShortRect g_4a337e;
 extern SceneButton g_4a2efc[27]; /* [0] isn't a button */
-extern char g_4b1540[4];
 extern ImageBank *g_4b1598;
 void fn_43f856(short which, short lit, ShortRect *bounds);
 void fn_439e55(short id);
@@ -5805,3 +5804,10 @@ extern short g_4b140e;
 extern short g_4b1410;
 extern short g_4b142c;
 short netKey(unsigned short key);
+extern SceneButton g_4a31cc[8]; /* [7]: the whole screen */
+extern ShortRect g_4a3376;
+extern ImageBank *g_4b15a0;
+extern char g_4b157d[];
+void drawNetPanel(short which, short lit, short show);
+void countZoombiniMade(short add);
+void pickZoombiniMade(short rename);
