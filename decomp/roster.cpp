@@ -772,6 +772,65 @@ void readWriteSavedGames(SavedGameList *list, short mode)
     closeFile(g_4aba7c, 0);
 }
 
+/* Walks the roster's next Zoombini (g_4ab9c2) on: 0 from the view
+   g_4ab8da (script g_4a0ffc on, for frame g_4a1010, with a view of its
+   own in front, g_4a0ffa), 1 likewise from g_4ab8dc (for frame g_4a1012,
+   after fn_41e8f3), 2 off toward the view g_4ab9f8 (script 12012). */
+/* @zoombi32 0x0041cf14 */
+void fn_41cf14(short which)
+{
+    View *view;
+
+    if (g_4ab9c2) {
+        g_4ab874 = g_4ab9c2;
+        switch (which) {
+        case 0:
+            view = findView(g_4ab8da);
+            break;
+        case 1:
+            view = findView(g_4ab8dc);
+            break;
+        case 2:
+            view = findView(g_4ab874);
+            break;
+        }
+        if (view) {
+            switch (which) {
+            case 0:
+                g_4ab8e4 = 0;
+                setViewScript(view, (g_4a1010 - 1) * 4 + g_4a0ffc, 1);
+                view->notify = fn_41d1b1;
+                deleteView(g_4a0ffa);
+                moveView(g_4ab874, 1, g_4ab9c4[g_4a1010]);
+                g_4a0ffa = addView(0x4108000, drawCels, runViewScript, (g_4a1010 - 1) * 4 + g_4a0ffc + 1, 6,
+                                   0, 1, g_4ab874);
+                groupViews(view->id, g_4a0ffa, 0, 0, 0, 0);
+                break;
+            case 1:
+                fn_41e8f3(g_4ab874, g_4a1012);
+                g_4ab8e4 = &g_4ab8e0;
+                setViewScript(view, (g_4a1012 - 1) * 4 + g_4a0ffc + 2, 1);
+                view->notify = fn_41d1b1;
+                deleteView(g_4a0ffa);
+                moveView(g_4ab874, 1, g_4ab9c4[g_4a1012]);
+                g_4a0ffa = addView(0x4108000, drawCels, runViewScript, (g_4a1012 - 1) * 4 + g_4a0ffc + 3, 6,
+                                   0, 1, g_4ab874);
+                groupViews(view->id, g_4a0ffa, 0, 0, 0, 0);
+                break;
+            case 2:
+                setViewsLocked(0);
+                g_4ab8e4 = 0;
+                viewSnoid(view)->unknownF2 = 0;
+                view->notify = fn_41d1b1;
+                startSnoidScript(viewSnoid(view), 12012, g_4ab8e4, 1);
+                groupViews(view->id, view->id, 0, 0, 0, 0);
+                moveView(view->id, 0, g_4ab9f8);
+                break;
+            }
+        }
+    }
+}
+
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to
    the roster file next to the program (userFile). */
 /* @zoombi32 0x0041f1da */

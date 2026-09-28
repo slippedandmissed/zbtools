@@ -6219,3 +6219,9 @@ extern short g_4abafc; /* @data 0x4abafc */
 extern long g_4abb00; /* @data 0x4abb00 */
 void fn_41f6fc(short reset);
 void readWriteSavedGames(SavedGameList *list, short mode);
+extern short g_4ab9c2; /* @data 0x4ab9c2: the roster's next Zoombini's view */
+extern short g_4ab9c4[26]; /* @data 0x4ab9c4: views, by frame */
+extern short g_4ab8da; /* @data 0x4ab8da */
+extern short g_4ab8dc; /* @data 0x4ab8dc */
+extern short g_4a0ffc; /* @data 0x4a0ffc: the first of the walking scripts */
+void fn_41cf14(short which);
