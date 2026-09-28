@@ -3485,3 +3485,157 @@ void lillyClick(short action)
         break;
     }
 }
+
+/* Opens the puzzle (Hotel.MHK) at the level reached. */
+/* Not exact: register allocation (the original caches g_4ac0d8's address
+   in ebx and keeps `labels` in esi). */
+/* @zoombi32 0x00424274 */
+void openLillyPuzzle()
+{
+    Point places[20] = {{455, 423}, {432, 421}, {412, 420}, {395, 425}, {379, 418}, {365, 433}, {352, 412},
+                        {340, 433}, {328, 418}, {314, 432}, {295, 421}, {279, 430}, {264, 437}, {259, 421},
+                        {244, 432}, {226, 421}, {211, 427}, {195, 419}, {176, 423}, {158, 431}};
+
+    unloadSounds();
+    fillMemory(g_4ac1a8, 0, 50);
+    fillMemory(g_4ac1da, 0, 50);
+    fillMemory(g_4ac20c, 0, 10);
+    fillMemory(g_4abdc0, 0, 250);
+    fillMemory(g_4ac10e, 0, 40);
+    g_4ac504 = g_4ac0be = g_4ac0c0 = 0;
+    g_4ac0f2 = g_4ac0f4 = g_4ac0fc = g_4ac0f6 = 0;
+    g_4ac0de = g_4ac0e0 = g_4ac0e2 = g_4ac0f0 = 0;
+    g_4ac0ce = g_4ac0d0 = g_4ac0f8 = g_4ac0ea = 0;
+    g_4ac0e6 = g_4ac0e4 = g_4ac13c = 0;
+    g_4ac138 = g_4ac0dc = 0;
+    g_4ac13a = 1;
+    g_4ac0ee = g_4ac0c4 = g_4ac0c6 = 25;
+    g_4ac0da = 1;
+    g_4b7554 = 0;
+    g_4b966e = g_4ac0d6 = 0;
+    g_4ac0d8 = sceneLevel();
+    g_4ac0fe = 1;
+    switch (g_4ac0d8) {
+    case 0:
+        g_4ac100 = 5;
+        break;
+    case 2:
+        g_4ac100 = 4;
+        break;
+    default:
+        g_4ac100 = 2;
+        break;
+    }
+    g_4ac102 = g_4ac0fe;
+    g_4ac104 = g_4ac100;
+    if (g_4ac0d8 == 3)
+        g_4ac0ee = 125;
+    g_4b0d52 = g_4abec4 = 0;
+    g_4abec0 = g_4abec2 = 0;
+    useAltSnoids(0);
+    openGameFile(&g_4abebc, "Hotel.MHK");
+    fn_46be2e(g_4abebc);
+    loadTerrain(100);
+    drawBackdrop(5000);
+    setViewPlaces(20, places, 1);
+    fn_4148da(10, 236);
+    if (g_4ac0d8 == 3)
+        loadFeatureGroup(9000, 0, 0);
+    else
+        loadFeatureGroup(6000, 0, 0);
+    loadFeatureGroup(7000, 1, 0);
+    loadFeatureGroup(10000, 2, 0);
+    loadFeatureGroup(11500, 3, 0);
+    loadFeatureGroup(11800, 4, 0);
+    if (g_4ac0d8 != 3)
+        loadFeatureGroup(7500, 5, 0);
+    if (g_4ac0d8 == 3)
+        loadScripts(9000, 12);
+    else
+        loadScripts(6000, 88);
+    addScripts(7000, 11, 2);
+    if (g_4ac0d8 != 3)
+        addScripts(10000, 25, 0);
+    else
+        addScripts(10025, 125, 0);
+    addScripts(11500, 6, 0);
+    addScripts(11800, 1, 0);
+    if (g_4ac0d8 != 3)
+        addScripts(7500, 10, 2);
+    if (g_4ac0d8 < 3) {
+        loadSnoidScripts(14000, 25, 5);
+        addSnoidScripts(13000, 70, 5);
+    } else {
+        loadSnoidScripts(14025, 25, 5);
+        addSnoidScripts(13025, 45, 5);
+    }
+    if (g_4ac0d8 == 2) {
+        g_4ac178 = loadImageBank(11000, &g_4ac148);
+        g_4ac180 = loadShortTable(11000, &g_4ac14c);
+        g_4ac184 = loadShortTable(11001, &g_4ac150);
+        g_4ac1a0 = loadShortTable(11002, &g_4ac170);
+        g_4ac1a4 = loadShortTable(11003, &g_4ac174);
+        g_4ac188 = loadShortTable(11004, &g_4ac154);
+        g_4ac18c = loadShortTable(11005, &g_4ac158);
+    }
+    if (g_4ac0d8 == 3) {
+        g_4ac17c = loadImageBank(12000, &g_4ac148);
+        g_4ac190 = loadShortTable(9000, &g_4ac160);
+        g_4ac194 = loadShortTable(9001, &g_4ac164);
+        g_4ac198 = loadShortTable(9002, &g_4ac168);
+        g_4ac19c = loadShortTable(9003, &g_4ac16c);
+        g_4ac188 = loadShortTable(12004, &g_4ac154);
+        g_4ac18c = loadShortTable(12005, &g_4ac158);
+    }
+    g_4a1a18 = loadImageBank(8000, &g_4ac144);
+    {
+        short labels = g_4ac0d8;
+
+        if (labels >= 2)
+            labels--;
+        g_4ac0c8 = addView(0x108000, drawCels, runViewScript, labels + 11500, 6, 0, 0, 0);
+    }
+    g_4ac0be = 0;
+    campHint((short *)(g_4a4ba0 + 0x3a));
+    g_4b966e = 20081;
+    switch (g_4ac0d8) {
+    case 0:
+        if ((*(short *)(g_4a4ba0 + 0x3a) & 0xfff) > 1)
+            g_4ac0be = randomUpTo(2) + 1;
+        break;
+    case 1:
+        g_4ac0be = 4;
+        break;
+    case 2:
+        g_4ac0be = 5;
+        break;
+    case 3:
+        g_4ac0be = 6;
+        break;
+    }
+    if (!g_4ac0be || g_4ac0be == 4)
+        g_4ac0c0 = 1;
+    setGroupLists(g_4a1764, 1, (short)0xc000);
+    addSoundRange(8900, 8901, 0);
+    addSoundRange(996, 997, 0);
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(99, 99, 0);
+    addSoundRange(7000, 7999, 1);
+    addSoundRange(425, 499, 0);
+    addSoundRange(6004, 6006, 0);
+    addSoundRange(6000, 6099, 0);
+    addSoundRange(9004, 9006, 0);
+    addSoundRange(9000, 9999, 0);
+    addSoundRange(10000, 10999, 0);
+    g_4ac0ba = addView(0x8108000, drawCels, runViewScript, g_4ac0be + 7000, 6, 0, 0, 0);
+    loadViewSounds(g_4ac0ba, 1);
+    makePartySnoids(0);
+    setUpLillyPuzzle();
+    g_4ac0ca = addView(0x100000, drawCels, runViewScript, 11800, 6, 0, 0, 0);
+    updateViews();
+    g_4ac0f2 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    getColors(&g_4ac51c[10], 10, 236);
+    g_4abec0 = 1;
+}
