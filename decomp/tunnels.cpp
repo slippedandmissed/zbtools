@@ -338,3 +338,45 @@ short scene8Key(unsigned short key)
     }
     return used;
 }
+
+/* The buttons' view's draw callback: draws both buttons, dim. */
+/* @zoombi32 0x0045e99c */
+void drawTunnelsButtons(View *)
+{
+    drawTunnelsButton(1, 0, 0);
+    drawTunnelsButton(2, 0, 0);
+}
+
+/* Takes the entry for `view` out of `list`, returning its kind (0 if
+   there's none). */
+/* Not exact: register allocation (the original keeps `kind` in ebx, `list`
+   in eax and `i` in edx; here `kind` is in ecx and ebx is scratch). */
+/* @zoombi32 0x0046033d */
+short removeTunnelEntry(TunnelList *list, short view)
+{
+    short i;
+    short kind;
+
+    for (i = 0; i < list->count; i++)
+        if (view == list->entries[i].view) {
+            kind = list->entries[i].kind;
+            for (; i < list->count - 1; i++) {
+                list->entries[i].view = list->entries[i + 1].view;
+                list->entries[i].unknown2 = list->entries[i + 1].unknown2;
+                list->entries[i].unknown4 = list->entries[i + 1].unknown4;
+                list->entries[i].unknown6 = list->entries[i + 1].unknown6;
+                list->entries[i].unknown8 = list->entries[i + 1].unknown8;
+                list->entries[i].unknownC[0] = list->entries[i + 1].unknownC[0];
+                list->entries[i].unknownC[1] = list->entries[i + 1].unknownC[1];
+                list->entries[i].unknownC[2] = list->entries[i + 1].unknownC[2];
+                list->entries[i].unknownC[3] = list->entries[i + 1].unknownC[3];
+                list->entries[i].unknownC[4] = list->entries[i + 1].unknownC[4];
+                list->entries[i].unknownC[5] = list->entries[i + 1].unknownC[5];
+                list->entries[i].unknownC[6] = list->entries[i + 1].unknownC[6];
+                list->entries[i].kind = list->entries[i + 1].kind;
+            }
+            list->count--;
+            return kind;
+        }
+    return 0;
+}

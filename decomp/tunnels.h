@@ -6,12 +6,16 @@
 #ifndef TUNNELS_H
 #define TUNNELS_H
 
-/* A record the caves keep a list of (fn_460527), 14 shorts: a view, and
+/* A record the caves keep a list of (fn_460527), 28 bytes: a view, and
    its kind last; the rest aren't known yet. */
 struct TunnelEntry
 {
     short view;
-    short unknown2[12];
+    short unknown2;
+    short unknown4;
+    short unknown6;
+    long unknown8;
+    short unknownC[7];
     short kind; /* +0x1a */
 };
 
@@ -102,5 +106,7 @@ extern short g_4b7fca; /* @data 0x4b7fca */
 extern short g_4b80a8; /* @data 0x4b80a8: the script last shown (debugging) */
 void fn_460642(short rule);
 short scene8Key(unsigned short key);
+void drawTunnelsButtons(View *);
+short removeTunnelEntry(TunnelList *list, short view);
 
 #endif
