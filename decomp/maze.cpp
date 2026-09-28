@@ -721,3 +721,73 @@ void fn_435da5(View *view, short event)
         break;
     }
 }
+
+/* Starts view g_4afd2c[n]'s script (g_4a2308[n], then told fn_436092),
+   with its second view's (g_4afd48[n], if g_4a22d0[n]), grouping them with
+   its paired Zoombini's view. */
+/* @zoombi32 0x0043573e */
+void fn_43573e(short n)
+{
+    short *parts;
+    View *view;
+    View *second;
+    View *other;
+
+    second = 0;
+    view = findView(g_4afd2c[n]);
+    if (view) {
+        setViewScript(view, g_4a2308[n], 1);
+        view->notify = fn_436092;
+        parts = (short *)&view->body;
+        if (g_4a22d0[n]) {
+            second = findView(g_4afd48[n]);
+            if (second)
+                setViewScript(second, g_4a2308[n] + 1, 1);
+        }
+        other = findView(parts[50]);
+        if (other) {
+            moveView(other->id, 1, view->id);
+            if (second)
+                groupViews(view->id, other->id, second->id, 0, 0, 0);
+            else
+                groupViews(view->id, other->id, 0, 0, 0, 0);
+        } else {
+            groupViews(view->id, view->id, 0, 0, 0, 0);
+        }
+    }
+}
+
+/* A view's notify: 92 deletes its two helper views (words 41 and 42),
+   takes it out of g_4afc4a and clears its square; when its script ends
+   (-1) it's listed in g_4b0958 (and g_4b0d3c cleared once g_4b0d3a
+   reaches g_4b0d38). */
+/* @zoombi32 0x00435f3d */
+void fn_435f3d(View *view, short event)
+{
+    short *parts = (short *)&view->body;
+    short i;
+
+    switch (event) {
+    case 92:
+        deleteView(parts[41]);
+        deleteView(parts[42]);
+        for (i = 0; i < 11; i++)
+            if (g_4afc4a[i] == view->id) {
+                for (; g_4afc4a[i]; i++)
+                    g_4afc4a[i] = g_4afc4a[i + 1];
+                i = 11;
+                g_4afc60--;
+            }
+        if (g_4b00d2[parts[33]][parts[34]][1] == view->id) {
+            g_4b00d2[parts[33]][parts[34]][0] = 0;
+            g_4b00d2[parts[33]][parts[34]][1] = 0;
+        }
+        break;
+    case -1:
+        g_4b0958[g_4b0a00] = view->id;
+        g_4b0a00++;
+        if (g_4b0d3a >= g_4b0d38)
+            g_4b0d3c = 0;
+        break;
+    }
+}

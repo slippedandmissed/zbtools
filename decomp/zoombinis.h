@@ -5558,3 +5558,13 @@ extern short g_4b00d2[][13][3]; /* the maze's squares */
 void fn_435c57(View *view, short event);
 void fn_435b9e(View *view, short event);
 void fn_435da5(View *view, short event);
+extern short g_4afd2c[];
+extern short g_4afd48[];
+extern short g_4a2308[];
+extern short g_4a22d0[];
+extern short g_4afc4a[12];
+extern short g_4afc60;
+extern short g_4b0958[];
+extern short g_4b0a00;
+void fn_436092(View *view, short event);
+void fn_43573e(short n);
