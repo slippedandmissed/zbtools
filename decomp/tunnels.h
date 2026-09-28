@@ -58,8 +58,6 @@ extern short g_4b7fee; /* @data 0x4b7fee */
 extern short g_4b7fd4; /* @data 0x4b7fd4 */
 extern short g_4b7fd6; /* @data 0x4b7fd6 */
 extern short g_4b7fd8; /* @data 0x4b7fd8 */
-extern short g_4b8000; /* @data 0x4b8000 */
-extern short g_4b8004; /* @data 0x4b8004 */
 void closeScene8();
 void fn_45fa56(View *, short event);
 void fn_45fb10(View *, short event);
@@ -124,6 +122,12 @@ void dropFirstTunnelEntry(TunnelList *list);
 void sayTunnelRemark();
 void fn_45fa80(View *, short event);
 void fn_45f9c9();
+void fn_45fb50(View *view, short event);
+extern Point g_4a78a6[4]; /* @data 0x4a78a6: where fn_45fb50 anchors the first entry's script */
+extern Point g_4a7770[16]; /* @data 0x4a7770: the places past door 1 */
+extern Point g_4a77b0[16]; /* @data 0x4a77b0: door 4 */
+extern Point g_4a77f0[16]; /* @data 0x4a77f0: door 2 */
+extern Point g_4a7830[16]; /* @data 0x4a7830: door 3 */
 void fn_461135();
 void fn_461bec();
 void fn_4612b1();

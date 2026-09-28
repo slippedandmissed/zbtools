@@ -84,17 +84,18 @@ void fn_45fa56(View *, short event)
     }
 }
 
-/* A notify: at the end (-1), fn_465175, and if g_4b8004, copies g_4b8000
-   and g_4b8004 into g_4b7fd4 and g_4b7fd6 and clears g_4b7fd8. */
+/* A notify for the first entry's line: at the end (-1), fn_465175, and if
+   there's a line to follow, sets it up to say next (g_4b7fd4 and g_4b7fd6,
+   clearing g_4b7fd8). */
 /* @zoombi32 0x0045fb10 */
 void fn_45fb10(View *, short event)
 {
     switch (event) {
     case -1:
         fn_465175();
-        if (g_4b8004) {
-            g_4b7fd4 = g_4b8000;
-            g_4b7fd6 = g_4b8004;
+        if (g_4b7ff0.entries[0].lineThen) {
+            g_4b7fd4 = g_4b7ff0.entries[0].speaker;
+            g_4b7fd6 = g_4b7ff0.entries[0].lineThen;
             g_4b7fd8 = 0;
         }
         break;
@@ -1469,5 +1470,175 @@ void fn_45f9c9()
             }
             dropFirstTunnelEntry(&g_4b7ff0);
         }
+    }
+}
+
+/* The Zoombinis' notify in the caves: 240-243 set the facing to use when
+   the next turn (0) ends, 250-253 face that way at once, 10 starts the
+   script in the first entry (unknownC) at one of four anchors, 13 has the
+   first entry's speaker say its line and stops the last view sound. At the
+   end of a script (-1): a Zoombini that is first in the queue, not waiting
+   (unknown2) and with a line to follow, goes through its door (the entry's
+   kind) to the next place there, counts toward g_4b8098 (more as the
+   chosen Zoombinis run out) and sets off the line; a waiting one gets a
+   remark (the first time) and walks to a free waiting place (fn_460021)
+   on its door's side. Either way the entry is dropped unless its line is
+   being said. */
+/* @zoombi32 0x0045fb50 */
+void fn_45fb50(View *view, short event)
+{
+    short spot;
+    Snoid *snoid;
+    View *speaker;
+    short side;
+    short anchor;
+    short after;
+    short count;
+
+    snoid = viewSnoid(view);
+    switch (event) {
+    case 250:
+    case 251:
+    case 252:
+    case 253:
+        setSnoidFacing(snoid, event - 250);
+        break;
+    case 240:
+    case 241:
+    case 242:
+    case 243:
+        g_4b7fe4 = event - 239;
+        break;
+    case 0:
+        snoid->unknownF2 = !snoid->unknownF2;
+        if (g_4b7fe4) {
+            setSnoidFacing(snoid, g_4b7fe4 - 1);
+            g_4b7fe4 = 0;
+        }
+        break;
+    case 10:
+        side = ((g_4b7ff0.entries[0].unknownC - 8000) / 2) & 3;
+        fn_4622f5();
+        startSnoidScript(snoid, g_4b7ff0.entries[0].unknownC, &g_4a78a6[side], 0);
+        view->notify = fn_45fb50;
+        break;
+    case 13:
+        speaker = 0;
+        if (g_4b7ff0.entries[0].line) {
+            startView(g_4b7ff0.entries[0].speaker, g_4b7ff0.entries[0].line, fn_45fb10, 1);
+            loadViewSounds(g_4b7ff0.entries[0].speaker, 1);
+            speaker = findView(g_4b7ff0.entries[0].speaker);
+        }
+        if (speaker) {
+            runViewScript(speaker, removedRgn);
+            speaker->body.group = view->body.group;
+            setViewsLocked(0);
+            if (isSoundPlaying(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+                stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                lastViewSound = 0;
+            }
+        }
+        break;
+    case -1:
+        g_4b7fd4 = 0;
+        g_4b7fd8 = 1;
+        if (!g_4b7ff0.entries[0].unknown2 && g_4b7ff0.entries[0].line
+            && g_4b7ff0.entries[0].view == view->id) {
+            if (g_4b7fe6[g_4b7ff0.entries[0].kind - 1] < 2) {
+                g_4b7fd4 = g_4b7ff0.entries[0].speaker;
+                g_4b7fd6 = g_4b7ff0.entries[0].line;
+            }
+            if (g_4b7ff0.entries[0].kind) {
+                anchor = g_4b808c;
+                after = 0;
+                view->flags |= 0x4008000;
+                switch (g_4b7ff0.entries[0].kind) {
+                case 1:
+                    if (g_4b8080) {
+                        anchor = g_4b7f34[g_4b8080 - 1];
+                        after = 1;
+                    }
+                    g_4b7f34[g_4b8080] = view->id;
+                    *(Point *)&viewSnoid(view)->targetX = g_4a7770[g_4b8080];
+                    g_4b8080++;
+                    break;
+                case 2:
+                    if (g_4b8084) {
+                        anchor = g_4b7f74[g_4b8084 - 1];
+                        after = 1;
+                    }
+                    g_4b7f74[g_4b8084] = view->id;
+                    *(Point *)&viewSnoid(view)->targetX = g_4a77f0[g_4b8084];
+                    g_4b8084++;
+                    break;
+                case 3:
+                    if (g_4b8086) {
+                        anchor = g_4b7f94[g_4b8086 - 1];
+                        after = 1;
+                    }
+                    g_4b7f94[g_4b8086] = view->id;
+                    *(Point *)&viewSnoid(view)->targetX = g_4a7830[g_4b8086];
+                    g_4b8086++;
+                    break;
+                default:
+                    if (g_4b8082) {
+                        anchor = g_4b7f54[g_4b8082 - 1];
+                        after = 1;
+                    }
+                    g_4b7f54[g_4b8082] = view->id;
+                    *(Point *)&viewSnoid(view)->targetX = g_4a77b0[g_4b8082];
+                    g_4b8082++;
+                    break;
+                }
+                viewSnoid(view)->unknownF7 = 1;
+                moveView(view->id, after, anchor);
+                setSnoidAction(viewSnoid(view), 10, 0);
+                count = countChosenSnoids();
+                if (count == g_4b8094) {
+                    g_4b8098 += 2;
+                    g_4b8096 = randomBetween(20055, 20063);
+                } else {
+                    switch (count) {
+                    case 10:
+                        g_4b8098++;
+                        break;
+                    case 12:
+                        g_4b8098++;
+                        break;
+                    case 14:
+                        g_4b8098 += 2;
+                        break;
+                    }
+                }
+            }
+            if (!g_4b7fba)
+                g_4b7fba = countChosenSnoids();
+        } else if (g_4b7ff0.entries[0].unknown2) {
+            if (!g_4b808e && g_4b8090) {
+                g_4b808e = 1;
+                queueViewSound(g_4b8090, 1);
+                startView(g_4b8092, randomBetween(0, 3) + 7001, 0, 0);
+            }
+            switch (g_4b7ff0.entries[0].kind) {
+            case 1:
+            case 2:
+                side = 1;
+                break;
+            case 3:
+            case 4:
+                side = 0;
+                break;
+            }
+            fn_460021(&spot, side);
+            view->flags = 1;
+            *(Point *)&viewSnoid(view)->targetX = tunnelPlaces[spot];
+            setSnoidAction(viewSnoid(view), 7, 0);
+            fn_4622f5();
+        }
+        if (!g_4b7fd4) {
+            dropFirstTunnelEntry(&g_4b7ff0);
+            g_4b7fd2 = 0;
+        }
+        break;
     }
 }
