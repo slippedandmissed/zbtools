@@ -2945,6 +2945,272 @@ void closeLillyPuzzle()
     }
 }
 
+/*
+ * The puzzle's idle work, once per pass: ends it when asked, and otherwise
+ * moves the guide's scenes along one step (each waits for its group of
+ * views to finish): setting the board up again when a round starts, the
+ * lily pad count, and a Zoombini's reaction after it is dropped on a square
+ * (idleSnoidView): hopping on to the pad, or being sent back.
+ */
+/* @zoombi32 0x00424b2d */
+void lillyIdle()
+{
+    short sound;
+    short backdrop;
+    basePort *saved;
+    View *view;
+    View *other;
+
+    if (g_4a1ab0 || !g_4abec0)
+        return;
+    g_4a1ab0 = 1;
+    updateViews();
+    if (g_4b0d52) {
+        if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+            g_4a1ab0 = 0;
+            return;
+        }
+        if (!g_4b9688 || g_4b9688 == 3) {
+            if (g_4b9688 == 3)
+                chooseSnoids(0, 0);
+            if (viewsLocked || !g_4b755a) {
+                g_4b0d50 = g_4b0d52;
+                g_4b0d52 = 0;
+                fn_46be2e(0);
+                closeLillyPuzzle();
+                g_4a1ab0 = 0;
+                return;
+            }
+        } else if (g_4b9688 == 2) {
+            g_4b9688 = 0;
+            g_4b0d52 = 0;
+        }
+    }
+    if (g_4ac0f0) {
+        if (!groupLeader[g_4ac0f0]) {
+            g_4ac0f0 = 0;
+            sound = randomUpTo(3) + 7503;
+            if (g_4ac0d8 != 3 && g_4ac0e6) {
+                if (!startView(g_4ac0ba, sound, 0, 0)) {
+                    g_4ac0ba = addView(0x8108000, drawCels, runViewScript, sound, 6, 0, 0, 0);
+                    g_4ac0f6 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+                }
+                loadViewSounds(g_4ac0ba, 1);
+            }
+        }
+    } else if (g_4ac0f6) {
+        if (!groupLeader[g_4ac0f6]) {
+            g_4ac0f6 = 0;
+            g_4abec2 = 1;
+        }
+    } else if (g_4ac0f2) {
+        g_4ac140 = clockTime();
+        if (!groupLeader[g_4ac0f2] || g_4ac13c) {
+            g_4ac0f2 = 0;
+            if (g_4ac0ba && g_4ac0be != 4)
+                fn_4280fd();
+            backdrop = 1;
+            if (g_4ac0d8 >= 3)
+                backdrop++;
+            chooseSnoids(1, 0);
+            removeDeadViews();
+            useAltSnoids(1);
+            deleteView(g_4ac0c8);
+            deleteView(g_4ac0ca);
+            g_4ac0ba = g_4ac0c8 = 0;
+            drawBackdrop(backdrop + 5000);
+            saved = getPort();
+            setPort(viewPort);
+            if (g_4ac0d8 == 0) {
+                fillPortRect(Rect(g_4a19e4), Color(0x25), 0);
+                fillPortRect(Rect(g_4a19ec), Color(0x25), 0);
+            } else if (g_4ac0d8 <= 2) {
+                fillPortRect(Rect(g_4a19f4), Color(0x25), 0);
+            } else if (g_4ac0d8 == 3) {
+                fillPortRect(Rect(g_4a19fc), Color(0x25), 0);
+            }
+            setPort(saved);
+            setViewPlaces(16, g_4a1a1c, 1);
+            makePartySnoids(0);
+            addView(0x1000, drawButtons, fn_4249e1, 0, 0, 0, 0, 0);
+            addLillyViews();
+            if (g_4ac0d8 != 3) {
+                g_4ac140 = clockTime();
+                if (g_4ac13c) {
+                    g_4ac0f2 = g_4ac0c0 = 0;
+                    g_4ac0f4 = g_4ac13a = g_4ac13c = 0;
+                    if (g_4ac0ba)
+                        fn_4280fd();
+                    g_4ac0fa = addView(0x108000, drawCels, runViewScript, g_4ac100 + 6000, 6, 0, 0, 0);
+                    queueViewSound(g_4ac0d8 + 30020, 0);
+                } else if (!g_4ac0be || g_4ac0be == 4 && g_4ac0c0) {
+                    g_4ac0ba = addView(0x8188000, drawCels, runViewScript, g_4ac0d8 + 7500, 6, 0, 0, 0);
+                    g_4ac0f4 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+                } else if (g_4ac0be > 4 && !g_4ac0c0) {
+                    if (g_4ac0ba)
+                        fn_4280fd();
+                    g_4ac0ba = addView(0x8108000, drawCels, runViewScript, g_4ac0d8 + 7500, 6, 0, 0, 0);
+                    loadViewSounds(g_4ac0ba, 1);
+                    g_4ac0f4 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+                } else {
+                    g_4ac0f4 = g_4ac13a = g_4ac13c = 0;
+                    g_4ac0fa = addView(0x108000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
+                    g_4ac0fc = groupViews(g_4ac0fa, g_4ac0fa, 0, 0, 0, 0);
+                    queueViewSound(g_4ac0d8 + 30020, 0);
+                }
+            } else {
+                g_4ac0f4 = g_4ac13a = g_4ac13c = 0;
+                if (g_4ac0ba)
+                    fn_4280fd();
+                queueViewSound(g_4ac0d8 + 30020, 0);
+            }
+            chooseSnoids(0, 0);
+            fn_42492b(1, 0, 0);
+            fn_42492b(2, 0, 0);
+            updateViews();
+            showRect(&g_4aa7b8);
+            resetViewClock();
+        }
+    } else if ((!g_4ac0be || g_4ac0be == 4) && g_4ac0c0 && !g_4ac13c) {
+        if (clockTime() - g_4ac140 > 180) {
+            g_4ac0c0 = 0;
+            startView(g_4ac0ba, g_4ac0d8 + 7500, 0, 0);
+            loadViewSounds(g_4ac0ba, 1);
+            g_4ac0f4 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+        } else if (!g_4ac0be) {
+            g_4ac0c0 = 0;
+            startView(g_4ac0ba, g_4ac0d8 + 7500, 0, 0);
+            loadViewSounds(g_4ac0ba, 1);
+            g_4ac0f4 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+        }
+    } else if (g_4ac0f4) {
+        if (!groupLeader[g_4ac0f4] || g_4ac13c) {
+            g_4ac0f4 = g_4ac13a = 0;
+            queueViewSound(g_4ac0d8 + 30020, 0);
+            if (g_4ac13c) {
+                g_4ac13c = 0;
+                if (g_4ac0ba)
+                    fn_4280fd();
+                if (g_4ac0d8 != 3)
+                    g_4ac0fa = addView(0x108000, drawCels, runViewScript, g_4ac100 + 6000, 6, 0, 0, 0);
+            } else if (g_4ac0d8 != 3) {
+                g_4ac0fa = addView(0x108000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
+                g_4ac0fc = groupViews(g_4ac0fa, g_4ac0fa, 0, 0, 0, 0);
+            }
+        }
+    } else if (g_4ac0fc) {
+        g_4ac0fc = 0;
+        other = findView(g_4ac0fa);
+        if (g_4ac0fe <= g_4ac100) {
+            if (!other)
+                g_4ac0fa = addView(0x108000, drawCels, runViewScript, g_4ac0fe + 6000, 6, 0, 0, 0);
+            else
+                startView(g_4ac0fa, g_4ac0fe + 6000, 0, 0);
+            g_4ac0fc = groupViews(g_4ac0fa, g_4ac0fa, 0, 0, 0, 0);
+            g_4ac0fe++;
+        }
+    } else if (g_4ac0d0) {
+        if (!groupLeader[g_4ac0d0])
+            g_4ac0d0 = 0;
+    } else if (g_4ac504) {
+        view = idleSnoidView(g_4ac504);
+        if (view) {
+            g_4ac504 = 0;
+            if (viewSnoid(view)->unknownF7) {
+                g_4ac0e4++;
+                if (g_4abdc0[g_4ac0ec] > 0)
+                    if (++g_4abdc0[g_4ac0ec] > 6)
+                        g_4abdc0[g_4ac0ec] = 6;
+                fn_42790a(view->id);
+                g_4abec2 = 1;
+                if (!g_4abdc0[g_4ac0ec]) {
+                    if (g_4ac0d8 < 3)
+                        startView(g_4abfc0[g_4ac0ec], g_4ac0ec + 6013, 0, 0);
+                    else
+                        fn_4275dc(g_4ac0ec);
+                    g_4abdc0[g_4ac0ec]++;
+                }
+                g_4ac136 = view->id;
+            } else {
+                g_4ac0ce = 1;
+                if (g_4ac0d8 < 3) {
+                    if (g_4ac0fe < 11)
+                        startView(g_4abec6[g_4ac0ec], g_4ac0ec + 6038, 0, 0);
+                    else
+                        fn_427e34();
+                } else {
+                    fn_427610(g_4ac0ec);
+                    if (g_4ac0fe >= 11 && !*(short *)(g_4a4ba0 + 0x20)) {
+                        other = findView(g_4ac40a[g_4ac0ec]);
+                        other->notify = (ViewNotify)fn_427e1a;
+                    }
+                }
+                g_4ac136 = view->id;
+                fn_427644(g_4ac136);
+                if (g_4ac0d8 != 3) {
+                    if (!g_4ac0da) {
+                        startView(g_4ac0fa, ++g_4ac0fe + 6000, 0, 0);
+                        g_4ac0f0 = groupViews(g_4ac0fa, g_4ac0fa, 0, 0, 0, 0);
+                    }
+                } else {
+                    g_4ac0fe++;
+                }
+                darkenPalette();
+                if (g_4ac0fe == 9) {
+                    sound = randomUpTo(2) + 7007;
+                    if (!startView(g_4ac0ba, sound, 0, 0)) {
+                        g_4ac0ba = addView(0x8108000, drawCels, runViewScript, sound, 6, 0, 0, 0);
+                        findView(g_4ac0ba);
+                    }
+                    loadViewSounds(g_4ac0ba, 1);
+                }
+                if (g_4ac0fe >= 12) {
+                    g_4ac0e6++;
+                    queueViewSound(6006, 0);
+                    updateViews();
+                    waitForEventFor(0, 60, 0, 1);
+                    if (g_4ac0d8 == 3) {
+                        randomUpTo(3);
+                        queueViewSound(7500, 0);
+                    }
+                }
+            }
+        }
+    } else if (g_4ac0f8) {
+        if (!groupLeader[g_4ac0f8]) {
+            g_4ac0f8 = 0;
+            other = findView(g_4ac0ea);
+            if (other) {
+                if (g_4ac0d8 == 3)
+                    setSnoidAction(viewSnoid(other), 0, 0);
+                else
+                    setSnoidAction(viewSnoid(other), 7, 0);
+                *(Point *)&viewSnoid(other)->targetX = *(Point *)&g_4ac510;
+                g_4ac0dc = 0;
+                if (g_4ac0e4 >= g_4ac0e8) {
+                    if (g_4ac0d8 < 3) {
+                        fn_427e34();
+                        g_4ac0ec = 200;
+                        other = findView(g_4ac0ba);
+                        sound = randomUpTo(2) + 7507;
+                        if (other)
+                            setViewScript(other, sound, 1);
+                        else
+                            g_4ac0ba = addView(0x8108000, drawCels, runViewScript, sound, 6, 0, 0, 0);
+                        loadViewSounds(g_4ac0ba, 1);
+                        g_4ac0f6 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+                    } else {
+                        g_4ac0ec = 200;
+                    }
+                }
+            }
+        }
+    }
+    if (g_4ac0d6 == 2 && g_4ac0d8 == 1)
+        fn_428140();
+    g_4a1ab0 = 0;
+}
+
 /* Told of a Zoombini's script's events on the puzzle. */
 /* @zoombi32 0x004276d0 */
 void fn_4276d0(View *view, short event)
