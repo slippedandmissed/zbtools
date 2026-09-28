@@ -1948,3 +1948,99 @@ void fn_438d67()
         g_4b00be++;
     }
 }
+
+/* A fifth way of choosing the maze's sequence: three rows' features
+   (fn_437416), then enough of the commonest to cover the Zoombinis left,
+   the fourth row's, two from the copy of the rows taken, and two at
+   random. */
+/* @zoombi32 0x00439190 */
+void fn_439190()
+{
+    short n;
+    short last;
+    short remaining;
+    short total;
+    short got;
+    short values[17];
+    short i;
+
+    g_4b00be = 0;
+    g_4b00c0 = 0;
+    g_4b00c2 = 0;
+    remaining = 0;
+    fn_437089();
+    fn_4371b3(0);
+    fn_43824f();
+    if (!fn_438280())
+        fn_43836f();
+    g_4b0096[g_4b00be] = fn_437416(0, 0);
+    if (!g_4b0096[g_4b00be])
+        g_4b0096[g_4b00be] = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+    g_4b00be++;
+    g_4b0096[g_4b00be] = fn_437416(0, 0);
+    if (!g_4b0096[g_4b00be])
+        g_4b0096[g_4b00be] = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+    g_4b00be++;
+    g_4b0096[g_4b00be] = fn_437416(0, 0);
+    if (!g_4b0096[g_4b00be])
+        g_4b0096[g_4b00be] = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+    g_4b00be++;
+    last = fn_437416(0, 0);
+    if (!last)
+        last = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+    fn_4371b3(g_4b0096[0]);
+    fn_4371b3(g_4b0096[1]);
+    total = g_4a26aa[fn_4371b3(g_4b0096[2])];
+    for (i = 0, n = 0; i < total; i++)
+        if (!i) {
+            g_4b0096[g_4b00be] = fn_437b7b(1, 1);
+            if (!g_4b0096[g_4b00be])
+                g_4b0096[g_4b00be] = g_4b0096[randomBetween(0, 2)];
+            got = fn_437acb(g_4b0096[g_4b00be]);
+            fn_4371b3(g_4b0096[g_4b00be]);
+            values[n] = g_4b0096[g_4b00be];
+            n++;
+            g_4b00be++;
+            i = got;
+            remaining = total - got;
+        } else if (remaining) {
+            values[n] = fn_437b7b(1, remaining);
+            if (!values[n])
+                values[n] = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+            got = fn_437acb(values[n]);
+            fn_4371b3(values[n++]);
+            i += got;
+            remaining = total - i;
+        }
+    g_4b0096[g_4b00be] = last;
+    g_4b00be++;
+    fn_437089();
+    fn_4371b3(0);
+    fn_43824f();
+    got = fn_438280();
+    if (!got)
+        fn_43836f();
+    fn_4371b3(last);
+    g_4b0096[g_4b00be] = fn_437ea2(1, 3);
+    if (!g_4b0096[g_4b00be]) {
+        if (got)
+            g_4b0096[g_4b00be] = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+        else
+            g_4b0096[g_4b00be] = g_4b0096[0];
+    }
+    fn_4371b3(g_4b0096[g_4b00be]);
+    g_4b00be++;
+    g_4b0096[g_4b00be] = fn_437ea2(1, 3);
+    if (!g_4b0096[g_4b00be]) {
+        if (got)
+            g_4b0096[g_4b00be] = g_4b0018[randomBetween(g_4b00c8, g_4b00c6)];
+        else
+            g_4b0096[g_4b00be] = g_4b0096[0];
+    }
+    fn_4371b3(g_4b0096[g_4b00be]);
+    g_4b00be++;
+    g_4b0096[g_4b00be] = randomBetween(1, 20);
+    g_4b00be++;
+    g_4b0096[g_4b00be] = randomBetween(1, 20);
+    g_4b00be++;
+}
