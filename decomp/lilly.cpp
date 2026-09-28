@@ -4460,3 +4460,304 @@ void openOtherPuzzle()
     }
     setViewsLocked(0);
 }
+
+/*
+ * The other puzzle's idle work, once per pass: ends it when asked, and
+ * otherwise starts the waiting actors' next moves (the queues of views
+ * whose scripts have ended), sends in new actors along the starting row
+ * from time to time (levels 3 and 4), and deletes the finished ones.
+ */
+/* Not exact: the original caches the addresses of g_4acfec and g_4acdc8
+   in esi and edi (this caches others), which changes the registers
+   throughout. */
+/* @zoombi32 0x00428d84 */
+void otherIdle()
+{
+    short row;
+    View *view;
+    LillyActor *actor;
+    short script;
+
+    if (g_4a1d88 || !g_4af368)
+        return;
+    g_4a1d88 = 1;
+    updateViews();
+    if (g_4b0d52) {
+        if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+            g_4a1d88 = 0;
+            return;
+        }
+        if (!g_4b9688 || g_4b9688 == 3) {
+            if (g_4b9688 == 3)
+                chooseSnoids(0, 0);
+            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
+                g_4b0d50 = g_4b0d52;
+                g_4b0d52 = 0;
+                fn_46be2e(0);
+                closeOtherPuzzle();
+                g_4a1d88 = 0;
+                return;
+            }
+        } else if (g_4b9688 == 2) {
+            g_4b9688 = 0;
+            g_4b0d52 = 0;
+        }
+    } else if (g_4b9684) {
+        fn_43af6b();
+        g_4a1d88 = 0;
+        return;
+    } else {
+        while (g_4acdc8 > 0 && !g_4acfee) {
+            g_4acdc8--;
+            g_4acfee = g_4acda0[g_4acdc8];
+            view = findView(g_4acfee);
+            if (view) {
+                setViewScript(view, 10057, 1);
+                view->placed = placeJumper;
+                view->notify = fn_42a6fa;
+            }
+        }
+        while (g_4ace1c > 0 && !g_4acfec) {
+            g_4ace1c--;
+            g_4acfec = g_4acdf4[g_4ace1c];
+            view = findView(g_4acfec);
+            if (view) {
+                setViewScript(view, 10058, 1);
+                view->placed = placeJumperAt;
+                view->notify = fn_42adb5;
+                view->flags = 0x4980002;
+                moveView(view->id, 0, g_4aed10);
+            }
+        }
+        if (g_4acfe8) {
+            view = findView(g_4acfe8);
+            g_4acfe8 = 0;
+            g_4acfec = 0;
+            if (view) {
+                actor = (LillyActor *)&view->body;
+                short *parts = (short *)&view->body;
+
+                *(Point *)&actor->body.x = g_4a1ca4[parts[20]];
+                setViewScript(view, parts[20] + 10043, 1);
+            }
+        }
+        while (g_4ace46 > 0 && !g_4acfee) {
+            view = findView(g_4ace1e[--g_4ace46]);
+            if (view) {
+                actor = (LillyActor *)&view->body;
+                if (actor->unknownDe == 3) {
+                    setViewScript(view, randomBetween(0, 2) * 2 + 10061, 1);
+                    view->placed = fn_42f336;
+                    view->notify = fn_42a7b6;
+                } else {
+                    setViewScript(view, randomBetween(0, 2) * 2 + 10060, 1);
+                    view->placed = fn_42f3ed;
+                    view->notify = fn_42a7b6;
+                }
+            }
+        }
+        while (g_4acdf2 && !g_4acff0) {
+            g_4acdf2--;
+            g_4acff0 = g_4acdca[g_4acdf2];
+            view = findView(g_4acff0);
+            if (view) {
+                setViewScript(view, 10059, 1);
+                view->placed = placeLander;
+                view->notify = fn_42aaba;
+            }
+        }
+        if (g_4acff2) {
+            deleteView(g_4acff2);
+            g_4acff2 = 0;
+            g_4acff0 = 0;
+        }
+        while (g_4acec4) {
+            view = findView(g_4ace9c[--g_4acec4]);
+            if (view) {
+                short *parts = (short *)&view->body;
+
+                setViewScript(view, parts[12] + 10141, 1);
+                view->placed = fn_42afbe;
+                view->notify = fn_42b003;
+                view->flags |= 0x4000000;
+            }
+        }
+        while (g_4ace9a) {
+            view = findView(g_4ace72[--g_4ace9a]);
+            if (view) {
+                short *parts = (short *)&view->body;
+
+                setViewScript(view, parts[15] + 10019, 1);
+                view->placed = fn_42afbe;
+                view->notify = fn_42f49d;
+            }
+        }
+        if (!g_4af360) {
+            if (g_4af5a4 == 1) {
+                g_4af5a4 = 0;
+                while (g_4acd9e) {
+                    g_4acd9e--;
+                    g_4acd4c[g_4acd74] = g_4acd76[g_4acd9e];
+                    g_4acd74++;
+                }
+                while (g_4acd74) {
+                    view = findView(g_4acd4c[--g_4acd74]);
+                    if (view) {
+                        if (clockTime() >= view->nextUpdate) {
+                            actor = (LillyActor *)&view->body;
+                            moveView(view->id, 0, g_4aed22[actor->row]);
+                            script = fn_42b276(actor);
+                            if (script == 10031) {
+                                setViewScript(view, script += actor->row, 1);
+                                view->placed = fn_42f192;
+                                view->notify = fn_42ae14;
+                            } else if (script) {
+                                setViewScript(view, script, 1);
+                                view->placed = fn_42f192;
+                                view->notify = hopNotify;
+                            } else {
+                                g_4acd76[g_4acd9e] = g_4acd4c[g_4acd74];
+                                g_4acd9e++;
+                            }
+                        } else {
+                            g_4acd76[g_4acd9e] = g_4acd4c[g_4acd74];
+                            g_4acd9e++;
+                        }
+                    }
+                }
+            } else {
+                g_4af5a4 = 1;
+                if (g_4a1b1c > 2 && !g_4af360) {
+                    if (g_4b755a <= 0) {
+                        while (g_4acfe6) {
+                            view = findView(g_4acec6[--g_4acfe6]);
+                            if (view) {
+                                actor = (LillyActor *)&view->body;
+                                startPlan(actor);
+                            }
+                        }
+                        if (clockTime() > g_4af0fc && g_4af0e6 < 20) {
+                            short column = g_4aece6[g_4af0e4].column;
+
+                            row = 0;
+                            if (!g_4acff4[row][column].attributes[0]) {
+                                g_4aeea0[g_4af0e6] = addLillyActor(g_4af0e4);
+                                view = findView(g_4aeea0[g_4af0e6]);
+                                if (view) {
+                                    g_4af0e6++;
+                                    actor = (LillyActor *)&view->body;
+                                    short *parts = (short *)&view->body;
+
+                                    actor->column = column;
+                                    actor->row = row;
+                                    actor->unknownBe = g_4af0e4;
+                                    actor->unknownDe = g_4aece6[0].attribute;
+                                    actor->unknownDf = g_4acff4[actor->row][actor->column].attributes[actor->unknownDe];
+                                    actor->unknownE0 = g_4a1b1e[g_4a1b38[actor->unknownDe]] + actor->unknownDf;
+                                    parts[25] = 0;
+                                    parts[26] = 0;
+                                    startPlan(actor);
+                                    g_4acff4[actor->row][actor->column].attributes[0] = 1;
+                                    actor->unknownC2 = 1;
+                                    actor->body.running = 1;
+                                    actor->grid[actor->row][actor->column] = 1;
+                                    actor->body.x = g_4ac940[actor->row + 1] + actor->column * 35 + 2;
+                                    actor->body.y = g_4ac944[actor->row + 1] + g_4a1d70[actor->column] - 17;
+                                    g_4aebae[actor->row][actor->column] = 1;
+                                    setViewScript(view, 10067, 1);
+                                    view->placed = fn_42f24c;
+                                    view->notify = fn_42a077;
+                                    moveView(view->id, 0, g_4aed22[actor->row]);
+                                    g_4af0fc = clockTime() + 480;
+                                }
+                            } else if (g_4aebae[row][column] == 1) {
+                                g_4aeea0[g_4af0e6] = addLillyActor(g_4af0e4);
+                                view = findView(g_4aeea0[g_4af0e6]);
+                                if (view) {
+                                    g_4af0e6++;
+                                    actor = (LillyActor *)&view->body;
+                                    short *parts = (short *)&view->body;
+
+                                    parts[25] = 1;
+                                    parts[26] = 0;
+                                    actor->column = column;
+                                    actor->row = row;
+                                    actor->unknownC2 = 1;
+                                    actor->body.running = 1;
+                                    actor->grid[actor->row][actor->column] = 1;
+                                    actor->body.x = g_4ac940[actor->row + 1] + actor->column * 35 + 2;
+                                    actor->body.y = g_4ac944[actor->row + 1] + g_4a1d70[actor->column] - 17;
+                                    setViewScript(view, 10067, 1);
+                                    view->placed = fn_42f24c;
+                                    view->notify = fn_42a077;
+                                    moveView(view->id, 0, g_4aed22[actor->row]);
+                                    g_4af0fc = clockTime() + 480;
+                                }
+                            }
+                            if (++g_4af0e4 >= g_4af0f8)
+                                g_4af0e4 = 0;
+                        }
+                    }
+                    while (g_4acd4a) {
+                        g_4acd4a--;
+                        g_4ac9e6[g_4acb06] = g_4acc2a[g_4acd4a];
+                        g_4acb06++;
+                    }
+                    while (g_4acb06) {
+                        view = findView(g_4ac9e6[--g_4acb06]);
+                        if (view) {
+                            if (clockTime() >= view->nextUpdate) {
+                                actor = (LillyActor *)&view->body;
+                                short *parts = (short *)&view->body;
+
+                                if (!parts[25])
+                                    script = fn_42f506(view);
+                                else
+                                    script = fn_42f7a5(view);
+                                if (script == 10069) {
+                                    moveView(view->id, 0, g_4aed22[actor->row]);
+                                    setViewScript(view, script, 1);
+                                    view->placed = fn_42f24c;
+                                    view->notify = fn_42a077;
+                                    actor->unknownC2 = 0;
+                                } else if (script) {
+                                    switch (actor->unknownD5) {
+                                    case 0:
+                                        moveView(view->id, 0, g_4aed22[actor->row]);
+                                        break;
+                                    case 1:
+                                        moveView(view->id, 0, g_4aed22[actor->row]);
+                                        break;
+                                    case 2:
+                                        moveView(view->id, 0, g_4aed22[actor->row + 1]);
+                                        break;
+                                    case 3:
+                                        moveView(view->id, 0, g_4aed22[actor->row]);
+                                        break;
+                                    }
+                                    setViewScript(view, script, 1);
+                                    view->placed = placeHopper;
+                                    view->notify = fn_42a077;
+                                } else {
+                                    g_4acc2a[g_4acd4a] = g_4ac9e6[g_4acb06];
+                                    g_4acd4a++;
+                                }
+                            } else {
+                                g_4acc2a[g_4acd4a] = g_4ac9e6[g_4acb06];
+                                g_4acd4a++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        while (g_4af0e0)
+            deleteView(g_4aed80[--g_4af0e0]);
+        if (g_4af33a) {
+            deleteView(g_4af33a);
+            g_4af33a = 0;
+        }
+    }
+    fn_43af6b();
+    g_4a1d88 = 0;
+}

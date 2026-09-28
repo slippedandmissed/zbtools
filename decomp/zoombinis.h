@@ -5014,6 +5014,10 @@ struct LillyStart
 extern LillyStart g_4aece6[3];
 void setUpBoard();
 void openOtherPuzzle();
+void otherIdle();
+extern short g_4a1d88;
+extern short g_4af5a4;
+extern short g_4aed10;
 extern short g_4ac958;
 extern short g_4af36c;
 extern short g_4af100;
