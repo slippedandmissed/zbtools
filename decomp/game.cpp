@@ -1048,3 +1048,203 @@ void fn_44f066(short which, short lit, short show)
             showRect(&g_4a4708[which].rect);
     }
 }
+
+/* Gives the Zoombinis in the views g_4b26ac the features set in slots 0-3
+   and 7-4 (in that order, so later slots win), and returns 2 if the two
+   then differ, else 0. */
+/* @zoombi32 0x004513ac */
+short fn_4513ac()
+{
+    char *first;
+    char *second;
+    short i;
+    View *view;
+    short result;
+
+    view = findView(g_4b26ac[0]);
+    if (view) {
+        view->body.running = 1;
+        Snoid *snoid = (Snoid *)&view->body;
+
+        snoid->unknownF4 = 4;
+        first = snoid->features;
+        for (i = 0; i < 4; i++) {
+            if (g_4b26cc[i][0])
+                first[0] = g_4b26cc[i][0];
+            if (g_4b26cc[i][1])
+                first[1] = g_4b26cc[i][1];
+            if (g_4b26cc[i][2])
+                first[2] = g_4b26cc[i][2];
+            if (g_4b26cc[i][3])
+                first[3] = g_4b26cc[i][3];
+        }
+    }
+    view = findView(g_4b26ac[1]);
+    if (view) {
+        view->body.running = 1;
+        Snoid *snoid = (Snoid *)&view->body;
+
+        snoid->unknownF4 = 4;
+        second = snoid->features;
+        for (i = 7; i > 3; i--) {
+            if (g_4b26cc[i][0])
+                second[0] = g_4b26cc[i][0];
+            if (g_4b26cc[i][1])
+                second[1] = g_4b26cc[i][1];
+            if (g_4b26cc[i][2])
+                second[2] = g_4b26cc[i][2];
+            if (g_4b26cc[i][3])
+                second[3] = g_4b26cc[i][3];
+        }
+    }
+    result = 0;
+    if (second[0] != first[0])
+        result = 2;
+    else if (second[1] != first[1])
+        result = 2;
+    else if (second[2] != first[2])
+        result = 2;
+    else if (second[3] != first[3])
+        result = 2;
+    return result;
+}
+
+/* Starts the scene's next move: view g_4b25a4 or g_4b25a6's script, and
+   the pair of views g_4b258c and g_4b258e (scripts from g_4b2714), grouped. */
+/* @zoombi32 0x004514f6 */
+void fn_4514f6()
+{
+    View *view;
+    View *first;
+    View *second;
+
+    g_4b2788 = 0;
+    if (!g_4b2742)
+        view = findView(g_4b25a4);
+    else
+        view = findView(g_4b25a6);
+    if (view) {
+        view->flags = 0x5188000;
+        if (g_4b2630 == 1 || g_4b2630 == 2) {
+            setViewScript(view, g_4b2724, 0);
+        } else {
+            g_4b2742 = !g_4b2742;
+            setViewScript(view, g_4b2726, 0);
+        }
+    }
+    first = findView(g_4b258c);
+    if (first) {
+        setViewScript(first, g_4b2714[g_4b273c], 1);
+        loadViewSounds(first->id, 1);
+        first->notify = fn_45174e;
+    }
+    second = findView(g_4b258e);
+    if (second) {
+        setViewScript(second, g_4b2714[g_4b273c + 1], 1);
+        second->notify = fn_45174e;
+    }
+    view = findView(g_4b26b2);
+    if (view && second)
+        moveView(view->id, 0, second->id);
+    if (first && second)
+        groupViews(first->id, second->id, 0, 0, 0, 0);
+}
+
+/* Gives the eight Zoombinis in the views g_4b2672 random features at their
+   places (g_4a44cc), except that one of the first `count`, at random, gets
+   the features set in g_4b263c. */
+/* @zoombi32 0x004520ec */
+void fn_4520ec(short count)
+{
+    short j;
+    char *features;
+    short i;
+    Snoid *snoid;
+    short chosen;
+    View *view;
+
+    if (count) {
+        if (count >= 8)
+            chosen = randomBetween(0, 7);
+        else
+            chosen = randomBetween(0, count - 1);
+        for (i = 0; i < 8; i++) {
+            view = findView(g_4b2672[i]);
+            if (view) {
+                view->body.running = 1;
+                view->changed = 1;
+                snoid = (Snoid *)&view->body;
+                snoid->unknownF4 = 4;
+                *(Point *)&snoid->body.x = g_4a44cc[i];
+                features = snoid->features;
+                for (j = 0; j < 4; j++)
+                    features[j] = randomBetween(1, 4);
+                snoid->unknownF1 = 1;
+                if (i == chosen) {
+                    if (g_4b263c[0])
+                        features[0] = g_4b263c[0];
+                    else
+                        features[0] = randomBetween(1, 4);
+                    if (g_4b263c[1])
+                        features[1] = g_4b263c[1];
+                    else
+                        features[1] = randomBetween(1, 4);
+                    if (g_4b263c[2])
+                        features[2] = g_4b263c[2];
+                    else
+                        features[2] = randomBetween(1, 4);
+                    if (g_4b263c[3])
+                        features[3] = g_4b263c[3];
+                    else
+                        features[3] = randomBetween(1, 4);
+                }
+            }
+        }
+    }
+}
+
+/* Moves on the one feature (unknownF5) of the Zoombinis in the views
+   g_4b2776[1-3] that change it: each takes the next value after its slot's (or
+   an earlier slot's, if its is unset), wrapping 5 round to 1, and records
+   it in the next slot. */
+/* @zoombi32 0x00450e87 */
+void fn_450e87()
+{
+    short i;
+    View *view;
+    Snoid *snoid;
+
+    for (i = 0; i < 3; i++) {
+        view = findView(g_4b2776[i + 1]);
+        if (view) {
+            snoid = (Snoid *)&view->body;
+            snoid->unknownF4 = 4;
+            if (snoid->unknownF5) {
+                switch (i) {
+                case 0:
+                    snoid->features[snoid->unknownF5 - 1] = g_4b26cc[0][snoid->unknownF5 - 1] + 1;
+                    break;
+                case 1:
+                    if (g_4b26cc[1][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[1][snoid->unknownF5 - 1] + 1;
+                    else
+                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[0][snoid->unknownF5 - 1] + 1;
+                    break;
+                case 2:
+                    if (g_4b26cc[2][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[2][snoid->unknownF5 - 1] + 1;
+                    else if (g_4b26cc[1][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[1][snoid->unknownF5 - 1] + 1;
+                    else
+                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[0][snoid->unknownF5 - 1] + 1;
+                    break;
+                }
+                if (snoid->features[snoid->unknownF5 - 1] > 5)
+                    snoid->features[snoid->unknownF5 - 1] = 1;
+                g_4b26cc[i + 1][snoid->unknownF5 - 1] = snoid->features[snoid->unknownF5 - 1];
+                view->unknown1e = snoid->features[snoid->unknownF5 - 1];
+                snoid->unknownF8 = 0;
+            }
+        }
+    }
+}
