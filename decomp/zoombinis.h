@@ -5766,7 +5766,7 @@ extern short g_4b13cc[];
 extern short g_4a2e58;
 extern short g_4b1450;
 extern short g_4b12b6;
-void fn_43d70d(View *view);
+void markerPlaced(View *view);
 void fn_43da30(short n);
 void fn_43e5a7(View *view, short region);
 void fn_43e435(short n);
@@ -5852,3 +5852,6 @@ extern unsigned long ambientSoundTime; /* @data 0x4b0d44: when to try the next *
 extern short ambientSound; /* @data 0x4b0d48: the last one */
 extern short ambientSoundCount; /* @data 0x4b0d58 */
 void playAmbientSound();
+extern short g_4b1440;
+extern short g_4b1444;
+extern short g_4b1448;

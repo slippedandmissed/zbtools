@@ -894,7 +894,7 @@ void fn_43e435(short n)
         if (view) {
             view->unknown1e = n;
             g_4b1450++;
-            view->placed = fn_43d70d;
+            view->placed = markerPlaced;
             view->interval = 3;
             moveView(g_4b13cc[g_4b13ca], 0, g_4b12b6);
         }
@@ -949,7 +949,7 @@ void fn_43da30(short n)
             view = findView(g_4b13cc[g_4b13ca]);
         }
         if (view) {
-            view->placed = fn_43d70d;
+            view->placed = markerPlaced;
             moveView(g_4b13cc[g_4b13ca], 0, g_4b12ba[0]);
         }
         g_4b144e = 0;
@@ -1869,4 +1869,79 @@ void enterNextScene()
     setClipRect(gameRect);
     if (scenes[*scene]->open)
         scenes[*scene]->open();
+}
+
+/*
+ * The marker's placing: turns each of its cels' images (1-184) into the
+ * ones for the codes chosen (g_4b143e, g_4b1442 and g_4b1446, and their
+ * second parts g_4b1440, g_4b1444 and g_4b1448; -1: none), by two tables
+ * of five; with g_4b1450 set, also moves the cels to the marker's place
+ * (g_4b1452, g_4b1454). A cel below 1 stops it there for good.
+ */
+/* @zoombi32 0x0043d70d */
+void markerPlaced(View *view)
+{
+    volatile short row2;
+    volatile short col1b;
+    volatile short row2b;
+    volatile short row0b;
+    short columns[5] = {2, 3, 0, 1, 4};
+    short rows[5] = {4, 0, 2, 1, 3};
+    short col1;
+    short row0;
+    short *cels;
+    short i;
+
+    col1 = row2 = row0 = -1;
+    col1b = row2b = row0b = -1;
+    if (g_4b1442 != -1)
+        col1 = columns[g_4b1442];
+    if (g_4b1446 != -1)
+        row2 = rows[g_4b1446];
+    if (g_4b143e != -1)
+        row0 = rows[g_4b143e];
+    if (g_4b1444 != -1)
+        col1b = columns[g_4b1444];
+    if (g_4b1448 != -1)
+        row2b = rows[g_4b1448];
+    if (g_4b1440 != -1)
+        row0b = rows[g_4b1440];
+    cels = (short *)&view->body;
+    i = 0;
+    while (cels[i]) {
+        if (cels[i] < 1)
+            continue;
+        if (cels[i] < 185) {
+            if (cels[i] < 6 && col1b >= 0 && row0b != -1)
+                cels[i] = row0b * 12 + col1b + 6;
+            else if (cels[i] < 6 && col1b != -1 && row0b == -1)
+                cels[i] = col1b + 1;
+            else if (cels[i] >= 6 && cels[i] < 11 && col1 >= 0 && row0 != -1)
+                cels[i] += row0 * 12 + col1;
+            else if (cels[i] >= 6 && cels[i] < 11 && col1 != -1)
+                cels[i] = col1 + 1;
+            else if (cels[i] >= 11 && cels[i] < 18 && row0 != -1)
+                cels[i] += row0 * 12;
+            else if (cels[i] >= 66 && cels[i] < 88 && row2 >= 0)
+                cels[i] += row2 * 22;
+            else if (cels[i] && cels[i] >= 176 && row2b != -1)
+                cels[i] = row2b * 22 + 66;
+            if (g_4b1450) {
+                if (!i) {
+                    cels[i + 1] = g_4b1452;
+                    cels[i + 2] = g_4b1454;
+                } else if (!g_4b1456) {
+                    if (g_4b12ac < 2)
+                        cels[i + 1] = g_4b1452 + 21;
+                    else
+                        cels[i + 1] = g_4b1452 + 3;
+                    cels[i + 2] = g_4b1454 + 7;
+                } else {
+                    cels[i + 1] = g_4b1452 + 4;
+                    cels[i + 2] = g_4b1454 + 3;
+                }
+            }
+        }
+        i += 3;
+    }
 }
