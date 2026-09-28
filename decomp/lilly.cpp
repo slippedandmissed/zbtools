@@ -1324,3 +1324,101 @@ void drawBoard(short)
             }
         }
 }
+
+/* Draws the square under the cursor, its image animating. */
+/* @zoombi32 0x0042c119 */
+void drawCursorSquare(View *view)
+{
+    if (view->body.running) {
+        LillyCell *cell = &g_4acff4[g_4af346][g_4af344];
+        short image = g_4a1e16[g_4acff4[g_4af346][g_4af344].attributes[2]] + g_4a1e28[g_4a1e30];
+        unsigned short *data;
+        short x;
+        short y;
+
+        if (image > 0 && image < 36) {
+            data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+            x = cell->rect.left - g_4ac948[g_4acff4[g_4af346][g_4af344].attributes[2] + 1];
+            y = cell->rect.top - g_4ac94c[g_4acff4[g_4af346][g_4af344].attributes[2] + 1];
+            drawImageData(data, x, y, 8);
+        }
+        image = g_4acff4[g_4af346][g_4af344].attributes[4];
+        if (image > 0 && image < 36) {
+            data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+            x = cell->rect.left - g_4ac948[g_4acff4[g_4af346][g_4af344].attributes[4]];
+            y = cell->rect.top - g_4ac94c[g_4acff4[g_4af346][g_4af344].attributes[4]];
+            drawImageData(data, x, y, 8);
+        }
+        if (clockTime() >= view->nextUpdate) {
+            view->nextUpdate = clockTime() + view->interval;
+            g_4a1e30++;
+            if (g_4a1e30 > 3)
+                g_4a1e30 = 0;
+        }
+    }
+}
+
+/*
+ * One step of a search over layer `layer` from (row, column): marks each
+ * unmarked neighbour whose square's attribute `attribute` is `layer`, with
+ * the way back and the distance, and queues it.
+ */
+/* Not exact: register allocation (the original keeps `layer` in esi, the
+   direction in ecx and `open` in edi). */
+/* @zoombi32 0x0042ea3d */
+void searchStep(short attribute, short layer, short row, short column)
+{
+    short back;
+    short open;
+    char c;
+    char r;
+
+    if (g_4ad7e0[layer].marks[row][column])
+        for (short direction = 0; direction < 4; direction++) {
+            open = 1;
+            c = column;
+            r = row;
+            switch (direction) {
+            case 0:
+                r--;
+                if (r < 1) {
+                    r++;
+                    open = 0;
+                }
+                back = 2;
+                break;
+            case 1:
+                c++;
+                if (c > 11) {
+                    c--;
+                    open = 0;
+                }
+                back = 3;
+                break;
+            case 2:
+                r++;
+                if (r > 12) {
+                    r--;
+                    open = 0;
+                }
+                back = 0;
+                break;
+            case 3:
+                c--;
+                if (c < 0) {
+                    c++;
+                    open = 0;
+                }
+                back = 1;
+                break;
+            }
+            if (open && g_4acff4[r - 1][c].attributes[attribute] == layer && !g_4ad7e0[layer].marks[r][c]) {
+                g_4af668[g_4af8a8].x = c;
+                g_4af668[g_4af8a8].y = r;
+                g_4af8a8++;
+                g_4ad7e0[layer].ways[r][c] = back;
+                g_4ad7e0[layer].steps[r][c] = g_4ad7e0[layer].steps[row][column] + 1;
+                g_4ad7e0[layer].marks[r][c] = g_4ad7e0[layer].marks[row][column];
+            }
+        }
+}

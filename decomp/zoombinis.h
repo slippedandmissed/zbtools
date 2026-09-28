@@ -4799,6 +4799,21 @@ void drawFeatureLabels();
 short addLillyActor(short value);
 void drawSquare(short row, short column);
 void drawBoard(short);
+void drawCursorSquare(View *view);
+void searchStep(short attribute, short layer, short row, short column);
+extern short g_4a1e16[];
+extern short g_4a1e28[4];
+extern short g_4a1e30;
+/* A search over one layer of the lilly board. */
+struct LillySearch
+{
+    short steps[13][13]; /* distance from the start */
+    short ways[13][13]; /* the way back (0-3) */
+    short marks[13][13];
+};
+extern LillySearch g_4ad7e0[];
+extern Point g_4af668[];
+extern short g_4af8a8;
 void fn_42ae14(View *view, short event);
 extern short g_4ac91c;
 extern short g_4acdca[];

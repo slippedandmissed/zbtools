@@ -339,6 +339,7 @@
 0x0042c0d9 fn_42c0d9
 0x0042c10b fn_42c10b
 0x0042c112 fn_42c112
+0x0042c119 drawCursorSquare
 0x0042c3b6 fn_42c3b6
 0x0042c6cb fn_42c6cb
 0x0042d616 loadTablePair
