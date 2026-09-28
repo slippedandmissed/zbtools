@@ -76,5 +76,8 @@ void fn_4333ef(View *view);
 extern short g_4afb8c; /* @data 0x4afb8c: drifting views started */
 void fn_432eff(View *view);
 short fn_43297f();
+extern char g_4afb4a[17]; /* @data 0x4afb4a: the hotspots open (from 1) */
+void fn_430cb3(View *view);
+void fn_430dc0(View *view);
 
 #endif

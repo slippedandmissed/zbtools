@@ -399,3 +399,132 @@ short fn_43297f()
     }
     return id;
 }
+
+/* A view's placed callback: keeps its cels for the hotspots open
+   (g_4afb4a, 11 also by 16; 4, 11 and 15 always with g_4b754a), with the
+   one picked (g_4afb5c) lit (93 images on; for 1, image 109), and drops
+   the others. */
+/* @zoombi32 0x00430cb3 */
+void fn_430cb3(View *view)
+{
+    short images[18];
+    ViewCel *cel;
+    short i;
+
+    for (i = 1; i <= 10; i++)
+        if (!g_4afb4a[i])
+            images[i] = 0;
+        else
+            images[i] = i;
+    i = 11;
+    if (!g_4afb4a[11] && !g_4afb4a[16])
+        images[i] = 0;
+    else
+        images[i] = i;
+    for (i = 12; i <= 15; i++)
+        if (!g_4afb4a[i])
+            images[i] = 0;
+        else
+            images[i] = i;
+    if (g_4b754a) {
+        images[4] = 4;
+        images[11] = 11;
+        images[15] = 15;
+    }
+    images[16] = 0;
+    if (g_4afb5c) {
+        if (g_4afb5c == 1)
+            images[16] = 109;
+        else if (images[g_4afb5c - 1])
+            images[g_4afb5c - 1] += 93;
+    }
+    cel = view->body.cels;
+    while (cel->image)
+        if (images[cel->image]) {
+            cel->image = images[cel->image];
+            cel++;
+        } else {
+            removeFirstCel(cel);
+        }
+}
+
+/* A view's placed callback: keeps its cels 17-32 for the hotspots open
+   (g_4afb4a, as fn_430cb3 orders them; all with g_4b754a), each moved on
+   16 images for each level past the first (g_4b754a, else the hotspot's
+   own), and drops the others. */
+/* @zoombi32 0x00430dc0 */
+void fn_430dc0(View *view)
+{
+    short images[33];
+    short levels[34];
+    ViewCel *cel;
+    short i;
+    short n;
+    short level;
+    short step;
+
+    for (i = 17; i <= 32; i++)
+        images[i] = i;
+    if (!g_4b754a) {
+        n = 0;
+        for (i = 17; i <= 32; i++)
+            switch (i) {
+            case 17:
+            case 18:
+            case 19:
+            case 20:
+            case 21:
+            case 22:
+            case 23:
+                levels[n] = g_4afb4a[i - 16];
+                if (!levels[n++])
+                    images[i] = 0;
+                break;
+            case 24:
+                levels[n] = g_4afb4a[11];
+                if (!levels[n++])
+                    images[i] = 0;
+                break;
+            case 25:
+            case 26:
+            case 27:
+            case 29:
+            case 30:
+            case 31:
+            case 32:
+                levels[n] = g_4afb4a[i - 17];
+                if (!levels[n++])
+                    images[i] = 0;
+                break;
+            case 28:
+                levels[n] = g_4afb4a[16];
+                if (!levels[n++])
+                    images[i] = 0;
+                break;
+            }
+    }
+    n = 0;
+    for (i = 17; i <= 32; i++, n++)
+        if (images[i]) {
+            if (g_4b754a)
+                level = g_4b754a;
+            else
+                level = levels[n];
+            if (level)
+                level--;
+            step = 0;
+            while (level) {
+                step += 16;
+                level--;
+            }
+            images[i] += step;
+        }
+    cel = view->body.cels;
+    while (cel->image)
+        if (images[cel->image]) {
+            cel->image = images[cel->image];
+            cel++;
+        } else {
+            removeFirstCel(cel);
+        }
+}
