@@ -982,6 +982,69 @@ void fn_41edf7()
     showRect(&all);
 }
 
+/* Picks the roster's features and lays out the places for them. */
+/* @zoombi32 0x0041e0e3 */
+void fn_41e0e3()
+{
+    fn_41e0f3();
+    fn_41e273();
+    fn_41e5e1();
+}
+
+/* Walks the chosen Zoombinis (up to g_4a1014 + 1) to their spots on the
+   roster screen (g_4a115c), resets the view g_4a101c, and clears the
+   places from g_4a100c on and the screen's state. */
+/* @zoombi32 0x0041ec69 */
+void fn_41ec69()
+{
+    volatile short unused; /* never used; volatile keeps its stack slot */
+    View *view;
+    View *walker;
+    short n;
+    short i;
+
+    n = 0;
+    for (walker = viewListEnd(1); walker && n <= g_4a1014; walker = walker->next)
+        if (walker->flags == 1) {
+            setSnoidAction(viewSnoid(walker), 0, &g_4a115c[n]);
+            n++;
+        }
+    view = findView(g_4a101c);
+    if (view)
+        view->reset = 1;
+    unionRgnRect(removedRgn, &g_4a11ac);
+    mainLoopEvents();
+    for (i = g_4a100c; i < 21; i++) {
+        g_4ab8ec[i] = 0;
+        g_4b83e4[i - 1] = 0;
+    }
+    for (i = 0; i < g_4a1016; i++)
+        g_4b83e4[i] = g_4ab96a;
+    fn_41eaf1();
+    g_4a0fea = 0;
+    g_4a0fe8 = 0;
+    g_4a0ff0 = 0;
+    g_4ab870 = 0;
+    g_4a100e = 0;
+}
+
+/* Saves the roster (with the player's settings, fn_41f6fc) if it changed
+   (g_4afb32) and the user file isn't the default one (ZBUser.txt). */
+/* @zoombi32 0x0041f551 */
+void fn_41f551()
+{
+    char name[32] = "ZBUser";
+
+    strcat(name, ".txt");
+    if (strncmp(userFile, name, strlen(userFile)) && g_4afb32) {
+        if (g_4a4ba0) {
+            fn_41f6fc(0);
+            readWriteRoster(g_4a4ba0, 0);
+        }
+        g_4afb32 = 0;
+    }
+}
+
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to
    the roster file next to the program (userFile). */
 /* @zoombi32 0x0041f1da */

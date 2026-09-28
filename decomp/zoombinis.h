@@ -6227,3 +6227,10 @@ extern short g_4a0ffc; /* @data 0x4a0ffc: the first of the walking scripts */
 void fn_41cf14(short which);
 void fn_41e326(short kind);
 void fn_41edf7();
+extern Point g_4a115c[20]; /* @data 0x4a115c: the chosen Zoombinis' spots on the roster screen */
+extern short g_4a101c; /* @data 0x4a101c */
+extern short g_4a1016; /* @data 0x4a1016 */
+extern short g_4a0fea; /* @data 0x4a0fea */
+extern short g_4ab96a; /* @data 0x4ab96a */
+void fn_41e0e3();
+void fn_41ec69();

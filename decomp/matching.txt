@@ -321,6 +321,7 @@
 0x0041dce6 fn_41dce6
 0x0041dd37 fn_41dd37
 0x0041dfe3 fn_41dfe3
+0x0041e0e3 fn_41e0e3
 0x0041e0f3 fn_41e0f3
 0x0041e273 fn_41e273
 0x0041e326 fn_41e326
@@ -328,6 +329,7 @@
 0x0041e771 fn_41e771
 0x0041e8f3 fn_41e8f3
 0x0041eaf1 fn_41eaf1
+0x0041ec69 fn_41ec69
 0x0041ed59 fn_41ed59
 0x0041edf7 fn_41edf7
 0x0041f100 openRosterFile
@@ -335,6 +337,7 @@
 0x0041f1da readWriteRoster
 0x0041f2c8 readWriteSavedGames
 0x0041f514 newSaveFileName
+0x0041f551 fn_41f551
 0x0041f5d0 fn_41f5d0
 0x0041f668 applyPlayerSettings
 0x0041f6fc fn_41f6fc
