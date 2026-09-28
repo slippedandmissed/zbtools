@@ -495,12 +495,11 @@ void scene0Frame()
    record: the building's dedication, the group's feat, "when traveling
    was", the level, and the date, in colours by the plaque (its kind,
    1004-1007). */
-/* Not exact: the original draws each cel with
-   drawImageData(image, *cel++, *cel++, 8), which relies on BCC's
-   left-to-right argument order (unspecified in C++), so the loop here
-   indexes and then steps; and the original keeps `i` in edi (as `bank`
-   was), not on the stack. */
-/* @zoombi32 0x0045dc5b */
+/* The original draws each cel with drawImageData(image, *cel++, *cel++, 8),
+   which relies on BCC's left-to-right argument order (unspecified in C++),
+   so the loop here indexes and then steps. (It also keeps `i` in edi, as
+   `bank` was, not on the stack.) */
+/* @zoombi32-functional 0x0045dc5b */
 void drawPlaque(View *view)
 {
     Font *oldFont;
