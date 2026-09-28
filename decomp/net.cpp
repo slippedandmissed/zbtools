@@ -938,3 +938,86 @@ void fn_439cb4(View *view)
     if (helper)
         groupViews(view->id, helper->id, 0, 0, 0, 0);
 }
+
+/* As fn_439cb4 for a Zoombini reaching a turning view (`other`): if its
+   feature (the view's word 41) is the view's (word 42), it turns the
+   view's way (word 38) first; it stops at the board's edge. */
+/* Not exact: the original keeps `other` in eax from the start (loading it
+   before `snoid` and `parts`); this loads it at the call. */
+/* @zoombi32 0x0043a0e8 */
+void fn_43a0e8(View *view, short other)
+{
+    Snoid *snoid;
+    short *parts;
+    short *its;
+    View *helper;
+    View *turning;
+
+    snoid = (Snoid *)&view->body;
+    parts = (short *)&view->body;
+    turning = findView(other);
+    if (turning)
+        its = (short *)&turning->body;
+    if (snoid->features[its[41] - 1] == its[42])
+        parts[20] = its[38];
+    parts[31] = parts[33];
+    parts[32] = parts[34];
+    switch (parts[20]) {
+    case 0:
+        parts[34]--;
+        if (parts[34] < 0)
+            parts[34] = 0;
+        break;
+    case 1:
+        parts[33]++;
+        if (parts[33] > 12)
+            parts[33] = 12;
+        break;
+    case 2:
+        parts[34]++;
+        if (parts[34] > 12)
+            parts[34] = 12;
+        break;
+    case 3:
+        parts[33]--;
+        if (parts[33] < 0)
+            parts[33] = 0;
+        break;
+    }
+    short kind = g_4b061a[parts[33]][parts[34]];
+
+    if (kind == 5) {
+        View *square = findView(g_4b04c8[parts[33]][parts[34]]);
+
+        if (square) {
+            its = (short *)&square->body;
+            if (its[43]) {
+                g_4b0930[g_4b09fe] = its[43];
+                g_4b09fe++;
+                View *partner = findView(its[43]);
+
+                its[43] = 0;
+                if (partner) {
+                    its = (short *)&partner->body;
+                    its[20] = parts[20];
+                }
+            }
+        }
+    }
+    *(Point *)&view->body.x = (g_4afbf0 + parts[32])[parts[31] * 13];
+    view->body.x += 4;
+    view->body.y += -38;
+    helper = findView(parts[41]);
+    if (helper) {
+        setViewScript(helper, parts[20] + 10000, 1);
+        helper->body.x = view->body.x;
+        helper->body.y = view->body.y;
+        helper->placed = fn_436321;
+    }
+    short script = parts[21 + parts[20]];
+
+    startSnoidScript((Snoid *)&view->body, script, 0, 0);
+    view->notify = fn_43638b;
+    if (helper)
+        groupViews(view->id, helper->id, 0, 0, 0, 0);
+}
