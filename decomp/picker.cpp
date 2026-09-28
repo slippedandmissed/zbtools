@@ -1934,3 +1934,133 @@ void scene19Clicked(short)
         }
     }
 }
+
+/* Scene 1's clicks, by hotspot (`which`): each goes to its scene (in
+   practice; the camps also in the game once the roster has reached them,
+   leaving practice), two with cheats to other scenes; 17 (the rest of the
+   screen) presses the help button (g_4afb42) or picks a level from the
+   list. */
+/* @zoombi32 0x0043010b */
+void scene1Clicked(short which)
+{
+    short clicked;
+    Point where;
+    View *view;
+    short scene;
+    short go;
+    short i;
+
+    scene = 0;
+    go = 0;
+    getCursorPosition(&where);
+    if (g_4b754a)
+        go = 1;
+    switch (which) {
+    case 1:
+        scene = 3;
+        fn_430724();
+        g_4b754a = 0;
+        go = 1;
+        break;
+    case 2:
+        scene = 7;
+        break;
+    case 3:
+        scene = 8;
+        break;
+    case 4:
+        scene = 9;
+        break;
+    case 5:
+        scene = 4;
+        go = g_4a4ba0[0x50] & 0xf;
+        if (g_4b754a && go) {
+            fn_430724();
+            g_4b754a = 0;
+        }
+        break;
+    case 6:
+        scene = 10;
+        break;
+    case 7:
+        scene = 11;
+        break;
+    case 8:
+        if ((short)isCheat((long)0xc07a877d, (long)0xedfa7273))
+            scene = 20;
+        else
+            scene = 12;
+        break;
+    case 9:
+        if ((short)isCheat(0x469110d3, 0x1e1c32f2))
+            scene = 19;
+        else
+            scene = 13;
+        break;
+    case 10:
+        scene = 14;
+        break;
+    case 11:
+        scene = 15;
+        break;
+    case 12:
+        scene = 5;
+        go = *(short *)(g_4a4ba0 + 0x52) & 0xff;
+        if (g_4b754a && go) {
+            fn_430724();
+            g_4b754a = 0;
+        }
+        break;
+    case 13:
+        scene = 16;
+        break;
+    case 14:
+        scene = 17;
+        break;
+    case 15:
+        scene = 18;
+        break;
+    case 16:
+        scene = 6;
+        go = g_4a4ba0[0x51] & 0xf;
+        if (g_4b754a && go) {
+            fn_430724();
+            g_4b754a = 0;
+        }
+        break;
+    case 17:
+        clicked = 0;
+        if (ptInRect(&g_4afb42, where)) {
+            view = findView(g_4afb40);
+            if (view) {
+                queueViewSound(999, 0);
+                setViewScript(view, 0, 1);
+                view->interval = 2;
+                updateViews();
+                waitForEventFor(0, 2, 0, 1);
+                setViewScript(view, 0, 1);
+                view->interval = 3;
+                updateViews();
+                view->body.running = 0;
+                showDialog(1, 0, 0, 0);
+            }
+        } else if (g_4b754a) {
+            for (i = 0; !clicked && i < 4; i++)
+                if (ptInRect(&g_4a1fa8[i], where)) {
+                    scene1Key(i + '1');
+                    clicked = 1;
+                }
+        }
+        go = 0;
+        break;
+    }
+    if (go) {
+        if (!g_4b9684)
+            fn_430030(which);
+        queueViewSound(998, 0);
+        waitForEventFor(0, 2, 0, 1);
+        g_4b0d50 = scene;
+        fn_46be2e(0);
+        closeScene1();
+    }
+}

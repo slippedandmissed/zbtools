@@ -140,5 +140,7 @@ extern ShortRect g_4a1f7c; /* @data 0x4a1f7c */
 short scene1Key(unsigned short key);
 extern ShortRect g_4a2068[3]; /* @data 0x4a2068: where a click catches nothing */
 void scene19Clicked(short);
+extern ShortRect g_4a1fa8[4]; /* @data 0x4a1fa8: the levels' lines in the list */
+void scene1Clicked(short which);
 
 #endif
