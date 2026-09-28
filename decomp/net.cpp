@@ -613,3 +613,36 @@ void fn_439fc3(View *view, short)
         groupViews(parts[41], view->id, parts[42], 0, 0, 0);
     }
 }
+
+/* Draws the net's buttons (1-20, from the bank g_4b1598; each lit if it's
+   the one chosen in its group of five, g_4b1540), or just button `which`,
+   lit or not; stores the area drawn in *bounds. */
+/* @zoombi32 0x0043f856 */
+void fn_43f856(short which, short lit, ShortRect *bounds)
+{
+    ShortRect rect = g_4a337e;
+    short i;
+    short image;
+
+    if (!which) {
+        unionRect(&rect, &g_4a2efc[1].rect);
+        unionRect(&rect, &g_4a2efc[20].rect);
+        for (i = 0; i < 20; i++) {
+            image = i + i + 1;
+            if (i % 5 + 1 == g_4b1540[i / 5])
+                image++;
+            drawImageData((unsigned short *)(g_4b1598->offsets[image] + (char *)g_4b1598), g_4a2efc[i + 1].rect.left,
+                          g_4a2efc[i + 1].rect.top, 8);
+        }
+    } else {
+        rect = g_4a2efc[which].rect;
+        i = which - 1;
+        image = i + i + 1;
+        if (lit)
+            image++;
+        drawImageData((unsigned short *)(g_4b1598->offsets[image] + (char *)g_4b1598), g_4a2efc[i + 1].rect.left,
+                      g_4a2efc[i + 1].rect.top, 8);
+    }
+    if (bounds)
+        *bounds = rect;
+}
