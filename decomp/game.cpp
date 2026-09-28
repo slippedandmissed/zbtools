@@ -2194,3 +2194,84 @@ void fn_452258(Snoid *snoid, short n)
     *(Point *)&snoid->body.x = g_4a4514[n];
     snoid->unknownF4 = 4;
 }
+
+/* Deals features to the four Zoombinis in the views g_4b269a. */
+/* @zoombi32 0x0045222d */
+void fn_45222d()
+{
+    short i;
+    View *view;
+
+    for (i = 0; i < 4; i++) {
+        view = findView(g_4b269a[i]);
+        if (view)
+            fn_452258((Snoid *)&view->body, i);
+    }
+}
+
+/* Adds a view for a Zoombini of this scene (drawn by fn_4541bf, updated by
+   fn_454228) from `snoid`; returns its id. */
+/* @zoombi32 0x00454165 */
+short fn_454165(Snoid *snoid)
+{
+    short id;
+    View *view;
+
+    id = addView(1, fn_4541bf, fn_454228, 0, 6, snoid, 0, 0);
+    view = findView(id);
+    if (view) {
+        fn_454374(snoid);
+        view->unknown1e = 0;
+        view->nextUpdate = 0;
+        view->body.frameOffset = 0;
+        view->flags = 0x4000002;
+    }
+    return id;
+}
+
+/* The scene's Zoombini views' update: cycles the feature being changed
+   (unknownF5) through its values every 60 ticks while unknownF8 is set,
+   else flashes it (every 30) between unknown1e and nothing; lays the
+   Zoombini out again when it changes. */
+/* @zoombi32 0x00454228 */
+void fn_454228(View *view, short region)
+{
+    short changed = 0;
+    Snoid *snoid;
+    char *features;
+
+    if (!g_4b9684 && view->body.running && clockTime() >= view->nextUpdate) {
+        view->nextUpdate = clockTime() + view->interval;
+        snoid = (Snoid *)&view->body;
+        if (snoid->unknownF8 && clockTime() >= view->body.frameOffset) {
+            view->body.frameOffset = clockTime() + 60;
+            features = snoid->features;
+            snoid->unknownF8++;
+            if (snoid->unknownF8 > 5)
+                snoid->unknownF8 = 1;
+            if (snoid->unknownF5 > 0)
+                features[snoid->unknownF5 - 1] = snoid->unknownF8;
+            snoid->unknownF4 = 4;
+        } else if (view->unknown1e && clockTime() >= view->body.frameOffset) {
+            view->body.frameOffset = clockTime() + 30;
+            features = snoid->features;
+            if (snoid->unknownF5 > 0 && !features[snoid->unknownF5 - 1])
+                features[snoid->unknownF5 - 1] = view->unknown1e;
+            else if (snoid->unknownF5 > 0)
+                features[snoid->unknownF5 - 1] = 0;
+            snoid->unknownF4 = 4;
+        }
+        switch (snoid->unknownF4) {
+        case 2:
+            break;
+        default:
+            changed = 1;
+            break;
+        }
+        if (changed) {
+            unionRgnRect(region, &view->body.bounds);
+            fn_454374(snoid);
+            view->changed = 1;
+        }
+    }
+}
