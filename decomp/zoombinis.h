@@ -6020,3 +6020,14 @@ void fn_44485d(View *view);
 void fn_444a93(View *view);
 short fn_44338b(short troll);
 void fn_446745();
+extern short g_4b1614; /* whose turn it is */
+extern short g_4b1670;
+extern short g_4b1620;
+extern short g_4b1606;
+extern short g_4b16bc;
+extern short g_4b15fe;
+extern short g_4b15ec;
+void fn_4441a8(View *view, short event);
+void fn_442c6c(View *view);
+void fn_444c62();
+void fn_444391();

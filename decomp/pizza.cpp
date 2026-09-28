@@ -1116,3 +1116,90 @@ void fn_446745()
         }
     }
 }
+
+/* Records the pizza as tried and has the troll whose turn it is
+   (g_4b1614, or g_4b1670 if set, counted down: 0 Arno, 1 Willa, 2
+   Shyler) react (8020, 9026 or 10030), placed by fn_442c6c; Willa's turn
+   is skipped while g_4b16bc. Clears the view g_4b1664. */
+/* @zoombi32 0x00444c62 */
+void fn_444c62()
+{
+    View *view;
+
+    deleteView(g_4b1664);
+    g_4b1664 = 0;
+    if (g_4b1670)
+        g_4b1614 = g_4b1670;
+    g_4b1614--;
+    fn_444556();
+    if (!g_4b1614) {
+        view = findView(g_4b160e);
+        setViewScript(view, 8020, 1);
+        moveView(g_4b160e, 1, g_4b1616);
+        if (g_4b1620 > 0)
+            moveView(g_4a3d42, 1, g_4b160e);
+        g_4b1606 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+    } else if (g_4b1614 == 1) {
+        if (g_4b16bc) {
+            g_4b15fe = ++g_4b1614;
+            return;
+        }
+        view = findView(g_4b1610);
+        setViewScript(view, 9026, 1);
+        view->notify = fn_4441a8;
+        moveView(g_4b1610, 1, g_4b1616);
+        moveView(g_4a3d42, 1, g_4b1610);
+        g_4b1606 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+    } else if (g_4b1614 == 2) {
+        view = findView(g_4b1612);
+        setViewScript(view, 10030, 1);
+        moveView(g_4b1612, 1, g_4b1616);
+        g_4b1606 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+    }
+    view->placed = fn_442c6c;
+    g_4b1614 = 0;
+}
+
+/* The trolls there are (Arno always; Willa if g_4b161a, Shyler if
+   g_4b161c) eat (8024-8031, 9030-9033, 10035-10037), each placing the
+   toppings it wants. */
+/* @zoombi32 0x00444391 */
+void fn_444391()
+{
+    View *view;
+    short r;
+
+    if (!g_4b161a && !g_4b161c) {
+        view = findView(g_4b160e);
+        setViewScript(view, randomUpTo(1) + 8024, 1);
+        view->placed = fn_44468e;
+    } else if (g_4b161a && !g_4b161c) {
+        r = randomUpTo(1);
+        view = findView(g_4b160e);
+        setViewScript(view, r + 8026, 1);
+        view->placed = fn_44468e;
+        view = findView(g_4b1610);
+        setViewScript(view, r + 9030, 1);
+        view->placed = fn_44485d;
+    } else if (!g_4b161a && g_4b161c) {
+        r = randomUpTo(1);
+        view = findView(g_4b160e);
+        setViewScript(view, r + 8028, 1);
+        view->placed = fn_44468e;
+        view = findView(g_4b1612);
+        setViewScript(view, r + 10035, 1);
+        view->placed = fn_444a93;
+    } else if (g_4b161a && g_4b161c) {
+        r = randomUpTo(1);
+        view = findView(g_4b160e);
+        setViewScript(view, r + 8030, 1);
+        view->placed = fn_44468e;
+        view = findView(g_4b1610);
+        setViewScript(view, r + 9032, 1);
+        view->placed = fn_44485d;
+        view = findView(g_4b1612);
+        setViewScript(view, r + 10036, 1);
+        view->placed = fn_444a93;
+    }
+    g_4b15ec = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+}
