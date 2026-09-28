@@ -1144,3 +1144,70 @@ short fn_43780d(short exclude)
     }
     return best;
 }
+
+/*
+ * Picks the value (1-20) with the most counts in g_4aff9a, between `low`
+ * and `high`, for which some row of g_4afe5a has that feature in a column
+ * where no row already taken (g_4b0770) has the same one; takes the rows
+ * with the value (into g_4b0770 and its copy from 20), clears them,
+ * recounts g_4aff9a, and returns the value (0: none).
+ */
+/* Not exact: the original copies `v` to `best` through dx; this uses ax
+   (as in fn_43780d). */
+/* @zoombi32 0x00437b7b */
+short fn_437b7b(short low, short high)
+{
+    short v;
+    short best;
+    short most;
+    short fresh;
+    short row;
+    short column;
+    short k;
+
+    for (v = 1, best = 0, most = 0; v < 21; v++)
+        if (g_4aff9a[v] > most && g_4aff9a[v] >= low && g_4aff9a[v] <= high)
+            for (row = 0; row < g_4afc36; row++)
+                for (column = 0; column < 4; column++) {
+                    fresh = 1;
+                    if (g_4afe5a[row][column] > 0 && g_4afe5a[row][column] + g_4a2634[column] == v) {
+                        for (k = 0; k < 20; k++)
+                            if (g_4b0770[k][column] > 0 && g_4b0770[k][column] == g_4afe5a[row][column])
+                                fresh = 0;
+                        if (fresh) {
+                            best = v;
+                            most = g_4aff9a[v];
+                            row = g_4afc36;
+                        }
+                        column = 4;
+                    }
+                }
+    if (best) {
+        fillMemory(g_4aff9a, 0, 42);
+        for (row = 0; row < g_4afc36; row++) {
+            for (column = 0; column < 4; column++)
+                if (g_4afe5a[row][column] && g_4afe5a[row][column] + g_4a2634[column] == best) {
+                    if (g_4b00d0 < 20) {
+                        g_4b0770[g_4b00d0 + 20][0] = g_4afe5a[row][0];
+                        g_4b0770[g_4b00d0 + 20][1] = g_4afe5a[row][1];
+                        g_4b0770[g_4b00d0 + 20][2] = g_4afe5a[row][2];
+                        g_4b0770[g_4b00d0 + 20][3] = g_4afe5a[row][3];
+                        g_4b0770[g_4b00d0][0] = g_4afe5a[row][0];
+                        g_4b0770[g_4b00d0][1] = g_4afe5a[row][1];
+                        g_4b0770[g_4b00d0][2] = g_4afe5a[row][2];
+                        g_4b0770[g_4b00d0][3] = g_4afe5a[row][3];
+                        g_4b00d0++;
+                    }
+                    g_4afe5a[row][0] = 0;
+                    g_4afe5a[row][1] = 0;
+                    g_4afe5a[row][2] = 0;
+                    g_4afe5a[row][3] = 0;
+                    column = 4;
+                }
+            if (g_4afe5a[row][0] > 0)
+                for (column = 0; column < 4; column++)
+                    g_4aff9a[g_4afe5a[row][column] + g_4a2634[column]]++;
+        }
+    }
+    return best;
+}
