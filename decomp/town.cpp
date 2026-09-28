@@ -592,3 +592,64 @@ void drawPlaque(View *view)
     setForeColor(saved);
     setFont(oldFont);
 }
+
+/* While g_4b7f12 allows, adds a townsperson (a Zoombini view of script
+   8000-8043, half from each half) walking at a random place, the height
+   by the script, into a free one of g_4b7ece's last three. */
+/* @zoombi32 0x0045e06e */
+void addTownsperson()
+{
+    Snoid snoid;
+    short y;
+    short id;
+    short script;
+    short i;
+    View *view;
+
+    if (!g_4b7f12 || g_4b9684 || g_4a74dc != -1)
+        return;
+    initSnoid(&snoid);
+    snoid.features[0] = 1;
+    snoid.features[1] = 1;
+    snoid.features[2] = 1;
+    snoid.features[3] = 1;
+    if (randomBetween(0, 100) <= 50)
+        script = randomBetween(8022, 8043);
+    else
+        script = randomBetween(8000, 8021);
+    if (script <= 8007)
+        y = randomBetween(170, 280);
+    else if (script <= 8009)
+        y = randomBetween(40, 280);
+    else if (script <= 8017)
+        y = randomBetween(110, 260);
+    else if (script <= 8021)
+        y = randomBetween(-10, 100);
+    else if (script <= 8029)
+        y = randomBetween(230, 310);
+    else if (script <= 8031)
+        y = randomBetween(140, 290);
+    else if (script <= 8039)
+        y = randomBetween(190, 280);
+    else if (script <= 8043)
+        y = randomBetween(100, 200);
+    for (i = 0; i < 3; i++)
+        if (!g_4b7ece[16 + i]) {
+            id = addView(1, drawCels, runViewScript, script, 6, &snoid, 0, 0);
+            view = findView(id);
+            if (view) {
+                g_4b7ece[16 + i] = id;
+                viewSnoid(view)->features[0] = 0;
+                view->flags = 0x908002;
+                view->body.x = randomBetween(100, 540);
+                view->body.y = y;
+                *(long *)&view->body.unknownAa = *(long *)&view->body.x;
+                view->notify = fn_45e29e;
+                view->notifyEnd = 1;
+                moveView(id, 0, g_4b7e0e);
+                i = 3;
+                if (g_4b7f12 > 0)
+                    g_4b7f12--;
+            }
+        }
+}

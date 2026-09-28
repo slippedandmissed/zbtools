@@ -47,7 +47,7 @@ extern short g_4b7f00; /* @data 0x4b7f00 */
 extern unsigned long g_4b7f04; /* @data 0x4b7f04 */
 extern unsigned long g_4b7f08; /* @data 0x4b7f08 */
 extern unsigned long g_4b7f0c; /* @data 0x4b7f0c */
-extern short g_4b7f12; /* @data 0x4b7f12 */
+extern short g_4b7f12; /* @data 0x4b7f12: townspeople still to add */
 
 extern Point g_4a74de[16]; /* @data 0x4a74de: the groups' hotspots (fn_45db25) */
 extern unsigned char g_4b7f14; /* @data 0x4b7f14: the clock's minute hand when winding started */
@@ -61,7 +61,10 @@ extern char *monumentTexts[16]; /* @data 0x4a537c: "this monument was made to ho
 extern char *featTexts[16]; /* @data 0x4a53bc: by group and level: "ambled past allergic cliffs, ...", ... */
 extern short plaqueLines[6]; /* @data 0x4a7594: the plaque's lines' tops */
 
+extern short g_4b7e0e; /* @data 0x4b7e0e */
+
 void openScene0();
+void addTownsperson();
 void drawPlaque(View *view);
 void scene0Frame();
 void drawClock(View *view);

@@ -854,6 +854,7 @@
 0x0045daf7 fn_45daf7
 0x0045db25 fn_45db25
 0x0045dfb1 settleTravellers
+0x0045e06e addTownsperson
 0x0045e29e fn_45e29e
 0x0045e2d8 resetScene8
 0x0045e441 openScene8
