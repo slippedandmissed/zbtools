@@ -346,6 +346,11 @@
 0x0041f5d0 fn_41f5d0
 0x0041f668 applyPlayerSettings
 0x0041f6fc fn_41f6fc
+0x00421bfc fn_421bfc
+0x00422491 scene13Key
+0x00422537 loadFerryScripts
+0x0042258a loadFerryScript
+0x004234c9 fn_4234c9
 0x0042492b fn_42492b
 0x004249c4 drawButtons
 0x004249e1 fn_4249e1
