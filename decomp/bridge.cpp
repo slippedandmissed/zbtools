@@ -3,12 +3,16 @@
  */
 
 #include "zoombinis.h"
+#include "basecamp.h"
 #include "bridge.h"
 #include "debug.h"
 #include "e2memory.h"
+#include "features.h"
 #include "graphics.h"
 #include "module_4623b8.h"
+#include "snoids.h"
 #include "sound.h"
+#include "tunnels.h"
 #include "view.h"
 
 /* Starts the timer. */
@@ -144,4 +148,48 @@ short turnedBack(FeatureRules *rules, short edge, Snoid *snoid)
     if (edge == 2)
         passes = !passes;
     return !passes;
+}
+
+/* A notify: 0 sets g_4ab7e6, 1-6 note the event in g_4ab802, 100 and 101
+   start g_4ab7e4's script (1236 in this view's group, or 1103); at the end
+   (-1), with fewer chosen than g_4ab82e, now and then a remark
+   (20045-20048). */
+/* @zoombi32 0x0041b357 */
+void fn_41b357(View *view, short event)
+{
+    View *other;
+
+    switch (event) {
+    case 0:
+        g_4ab7e6 = 1;
+        break;
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+        g_4ab802 = event;
+        break;
+    case 10:
+        break;
+    case 100:
+    case 101:
+        other = findView(g_4ab7e4);
+        if (other) {
+            if (event == 100) {
+                setViewScript(other, 1236, 1);
+                other->body.group = view->body.group;
+            } else {
+                setViewScript(other, 1103, 1);
+            }
+        }
+        break;
+    case -1:
+        if (countChosenSnoids() < g_4ab82e
+            && (randomBetween(0, 4) > g_4ab790 || (*(short *)(g_4a4ba0 + 0x2a) & 0xfff) <= 3)
+            && countChosenSnoids())
+            queueViewSound(randomBetween(20045, 20048), 0);
+        break;
+    }
 }

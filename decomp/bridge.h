@@ -15,10 +15,12 @@ extern short g_4ab788; /* @data 0x4ab788: the scene is open */
 extern short g_4ab78a; /* @data 0x4ab78a: button 2 is live */
 extern short g_4ab78c; /* @data 0x4ab78c */
 extern short g_4ab78e; /* @data 0x4ab78e */
+extern short g_4ab790; /* @data 0x4ab790: the level */
 extern short g_4ab792[16]; /* @data 0x4ab792 */
 extern short g_4ab7b2[16]; /* @data 0x4ab7b2 */
 extern unsigned long g_4ab7d4; /* @data 0x4ab7d4: when the timer started (clockTime) */
 extern short g_4ab7d8; /* @data 0x4ab7d8 */
+extern short g_4ab7e4; /* @data 0x4ab7e4 */
 extern short g_4ab7e6; /* @data 0x4ab7e6 */
 extern short g_4ab7ea; /* @data 0x4ab7ea */
 extern short g_4ab7ee; /* @data 0x4ab7ee */
@@ -33,6 +35,7 @@ extern short g_4ab826; /* @data 0x4ab826 */
 extern short g_4ab828; /* @data 0x4ab828 */
 extern short g_4ab82a; /* @data 0x4ab82a */
 extern short g_4ab82c; /* @data 0x4ab82c */
+extern short g_4ab82e; /* @data 0x4ab82e */
 extern unsigned long g_4ab830; /* @data 0x4ab830 */
 extern unsigned long g_4ab834; /* @data 0x4ab834 */
 extern unsigned long g_4ab838; /* @data 0x4ab838 */
@@ -43,6 +46,7 @@ void resetScene7();
 void drawBridgeButton(short which, short lit, short show);
 void fn_41a965(View *, short region);
 void closeScene7();
+void fn_41b357(View *view, short event);
 short turnedBack(FeatureRules *rules, short edge, Snoid *snoid);
 
 #endif
