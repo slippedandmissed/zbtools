@@ -6,6 +6,7 @@
 
 #include "zoombinis.h"
 #include "basecamp.h"
+#include "debug.h"
 #include "e2memory.h"
 #include "features.h"
 #include "ferry.h"
@@ -891,4 +892,134 @@ void fn_423ebb(View *view, short event)
         g_4abb3e = 1;
         break;
     }
+}
+
+/* The level's feature rules for the ferry, in the game's state: 0-3 shift
+   each feature's value (1-5), 4-7 (from level 2) move each feature to
+   another's place (from 1; 0: stays). */
+inline char *ferryRules()
+{
+    return g_4a4ba0 + 0xc;
+}
+
+/*
+ * Puts the travellers aboard (g_4abdbc of them): picks up to three to
+ * stand out (g_4abb34-g_4abb38, placed by table 5000), the others by table
+ * 5001; each gets its features changed by the level's rules (new rules on
+ * a new game, g_4abb6a 1 or 3), and the views are stacked in order.
+ */
+/* Not exact: BCC32 keeps g_4a4ba0's address in edi here (dropping any one
+   of the rule loops stops it), where the original loads the pointer at
+   each use; the code is otherwise the same. */
+/* @zoombi32 0x00422e90 */
+void boardFerry()
+{
+    short b;
+    short a;
+    short *pickedPlaces;
+    short *otherPlaces;
+    long otherResource;
+    long pickedResource;
+    short count;
+    short flag;
+    unsigned long used;
+    Snoid snoid;
+    short views[18];
+    short i;
+    short j;
+
+    g_4abdbc = fn_4572bf();
+    if (!g_4abdbc)
+        return;
+    flag = 0;
+    count = 0;
+    for (i = 0; i < 18; i++)
+        views[i] = 0;
+    b = a = 0;
+    pickedPlaces = loadShortTable(5000, &pickedResource);
+    otherPlaces = loadShortTable(5001, &otherResource);
+    g_4abb34 = randomBetween(1, g_4abdbc);
+    switch (g_4abdbc) {
+    case 1:
+        g_4abb1e = 2;
+        g_4abb2e = 1;
+        break;
+    case 2:
+        g_4abb1e = 1;
+        break;
+    }
+    if (g_4abdbc >= 2)
+        for (g_4abb36 = g_4abb34; g_4abb36 == g_4abb34;)
+            g_4abb36 = randomBetween(1, g_4abdbc);
+    if (g_4abdbc >= 3)
+        for (g_4abb38 = g_4abb34; g_4abb38 == g_4abb34 || g_4abb38 == g_4abb36;)
+            g_4abb38 = randomBetween(1, g_4abdbc);
+    if (!g_4a4ba0[0xc] || g_4abb6a == 1 || g_4abb6a == 3)
+        for (j = 0; j < 4; j++)
+            g_4a4ba0[0xc + j] = randomBetween(1, 5);
+    if (g_4abb6a > 1) {
+        if (!g_4a4ba0[0x10] || g_4abb6a == 3) {
+            g_4a4ba0[0x10] = randomBetween(2, 4);
+            used = 1 << (g_4a4ba0[0x10] - 1);
+            for (j = 5; j < 8; j++)
+                g_4a4ba0[0xc + j] = g_4a16d2[allocateSlot(&used, 4, 0)];
+        }
+    } else {
+        for (j = 4; j < 8; j++)
+            g_4a4ba0[0xc + j] = 0;
+    }
+    for (i = 0; i < g_4abdbc; i++) {
+        if (!g_4a4ba0[i * 19 + 0xa93c])
+            continue;
+        for (j = 0; j < 4; j++) {
+            char value = ((g_4a4ba0 + i * 19)[j + 0xa934] + g_4a4ba0[0xc + j] - 2) % 5 + 1;
+
+            if (g_4a4ba0[0xc + 4 + j])
+                snoid.features[g_4a4ba0[0xc + 4 + j] - 1] = value;
+            else
+                snoid.features[j] = value;
+        }
+        snoid.unknownF1 = 0;
+        snoid.unknownF2 = 0;
+        if (i + 1 == g_4abb34 || i + 1 == g_4abb36 || i + 1 == g_4abb38) {
+            if (*pickedPlaces > a) {
+                snoid.unknownF0 = a + *otherPlaces;
+                snoid.body.x = pickedPlaces[a * 2 + 1];
+                snoid.body.y = pickedPlaces[a * 2 + 2];
+                a++;
+            }
+        } else if (*otherPlaces > b) {
+            snoid.unknownF0 = b;
+            snoid.body.x = otherPlaces[b * 2 + 1];
+            snoid.body.y = otherPlaces[b * 2 + 2];
+            b++;
+            flag = 1;
+        }
+        for (j = 0; j < 10; j++)
+            snoid.name[j] = (g_4a4ba0 + i * 19)[j + 0xa93d];
+        snoid.home = *(Point *)&snoid.body.x;
+        *(Point *)&snoid.body.unknownAa = *(Point *)&snoid.body.x;
+        *(Point *)&snoid.targetX = *(Point *)&snoid.body.x;
+        snoid.unknownEa = 0;
+        snoid.unknownEb = 0;
+        snoid.unknownEc = 0;
+        snoid.unknownEe = 0;
+        snoid.unknownF8 = randomBetween(0, 80);
+        snoid.unknownF7 = 1;
+        g_4abba2[i] = addFerrySnoid(&snoid);
+        g_4abbc2[i] = 0;
+        if (flag) {
+            flag = 0;
+            views[count] = g_4abba2[i];
+            count++;
+        }
+    }
+    fn_46c602(&pickedResource);
+    fn_46c602(&otherResource);
+    moveView(views[2], 0, views[1]);
+    moveView(views[5], 0, views[4]);
+    moveView(views[8], 1, views[7]);
+    moveView(views[9], 1, views[8]);
+    moveView(views[10], 0, views[8]);
+    moveView(views[11], 0, views[10]);
 }

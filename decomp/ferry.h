@@ -64,7 +64,14 @@ extern short hairLayers[6]; /* @data 0x4a1678 */
 extern short *ferryHotX; /* @data 0x4abb98: the ferry's images' hot spots */
 extern short *ferryHotY; /* @data 0x4abb9c */
 
+extern short g_4a16d2[4]; /* @data 0x4a16d2: the features to swap in (ferry rules 5-7) */
+extern short g_4abb34; /* @data 0x4abb34: the travellers picked to stand out (from 1) */
+extern short g_4abb36; /* @data 0x4abb36 */
+extern short g_4abb38; /* @data 0x4abb38 */
+extern short g_4abdbc; /* @data 0x4abdbc: travellers aboard */
+
 void resetScene13();
+void boardFerry();
 void updateFerrySnoid(View *view, short region);
 short addFerrySnoid(Snoid *snoid);
 void fn_423ebb(View *view, short event);
