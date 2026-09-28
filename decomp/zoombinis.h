@@ -4790,6 +4790,7 @@ void mirrorGrid(short (*grid)[12], short how);
 void clearWay(short x);
 extern ShortRect g_4a1ae6;
 short fn_426aff(short a, short b, short n);
+short fn_427217(short a, short b, short c, short n);
 void fn_42e542(short id, short row, short column);
 extern short g_4abec4;
 extern short *g_4ac948;

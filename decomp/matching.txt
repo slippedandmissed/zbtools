@@ -310,6 +310,7 @@
 0x00426c33 darkenPalette
 0x00426cef countFeatureValues
 0x00426daf drawFeatureLabels
+0x00427217 fn_427217
 0x0042756d fn_42756d
 0x004275dc fn_4275dc
 0x00427610 fn_427610

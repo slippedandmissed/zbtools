@@ -2463,3 +2463,77 @@ void placeHopper(View *view)
         *cel++ = y - g_4ac954[image];
     }
 }
+
+/* Whether a, b and c fit square n of the 5 by 5 by 5 puzzle: its row,
+   layer and column sort by them, or can, the values being unused elsewhere. */
+/* @zoombi32 0x00427217 */
+short fn_427217(short a, short b, short c, short n)
+{
+    short column;
+    short layer;
+    short row;
+    short i;
+
+    if (g_4abec4)
+        return 1;
+    column = n % 5;
+    layer = n / 25;
+    row = n % 25;
+    row = row / 5;
+    if (!g_4ac1a8[row] && !g_4ac1da[layer] && !g_4ac20c[column]) {
+        for (i = 0; i < 5; i++) {
+            if (b == g_4ac1da[i])
+                return 0;
+            if (a == g_4ac1a8[i])
+                return 0;
+            if (c == g_4ac20c[i])
+                return 0;
+        }
+        return 1;
+    }
+    if (!g_4ac1a8[row])
+        for (i = 0; i < 5; i++)
+            if (a == g_4ac1a8[i])
+                return 0;
+    if (!g_4ac1da[layer])
+        for (i = 0; i < 5; i++)
+            if (b == g_4ac1da[i])
+                return 0;
+    if (!g_4ac20c[column])
+        for (i = 0; i < 5; i++)
+            if (c == g_4ac20c[i])
+                return 0;
+    if (g_4ac20c[column] && c != g_4ac20c[column])
+        return 0;
+    if (g_4ac1a8[row] && a != g_4ac1a8[row])
+        return 0;
+    if (g_4ac1da[layer] && b != g_4ac1da[layer])
+        return 0;
+    if (a == g_4ac1a8[row] && c == g_4ac20c[column] && b == g_4ac1da[layer])
+        return 1;
+    if (a == g_4ac1a8[row] && !g_4ac1da[layer])
+        for (i = 0; i < 5; i++)
+            if (b == g_4ac1da[i])
+                return 0;
+    if (b == g_4ac1da[layer] && !g_4ac1a8[row])
+        for (i = 0; i < 5; i++)
+            if (a == g_4ac1a8[i])
+                return 0;
+    if (a == g_4ac1a8[row] && !g_4ac20c[column])
+        for (i = 0; i < 5; i++)
+            if (c == g_4ac20c[i])
+                return 0;
+    if (b == g_4ac1da[layer] && !g_4ac20c[column])
+        for (i = 0; i < 5; i++)
+            if (c == g_4ac20c[i])
+                return 0;
+    if (c == g_4ac20c[column] && !g_4ac1da[layer])
+        for (i = 0; i < 5; i++)
+            if (b == g_4ac1da[i])
+                return 0;
+    if (c == g_4ac20c[column] && !g_4ac1a8[row])
+        for (i = 0; i < 5; i++)
+            if (a == g_4ac1a8[i])
+                return 0;
+    return 1;
+}
