@@ -636,3 +636,360 @@ short fn_454c10()
     }
     return scene;
 }
+
+/* Stands each Zoombini on a cell in state 508 at its cell. */
+/* @zoombi32 0x0044e0e2 */
+void fn_44e0e2()
+{
+    Point where;
+    short i;
+    View *view;
+
+    g_4b2540 = 0;
+    for (i = 0; i < 117; i++)
+        if (g_4b1aea[i].state == 508) {
+            view = findView(g_4b1aea[i].view);
+            where.x = view->body.x + 24;
+            where.y = view->body.y - 5;
+            setSnoidAction((Snoid *)&findView(g_4b1aea[i].snoid)->body, 0, &where);
+        }
+}
+
+/* Stands the placed Zoombinis (g_4b2544) on their cells (state 507). */
+/* @zoombi32 0x0044e161 */
+void fn_44e161()
+{
+    Point where;
+    short i;
+    short cell;
+    View *view;
+
+    for (i = 0; i < g_4b2414; i++)
+        if (g_4b2544[i].cell) {
+            cell = g_4b2544[i].cell;
+            view = findView(g_4b1aea[g_4b2544[i].cell].view);
+            where.x = view->body.x + 24;
+            where.y = view->body.y - 5;
+            view = findView(g_4b2544[i].snoid);
+            if (view) {
+                setSnoidAction(viewSnoid(view), 0, &where);
+                g_4b1aea[cell].state = 507;
+                g_4b1aea[cell].snoid = g_4b2544[i].snoid;
+            }
+        }
+}
+
+/* Loads a QuickTime movie from a file (0: failed). */
+/* @zoombi32 0x004552fd */
+long fn_4552fd(const char *path)
+{
+    long movie;
+    long id;
+    long file;
+    long error;
+
+    error = qtim_2c(path, &file, 0);
+    if (qtim_5e() || error)
+        return 0;
+    id = 0;
+    error = qtim_2a(&movie, file, &id, 0, 0, 0);
+    if (qtim_5e() || error)
+        return 0;
+    error = qtim_02(file);
+    if (qtim_5e() || error)
+        return 0;
+    return movie;
+}
+
+/* Stops the movie playing, if one is, and with `shutdown` closes
+   QuickTime. */
+/* @zoombi32 0x00455273 */
+void fn_455273(short shutdown)
+{
+    if (g_4b2ad4) {
+        g_4b2ad6 = 1;
+        g_4b2ad4 = 0;
+        qtim_31(g_4b2ad8, 0);
+        qtim_07(g_4b2ad8);
+        setPort(g_4b2ae4);
+    }
+    if (shutdown && quickTimeReady) {
+        quickTimeReady = 0;
+        if (g_4b2adc) {
+            qtim_37(g_4b2adc);
+            g_4b2adc = 0;
+        }
+        qtim_0c();
+        QTTerminate();
+    }
+}
+
+/* Copies the features of the Zoombini in view `id` to one of the slot
+   views (0 and 1, or 7 and 8); for any but slot 0, while g_4b2630 is
+   below 3, the Zoombini's view also stops and moves to the slot view's
+   place in the list (moveView). */
+/* @zoombi32 0x00450c24 */
+void fn_450c24(short id, short n)
+{
+    View *to;
+    char *features;
+    View *from;
+
+    from = findView(id);
+    Snoid *fromSnoid = viewSnoid(from);
+    features = fromSnoid->features;
+    switch (n) {
+    case 0:
+        to = findView(g_4b26a6[0]);
+        break;
+    case 1:
+        to = findView(g_4b26a6[1]);
+        break;
+    case 7:
+        to = findView(g_4b26ba[7]);
+        break;
+    case 8:
+        to = findView(g_4b26ba[8]);
+        break;
+    }
+    if (to) {
+        to->changed = 1;
+        Snoid *snoid = viewSnoid(to);
+        char *copy = snoid->features;
+
+        copy[0] = features[0];
+        copy[1] = features[1];
+        copy[2] = features[2];
+        copy[3] = features[3];
+        snoid->unknownF4 = 4;
+        if (n && g_4b2630 < 3) {
+            from->changed = 1;
+            from->body.running = 0;
+            moveView(from->id, 0, to->id);
+        }
+    }
+}
+
+/* Records the features of the Zoombinis in the views g_4b2776[1-3] as
+   slots 1-3's (none if a view is gone). */
+/* @zoombi32 0x00450d5d */
+void fn_450d5d()
+{
+    short i;
+    View *view;
+
+    for (i = 1; i < 4; i++) {
+        view = findView(g_4b2776[i]);
+        if (view) {
+            Snoid *snoid = viewSnoid(view);
+
+            g_4b26cc[i][0] = snoid->features[0];
+            g_4b26cc[i][1] = snoid->features[1];
+            g_4b26cc[i][2] = snoid->features[2];
+            g_4b26cc[i][3] = snoid->features[3];
+        } else {
+            g_4b26cc[i][0] = 0;
+            g_4b26cc[i][1] = 0;
+            g_4b26cc[i][2] = 0;
+            g_4b26cc[i][3] = 0;
+        }
+    }
+}
+
+/* The same for slots 4-6. */
+/* @zoombi32 0x00450df2 */
+void fn_450df2()
+{
+    short i;
+    View *view;
+
+    for (i = 4; i < 7; i++) {
+        view = findView(g_4b2776[i]);
+        if (view) {
+            Snoid *snoid = viewSnoid(view);
+
+            g_4b26cc[i][0] = snoid->features[0];
+            g_4b26cc[i][1] = snoid->features[1];
+            g_4b26cc[i][2] = snoid->features[2];
+            g_4b26cc[i][3] = snoid->features[3];
+        } else {
+            g_4b26cc[i][0] = 0;
+            g_4b26cc[i][1] = 0;
+            g_4b26cc[i][2] = 0;
+            g_4b26cc[i][3] = 0;
+        }
+    }
+}
+
+/* Copies the features of the Zoombinis in the next two views of
+   g_4b2604 (from g_4b2734, up to g_4b262e) into g_4b263c; returns how many
+   there were. */
+/* @zoombi32 0x00452035 */
+short fn_452035()
+{
+    short count = 0;
+    View *view;
+
+    if (g_4b2734 < g_4b262e) {
+        count++;
+        view = findView(g_4b2604[g_4b2734]);
+        if (view) {
+            Snoid *snoid = viewSnoid(view);
+            char *features = snoid->features;
+
+            g_4b263c[0] = features[0];
+            g_4b263c[1] = features[1];
+            g_4b263c[2] = features[2];
+            g_4b263c[3] = features[3];
+        }
+        if (g_4b2734 + 1 < g_4b262e) {
+            count++;
+            view = findView(g_4b2604[g_4b2734 + 1]);
+            if (view) {
+                Snoid *snoid = viewSnoid(view);
+                char *features = snoid->features;
+
+                g_4b263c[4] = features[0];
+                g_4b263c[5] = features[1];
+                g_4b263c[6] = features[2];
+                g_4b263c[7] = features[3];
+            }
+        } else {
+            g_4b263c[4] = 0;
+            g_4b263c[5] = 0;
+            g_4b263c[6] = 0;
+            g_4b263c[7] = 0;
+        }
+    }
+    return count;
+}
+
+/* Starts view g_4b25ac's script (11036 on, by g_4b266c) and, with it, the
+   Zoombini in view g_4b26b2 (script 12020 on, from g_4a44ac), grouping
+   them. */
+/* @zoombi32 0x0045162e */
+void fn_45162e(short)
+{
+    View *view;
+    View *other;
+
+    view = findView(g_4b25ac);
+    if (view) {
+        setViewScript(view, g_4b266c + 11036, 1);
+        view->notify = fn_45174e;
+        moveView(view->id, 0, g_4b25ae);
+    }
+    other = findView(g_4b26b2);
+    if (other && view) {
+        Snoid *snoid = viewSnoid(other);
+
+        snoid->unknownF2 = 1;
+        *(Point *)&snoid->body.x = g_4a44ac;
+        startSnoidScript(viewSnoid(other), g_4b266c + 12020, 0, 0);
+        other->notify = fn_45174e;
+        moveView(other->id, 1, view->id);
+    }
+    if (other)
+        groupViews(other->id, view->id, 0, 0, 0, 0);
+    else
+        groupViews(view->id, view->id, 0, 0, 0, 0);
+}
+
+/* Whether two of the Zoombinis (g_4b2430) share a feature; g_4b2516 is
+   set to the first they share (0-3). */
+/* @zoombi32 0x0044cd71 */
+short fn_44cd71(short first, short second)
+{
+    short hair;
+    short eyes;
+    short nose;
+    short feet;
+    short hair2;
+    short eyes2;
+    short nose2;
+    short feet2;
+
+    {
+        Snoid *snoid = (Snoid *)&findView(partyViews[g_4b2430[first]])->body;
+
+        hair = snoid->features[0];
+        eyes = snoid->features[1];
+        nose = snoid->features[2];
+        feet = snoid->features[3];
+    }
+    {
+        Snoid *snoid = (Snoid *)&findView(partyViews[g_4b2430[second]])->body;
+
+        hair2 = snoid->features[0];
+        eyes2 = snoid->features[1];
+        nose2 = snoid->features[2];
+        feet2 = snoid->features[3];
+    }
+    if (hair == hair2) {
+        g_4b2516 = 0;
+        return 1;
+    }
+    if (eyes == eyes2) {
+        g_4b2516 = 1;
+        return 1;
+    }
+    if (nose == nose2) {
+        g_4b2516 = 2;
+        return 1;
+    }
+    if (feet2 == feet) {
+        g_4b2516 = 3;
+        return 1;
+    }
+    return 0;
+}
+
+/* Picks a random Zoombini of the views g_4b2604 and copies its features
+   into g_4b263c, and from g_4b2630 3 on, the next one's after it; returns
+   how many views there were. */
+/* @zoombi32 0x00451f4e */
+short fn_451f4e()
+{
+    short i;
+    short count;
+    short ids[22];
+    View *view;
+
+    for (i = 0, count = 0; i < g_4b262e; i++)
+        if (g_4b2604[i])
+            ids[count++] = g_4b2604[i];
+    if (count) {
+        i = randomBetween(0, count - 1);
+        view = findView(ids[i]);
+        if (view) {
+            Snoid *snoid = viewSnoid(view);
+            char *features = snoid->features;
+
+            g_4b263c[0] = features[0];
+            g_4b263c[1] = features[1];
+            g_4b263c[2] = features[2];
+            g_4b263c[3] = features[3];
+        }
+        if (g_4b2630 >= 3 && count > 1) {
+            i++;
+            if (i == count)
+                i = 0;
+            view = findView(ids[i]);
+            if (view) {
+                Snoid *snoid = viewSnoid(view);
+                char *features = snoid->features;
+
+                g_4b263c[4] = features[0];
+                g_4b263c[5] = features[1];
+                g_4b263c[6] = features[2];
+                g_4b263c[7] = features[3];
+            }
+        } else {
+            g_4b263c[4] = 0;
+            g_4b263c[5] = 0;
+            g_4b263c[6] = 0;
+            g_4b263c[7] = 0;
+        }
+    }
+    return count;
+}

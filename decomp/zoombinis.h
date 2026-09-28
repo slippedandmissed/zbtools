@@ -5226,9 +5226,9 @@ short setThreadError(short error); /* 0x46f78e */
 /* A cell of the game module's hexagonal board (117 of them). */
 struct HexCell
 {
-    short unknown0;
+    short view; /* its view */
     short state; /* +2: 500 empty, 508 ... */
-    short unknown4; /* 0x1fe-0x201 */
+    short snoid; /* +4: the view of the Zoombini on it */
     short links[6]; /* +6: the neighbours in each direction (-1: none) */
 };
 extern HexCell g_4b1aea[117];
@@ -5265,6 +5265,47 @@ void fn_44f180(View *, short region);
 void fn_44f1f2();
 void fn_4541bf(View *view);
 short fn_454c10();
+/* A Zoombini placed on a cell (g_4b2544). */
+struct PlacedSnoid
+{
+    short cell;
+    short snoid; /* its view */
+};
+extern PlacedSnoid g_4b2544[];
+extern short g_4b2ad6;
+extern basePort *g_4b2ae4;
+long __cdecl qtim_02(long file);
+long __cdecl qtim_07(long movie);
+long __cdecl qtim_0c();
+long __cdecl qtim_2a(long *movie, long file, long *id, long, long, long);
+long __cdecl qtim_2c(const char *path, long *file, long);
+long __cdecl qtim_31(long movie, long);
+long __cdecl qtim_37(long controller);
+long __cdecl qtim_5e();
+void __cdecl QTTerminate();
+void fn_44e0e2();
+void fn_44e161();
+long fn_4552fd(const char *path);
+void fn_455273(short shutdown);
+extern short g_4b2630;
+extern short g_4b2776[];
+void fn_450c24(short id, short n);
+void fn_450d5d();
+void fn_450df2();
+extern short g_4b2734;
+extern short g_4b262e;
+extern short g_4b2604[];
+extern char g_4b263c[8];
+extern short g_4b25ac;
+extern short g_4b25ae;
+extern short g_4b26b2;
+extern short g_4b266c;
+extern Point g_4a44ac;
+short fn_452035();
+void fn_45162e(short);
+extern short g_4b2516;
+short fn_44cd71(short first, short second);
+short fn_451f4e();
 short fn_44d102();
 void fn_44d5ad(short cell);
 void fn_44dca0(short cell, short direction, short bit);
