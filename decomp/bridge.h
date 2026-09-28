@@ -57,6 +57,7 @@ void closeScene7();
 void fn_41b357(View *view, short event);
 short scene7Key(unsigned short key);
 void fn_41b453(View *view, short event);
+void makeBridgeRule();
 short turnedBack(FeatureRules *rules, short edge, Snoid *snoid);
 
 #endif

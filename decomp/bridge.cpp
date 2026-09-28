@@ -9,6 +9,7 @@
 #include "e2memory.h"
 #include "features.h"
 #include "graphics.h"
+#include "loading.h"
 #include "module_4623b8.h"
 #include "snoids.h"
 #include "sound.h"
@@ -402,4 +403,293 @@ void fn_41b453(View *view, short event)
         }
         break;
     }
+}
+
+/*
+ * Makes the cliffs' rule for the level (g_4ab790): builds the masks of
+ * feature values it may use (0: one value; 1: either of two values of one
+ * feature; 2: a value of each of two features; 3: 500 combinations), counts
+ * the chosen Zoombinis matching each, and picks at random among those
+ * matching as near half as possible (skipping, at level 0, the count of the
+ * last rule, g_4b7548). The rule's side is random.
+ */
+/* Not exact: register allocation (the original keeps `masks` in ebx and
+   `value` in esi, saving esi around the arrays' copies; here they're the
+   other way round, whatever the declaration order or scope). */
+/* @zoombi32 0x0041b812 */
+void makeBridgeRule()
+{
+    unsigned short *counts;
+    ChosenSnoids *chosen;
+    unsigned long n;
+    unsigned long picked;
+    unsigned long j;
+    unsigned long best;
+    unsigned long shift;
+    unsigned long shift2;
+    unsigned long step;
+    unsigned long step2;
+    unsigned long step3;
+    unsigned long mask1;
+    unsigned long mask2;
+    unsigned long base[10] = {0x12, 0x13, 0x14, 0x15, 0x23, 0x24, 0x25, 0x34, 0x35, 0x45};
+    unsigned long low[6] = {0x1, 0x1, 0x1, 0x100, 0x100, 0x10000};
+    unsigned long high[6] = {0x100, 0x10000, 0x1000000, 0x10000, 0x1000000, 0x1000000};
+    unsigned long value;
+    unsigned long *masks;
+    unsigned long i;
+    unsigned long k;
+    unsigned long m;
+    long matches;
+    unsigned long target;
+    long pick;
+
+    masks = (unsigned long *)newPtr(2000);
+    if (!masks)
+        fatalError(msgOutOfMemory);
+    counts = (unsigned short *)newPtr(1000);
+    if (!counts)
+        fatalError(msgOutOfMemory);
+    chosen = listChosenSnoids();
+    for (i = 0; i < 500; i++) {
+        masks[i] = 0;
+        counts[i] = 0;
+    }
+    switch (g_4ab790) {
+    case 0:
+        n = 20;
+        value = 1;
+        step = 1;
+        for (i = 0; i < 20; i++) {
+            masks[i] = value;
+            switch (value) {
+            case 5:
+                value = step = 0x100;
+                break;
+            case 0x500:
+                value = step = 0x10000;
+                break;
+            case 0x50000:
+                value = step = 0x1000000;
+                break;
+            case 0x5000000:
+                break;
+            default:
+                value += step;
+                break;
+            }
+        }
+        break;
+    case 1:
+        n = 40;
+        shift = 0;
+        k = 0;
+        for (j = 0; j < 4; j++) {
+            for (i = 0; i < 10; i++) {
+                masks[k] = base[i] << shift;
+                k++;
+            }
+            shift += 8;
+        }
+        for (j = 0; j < chosen->count; j++) {
+            value = swapLong(*(unsigned long *)chosen->features[j]);
+            for (i = 0; i < n; i++)
+                if ((value & 0xf) == (masks[i] & 0xf) || (value & 0xf00) == (masks[i] & 0xf00)
+                    || (value & 0xf0000) == (masks[i] & 0xf0000)
+                    || (value & 0xf000000) == (masks[i] & 0xf000000)
+                    || (value & 0xf) == (masks[i] & 0xf0) >> 4
+                    || (value & 0xf00) == (masks[i] & 0xf000) >> 4
+                    || (value & 0xf0000) == (masks[i] & 0xf00000) >> 4
+                    || (value & 0xf000000) == (masks[i] & 0xf0000000) >> 4)
+                    counts[i]++;
+        }
+        break;
+    case 2:
+        n = 150;
+        k = 0;
+        for (j = 0; j < 6; j++)
+            for (i = 1; i <= 5; i++) {
+                step = high[j] * i + low[j];
+                for (m = 1; m <= 5; m++) {
+                    masks[k] = step;
+                    k++;
+                    step += low[j];
+                }
+            }
+        break;
+    case 3:
+        n = 500;
+        k = 0;
+        for (j = 0; j < 4; j++) {
+            switch (j) {
+            case 0:
+                value = 0x10101;
+                step = 1;
+                mask1 = 0xf0f00;
+                step2 = 0x100;
+                mask2 = 0xf000f;
+                step3 = 0x10000;
+                shift = 0;
+                shift2 = 8;
+                break;
+            case 1:
+                value = 0x1000101;
+                step = 1;
+                mask1 = 0xf000f00;
+                step2 = 0x100;
+                mask2 = 0xf00000f;
+                step3 = 0x1000000;
+                shift = 0;
+                shift2 = 8;
+                break;
+            case 2:
+                value = 0x1010001;
+                step = 1;
+                mask1 = 0xf0f0000;
+                step2 = 0x10000;
+                mask2 = 0xf00000f;
+                step3 = 0x1000000;
+                shift = 0;
+                shift2 = 16;
+                break;
+            case 3:
+                value = 0x1010100;
+                step = 0x100;
+                mask1 = 0xf0f0000;
+                step2 = 0x10000;
+                mask2 = 0xf000f00;
+                step3 = 0x1000000;
+                shift = 8;
+                shift2 = 16;
+                break;
+            }
+            for (i = 0; i < 125; i++) {
+                masks[i + k] = value;
+                value += step;
+                if (((value >> shift) & 0xf) == 6) {
+                    value &= mask1;
+                    value += step + step2;
+                    if (((value >> shift2) & 0xf) == 6) {
+                        value &= mask2;
+                        value += step2 + step3;
+                    }
+                }
+            }
+            k += 125;
+        }
+        break;
+    }
+    if (g_4ab790 != 1)
+        for (j = 0; j < chosen->count; j++) {
+            value = swapLong(*(unsigned long *)chosen->features[j]);
+            for (i = 0; i < n; i++)
+                if ((value & 0xf) == (masks[i] & 0xf) || (value & 0xf00) == (masks[i] & 0xf00)
+                    || (value & 0xf0000) == (masks[i] & 0xf0000)
+                    || (value & 0xf000000) == (masks[i] & 0xf000000))
+                    counts[i]++;
+        }
+    matches = 0;
+    value = 1;
+    target = chosen->count / 2;
+    while (!matches) {
+        if (target > 0 && target < 16) {
+            for (i = 0; i < n; i++)
+                if (target == counts[i])
+                    matches++;
+            best = target;
+        }
+        target += value;
+        /* value (the step here) is unsigned, so the test is always false (as in the tunnels'
+           fn_460e3d). */
+        if (value < 0)
+            value--;
+        value++;
+        value = -value;
+    }
+    pick = randomBetween(1, matches);
+    for (i = 0; i < n; i++)
+        if (counts[i] == best && !--pick) {
+            picked = masks[i];
+            i = n;
+        }
+    g_4b7548 = 0;
+    g_4b7544 = 0;
+    if (!g_4ab790 && matches == 1) {
+        g_4b7548 = best;
+        g_4b7544 = picked;
+    }
+    bridgeRules.count = 1;
+    bridgeRules.rules[0].side = randomBetween(0, 1);
+    switch (g_4ab790) {
+    case 0:
+        bridgeRules.rules[0].count = 1;
+        if (picked & 0xff) {
+            bridgeRules.rules[0].features[0] = 4;
+            bridgeRules.rules[0].values[0] = picked & 0xf;
+        } else if (picked & 0xff00) {
+            bridgeRules.rules[0].features[0] = 3;
+            bridgeRules.rules[0].values[0] = (picked >> 8) & 0xf;
+        } else if (picked & 0xff0000) {
+            bridgeRules.rules[0].features[0] = 2;
+            bridgeRules.rules[0].values[0] = (picked >> 16) & 0xf;
+        } else if (picked & 0xff000000) {
+            bridgeRules.rules[0].features[0] = 1;
+            bridgeRules.rules[0].values[0] = (picked >> 24) & 0xf;
+        }
+        break;
+    case 1:
+        bridgeRules.rules[0].count = 2;
+        if (picked & 0xff) {
+            bridgeRules.rules[0].features[0] = 4;
+            bridgeRules.rules[0].values[0] = picked & 0xf;
+            bridgeRules.rules[0].features[1] = 4;
+            bridgeRules.rules[0].values[1] = (picked & 0xf0) >> 4;
+        } else if (picked & 0xff00) {
+            bridgeRules.rules[0].features[0] = 3;
+            bridgeRules.rules[0].values[0] = (picked >> 8) & 0xf;
+            bridgeRules.rules[0].features[1] = 3;
+            bridgeRules.rules[0].values[1] = (picked >> 12) & 0xf;
+        } else if (picked & 0xff0000) {
+            bridgeRules.rules[0].features[0] = 2;
+            bridgeRules.rules[0].values[0] = (picked >> 16) & 0xf;
+            bridgeRules.rules[0].features[1] = 2;
+            bridgeRules.rules[0].values[1] = (picked >> 20) & 0xf;
+        } else if (picked & 0xff000000) {
+            bridgeRules.rules[0].features[0] = 1;
+            bridgeRules.rules[0].values[0] = (picked >> 24) & 0xf;
+            bridgeRules.rules[0].features[1] = 1;
+            bridgeRules.rules[0].values[1] = (picked >> 28) & 0xf;
+        }
+        break;
+    case 2:
+    case 3:
+        i = 0;
+        bridgeRules.rules[0].count = 0;
+        if (picked & 0xff) {
+            bridgeRules.rules[0].features[i] = 4;
+            bridgeRules.rules[0].values[i] = picked & 0xf;
+            i++;
+            bridgeRules.rules[0].count++;
+        }
+        if ((picked & 0xff00) && i < g_4ab790) {
+            bridgeRules.rules[0].features[i] = 3;
+            bridgeRules.rules[0].values[i] = (picked >> 8) & 0xf;
+            i++;
+            bridgeRules.rules[0].count++;
+        }
+        if ((picked & 0xff0000) && i < g_4ab790) {
+            bridgeRules.rules[0].features[i] = 2;
+            bridgeRules.rules[0].values[i] = (picked >> 16) & 0xf;
+            i++;
+            bridgeRules.rules[0].count++;
+        }
+        if ((picked & 0xff000000) && i < g_4ab790) {
+            bridgeRules.rules[0].features[i] = 1;
+            bridgeRules.rules[0].values[i] = (picked >> 24) & 0xf;
+            bridgeRules.rules[0].count++;
+        }
+        break;
+    }
+    disposePtr(masks);
+    disposePtr(counts);
 }

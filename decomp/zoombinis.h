@@ -3617,6 +3617,8 @@ extern short g_4b9688;
 extern short g_4b754c;
 extern short g_4b755e;
 extern short g_4b7560;
+extern long g_4b7544; /* @data 0x4b7544: the last one-feature rule made (tunnels, bridge) */
+extern short g_4b7548; /* @data 0x4b7548: and how many it matched */
 extern short g_4b7566;
 extern long g_4b9670;
 extern long g_4b9674;

@@ -83,8 +83,6 @@ extern short g_4b8098; /* @data 0x4b8098 */
 extern unsigned long g_4b80a4; /* @data 0x4b80a4: slots used (allocateSlot) */
 extern long g_4b809c; /* @data 0x4b809c */
 extern long g_4b80a0; /* @data 0x4b80a0 */
-extern short g_4b7548; /* @data 0x4b7548 */
-extern long g_4b7544; /* @data 0x4b7544 */
 extern short g_4b7fbc; /* @data 0x4b7fbc */
 void resetScene8();
 extern short g_4b80a8; /* @data 0x4b80a8: the script last shown (debugging) */
