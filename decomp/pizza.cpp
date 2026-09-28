@@ -453,7 +453,7 @@ void fn_446035()
         moveView(g_4b1664, 1, g_4b1616);
         if (g_4b1618 == 3) {
             if (g_4b1712 >= 0)
-                moveView(g_4b160e, 0, g_4b1734);
+                moveView(g_4b160e, 0, g_4b1734[0].view);
             else
                 moveView(g_4b160e, 0, g_4b1664);
         }
@@ -1534,4 +1534,61 @@ void fn_445153()
         g_4b15fc = 1000;
     }
     claimPlacedView(1, 0);
+}
+
+/* Shows four pizzas, each with two of the toppings a, b, c and d (a and
+   b, b and c, c and d, a and d), recording each as tried and shown
+   (g_4b1734; scripts 12042 on, g_4b170e counting). */
+/* @zoombi32 0x00446487 */
+void fn_446487(short a, short b, short c, short d)
+{
+    fillMemory(g_4b16da, 0, 16);
+    g_4b16da[a] = 1;
+    g_4b16da[b] = 1;
+    fn_444556();
+    g_4b1712++;
+    g_4b1734[g_4b1712].set = g_4b16ec[g_4b1708];
+    g_4b1734[g_4b1712].unknown4 = 4;
+    g_4b170e++;
+    g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
+    g_4b1734[g_4b1712].script = g_4b170e + 12025;
+    findView(g_4b1734[g_4b1712].view)->placed = fn_442a9f;
+    updateViews();
+    fillMemory(g_4b16da, 0, 16);
+    g_4b16da[b] = 1;
+    g_4b16da[c] = 1;
+    fn_444556();
+    g_4b1712++;
+    g_4b1734[g_4b1712].set = g_4b16ec[g_4b1708];
+    g_4b1734[g_4b1712].unknown4 = 4;
+    g_4b170e++;
+    g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
+    g_4b1734[g_4b1712].script = g_4b170e + 12025;
+    findView(g_4b1734[g_4b1712].view)->placed = fn_442a9f;
+    updateViews();
+    fillMemory(g_4b16da, 0, 16);
+    g_4b16da[c] = 1;
+    g_4b16da[d] = 1;
+    fn_444556();
+    g_4b1712++;
+    g_4b1734[g_4b1712].set = g_4b16ec[g_4b1708];
+    g_4b1734[g_4b1712].unknown4 = 4;
+    g_4b170e++;
+    g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
+    g_4b1734[g_4b1712].script = g_4b170e + 12025;
+    findView(g_4b1734[g_4b1712].view)->placed = fn_442a9f;
+    updateViews();
+    fillMemory(g_4b16da, 0, 16);
+    g_4b16da[a] = 1;
+    g_4b16da[d] = 1;
+    fn_444556();
+    g_4b1712++;
+    g_4b1734[g_4b1712].set = g_4b16ec[g_4b1708];
+    g_4b1734[g_4b1712].unknown4 = 4;
+    g_4b170e++;
+    g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 0, 0, 0, 0);
+    g_4b1734[g_4b1712].script = g_4b170e + 12025;
+    findView(g_4b1734[g_4b1712].view)->placed = fn_442a9f;
+    updateViews();
+    fillMemory(g_4b16da, 0, 16);
 }

@@ -6006,7 +6006,15 @@ void fn_445789();
 extern short g_4b1664;
 extern short g_4b1616;
 extern short g_4b1712;
-extern short g_4b1734;
+/* The pizzas shown (from 1, g_4b1712 of them). */
+struct ShownPizza
+{
+    short view;
+    short set; /* its toppings, a bit each */
+    short unknown4;
+    short script;
+};
+extern ShownPizza g_4b1734[];
 extern short g_4b16ca[8];
 extern short toppingViews[8]; /* @data 0x4b1636 */
 extern short g_4b1630;
@@ -6043,3 +6051,5 @@ extern short g_4b165c;
 extern short g_4b1648;
 extern short g_4b15fc;
 void fn_445153();
+extern short g_4b170e;
+void fn_446487(short a, short b, short c, short d);
