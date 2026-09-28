@@ -5929,3 +5929,35 @@ extern Point g_4a2406[4][20]; /* each row's spots to walk off by */
 extern unsigned long g_4b0d30;
 extern unsigned long g_4b0d34;
 void mazeFrame();
+/* Pizza Pass (pizza) */
+extern SceneButton pizzaButtons[5]; /* @data 0x4a33c0: 1-4 ([0] isn't one) */
+extern short g_4b15e6;
+extern short g_4a3d98;
+extern short g_4a3d9a;
+extern short g_4b166c;
+extern short g_4b15e4; /* the scene is open */
+extern long g_4a3d3c;
+extern long g_4b15d0;
+extern short g_4b162e;
+extern short g_4b161e;
+extern Point g_4a3d54[];
+extern short g_4b1820;
+extern short g_4b15d4;
+void fn_441127(View *, short region);
+void closePizza();
+void fn_4423d7();
+void fn_442443(View *view);
+void fn_4468eb();
+extern ImageBank *g_4a3d94;
+extern short g_4b1624; /* how many toppings */
+extern short g_4b1626;
+extern short g_4b1628;
+extern short g_4b1676[8];
+extern short trollWants[3][8]; /* @data 0x4b1686 */
+extern short g_4b16da[8];
+extern short g_4b1708;
+extern char g_4b16ec[];
+void drawPizzaButton(short which, short lit, short show);
+short fn_443316(short troll);
+void fn_44410b();
+short fn_44460a();
