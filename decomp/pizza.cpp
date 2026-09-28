@@ -2206,3 +2206,216 @@ void fn_442ea2()
         break;
     }
 }
+
+/*
+ * A pizza served to troll `troll` (0-2), unless it's done (3): it reacts
+ * by its verdict (fn_44338b): 2 (all it wants) it's satisfied (state 2);
+ * 1 it wants more (the next of its scripts; the pizza goes on its pile
+ * the first time); 0 and 4 it rejects it; 3 never happens. Once every
+ * troll there is satisfied, the puzzle is solved (g_4b1662).
+ */
+/* @zoombi32 0x00443521 */
+void fn_443521(short troll, short)
+{
+    View *view;
+
+    g_4b1824 = clockTime();
+    view = 0;
+    switch (troll) {
+    case 0:
+        if (g_4b1618 == 3)
+            break;
+        switch (fn_44338b(0)) {
+        case 2:
+            view = findView(g_4b160e);
+            setViewScript(view, randomUpTo(2) + 8017, 1);
+            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            g_4b1618 = 2;
+            g_4b16ea++;
+            break;
+        case 1:
+            view = findView(g_4b160e);
+            setViewScript(view, g_4b16b6 + 8000, 1);
+            fn_446035();
+            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            if (++g_4b16b6 >= 6)
+                g_4b16b6 = 5;
+            g_4a3d40 = 0;
+            if (!g_4b1670) {
+                g_4b1670 = 1;
+                g_4b1710 = 5;
+            }
+            g_4b15fe = 1;
+            g_4b16ea = 0;
+            break;
+        case 0:
+            view = findView(g_4b160e);
+            setViewScript(view, g_4b16b8 + 8006, 1);
+            fn_446035();
+            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            if (++g_4b16b8 >= 2)
+                g_4b16b8 = 0;
+            g_4b16ea = 0;
+            g_4b15fe = 1;
+            g_4b1710 = 4;
+            break;
+        case 4:
+            view = findView(g_4b160e);
+            setViewScript(view, g_4b16ba + 8008, 1);
+            fn_446035();
+            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            if (++g_4b16ba >= 6)
+                g_4b16ba = 0;
+            g_4b16ea = 0;
+            g_4b15fe = 1;
+            g_4b1710 = 4;
+            break;
+        case 3:
+            view = findView(g_4b160e);
+            setViewScript(view, randomUpTo(1) + 8015, 1);
+            fn_446035();
+            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            g_4b16ea = 0;
+            g_4b15fe = 1;
+            g_4b1710 = 4;
+            break;
+        }
+        break;
+    case 1:
+        if (g_4b161a == 3)
+            break;
+        switch (fn_44338b(1)) {
+        case 2:
+            view = findView(g_4b1610);
+            setViewScript(view, randomUpTo(6) + 9010, 1);
+            fn_446035();
+            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            g_4b161a = 2;
+            g_4b16ea++;
+            break;
+        case 1:
+            view = findView(g_4b1610);
+            setViewScript(view, g_4b16be + 9021, 1);
+            fn_446035();
+            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            if (++g_4b16be >= 5)
+                g_4b16be = 4;
+            g_4a3d40 = 1;
+            if (!g_4b1670) {
+                g_4b1670 = 2;
+                g_4b1710 = 6;
+            }
+            g_4b15fe = 2;
+            g_4b16ea = 0;
+            break;
+        case 0:
+            view = findView(g_4b1610);
+            setViewScript(view, g_4b16c0 + 9000, 1);
+            fn_446035();
+            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            if (++g_4b16c0 >= 5)
+                g_4b16c0 = 0;
+            g_4b16ea = 0;
+            g_4b15fe = 2;
+            if (!g_4b1670)
+                g_4b1710 = 4;
+            break;
+        case 4:
+            view = findView(g_4b1610);
+            setViewScript(view, g_4b16c2 + 9005, 1);
+            fn_446035();
+            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            if (++g_4b16c2 >= 5)
+                g_4b16c2 = 0;
+            g_4b16ea = 0;
+            g_4b15fe = 2;
+            if (!g_4b1670)
+                g_4b1710 = 4;
+            break;
+        case 3:
+            view = findView(g_4b1610);
+            setViewScript(view, randomUpTo(1) + 9017, 1);
+            fn_446035();
+            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            g_4b16ea = 0;
+            g_4b15fe = 2;
+            g_4b1710 = 4;
+            break;
+        }
+        break;
+    case 2:
+        if (g_4b161c == 3)
+            break;
+        switch (fn_44338b(2)) {
+        case 2:
+            view = findView(g_4b1612);
+            setViewScript(view, randomUpTo(3) + 10023, 1);
+            fn_446035();
+            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            g_4b161c = 2;
+            g_4b16ea++;
+            break;
+        case 1:
+            view = findView(g_4b1612);
+            setViewScript(view, g_4b16c4 + 10009, 1);
+            fn_446035();
+            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            if (++g_4b16c4 >= 5)
+                g_4b16c4 = 4;
+            g_4a3d40 = 2;
+            if (!g_4b1670) {
+                g_4b1670 = 3;
+                g_4b1710 = 7;
+            }
+            g_4b16ea = 0;
+            g_4b15fe = 3;
+            break;
+        case 0:
+            view = findView(g_4b1612);
+            setViewScript(view, g_4b16c6 + 10014, 1);
+            fn_446035();
+            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            if (++g_4b16c6 >= 6)
+                g_4b16c6 = 0;
+            g_4b16ea = 0;
+            g_4b15fe = 3;
+            if (!g_4b1670)
+                g_4b1710 = 4;
+            break;
+        case 4:
+            view = findView(g_4b1612);
+            setViewScript(view, g_4b16c8 + 10020, 1);
+            fn_446035();
+            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            if (++g_4b16c8 >= 3)
+                g_4b16c8 = 0;
+            g_4b16ea = 0;
+            g_4b15fe = 3;
+            if (!g_4b1670)
+                g_4b1710 = 4;
+            break;
+        case 3:
+            view = findView(g_4b1612);
+            setViewScript(view, randomUpTo(2) + 10027, 1);
+            fn_446035();
+            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            g_4b16ea = 0;
+            g_4b15fe = 3;
+            g_4b1710 = 4;
+            break;
+        }
+        break;
+    }
+    if (view)
+        view->placed = fn_442c6c;
+    if (g_4b1618 >= 2 && !g_4b161a && !g_4b161c)
+        g_4b1662 = 1;
+    else if (g_4b1618 >= 2 && g_4b161a >= 2 && !g_4b161c)
+        g_4b1662 = 1;
+    else if (g_4b1618 >= 2 && !g_4b161a && g_4b161c >= 2)
+        g_4b1662 = 1;
+    else if (g_4b1618 >= 2 && g_4b161a >= 2 && g_4b161c >= 2)
+        g_4b1662 = 1;
+    if (g_4b1662)
+        g_4b181c = g_4b15d4 - 1;
+}
