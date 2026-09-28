@@ -1301,7 +1301,7 @@ void drawSquare(short row, short column)
 
 /* Draws the whole board. */
 /* @zoombi32 0x0042bf1b */
-void drawBoard(short)
+void drawBoard(View *)
 {
     short image;
     unsigned short *data;
@@ -2764,7 +2764,7 @@ void addLillyViews()
 
 /* Draws both buttons, unlit. */
 /* @zoombi32 0x004249c4 */
-void drawButtons(short)
+void drawButtons(View *)
 {
     fn_42492b(1, 0, 0);
     fn_42492b(2, 0, 0);
@@ -2772,7 +2772,7 @@ void drawButtons(short)
 
 /* Draws the other set's buttons, unlit. */
 /* @zoombi32 0x00428c28 */
-void drawOtherButtons(short)
+void drawOtherButtons(View *)
 {
     fn_428b8f(1, 0, 0);
     fn_428b8f(2, 0, 0);
@@ -4240,4 +4240,223 @@ void setUpBoard()
     total += 5;
     g_4ac924 = total / 6;
     g_4ac924 += g_4ac924 * 6 < total;
+}
+
+/* Opens the other puzzle (Lilly.MHK) at the level reached. */
+/* @zoombi32 0x004281b0 */
+void openOtherPuzzle()
+{
+    Snoid *snoid;
+    Point place;
+    LillyActor actor;
+    short i;
+    View *view;
+    View *other;
+
+    g_4ac922 = 0;
+    g_4ac924 = 0;
+    g_4ac926 = 0;
+    g_4ac958 = 0;
+    g_4af36a = 0;
+    g_4b0d52 = 0;
+    g_4af36c = 0;
+    g_4af368 = 0;
+    g_4af332 = 0;
+    g_4ac91c = 0;
+    g_4af100 = 0;
+    g_4af102 = 12;
+    g_4af33a = 0;
+    g_4af342 = 0;
+    g_4af0f0 = 0;
+    g_4af104 = 0;
+    g_4af0fc = clockTime() + 600;
+    g_4af0fa = 0;
+    g_4af0ec = 0;
+    g_4af0f2 = 0;
+    g_4af0f4 = 0;
+    g_4af35e = 0;
+    g_4af360 = 0;
+    g_4af350 = 0;
+    g_4af352 = 0;
+    g_4af0f6 = 1;
+    g_4b966e = 0;
+    fillMemory(g_4aed3a, 0, 42);
+    fillMemory(g_4aed64, 0, 28);
+    fillMemory(g_4aefc0, 0, 288);
+    fillMemory(g_4aed0e, 0, 20);
+    fillMemory(g_4aed22, 0, 24);
+    fillMemory(g_4ac9bc, 0, 40);
+    fillMemory(g_4acd4c, 0, 40);
+    fillMemory(g_4acd76, 0, 40);
+    fillMemory(g_4acdf4, 0, 40);
+    fillMemory(g_4ace48, 0, 40);
+    fillMemory(g_4ace9c, 0, 40);
+    fillMemory(g_4ace72, 0, 40);
+    fillMemory(g_4acdca, 0, 40);
+    fillMemory(g_4ace1e, 0, 40);
+    fillMemory(g_4ac9e6, 0, 288);
+    fillMemory(g_4acb08, 0, 288);
+    fillMemory(g_4acc2a, 0, 288);
+    fillMemory(g_4aeea0, 0, 288);
+    fillMemory(g_4aed80, 0, 288);
+    fillMemory(g_4acec6, 0, 288);
+    g_4acfe6 = 0;
+    g_4af0e0 = 0;
+    g_4af0e2 = 0;
+    g_4af0e4 = 0;
+    g_4af0e6 = 0;
+    g_4af0ea = 0;
+    g_4acc28 = 0;
+    g_4acb06 = 0;
+    g_4acd4a = 0;
+    g_4acfea = 0;
+    g_4ace46 = 0;
+    g_4acff0 = 0;
+    g_4acdf2 = 0;
+    g_4acfec = 0;
+    g_4acfe8 = 0;
+    g_4acfee = 0;
+    g_4acff2 = 0;
+    g_4ace9a = 0;
+    g_4acec4 = 0;
+    g_4ac9e4 = 0;
+    g_4acd74 = 0;
+    g_4acd9e = 0;
+    g_4acdc8 = 0;
+    g_4ace1c = 0;
+    g_4ace70 = 0;
+    openGameFile(&g_4af364, "Lilly.MHK");
+    fn_46be2e(g_4af364);
+    g_4a1d68 = loadImageBank(7000, &g_4a1be8);
+    drawBackdrop(5000);
+    loadFeatureGroup(11000, 0, 0);
+    loadFeatureGroup(14000, 1, 0);
+    loadFeatureGroup(10000, 2, 0);
+    loadScripts(11000, 1);
+    addScripts(14000, 5, 0);
+    addScripts(10000, 167, 0);
+    fn_4148da(10, 236);
+    addView(0x1000, drawOtherButtons, fn_428c45, 0, 0, 0, 0, 0);
+    g_4af5a0 = loadImageBank(13000, &g_4a1b44);
+    loadTablePair(g_4ac928, 100, &g_4ac940, &g_4ac944);
+    loadTablePair(g_4ac938, 10000, &g_4ac950, &g_4ac954);
+    loadTablePair(g_4ac930, 200, &g_4ac948, &g_4ac94c);
+    makePartySnoids(0);
+    g_4af0e8 = listChosenSnoids()->count;
+    fn_42b7e7(g_4a1b1c = sceneLevel() + 1);
+    loadLockedTable(&g_4ac98c, &g_4ac994, 15000, (short **)&g_4ac9b0);
+    loadLockedTable(&g_4ac998, &g_4ac9a0, 15001, (short **)&g_4ac9b4);
+    loadLockedTable(&g_4ac9a4, &g_4ac9ac, 15002, (short **)&g_4ac9b8);
+    setUpBoard();
+    g_4a1b40 = addView(0x4008000, drawBoard, fn_42c0d9, 0, 0, 0, 0, 0);
+    for (i = 0; i < 12; i++) {
+        place.x = g_4ac940[i + 1] + 18;
+        place.y = g_4ac944[i + 1] + 15;
+        placedViewPoints[i] = place;
+        g_4b83e4[i] = 0;
+    }
+    placedViewCount = 12;
+    g_4b7560 = 1;
+    g_4af33c = addView(0x4008000, drawCursorSquare, fn_42c306, 0, 5, 0, 0, 0);
+    g_4af33e = addView(0x4008000, flashSquare, fn_42c9aa, 0, 4, 0, 0, 0);
+    g_4af340 = addView(0x4008000, flashSwap, fn_42c9aa, 0, 4, 0, 0, 0);
+    short n = 0;
+
+    for (view = viewListEnd(1); view; view = view->next)
+        if (view->flags == 1) {
+            view->body.running = 0;
+            view->body.x = 680;
+            view->body.y = 220;
+            snoid = viewSnoid(view);
+            g_4aed3a[n] = addView(0x4180000, drawCels, runViewScript, n + 10109, 4, &g_4a1bfc[n], 0, 0);
+            other = findView(g_4aed3a[n]);
+            if (other) {
+                other->placed = fn_42afbe;
+                short *parts = (short *)&other->body;
+
+                parts[10] = snoid->features[0] - 1;
+                parts[13] = view->id;
+                parts[12] = n;
+                parts[15] = 0;
+                if (n == g_4af0e8 - 2 || n == g_4af0e8 - 1) {
+                    other->body.running = 0;
+                    if (g_4a1b1c == 1) {
+                        setViewScript(other, n + 10089, 1);
+                        other->body.running = 1;
+                        other->placed = fn_42afbe;
+                        other->notify = fn_42b003;
+                    }
+                    g_4b755a = g_4af0e8 - n;
+                    if (g_4b755a < 0)
+                        g_4b755a = 0;
+                }
+                n++;
+            }
+        }
+    addLillyActors();
+    for (i = 14000; i <= 14004; i++)
+        g_4aed0e[i - 14000] = addView(0x4000000, drawCels, runViewScript, i, 0, 0, 0, 0);
+    if (g_4a1b1c > 1) {
+        g_4af338 = addView(0x180000, drawCels, runViewScript, 11000, 5, 0, 0, 0);
+        actor.unknownC2 = 0;
+        actor.unknownC0 = 2;
+        g_4af354 = addView(0x4180002, drawCels, runViewScript, g_4ac922 + 10078, 6, &actor, 0, 0);
+        g_4af358 = 4;
+        other = findView(g_4af354);
+        if (other) {
+            other->flags = 0;
+            other->body.running = 0;
+            other->body.x = 38;
+            other->body.y = 415;
+        }
+    } else {
+        g_4af358 = 0;
+    }
+    for (i = 0; i < 12; i++)
+        g_4aed22[i] = addView(0x4000000, (ViewDraw)fn_42c10b, (ViewUpdate)fn_42c112, 14000, 0, 0, 0, 0);
+    fadeOutViews();
+    fn_4148da(10, 236);
+    updateViews();
+    setGroupLists(g_4a1bc8, 1, (short)0xc000);
+    fn_428b8f(1, 0, 0);
+    fn_428b8f(2, 0, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    if (g_4a1b1c == 1)
+        queueViewSound(997, 0);
+    chooseSnoids(0, 0);
+    resetViewClock();
+    g_4af368 = 1;
+    addSoundRange(996, 997, 0);
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(11000, 11001, 1);
+    addSoundRange(12000, 12004, 0);
+    addSoundRange(10009, 10009, 0);
+    addSoundRange(10010, 10010, 0);
+    addSoundRange(10011, 10011, 0);
+    addSoundRange(10000, 10000, 0);
+    addSoundRange(10002, 10002, 0);
+    addSoundRange(10004, 10004, 0);
+    addSoundRange(10003, 10003, 0);
+    addSoundRange(10005, 10008, 0);
+    switch (campHint((short *)(g_4a4ba0 + 0x34))) {
+    case 2:
+        g_4b966e = randomBetween(20076, 20077);
+        break;
+    default:
+        if (g_4a1b1c > 1)
+            g_4b966e = randomBetween(20075, 20077);
+        else
+            g_4b966e = 20075;
+        break;
+    }
+    fn_42c6cb(3);
+    if (g_4a1b1c > 1) {
+        other = findView(g_4af338);
+        if (other) {
+            setViewScript(other, 11000, 1);
+            other->notify = fn_42b08e;
+        }
+    }
+    setViewsLocked(0);
 }
