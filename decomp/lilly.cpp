@@ -1853,3 +1853,156 @@ void addLillyActors()
         }
     }
 }
+
+/* The same, landing at (484, 450), with any further parts placed there too. */
+/* @zoombi32 0x0042a840 */
+void placeLander(View *view)
+{
+    LillyActor *actor = (LillyActor *)&view->body;
+    short *cel;
+    short image;
+
+    switch (actor->body.frame) {
+    case 0:
+        actor->targetX = 484;
+        actor->targetY = 450;
+        actor->stepX = (actor->targetX - actor->body.x) / 3;
+        actor->stepY = (actor->targetY - actor->body.y) / 3;
+        /* fall through */
+    case 1:
+    case 2:
+        cel = (short *)&view->body;
+        image = *cel++;
+        *cel++ -= g_4ac950[image];
+        *cel++ -= g_4ac954[image];
+        *cel += actor->unknownE0;
+        image = *cel++;
+        *cel++ -= g_4ac950[image];
+        *cel -= g_4ac954[image];
+        break;
+    case 3:
+    case 4:
+        cel = (short *)&view->body;
+        image = *cel++;
+        *cel++ = actor->body.x + actor->stepX - g_4ac950[image];
+        *cel++ = actor->body.y + actor->stepY - g_4ac954[image];
+        *cel += actor->unknownE0;
+        image = *cel++;
+        *cel++ = actor->body.x + actor->stepX - g_4ac950[image];
+        *cel = actor->body.y + actor->stepY - g_4ac954[image];
+        actor->stepX += actor->stepX;
+        actor->stepY += actor->stepY;
+        break;
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+        cel = (short *)&view->body;
+        image = *cel++;
+        *cel++ = actor->targetX - g_4ac950[image];
+        *cel++ = actor->targetY - g_4ac954[image];
+        if (*cel == 0x5b) {
+            *cel += actor->unknownE0;
+            image = *cel++;
+            *cel++ = actor->targetX - g_4ac950[image];
+            *cel++ = actor->targetY - g_4ac954[image];
+        }
+        while (*cel) {
+            image = *cel++;
+            *cel++ = actor->targetX - g_4ac950[image];
+            *cel++ = actor->targetY - g_4ac954[image];
+        }
+        break;
+    }
+}
+
+/*
+ * Picks a lilly actor's next square: the first neighbour that's free, of
+ * its kind and nearer (by its layer's search), claiming it; the script to
+ * run next, or 0.
+ */
+/* Not exact: register allocation (the original keeps `actor` on the stack
+   and the direction in eax). */
+/* @zoombi32 0x0042f506 */
+short fn_42f506(View *view)
+{
+    LillyActor *actor = (LillyActor *)&view->body;
+    short done = 0;
+    short best;
+    short bestColumn;
+    short bestRow;
+    short column = actor->column;
+    short row = actor->row + 1;
+    char direction = 0;
+
+    best = 5;
+    while (direction < 4 && !done) {
+        short open = 1;
+        char c = column;
+        char r = row;
+
+        switch (direction) {
+        case 0:
+            r--;
+            if (r < 1) {
+                r = 1;
+                open = 0;
+            }
+            break;
+        case 1:
+            c++;
+            if (c > 11) {
+                c = 11;
+                open = 0;
+            }
+            break;
+        case 2:
+            r++;
+            if (r > 12) {
+                r = 12;
+                open = 0;
+                done = 1;
+                direction = 4;
+            }
+            break;
+        case 3:
+            c--;
+            if (c < 0) {
+                c = 0;
+                open = 0;
+            }
+            break;
+        }
+        if (open && !g_4acff4[r - 1][c].attributes[0]
+            && g_4acff4[r - 1][c].attributes[actor->unknownDe] == actor->unknownDf
+            && g_4ad7e0[actor->unknownDf].steps[r][c] < g_4ad7e0[actor->unknownDf].steps[actor->row + 1][actor->column]) {
+            best = direction;
+            bestColumn = c;
+            bestRow = r - 1;
+            direction = 4;
+        }
+        direction++;
+    }
+    if (done)
+        return actor->unknownD9 = 10069;
+    switch (best) {
+    case 0:
+        actor->unknownD5 = 0;
+        g_4acff4[bestRow][bestColumn].attributes[0] = 1;
+        return actor->unknownD9 = 10071;
+    case 1:
+        actor->unknownD5 = 1;
+        g_4acff4[bestRow][bestColumn].attributes[0] = 1;
+        return actor->unknownD9 = 10077;
+    case 2:
+        actor->unknownD5 = 2;
+        g_4acff4[bestRow][bestColumn].attributes[0] = 1;
+        return actor->unknownD9 = 10073;
+    case 3:
+        actor->unknownD5 = 3;
+        g_4acff4[bestRow][bestColumn].attributes[0] = 1;
+        return actor->unknownD9 = 10075;
+    }
+    return 0;
+}
