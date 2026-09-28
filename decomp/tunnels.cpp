@@ -14,6 +14,7 @@
 #include "loading.h"
 #include "module_4623b8.h"
 #include "net.h"
+#include "platform.h"
 #include "snoids.h"
 #include "sound.h"
 #include "tunnels.h"
@@ -369,11 +370,11 @@ short removeTunnelEntry(TunnelList *list, short view)
             kind = list->entries[i].kind;
             for (; i < list->count - 1; i++) {
                 list->entries[i].view = list->entries[i + 1].view;
-                list->entries[i].unknown2 = list->entries[i + 1].unknown2;
+                list->entries[i].back = list->entries[i + 1].back;
                 list->entries[i].step = list->entries[i + 1].step;
-                list->entries[i].unknown6 = list->entries[i + 1].unknown6;
+                list->entries[i].from = list->entries[i + 1].from;
                 list->entries[i].script = list->entries[i + 1].script;
-                list->entries[i].unknownC = list->entries[i + 1].unknownC;
+                list->entries[i].backScript = list->entries[i + 1].backScript;
                 list->entries[i].speaker = list->entries[i + 1].speaker;
                 list->entries[i].line = list->entries[i + 1].line;
                 list->entries[i].lineThen = list->entries[i + 1].lineThen;
@@ -454,7 +455,7 @@ short fn_460c41(TunnelRules *rules, short door, Snoid *snoid, unsigned short *fi
    the features), leaves out (g_4b7544) the count g_4b7548 if others remain,
    looks around half the party's size for a count some values have, picks
    one of those values at random as the rule, which the door accepts or
-   refuses at random (unknown2). */
+   refuses at random (back). */
 /* @zoombi32 0x00460e3d */
 void fn_460e3d()
 {
@@ -1477,14 +1478,14 @@ void fn_45f9c9()
 
 /* The Zoombinis' notify in the caves: 240-243 set the facing to use when
    the next turn (0) ends, 250-253 face that way at once, 10 starts the
-   script in the first entry (unknownC) at one of four anchors, 13 has the
+   script in the first entry (backScript) at one of four anchors, 13 has the
    first entry's speaker say its line and stops the last view sound. At the
-   end of a script (-1): a Zoombini that is first in the queue, not waiting
-   (unknown2) and with a line to follow, goes through its door (the entry's
+   end of a script (-1): a Zoombini that is first in the queue, not turned
+   back and with a line to follow, goes through its door (the entry's
    kind) to the next place there, counts toward g_4b8098 (more as the
-   chosen Zoombinis run out) and sets off the line; a waiting one gets a
-   remark (the first time) and walks to a free waiting place (fn_460021)
-   on its door's side. Either way the entry is dropped unless its line is
+   chosen Zoombinis run out) and sets off the line; one turned back gets
+   a remark (the first time) and walks to a free waiting place
+   (fn_460021) on its door's side. Either way the entry is dropped unless its line is
    being said. */
 /* @zoombi32 0x0045fb50 */
 void fn_45fb50(View *view, short event)
@@ -1519,9 +1520,9 @@ void fn_45fb50(View *view, short event)
         }
         break;
     case 10:
-        side = ((g_4b7ff0.entries[0].unknownC - 8000) / 2) & 3;
+        side = ((g_4b7ff0.entries[0].backScript - 8000) / 2) & 3;
         fn_4622f5();
-        startSnoidScript(snoid, g_4b7ff0.entries[0].unknownC, &g_4a78a6[side], 0);
+        startSnoidScript(snoid, g_4b7ff0.entries[0].backScript, &g_4a78a6[side], 0);
         view->notify = fn_45fb50;
         break;
     case 13:
@@ -1544,7 +1545,7 @@ void fn_45fb50(View *view, short event)
     case -1:
         g_4b7fd4 = 0;
         g_4b7fd8 = 1;
-        if (!g_4b7ff0.entries[0].unknown2 && g_4b7ff0.entries[0].line
+        if (!g_4b7ff0.entries[0].back && g_4b7ff0.entries[0].line
             && g_4b7ff0.entries[0].view == view->id) {
             if (g_4b7fe6[g_4b7ff0.entries[0].kind - 1] < 2) {
                 g_4b7fd4 = g_4b7ff0.entries[0].speaker;
@@ -1615,7 +1616,7 @@ void fn_45fb50(View *view, short event)
             }
             if (!g_4b7fba)
                 g_4b7fba = countChosenSnoids();
-        } else if (g_4b7ff0.entries[0].unknown2) {
+        } else if (g_4b7ff0.entries[0].back) {
             if (!g_4b808e && g_4b8090) {
                 g_4b808e = 1;
                 queueViewSound(g_4b8090, 1);
@@ -1646,15 +1647,14 @@ void fn_45fb50(View *view, short event)
 }
 
 /* Scene 8's frame. Leaves the scene when asked (g_4b0d52) unless a
-   character is talking; ends a waiting Zoombini's remark (g_4b8090) when
-   its sound has; says the line set up to follow (g_4b7fd4) or queues the
-   pending sound (g_4b8096) when nobody's talking. While Zoombinis remain
-   to go (g_4b7fc0) it starts the first entry of g_4b7ff0: a Zoombini
-   walks off to its door with its script (and the entry's reply is said),
-   counting down the four remarks for the last Zoombinis to wait
-   (4700-4703); otherwise the entry is a remark to say. With none left,
-   sends the waiting Zoombinis through (fn_45f9c9) and queues a closing
-   remark. Also makes an idle remark now and then (every 5400-10800 view
+   character is talking; ends the warning (g_4b8090) when its sound has;
+   says the line set up to follow (g_4b7fd4) or queues the pending sound
+   (g_4b8096) when nobody's talking. While turn-backs are left
+   (turnBacksLeft) it starts the first entry of g_4b7ff0: a Zoombini walks
+   to its door with its script (and the entry's reply is said); one turned
+   back uses up a turn-back, with a warning (4700-4703) for the last four;
+   otherwise the entry is a remark to say. With none left, sends the
+   waiting Zoombinis off (fn_45f9c9) and queues a closing remark. Also makes an idle remark now and then (every 5400-10800 view
    ticks), starts g_4b7fc2's script once (g_4b7fee), and every so often
    has an idle Zoombini fidget (8559 on), up to g_4b8098 times. */
 /* @zoombi32 0x0045ea81 */
@@ -1669,7 +1669,7 @@ void scene8Frame()
     if (g_4a7888 || !g_4b7fb8)
         return;
     g_4a7888 = 1;
-    if (!g_4b7fc0)
+    if (!turnBacksLeft)
         g_4b754c = 1;
     updateViews();
     if (lastViewSound >= 4000 && lastViewSound <= 4699) {
@@ -1723,7 +1723,7 @@ void scene8Frame()
         queueViewSound(g_4b8096, 1);
         g_4b8096 = 0;
     }
-    if (g_4b7fc0) {
+    if (turnBacksLeft) {
         if (!g_4b808e && g_4b7ff0.count && !g_4b7fd2) {
             if (g_4b7ff0.entries[0].view) {
                 if (!g_4b7ff0.entries[0].step && !talking && !aside) {
@@ -1743,9 +1743,9 @@ void scene8Frame()
                         view->notify = fn_45fb50;
                         view->notifyEnd = 1;
                         groupViews(id, id, 0, 0, 0, 0);
-                        if (g_4b7ff0.entries[0].unknown2) {
-                            g_4b7fc0--;
-                            switch (g_4b7fc0) {
+                        if (g_4b7ff0.entries[0].back) {
+                            turnBacksLeft--;
+                            switch (turnBacksLeft) {
                             case 1:
                                 g_4b8090 = 4703;
                                 break;
@@ -1817,7 +1817,7 @@ void scene8Frame()
     g_4a7888 = 0;
 }
 
-/* Opens scene 8: its level's number of Zoombinis to go through (16-22)
+/* Opens scene 8: its level's number of turn-backs allowed (16-22)
    and rules (fn_460e3d, fn_461135, fn_4612b1, fn_461bec), Tunnels.MHK,
    the backdrop, images and scripts, the views (the four placed at the
    doors, the characters, the buttons), the party, and a first remark. */
@@ -1833,16 +1833,16 @@ void openScene8()
     g_4b7fbe = sceneLevel();
     switch (g_4b7fbe) {
     case 0:
-        g_4b7fc0 = 16;
+        turnBacksLeft = 16;
         break;
     case 1:
-        g_4b7fc0 = 18;
+        turnBacksLeft = 18;
         break;
     case 2:
-        g_4b7fc0 = 20;
+        turnBacksLeft = 20;
         break;
     case 3:
-        g_4b7fc0 = 22;
+        turnBacksLeft = 22;
         break;
     }
     addSoundRange(20000, 29999, 1);
@@ -1926,4 +1926,213 @@ void openScene8()
     g_4b966e = randomBetween(20069, 20070);
     fn_460642(1);
     g_4b7fe0 = randomBetween(5400, 10800);
+}
+
+/* Scene 8's clicks: 1 leaves (asking whether to keep the party), 2 sends
+   the Zoombinis on (once all have gone through or given up) with a closing
+   remark, 3 drags a Zoombini. Dropped at a door (heldPlaceNumber), it
+   queues an entry in g_4b7ff0 for it to go through or be turned back
+   (fn_460c41, under the rules; on level 0 the first rule's side decides a
+   door's result), with what the characters say about it; a Zoombini taken
+   off the queue goes back to a free waiting place. */
+/* Not exact: register allocation (the original keeps `view` in esi and
+   `remark` in edi, the other way round, whatever the declaration order),
+   and it adds 8000 to `remark` as 32 bits (`add edi, 0x1f40`). */
+/* @zoombi32 0x0045eff0 */
+void scene8Clicked(short which)
+{
+    short remark;
+    View *view;
+    Point where;
+    volatile long home; /* where it stood (unused) */
+    Snoid *snoid;
+    short first;
+    short back;
+    short removed;
+    short speaker;
+    short line;
+    short lineThen;
+    short replier;
+    short reply;
+    short replyThen;
+    short script;
+    TunnelEntry entry;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeScene8();
+        return;
+    }
+    switch (which) {
+    case 1:
+        queueViewSound(999, 0);
+        drawTunnelsButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawTunnelsButton(which, 0, 1);
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (!g_4b7fba)
+            break;
+        if (g_4b7fce && !g_4b7fd0)
+            break;
+        g_4b7564 = 0;
+        drawTunnelsButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawTunnelsButton(which, 0, 1);
+        sendSnoids(670, 30, 45);
+        g_4b0d52 = 9;
+        if (lastViewSound && isSoundPlaying(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+            stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+            lastViewSound = 0;
+        }
+        fn_460642(3);
+        break;
+    case 3:
+        if (!g_4b7fce && g_4b7ff0.count && !g_4b7ff0.entries[0].view) {
+            g_4b7ff0.count = 0;
+            g_4b7fd2 = 0;
+        }
+        if (g_4b755a > 0 || g_4b7fce)
+            break;
+        removed = 0;
+        getCursorPosition(&where);
+        view = viewAt(where, 1, 1);
+        if (!view)
+            view = viewAt(where, 0x4008001, 1);
+        if (!view || g_4b754c)
+            break;
+        snoid = viewSnoid(view);
+        which = snoid->unknownF7;
+        if (snoid->unknownF4 && snoid->unknownF4 != 6)
+            break;
+        home = *(long *)&view->body.x;
+        if (which)
+            g_4b7556 = 1;
+        dragSnoid(view, where, 0, 0);
+        if (which)
+            break;
+        which = removeTunnelEntry(&g_4b7ff0, view->id);
+        if (which) {
+            claimPlacedView(which, 0);
+            removed = 1;
+            view->flags &= ~0x4000000;
+        }
+        which = heldPlaceNumber();
+        if (which) {
+            line = lineThen = 0;
+            replier = reply = replyThen = 0;
+            view->flags |= 0x4000000;
+            back = fn_460c41(&g_4b7f18, which, viewSnoid(view), (unsigned short *)&first);
+            switch (which) {
+            case 1:
+                if (!first)
+                    remark = 0;
+                else
+                    remark = 1;
+                break;
+            case 2:
+                if (!first)
+                    remark = 2;
+                else
+                    remark = 3;
+                break;
+            case 3:
+                if (first)
+                    remark = 4;
+                else
+                    remark = 5;
+                break;
+            case 4:
+                if (first)
+                    remark = 6;
+                else
+                    remark = 7;
+                break;
+            }
+            if (!back && !g_4b7fbe) {
+                if (g_4b7fbc) {
+                    if (which == 1 || which == 4)
+                        back = 1;
+                } else if (which == 2 || which == 3) {
+                    back = 1;
+                }
+            }
+            view->body.cels[20].image = remark;
+            speaker = tunnelsSpeakers[doorSpeakers[remark]];
+            if (first) {
+                if (remark < 4) {
+                    replier = tunnelsSpeakers[0];
+                    reply = g_4a75e8[allocateSlot(&g_4a7600, 11, 0)];
+                } else {
+                    replier = tunnelsSpeakers[3];
+                    reply = g_4a7640[allocateSlot(&g_4a764c, 6, 0)];
+                }
+            }
+            if (back) {
+                g_4b7fe6[which - 1] = 0;
+                line = remark + 6004;
+                switch (doorSpeakers[remark]) {
+                case 0:
+                    g_4b8088++;
+                    do
+                        lineThen = g_4a75d0[allocateSlot(&g_4a75e4, 10, 0)];
+                    while (lineThen == 4005 && g_4b8088 < 3);
+                    break;
+                case 1:
+                    lineThen = g_4a7650[allocateSlot(&g_4a7658, 4, 0)];
+                    break;
+                case 2:
+                    lineThen = g_4a7604[allocateSlot(&g_4a7614, 8, 0)];
+                    break;
+                case 3:
+                    g_4b808a++;
+                    do
+                        lineThen = g_4a762c[allocateSlot(&g_4a763c, 7, 0)];
+                    while (lineThen == 4416 && g_4b808a < 3);
+                    break;
+                }
+                script = remark * 5 + snoid->features[3] + 8519;
+                remark += 8000;
+            } else {
+                g_4b808a = g_4b8088 = 0;
+                g_4b7fe6[which - 1]++;
+                switch (remark) {
+                case 1:
+                case 6:
+                    line = g_4a765c[allocateSlot(&g_4a7668, 6, 0)];
+                    break;
+                case 3:
+                case 4:
+                    line = g_4a7618[allocateSlot(&g_4a7628, 8, 0)];
+                    break;
+                }
+                script = (snoid->features[3] - 1) * 4 + remark / 2 + 8500;
+                remark = 0;
+                if (countChosenSnoids() + 1 >= g_4b8094)
+                    replier = reply = replyThen = 0;
+            }
+            entry.view = view->id;
+            entry.back = back;
+            entry.step = 0;
+            entry.from = *(long *)&snoid->body.x;
+            entry.script = script;
+            entry.backScript = remark;
+            entry.speaker = speaker;
+            entry.line = line;
+            entry.lineThen = lineThen;
+            entry.replier = replier;
+            entry.reply = reply;
+            entry.replyThen = replyThen;
+            entry.kind = which;
+            fn_460527(&g_4b7ff0, entry);
+        } else if (removed) {
+            if (snoid->body.x != snoid->targetX || snoid->body.y != snoid->targetY)
+                pickFreePlace((Point *)&snoid->targetX, tunnelPlaces, 16, 500);
+        }
+        break;
+    }
 }

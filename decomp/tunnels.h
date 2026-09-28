@@ -10,19 +10,19 @@
    its kind last; the rest aren't known yet. */
 struct TunnelEntry
 {
-    short view;
-    short unknown2;
+    short view; /* a Zoombini at a door (0 for a remark) */
+    short back; /* +2: it is turned back */
     short step; /* +4: of a remark, the part being said (fn_460571) */
-    long unknown6;
+    long from; /* +6: where it stood (a Point) */
     short script; /* +0xa: a Zoombini's, as it goes to its door */
-    short unknownC;
+    short backScript; /* +0xc: its script for being turned back (8000 on) */
     short speaker; /* +0xe: a remark: the view saying `line` then `lineThen` */
     short line;
     short lineThen;
     short replier; /* +0x14: and the one replying (0 for none) */
     short reply;
     short replyThen;
-    short kind; /* +0x1a */
+    short kind; /* +0x1a: the door (1-4) */
 };
 
 /* A list of up to five of them. */
@@ -126,13 +126,23 @@ extern Point g_4a77f0[16]; /* @data 0x4a77f0: door 2 */
 extern Point g_4a7830[16]; /* @data 0x4a7830: door 3 */
 void scene8Frame();
 extern short g_4a7888; /* @data 0x4a7888: scene8Frame is running */
-extern short g_4b7fc0; /* @data 0x4b7fc0: Zoombinis still to go through */
+extern short turnBacksLeft; /* @data 0x4b7fc0: how many more times a Zoombini can be turned back */
 extern short g_4b7fc2; /* @data 0x4b7fc2 */
 extern unsigned long g_4b7fe0; /* @data 0x4b7fe0: when to make the next idle remark (view ticks) */
 extern short tunnelsSpeakers[4]; /* @data 0x4b7fc4: the four views that make the remarks (fn_460642) */
 extern short g_4b7fcc; /* @data 0x4b7fcc: the buttons' view */
 extern GroupList tunnelsGroups[1]; /* @data 0x4a76e8 */
 void openScene8();
+void scene8Clicked(short which);
+extern short doorSpeakers[8]; /* @data 0x4a7710: which of tunnelsSpeakers remarks on a Zoombini at a door (by door and result) */
+extern short g_4a75d0[10]; /* @data 0x4a75d0: remarks (g_4a75e4 picks) */
+extern short g_4a75e8[11]; /* @data 0x4a75e8: (g_4a7600) */
+extern short g_4a7604[8]; /* @data 0x4a7604: (g_4a7614) */
+extern short g_4a7618[8]; /* @data 0x4a7618: (g_4a7628) */
+extern short g_4a762c[7]; /* @data 0x4a762c: (g_4a763c) */
+extern short g_4a7640[6]; /* @data 0x4a7640: (g_4a764c) */
+extern short g_4a7650[4]; /* @data 0x4a7650: (g_4a7658) */
+extern short g_4a765c[6]; /* @data 0x4a765c: (g_4a7668) */
 void fn_461135();
 void fn_461bec();
 void fn_4612b1();
