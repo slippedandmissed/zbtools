@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "jointext.h"
 
 IniState iniState;
 

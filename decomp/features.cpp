@@ -7,6 +7,19 @@
  */
 
 #include "zoombinis.h"
+#include "basecamp.h"
+#include "debug.h"
+#include "e2memory.h"
+#include "features.h"
+#include "game.h"
+#include "graphics.h"
+#include "loading.h"
+#include "module_4623b8.h"
+#include "picker.h"
+#include "roster.h"
+#include "snoids.h"
+#include "sound.h"
+#include "view.h"
 
 /* Loads group `group`'s image bank (id `id`), and with `hotspots` its
    images' hotspots (ids `id` and `id` + 1). */

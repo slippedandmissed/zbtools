@@ -5,6 +5,8 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "os_localmem.h"
+#include "os_refcount.h"
 
 /* A timer calling `proc` after `delay` ms and then every `period` ms (0:
    once); 0 on error. */

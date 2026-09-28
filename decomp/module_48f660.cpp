@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "zoombinis.h"
+#include "e2memory.h"
 
 /* Closes an archive once its last user does: writes back what changed,
    cancels its preloads, frees its resources' data and, if `compact`, first

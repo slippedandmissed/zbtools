@@ -5,6 +5,8 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "os_manager.h"
+#include "os_threads.h"
 
 /* Reads up to *size bytes; *size is set to how many were read (0x283f if
    fewer). */

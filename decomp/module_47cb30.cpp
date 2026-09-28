@@ -6,6 +6,11 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "basecamp.h"
+#include "os_46d754.h"
+#include "os_manager.h"
+#include "os_refcount.h"
+#include "os_threads.h"
 
 /* A buffer for `samples` samples; 0 on error. */
 /* @zoombi32 0x0047cb30 */

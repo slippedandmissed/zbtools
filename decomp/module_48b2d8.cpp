@@ -5,6 +5,7 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "graphics.h"
 
 /* The current display mode. */
 /* @zoombi32 0x0048b2d8 */

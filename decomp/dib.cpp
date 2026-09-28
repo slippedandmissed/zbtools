@@ -7,6 +7,8 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "graphics.h"
+#include "os_46d754.h"
 
 RGBQUAD monoColors[2] = {{0, 0, 0, 0}, {0xff, 0xff, 0xff, 0}};
 RGBQUAD vgaColors[16] = {

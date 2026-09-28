@@ -5,6 +5,7 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "os_manager.h"
 
 /* @zoombi32 0x0048ef7c */
 short unlockPtr(void *pointer)

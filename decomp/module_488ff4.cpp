@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include "zoombinis.h"
+#include "game.h"
 
 /* Disposes of a font nothing uses. Not exact: the original keeps `font` in eax (no call intervenes where it is
    used); BCC32 4.5 gives it ebx. */

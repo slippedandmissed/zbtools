@@ -4,6 +4,19 @@
 
 #include <stdlib.h>
 #include "zoombinis.h"
+#include "basecamp.h"
+#include "debug.h"
+#include "e2memory.h"
+#include "events.h"
+#include "features.h"
+#include "graphics.h"
+#include "loading.h"
+#include "module_4623b8.h"
+#include "net.h"
+#include "platform.h"
+#include "snoids.h"
+#include "sound.h"
+#include "view.h"
 
 /* @zoombi32 0x00456c00 */
 void resetSnoids()

@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "os_manager.h"
 
 /*
  * Sets the cursor: a standard one (0 arrow, 1 cross, 2 I-beam, 3 wait) or

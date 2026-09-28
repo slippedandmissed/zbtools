@@ -7,6 +7,11 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "e2memory.h"
+#include "graphics.h"
+#include "jointext.h"
+#include "loading.h"
+#include "platform.h"
 
 /*
  * Sets up graphics in a display mode: the engine, the main window, the

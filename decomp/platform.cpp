@@ -11,6 +11,13 @@
 #include <dos.h>
 #include <stdlib.h>
 #include "zoombinis.h"
+#include "debug.h"
+#include "events.h"
+#include "game.h"
+#include "graphics.h"
+#include "loading.h"
+#include "os_manager.h"
+#include "platform.h"
 
 /*
  * Checks the display mode asked for, and switches to it: the smallest of

@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "os_manager.h"
 
 /* ShowCursor(FALSE); with the cursor fix, the first hide swaps in a blank
    cursor instead. The new display count. */

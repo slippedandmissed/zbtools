@@ -3,6 +3,14 @@
  */
 
 #include "zoombinis.h"
+#include "debug.h"
+#include "events.h"
+#include "focus.h"
+#include "graphics.h"
+#include "module_4623b8.h"
+#include "net.h"
+#include "platform.h"
+#include "view.h"
 
 /*
  * One pass of the main loop (WinMain runs it and mainLoopEvents until it's

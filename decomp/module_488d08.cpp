@@ -6,6 +6,8 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "graphics.h"
+#include "os_localmem.h"
 
 /*
  * A new palette, in graphics.palettes: the static colours at each end and

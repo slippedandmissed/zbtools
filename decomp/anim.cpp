@@ -9,6 +9,15 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "anim.h"
+#include "debug.h"
+#include "e2memory.h"
+#include "events.h"
+#include "graphics.h"
+#include "jointext.h"
+#include "loading.h"
+#include "platform.h"
+#include "sound.h"
 
 #define SOUND RESOURCE_TYPE(0, 'S', 'N', 'D')
 #define MIDI RESOURCE_TYPE('t', 'M', 'I', 'D')

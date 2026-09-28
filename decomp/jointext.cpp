@@ -4,6 +4,9 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "jointext.h"
+#include "loading.h"
+#include "platform.h"
 
 /* Joins two texts into *joined (a JoinNode) unless it's already set. */
 /* @zoombi32 0x00413c24 */

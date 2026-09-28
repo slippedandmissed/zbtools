@@ -8,6 +8,8 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "os_46f5c0.h"
+#include "os_threads.h"
 
 /*
  * Sets up a thread's context: a stack of `stackSize` bytes, first fit from

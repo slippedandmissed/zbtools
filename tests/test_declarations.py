@@ -1,4 +1,12 @@
-from zbtools.declarations import Global, globals_in, structs_as_c
+from zbtools.declarations import (
+    Global,
+    Prototype,
+    declared_twice,
+    globals_in,
+    headers,
+    prototypes_in,
+    structs_as_c,
+)
 
 HEADER = """
 struct Link
@@ -73,3 +81,46 @@ def test_typedefs_and_anonymous_unions() -> None:
     assert "typedef Chunk **Block;\n" in c
     assert "    } u1;\n" in c
     assert c.index("typedef Chunk **Block;") < c.index("struct Entry\n{")
+
+
+PROTOTYPES = """
+short addView(unsigned long flags, ViewDraw draw,
+              short target);
+long newTimer(long data); /* 0x46daca */
+class Color
+{
+public:
+    Color(short index);
+};
+inline short twice(short x)
+{
+    return x * 2;
+}
+extern short g_4a0000;
+void fn_41d1b1(View *view, short event);
+"""
+
+
+def test_prototypes_at_the_top_level() -> None:
+    assert prototypes_in(PROTOTYPES) == [
+        Prototype("addView", None),
+        Prototype("newTimer", 0x46DACA),
+        Prototype("fn_41d1b1", None),
+    ]
+
+
+def test_declared_twice() -> None:
+    once = "void f(short a);\n"
+    assert declared_twice([once, "void g();\n"]) == []
+    # The same function in two headers, or a conflicting copy.
+    assert declared_twice([once, once]) == ["f"]
+    assert declared_twice([once, "void f(long a); /* 0x401000 */\n"]) == ["f"]
+    # Two functions sharing a name, each with its address, are fine.
+    assert (
+        declared_twice(["void f(short a); /* 0x401000 */\n", "void f(long a); /* 0x402000 */\n"])
+        == []
+    )
+
+
+def test_decomp_declares_each_function_once() -> None:
+    assert declared_twice([path.read_text() for path in headers()]) == []

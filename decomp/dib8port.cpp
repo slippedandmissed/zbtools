@@ -9,6 +9,7 @@
 #include <string.h>
 #define RECT_OUT_OF_LINE
 #include "zoombinis.h"
+#include "graphics.h"
 
 /*
  * Clips a copy of 8-bit pixels to `bounds` and `clip`: x and y (the pixels'

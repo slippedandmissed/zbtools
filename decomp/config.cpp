@@ -4,6 +4,10 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "config.h"
+#include "e2memory.h"
+#include "loading.h"
+#include "module_4623b8.h"
 
 char installFromDirKey[] = "INSTALLFROMDIR";
 char dataDirName[] = "Data\\";

@@ -5,6 +5,13 @@
 #include <stdio.h>
 #include <string.h>
 #include "zoombinis.h"
+#include "debug.h"
+#include "e2memory.h"
+#include "events.h"
+#include "jointext.h"
+#include "loading.h"
+#include "platform.h"
+#include "sound.h"
 
 /* The module's messages (named, not literals: the original addresses each
    directly). */

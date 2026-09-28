@@ -5,6 +5,7 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "graphics.h"
 
 /*
  * Whether there is a display mode suiting `mode` (switching to it if

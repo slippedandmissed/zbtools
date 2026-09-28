@@ -11,6 +11,8 @@
 #include <stdlib.h>
 
 #include "zoombinis.h"
+#include "os_manager.h"
+#include "os_threads.h"
 
 FileState files;
 

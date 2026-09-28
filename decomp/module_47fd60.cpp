@@ -6,6 +6,7 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "os_localmem.h"
 
 /* Swaps a 16-bit block's samples to little-endian (if it's prepared and
    not queued: the engine keeps them big-endian). */

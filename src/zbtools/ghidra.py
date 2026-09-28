@@ -49,7 +49,7 @@ _URL = (
 )
 _SHA256 = "ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db"
 PROGRAM_NAME = "zoombi32.exe"
-TYPES_CATEGORY = "/zoombinis"  # where the types from decomp/zoombinis.h go
+TYPES_CATEGORY = "/zoombinis"  # where the types from decomp/'s headers go
 
 
 class FunctionInfo(BaseModel):
@@ -703,7 +703,7 @@ class Declared:
 
 
 def _add_types(program: "Program", c: str) -> int:
-    """Parse decomp/zoombinis.h's structs with Ghidra's C parser and put them in
+    """Parse the structs in decomp/'s headers with Ghidra's C parser and put them in
     the program's /zoombinis category, replacing earlier versions in place (so
     data already typed with them follows). Windows types they use (such as
     PALETTEENTRY) come from Ghidra's own Windows type archive."""
@@ -751,7 +751,7 @@ _BUILTINS = {"unsigned long": "ulong", "unsigned short": "ushort", "unsigned cha
 
 
 def _data_type(program: "Program", text: str) -> "DataType | None":
-    """A type from decomp/zoombinis.h (a builtin, one of our structs, or a
+    """A type from decomp/'s headers (a builtin, one of our structs, or a
     Windows type such as HWND from the types Ghidra imported with the program,
     with any number of `*`s) as a Ghidra data type; None if Ghidra has none."""
     from ghidra.program.model.data import BuiltInDataTypeManager  # noqa: PLC0415
@@ -776,7 +776,7 @@ def _data_type(program: "Program", text: str) -> "DataType | None":
 
 
 def _apply_declarations(program: "Program") -> Declared:
-    """Give Ghidra decomp/zoombinis.h's types, and its globals' names and types.
+    """Give Ghidra decomp/'s headers' types, and their globals' names and types.
     Names set by hand in Ghidra are kept, and so are types other than ours,
     builtins and undefined data."""
     from ghidra.program.model.data import DataUtilities  # noqa: PLC0415
@@ -836,7 +836,7 @@ def label() -> None:
     """Apply everything the tools have recovered to the Ghidra project: Borland
     runtime names (`uv run runtime-symbols`), C++ classes from RTTI (`uv run
     classes`), the names of functions decompiled in decomp/, calling
-    conventions, the types and globals declared in decomp/zoombinis.h, the
+    conventions, the types and globals declared in decomp/'s headers, the
     ends of functions Ghidra cut short at a breakpoint or a switch, and the
     fragments it split off functions.
     Names you've set by hand are kept."""
@@ -877,7 +877,7 @@ def label() -> None:
         f"{conventions} functions. Function list updated: {paths.GHIDRA_FUNCTIONS}"
     )
     print(
-        f"From decomp/zoombinis.h: {declared.types} types; named {declared.named} and typed "
+        f"From decomp/'s headers: {declared.types} types; named {declared.named} and typed "
         f"{declared.typed} globals (kept {declared.kept} names or types set by hand)."
     )
     if missed:

@@ -3,6 +3,19 @@
  */
 
 #include "zoombinis.h"
+#include "basecamp.h"
+#include "debug.h"
+#include "e2memory.h"
+#include "features.h"
+#include "focus.h"
+#include "graphics.h"
+#include "maze.h"
+#include "module_4623b8.h"
+#include "net.h"
+#include "random.h"
+#include "snoids.h"
+#include "sound.h"
+#include "view.h"
 
 /*
  * Lays out a maze Zoombini's cels (unless it's in state 1; 3 and others

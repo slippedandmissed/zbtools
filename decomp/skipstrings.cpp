@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "skipstrings.h"
 
 /* Skips `count` NUL-terminated strings. */
 /* @zoombi32 0x0041559c */

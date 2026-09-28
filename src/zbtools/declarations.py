@@ -1,5 +1,7 @@
-"""What decomp/zoombinis.h declares, for tools that carry it elsewhere (`uv run
-ghidra label` gives Ghidra our struct types and global names and types).
+"""What decomp/'s headers declare, for tools that carry it elsewhere (`uv run
+ghidra label` gives Ghidra our struct types and global names and types):
+zoombinis.h (the shared types and declarations) and each module's own
+header (`decomp/<module>.h`: its functions and the globals only it uses).
 
 Globals are found from their `extern` declarations; a global's address is in
 its name (`g_4a7f58`) until it's renamed, and then in a marker comment on the
@@ -19,10 +21,17 @@ written plainly; a C++ parser would be a heavy dependency for it.
 
 import re
 from dataclasses import dataclass
+from pathlib import Path
 
 from zbtools import paths
 
 HEADER = paths.DECOMP_DIR / "zoombinis.h"
+
+
+def headers() -> list[Path]:
+    """The shared header first, then the modules' headers."""
+    return [HEADER, *sorted(p for p in paths.DECOMP_DIR.glob("*.h") if p != HEADER)]
+
 
 _EXTERN = re.compile(r"^extern\s+([^;]*?)\s*\b(\w+)\s*(\[[^\]]*\])?\s*;(.*)$")
 # `extern void (*g_4aa4c4)(Point *where);`: a function pointer.
@@ -109,6 +118,52 @@ def _name_anonymous_unions(struct: str) -> str:
     return "\n".join(lines)
 
 
+# A function's prototype at the top level: `short foo(short a);`, possibly
+# over several lines, with an optional address comment (`/* 0x46daca */`).
+_PROTOTYPE = re.compile(
+    r"^(?!typedef|struct|class|union|enum|inline|static|extern|return|#|/)"
+    r"[A-Za-z_][\w\s*&:,]*?\b(\w+)\s*\([^;{]*\)\s*;(.*)$",
+    re.MULTILINE,
+)
+_ADDRESS_COMMENT = re.compile(r"/\*\s*(0x[0-9a-fA-F]+)\s*\*/")
+
+
+@dataclass(frozen=True)
+class Prototype:
+    name: str
+    address: int | None  # from an address comment, if it has one
+
+
+def prototypes_in(text: str) -> list[Prototype]:
+    """The functions a header declares outside any braces (not class members)."""
+    found = []
+    depth = 0
+    position = 0
+    for match in _PROTOTYPE.finditer(text):
+        depth += text.count("{", position, match.start()) - text.count("}", position, match.start())
+        position = match.start()
+        if depth:
+            continue
+        comment = _ADDRESS_COMMENT.search(match.group(2))
+        found.append(Prototype(match.group(1), int(comment.group(1), 16) if comment else None))
+    return found
+
+
+def declared_twice(texts: list[str]) -> list[str]:
+    """Functions declared more than once across headers. Two functions may
+    share a name (overloads) only if each declaration has its own address
+    comment; otherwise one of them is a stale or conflicting copy."""
+    by_name: dict[str, list[int | None]] = {}
+    for text in texts:
+        for prototype in prototypes_in(text):
+            by_name.setdefault(prototype.name, []).append(prototype.address)
+    return sorted(
+        name
+        for name, addresses in by_name.items()
+        if len(addresses) > 1 and (None in addresses or len(set(addresses)) < len(addresses))
+    )
+
+
 def load() -> tuple[list[Global], str]:
-    text = HEADER.read_text()
+    text = "\n".join(path.read_text() for path in headers())
     return globals_in(text), structs_as_c(text)

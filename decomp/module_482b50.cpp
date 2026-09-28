@@ -8,6 +8,8 @@
 #include <stdio.h>
 
 #include "zoombinis.h"
+#include "os_manager.h"
+#include "os_threads.h"
 
 /* IOCTL_DISK_GET_MEDIA_TYPES's DISK_GEOMETRY. */
 struct MediaType

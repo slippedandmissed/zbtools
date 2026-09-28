@@ -6,6 +6,8 @@
 /* @flags -p */
 
 #include "zoombinis.h"
+#include "os_manager.h"
+#include "os_refcount.h"
 
 /* Drops the calls waiting on a lock. */
 /* Not exact: the original computes &lock->queue in ebx (a saved register);

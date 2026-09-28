@@ -3,6 +3,12 @@
  */
 
 #include "zoombinis.h"
+#include "e2memory.h"
+#include "features.h"
+#include "module_4623b8.h"
+#include "picker.h"
+#include "sound.h"
+#include "view.h"
 
 /* @zoombi32 0x0042fc89 */
 void fn_42fc89(Counters *object)

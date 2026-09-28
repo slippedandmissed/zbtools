@@ -8,6 +8,13 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "debug.h"
+#include "e2memory.h"
+#include "game.h"
+#include "jointext.h"
+#include "loading.h"
+#include "platform.h"
+#include "sound.h"
 
 char *shapeText;
 char *arrayText;

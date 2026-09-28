@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "zoombinis.h"
+#include "game.h"
 
 /* A new font ("SYSTEM" for no name or "default"), in graphics.fonts. */
 /* @zoombi32 0x00488ad0 */

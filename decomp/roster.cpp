@@ -6,6 +6,19 @@
 #include <string.h>
 
 #include "zoombinis.h"
+#include "basecamp.h"
+#include "debug.h"
+#include "e2memory.h"
+#include "features.h"
+#include "graphics.h"
+#include "jointext.h"
+#include "module_4623b8.h"
+#include "net.h"
+#include "platform.h"
+#include "roster.h"
+#include "snoids.h"
+#include "sound.h"
+#include "view.h"
 
 /*
  * The notify of the Zoombinis cheering on the roster screen (rosterFrame),

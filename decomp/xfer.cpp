@@ -3,6 +3,7 @@
  */
 
 #include "zoombinis.h"
+#include "xfer.h"
 
 /* @zoombi32 0x0046b07b */
 long fn_46b07b(long)

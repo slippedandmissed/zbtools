@@ -4,6 +4,14 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "debug.h"
+#include "e2memory.h"
+#include "events.h"
+#include "loading.h"
+#include "module_4623b8.h"
+#include "os_manager.h"
+#include "platform.h"
+#include "random.h"
 
 /* @zoombi32 0x00415604 */
 void fn_415604(Callback callback)

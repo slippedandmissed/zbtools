@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "zoombinis.h"
+#include "os_refcount.h"
 
 SoundState sound;
 

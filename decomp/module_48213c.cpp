@@ -6,6 +6,7 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "os_threads.h"
 
 /* @zoombi32 0x0048213c */
 __cdecl AsyncWorker::AsyncWorker()

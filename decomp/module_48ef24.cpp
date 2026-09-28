@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "os_manager.h"
 
 /* @zoombi32 0x0048ef24 */
 void moveMemory(void *to, const void *from, unsigned long size)

@@ -114,7 +114,7 @@ uv run runtime-symbols      # find them: matches the toolchain's libraries again
 uv run classes              # recover C++ classes from RTTI: names, hierarchy, vtables, constructors
 uv run ghidra label         # apply both to the Ghidra project, with QuickTime's SDK glue and the
                             # names of functions decompiled in decomp/, the types and globals in
-                            # decomp/zoombinis.h, and set calling conventions (never overwrites
+                            # decomp/'s headers, and set calling conventions (never overwrites
                             # names or types you've set by hand); also fixes functions
                             # Ghidra cut short at a switch table or a breakpoint
 ```

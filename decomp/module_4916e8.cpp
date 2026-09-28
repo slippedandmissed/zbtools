@@ -6,6 +6,7 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "os_threads.h"
 
 ResourceState resources;
 

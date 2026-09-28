@@ -5,6 +5,9 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "debug.h"
+#include "os_localmem.h"
+#include "os_refcount.h"
 
 TimerState timerState;
 

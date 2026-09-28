@@ -5,6 +5,7 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "os_localmem.h"
 
 /* Disposes of a palette no port uses. Not exact: the original keeps `palette` in eax (no call intervenes where it is
    used); BCC32 4.5 gives it ebx. */

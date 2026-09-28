@@ -5,6 +5,7 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "graphics.h"
 
 /* Copies a rectangle of one port to a rectangle of another. */
 /* @zoombi32 0x00488a88 */

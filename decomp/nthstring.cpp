@@ -3,6 +3,8 @@
  */
 
 #include "zoombinis.h"
+#include "nthstring.h"
+#include "skipstrings.h"
 
 /*
  * String `n` (from 1) of a table: a count, then that many NUL-terminated

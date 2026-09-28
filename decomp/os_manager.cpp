@@ -13,6 +13,12 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include "zoombinis.h"
+#include "debug.h"
+#include "os_localmem.h"
+#include "os_manager.h"
+#include "os_refcount.h"
+#include "os_threads.h"
+#include "platform.h"
 
 OsState os;
 SystemState systemState;

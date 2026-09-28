@@ -8,6 +8,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include "zoombinis.h"
+#include "basecamp.h"
+#include "config.h"
+#include "debug.h"
+#include "e2memory.h"
+#include "features.h"
+#include "focus.h"
+#include "game.h"
+#include "graphics.h"
+#include "loading.h"
+#include "module_446bf8.h"
+#include "module_4623b8.h"
+#include "os_manager.h"
+#include "platform.h"
+#include "random.h"
+#include "roster.h"
+#include "snoids.h"
+#include "sound.h"
+#include "view.h"
 
 /*
  * The game's part of each pass of the main loop (WinMain registers it with

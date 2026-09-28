@@ -5,6 +5,8 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "debug.h"
+#include "os_refcount.h"
 
 /* Holds timers' procedures until unlockTimers. */
 /* @zoombi32 0x00492f9c */

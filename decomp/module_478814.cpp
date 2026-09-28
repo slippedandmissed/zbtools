@@ -8,6 +8,8 @@
 #include <stdlib.h>
 
 #include "zoombinis.h"
+#include "os_46d754.h"
+#include "os_refcount.h"
 
 static unsigned short midiUsers;
 

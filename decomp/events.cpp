@@ -4,6 +4,12 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "debug.h"
+#include "events.h"
+#include "graphics.h"
+#include "module_4623b8.h"
+#include "os_46d754.h"
+#include "platform.h"
 
 /* How many events are queued (eventHead is where reading starts, eventTail
    where writing does). */

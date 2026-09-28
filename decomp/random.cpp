@@ -3,6 +3,7 @@
  */
 
 #include "zoombinis.h"
+#include "random.h"
 
 /* @zoombi32 0x00415514 */
 void fn_415514()

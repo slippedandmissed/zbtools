@@ -5,6 +5,7 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "e2memory.h"
 
 /* The handle holding a resource's data; 0 if it isn't loaded. */
 /* @zoombi32 0x00490140 */

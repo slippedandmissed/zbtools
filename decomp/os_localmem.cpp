@@ -6,6 +6,7 @@
 /* @flags -p */
 
 #include "zoombinis.h"
+#include "os_localmem.h"
 
 /* Memory from the process's heap (LocalAlloc); 0 for 0 bytes. */
 /* @zoombi32 0x0046d95c */

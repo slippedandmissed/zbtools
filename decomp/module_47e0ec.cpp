@@ -7,6 +7,9 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "os_46d754.h"
+#include "os_localmem.h"
+#include "os_manager.h"
 
 /* @zoombi32 0x0047e0ec */
 __cdecl wmxDevice::wmxDevice()

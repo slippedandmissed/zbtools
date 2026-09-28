@@ -5,6 +5,7 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "os_refcount.h"
 
 /* Stops a timer. If its call is waiting to run under the lock, it's freed
    when it does. */

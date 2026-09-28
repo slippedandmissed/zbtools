@@ -6,6 +6,8 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "os_manager.h"
+#include "os_threads.h"
 
 /* Holds the file (for a sequence of calls), waiting up to `timeout` ms;
    0x283d if that runs out. */

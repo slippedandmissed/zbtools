@@ -8,6 +8,10 @@
 #include <stdio.h>
 
 #include "zoombinis.h"
+#include "os_localmem.h"
+#include "os_manager.h"
+#include "os_refcount.h"
+#include "os_threads.h"
 
 /* [WaveMix]'s strings, stored apart from the pooled literals. */
 static char waveMixSection[] = "WaveMix";

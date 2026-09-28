@@ -3,6 +3,20 @@
  */
 
 #include "zoombinis.h"
+#include "basecamp.h"
+#include "debug.h"
+#include "e2memory.h"
+#include "features.h"
+#include "focus.h"
+#include "graphics.h"
+#include "lilly.h"
+#include "maze.h"
+#include "module_4623b8.h"
+#include "net.h"
+#include "platform.h"
+#include "snoids.h"
+#include "sound.h"
+#include "view.h"
 
 /* @zoombi32 0x0043595f */
 void fn_43595f(View *)

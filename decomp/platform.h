@@ -1,0 +1,86 @@
+/*
+ * platform's functions and globals: the declarations only its code and
+ * its callers need (shared types and the rest are in zoombinis.h).
+ */
+
+#ifndef PLATFORM_H
+#define PLATFORM_H
+
+extern short g_4a4ad6;
+extern Callback g_4a4a14;
+extern long g_4a4a18;
+extern long g_4a4a1c;
+extern char minimumOfText[]; /* @data 0x4a4a20 */
+extern char colors256Text[]; /* @data 0x4a4a2e */
+extern char svgaRequiredFormat[]; /* @data 0x4a4a39 */
+extern char color16Text[]; /* @data 0x4a4a8d */
+extern char color24Text[]; /* @data 0x4a4a9a */
+extern long savedDisk; /* @data 0x4a4aa8 */
+extern unsigned short resolutionWidths[4]; /* @data 0x4a4aac */
+extern unsigned short resolutionHeights[4]; /* @data 0x4a4ab4 */
+extern char messageLogName[]; /* @data 0x4a4ad8 */
+extern unsigned short appActive; /* @data 0x4a4ae4 */
+extern ShortRect g_4a4ae6;
+extern short g_4b2b04;
+extern char programPath[0x100]; /* @data 0x4b2b06 */
+extern char savedDirectory[]; /* @data 0x4b2c06 */
+extern WNDCLASS windowClass; /* @data 0x4b2d06 */
+extern short classRegistered; /* @data 0x4b2d2e */
+extern short g_4b2d30;
+extern short inputIgnored; /* @data 0x4b2d36: keys and clicks are dropped */
+extern short g_4b2d3c;
+extern short g_4b2d42;
+extern long g_4b2d44[0x400];
+extern long g_4b3d44[0x400];
+extern long g_4b4d44[0x400];
+extern long g_4b5d44[0x400];
+extern short g_4b6d44[0x400];
+short fn_45590b();
+void fn_455ab0(short type);
+void fn_455f66();
+LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
+void fn_456914();
+void fn_456a64();
+void mouseButtonDown(short button, long keys, long where);
+short handleNextMessage();
+void flushInput(short which);
+void handleMessagesIgnoringInput();
+void activateApp(long active);
+void placeGamePort();
+void destroyMainWindow();
+void showError(const char *prefix, const char *format, va_list args);
+void releaseControlKeys();
+void fn_456b2e(short active);
+void checkDisplayMode(DisplayMode *mode);
+void handleWaitingMessage();
+void waitWhilePaused();
+short pumpMessage(MSG *message, unsigned short first, unsigned short last, unsigned short flags);
+void handleSystemKey(MSG *message);
+void handleMessage(MSG *message);
+short createMainWindow(short width, short height);
+short addModifierKeys(short modifiers);
+void getCursorPosition(Point *where);
+void setCursorPosition(short x, short y);
+short isButtonStillDown(unsigned short button);
+short allocateBlock(void **block, unsigned long size);
+void getClockTime(char *hour, char *minute, char *second);
+void enterProgramDirectory();
+void restoreDirectory();
+void brightenPalette(PALETTEENTRY *entries, short first, short count);
+short isInputWaiting(short which);
+void logMessage(long message, long wParam, long lParam, short after, long result);
+void dumpMessages();
+int isMousePresent();
+void freeAndClear(void **block);
+char *intToDecimal(int value, char *buffer);
+char *unsignedToDecimal(unsigned long value, char *buffer);
+void fn_455e26(long);
+void fn_455e2d(long);
+short fn_455e85(Point *where, short button);
+void fn_456a2f(Callback callback);
+short fn_4568d8();
+void fn_456a3e(long first, long second);
+void fn_456a55(void (*callback)(short active));
+short fn_456bf6();
+
+#endif

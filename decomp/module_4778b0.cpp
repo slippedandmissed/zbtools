@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "zoombinis.h"
+#include "os_46d754.h"
 
 MidiMapState midiMapState;
 

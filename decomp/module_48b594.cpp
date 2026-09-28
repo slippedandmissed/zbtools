@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "zoombinis.h"
+#include "game.h"
+#include "graphics.h"
+#include "os_localmem.h"
+#include "os_manager.h"
 
 /* Windows 95 additions Borland C++ 4.5's headers predate */
 #ifndef CDS_TEST

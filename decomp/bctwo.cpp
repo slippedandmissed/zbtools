@@ -3,6 +3,7 @@
  */
 
 #include "zoombinis.h"
+#include "bctwo.h"
 
 /* @zoombi32 0x004196a8 */
 long fn_4196a8(long)

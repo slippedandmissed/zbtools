@@ -8,6 +8,11 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "zoombinis.h"
+#include "e2memory.h"
+#include "loading.h"
+#include "nthstring.h"
+#include "platform.h"
+#include "sound.h"
 
 #define MIDI RESOURCE_TYPE('t', 'M', 'I', 'D')
 

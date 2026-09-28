@@ -7,6 +7,7 @@
 /* @flags -p */
 
 #include "zoombinis.h"
+#include "os_46d754.h"
 
 /* The result of a division by zero or an overflow. */
 #define FIXED_ERROR ((long)0x80000000L)

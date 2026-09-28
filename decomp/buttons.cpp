@@ -6,6 +6,10 @@
  */
 
 #include "zoombinis.h"
+#include "buttons.h"
+#include "e2memory.h"
+#include "graphics.h"
+#include "jointext.h"
 
 /* @zoombi32 0x004121cc */
 void drawButtonOn(InputItem *item)

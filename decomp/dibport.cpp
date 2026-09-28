@@ -8,6 +8,8 @@
 #include <string.h>
 #define RECT_OUT_OF_LINE
 #include "zoombinis.h"
+#include "graphics.h"
+#include "os_localmem.h"
 
 /* @zoombi32 0x0048a720 */
 __cdecl DIBPort::DIBPort(short width, short height, unsigned short depth)

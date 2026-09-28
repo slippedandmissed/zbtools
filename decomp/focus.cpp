@@ -8,6 +8,10 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "debug.h"
+#include "events.h"
+#include "focus.h"
+#include "platform.h"
 
 /* Installs the lists of groups to move the focus over, and numbers their
    items. */

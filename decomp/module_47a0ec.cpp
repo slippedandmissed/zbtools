@@ -6,6 +6,9 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "os_46d754.h"
+#include "os_manager.h"
+#include "os_refcount.h"
 
 /* Splits the samples into blocks: at each cue point, and at the loop's
    start and end. */

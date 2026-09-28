@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "os_manager.h"
 
 /*
  * Realizes a palette in the main window's DC (the foreground window's if

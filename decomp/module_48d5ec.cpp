@@ -5,6 +5,7 @@
 /* @flags -p -x- */
 
 #include "zoombinis.h"
+#include "graphics.h"
 
 /*
  * Sets `count` of a palette's colours from `first`, leaving the static

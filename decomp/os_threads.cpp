@@ -10,6 +10,11 @@
 
 #include <string.h>
 #include "zoombinis.h"
+#include "os_46f5c0.h"
+#include "os_localmem.h"
+#include "os_manager.h"
+#include "os_refcount.h"
+#include "os_threads.h"
 
 ThreadState threads;
 thread *dyingThread;

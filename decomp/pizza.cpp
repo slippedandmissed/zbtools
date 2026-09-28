@@ -6,6 +6,20 @@
 #include <stdio.h>
 
 #include "zoombinis.h"
+#include "basecamp.h"
+#include "debug.h"
+#include "e2memory.h"
+#include "features.h"
+#include "focus.h"
+#include "graphics.h"
+#include "module_4623b8.h"
+#include "net.h"
+#include "pizza.h"
+#include "platform.h"
+#include "random.h"
+#include "snoids.h"
+#include "sound.h"
+#include "view.h"
 
 /* A view's update: redraws button 2 when g_4b15e6 changes, and button 1
    once. */
