@@ -415,3 +415,214 @@ void linkFerryPlaces(short draw)
     if (draw)
         showRect(&gameRect);
 }
+
+/* A view draw: draws both buttons, unlit. */
+/* @zoombi32 0x0041fe87 */
+void drawFerryButtons(View *)
+{
+    drawFerryButton(1, 0, 0);
+    drawFerryButton(2, 0, 0);
+}
+
+/* Scene 10's keys (with debugging on, g_4b8803, or else only 0x16f; case
+   ignored): 0x16f fn_466b93; A draws the links between the places; L
+   reports the level (from 1); F plays Captain Cajun's script g_4abb14
+   (1800-1832; else his current one). Returns whether the key was used. */
+/* @zoombi32 0x004208a3 */
+short scene10Key(unsigned short key)
+{
+    short used = 0;
+    ShortRect unused = {0, 0, 225, 18};
+    View *view;
+
+    if (!g_4b8803 && key != 0x16f)
+        return 0;
+    if (key >= 'a' && key <= 'z')
+        key -= 32;
+    switch (key) {
+    case 0x16f:
+        fn_466b93();
+        used = 1;
+        break;
+    case 'A':
+        linkFerryPlaces(1);
+        used = 1;
+        break;
+    case 'L':
+        debugMessage(g_4aba8a + 1, 0, 0, 0, 0);
+        used = 1;
+        break;
+    case 'F':
+        if (g_4abab2) {
+            view = findView(g_4abab4);
+            if (view) {
+                if (g_4abb14 > 1832 || g_4abb14 < 1800)
+                    g_4abb14 = view->kind;
+                setViewScript(view, g_4abb14, 1);
+                loadViewSounds(g_4abab4, 1);
+                used = 1;
+                debugMessage(g_4abb14, "Play FrogMan SCRB id:", 0, 0, 0);
+            }
+        }
+        break;
+    }
+    return used;
+}
+
+/*
+ * Lays out the places from 'SCRB' script `id`: its first two frames are
+ * two lists of parts, taken in turn, a list at a time; each part is a view
+ * (script part + 1499) at a point: 1-3 places to stand (placed views, from
+ * g_4abac4 on), 4-10 scenery (unless g_4a4ba0's +0x20).
+ */
+/* @zoombi32 0x00420cce */
+void layOutFerry(short id)
+{
+    long resource;
+    short count;
+    short frame;
+    short *first;
+    short *second;
+    Point at;
+    short useFirst;
+    short after;
+    short *data;
+    short word;
+    int i;
+    int j;
+    short done;
+
+    resource = 0;
+    count = 0;
+    after = g_4abac4;
+    data = loadSwappedResource(&resource, id, RESOURCE_TYPE('S', 'C', 'R', 'B'));
+    frame = 0;
+    first = data + scriptFrameOffset(data, &frame, 0);
+    frame = 1;
+    data += scriptFrameOffset(data, &frame, 0);
+    second = data;
+    useFirst = 1;
+    i = j = 0;
+    word = second[j];
+    if (!word) {
+        j += 3;
+        for (done = 0; !done;) {
+            word = second[j++];
+            if (!word) {
+                j += 2;
+            } else {
+                if (word < 0)
+                    j = -1;
+                else
+                    j--;
+                done = 1;
+            }
+        }
+    }
+    while (i >= 0 || j >= 0) {
+        if (useFirst) {
+            if (i >= 0) {
+                word = first[i++];
+                if (!word) {
+                    i += 2;
+                    for (done = 0; !done;) {
+                        word = first[i++];
+                        if (!word) {
+                            i += 2;
+                        } else {
+                            if (word < 0)
+                                i = -1;
+                            else
+                                i--;
+                            done = 1;
+                        }
+                    }
+                    word = 0;
+                    useFirst = 0;
+                } else if (word > 0) {
+                    at.x = first[i];
+                    i++;
+                    at.y = first[i];
+                    i++;
+                } else {
+                    i = -1;
+                }
+            } else {
+                useFirst = 0;
+            }
+        } else if (j >= 0) {
+            word = second[j++];
+            if (!word) {
+                j += 2;
+                for (done = 0; !done;) {
+                    word = second[j++];
+                    if (!word) {
+                        j += 2;
+                    } else {
+                        if (word < 0)
+                            j = -1;
+                        else
+                            j--;
+                        done = 1;
+                    }
+                }
+                word = 0;
+                useFirst = 1;
+            } else if (word > 0) {
+                at.x = second[j];
+                j++;
+                at.y = second[j];
+                j++;
+            } else {
+                j = -1;
+            }
+        } else {
+            useFirst = 1;
+        }
+        if (word >= 1 && word <= 3) {
+            after = addView(0x748c2000, drawCels, runViewScript, word + 1499, 6, &at, 1, after);
+            g_4abac6[count] = after;
+            placedViewPoints[count].x = at.x + 22;
+            placedViewPoints[count].y = at.y - 7;
+            placedViews[count] = g_4abac6[count];
+            g_4b83e4[count] = 0;
+            count++;
+        } else if (word >= 4 && word <= 10 && !*(short *)(g_4a4ba0 + 0x20)) {
+            after = addView(0x74980000, drawCels, runViewScript, word + 1499, 6, &at, 1, after);
+        }
+    }
+    placedViewCount = count;
+    fn_46c602(&resource);
+}
+
+/* Lays out the places for the level (g_4aba8a, 0-4) and the number of
+   Zoombinis (16-20, or g_4aba88): scripts 1510-1529. */
+/* @zoombi32 0x004211a3 */
+void layOutFerryLevel()
+{
+    short n;
+
+    if (g_4aba8a < 0 || g_4aba8a > 4)
+        g_4aba8a = 0;
+    n = countChosenSnoids();
+    if (g_4aba88)
+        n = g_4aba88;
+    if (n < 16 || n > 20)
+        n = 16;
+    n -= 16;
+    switch (g_4aba8a) {
+    case 0:
+        n += 1510;
+        break;
+    case 1:
+        n += 1515;
+        break;
+    case 2:
+        n += 1520;
+        break;
+    case 3:
+        n += 1525;
+        break;
+    }
+    layOutFerry(n);
+}

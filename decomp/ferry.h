@@ -31,6 +31,7 @@ extern long g_4abaa8; /* @data 0x4abaa8: Ferry.MHK */
 extern short g_4abaac; /* @data 0x4abaac: the scene is open */
 extern short g_4abaae; /* @data 0x4abaae: button 2 is live */
 extern short g_4abab0; /* @data 0x4abab0 */
+extern short g_4abab2; /* @data 0x4abab2 */
 extern short g_4abab4; /* @data 0x4abab4: Captain Cajun's view */
 extern short g_4abab6; /* @data 0x4abab6 */
 extern short g_4abab8; /* @data 0x4abab8 */
@@ -39,6 +40,7 @@ extern short g_4ababc; /* @data 0x4ababc */
 extern short g_4ababe; /* @data 0x4ababe */
 extern short g_4abac0; /* @data 0x4abac0 */
 extern short g_4abac2; /* @data 0x4abac2 */
+extern short g_4abac4; /* @data 0x4abac4 */
 extern short g_4abac6[20]; /* @data 0x4abac6: the placed views */
 extern short g_4abaee; /* @data 0x4abaee */
 extern short g_4abaf0; /* @data 0x4abaf0 */
@@ -51,10 +53,15 @@ extern short g_4abb08; /* @data 0x4abb08 */
 extern short g_4abb0a; /* @data 0x4abb0a */
 extern short g_4abb0c; /* @data 0x4abb0c */
 extern short g_4abb10; /* @data 0x4abb10 */
+extern short g_4abb14; /* @data 0x4abb14: the script F plays */
 extern short g_4abb16; /* @data 0x4abb16: Captain Cajun's script */
 extern Point ferryPlaces[20]; /* @data 0x4a1520: where the Zoombinis wait */
 
 void resetScene10();
+void drawFerryButtons(View *);
+short scene10Key(unsigned short key);
+void layOutFerry(short id);
+void layOutFerryLevel();
 void linkFerryPlaces(short draw);
 void findFerryPlace(short *spot);
 void fn_420f85(short n);
