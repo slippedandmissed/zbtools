@@ -5580,3 +5580,5 @@ extern short g_4b08b8[];
 extern short g_4b09fa;
 extern short g_4afc6c[];
 void fn_43596d(View *view, short group, ViewNotify, char unknownF8);
+extern short g_4afd8c[];
+void fn_43638b(View *view, short event);

@@ -999,3 +999,83 @@ void fn_436092(View *view, short event)
         break;
     }
 }
+
+/* Moves the Zoombini paired with `view` onto its square (words 31 and
+   32, g_4afbf0) by its pose (word 20), adds a helper view there for the
+   pose (paired back with the Zoombini), and starts the Zoombini's script
+   for the pose (then told fn_43638b), in `group`. */
+/* @zoombi32 0x0043596d */
+void fn_43596d(View *view, short group, ViewNotify, char unknownF8)
+{
+    short script;
+    short helperScript;
+    short pose;
+    short column;
+    Point where;
+    short *parts;
+    View *other;
+    View *helper;
+
+    parts = (short *)&view->body;
+    other = findView(parts[50]);
+    if (other) {
+        Snoid *snoid = (Snoid *)&other->body;
+
+        parts = (short *)snoid;
+        column = parts[32];
+        *(Point *)&snoid->body.x = (g_4afbf0 + parts[32])[parts[31] * 13];
+        pose = parts[20];
+        switch (pose) {
+        case 0:
+            snoid->body.x += 8;
+            snoid->body.y += -33;
+            helperScript = parts[20] + 10000;
+            script = parts[21 + parts[20]];
+            break;
+        case 1:
+            snoid->body.x += 4;
+            snoid->body.y += -38;
+            helperScript = 10042;
+            script = snoid->features[3] + 15080;
+            break;
+        case 3:
+            snoid->body.x += 4;
+            snoid->body.y += -33;
+            helperScript = 10043;
+            script = snoid->features[3] + 15085;
+            break;
+        default:
+            snoid->body.x += 4;
+            snoid->body.y += -38;
+            helperScript = parts[20] + 10042;
+            script = snoid->features[3] + 15085;
+            break;
+        }
+        where = *(Point *)&snoid->body.x;
+        parts[41] = addView(0x4908000, drawCels, runViewScript, helperScript, 7, &where, 0, 0);
+        helper = findView(parts[41]);
+        if (helper) {
+            setViewScript(helper, helperScript, 1);
+            unionRgnRect(removedRgn, &helper->body.bounds);
+            helper->placed = fn_436321;
+            helper->body.group = group;
+            parts = (short *)&helper->body;
+            parts[50] = other->id;
+            runViewScript(helper, removedRgn);
+        }
+        startSnoidScript((Snoid *)&other->body, script, 0, unknownF8);
+        other->notify = fn_43638b;
+        other->body.group = group;
+        switch (pose) {
+        case 0:
+            moveView(other->id, 0, g_4afd8c[column]);
+            moveView(helper->id, 1, other->id);
+            break;
+        case 1:
+        case 3:
+            moveView(other->id, 0, g_4afd8c[column]);
+            moveView(helper->id, 1, other->id);
+            break;
+        }
+    }
+}
