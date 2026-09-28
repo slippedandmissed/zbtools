@@ -1470,7 +1470,7 @@ char *fn_46cabc(long resource); /* locks a resource */
 void fn_46cad1(long resource); /* unlocks it */
 char *nthString(char *table, unsigned char n);
 char *skipStrings(char *text, short count);
-short randomUpTo(unsigned short limit);
+unsigned short randomUpTo(unsigned short limit);
 void __cdecl formatJoined(const char *text);
 short collectParts(short count, const char **parts, const char *text);
 /* graphics */
@@ -4786,6 +4786,10 @@ void fn_42a6fa(View *view, short event);
 void countFeatureValues();
 void drawNumberBox(ShortRect rect, short number);
 void fn_42f24c(View *view);
+void drawIdBox(short id);
+void mirrorGrid(short (*grid)[12], short how);
+void clearWay(short x);
+extern ShortRect g_4a1ae6;
 void fn_42a077(View *view, short event);
 extern short g_4ac9e6[];
 extern short g_4acb06;

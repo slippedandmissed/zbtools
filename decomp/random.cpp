@@ -13,7 +13,7 @@ void fn_415514()
 
 /* A random number from 0 to `limit`. */
 /* @zoombi32 0x0041552a */
-short randomUpTo(unsigned short limit)
+unsigned short randomUpTo(unsigned short limit)
 {
     unsigned short value;
 

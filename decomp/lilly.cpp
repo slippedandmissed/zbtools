@@ -2,6 +2,7 @@
  * lilly (0x424274-0x42f920): 'Lilly.MHK'; 46 KB, so probably several modules
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "zoombinis.h"
@@ -873,5 +874,92 @@ void fn_42a077(View *view, short event)
                 g_4af0e6--;
             }
         break;
+    }
+}
+
+/* Shows a view id in a box (a debugging aid). */
+/* Not exact: the frame's layout (the original puts `text` above `saved`
+   and the temporaries; BCC 4.5 puts this array below them). */
+/* @zoombi32 0x00428009 */
+void drawIdBox(short id)
+{
+    ShortRect rect = g_4a1ae6;
+    char text[12];
+
+    sprintf(text, "id=%u", id);
+    Color saved;
+
+    saved = setForeColor(Color(0xb));
+    fillPortRect(Rect(rect), Color(0xe), 0);
+    frameRect(Rect(rect));
+    drawText(Rect(rect), 0x22, text, 0xffff);
+    setForeColor(saved);
+    showRect(&rect);
+}
+
+/* Mirrors a 12 by 12 grid left to right (`how` 0) or top to bottom (1). */
+/* @zoombi32 0x0042d875 */
+void mirrorGrid(short (*grid)[12], short how)
+{
+    short copy[12][12];
+    short changed;
+    short row;
+    short column;
+
+    for (row = 0; row < 12; row++)
+        for (column = 0; column < 12; column++)
+            copy[row][column] = 0;
+    changed = 0;
+    if (!how) {
+        short last = 11;
+
+        changed = 1;
+        for (row = 0; row < 12; row++)
+            for (column = 0; column < 12; column++)
+                copy[row][last - column] = grid[row][column];
+    } else if (how == 1) {
+        short last = 11;
+
+        changed = 1;
+        for (column = 0; column < 12; column++)
+            for (row = 0; row < 12; row++)
+                copy[last - row][column] = grid[row][column];
+    }
+    if (changed)
+        for (row = 0; row < 12; row++)
+            for (column = 0; column < 12; column++)
+                grid[row][column] = copy[row][column];
+}
+
+/* Moves the Zoombinis standing near x (on the bank, y 400-440) out of the
+   way, to either side at random. */
+/* Not exact: the original keeps viewY in edx; this spills it to the stack. */
+/* @zoombi32 0x00427edc */
+void clearWay(short x)
+{
+    for (short i = 0; i < g_4ac0e8; i++) {
+        View *view = findView(partyViews[i]);
+
+        if (view && view->body.running) {
+            short viewX = view->body.x;
+            short viewY = view->body.y;
+
+            if (viewY >= 400 && viewY <= 440 && viewX >= x - 20 && viewX <= x + 20) {
+                Point target;
+
+                target.y = 440;
+                if (randomUpTo(1)) {
+                    target.x = randomUpTo(3) * 30 + x + 50;
+                    if (target.x > 520)
+                        target.x = x - 50 - randomUpTo(3) * 30;
+                } else {
+                    target.x = x - 50 - randomUpTo(3) * 30;
+                    if (target.x < 15)
+                        target.x = randomUpTo(3) * 30 + x + 50;
+                }
+                setSnoidAction(viewSnoid(view), 7, 0);
+                *(Point *)&viewSnoid(view)->targetX = target;
+            }
+        }
     }
 }

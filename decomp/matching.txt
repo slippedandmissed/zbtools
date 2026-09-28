@@ -337,6 +337,7 @@
 0x0042d616 loadTablePair
 0x0042d64c freeResourcePair
 0x0042d667 loadLockedTable
+0x0042d875 mirrorGrid
 0x0042d996 freeLockedResource
 0x0042e4b6 fn_42e4b6
 0x0042e693 fn_42e693
