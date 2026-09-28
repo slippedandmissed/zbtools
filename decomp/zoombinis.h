@@ -5554,3 +5554,7 @@ void fn_435f3d(View *view, short event);
 short fn_4372bf(short which, short ignore);
 void fn_435e8a(View *view, short event);
 short *fn_436a00(short which);
+extern short g_4b00d2[][13][3]; /* the maze's squares */
+void fn_435c57(View *view, short event);
+void fn_435b9e(View *view, short event);
+void fn_435da5(View *view, short event);

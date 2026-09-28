@@ -653,3 +653,71 @@ short *fn_436a00(short which)
     g_4b076c = 0;
     return loadShortTable(id, &g_4afbdc);
 }
+
+/* A view's notify: 0 turns it round (the flags test is always true: `==`
+   binds before `|`, as in the original), 61 starts its paired Zoombini's
+   script 14004 (then told fn_435c57), 63 lists the view in g_4b0908. */
+/* @zoombi32 0x00435b9e */
+void fn_435b9e(View *view, short event)
+{
+    switch (event) {
+    case 0:
+        if (view->flags == 0x8000 | 0x4000001) {
+            Snoid *snoid = (Snoid *)&view->body;
+
+            snoid->unknownF2 = !snoid->unknownF2;
+        }
+        break;
+    case 61: {
+        short *parts = (short *)&view->body;
+        View *other = findView(parts[50]);
+
+        if (other) {
+            startSnoidScript((Snoid *)&other->body, 14004, 0, 1);
+            other->body.group = view->body.group;
+            other->notify = fn_435c57;
+        }
+        break;
+    }
+    case 62:
+        break;
+    case 63:
+        g_4b0908[g_4b09fc] = view->id;
+        g_4b09fc++;
+        break;
+    }
+}
+
+/* A view's notify: 71 lists its paired view in g_4b0908 and clears its
+   square (g_4b00d2, by its words 33 and 34) if the square is still its;
+   120 starts its paired Zoombini's script 14007. */
+/* @zoombi32 0x00435da5 */
+void fn_435da5(View *view, short event)
+{
+    short *parts;
+    View *other;
+
+    switch (event) {
+    case 71:
+        parts = (short *)&view->body;
+        other = findView(parts[50]);
+        if (other) {
+            g_4b0908[g_4b09fc] = other->id;
+            g_4b09fc++;
+        }
+        if (g_4b00d2[parts[33]][parts[34]][1] == view->id) {
+            g_4b00d2[parts[33]][parts[34]][0] = 0;
+            g_4b00d2[parts[33]][parts[34]][1] = 0;
+        }
+        break;
+    case 120:
+        parts = (short *)&view->body;
+        other = findView(parts[50]);
+        if (other) {
+            startSnoidScript((Snoid *)&other->body, 14007, 0, 0);
+            other->notify = fn_435c57;
+            other->body.group = view->body.group;
+        }
+        break;
+    }
+}
