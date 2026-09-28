@@ -1663,3 +1663,69 @@ void fn_44a4d9(short cell)
     to = g_4b1aea[via].links[2];
     fn_44a674(cell, via, to);
 }
+
+/* Follows the moves (fn_44a674) from `cell` along two winding routes (from
+   directions 5 and 3), each step taken only while the last landed on a lit
+   cell (508 or 502). */
+/* @zoombi32 0x0044accc */
+void fn_44accc(short cell)
+{
+    short middle;
+    short via;
+    short to;
+
+    via = g_4b1aea[cell].links[5];
+    to = g_4b1aea[via].links[4];
+    fn_44a674(cell, via, to);
+    if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+        middle = to;
+        via = g_4b1aea[middle].links[4];
+        to = g_4b1aea[via].links[4];
+        fn_44a674(middle, via, to);
+        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+            middle = to;
+            via = g_4b1aea[middle].links[4];
+            to = g_4b1aea[via].links[3];
+            fn_44a674(middle, via, to);
+        }
+        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+            middle = to;
+            via = g_4b1aea[middle].links[2];
+            to = g_4b1aea[via].links[1];
+            fn_44a674(middle, via, to);
+        }
+        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+            middle = to;
+            via = g_4b1aea[middle].links[1];
+            to = g_4b1aea[via].links[1];
+            fn_44a674(middle, via, to);
+        }
+    }
+    via = g_4b1aea[cell].links[3];
+    to = g_4b1aea[via].links[4];
+    fn_44a674(cell, via, to);
+    if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+        middle = to;
+        via = g_4b1aea[middle].links[4];
+        to = g_4b1aea[via].links[4];
+        fn_44a674(middle, via, to);
+        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+            middle = to;
+            via = g_4b1aea[middle].links[4];
+            to = g_4b1aea[via].links[5];
+            fn_44a674(middle, via, to);
+        }
+        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+            middle = to;
+            via = g_4b1aea[middle].links[0];
+            to = g_4b1aea[via].links[1];
+            fn_44a674(middle, via, to);
+        }
+        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+            middle = to;
+            via = g_4b1aea[middle].links[1];
+            to = g_4b1aea[via].links[1];
+            fn_44a674(middle, via, to);
+        }
+    }
+}

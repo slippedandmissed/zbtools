@@ -81,4 +81,6 @@ void linkCells();
 short fn_44b4ec(short a, short b);
 void fn_44a4d9(short cell);
 
+void fn_44accc(short cell);
+
 #endif
