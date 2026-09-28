@@ -528,7 +528,7 @@ void runViewCels(View *view, short region)
 /* @zoombi32 0x00466a25 */
 void strandParty()
 {
-    fn_459c84(1, 1);
+    recordParty(1, 1);
     switch (currentScene) {
     case 1:
     case 6:

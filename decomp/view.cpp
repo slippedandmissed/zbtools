@@ -101,7 +101,7 @@ void clearViews()
             party()->unknown2 = 1;
             party()->unknown4 = 1;
         } else {
-            fn_459c84(1, 0);
+            recordParty(1, 0);
         }
         view = views;
         while (view) {
@@ -154,7 +154,7 @@ void removeDeadViews()
     View *view;
 
     if (viewsReady) {
-        fn_459c84(0, 0);
+        recordParty(0, 0);
         view = views;
         while (view) {
             if (view->prev && view->next && (view->flags & 0xf) == 1) {

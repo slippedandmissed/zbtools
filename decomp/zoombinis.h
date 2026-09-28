@@ -1036,6 +1036,33 @@ extern unsigned short appActive; /* @data 0x4a4ae4 */
 extern ShortRect g_4a4ae6;
 extern short g_4a4b98;
 extern char *g_4a4ba0;
+/* Per puzzle scene (from scene 7): bits 0-3, left at level 0-3; bits 4-7,
+   passed at level 0-3. */
+inline char *sceneFlags()
+{
+    return g_4a4ba0 + 0x56;
+}
+/* The records of groups passed (16): when, which group and level (+1; 0: none). */
+inline short *recordYears()
+{
+    return (short *)(g_4a4ba0 + 0x62);
+}
+inline char *recordMonths()
+{
+    return g_4a4ba0 + 0x82;
+}
+inline char *recordDays()
+{
+    return g_4a4ba0 + 0x92;
+}
+inline char *recordGroups()
+{
+    return g_4a4ba0 + 0xa2;
+}
+inline char *recordLevels()
+{
+    return g_4a4ba0 + 0xb2;
+}
 /* The level reached in each group of scenes (1-4). */
 inline short *puzzleLevels()
 {
@@ -4121,7 +4148,7 @@ void fn_415a20(Callback callback);
 void initViews(); /* 0x46310c */
 void fn_469669();
 void showNameTag(const char *text, unsigned long duration, short large); /* 0x4589ce */
-void fn_459c84(short, short);
+void recordParty(short ending, short all);
 void freePaths();
 void debugMessage(short value, const char *after, short *number, const char *before, short wait);
 extern ShortRect debugRect; /* @data 0x4a79cc */

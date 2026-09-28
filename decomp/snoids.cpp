@@ -2827,3 +2827,206 @@ void startSnoidScript(Snoid *snoid, short id, Point *anchor, char unknownF8)
     layOutSnoid(snoid, 0);
     unionRgnRect(removedRgn, &snoid->body.bounds);
 }
+
+/*
+ * Records the party as a scene ends: the Zoombinis on screen (the chosen
+ * first; all count as on board if `all`) become the party. In a puzzle
+ * scene, notes how far it got: those left behind join the group's waiting
+ * party, or if none were lost and the scene was passed, records the pass
+ * (a dated record for the group's last scene, and the next level).
+ */
+/* Not exact: register allocation (the original keeps the views in edx and
+   the loop counter in esi, with one fewer stack slot). */
+/* @zoombi32 0x00459c84 */
+void recordParty(short ending, short all)
+{
+    short n;
+    short lost;
+    short pass;
+    unsigned short group;
+    short last;
+    unsigned short chosen;
+    char ignored;
+    short savedAll;
+    Party *waiting;
+    short i;
+    View *view;
+
+    if (!all) {
+        g_4b7554 = 1;
+        fn_45aaff(1);
+    }
+    if (viewsLocked)
+        return;
+    if (g_4b754a && ending) {
+        party()->count = 0;
+        party()->unknown2 = 1;
+        party()->unknown4 = 1;
+        return;
+    }
+    party()->unknown2 = 0;
+    party()->unknown4 = 0;
+    if (!all)
+        for (view = viewListEnd(1); view; view = view->next)
+            if (view->flags & 1) {
+                view->flags = 1;
+                if (!view->body.running) {
+                    view->body.running = 1;
+                    viewSnoid(view)->unknownF7 = 0;
+                }
+                if (viewSnoid(view)->unknownF7)
+                    viewSnoid(view)->unknownF7 = 1;
+            }
+    if (g_4a48e6 && currentScene != 4 && currentScene != 5 && currentScene != 6)
+        chooseSnoids(1, 1);
+    party()->count = countSnoidViews();
+    chosen = 1;
+    n = 0;
+    savedAll = all;
+    if (currentScene == 4 || currentScene == 5)
+        all = 0;
+    for (pass = 0; pass < 2; pass++) {
+        View *actor = nextActorView(1);
+
+        for (i = 0; i < party()->count && n < 32; actor = nextActorView(0), i++)
+            if (actor) {
+                unsigned short isChosen = 0;
+
+                if (viewSnoid(actor)->unknownF7)
+                    isChosen = 1;
+                if (all || isChosen == chosen) {
+                    short j;
+
+                    for (j = 0; j < 4; j++)
+                        party()->travellers[n].features[j] = viewSnoid(actor)->features[j];
+                    party()->travellers[n].place = *(Point *)&actor->body.x;
+                    for (j = 0; j < 10; j++)
+                        party()->travellers[n].name[j] = viewSnoid(actor)->name[j];
+                    party()->travellers[n].onboard = chosen || all ? 1 : 0;
+                    n++;
+                }
+            }
+        chosen = !chosen;
+    }
+    all = savedAll;
+    lost = party()->count - fn_4572bf();
+    group = sceneGroup(&last);
+    g_4b7558 = 0;
+    if (group && !all) {
+        short scene = currentScene - 7;
+
+        switch (puzzleLevels()[group]) {
+        case 0:
+            sceneFlags()[scene] |= 1;
+            break;
+        case 1:
+            sceneFlags()[scene] |= 2;
+            break;
+        case 2:
+            sceneFlags()[scene] |= 4;
+            break;
+        case 3:
+            sceneFlags()[scene] |= 8;
+            break;
+        }
+        if (lost) {
+            short from;
+            short slot;
+            short k;
+
+            switch (group) {
+            case 1:
+                waiting = &waitingParties()[0];
+                break;
+            case 2:
+            case 3:
+                waiting = &waitingParties()[1];
+                *(short *)(g_4a4ba0 + 0x4a) += lost;
+                break;
+            case 4:
+                waiting = &waitingParties()[2];
+                *(short *)(g_4a4ba0 + 0x4c) += lost;
+                break;
+            }
+            if (waiting->unknown2)
+                for (i = 0; i < waiting->count; i++)
+                    if (waiting->travellers[i].onboard) {
+                        waiting->count--;
+                        for (k = i; k < waiting->count; k++)
+                            waiting->travellers[k] = waiting->travellers[k + 1];
+                        i--;
+                    }
+            waiting->unknown2 = waiting->unknown4 = 0;
+            for (from = 0; party()->travellers[from].onboard; from++)
+                ;
+            slot = -1;
+            for (i = 0; slot < 0 && i <= waiting->count; i++)
+                if (!waiting->travellers[i].onboard || i == waiting->count)
+                    slot = i;
+            if (slot < 0) {
+                waiting->count = 0;
+                slot = 0;
+            }
+            for (k = 0; k < lost; k++)
+                if (waiting->count < 32 && slot < 32) {
+                    short j;
+
+                    for (j = 0; j < 4; j++)
+                        waiting->travellers[slot].features[j] = party()->travellers[from].features[j];
+                    for (j = 0; j < 10; j++)
+                        waiting->travellers[slot].name[j] = party()->travellers[from].name[j];
+                    waiting->travellers[slot].onboard = 1;
+                    slot++;
+                    from++;
+                    waiting->count++;
+                }
+            switch (group) {
+            case 1:
+                waitingParties()[0] = *waiting;
+                break;
+            case 2:
+            case 3:
+                waitingParties()[1] = *waiting;
+                break;
+            case 4:
+                waitingParties()[2] = *waiting;
+                break;
+            }
+            *(short *)(g_4a4ba0 + 0x54) = 0;
+            party()->count -= lost;
+        } else if (*(short *)(g_4a4ba0 + 0x54) && !g_4a48e6) {
+            short done;
+
+            switch (puzzleLevels()[group]) {
+            case 0:
+                sceneFlags()[scene] |= 0x10;
+                break;
+            case 1:
+                sceneFlags()[scene] |= 0x20;
+                break;
+            case 2:
+                sceneFlags()[scene] |= 0x40;
+                break;
+            case 3:
+                sceneFlags()[scene] |= 0x80;
+                break;
+            }
+            done = 0;
+            for (i = 0; !done && i < 16; i++)
+                if (recordGroups()[i] && recordGroups()[i] == (char)group
+                    && recordLevels()[i] == (char)(puzzleLevels()[group] + 1))
+                    done = 1;
+            for (i = 0; last && !done && i < 16; i++)
+                if (!recordGroups()[i]) {
+                    getDateTime(&recordYears()[i], &recordMonths()[i], &recordDays()[i], &ignored, &ignored);
+                    recordGroups()[i] = group;
+                    recordLevels()[i] = puzzleLevels()[group] + 1;
+                    i = 16;
+                }
+            if (last && puzzleLevels()[group] < 3) {
+                puzzleLevels()[group]++;
+                g_4b7558 = 1;
+            }
+        }
+    }
+}
