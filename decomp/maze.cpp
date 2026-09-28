@@ -1277,3 +1277,101 @@ short fn_437ea2(short low, short high)
     }
     return best;
 }
+
+/* Adds a view for a Zoombini in the maze (drawn by fn_43692b, updated by
+   fn_436994) from `snoid`: gives it the next ten words of g_4b076c (its
+   kind, square, line...), records it on its square (g_4b04c8, g_4b061a)
+   and in its line's list, and lays it out. */
+/* @zoombi32 0x00436d39 */
+void fn_436d39(Snoid *snoid)
+{
+    View *view;
+    short id;
+    Snoid *made;
+    short *parts;
+    short i;
+
+    id = addView(1, fn_43692b, fn_436994, 0, randomBetween(20, 25), snoid, 0, 0);
+    if (g_4afc44)
+        moveView(id, 1, g_4afc44);
+    else if (g_4afc2a)
+        moveView(id, 1, g_4afc2a);
+    if ((view = findView(id)) != 0) {
+        made = (Snoid *)&view->body;
+        parts = (short *)made;
+        for (i = 0; i < 10; i++)
+            parts[30 + i] = (g_4b076c + i)[g_4b08b4 * 10];
+        g_4b08b4++;
+        g_4b04c8[parts[31]][parts[32]] = view->id;
+        g_4b061a[parts[31]][parts[32]] = parts[30];
+        *(Point *)&made->body.x = (g_4afbf0 + parts[32])[parts[31] * 13];
+        switch (parts[33]) {
+        case 1:
+            g_4b0a10[g_4b0cfe[0]] = id;
+            g_4b0cfe[0]++;
+            parts[40] = g_4b0d12[0];
+            break;
+        case 2:
+            g_4b0b6e[g_4b0cfe[1]] = id;
+            g_4b0cfe[1]++;
+            parts[40] = g_4b0d12[1];
+            break;
+        case 3:
+            g_4b0ba0[g_4b0cfe[2]] = id;
+            g_4b0cfe[2]++;
+            parts[40] = g_4b0d12[2];
+            break;
+        case 4:
+            g_4b0bd2[g_4b0cfe[3]] = id;
+            g_4b0cfe[3]++;
+            parts[40] = g_4b0d12[3];
+            break;
+        case 5:
+            g_4b0c04[g_4b0cfe[4]] = id;
+            g_4b0cfe[4]++;
+            parts[40] = g_4b0d12[4];
+            break;
+        case 6:
+            g_4b0c36[g_4b0cfe[5]] = id;
+            g_4b0cfe[5]++;
+            parts[40] = g_4b0d12[5];
+            break;
+        case 7:
+            g_4b0c68[g_4b0cfe[6]] = id;
+            g_4b0cfe[6]++;
+            parts[40] = g_4b0d12[6];
+            break;
+        case 8:
+            g_4b0c9a[g_4b0cfe[7]] = id;
+            g_4b0cfe[7]++;
+            parts[40] = g_4b0d12[7];
+            break;
+        default:
+            g_4b0a10[g_4b0cfe[0]] = id;
+            g_4b0cfe[0]++;
+            parts[40] = g_4b0d12[0];
+            break;
+        }
+        switch (parts[30]) {
+        case 1:
+        case 5:
+            made->unknownF4 = 2;
+            break;
+        case 2:
+            parts[41] = g_4a25e0[g_4b0096[g_4b00c2]][0] + 1;
+            parts[42] = g_4a25e0[g_4b0096[g_4b00c2]][1];
+            g_4b00c2++;
+            made->unknownF4 = 3;
+            break;
+        default:
+            parts[41] = 0;
+            parts[42] = 0;
+            made->unknownF4 = 3;
+            break;
+        }
+        parts[43] = 0;
+        fn_43a7a6(made);
+        view->flags = 0x4188000;
+        view->nextUpdate = 0;
+    }
+}
