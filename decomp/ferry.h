@@ -65,6 +65,9 @@ extern short *ferryHotX; /* @data 0x4abb98: the ferry's images' hot spots */
 extern short *ferryHotY; /* @data 0x4abb9c */
 
 void resetScene13();
+void drawFerryButtons(View *);
+void startFerryScript(View *view, short id, Point *anchor);
+void fn_423f84();
 short ferryLayOutSnoid(Snoid *snoid, short *event);
 void fn_423512(View *view, short event);
 short ferryScript(View *view, short which);

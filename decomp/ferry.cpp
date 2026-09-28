@@ -2,6 +2,8 @@
  * ferry (0x42160c-0x424274): Captain Cajun's ferry (scene 13), 'Ferry.MHK'
  */
 
+#include <stdlib.h>
+
 #include "zoombinis.h"
 #include "basecamp.h"
 #include "e2memory.h"
@@ -633,4 +635,125 @@ short ferryLayOutSnoid(Snoid *snoid, short *event)
         snoid->body.frame++;
     }
     return sound;
+}
+
+/* A view draw: draws both buttons, unlit. */
+/* @zoombi32 0x00421bdf */
+void drawFerryButtons(View *)
+{
+    drawFerryButton(1, 0, 0);
+    drawFerryButton(2, 0, 0);
+}
+
+/*
+ * The ferry's startSnoidScript: starts a Zoombini's view on ferry script
+ * `id` (4000 on: its own scripts, unknownF4 1; others as 0), placed so that
+ * its first positioned frame is at `anchor`, if given.
+ */
+/* @zoombi32 0x00422c82 */
+void startFerryScript(View *view, short id, Point *anchor)
+{
+    Snoid *snoid = viewSnoid(view);
+    short index;
+    short originX;
+    short originY;
+    short frame;
+    short found;
+    short *data;
+    short n;
+
+    snoid->unknownC0 = -1;
+    if (snoid->body.group) {
+        if (groupLeader[snoid->body.group] == view->id)
+            groupLeader[snoid->body.group] = 0;
+        g_4b8b43[snoid->body.group] = 0;
+    }
+    snoid->body.group = 0;
+    if (id >= 4000) {
+        snoid->unknownF4 = 1;
+        index = id - 4000;
+    } else {
+        snoid->unknownF4 = 0;
+        index = 0;
+    }
+    snoid->body.running = 1;
+    snoid->body.script = index;
+    if (!ferryScripts[index])
+        ferryScripts[index] = loadSwappedResource(&ferryScriptResources[index], index + 4000, RESOURCE_TYPE('S', 'C', 'R', 'S'));
+    data = ferryScripts[index];
+    snoid->body.frame = 0;
+    snoid->body.frameOffset = 2;
+    snoid->body.lastFrame = data[0];
+    if (!snoid->unknownF4)
+        snoid->unknownF5 = 1;
+    else
+        snoid->unknownF5 = 0;
+    if (removedRgn)
+        unionRgnRect(removedRgn, &snoid->body.bounds);
+    originX = snoid->body.x;
+    originY = snoid->body.y;
+    if (snoid->unknownF4 == 1) {
+        if (anchor) {
+            n = -1;
+            found = 0;
+            while (!found) {
+                frame = n;
+                short *at = data + scriptFrameOffset(data, &frame, 1);
+
+                if (*at > 0) {
+                    originX = anchor->x;
+                    originY = anchor->y;
+                    found = 1;
+                    data = at;
+                }
+                n--;
+                if (abs(n) > snoid->body.lastFrame)
+                    found = 1;
+            }
+        } else {
+            data += 2;
+        }
+    } else {
+        data += 2;
+    }
+    if (*data > 0) {
+        snoid->body.unknownAa = data[1] - originX;
+        snoid->body.unknownAc = data[2] - originY;
+    }
+    ferryLayOutSnoid(snoid, 0);
+    if (removedRgn)
+        unionRgnRect(removedRgn, &snoid->body.bounds);
+}
+
+/* Starts the g_4abb46 Zoombinis of g_4abb4a moving on (7021), the last
+   one (8) going ahead of g_4abb24, counted in g_4b755a until it's done
+   (fn_42403b); then one fewer. */
+/* @zoombi32 0x00423f84 */
+void fn_423f84()
+{
+    short i;
+    View *view;
+    short script;
+
+    for (i = 0; i < g_4abb46; i++) {
+        view = findView(g_4abb4a[i]);
+        if (view) {
+            if (i == g_4abb46 - 1) {
+                script = ferrySnoidScript(view, 8);
+                if (script) {
+                    g_4b755a++;
+                    moveView(view->id, 0, g_4abb24);
+                    startSnoidScript(viewSnoid(view), script, 0, 0);
+                    view->notifyEnd = 1;
+                    view->notify = fn_42403b;
+                }
+            } else {
+                script = ferrySnoidScript(view, 7021);
+                if (script)
+                    startSnoidScript(viewSnoid(view), script, 0, 0);
+            }
+        }
+    }
+    if (g_4abb46)
+        g_4abb46--;
 }
