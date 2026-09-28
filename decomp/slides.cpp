@@ -631,3 +631,145 @@ void fn_44af15(View *view, short event)
         break;
     }
 }
+
+/* Groups the party in threes (g_4b2450 groups; g_4b24f2 marks those
+   taken): each next Zoombini shares a feature with the last where one can
+   (noted in g_4b2452 as 510-513 by feature, else 501). */
+/* @zoombi32 0x0044986f */
+void fn_44986f()
+{
+    short group;
+    short n;
+    short who;
+    short other;
+    short i;
+
+    who = n = 0;
+    fillMemory(g_4b2452, 0, 32);
+    fillMemory(g_4b24f2, 0, 32);
+    g_4b2450 = g_4b2414 / 3;
+    if (g_4b2414 % 3)
+        g_4b2450++;
+    for (group = 0; group < g_4b2450; group++) {
+        g_4b24f2[who] = 1;
+        other = fn_449a21(who);
+        if (other == -1) {
+            g_4b2452[n] = 501;
+            n++;
+            for (i = 1; i < g_4b2414; i++)
+                if (!g_4b24f2[i]) {
+                    other = i;
+                    g_4b24f2[other] = 1;
+                    break;
+                }
+        } else {
+            g_4b24f2[other] = 1;
+            g_4b2452[n] = g_4b2516 + 510;
+            n++;
+        }
+        who = other;
+        other = -1;
+        for (i = 1; i < g_4b2414; i++)
+            if (!g_4b24f2[i])
+                other = i;
+        if (other == -1)
+            return;
+        other = fn_449a21(who);
+        if (other == -1) {
+            g_4b2452[n] = 501;
+            n++;
+            for (i = 1; i < g_4b2414; i++)
+                if (!g_4b24f2[i]) {
+                    other = i;
+                    who = i;
+                }
+        } else {
+            g_4b24f2[other] = 1;
+            g_4b2452[n] = g_4b2516 + 510;
+            n++;
+        }
+        g_4b24f2[other] = 1;
+        other = -1;
+        for (i = 1; i < g_4b2414; i++)
+            if (!g_4b24f2[i]) {
+                other = i;
+                who = i;
+            }
+        if (other == -1)
+            return;
+    }
+}
+
+/* Whether the Zoombinis on cells `a` and `b` share a feature, checking the
+   features from a random one on: 510-513 for the first shared (hair, eyes,
+   nose, feet); 0 if none, or if a cell is empty. */
+/* Not exact: register allocation (the original keeps `a` in eax; here it
+   shares ebx with `feet`), as in fn_44b0fc. */
+/* @zoombi32 0x00449f96 */
+short fn_449f96(short a, short b)
+{
+    Snoid *snoid;
+    short feet;
+    short hair;
+    short eyes;
+    short nose;
+    short otherFeet;
+    short otherHair;
+    short otherEyes;
+    short otherNose;
+    short r;
+
+    if (g_4b1aea[a].state == 500 || g_4b1aea[b].state == 500)
+        return 0;
+    if (!g_4b1aea[a].snoid || !g_4b1aea[b].snoid)
+        return 0;
+    snoid = (Snoid *)&findView(g_4b1aea[a].snoid)->body;
+    hair = snoid->features[0];
+    eyes = snoid->features[1];
+    nose = snoid->features[2];
+    feet = snoid->features[3];
+    snoid = (Snoid *)&findView(g_4b1aea[b].snoid)->body;
+    otherHair = snoid->features[0];
+    otherEyes = snoid->features[1];
+    otherNose = snoid->features[2];
+    otherFeet = snoid->features[3];
+    r = randomUpTo(1000);
+    if (r < 250) {
+        if (hair == otherHair)
+            return 510;
+        if (eyes == otherEyes)
+            return 511;
+        if (nose == otherNose)
+            return 512;
+        if (feet == otherFeet)
+            return 513;
+    } else if (r < 500) {
+        if (eyes == otherEyes)
+            return 511;
+        if (nose == otherNose)
+            return 512;
+        if (feet == otherFeet)
+            return 513;
+        if (hair == otherHair)
+            return 510;
+    } else if (r < 750) {
+        if (nose == otherNose)
+            return 512;
+        if (feet == otherFeet)
+            return 513;
+        if (hair == otherHair)
+            return 510;
+        if (eyes == otherEyes)
+            return 511;
+    } else {
+        if (feet == otherFeet)
+            return 513;
+        if (hair == otherHair)
+            return 510;
+        if (eyes == otherEyes)
+            return 511;
+        if (nose == otherNose)
+            return 512;
+    }
+    return 0;
+}
