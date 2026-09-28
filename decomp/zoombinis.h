@@ -6160,8 +6160,8 @@ extern long g_4a0fd0;
 extern long g_4ab83c;
 extern short g_4ab878;
 extern short g_4a0ff4;
-extern short g_4ab87a;
-extern short g_4ab87c;
+extern short rosterFeatures[2]; /* @data 0x4ab87a: the features (0-3) the roster asks about */
+extern short rosterValues[2][5]; /* @data 0x4ab87e: and their values */
 extern short g_4ab892[6][6];
 extern short g_4a1014;
 void drawRosterButtonsView(View *);
@@ -6185,3 +6185,10 @@ extern short g_4a0ff8;
 extern short g_4a0fe4;
 void readWriteRoster(void *data, short read);
 void fn_41dfe3(short which);
+extern short g_4a0ffe; /* @data 0x4a0ffe */
+extern short g_4a1006; /* @data 0x4a1006 */
+extern short g_4ab994; /* @data 0x4ab994 */
+extern Point g_4aba14[20]; /* @data 0x4aba14: a stack of points, g_4aba64 of them */
+void fn_41d1b1(View *view, short event);
+extern short g_4a1018; /* @data 0x4a1018 */
+void fn_41e0f3();

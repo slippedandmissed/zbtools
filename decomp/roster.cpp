@@ -310,8 +310,64 @@ void closeRoster()
     }
 }
 
-/* Counts the chosen Zoombinis (g_4a1014 of them) by feature g_4ab87a, and
-   when there's a second (g_4ab878 above 2), by both it and g_4ab87c, into
+/* Picks the roster's features: one (two when g_4ab878 is above 2) of the
+   four at random, the first hair (2) when g_4a1018 asks, and for each
+   g_4a0ff2 different values (1-5) at random. */
+/* @zoombi32 0x0041e0f3 */
+void fn_41e0f3()
+{
+    short left;
+    volatile short unused; /* set, never read: volatile keeps the store */
+    short features[4];
+    short values[7];
+    short i;
+    short j;
+    short k;
+    short valuesLeft;
+
+    if (g_4ab878 > 2)
+        g_4a0ff4 = 2;
+    else
+        g_4a0ff4 = 1;
+    for (i = 0; i < 2; i++)
+        rosterFeatures[i] = 0;
+    for (j = 0; j < g_4a0ff4; j++)
+        for (i = 0; i < g_4a0ff2; i++)
+            rosterValues[j][i] = 0;
+    left = 3;
+    for (i = 0; i < 4; i++)
+        features[i] = i;
+    unused = 0;
+    for (j = 0; j < 2; j++) {
+        for (i = 0; i < 7; i++)
+            values[i] = i;
+        if (j == 0) {
+            k = randomBetween(0, left);
+            if (g_4a1018) {
+                k = 2;
+                g_4a1018 = 0;
+            }
+            rosterFeatures[0] = features[k];
+            for (; k < left + 1; k++)
+                features[k] = features[k + 1];
+            left--;
+        } else {
+            rosterFeatures[1] = features[randomBetween(0, left)];
+        }
+        valuesLeft = 5;
+        for (i = 0; i < g_4a0ff2; i++) {
+            k = randomBetween(1, valuesLeft);
+            rosterValues[j][i] = values[k];
+            for (; k < valuesLeft + 1; k++)
+                values[k] = values[k + 1];
+            valuesLeft--;
+        }
+    }
+}
+
+/* Counts the chosen Zoombinis (g_4a1014 of them) by feature
+   rosterFeatures[0], and when there's a second (g_4ab878 above 2), by both
+   it and rosterFeatures[1], into
    g_4ab892. */
 /* @zoombi32 0x0041e273 */
 void fn_41e273()
@@ -330,12 +386,57 @@ void fn_41e273()
         for (j = 0; j < 6; j++)
             g_4ab892[i][j] = 0;
     for (j = 0; j < g_4a1014; j++) {
-        first = chosen->features[j][g_4ab87a];
+        first = chosen->features[j][rosterFeatures[0]];
         g_4ab892[0][first]++;
         if (g_4a0ff4 > 1) {
-            second = chosen->features[j][g_4ab87c];
+            second = chosen->features[j][rosterFeatures[1]];
             g_4ab892[second][first]++;
         }
+    }
+}
+
+/* The notify of the roster's walking Zoombini (g_4ab874): 1 and 2 start
+   the scripts g_4a0ffe and the next (in its group); 4 moves on to the next frame
+   (fn_41dd37) and deletes the view g_4a0ffa; 5 sets g_4a1006; 10 walks
+   back to the last point pushed on g_4aba14 (script 12013); 20 and 21 as
+   in fn_41d30b. */
+/* @zoombi32 0x0041d1b1 */
+void fn_41d1b1(View *view, short event)
+{
+    switch (event) {
+    case 1:
+        fn_41d167(view->body.group, g_4a0ffe, fn_41d1b1, 1);
+        break;
+    case 5:
+        g_4a1006 = 1;
+        break;
+    case 2:
+        fn_41d167(view->body.group, g_4a0ffe + 1, fn_41d1b1, 0);
+        break;
+    case 4:
+        fn_465175();
+        g_4ab994 = 1;
+        g_4a1004++;
+        fn_41dd37(g_4a1004);
+        deleteView(g_4a0ffa);
+        break;
+    case 10:
+        g_4aba64--;
+        g_4ab8e4 = &g_4aba14[g_4aba64];
+        fn_41d167(view->body.group, 12013, fn_41d1b1, 0);
+        break;
+    case 20:
+        g_4ab874 = 0;
+        if (g_4a1004 == g_4a1002)
+            g_4a0ff0 = 1;
+        else
+            g_4a0ff0 = 0;
+        fn_465175();
+        break;
+    case 21:
+        g_4ab874 = 0;
+        g_4a0ff0 = 1;
+        break;
     }
 }
 
