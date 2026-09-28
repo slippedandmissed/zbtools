@@ -5741,8 +5741,11 @@ extern short g_4b11a0;
 void fn_43cfc3();
 void fn_439fc3(View *view, short);
 extern ShortRect g_4a337e;
-extern SceneButton g_4a2efc[21]; /* [0] isn't a button */
+extern SceneButton g_4a2efc[27]; /* [0] isn't a button */
 extern char g_4b1540[4];
 extern ImageBank *g_4b1598;
 void fn_43f856(short which, short lit, ShortRect *bounds);
 void fn_439e55(short id);
+extern short g_4a33b2;
+extern short g_4a33b4;
+void fn_43fc9a(View *, short region);

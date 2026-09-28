@@ -726,3 +726,44 @@ void fn_439e55(short id)
         }
     }
 }
+
+/* The scene's update: adds to the region to redraw the buttons whose state
+   changed (24 with the cheat modifier, 26 and 21 with g_4b15a8, 21 with
+   g_4b15aa, 22 when g_4b15ac asks). */
+/* @zoombi32 0x0043fc9a */
+void fn_43fc9a(View *, short region)
+{
+    if (!g_4b9684 && *(short *)(g_4a4ba0 + 0x48) < 625 && addModifierKeys(0) == 0x800) {
+        if (!g_4b15a6) {
+            g_4b15a6 = 1;
+            unionRgnRect(region, &g_4a2efc[24].rect);
+        }
+    } else if (g_4b15a6) {
+        g_4b15a6 = 0;
+        unionRgnRect(region, &g_4a2efc[24].rect);
+    }
+    if (g_4b15a8) {
+        if (!g_4a33b2) {
+            g_4a33b2 = 1;
+            unionRgnRect(region, &g_4a2efc[26].rect);
+            unionRgnRect(region, &g_4a2efc[21].rect);
+        }
+    } else if (g_4a33b2) {
+        g_4a33b2 = 0;
+        unionRgnRect(region, &g_4a2efc[26].rect);
+        unionRgnRect(region, &g_4a2efc[21].rect);
+    }
+    if (!g_4b15aa) {
+        if (g_4a33b4) {
+            g_4a33b4 = 0;
+            unionRgnRect(region, &g_4a2efc[21].rect);
+        }
+    } else if (!g_4a33b4) {
+        g_4a33b4 = 1;
+        unionRgnRect(region, &g_4a2efc[21].rect);
+    }
+    if (g_4b15ac) {
+        g_4b15ac = 0;
+        unionRgnRect(region, &g_4a2efc[22].rect);
+    }
+}
