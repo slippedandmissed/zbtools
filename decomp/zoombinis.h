@@ -5953,7 +5953,10 @@ extern short g_4b1624; /* how many toppings */
 extern short g_4b1626;
 extern short g_4b1628;
 extern short g_4b1676[8];
-extern short trollWants[3][8]; /* @data 0x4b1686 */
+/* The toppings each troll wants. */
+extern short arnoWants[8]; /* @data 0x4b1686 */
+extern short willaWants[8]; /* @data 0x4b1696 */
+extern short shylerWants[8]; /* @data 0x4b16a6 */
 extern short g_4b16da[8];
 extern short g_4b1708;
 extern char g_4b16ec[];
@@ -6053,3 +6056,4 @@ extern short g_4b15fc;
 void fn_445153();
 extern short g_4b170e;
 void fn_446487(short a, short b, short c, short d);
+void fn_443e2e();

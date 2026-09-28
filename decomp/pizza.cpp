@@ -3,6 +3,8 @@
  * 'Willa', 'Shyler'
  */
 
+#include <stdio.h>
+
 #include "zoombinis.h"
 
 /* A view's update: redraws button 2 when g_4b15e6 changes, and button 1
@@ -112,7 +114,8 @@ void fn_4468eb()
     }
 }
 
-/* A random topping (of g_4b1624) that troll `troll` (0-2) wants. */
+/* A random topping (of g_4b1624) that troll `troll` (0-2: Arno, Willa, Shyler)
+   wants. */
 /* @zoombi32 0x00443316 */
 short fn_443316(short troll)
 {
@@ -122,17 +125,17 @@ short fn_443316(short troll)
     case 0:
         do
             n = randomUpTo(g_4b1624 - 1);
-        while (!trollWants[0][n]);
+        while (!arnoWants[n]);
         break;
     case 1:
         do
             n = randomUpTo(g_4b1624 - 1);
-        while (!trollWants[1][n]);
+        while (!willaWants[n]);
         break;
     case 2:
         do
             n = randomUpTo(g_4b1624 - 1);
-        while (!trollWants[2][n]);
+        while (!shylerWants[n]);
         break;
     }
     return n;
@@ -659,7 +662,7 @@ void fn_44468e(View *view)
         case 157:
         case 158:
         case 159:
-            if (!trollWants[0][4]) {
+            if (!arnoWants[4]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -668,7 +671,7 @@ void fn_44468e(View *view)
         case 161:
         case 162:
         case 163:
-            if (!trollWants[0][3]) {
+            if (!arnoWants[3]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -677,7 +680,7 @@ void fn_44468e(View *view)
         case 165:
         case 166:
         case 167:
-            if (!trollWants[0][2]) {
+            if (!arnoWants[2]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -686,7 +689,7 @@ void fn_44468e(View *view)
         case 169:
         case 170:
         case 171:
-            if (!trollWants[0][1]) {
+            if (!arnoWants[1]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -695,7 +698,7 @@ void fn_44468e(View *view)
         case 173:
         case 174:
         case 175:
-            if (!trollWants[0][0]) {
+            if (!arnoWants[0]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -713,7 +716,7 @@ void fn_44468e(View *view)
         case 189:
         case 190:
         case 191:
-            if (!trollWants[0][5] || !g_4b161e) {
+            if (!arnoWants[5] || !g_4b161e) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -722,7 +725,7 @@ void fn_44468e(View *view)
         case 185:
         case 186:
         case 187:
-            if (!trollWants[0][6] || !g_4b161e) {
+            if (!arnoWants[6] || !g_4b161e) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -731,7 +734,7 @@ void fn_44468e(View *view)
         case 181:
         case 182:
         case 183:
-            if (!trollWants[0][7] || !g_4b161e) {
+            if (!arnoWants[7] || !g_4b161e) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -773,7 +776,7 @@ void fn_44485d(View *view)
         case 157:
         case 158:
         case 159:
-            if (!trollWants[1][4]) {
+            if (!willaWants[4]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -782,7 +785,7 @@ void fn_44485d(View *view)
         case 161:
         case 162:
         case 163:
-            if (!trollWants[1][3]) {
+            if (!willaWants[3]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -791,7 +794,7 @@ void fn_44485d(View *view)
         case 165:
         case 166:
         case 167:
-            if (!trollWants[1][2]) {
+            if (!willaWants[2]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -800,7 +803,7 @@ void fn_44485d(View *view)
         case 169:
         case 170:
         case 171:
-            if (!trollWants[1][1]) {
+            if (!willaWants[1]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -809,7 +812,7 @@ void fn_44485d(View *view)
         case 173:
         case 174:
         case 175:
-            if (!trollWants[1][0]) {
+            if (!willaWants[0]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -827,7 +830,7 @@ void fn_44485d(View *view)
         case 189:
         case 190:
         case 191:
-            if (!trollWants[1][5] || !g_4b161e) {
+            if (!willaWants[5] || !g_4b161e) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -836,7 +839,7 @@ void fn_44485d(View *view)
         case 185:
         case 186:
         case 187:
-            if (!trollWants[1][6] || !g_4b161e) {
+            if (!willaWants[6] || !g_4b161e) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -845,7 +848,7 @@ void fn_44485d(View *view)
         case 181:
         case 182:
         case 183:
-            if (!trollWants[1][7] || !g_4b161e) {
+            if (!willaWants[7] || !g_4b161e) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -893,7 +896,7 @@ void fn_444a93(View *view)
         case 157:
         case 158:
         case 159:
-            if (!trollWants[2][4]) {
+            if (!shylerWants[4]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -902,7 +905,7 @@ void fn_444a93(View *view)
         case 161:
         case 162:
         case 163:
-            if (!trollWants[2][3]) {
+            if (!shylerWants[3]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -911,7 +914,7 @@ void fn_444a93(View *view)
         case 165:
         case 166:
         case 167:
-            if (!trollWants[2][2]) {
+            if (!shylerWants[2]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -920,7 +923,7 @@ void fn_444a93(View *view)
         case 169:
         case 170:
         case 171:
-            if (!trollWants[2][1]) {
+            if (!shylerWants[1]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -929,7 +932,7 @@ void fn_444a93(View *view)
         case 173:
         case 174:
         case 175:
-            if (!trollWants[2][0]) {
+            if (!shylerWants[0]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -947,7 +950,7 @@ void fn_444a93(View *view)
         case 189:
         case 190:
         case 191:
-            if (!trollWants[2][5] || !g_4b161e) {
+            if (!shylerWants[5] || !g_4b161e) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -956,7 +959,7 @@ void fn_444a93(View *view)
         case 185:
         case 186:
         case 187:
-            if (!trollWants[2][6] || !g_4b161e) {
+            if (!shylerWants[6] || !g_4b161e) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -965,7 +968,7 @@ void fn_444a93(View *view)
         case 181:
         case 182:
         case 183:
-            if (!trollWants[2][7] || !g_4b161e) {
+            if (!shylerWants[7] || !g_4b161e) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -1007,11 +1010,11 @@ short fn_44338b(short troll)
     switch (troll) {
     case 0:
         for (i = 0; i < g_4b1624; i++)
-            if (trollWants[0][i])
+            if (arnoWants[i])
                 wanted++;
         for (i = 0; i < g_4b1624; i++)
             if (g_4b16da[i]) {
-                if (trollWants[0][i])
+                if (arnoWants[i])
                     right++;
                 else
                     wrong++;
@@ -1025,11 +1028,11 @@ short fn_44338b(short troll)
         break;
     case 1:
         for (i = 0; i < g_4b1624; i++)
-            if (trollWants[1][i])
+            if (willaWants[i])
                 wanted++;
         for (i = 0; i < g_4b1624; i++)
             if (g_4b16da[i]) {
-                if (trollWants[1][i])
+                if (willaWants[i])
                     right++;
                 else
                     wrong++;
@@ -1043,11 +1046,11 @@ short fn_44338b(short troll)
         break;
     case 2:
         for (i = 0; i < g_4b1624; i++)
-            if (trollWants[2][i])
+            if (shylerWants[i])
                 wanted++;
         for (i = 0; i < g_4b1624; i++)
             if (g_4b16da[i]) {
-                if (trollWants[2][i])
+                if (shylerWants[i])
                     right++;
                 else
                     wrong++;
@@ -1591,4 +1594,42 @@ void fn_446487(short a, short b, short c, short d)
     findView(g_4b1734[g_4b1712].view)->placed = fn_442a9f;
     updateViews();
     fillMemory(g_4b16da, 0, 16);
+}
+
+/* Debugging: shows what each troll there wants and the meal on the pizza
+   (g_4b16ca) in a box at the top right. */
+/* @zoombi32 0x00443e2e */
+void fn_443e2e()
+{
+    ShortRect box = {400, 1, 600, 80};
+    ShortRect arnoLine = {400, 1, 600, 20};
+    ShortRect willaLine = {400, 21, 600, 40};
+    ShortRect shylerLine = {400, 41, 600, 60};
+    ShortRect mealLine = {400, 61, 600, 80};
+    Color saved;
+    char arno[32];
+    char willa[32];
+    char shyler[32];
+    char meal[32];
+
+    saved = setForeColor(Color(11));
+    sprintf(arno, "Arno    %d %d %d %d %d %d %d %d", arnoWants[0], arnoWants[1], arnoWants[2],
+            arnoWants[3], arnoWants[4], arnoWants[5], arnoWants[6], arnoWants[7]);
+    sprintf(willa, "Willa   %d %d %d %d %d %d %d %d", willaWants[0], willaWants[1], willaWants[2],
+            willaWants[3], willaWants[4], willaWants[5], willaWants[6], willaWants[7]);
+    sprintf(shyler, "Shyler  %d %d %d %d %d %d %d %d", shylerWants[0], shylerWants[1], shylerWants[2],
+            shylerWants[3], shylerWants[4], shylerWants[5], shylerWants[6], shylerWants[7]);
+    sprintf(meal, "Meal     %d %d %d %d %d %d %d %d", g_4b16ca[0], g_4b16ca[1], g_4b16ca[2], g_4b16ca[3],
+            g_4b16ca[4], g_4b16ca[5], g_4b16ca[6], g_4b16ca[7]);
+    fillPortRect(box, Color(14), 0);
+    frameRect(box);
+    if (g_4b1618 == 1)
+        drawText(arnoLine, 0x22, arno, 0xffff);
+    if (g_4b161a == 1)
+        drawText(willaLine, 0x22, willa, 0xffff);
+    if (g_4b161c == 1)
+        drawText(shylerLine, 0x22, shyler, 0xffff);
+    drawText(mealLine, 0x22, meal, 0xffff);
+    setForeColor(saved);
+    showRect(&box);
 }
