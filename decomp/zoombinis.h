@@ -6018,3 +6018,5 @@ void fn_442a9f(View *view);
 void fn_44468e(View *view);
 void fn_44485d(View *view);
 void fn_444a93(View *view);
+short fn_44338b(short troll);
+void fn_446745();

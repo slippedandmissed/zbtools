@@ -989,3 +989,130 @@ void fn_444a93(View *view)
         }
     }
 }
+
+/*
+ * What troll `troll` (0-2) makes of the pizza (g_4b16da): 0 if it has one
+ * topping the troll doesn't want, 4 if more; else 2 if it has all the
+ * troll wants, 1 if not all. (3 is never returned.)
+ */
+/* @zoombi32 0x0044338b */
+short fn_44338b(short troll)
+{
+    short never;
+    short wanted;
+    short right;
+    short wrong;
+    short i;
+
+    never = wanted = right = wrong = 0;
+    switch (troll) {
+    case 0:
+        for (i = 0; i < g_4b1624; i++)
+            if (trollWants[0][i])
+                wanted++;
+        for (i = 0; i < g_4b1624; i++)
+            if (g_4b16da[i]) {
+                if (trollWants[0][i])
+                    right++;
+                else
+                    wrong++;
+            }
+        if (never)
+            return 3;
+        if (wrong == 1)
+            return 0;
+        if (wrong > 1)
+            return 4;
+        break;
+    case 1:
+        for (i = 0; i < g_4b1624; i++)
+            if (trollWants[1][i])
+                wanted++;
+        for (i = 0; i < g_4b1624; i++)
+            if (g_4b16da[i]) {
+                if (trollWants[1][i])
+                    right++;
+                else
+                    wrong++;
+            }
+        if (never)
+            return 3;
+        if (wrong == 1)
+            return 0;
+        if (wrong > 1)
+            return 4;
+        break;
+    case 2:
+        for (i = 0; i < g_4b1624; i++)
+            if (trollWants[2][i])
+                wanted++;
+        for (i = 0; i < g_4b1624; i++)
+            if (g_4b16da[i]) {
+                if (trollWants[2][i])
+                    right++;
+                else
+                    wrong++;
+            }
+        if (never)
+            return 3;
+        if (wrong == 1)
+            return 0;
+        if (wrong > 1)
+            return 4;
+        break;
+    }
+    if (right == wanted)
+        return 2;
+    return 1;
+}
+
+/* Now and then, while no troll is busy (g_4b1600-g_4b1604), has one of the
+   trolls there are at the level fidget (8034-8035, 9019-9020, or 10001 or
+   10006-10008). */
+/* Not exact: the original keeps `view` in ebx and `r` in esi; BCC swaps
+   them, whatever the declaration order. */
+/* @zoombi32 0x00446745 */
+void fn_446745()
+{
+    short r;
+    View *view;
+
+    if (!g_4b1600 && !g_4b1602 && !g_4b1604) {
+        switch (g_4b161e) {
+        case 0:
+            if (g_4b1618 != 3) {
+                view = findView(g_4b160e);
+                setViewScript(view, randomUpTo(1) + 8034, 1);
+            }
+            break;
+        case 1:
+            if (randomUpTo(1000) < 500 && g_4b1618 == 1) {
+                view = findView(g_4b160e);
+                setViewScript(view, randomUpTo(1) + 8034, 1);
+            } else if (g_4b161a == 1) {
+                view = findView(g_4b1610);
+                setViewScript(view, randomUpTo(1) + 9019, 1);
+            }
+            break;
+        case 2:
+        case 3:
+            r = randomUpTo(1000);
+            if (r < 300 && g_4b1618 == 1) {
+                view = findView(g_4b160e);
+                setViewScript(view, randomUpTo(1) + 8034, 1);
+            } else if (r < 600 && g_4b161a == 1) {
+                view = findView(g_4b1610);
+                setViewScript(view, randomUpTo(1) + 9019, 1);
+            } else if (g_4b161c == 1) {
+                r = randomUpTo(3);
+                if (!r)
+                    r = 1;
+                else
+                    r += 5;
+                view = findView(g_4b1612);
+                setViewScript(view, r + 10000, 1);
+            }
+            break;
+        }
+    }
+}
