@@ -115,5 +115,7 @@ extern char *placeNames[16]; /* @data 0x4a5278: the hotspots' names ("zoombini i
    to get back to the game from each level. */
 extern char *mapTexts[21]; /* @data 0x4a52b8 */
 void fn_430878(ShortRect *rect);
+void fn_43157f(View *view);
+void fn_43145f(short update);
 
 #endif

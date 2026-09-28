@@ -1397,3 +1397,45 @@ void fn_430878(ShortRect *rect)
     }
     setForeColor(saved);
 }
+
+/* Draws the map's box view once (while its kind is set, which it then
+   clears): its cels and the box (fn_430878), straight to the screen. */
+/* @zoombi32 0x0043157f */
+void fn_43157f(View *view)
+{
+    if (view->kind) {
+        view->body.running = 1;
+        drawCels(view);
+        fn_430878(&view->body.bounds);
+        copyPortBits(viewPort, workPort, view->body.bounds, view->body.bounds, 0);
+        view->kind = 0;
+        view->body.running = 0;
+    }
+}
+
+/* Makes the map's views again: the open hotspots (fn_4312e2) and the
+   terrains' names, the levels' list (g_4afb38, script 1003, animated in
+   practice) and the box (g_4afb34, script 1002); with `update`, shows
+   them. */
+/* @zoombi32 0x0043145f */
+void fn_43145f(short update)
+{
+    View *view;
+    long interval;
+
+    deleteView(g_4afb38);
+    deleteView(g_4afb34);
+    g_4afb38 = g_4afb34 = 0;
+    fn_4312e2(g_4afb4a);
+    fn_431111();
+    interval = 0;
+    if (g_4b754a)
+        interval = 6;
+    g_4afb38 = addView(0x100000, fn_43160a, runViewScript, 1003, interval, 0, 0, 0);
+    view = findView(g_4afb38);
+    if (view)
+        view->placed = fn_430f8e;
+    g_4afb34 = addView(0x100000, fn_43157f, runViewScript, 1002, 0, 0, 0, 0);
+    if (update)
+        updateViews();
+}
