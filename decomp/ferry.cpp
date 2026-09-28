@@ -12,6 +12,7 @@
 #include "graphics.h"
 #include "module_4623b8.h"
 #include "net.h"
+#include "platform.h"
 #include "snoids.h"
 #include "sound.h"
 #include "view.h"
@@ -832,4 +833,158 @@ void scene10Frame()
     }
     playAmbientSound();
     g_4a1574 = 0;
+}
+
+/* Scene 10's clicks: 1 leaves (asking whether to keep the party), 2 sets
+   the ferry off (once there's a Zoombini aboard, g_4abaae), 3 drags a
+   Zoombini. Put at a place, it must share a feature with every Zoombini
+   at a place linked to it (ferryLinks; the shared features go in
+   g_4abb04): if so it stays (with a remark now and then), else it's sent
+   back to cross (g_4abaa2) with a remark. Dropped elsewhere, it goes back
+   where it was if that was in the waiting area, else to a free waiting
+   place. */
+/* @zoombi32 0x004203b3 */
+void scene10Clicked(short which)
+{
+    View *other;
+    ShortRect bounds;
+    Point where;
+    ShortRect unused = {203, 261, 639, 408};
+    short spot;
+    short placed;
+    Point target;
+    Point from;
+    short ok;
+    short k;
+    short f;
+    View *view;
+
+    if (g_4b0d52 || g_4abaf4) {
+        if (g_4abaf4)
+            g_4b0d52 = 11;
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeScene10();
+        return;
+    }
+    switch (which) {
+    case 1:
+        queueViewSound(999, 0);
+        drawFerryButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawFerryButton(which, 0, 1);
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (!g_4abaae)
+            break;
+        queueViewSound(999, 0);
+        if (g_4abaa2)
+            g_4aba90 = 1;
+        drawFerryButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawFerryButton(which, 0, 1);
+        g_4abaf4 = 1;
+        break;
+    case 3:
+        if (g_4b755a > 0 || g_4aba90)
+            break;
+        getCursorPosition(&where);
+        view = viewAt(where, 1, 1);
+        if (!view || g_4abaa6 || g_4abaf4)
+            break;
+        placed = viewSnoid(view)->unknownF7;
+        viewSnoid(view)->unknownF7 = 0;
+        g_4aba8c = *(Point *)&view->body.x;
+        dragSnoid(view, where, 0, 0);
+        unloadSounds();
+        bounds = view->body.bounds;
+        g_4abaf0 = 0;
+        g_4abac0 = heldPlaceNumber();
+        if (g_4abac0) {
+            ok = 1;
+            g_4abb04 = 0;
+            for (k = 0; ok && k < 8; k++)
+                if (ferryLinks[g_4abac0 - 1][k]) {
+                    other = findView(g_4b83e4[ferryLinks[g_4abac0 - 1][k] - 1]);
+                    if (other) {
+                        ok = 0;
+                        for (f = 0; f < 4; f++)
+                            if (viewSnoid(other)->features[f] == viewSnoid(view)->features[f]) {
+                                switch (f) {
+                                case 0:
+                                    g_4abb04 |= 1;
+                                    break;
+                                case 1:
+                                    g_4abb04 |= 2;
+                                    break;
+                                case 2:
+                                    g_4abb04 |= 4;
+                                    break;
+                                case 3:
+                                    g_4abb04 |= 8;
+                                    break;
+                                }
+                                ok = 1;
+                            }
+                    }
+                }
+            if (ok) {
+                g_4abb0a = 0;
+                if (!placed)
+                    g_4abb08++;
+                if (countChosenSnoids() + 1 == g_4abb0e || g_4abb08 == g_4abb0c) {
+                    g_4abb0c += randomBetween(3, 5);
+                    if (!g_4abb10) {
+                        g_4abb10 = 1;
+                        g_4abaa0 = 1816;
+                    } else {
+                        g_4abaa0 = g_4a1400[allocateSlot(&g_4a1404, 2, 0)];
+                    }
+                }
+                viewSnoid(view)->unknownF7 = 1;
+                if (g_4abb04 && g_4b754a)
+                    g_4abb06 = view->id;
+            } else {
+                g_4abb0a++;
+                g_4abb08 = 0;
+                g_4abb0c = 1;
+                g_4aba90 = 1;
+                releaseHeldPlace();
+                viewSnoid(view)->unknownF8 = 1;
+                g_4abaf0 = view->id;
+                g_4abac0 = g_4abac6[g_4abac0 - 1];
+                if (randomBetween(3, 5) == g_4abb0a) {
+                    g_4abaa0 = 1815;
+                    g_4abb0a = 5;
+                } else {
+                    g_4abaa0 = g_4a1408[allocateSlot(&g_4a1420, 11, 0)];
+                }
+                g_4abaa2 = 1;
+            }
+        } else if (viewSnoid(view)->unknownF4 == 4) {
+            target = *(Point *)&viewSnoid(view)->targetX;
+            from = *(Point *)&view->body.x;
+            if (target.x != from.x || target.y != from.y) {
+                ShortRect area = {0, 130, 469, 240};
+
+                if (ptInRect(&area, g_4aba8c)) {
+                    *(Point *)&viewSnoid(view)->targetX = g_4aba8c;
+                } else {
+                    findFerryPlace(&spot);
+                    *(Point *)&viewSnoid(view)->targetX = ferryPlaces[spot];
+                    placed = 0;
+                }
+                if (!g_4abaa0 && nearPlacedView(from))
+                    g_4abaa0 = g_4a1434[allocateSlot(&g_4a143c, 3, 0)];
+            } else {
+                placed = 0;
+            }
+            viewSnoid(view)->unknownF7 = placed;
+        }
+        break;
+    }
+    g_4abaae = countChosenSnoids();
 }

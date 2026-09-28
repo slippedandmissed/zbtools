@@ -13,6 +13,12 @@ extern GroupList ferryGroups[1]; /* @data 0x4a14fc */
 extern short g_4a13f0[5]; /* @data 0x4a13f0: remarks (g_4a13fc picks) */
 extern unsigned long g_4a13fc; /* @data 0x4a13fc: slots used (allocateSlot) */
 extern short g_4a1574; /* @data 0x4a1574: scene10Frame is running */
+extern short g_4a1400[2]; /* @data 0x4a1400: remarks for a good placing (g_4a1404 picks) */
+extern unsigned long g_4a1404; /* @data 0x4a1404 */
+extern short g_4a1408[11]; /* @data 0x4a1408: remarks for a bad one (g_4a1420 picks) */
+extern unsigned long g_4a1420; /* @data 0x4a1420 */
+extern short g_4a1434[3]; /* @data 0x4a1434: remarks (g_4a143c picks) */
+extern unsigned long g_4a143c; /* @data 0x4a143c */
 extern short g_4a1424[5]; /* @data 0x4a1424: sounds (g_4a1430 picks) */
 extern unsigned long g_4a1430; /* @data 0x4a1430: slots used (allocateSlot) */
 extern short g_4a1454[10]; /* @data 0x4a1454: scripts by g_4abaee */
@@ -67,6 +73,7 @@ extern short g_4abb16; /* @data 0x4abb16: Captain Cajun's script */
 extern Point ferryPlaces[20]; /* @data 0x4a1520: where the Zoombinis wait */
 
 void resetScene10();
+void scene10Clicked(short which);
 void scene10Frame();
 void openScene10();
 void drawFerryButtons(View *);

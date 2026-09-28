@@ -353,6 +353,7 @@
 0x0041fea4 fn_41fea4
 0x0041ff16 closeScene10
 0x0041ff89 scene10Frame
+0x004203b3 scene10Clicked
 0x004208a3 scene10Key
 0x004209b8 fn_4209b8
 0x00420a08 fn_420a08
