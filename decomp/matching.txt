@@ -357,7 +357,9 @@
 0x0042c119 drawCursorSquare
 0x0042c3b6 fn_42c3b6
 0x0042c52f flashSquare
+0x0042c5d4 flashSwap
 0x0042c6cb fn_42c6cb
+0x0042c6dc swapSquares
 0x0042d616 loadTablePair
 0x0042d64c freeResourcePair
 0x0042d667 loadLockedTable

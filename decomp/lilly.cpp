@@ -3050,3 +3050,104 @@ void searchLayer(short attribute, short layer)
             }
     }
 }
+
+/* A layer to search again (by swapSquares). */
+struct LayerToSearch
+{
+    short attribute;
+    short layer;
+};
+
+/*
+ * Swaps the attributes of squares (g_4af34a, g_4af348) and (g_4af34e,
+ * g_4af34c), and replans every actor whose kind either square now has,
+ * searching their layers again.
+ */
+/* @zoombi32 0x0042c6dc */
+void swapSquares()
+{
+    LillyCell *a = &g_4acff4[g_4af34a][g_4af348];
+    LillyCell *b = &g_4acff4[g_4af34e][g_4af34c];
+    short first = a->attributes[1];
+    short second = a->attributes[2];
+    short third = a->attributes[3];
+    short fourth = a->attributes[4];
+    LayerToSearch layers[5];
+    short i;
+    LillyActor *actor;
+
+    a->attributes[1] = b->attributes[1];
+    a->attributes[2] = b->attributes[2];
+    a->attributes[3] = b->attributes[3];
+    a->attributes[4] = b->attributes[4];
+    b->attributes[1] = first;
+    b->attributes[2] = second;
+    b->attributes[3] = third;
+    b->attributes[4] = fourth;
+    for (i = 0; i < g_4af102; i++) {
+        View *view = findView(g_4aed64[i]);
+
+        if (view) {
+            actor = (LillyActor *)&view->body;
+            if (actor->unknownC2) {
+                actor->grid[g_4af34a][g_4af348] = 0;
+                actor->grid[g_4af34e][g_4af34c] = 0;
+                if (g_4acff4[g_4af34a][g_4af348].attributes[actor->unknownDe] == actor->unknownDf
+                    || g_4acff4[g_4af34e][g_4af34c].attributes[actor->unknownDe] == actor->unknownDf)
+                    startPlan(actor);
+            }
+        }
+    }
+    mainLoopEvents();
+    fillMemory(layers, 0, sizeof layers);
+    for (i = 0; i < g_4af0e6; i++) {
+        View *view = findView(g_4aeea0[i]);
+
+        if (view) {
+            actor = (LillyActor *)&view->body;
+            if (actor->unknownC2) {
+                actor->grid[g_4af34a][g_4af348] = 0;
+                actor->grid[g_4af34e][g_4af34c] = 0;
+                if (g_4acff4[g_4af34a][g_4af348].attributes[actor->unknownDe] == actor->unknownDf
+                    || g_4acff4[g_4af34e][g_4af34c].attributes[actor->unknownDe] == actor->unknownDf) {
+                    startPlan(actor);
+                    layers[actor->unknownDf].attribute = actor->unknownDe;
+                    layers[actor->unknownDf].layer = actor->unknownDf;
+                }
+            }
+        }
+    }
+    for (i = 0; i < g_4af342; i++)
+        if (layers[i].attribute)
+            searchLayer(layers[i].attribute, layers[i].layer);
+    mainLoopEvents();
+    g_4af360 = 0;
+}
+
+/* Flashes the two squares being swapped, swapping them first. */
+/* @zoombi32 0x0042c5d4 */
+void flashSwap(View *view)
+{
+    if (view->body.running) {
+        if (!g_4af352) {
+            swapSquares();
+            fn_42c3b6(g_4af34e, g_4af34c, 1);
+            fn_42c3b6(g_4af34a, g_4af348, 1);
+        }
+        if (g_4af352 >= g_4af350) {
+            g_4af352 = 0;
+            g_4af358 = 4;
+            view->body.running = 0;
+            unionRgnRect(removedRgn, &g_4acff4[g_4af34e][g_4af34c].rect);
+        } else {
+            if (clockTime() >= view->nextUpdate) {
+                view->nextUpdate = clockTime() + view->interval;
+                g_4af352++;
+                g_4a1e3b++;
+                if (g_4a1e3b > 1)
+                    g_4a1e3b = 0;
+            }
+            fn_42c3b6(g_4af34e, g_4af34c, g_4a1e3b);
+        }
+    }
+}
