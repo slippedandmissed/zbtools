@@ -539,3 +539,77 @@ void fn_43eb13()
         fn_4624fc();
     }
 }
+
+/* Sends the next Zoombini of the party (g_4b0e68 of g_4b0e66) to the
+   first free place of three (g_4b1438, from the last), while g_4b144a lets
+   it (for g_4b145c more); counts in g_4b11a0 the places left when none
+   are left to send. */
+/* @zoombi32 0x0043cfc3 */
+void fn_43cfc3()
+{
+    Point target;
+    short i;
+    View *view;
+
+    target.x = 233;
+    target.y = 392;
+    for (i = 2; i >= 0; i--)
+        if (!g_4b1438[i]) {
+            if (g_4b0e68 < g_4b0e66) {
+                if (!g_4b144a)
+                    return;
+                if (!--g_4b145c)
+                    g_4b144a = 0;
+                view = findView(partyViews[g_4b0e68]);
+                if (view) {
+                    setSnoidAction((Snoid *)&view->body, 10, 0);
+                    *(Point *)&((Snoid *)&view->body)->targetX = target;
+                    g_4b0d5c = g_4b0e68;
+                    g_4b1438[i] = partyViews[g_4b0e68];
+                    g_4b0e68++;
+                    g_4b119a = i;
+                    g_4b1462 = 1;
+                    return;
+                }
+            } else {
+                g_4b11a0++;
+            }
+        }
+    g_4b145c = 0;
+    g_4b144a = 0;
+}
+
+/* Puts a maze Zoombini on its square (words 33 and 34) with its helper
+   view (script 10030, told fn_435b9e) and a second view it adds (word 42:
+   10031), and starts its script 14006 (then told fn_435f3d), grouped. */
+/* @zoombi32 0x00439fc3 */
+void fn_439fc3(View *view, short)
+{
+    short *parts = (short *)&view->body;
+    View *helper;
+    Point where;
+
+    *(Point *)&view->body.x = (g_4afbf0 + parts[34])[parts[33] * 13];
+    view->body.x += 3;
+    view->body.y += -38;
+    helper = findView(parts[41]);
+    if (helper) {
+        setViewScript(helper, 10030, 1);
+        *(Point *)&helper->body.x = *(Point *)&view->body.x;
+        helper->placed = fn_436321;
+        helper->notify = fn_435b9e;
+        where = *(Point *)&helper->body.x;
+        parts[42] = addView(0x4988000, drawCels, runViewScript, 10031, 7, &where, 0, 0);
+        helper = findView(parts[42]);
+        if (helper) {
+            setViewScript(helper, 10031, 1);
+            helper->placed = fn_436321;
+        }
+        view->body.x += 17;
+        view->body.y += 5;
+        startSnoidScript((Snoid *)&view->body, 14006, 0, 1);
+        view->notify = fn_435f3d;
+        moveView(parts[42], 0, view->id);
+        groupViews(parts[41], view->id, parts[42], 0, 0, 0);
+    }
+}
