@@ -2852,3 +2852,202 @@ void netPanelClicked(short button)
         break;
     }
 }
+
+/*
+ * A code chosen: `which` (1-3) sets the first, second or third code to
+ * `value` (keeping the previous ones in g_4b1440-g_4b1448) and shows it
+ * (script 10002, 10007 or 10012 on), and once all the codes the level
+ * needs are set, shows the marker (7026, 7027 or 7019) and the net's view
+ * (10018). `which` 0 sends the marker off (10001) to the entry for the
+ * codes (g_4b119e; script 7028 on by its column) with fn_43de4d.
+ */
+/* @zoombi32 0x0043d0b4 */
+void fn_43d0b4(short which, short value)
+{
+    View *view;
+    short ready = 0;
+    short column;
+
+    if ((g_4b12ac <= 1 && g_4b1442 >= 0 && g_4b1446 >= 0) || (g_4b143e >= 0 && g_4b1442 >= 0 && g_4b1446 >= 0))
+        ready = 1;
+    switch (which) {
+    case 1:
+        if (g_4b12ac >= 2) {
+            g_4b1444 = g_4b1442;
+            g_4b1440 = g_4b143e;
+            g_4b143e = value;
+            if (g_4b1440 != g_4b143e) {
+                startView(g_4b1400, value + 10002, 0, 0);
+                if (!g_4b142c && ready) {
+                    view = startView(g_4b12b6, 7027, 0, 0);
+                    if (view) {
+                        g_4b1450 = 0;
+                        view->placed = markerPlaced;
+                    }
+                    if (!g_4b1466)
+                        startView(g_4b13fe, 10018, 0, 0);
+                }
+            }
+        }
+        break;
+    case 2:
+        g_4b1444 = g_4b1442;
+        g_4b1442 = value;
+        g_4b1440 = g_4b143e;
+        if (g_4b1444 != g_4b1442) {
+            startView(g_4b1402, value + 10007, 0, 0);
+            if (!g_4b142c && ready) {
+                view = findView(g_4b12b6);
+                if (view) {
+                    setViewScript(view, 7019, 1);
+                    view->interval = 3;
+                } else {
+                    g_4b12b6 = addView(0x4108000, drawCels, runViewScript, 7019, 3, 0, 0, 0);
+                    view = findView(g_4b12b6);
+                }
+                if (view) {
+                    g_4b1450 = 0;
+                    view->placed = markerPlaced;
+                }
+                if (!g_4b1466)
+                    startView(g_4b13fe, 10018, 0, 0);
+            }
+        }
+        break;
+    case 3:
+        g_4b1448 = g_4b1446;
+        g_4b1444 = g_4b1442;
+        g_4b1440 = g_4b143e;
+        g_4b1446 = value;
+        if (g_4b1448 != g_4b1446) {
+            startView(g_4b1404, value + 10012, 0, 0);
+            if (!g_4b142c && ready) {
+                view = startView(g_4b12b6, 7026, 0, 0);
+                if (view) {
+                    g_4b1450 = 0;
+                    view->placed = markerPlaced;
+                }
+                if (!g_4b1466)
+                    startView(g_4b13fe, 10018, 0, 0);
+            }
+        }
+        break;
+    case 0:
+        g_4b1448 = g_4b1446;
+        g_4b1444 = g_4b1442;
+        g_4b1440 = g_4b143e;
+        if ((g_4b12ac <= 1 && g_4b1442 >= 0 && g_4b1446 >= 0)
+            || (g_4b143e >= 0 && g_4b1442 >= 0 && g_4b1446 >= 0)) {
+            startView(g_4b13fe, 10001, 0, 0);
+            g_4b1416 = 0;
+            g_4b119e = findCodeEntry();
+            if (g_4b12ac < 2)
+                column = g_4b119e % 5;
+            else
+                column = g_4b119e % 25 / 5;
+            if (!column)
+                g_4a2e58 = 1;
+            else if (column >= 1 && column < 4)
+                g_4a2e58 = 0;
+            else
+                g_4a2e58 = 2;
+            view = startView(g_4b12b6, g_4a2e58 + 7028, fn_43de4d, 0);
+            if (view) {
+                g_4b1450 = 0;
+                view->placed = markerPlaced;
+                view->interval = 6;
+                g_4b1464 = groupViews(g_4b12b6, g_4b12b6, 0, 0, 0, 0);
+            }
+        }
+        break;
+    }
+    if (!g_4b1416 && !g_4b142c) {
+        g_4b1410++;
+        g_4b1416++;
+    }
+}
+
+/*
+ * Scene 15's buttons: leaves at once if asked to; unless g_4b11a4, 3 sends
+ * the marker off with the codes chosen, and 4-8, 9-13 and 14-18 choose the
+ * first (from level 2), second and third code. 1 asks to leave for the map
+ * (999, keeping the party); 2, once allowed (g_4b12aa), sends the
+ * Zoombinis off (996) and asks to leave for scene 5.
+ */
+/* @zoombi32 0x0043c48b */
+void fn_43c48b(short button)
+{
+    short code;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeNet();
+        return;
+    }
+    if (!g_4b11a4) {
+        switch (button) {
+        case 3:
+            if (!g_4b1466 && !g_4b144c && !g_4b142c) {
+                g_4b1466++;
+                g_4b144c++;
+                g_4b1470 = clockTime();
+                code = 0;
+                fn_43d0b4(0, code);
+            }
+            break;
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+            if (g_4b12ac > 1 && (!g_4b144c || g_4b142c)) {
+                code = button - 4;
+                fn_43d0b4(1, code);
+            }
+            break;
+        case 9:
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+            if (!g_4b144c || g_4b142c) {
+                code = button - 9;
+                fn_43d0b4(2, code);
+            }
+            break;
+        case 14:
+        case 15:
+        case 16:
+        case 17:
+        case 18:
+            if (!g_4b144c || g_4b142c) {
+                code = button - 14;
+                fn_43d0b4(3, code);
+            }
+            break;
+        }
+    }
+    switch (button) {
+    case 1:
+        queueViewSound(999, 0);
+        drawNetButton(button, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawNetButton(button, 0, 1);
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (g_4b12aa) {
+            queueViewSound(0, 0);
+            drawNetButton(button, 1, 1);
+            waitForEventFor(0, 2, 0, 1);
+            drawNetButton(button, 0, 1);
+            queueViewSound(996, 0);
+            sendSnoids(600, -100, 45);
+            g_4b0d52 = 5;
+        }
+        break;
+    }
+}
