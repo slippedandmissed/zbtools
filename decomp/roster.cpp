@@ -97,16 +97,15 @@ void fn_41d167(short group, short script, ViewNotify notify, char f8)
     }
 }
 
-/* Shows frame n (up to rosterButtons[0].rect.top) of the view g_4ab9f8
-   (script rosterButtons[0].rect.left on), if it's not running, with notify
-   fn_41d30b. */
+/* Shows frame n (up to g_4a1002) of the view g_4ab9f8 (script g_4a1000
+   on), if it's not running, with notify fn_41d30b. */
 /* @zoombi32 0x0041dd37 */
 void fn_41dd37(volatile short n)
 {
     View *view = findView(g_4ab9f8);
 
-    if (view && !view->body.running && n <= rosterButtons[0].rect.top) {
-        setViewScript(view, rosterButtons[0].rect.left + n, 1);
+    if (view && !view->body.running && n <= g_4a1002) {
+        setViewScript(view, g_4a1000 + n, 1);
         view->notify = fn_41d30b;
     }
 }
@@ -135,15 +134,15 @@ void fn_41d972(View *, short region)
     if (g_4a0fe8) {
         if (!g_4a120a) {
             g_4a120a = 1;
-            unionRgnRect(region, &rosterButtons[2].rect);
+            unionRgnRect(region, &rosterButtons[1].rect);
         }
     } else if (g_4a120a) {
         g_4a120a = 0;
-        unionRgnRect(region, &rosterButtons[2].rect);
+        unionRgnRect(region, &rosterButtons[1].rect);
     }
     if (!g_4a120c) {
         g_4a120c = 1;
-        unionRgnRect(region, &rosterButtons[1].rect);
+        unionRgnRect(region, &rosterButtons[0].rect);
     }
 }
 
@@ -208,10 +207,10 @@ void drawRosterButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)(g_4a1020->offsets[image] + (char *)g_4a1020), rosterButtons[which].rect.left,
-                      rosterButtons[which].rect.top, 8);
+        drawImageData((unsigned short *)(g_4a1020->offsets[image] + (char *)g_4a1020), rosterButtons[which - 1].rect.left,
+                      rosterButtons[which - 1].rect.top, 8);
         if (show)
-            showRect(&rosterButtons[which].rect);
+            showRect(&rosterButtons[which - 1].rect);
     }
 }
 
@@ -352,7 +351,7 @@ void fn_41d30b(View *, short event)
         break;
     case 20:
         g_4ab874 = 0;
-        if (rosterButtons[0].rect.right == rosterButtons[0].rect.top) {
+        if (g_4a1004 == g_4a1002) {
             if (countChosenSnoids() < g_4a1014) {
                 if (randomBetween(0, 4) > g_4ab878 - 1 || (*(short *)(g_4a4ba0 + 0x40) & 0xfff) <= 3)
                     queueViewSound(randomBetween(20045, 20048), 0);

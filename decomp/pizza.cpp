@@ -15,15 +15,15 @@ void fn_441127(View *, short region)
     if (g_4b15e6) {
         if (!g_4a3d98) {
             g_4a3d98 = 1;
-            unionRgnRect(region, &pizzaButtons[2].rect);
+            unionRgnRect(region, &pizzaButtons[1].rect);
         }
     } else if (g_4a3d98) {
         g_4a3d98 = 0;
-        unionRgnRect(region, &pizzaButtons[2].rect);
+        unionRgnRect(region, &pizzaButtons[1].rect);
     }
     if (!g_4a3d9a) {
         g_4a3d9a = 1;
-        unionRgnRect(region, &pizzaButtons[1].rect);
+        unionRgnRect(region, &pizzaButtons[0].rect);
     }
 }
 
@@ -49,10 +49,10 @@ void drawPizzaButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)(g_4a3d94->offsets[image] + (char *)g_4a3d94), pizzaButtons[which].rect.left,
-                      pizzaButtons[which].rect.top, 8);
+        drawImageData((unsigned short *)(g_4a3d94->offsets[image] + (char *)g_4a3d94), pizzaButtons[which - 1].rect.left,
+                      pizzaButtons[which - 1].rect.top, 8);
         if (show)
-            showRect(&pizzaButtons[which].rect);
+            showRect(&pizzaButtons[which - 1].rect);
     }
 }
 
@@ -2958,13 +2958,13 @@ void openPizza()
     fillMemory(g_4b16ca, 0, 16);
     fillMemory(g_4b16ec, 0, 28);
     if (!g_4b161e)
-        memcpy(&pizzaButtons[1], g_4a35b8, sizeof g_4a35b8);
+        memcpy(pizzaButtons, g_4a35b8, sizeof g_4a35b8);
     else if (g_4b161e == 1)
-        memcpy(&pizzaButtons[1], g_4a378c, sizeof g_4a378c);
+        memcpy(pizzaButtons, g_4a378c, sizeof g_4a378c);
     else if (g_4b161e == 2)
-        memcpy(&pizzaButtons[1], g_4a3960, sizeof g_4a3960);
+        memcpy(pizzaButtons, g_4a3960, sizeof g_4a3960);
     else if (g_4b161e == 3)
-        memcpy(&pizzaButtons[1], g_4a3b34, sizeof g_4a3b34);
+        memcpy(pizzaButtons, g_4a3b34, sizeof g_4a3b34);
     openGameFile(&g_4b15d0, "Pizza.MHK");
     fn_46be2e(g_4b15d0);
     loadPaths(1000);

@@ -5930,7 +5930,7 @@ extern unsigned long g_4b0d30;
 extern unsigned long g_4b0d34;
 void mazeFrame();
 /* Pizza Pass (pizza) */
-extern SceneButton pizzaButtons[14]; /* @data 0x4a33c0: 1-13 ([0] isn't one) */
+extern SceneButton pizzaButtons[13]; /* @data 0x4a33e4: buttons 1-13 */
 extern short g_4b15e6;
 extern short g_4a3d98;
 extern short g_4a3d9a;
@@ -6142,9 +6142,10 @@ extern long g_4aba7c; /* the roster file */
 void fn_41d972(View *, short region);
 void applyPlayerSettings();
 short openRosterFile(const char *path, short mode);
-/* The roster screen's buttons (1-2); [0] isn't one: its first words are the
-   script and number of frames fn_41dd37 shows. */
-extern SceneButton rosterButtons[3]; /* @data 0x4a1000 */
+extern short g_4a1000; /* the first of the frames fn_41dd37 shows */
+extern short g_4a1002; /* their number */
+extern short g_4a1004; /* the frame shown */
+extern SceneButton rosterButtons[2]; /* @data 0x4a1024: buttons 1 and 2 */
 extern ImageBank *g_4a1020;
 extern short g_4a1282[6];
 extern short g_4a128e[6];
