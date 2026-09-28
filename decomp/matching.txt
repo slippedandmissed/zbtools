@@ -364,6 +364,7 @@
 0x0042c5d4 flashSwap
 0x0042c6cb fn_42c6cb
 0x0042c6dc swapSquares
+0x0042cc75 setUpBoard
 0x0042d616 loadTablePair
 0x0042d64c freeResourcePair
 0x0042d667 loadLockedTable

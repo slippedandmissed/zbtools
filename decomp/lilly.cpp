@@ -1093,7 +1093,7 @@ short fn_42f7a5(View *view)
     }
     if (!blocked) {
         if (!g_4acff4[row][column].attributes[0]) {
-            actor->unknownDe = g_4aece8;
+            actor->unknownDe = g_4aece6[0].attribute;
             actor->unknownDf = g_4acff4[row][column].attributes[actor->unknownDe];
             actor->unknownE0 = g_4a1b1e[g_4a1b38[actor->unknownDe]] + actor->unknownDf;
             actor->grid[row][column] = 1;
@@ -3183,7 +3183,7 @@ void fn_42b08e(View *view, short event)
         }
         if (g_4a1b1c > 2)
             for (i = 0; i < g_4af342; i++)
-                searchLayer(g_4aece8, i);
+                searchLayer(g_4aece6[0].attribute, i);
         break;
     case 5:
         switch (g_4af358) {
@@ -4007,4 +4007,237 @@ void fn_42d9c5(View *piece, Point where0)
         view->interval = interval;
         discardEvents(3);
     }
+}
+
+/*
+ * Sets up the other puzzle's board: turns and mirrors the level's grids,
+ * leaves out some pieces, deals the squares and fills them in, noting
+ * starting squares on the first row (g_4aece6) at levels 3 and 4.
+ */
+/* @zoombi32 0x0042cc75 */
+void setUpBoard()
+{
+    short k;
+    short unusedA[1];
+    short next;
+    short limit;
+    short unusedB[2];
+    short had1;
+    short had2;
+    short had3;
+    short count;
+    short total;
+    short unusedD[1];
+    short row;
+    short column;
+    short value;
+
+    fillMemory(g_4a1ec6, 0, 24);
+    for (row = 0; row < 13; row++) {
+        g_4a1ede[row] = row;
+        g_4a1efa[row] = row;
+    }
+    g_4a1ede[13] = 0;
+    g_4a1efa[13] = 0;
+    for (row = 0; row < 12; row++)
+        for (column = 0; column < 13; column++)
+            g_4acff4[row][column].attributes[0] = 0;
+    if (g_4a1b1c == 1 || g_4a1b1c == 2) {
+        limit = 0;
+        g_4af342 = 0;
+        if (g_4a1b1c == 1)
+            column = 12 - g_4a1e84[g_4af0e8];
+        else
+            column = 12;
+    } else {
+        column = 12;
+        if (g_4a1b1c == 3) {
+            limit = 2;
+            if (g_4a1e84[g_4af0e8] < 8) {
+                switch (randomBetween(3, 5)) {
+                case 3:
+                    g_4af342 = 3;
+                    turnGrid(g_4ac9b0, 0);
+                    break;
+                case 4:
+                    g_4af342 = 4;
+                    turnGrid(g_4ac9b4, 0);
+                    break;
+                case 5:
+                    g_4af342 = 5;
+                    turnGrid(g_4ac9b8, 0);
+                    break;
+                }
+            } else {
+                g_4af342 = 4;
+                turnGrid(g_4ac9b4, 0);
+            }
+        } else if (g_4a1b1c == 4) {
+            limit = 3;
+            if (g_4a1e84[g_4af0e8] < 8) {
+                if (randomBetween(4, 5) == 4) {
+                    g_4af342 = 4;
+                    turnGrid(g_4ac9b4, 0);
+                } else {
+                    g_4af342 = 5;
+                    turnGrid(g_4ac9b8, 0);
+                }
+            } else {
+                g_4af342 = 4;
+                turnGrid(g_4ac9b4, 0);
+            }
+        }
+    }
+    switch (randomBetween(0, 2)) {
+    case 0:
+        turnGrid(g_4ac9b0, 1);
+        turnGrid(g_4ac9b4, 1);
+        turnGrid(g_4ac9b8, 1);
+        break;
+    case 1:
+        mirrorGrid(g_4ac9b0, randomBetween(0, 1));
+        mirrorGrid(g_4ac9b4, randomBetween(0, 1));
+        mirrorGrid(g_4ac9b8, randomBetween(0, 1));
+        break;
+    case 2:
+        break;
+    }
+    row = 12;
+    for (k = 0; k < column; k++) {
+        short j = randomBetween(1, row);
+
+        g_4a1ede[g_4a1efa[j]] = 0;
+        for (; j < row + 1; j++)
+            g_4a1efa[j] = g_4a1efa[j + 1];
+        row--;
+    }
+    dealSquares();
+    count = 0;
+    total = 0;
+    for (row = 0; row < 12; row++)
+        for (column = 0; column < 12; column++) {
+            g_4aebae[row][column] = -1;
+            g_4acff4[row][column].attributes[0] = 0;
+            g_4acff4[row][column].attributes[1] = 0;
+            g_4acff4[row][column].attributes[2] = 0;
+            had1 = 0;
+            had2 = 0;
+            had3 = 0;
+            for (k = 0; k < 3; k++) {
+                switch (k) {
+                case 0:
+                    value = g_4ac9b0[row][column];
+                    if (value) {
+                        if (g_4af342 == 3)
+                            next = value;
+                        else
+                            next = value + 1;
+                        if (next > 3)
+                            next = 1;
+                    }
+                    break;
+                case 1:
+                    value = g_4ac9b4[row][column];
+                    if (value) {
+                        if (g_4af342 == 4)
+                            next = value;
+                        else
+                            next = value + 1;
+                        if (next > 7)
+                            next = 4;
+                    }
+                    break;
+                case 2:
+                    value = g_4ac9b8[row][column];
+                    if (value) {
+                        if (g_4af342 == 5)
+                            next = value;
+                        else
+                            next = value + 1;
+                        if (next > 12)
+                            next = 8;
+                    }
+                    break;
+                }
+                if (value && g_4a1eae[row] && g_4a1eae[column] && !g_4a1ede[value] && g_4a1ec6[value] < 2)
+                    if (randomBetween(0, 100) > 75 || (row == 11 && !g_4a1ec6[value])) {
+                        g_4a1ec6[value]++;
+                        value = next;
+                        total++;
+                    }
+                if (value > 0 && value < 13) {
+                    switch (g_4af616[value].a) {
+                    case 1:
+                        had1 = 1;
+                        g_4acff4[row][column].attributes[g_4af616[value].a] = g_4af616[value].b;
+                        break;
+                    case 2:
+                        had2 = 1;
+                        g_4acff4[row][column].attributes[g_4af616[value].a] = g_4af616[value].b;
+                        break;
+                    case 3:
+                        had3 = 1;
+                        g_4acff4[row][column].attributes[g_4af616[value].a] = g_4af616[value].b;
+                        break;
+                    }
+                    if ((g_4a1b1c == 3 || g_4a1b1c == 4) && count < limit && !row)
+                        switch (g_4af342) {
+                        case 3:
+                            if (value >= 1 && value <= 3) {
+                                g_4aece6[count].column = column;
+                                g_4aece6[count].attribute = g_4af616[value].a;
+                                g_4aece6[count].layer = g_4af616[value].b;
+                                g_4aece6[count].c = g_4af616[value].c;
+                                count++;
+                            }
+                            break;
+                        case 4:
+                            if (value >= 4 && value <= 7) {
+                                g_4aece6[count].column = column;
+                                g_4aece6[count].attribute = g_4af616[value].a;
+                                g_4aece6[count].layer = g_4af616[value].b;
+                                g_4aece6[count].c = g_4af616[value].c;
+                                count++;
+                            }
+                            break;
+                        case 5:
+                            if (value >= 8 && value <= 12) {
+                                g_4aece6[count].column = column;
+                                g_4aece6[count].attribute = g_4af616[value].a;
+                                g_4aece6[count].layer = g_4af616[value].b;
+                                g_4aece6[count].c = g_4af616[value].c;
+                                count++;
+                            }
+                            break;
+                        }
+                }
+            }
+            if (!had1)
+                g_4acff4[row][column].attributes[1] = randomBetween(0, 2);
+            if (!had2)
+                g_4acff4[row][column].attributes[2] = randomBetween(0, 3);
+            if (!had3)
+                g_4acff4[row][column].attributes[3] = randomBetween(0, 4);
+            g_4acff4[row][column].attributes[4] =
+                g_4a1e70[g_4acff4[row][column].attributes[3]] + g_4acff4[row][column].attributes[1];
+            g_4acff4[row][column].rect.left = g_4ac940[row + 1] + column * 35;
+            g_4acff4[row][column].rect.top = g_4ac944[row + 1] + g_4a1d70[column];
+            g_4acff4[row][column].rect.right = g_4acff4[row][column].rect.left + 36;
+            g_4acff4[row][column].rect.bottom = g_4acff4[row][column].rect.top + 30;
+        }
+    if (g_4a1b1c > 1) {
+        g_4af348 = g_4a1d40[0].x;
+        g_4af34a = g_4a1d54[0].x;
+        g_4af34c = g_4a1d40[1].x;
+        g_4af34e = g_4a1d54[1].x;
+        swapSquares();
+        g_4af348 = g_4a1d40[2].x;
+        g_4af34a = g_4a1d54[2].x;
+        g_4af34c = g_4a1d40[3].x;
+        g_4af34e = g_4a1d54[3].x;
+        swapSquares();
+    }
+    total += 5;
+    g_4ac924 = total / 6;
+    g_4ac924 += g_4ac924 * 6 < total;
 }

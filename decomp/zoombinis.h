@@ -5003,7 +5003,25 @@ extern short g_4a1e20[];
 extern ImageBank *g_4af5a0;
 extern short g_4acec6[];
 extern short g_4acfe6;
-extern short g_4aece8;
+/* A starting square on the other puzzle's first row. */
+struct LillyStart
+{
+    short column;
+    short attribute;
+    short layer;
+    short c;
+};
+extern LillyStart g_4aece6[3];
+void setUpBoard();
+extern short g_4a1ec6[12];
+extern short g_4a1ede[14];
+extern short g_4a1efa[14];
+extern short g_4a1e84[];
+extern short (*g_4ac9b0)[12];
+extern short (*g_4ac9b4)[12];
+extern short (*g_4ac9b8)[12];
+extern short g_4a1eae[12];
+extern short g_4a1e70[];
 extern short g_4a1b1e[];
 extern short g_4a1b38[];
 extern short g_4aebae[12][13];

@@ -140,6 +140,7 @@ Details that depend on how the source is written, found while matching:
 - Registers go to variables in declaration order: in `swapSquares` (`0x42c6dc`) the four saved attributes matched only when declared in order (the first two took `ecx`/`esi`, the last two the stack), and a pointer used in two loops took the same saved register in both only when declared once at function level. A value computed from a parameter into a separate variable (`row = n % 25; row /= 5` rather than reusing `n`) changes which of them gets a register (`fn_427217`, `0x427217`).
 - A one-case `switch` on an `unsigned short` compiles to 16-bit `mov ax`/`sub ax, imm` (`otherKey`, `0x42b258`); on a `short` it is `movsx`/`sub eax`. `default: break;` written first puts the default's `jmp` straight after the dispatch (`fn_42f49d`, `0x42f49d`).
 - BCC drops stores to locals that are never read, but `fn_42d9c5` (`0x42d9c5`) stores two such pointers to the stack; declaring them `volatile` reproduces the stores. A value tested after an `||` of two calls (`call; test ax; jne L; call; L: test ax`) is a local assigned from the first call and, if zero, the second.
+- BCC gives no stack slot to a scalar local that is never referenced, but does to an unreferenced array: the gaps in `setUpBoard`'s frame (`0x42cc75`) are reproduced with one- and two-element `short` arrays.
 - Dead code is compiled: `runViewScript` has a check reachable only under a constant-false condition (`else if (0) { ... }`), laid out after the branch that jumps over it.
 
 ### The Pascal calling convention (`-p`)
