@@ -286,9 +286,9 @@
 0x00417108 campButtonClicked
 0x00417350 campMouse
 0x00417906 fn_417906
-0x0041790f drawCampButtons
-0x00417ac4 drawCampButtons1
-0x00417ad8 drawCampButtons2
+0x0041790f drawSceneButtons
+0x00417ac4 drawSceneButtons1
+0x00417ad8 drawSceneButtons2
 0x00417aec fn_417aec
 0x00417b56 findCampSlot
 0x00417cf1 scrollCamp
@@ -407,10 +407,12 @@
 0x0044d102 fn_44d102
 0x0044d5ad fn_44d5ad
 0x0044dca0 fn_44dca0
+0x0044dcdc fn_44dcdc
 0x0044e092 fn_44e092
 0x0044e0e2 fn_44e0e2
 0x0044e161 fn_44e161
 0x0044e314 fn_44e314
+0x0044f066 fn_44f066
 0x0044f180 fn_44f180
 0x0044f1f2 fn_44f1f2
 0x00450540 fn_450540

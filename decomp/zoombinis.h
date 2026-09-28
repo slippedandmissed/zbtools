@@ -426,8 +426,8 @@ inline View *snoidView(Snoid *snoid)
 }
 
 
-/* A button in the camp (0x24 bytes). */
-struct CampButton
+/* A button on a scene's screen (the camp's, the puzzles'; 0x24 bytes). */
+struct SceneButton
 {
     ShortRect rect;
     char unknown8[0x1c];
@@ -1225,7 +1225,7 @@ extern short g_4ab526;
 extern short g_4ab52a;
 extern short g_4ab52c;
 extern short g_4ab52e;
-extern CampButton campButtons[7]; /* @data 0x4a0824 */
+extern SceneButton campButtons[7]; /* @data 0x4a0824 */
 extern ImageBank *campButtonImages; /* @data 0x4a0970 */
 extern long campButtonsResource; /* @data 0x4a0968: holding campButtonImages */
 extern long campFrameResource; /* @data 0x4a096c: holding g_4a0974 */
@@ -4673,9 +4673,9 @@ void pickFreePlace(Point *result, Point *places, short count, short radius);
 extern Point g_4a4d1c;
 void fn_4624fc();
 void fn_43af6b();
-void drawCampButtons(short button, short pressed, short group, short show); /* 0x41790f */
-void drawCampButtons1(View *);
-void drawCampButtons2(View *);
+void drawSceneButtons(short button, short pressed, short group, short show); /* 0x41790f */
+void drawSceneButtons1(View *);
+void drawSceneButtons2(View *);
 void fn_417aec(View *, short region);
 short findCampSlot(short start, ShortRect rect, short occupied);
 void scrollCamp(View *view, short);
@@ -4733,12 +4733,7 @@ extern short g_4abec2;
 extern short g_4a1aac;
 extern short g_4a1aae;
 /* A lilly button (36 bytes). Partly known. */
-struct LillyButton
-{
-    ShortRect rect;
-    char unknown8[28];
-};
-extern LillyButton g_4a16c4[3];
+extern SceneButton g_4a16c4[3];
 /* A square of the lilly board (13 bytes). Partly known. */
 struct LillyCell
 {
@@ -4768,7 +4763,7 @@ void fn_426f38(View *view);
 void fn_427e34();
 void fn_42e6b5();
 void fn_42c306(View *view, short region);
-extern LillyButton g_4a1b28[3];
+extern SceneButton g_4a1b28[3];
 extern ImageBank *g_4a1d68;
 extern ImageBank *g_4ac178;
 extern ImageBank *g_4ac17c;
@@ -5252,8 +5247,7 @@ extern short g_4b2790; /* the scene is open */
 extern short g_4b2792;
 extern short g_4a483e;
 extern short g_4a4840;
-extern ShortRect g_4a4750;
-extern ShortRect g_4a472c;
+extern SceneButton g_4a4708[3];
 extern long g_4a47c8;
 extern long g_4b2638;
 extern long g_4b2650;
@@ -5306,6 +5300,9 @@ void fn_45162e(short);
 extern short g_4b2516;
 short fn_44cd71(short first, short second);
 short fn_451f4e();
+extern ShortRect g_4a447a;
+void fn_44dcdc();
+void fn_44f066(short which, short lit, short show);
 short fn_44d102();
 void fn_44d5ad(short cell);
 void fn_44dca0(short cell, short direction, short bit);

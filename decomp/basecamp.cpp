@@ -623,8 +623,8 @@ void enterCamp()
     campButtonImages = loadImageBank(0x834, &campButtonsResource);
     fn_4148da(0xec, 10);
     g_4ab518 = addView(0xc000, drawCamp, scrollCamp, 0, 6, 0, 0, 0);
-    addView(0x9000, drawCampButtons2, 0, 0, 0, 0, 0, 0);
-    addView(0x1000, drawCampButtons1, fn_417aec, 0, 0, 0, 0, 0);
+    addView(0x9000, drawSceneButtons2, 0, 0, 0, 0, 0, 0);
+    addView(0x1000, drawSceneButtons1, fn_417aec, 0, 0, 0, 0, 0);
     for (short i = 0; i < 16; i++)
         placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 0x4b0, 7, &places[i], 0, 0);
     g_4ab530[0] = addView(0x1180000, drawCels, runViewScript, 0x452, 6, 0, 0, 0);
@@ -693,7 +693,7 @@ void enterCamp()
     }
     setGroupLists(campGroupLists, 2, (short)0xc000);
     highlightItemAt(1, 1);
-    drawCampButtons(0, 0, 0, 0);
+    drawSceneButtons(0, 0, 0, 0);
     showRect(&g_4aa7b8);
     fadeInViews();
     campActive = 1;
@@ -864,9 +864,9 @@ void campButtonClicked(short button)
         case 1:
             if (g_4ab524) {
                 queueViewSound(996, 0);
-                drawCampButtons(button, 1, 0, 1);
+                drawSceneButtons(button, 1, 0, 1);
                 waitForEventFor(0, 2, 0, 1);
-                drawCampButtons(button, 0, 0, 1);
+                drawSceneButtons(button, 0, 0, 1);
                 markPlacedSnoids();
                 sendSnoids(0x2a8, 0x13c, 0x2d);
                 g_4b0d52 = 10;
@@ -892,9 +892,9 @@ void campButtonClicked(short button)
         case 2:
             if (g_4ab524) {
                 queueViewSound(996, 0);
-                drawCampButtons(button, 1, 0, 1);
+                drawSceneButtons(button, 1, 0, 1);
                 waitForEventFor(0, 2, 0, 1);
-                drawCampButtons(button, 0, 0, 1);
+                drawSceneButtons(button, 0, 0, 1);
                 markPlacedSnoids();
                 sendSnoids(0x2a8, 0x190, 0x2d);
                 g_4b0d52 = 13;
@@ -919,9 +919,9 @@ void campButtonClicked(short button)
             break;
         case 3:
             queueViewSound(999, 0);
-            drawCampButtons(button, 1, 0, 1);
+            drawSceneButtons(button, 1, 0, 1);
             waitForEventFor(0, 2, 0, 1);
-            drawCampButtons(button, 0, 0, 1);
+            drawSceneButtons(button, 0, 0, 1);
             g_4b0d50 = 1;
             leaveCamp();
             break;
@@ -930,7 +930,7 @@ void campButtonClicked(short button)
         case 6:
         case 7:
             g_4ab512 = button;
-            drawCampButtons(button, 1, 0, 1);
+            drawSceneButtons(button, 1, 0, 1);
             do {
                 g_4a080c = button - 3;
                 updateCampScroll(0);
@@ -938,7 +938,7 @@ void campButtonClicked(short button)
             } while (isButtonStillDown(g_4b80d0));
             updateCampScroll(1);
             g_4ab512 = 0;
-            drawCampButtons(button, 0, 0, 1);
+            drawSceneButtons(button, 0, 0, 1);
             break;
         }
     }
@@ -1114,7 +1114,7 @@ void campMouse(short action)
  * them; 0 and 1 are greyed out without g_4ab524). With `show`, shows them.
  */
 /* @zoombi32 0x0041790f */
-void drawCampButtons(short button, short pressed, short group, short show)
+void drawSceneButtons(short button, short pressed, short group, short show)
 {
     short y;
     ShortRect bounds = campButtonsBounds;
@@ -1197,15 +1197,15 @@ void drawCampButtons(short button, short pressed, short group, short show)
 /* The camp view's drawing: its buttons, the first group (0-2) and the
    second (3-6). */
 /* @zoombi32 0x00417ac4 */
-void drawCampButtons1(View *)
+void drawSceneButtons1(View *)
 {
-    drawCampButtons(0, 0, 1, 0);
+    drawSceneButtons(0, 0, 1, 0);
 }
 
 /* @zoombi32 0x00417ad8 */
-void drawCampButtons2(View *)
+void drawSceneButtons2(View *)
 {
-    drawCampButtons(0, 0, 2, 0);
+    drawSceneButtons(0, 0, 2, 0);
 }
 
 /* @zoombi32 0x00417aec */

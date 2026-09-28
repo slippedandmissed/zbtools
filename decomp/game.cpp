@@ -4,6 +4,7 @@
 
 #include <windows.h>
 #include <mmsystem.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "zoombinis.h"
@@ -557,23 +558,23 @@ void fn_4512ac()
     }
 }
 
-/* A view's update: adds the rectangles g_4a4750 (when g_4b2792 changes)
-   and g_4a472c (the first time) to the region to redraw. */
+/* A view's update: adds buttons 2 (when g_4b2792 changes) and 1 (the
+   first time) to the region to redraw. */
 /* @zoombi32 0x0044f180 */
 void fn_44f180(View *, short region)
 {
     if (g_4b2792) {
         if (!g_4a483e) {
             g_4a483e = 1;
-            unionRgnRect(region, &g_4a4750);
+            unionRgnRect(region, &g_4a4708[2].rect);
         }
     } else if (g_4a483e) {
         g_4a483e = 0;
-        unionRgnRect(region, &g_4a4750);
+        unionRgnRect(region, &g_4a4708[2].rect);
     }
     if (!g_4a4840) {
         g_4a4840 = 1;
-        unionRgnRect(region, &g_4a472c);
+        unionRgnRect(region, &g_4a4708[1].rect);
     }
 }
 
@@ -992,4 +993,58 @@ short fn_451f4e()
         }
     }
     return count;
+}
+
+/* The cheat's message: "You have entered the psychedelic ZB Zone!", in a
+   box at g_4a447a. */
+/* @zoombi32 0x0044dcdc */
+void fn_44dcdc()
+{
+    ShortRect rect = g_4a447a;
+    Color saved;
+    char text[64];
+
+    sprintf(text, "You have entered the psychedelic ZB Zone!");
+    saved = setForeColor(Color(0x19));
+    fillPortRect(Rect(rect), Color(0x1f), 0);
+    frameRect(Rect(rect));
+    drawText(Rect(rect), 0x22, text, 0xffff);
+    setForeColor(saved);
+    showRect(&rect);
+}
+
+/* Draws button 1 (image 5 or 6) or 2 (2 or 3, or 1 or 2 without
+   g_4b2792), lit or not, and with `show` shows it. */
+/* @zoombi32 0x0044f066 */
+void fn_44f066(short which, short lit, short show)
+{
+    short image = 0;
+    short handle;
+    ImageBank *bank;
+
+    switch (which) {
+    case 1:
+        image = 5;
+        break;
+    case 2:
+        image = 2;
+        if (!g_4b2792) {
+            lit = 0;
+            image = 1;
+        }
+        break;
+    }
+    if (image) {
+        if (lit)
+            image++;
+        handle = fn_46beac(g_4a47c8);
+        lockHandle(handle);
+        bank = (ImageBank *)handleData(handle);
+        unsigned short *data = (unsigned short *)(swapLong(bank->offsets[image]) + (char *)bank);
+
+        drawImageData(data, g_4a4708[which].rect.left, g_4a4708[which].rect.top, 8);
+        unlockHandle(handle);
+        if (show)
+            showRect(&g_4a4708[which].rect);
+    }
 }
