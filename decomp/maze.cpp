@@ -579,3 +579,77 @@ short fn_4370f8(short id)
     }
     return count;
 }
+
+/* The first entry of column `which` in the rows of g_4afe5a that is set
+   and isn't `ignore`, plus the column's offset (g_4a2634); 0 if none. */
+/* @zoombi32 0x004372bf */
+short fn_4372bf(short which, short ignore)
+{
+    short row, column;
+
+    for (row = 0; row < g_4afc36; row++)
+        for (column = 0; column < 4; column++)
+            if (column == which && g_4afe5a[row][column] != ignore && g_4afe5a[row][column])
+                return g_4afe5a[row][column] + g_4a2634[column];
+    return 0;
+}
+
+/* A view's notify: 61 starts its paired Zoombini's script 14004 in its
+   group (then told fn_435f3d); 63 lists the view in g_4b0908. */
+/* @zoombi32 0x00435e8a */
+void fn_435e8a(View *view, short event)
+{
+    switch (event) {
+    case 61: {
+        short *parts = (short *)&view->body;
+        View *other = findView(parts[50]);
+
+        if (other) {
+            startSnoidScript((Snoid *)&other->body, 14004, 0, 1);
+            other->body.group = view->body.group;
+            other->notify = fn_435f3d;
+        }
+        break;
+    }
+    case 62:
+        break;
+    case 63:
+        g_4b0908[g_4b09fc] = view->id;
+        g_4b09fc++;
+        break;
+    }
+}
+
+/* Loads the hot-spot table for one of five sets (the first four by their
+   entries in g_4a210e, recorded in g_4a210c). */
+/* @zoombi32 0x00436a00 */
+short *fn_436a00(short which)
+{
+    short id;
+
+    switch (which) {
+    case 0:
+        id = g_4a210e[0] + 16600;
+        g_4a210c = g_4a210e[0];
+        break;
+    case 1:
+        id = g_4a210e[1] + 16602;
+        g_4a210c = g_4a210e[1];
+        break;
+    case 2:
+        id = g_4a210e[2] + 16604;
+        g_4a210c = g_4a210e[2];
+        break;
+    case 3:
+        id = g_4a210e[3] + 16606;
+        g_4a210c = g_4a210e[3];
+        break;
+    case 4:
+        id = 16609;
+        g_4a210c = 0;
+        break;
+    }
+    g_4afbdc = 0;
+    g_4b076c = 0;
+    return loadShortTable(id, &g_4afbdc);
+}
