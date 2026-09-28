@@ -326,10 +326,12 @@
 0x0042a7b6 fn_42a7b6
 0x0042aaba fn_42aaba
 0x0042adb5 fn_42adb5
+0x0042ae14 fn_42ae14
 0x0042afbe fn_42afbe
 0x0042b003 fn_42b003
 0x0042b708 drawNumberBox
 0x0042b7e7 fn_42b7e7
+0x0042bacf addLillyActor
 0x0042bc61 loadLillyScripts
 0x0042bd19 freeLockedResources
 0x0042c0d9 fn_42c0d9

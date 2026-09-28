@@ -11,21 +11,33 @@
 struct LillyActor
 {
     ViewBody body;
-    char unknownBc[6];
+    short unknownBc;
+    short unknownBe;
+    short unknownC0;
     char unknownC2;
     char column; /* +0xc3 */
     char row; /* +0xc4 */
-    char unknownC5[17];
+    char unknownC5;
+    char unknownC6;
+    char unknownC7;
+    char unknownC8;
+    short unknownC9;
+    short unknownCb;
+    char unknownCd[8];
+    char unknownD5;
     char unknownD6;
-    char unknownD7[2];
+    short unknownD7;
     short unknownD9; /* +0xd9 */
-    char unknownDB[3];
-    char unknownDE;
-    char unknownDF;
+    char unknownDb;
+    short unknownDc;
+    char unknownDe;
+    char unknownDf;
     char unknownE0; /* +0xe0: added to its second part's image */
-    char unknownE1[2];
+    char unknownE1;
+    char unknownE2;
     char unknownE3; /* +0xe3: added to its third part's image */
-    char unknownE4[14];
+    short unknownE4;
+    char unknownE6[12];
     short grid[12][13]; /* +0xf2 */
 };
 
@@ -1079,9 +1091,9 @@ short fn_42f7a5(View *view)
     }
     if (!blocked) {
         if (!g_4acff4[row][column].attributes[0]) {
-            actor->unknownDE = g_4aece8;
-            actor->unknownDF = g_4acff4[row][column].attributes[actor->unknownDE];
-            actor->unknownE0 = g_4a1b1e[g_4a1b38[actor->unknownDE]] + actor->unknownDF;
+            actor->unknownDe = g_4aece8;
+            actor->unknownDf = g_4acff4[row][column].attributes[actor->unknownDe];
+            actor->unknownE0 = g_4a1b1e[g_4a1b38[actor->unknownDe]] + actor->unknownDf;
             actor->grid[row][column] = 1;
             body[26] = 1;
         } else if (g_4aebae[row][column] != 1 && !g_4aebae[row][column]) {
@@ -1157,4 +1169,106 @@ void turnGrid(short (*grid)[12], short how)
         for (row = 0; row < 12; row++)
             for (column = 0; column < 12; column++)
                 grid[row][column] = copy[row][column];
+}
+
+/* Adds a lilly actor (showing `value`), placed among views 4-7 at random. */
+/* @zoombi32 0x0042bacf */
+short addLillyActor(short value)
+{
+    LillyActor actor;
+
+    actor.unknownE3 = 0;
+    actor.unknownE4 = 0;
+    actor.unknownE2 = 0;
+    actor.column = 0;
+    actor.row = 0;
+    actor.unknownC5 = 0;
+    actor.unknownC6 = 0;
+    actor.unknownC7 = 0;
+    actor.unknownC8 = 0;
+    actor.unknownD5 = 2;
+    actor.unknownBc = 0;
+    actor.unknownBe = value;
+    actor.unknownC0 = 1;
+    actor.unknownDc = 0;
+    actor.unknownDb = 0;
+    actor.unknownC2 = 0;
+    actor.unknownD7 = 0;
+    actor.unknownD6 = 11;
+    actor.body.celsEnd = 0;
+    actor.body.script = 0;
+    actor.body.scriptGroup = 0;
+    actor.body.frameOffset = 1;
+    actor.body.running = 0;
+    actor.unknownC9 = 0;
+    actor.unknownCb = 0;
+    actor.body.x = 100;
+    actor.body.y = 25;
+    actor.body.unknownAa = 100;
+    actor.body.unknownAc = 25;
+    for (short row = 0; row < 12; row++)
+        for (short column = 0; column < 12; column++)
+            actor.grid[row][column] = 0;
+    actor.unknownD9 = 63;
+    actor.unknownBe = value;
+    short id = addView(0x980002, drawCels, runViewScript, 10067, 8, &actor, randomBetween(4, 7), 0);
+    View *view = findView(id);
+
+    if (view) {
+        view->flags = 0x980002;
+        view->placed = fn_42f192;
+        LillyActor *added = (LillyActor *)&view->body;
+
+        added->body.running = 0;
+    }
+    return id;
+}
+
+/* @zoombi32 0x0042ae14 */
+void fn_42ae14(View *view, short event)
+{
+    ViewBody *body = &view->body;
+    LillyActor *actor = (LillyActor *)&view->body;
+
+    switch (event) {
+    case 30: {
+        actor->body.x = g_4ac950[body->cels[0].image] + body->cels[0].x;
+        actor->body.y = g_4ac954[body->cels[0].image] + body->cels[0].y;
+        actor->body.unknownAa = g_4ac950[body->cels[0].image] + body->cels[0].x;
+        actor->body.unknownAc = g_4ac954[body->cels[0].image] + body->cels[0].y;
+        g_4ac91c++;
+        if (g_4ac91c == 1)
+            g_4af36a = 1;
+        actor->unknownDb++;
+        actor->unknownD6 = 0;
+        if (actor->unknownDb == 2) {
+            g_4acdca[g_4acdf2] = view->id;
+            g_4acdf2++;
+        } else {
+            g_4acda0[g_4acdc8] = view->id;
+            g_4acdc8++;
+        }
+        g_4acff4[actor->row][actor->column].attributes[0] = 0;
+        body->cels[2].image = 0;
+        moveView(actor->unknownE1, 0, g_4aed14);
+        View *other = findView(actor->unknownE1);
+
+        if (other) {
+            other->body.running = 1;
+            setViewScript(other, actor->row + 10129, 1);
+            other->placed = fn_42afbe;
+            other->notify = fn_42b003;
+            short *parts = (short *)&other->body;
+            View *rider = findView(parts[13]);
+
+            if (rider) {
+                g_4af0ea++;
+                viewSnoid(rider)->unknownF7 = 1;
+            }
+        }
+        if (g_4af0ea == g_4af0e8)
+            queueViewSound(randomBetween(20055, 20063), 0);
+        break;
+    }
+    }
 }
