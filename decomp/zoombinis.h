@@ -4706,7 +4706,7 @@ void fn_4184b7();
 short returnToCamp();
 long fn_4196a8(long);
 short fn_419f1a();
-int fn_41d3e6(long, short value);
+int fn_41d3e6(View *, short value);
 void fn_41d9e4(long);
 void fn_41d9eb(long, long);
 void fn_427e1a(Flagged *object, short code);
@@ -6246,3 +6246,9 @@ extern short g_4aba08; /* @data 0x4aba08 */
 extern short g_4ab876; /* @data 0x4ab876 */
 extern Point *g_4ab8e8; /* @data 0x4ab8e8 */
 void rosterClicked(short which);
+extern short g_4a1208; /* @data 0x4a1208: rosterFrame is running */
+extern unsigned long g_4ab9fc; /* @data 0x4ab9fc: when a Zoombini last cheered */
+extern unsigned long g_4aba00; /* @data 0x4aba00: slots used (allocateSlot) */
+extern short g_4aba04; /* @data 0x4aba04: how many cheer */
+extern short g_4aba06; /* @data 0x4aba06: how many have */
+void rosterFrame();

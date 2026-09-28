@@ -8,12 +8,14 @@
 #include "zoombinis.h"
 
 /*
+ * The notify of the Zoombinis cheering on the roster screen (rosterFrame),
+ * which returns its event plus one (ignored).
  * The original adds one with `sub eax, -1`; BCC32 turns every way of writing
  * it tried so far (+ 1, - -1, enums, consts, unsigned, compound assignment,
  * locals, other -O options, and Borland C++ 4.52 as well as 4.5) into `inc eax`.
  */
 /* @zoombi32 0x0041d3e6 */
-int fn_41d3e6(long, short value)
+int fn_41d3e6(View *, short value)
 {
     return value + 1;
 }
@@ -1263,6 +1265,150 @@ void rosterClicked(short which)
             }
         }
         break;
+    }
+}
+
+/* The roster screen's frame (scenes[]): leaves the screen after a button
+   (g_4b0d52) once the sound and the Zoombinis are done, starts the walk
+   (g_4ab870), shows the frames' changes (g_4ab994), walks Zoombinis on
+   (fn_41cf14), blinks the place g_4ab86c, has placed Zoombinis (g_4ab996)
+   and, when all are placed (g_4aba08), the others cheer, and plays the
+   ambient sounds. */
+/* @zoombi32 0x0041ca44 */
+void rosterFrame()
+{
+    View *view;
+    Snoid *snoid;
+    short started;
+    short i;
+    short n;
+
+    if (!g_4a1208 && g_4a0fec) {
+        g_4a1208 = 1;
+        updateViews();
+        if (g_4b0d52) {
+            if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+                g_4a1208 = 0;
+                return;
+            }
+            if (!g_4b9688 || g_4b9688 == 3) {
+                if (g_4b9688 == 3)
+                    chooseSnoids(0, 0);
+                if ((viewsLocked || !g_4b755a || g_4b755c >= 1)
+                    && (g_4ab872 == 3 || g_4b0d52 == 1 || viewsLocked)) {
+                    g_4b0d50 = g_4b0d52;
+                    g_4b0d52 = 0;
+                    fn_46be2e(0);
+                    closeRoster();
+                    g_4a1208 = 0;
+                    return;
+                }
+                if (g_4ab872 == 2) {
+                    g_4ab872 = 3;
+                    queueViewSound(996, 0);
+                    fn_41d80e(660, 376, 30);
+                }
+            } else if (g_4b9688 == 2) {
+                g_4b9688 = 0;
+                g_4b0d52 = 0;
+            }
+        }
+        if (g_4b9684) {
+            playAmbientSound();
+            g_4a1208 = 0;
+            return;
+        }
+        if (g_4ab870 && !g_4ab874) {
+            g_4ab870 = 0;
+            g_4ab872 = 1;
+            setViewsLocked(0);
+            view = removeView(g_4ab9c4[24], 0);
+            if (view) {
+                g_4a0fea = 1;
+                setViewScript(view, 6002, 1);
+                view->notify = fn_41d30b;
+                insertViewAtEnd(view);
+            }
+        }
+        if (g_4ab994) {
+            g_4ab994 = 0;
+            view = findView(g_4ab8da);
+            if (view) {
+                setViewScript(view, g_4a1010 + 8999, 0);
+                view->body.running = 1;
+            }
+            view = findView(g_4ab8dc);
+            if (view) {
+                setViewScript(view, g_4a1012 + 8999, 0);
+                view->body.running = 1;
+            }
+            view = findView(g_4ab874);
+            if (view) {
+                snoid = viewSnoid(view);
+                snoid->unknownF1 = g_4a11b4[g_4a1012];
+                snoid->unknownF2 = g_4a11de[g_4a1012];
+            }
+        }
+        if (g_4ab876) {
+            g_4ab876 = 0;
+            setViewsLocked(0);
+            fn_41cf14(0);
+        }
+        if (g_4a1006) {
+            g_4a1006 = 0;
+            fn_41cf14(1);
+        }
+        if (g_4ab878 == 1 && g_4ab86c < 6) {
+            view = findView(g_4a101c);
+            if (view && clockTime() >= view->nextUpdate) {
+                if (!g_4ab86c) {
+                    view->nextUpdate = clockTime() + 30;
+                    unionRgnRect(removedRgn, &g_4a11ac);
+                    g_4ab86e++;
+                    g_4ab86c = g_4ab86e;
+                } else {
+                    view->nextUpdate = clockTime() + 30;
+                    unionRgnRect(removedRgn, &g_4a11ac);
+                    g_4ab86c = 0;
+                }
+            }
+        }
+        while (g_4ab9be) {
+            view = findView(g_4ab996[--g_4ab9be]);
+            if (view) {
+                view->flags = 0x4008001;
+                snoid = viewSnoid(view);
+                startSnoidScript(viewSnoid(view), snoid->features[3] + 12999, g_4ab8e8, 0);
+                view->notifyEnd = 1;
+                view->notify = (ViewNotify)fn_41d3e6;
+                g_4ab8e8 = 0;
+            }
+        }
+        if (g_4aba08 && g_4aba06 < g_4aba04) {
+            if (clockTime() - g_4ab9fc > 30) {
+                started = 0;
+                g_4ab9fc = clockTime();
+                for (i = 0; i < g_4a1014 && !started; i++) {
+                    n = allocateSlot(&g_4aba00, g_4a1014, 0);
+                    if (partyViews[n]) {
+                        view = idleSnoidView(partyViews[n]);
+                        /* The original's test is always true: == binds before |. */
+                        if (view && view->body.running && ((view->flags == 0x8000) | 0x4000001)) {
+                            snoid = viewSnoid(view);
+                            startSnoidScript(viewSnoid(view), snoid->features[3] + 12999, 0, 0);
+                            view->notifyEnd = 1;
+                            view->notify = (ViewNotify)fn_41d3e6;
+                            g_4aba06++;
+                            started = 1;
+                        }
+                    }
+                }
+            }
+        } else if (g_4aba06 >= g_4aba04) {
+            g_4aba06 = g_4aba08 = g_4ab9fc = g_4aba00 = 0;
+        }
+        playAmbientSound();
+        g_4a1208 = 0;
     }
 }
 
