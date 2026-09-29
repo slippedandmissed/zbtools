@@ -1024,8 +1024,11 @@
 0x004695e5 askLoadGame
 0x00469627 askSaveGame
 0x00469669 askQuit
+0x0046ac6e closeScene2
 0x0046b07b fn_46b07b
 0x0046b747 fn_46b747
+0x0046bb0c fn_46bb0c
+0x0046bbce fn_46bbce
 0x0046be28 currentMap
 0x0046be2e fn_46be2e
 0x0046be3d fn_46be3d
