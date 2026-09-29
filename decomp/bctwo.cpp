@@ -5,6 +5,7 @@
 #include "zoombinis.h"
 #include "basecamp.h"
 #include "bctwo.h"
+#include "debug.h"
 #include "e2memory.h"
 #include "features.h"
 #include "graphics.h"
@@ -111,6 +112,71 @@ void scene5Frame()
     }
     playAmbientSound();
     g_4a0ce8 = 0;
+}
+
+/* Scene 5's clicks: once a scene is due, leaves for it; 1 leaves for
+   the map (scene 16) when g_4ab65c, else says a line; 3 leaves for scene
+   1; 4-7 scroll the book while held. */
+/* @zoombi32 0x00418fa7 */
+void scene5Clicked(short which)
+{
+    Point where;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeScene5();
+        return;
+    }
+    getCursorPosition(&where);
+    switch (which) {
+    case 1:
+        if (g_4ab65c) {
+            queueViewSound(996, 0);
+            fn_4196b1(which, 1, 0, 1);
+            waitForEventFor(0, 2, 0, 1);
+            fn_4196b1(which, 0, 0, 1);
+            markPlacedSnoids();
+            sendSnoids(680, 316, 45);
+            g_4b0d52 = 16;
+        } else
+            switch (randomBetween(1, 3)) {
+            case 1:
+                queueViewSound(20084, 0);
+                break;
+            case 2:
+                queueViewSound(20085, 0);
+                break;
+            case 3:
+                queueViewSound(20082, 0);
+                break;
+            }
+        break;
+    case 3:
+        queueViewSound(999, 0);
+        fn_4196b1(which, 1, 0, 1);
+        waitForEventFor(0, 2, 0, 1);
+        fn_4196b1(which, 0, 0, 1);
+        g_4b0d50 = 1;
+        closeScene5();
+        break;
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+        g_4ab64a = which;
+        fn_4196b1(which, 1, 0, 1);
+        do {
+            g_4a0abc = which - 3;
+            fn_41a11b(0, 0);
+            mainLoopEvents();
+        } while (isButtonStillDown(1));
+        fn_41a11b(1, 0);
+        g_4ab64a = 0;
+        fn_4196b1(which, 0, 0, 1);
+        break;
+    }
 }
 
 /* @zoombi32 0x004196a8 */
@@ -374,6 +440,74 @@ void fn_419c3a(View *)
     }
     drawImage(g_4a0ac0, image + 1, dx + 141, dy + 28, 8, 17);
     drawImage(g_4a0ac0, 5, 101, 0, 8, 17);
+}
+
+/* The book's view update: when due, scrolls the book the way pressed
+   (g_4a0abc: 1 up a page, 2 up, 3 down, 4 down a page), half a line at a
+   time (g_4a0abe), making room at the start when at the top. */
+/* @zoombi32 0x00419a59 */
+void fn_419a59(View *view, short)
+{
+    short steps;
+
+    if (clockTime() >= view->nextUpdate) {
+        view->nextUpdate = clockTime() + view->interval;
+        if (view->reset) {
+            view->reset = 0;
+            view->body.bounds = g_4a0be8;
+        } else if (g_4a0abc) {
+            view->changed = 1;
+            steps = 1;
+            switch (g_4a0abc) {
+            case 1:
+                steps += 4;
+                if (!g_4a0abe && g_4ab640 - steps < 0)
+                    steps = 0;
+                /* falls through: 5 steps up */
+            case 2:
+                if (steps && !g_4ab640)
+                    fn_419f3a();
+                if (steps)
+                    do {
+                        if (!g_4a0abe && g_4ab640 > 0) {
+                            g_4ab640--;
+                            if (g_4ab640 < 0) {
+                                g_4ab640 = 0;
+                                steps = 1;
+                            }
+                            g_4a0abe = 1;
+                        } else
+                            g_4a0abe = 0;
+                    } while (--steps);
+                break;
+            case 4:
+                steps += 4;
+                if (!g_4a0abe && g_4ab640 + steps > g_4ab642 - 5)
+                    steps = 0;
+                /* falls through: 5 steps down */
+            case 3:
+                if (steps)
+                    do {
+                        if (!g_4a0abe) {
+                            if (g_4ab640 + 1 <= 120 && g_4ab640 < g_4ab642 - 5)
+                                g_4a0abe = 1;
+                        } else {
+                            g_4a0abe = 0;
+                            g_4ab640++;
+                            if (g_4ab640 >= g_4ab642 - 5) {
+                                g_4ab640 = g_4ab642 - 5;
+                                if (g_4ab640 > 120)
+                                    g_4ab640 = 120;
+                                steps = 1;
+                            }
+                        }
+                    } while (--steps);
+                break;
+            }
+            if (!g_4a0abe)
+                g_4a0abc = 0;
+        }
+    }
 }
 
 /* Makes room for a row at the start, when one is taken, there are under

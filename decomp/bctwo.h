@@ -48,6 +48,7 @@ extern ResourceList *g_4a0ac0; /* @data 0x4a0ac0: the book's images */
 extern ResourceList *g_4a0ac4; /* @data 0x4a0ac4: the camp's images */
 extern short g_4a0ce8; /* @data 0x4a0ce8: in scene5Frame */
 extern ShortRect g_4a0cea; /* @data 0x4a0cea */
+extern ShortRect g_4a0be8; /* @data 0x4a0be8 */
 extern ShortRect g_4a0d76; /* @data 0x4a0d76 */
 extern short cellX[11]; /* @data 0x4a0cf2: the book's cells' x, by half line */
 extern short cellY[11][5]; /* @data 0x4a0d08: their y, by half line and column */
@@ -59,6 +60,8 @@ void fn_41a225();
 void closeScene5();
 void scene5Frame();
 void fn_419c3a(View *view);
+void scene5Clicked(short which);
+void fn_419a59(View *view, short region);
 void fn_419f3a();
 short fn_41a23b();
 void fn_41a024();
