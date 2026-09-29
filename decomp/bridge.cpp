@@ -13,6 +13,7 @@
 #include "loading.h"
 #include "module_4623b8.h"
 #include "net.h"
+#include "platform.h"
 #include "snoids.h"
 #include "sound.h"
 #include "tunnels.h"
@@ -833,8 +834,8 @@ void scene7Frame()
             loadViewSounds(g_4ab7e0, 1);
     }
     if (g_4ab800 && !g_4ab7ea) {
-        n = g_4ab7f8;
-        if (g_4ab7da >= 6 || g_4ab7fc && g_4ab7ee > 4 || bridgeTimer() < 45)
+        n = queueViews[0];
+        if (g_4ab7da >= 6 || queuePasses[0] && g_4ab7ee > 4 || bridgeTimer() < 45)
             n = 0;
         view = idleSnoidView(n);
         if (view) {
@@ -842,11 +843,11 @@ void scene7Frame()
             switch (g_4ab800) {
             case 1:
             case 2:
-                g_4ab7ec = g_4ab7f4;
-                g_4ab7e8 = g_4ab7fc;
-                g_4ab7f8 = g_4ab7fa;
-                g_4ab7f4 = g_4ab7f6;
-                g_4ab7fc = g_4ab7fe;
+                g_4ab7ec = queueBridges[0];
+                g_4ab7e8 = queuePasses[0];
+                queueViews[0] = queueViews[1];
+                queueBridges[0] = queueBridges[1];
+                queuePasses[0] = queuePasses[1];
                 g_4ab800--;
                 break;
             }
@@ -953,4 +954,105 @@ void scene7Frame()
         } while (!n && tries < 16);
     }
     g_4a0f0c = 0;
+}
+
+/* Scene 7's clicks: 1 leaves (asking whether to keep the party), 2 sends
+   the Zoombinis across (once one has, g_4ab78a), 3 drags a Zoombini (not
+   one across or crossing; one sent back only once it's done): dropped at a
+   bridge's end it joins the queue (up to two) with whether it passes;
+   taken off the queue and dropped elsewhere it goes to a free place. */
+/* @zoombi32 0x0041af4c */
+void scene7Clicked(short which)
+{
+    ShortRect bounds;
+    Point where;
+    short moved;
+    short place;
+    View *view;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeScene7();
+        return;
+    }
+    switch (which) {
+    case 1:
+        queueViewSound(999, 0);
+        drawBridgeButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawBridgeButton(which, 0, 1);
+        g_4b0d52 = 1;
+        askKeepParty();
+        break;
+    case 2:
+        if (!g_4ab78a)
+            break;
+        queueViewSound(996, 0);
+        drawBridgeButton(which, 1, 1);
+        waitForEventFor(0, 2, 0, 1);
+        drawBridgeButton(which, 0, 1);
+        sendSnoids(680, 316, 45);
+        g_4b0d52 = 8;
+        break;
+    case 3:
+        if (g_4b755a > 0 && !g_4ab7d8)
+            break;
+        if (g_4ab7da >= 6)
+            break;
+        g_4ab7d8 = 1;
+        getCursorPosition(&where);
+        view = viewAt(where, 1, 1);
+        if (!view)
+            break;
+        moved = 0;
+        if (viewSnoid(view)->unknownF4 == 8 || viewSnoid(view)->unknownF7)
+            break;
+        if (viewSnoid(view)->unknownF4 == 9) {
+            if (!g_4ab824)
+                break;
+            if (g_4ab7ea)
+                g_4ab7ea = 0;
+            g_4ab824 = 0;
+        }
+        dragSnoid(view, where, &g_4a0eb8, 0);
+        bounds = view->body.bounds;
+        switch (g_4ab800) {
+        case 1:
+            if (queueViews[0] == view->id) {
+                g_4ab800 = 0;
+                moved = 1;
+            }
+            break;
+        case 2:
+            if (queueViews[1] == view->id)
+                g_4ab800 = 1;
+            if (queueViews[0] == view->id) {
+                queueBridges[0] = queueBridges[1];
+                queueViews[0] = queueViews[1];
+                queuePasses[0] = queuePasses[1];
+                g_4ab800 = 1;
+                moved = 1;
+            }
+            break;
+        }
+        place = heldPlaceNumber();
+        if (place) {
+            switch (g_4ab800) {
+            case 0:
+            case 1:
+                queueBridges[g_4ab800] = place;
+                queueViews[g_4ab800] = view->id;
+                queuePasses[g_4ab800] = turnedBack(&bridgeRules, place, viewSnoid(view));
+                g_4ab800++;
+                break;
+            case 2:
+                break;
+            }
+        } else if (moved) {
+            pickFreePlace((Point *)&viewSnoid(view)->targetX, viewPlaces, 16, 500);
+        }
+        break;
+    }
 }

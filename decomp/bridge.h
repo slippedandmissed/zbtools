@@ -39,12 +39,9 @@ extern short g_4ab7ec; /* @data 0x4ab7ec: the bridge being crossed (1 upper) */
 extern short g_4ab7ee; /* @data 0x4ab7ee */
 extern short g_4ab7f0; /* @data 0x4ab7f0 */
 extern short g_4ab7f2; /* @data 0x4ab7f2 */
-extern short g_4ab7f4; /* @data 0x4ab7f4: the queue of Zoombinis to cross (bridge, view, passes; two deep) */
-extern short g_4ab7f6; /* @data 0x4ab7f6 */
-extern short g_4ab7f8; /* @data 0x4ab7f8 */
-extern short g_4ab7fa; /* @data 0x4ab7fa */
-extern short g_4ab7fc; /* @data 0x4ab7fc */
-extern short g_4ab7fe; /* @data 0x4ab7fe */
+extern short queueBridges[2]; /* @data 0x4ab7f4: the Zoombinis queued to cross: the bridge (1 upper), */
+extern short queueViews[2]; /* @data 0x4ab7f8: the view */
+extern short queuePasses[2]; /* @data 0x4ab7fc: and whether it passes (turnedBack) */
 extern short g_4ab800; /* @data 0x4ab800: how many are queued */
 extern short g_4ab802; /* @data 0x4ab802 */
 extern FeatureRules bridgeRules; /* @data 0x4ab804 */
@@ -61,7 +58,10 @@ extern unsigned long g_4ab838; /* @data 0x4ab838 */
 
 void startBridgeTimer();
 unsigned long bridgeTimer();
+extern ShortRect g_4a0eb8; /* @data 0x4a0eb8: where a Zoombini can be dragged */
+
 void resetScene7();
+void scene7Clicked(short which);
 void scene7Frame();
 void drawBridgeButtons(View *);
 void openScene7();

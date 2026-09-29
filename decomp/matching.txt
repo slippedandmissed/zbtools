@@ -311,6 +311,7 @@
 0x0041a965 fn_41a965
 0x0041a9d7 closeScene7
 0x0041aa24 scene7Frame
+0x0041af4c scene7Clicked
 0x0041b203 scene7Key
 0x0041b357 fn_41b357
 0x0041b453 fn_41b453
