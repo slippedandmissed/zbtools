@@ -38,13 +38,18 @@ extern short g_4ab666; /* @data 0x4ab666 */
 extern short g_4ab668; /* @data 0x4ab668 */
 extern short g_4ab67e; /* @data 0x4ab67e */
 extern short g_4a0abc; /* @data 0x4a0abc: the scroll button pressed (1-4) */
-extern ShortRect g_4a0adc; /* @data 0x4a0adc */
+extern SceneButton campButtons[7]; /* @data 0x4a0adc: fn_4196b1 draws them */
+extern ResourceList *g_4a0ac4; /* @data 0x4a0ac4: the camp's images */
+extern ShortRect g_4a0cea; /* @data 0x4a0cea */
 void resetScene5();
 void fn_419867(View *view, short region);
 void fn_419e49(short n);
 long fn_4196a8(long);
 void fn_41a225();
 void fn_41a024();
+void fn_4196b1(short button, short lit, short group, short show);
+void fn_41983f(View *view);
+void fn_419853(View *view);
 void fn_41a11b(short quiet, short);
 short fn_419f1a();
 

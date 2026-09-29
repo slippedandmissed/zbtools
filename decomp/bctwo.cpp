@@ -3,8 +3,10 @@
  */
 
 #include "zoombinis.h"
+#include "basecamp.h"
 #include "bctwo.h"
 #include "features.h"
+#include "graphics.h"
 #include "sound.h"
 #include "view.h"
 
@@ -25,18 +27,109 @@ long fn_4196a8(long)
     return 0;
 }
 
-/* A view update: redraws g_4a0adc whenever g_4ab65c changes. */
+/* Draws the camp's button `button` (1-7), lit or not, or with 0 a group
+   of them (`group` 1: 1-3, 2: 4-7, else all); button 1 is out while
+   g_4ab65c is clear, 4-7 lit for the one chosen (g_4ab64a). With `show`
+   shows them (redrawing the dragged view over 4-7). */
+/* @zoombi32 0x004196b1 */
+void fn_4196b1(short button, short lit, short group, short show)
+{
+    short y;
+    ShortRect unused; /* unused, like `color`: they only take stack space */
+    ShortRect rect = g_4a0cea;
+    Color color;
+    short dragging = 0;
+    short first;
+    short last;
+    short image;
+    short x;
+
+    if (!button) {
+        switch (group) {
+        case 1:
+            first = 0;
+            last = 3;
+            break;
+        case 2:
+            first = 3;
+            last = 7;
+            break;
+        default:
+            first = 0;
+            last = 7;
+            break;
+        }
+        rect = campButtons[first].rect;
+        unionRect(&rect, &campButtons[last - 1].rect);
+    } else {
+        first = button - 1;
+        last = first + 1;
+        rect = campButtons[button - 1].rect;
+    }
+    for (; first < last; first++) {
+        x = campButtons[first].rect.left;
+        y = campButtons[first].rect.top;
+        image = 0;
+        switch (first) {
+        case 0:
+            image = 1;
+            if (!g_4ab65c) {
+                lit = 0;
+                image = 15;
+            }
+            break;
+        case 2:
+            image = 5;
+            break;
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+            dragging = 1;
+            image = (first - 3) * 2 + 7;
+            lit = 0;
+            if (g_4ab64a - 1 == first)
+                lit = 1;
+            break;
+        }
+        if (image) {
+            if (lit)
+                image++;
+            drawImage(g_4a0ac4, image, x, y, 8, 17);
+        }
+    }
+    if (show) {
+        if (dragging)
+            drawDragCursor(viewListEnd(0));
+        showRect(&rect);
+    }
+}
+
+/* View draw callbacks: draw buttons 1-3, and 4-7. */
+/* @zoombi32 0x0041983f */
+void fn_41983f(View *)
+{
+    fn_4196b1(0, 0, 1, 0);
+}
+
+/* @zoombi32 0x00419853 */
+void fn_419853(View *)
+{
+    fn_4196b1(0, 0, 2, 0);
+}
+
+/* A view update: redraws button 0 whenever g_4ab65c changes. */
 /* @zoombi32 0x00419867 */
 void fn_419867(View *, short region)
 {
     if (g_4ab65c) {
         if (!g_4ab65e) {
             g_4ab65e = 1;
-            unionRgnRect(region, &g_4a0adc);
+            unionRgnRect(region, &campButtons[0].rect);
         }
     } else if (g_4ab65e) {
         g_4ab65e = 0;
-        unionRgnRect(region, &g_4a0adc);
+        unionRgnRect(region, &campButtons[0].rect);
     }
 }
 
