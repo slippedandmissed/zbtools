@@ -12,6 +12,7 @@
 #include "graphics.h"
 #include "loading.h"
 #include "module_4623b8.h"
+#include "net.h"
 #include "snoids.h"
 #include "sound.h"
 #include "tunnels.h"
@@ -773,4 +774,183 @@ void openScene7()
     queueViewSound(997, 0);
     switch (campHint((short *)(g_4a4ba0 + 0x2a))) {
     }
+}
+
+/*
+ * Scene 7's frame: leaves when asked (once sound 996 ends and nobody's
+ * moving); when the cliff has spoken (g_4ab7e6) starts its reply; sends
+ * the next queued Zoombini (g_4ab800: which bridge, g_4ab7ec, and whether
+ * it passes, g_4ab7e8) across, unless it's too soon; plays the bridge's
+ * reaction (g_4ab7f2): the cliff sneezes the Zoombini back or lets it
+ * across (g_4ab7da counting those sent back); and now and then has a
+ * Zoombini fidget (2019 on), up to g_4ab82a times.
+ */
+/* @zoombi32 0x0041aa24 */
+void scene7Frame()
+{
+    View *view;
+    short n;
+    short tries;
+
+    if (g_4a0f0c || !g_4ab788)
+        return;
+    g_4a0f0c = 1;
+    updateViews();
+    if (g_4b0d52) {
+        if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+            g_4a0f0c = 0;
+            return;
+        }
+        if (!g_4b9688 || g_4b9688 == 3) {
+            if (g_4b9688 == 3)
+                chooseSnoids(0, 0);
+            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
+                g_4b0d50 = g_4b0d52;
+                g_4b0d52 = 0;
+                fn_46be2e(0);
+                closeScene7();
+                g_4a0f0c = 0;
+                return;
+            }
+        } else if (g_4b9688 == 2) {
+            g_4b9688 = 0;
+            g_4b0d52 = 0;
+        }
+    }
+    if (g_4ab7e6) {
+        g_4b7560 = 0;
+        g_4ab7e6 = 0;
+        g_4b754c = 1;
+        view = findView(g_4ab7dc);
+        if (view) {
+            view->body.running = 0;
+            view->body.cels[0].image = 0;
+        }
+        view = findView(g_4ab7de);
+        if (view)
+            setViewScript(view, 1235, 1);
+        if (startView(g_4ab7e0, 1221, fn_41b357, 1))
+            loadViewSounds(g_4ab7e0, 1);
+    }
+    if (g_4ab800 && !g_4ab7ea) {
+        n = g_4ab7f8;
+        if (g_4ab7da >= 6 || g_4ab7fc && g_4ab7ee > 4 || bridgeTimer() < 45)
+            n = 0;
+        view = idleSnoidView(n);
+        if (view) {
+            startBridgeTimer();
+            switch (g_4ab800) {
+            case 1:
+            case 2:
+                g_4ab7ec = g_4ab7f4;
+                g_4ab7e8 = g_4ab7fc;
+                g_4ab7f8 = g_4ab7fa;
+                g_4ab7f4 = g_4ab7f6;
+                g_4ab7fc = g_4ab7fe;
+                g_4ab800--;
+                break;
+            }
+            switch (g_4ab7ec) {
+            case 1:
+                if (g_4ab7e8)
+                    n = 2010;
+                else
+                    n = 2015;
+                claimPlacedView(1, 0);
+                break;
+            default:
+                if (g_4ab7e8)
+                    n = 2000;
+                else
+                    n = 2005;
+                claimPlacedView(2, 0);
+                break;
+            }
+            g_4ab7ee++;
+            g_4ab7ea = g_4ab7e8;
+            if (!g_4ab7e8) {
+                viewSnoid(view)->unknownF7 = 1;
+                view->interval = randomBetween(4, 5);
+            }
+            g_4ab826 = -1;
+            g_4ab828 = -1;
+            /* the script for its feet (from 1) */
+            startSnoidScript(viewSnoid(view), (n += viewSnoid(view)->features[3], n - 1), 0, 0);
+            view->notify = fn_41b453;
+            view->notifyEnd = 1;
+            g_4ab7f0 = groupViews(view->id, view->id, 0, 0, 0, 0);
+        }
+    }
+    if (g_4ab7f2) {
+        view = findView(g_4ab7f2);
+        if (view && g_4ab7e8) {
+            if (g_4ab7f2 == g_4ab7dc)
+                n = 1222;
+            else
+                n = 1214;
+            g_4ab7f2 = 0;
+            setViewScript(view, n, 1);
+            if (g_4ab7f0) {
+                view->body.group = g_4ab7f0;
+                groupLeader[g_4ab7f0] = 0;
+            }
+            if (g_4ab7e8) {
+                view = findView(g_4ab7e2);
+                if (view) {
+                    switch (g_4ab7ec) {
+                    case 1:
+                        n = g_4ab7da + 1223;
+                        break;
+                    default:
+                        n = g_4ab7da + 1208;
+                        break;
+                    }
+                    startView(g_4ab7e2, n, fn_41b357, 0);
+                    view->body.group = g_4ab7f0;
+                    loadViewSounds(g_4ab7e2, 1);
+                }
+                switch (g_4ab7ec) {
+                case 1:
+                    n = g_4ab7da + 1229;
+                    break;
+                default:
+                    n = g_4ab7da + 1215;
+                    break;
+                }
+            } else {
+                switch (g_4ab7ec) {
+                case 1:
+                    n = g_4ab7da + 1243;
+                    break;
+                default:
+                    n = g_4ab7da + 1237;
+                    break;
+                }
+            }
+            view = findView(g_4ab7de);
+            if (view && n) {
+                setViewScript(view, n, 1);
+                view->body.group = g_4ab7f0;
+            }
+        }
+        g_4ab7f2 = 0;
+    }
+    playAmbientSound();
+    if (g_4ab82c < g_4ab82a && clockTime() - g_4ab830 > g_4ab834) {
+        n = 0;
+        g_4ab830 = clockTime();
+        tries = 0;
+        do {
+            tries++;
+            view = idleSnoidView(partyViews[allocateSlot(&g_4ab838, g_4ab82e, 0)]);
+            if (view && viewSnoid(view)->unknownF7 && (view->flags & 1)) {
+                n = viewSnoid(view)->features[3];
+                n += 2019;
+                startSnoidScript(viewSnoid(view), n, 0, 0);
+                g_4ab82c++;
+                n = 1;
+            }
+        } while (!n && tries < 16);
+    }
+    g_4a0f0c = 0;
 }
