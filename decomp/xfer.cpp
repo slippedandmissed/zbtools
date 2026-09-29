@@ -196,6 +196,130 @@ void fn_46b084(char *levels)
     }
 }
 
+/* The map view's placed callback (map g_4b9916, 1-4): picks each cel's
+   image by the places' levels (g_4b98e4): the first ones show the places
+   reached, the rest each place's level. Notes the image of place g_4b991c
+   in g_4b9928 (1-4). */
+/* @zoombi32 0x0046b326 */
+void fn_46b326(View *view)
+{
+    short images[10];
+    short last;
+    short base;
+    short found = 0;
+    short count;
+    short i;
+    short place;
+    ViewCel *cel;
+
+    switch (g_4b9916) {
+    case 1:
+        base = 0;
+        count = 5;
+        last = 8;
+        break;
+    case 2:
+        base = 5;
+        count = 6;
+        last = 9;
+        break;
+    case 3:
+        base = 10;
+        count = 6;
+        last = 9;
+        break;
+    case 4:
+        base = 15;
+        count = 6;
+        last = 9;
+        break;
+    default:
+        return;
+    }
+    images[0] = 0;
+    for (i = 1; i <= last; i++) {
+        images[i] = 0;
+        if (i >= count) {
+            place = g_4a7ee0[0][base + i - count + 1];
+            if (g_4b991c && place == g_4b991c) {
+                g_4b991c = 0;
+                found = i;
+                switch (g_4b9916) {
+                case 1:
+                    switch (found) {
+                    case 5:
+                        g_4b9928 = 1;
+                        break;
+                    case 6:
+                        g_4b9928 = 2;
+                        break;
+                    case 7:
+                        g_4b9928 = 3;
+                        break;
+                    case 8:
+                        g_4b9928 = 4;
+                        break;
+                    }
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                    switch (found) {
+                    case 6:
+                        g_4b9928 = 1;
+                        break;
+                    case 7:
+                        g_4b9928 = 2;
+                        break;
+                    case 8:
+                        g_4b9928 = 3;
+                        break;
+                    case 9:
+                        g_4b9928 = 4;
+                        break;
+                    }
+                    break;
+                }
+            }
+            place = g_4b98e4[place];
+            if (place > 0)
+                images[i] = i + place * 4;
+            else {
+                if (g_4b98dc < 0)
+                    g_4b98dc = 0;
+                if (i == count)
+                    images[i] = g_4b98dc * 4 + i;
+                else if (i > count && place == -1 && images[i - 1] > last)
+                    images[i] = g_4b98dc * 4 + i;
+            }
+        } else if (!base) {
+            if (g_4b98e4[i])
+                images[i] = i;
+        } else {
+            place = g_4a7ee0[0][base + i - 1];
+            if (g_4b98e4[place])
+                images[i] = i;
+            else if (place == 11) {
+                if (g_4b98e4[16])
+                    images[i] = i;
+            } else if (place == 16) {
+                if (g_4b98e4[11])
+                    images[i] = i;
+            }
+        }
+    }
+    cel = view->body.cels;
+    while (cel->image) {
+        if (found && found == cel->image)
+            found = 0;
+        if (images[cel->image]) {
+            cel->image = images[cel->image];
+            cel++;
+        } else
+            removeFirstCel(cel);
+    }
+}
+
 /* A Zoombini's view's script events: 250-253 face it that way; 240-243
    note a way to face (g_4b9904, then 1-4) when it next turns round (0);
    26 faces it left and moves it after g_4b9906; 10-11 start the view of

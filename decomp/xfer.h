@@ -11,7 +11,8 @@ extern short g_4b98d8; /* @data 0x4b98d8: the scene is open */
 extern short g_4b98da; /* @data 0x4b98da: Zoombiniville's population, when the scene opened */
 extern short g_4b98dc; /* @data 0x4b98dc */
 extern long g_4b98e0; /* @data 0x4b98e0 */
-extern char g_4b98e4[17]; /* @data 0x4b98e4 */
+extern char g_4b98e4[17]; /* @data 0x4b98e4: the places' levels (fn_46b084) */
+extern short g_4a7ee0[4][5]; /* @data 0x4a7ee0: the places on each of g_4b9916's maps */
 extern short g_4b98f6; /* @data 0x4b98f6 */
 extern short g_4b98f8[4]; /* @data 0x4b98f8 */
 extern short g_4b9900[2]; /* @data 0x4b9900 */
@@ -50,6 +51,7 @@ void resetScene2();
 void closeScene2();
 void fn_46b761(View *view);
 void fn_46b084(char *levels);
+void fn_46b326(View *view);
 void fn_46b5ce(View *view, short event);
 void fn_46b872(char *grid, unsigned long stride, unsigned long rows, unsigned long columns,
                 unsigned char from1, unsigned char from2, char to1, char to2, char taken1,
