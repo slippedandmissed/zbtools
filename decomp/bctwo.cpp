@@ -179,6 +179,172 @@ void scene5Clicked(short which)
     }
 }
 
+/* The camp's drags (event 1 pressed, 2 dragging): a Zoombini picked out
+   of the book (taken from its entry) or one on the ground is dragged;
+   dropped on an empty cell of the book it goes in it, and a Zoombini
+   picked out of the book goes back if dropped nowhere useful (or with over
+   32 about). g_4ab65c then says whether enough are chosen to leave.
+   Clicking elsewhere starts the camp's thing there (g_4a0c58). */
+/* @zoombi32 0x0041914d */
+void fn_41914d(short event)
+{
+    Point where;
+    ShortRect rect;
+    ShortRect unused; /* only takes stack space */
+    short slot;
+    short added;
+    short picked;
+    short dropped;
+    short place;
+    Snoid *snoid;
+    short moved;
+    View *view;
+    short entry;
+    short i;
+
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        fn_46be2e(0);
+        closeScene5();
+        return;
+    }
+    if (g_4ab662 && event != 2)
+        return;
+    getCursorPosition(&where);
+    picked = 0;
+    view = 0;
+    if (event == 1 && g_4b755a <= 0) {
+        view = viewAt(where, 1, 1);
+        if (!view) {
+            rect.left = rect.right = where.x;
+            rect.top = rect.bottom = where.y;
+            entry = fn_4198be(g_4ab640, rect, 1);
+            if (entry >= 0) {
+                if (g_4ab646 > 0)
+                    g_4ab646--;
+                initSnoid(&g_4ab680);
+                g_4ab680.zoombini = g_4ab64c->entries[entry].zoombini;
+                for (i = 0; i < 10; i++)
+                    g_4ab680.name[i] = g_4ab64c->entries[entry].name[i];
+                g_4ab680.body.x = where.x;
+                g_4ab680.body.y = where.y;
+                g_4ab64c->entries[entry].zoombini = 0;
+                fn_41a225();
+                added = addSnoidView(&g_4ab680, 0);
+                if (added) {
+                    view = findView(added);
+                    g_4a0abc = -1;
+                    picked = 1;
+                    event = 2;
+                }
+            }
+        } else
+            event = 2;
+    }
+    switch (event) {
+    case 1:
+        break;
+    case 2:
+        if (!view && g_4b755a <= 0)
+            view = viewAt(where, 1, 1);
+        if (view) {
+            i = 0;
+            g_4ab654 = 0;
+            g_4ab664 = 1;
+            dropped = dragSnoid(view, where, 0, 0);
+            g_4ab664 = 0;
+            place = heldPlaceNumber();
+            snoid = viewSnoid(view);
+            moved = !(snoid->targetX == snoid->body.x && snoid->targetY == snoid->body.y);
+            snoid->unknownF7 = place > 0;
+            if (snoid->unknownF7)
+                snoid->unknownF8 = 1;
+            rect = view->body.bounds;
+            if (sectRect(&rect, &g_4a0be8)) {
+                rect = view->body.bounds;
+                slot = fn_4198be(g_4ab640, rect, 0);
+                if (slot >= 0) {
+                    fn_419e49(slot);
+                    g_4ab64c->entries[slot].zoombini = viewSnoid(view)->zoombini;
+                    for (i = 0; i < 10; i++)
+                        g_4ab64c->entries[slot].name[i] = viewSnoid(view)->name[i];
+                    deleteView(view->id);
+                    fn_41a225();
+                    g_4a0abc = -1;
+                    picked = 0;
+                    i = 1;
+                }
+            }
+            if (picked) {
+                short back = countSnoidViews() > 32;
+
+                if (!back && !place && moved)
+                    back = 1;
+                if (back) {
+                    g_4ab64c->entries[entry].zoombini = g_4ab680.zoombini;
+                    for (i = 0; i < 10; i++)
+                        g_4ab64c->entries[entry].name[i] = g_4ab680.name[i];
+                    removeView(added, 1);
+                }
+                g_4a0abc = -1;
+            } else if (dropped && !place && moved && !i) {
+                claimPlacedView(dropped, view->id);
+                snoid->unknownF7 = 1;
+                snoid->unknownF8 = 1;
+            }
+            if (g_4ab67e) {
+                short chosen = countChosenSnoids();
+
+                g_4ab65c = chosen
+                           && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c)
+                                      + waitingParties()[0].count
+                                  <= chosen;
+            } else
+                g_4ab65c = countChosenSnoids() >= 16;
+        } else
+            for (i = 0; i < 10; i++)
+                if (ptInRect(&g_4a0c58[i], where)) {
+                    view = findView(g_4ab66a[i]);
+                    if (view && !view->body.running) {
+                        switch (i) {
+                        case 3: {
+                            short script;
+
+                            if (g_4ab666) {
+                                g_4ab666 = 0;
+                                script = 6002;
+                            } else {
+                                g_4ab666 = 1;
+                                script = 6003;
+                            }
+                            setViewScript(view, script, 1);
+                            break;
+                        }
+                        case 1:
+                            if (view->kind == 6013)
+                                setViewScript(view, 6011, 1);
+                            else
+                                setViewScript(view, view->kind + 1, 1);
+                            break;
+                        case 9:
+                            if (!g_4ab668) {
+                                setViewScript(view, 0, 1);
+                                g_4ab668 = 1;
+                            }
+                            break;
+                        default:
+                            setViewScript(view, 0, 1);
+                            break;
+                        }
+                        i = 10;
+                        loadViewSounds(view->id, 1);
+                    }
+                }
+        break;
+    }
+}
+
 /* @zoombi32 0x004196a8 */
 long fn_4196a8(long)
 {

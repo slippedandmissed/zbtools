@@ -31,6 +31,7 @@ extern short g_4ab64a; /* @data 0x4ab64a */
 extern CampEntries *g_4ab64c;
 extern short g_4ab650; /* @data 0x4ab650 */
 extern short g_4ab652; /* @data 0x4ab652 */
+extern long g_4ab654; /* @data 0x4ab654 */
 extern long g_4ab658; /* @data 0x4ab658: BaseCamp.MHK */
 extern short g_4ab660; /* @data 0x4ab660: the scene is open */
 extern short g_4ab65c; /* @data 0x4ab65c */
@@ -39,8 +40,10 @@ extern short g_4ab662; /* @data 0x4ab662 */
 extern short g_4ab664; /* @data 0x4ab664 */
 extern short g_4ab666; /* @data 0x4ab666 */
 extern short g_4ab668; /* @data 0x4ab668 */
+extern short g_4ab66a[10]; /* @data 0x4ab66a: their views */
 extern short g_4ab67c; /* @data 0x4ab67c */
 extern short g_4ab67e; /* @data 0x4ab67e */
+extern Snoid g_4ab680; /* @data 0x4ab680: the Zoombini taken out of the book */
 extern short g_4a0abc; /* @data 0x4a0abc: the scroll button pressed (1-4) */
 extern SceneButton campButtons[7]; /* @data 0x4a0adc: fn_4196b1 draws them */
 extern short g_4a0abe; /* @data 0x4a0abe: the book shows half a line more */
@@ -48,7 +51,8 @@ extern ResourceList *g_4a0ac0; /* @data 0x4a0ac0: the book's images */
 extern ResourceList *g_4a0ac4; /* @data 0x4a0ac4: the camp's images */
 extern short g_4a0ce8; /* @data 0x4a0ce8: in scene5Frame */
 extern ShortRect g_4a0cea; /* @data 0x4a0cea */
-extern ShortRect g_4a0be8; /* @data 0x4a0be8 */
+extern ShortRect g_4a0be8; /* @data 0x4a0be8: the book's area */
+extern ShortRect g_4a0c58[10]; /* @data 0x4a0c58: the camp's things to click */
 extern ShortRect g_4a0d76; /* @data 0x4a0d76 */
 extern short cellX[11]; /* @data 0x4a0cf2: the book's cells' x, by half line */
 extern short cellY[11][5]; /* @data 0x4a0d08: their y, by half line and column */
@@ -61,6 +65,7 @@ void closeScene5();
 void scene5Frame();
 void fn_419c3a(View *view);
 void scene5Clicked(short which);
+void fn_41914d(short event);
 void fn_419a59(View *view, short region);
 void fn_419f3a();
 short fn_41a23b();
