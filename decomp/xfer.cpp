@@ -734,6 +734,72 @@ void fn_46bbce(View *view)
     }
 }
 
+/* A view's draw callback: while it changes, fills in its first cel's
+   image (a grid, the header's words big-endian) 7 thousandths more each
+   time: first setting up the grid (fn_46b872) from where map g_4b9916's
+   place g_4b9928 starts, with marks by g_4b991e's level, then spreading
+   them (fn_46b9a2). */
+/* @zoombi32 0x0046bc51 */
+void fn_46bc51(View *view)
+{
+    char to1;
+    char to2;
+    char taken1;
+    char taken2;
+    ViewCel *cel;
+    short start;
+    unsigned short *header;
+    ImageBank *bank;
+
+    if (!view->changed) {
+        drawCels(view);
+        return;
+    }
+    if (!g_4b992c) {
+        cel = view->body.cels;
+        bank = groupBanks[view->body.scriptGroup];
+        if (cel->image) {
+            start = (g_4b9916 - 1) * 4 + g_4b9928 - 1;
+            if (start < 0 || start > 15)
+                start = 0;
+            switch (g_4b991e) {
+            default:
+                to1 = '.';
+                to2 = '/';
+                taken1 = '0';
+                taken2 = '1';
+                break;
+            case 2:
+                to1 = '0';
+                to2 = '1';
+                taken1 = '2';
+                taken2 = '3';
+                break;
+            case 3:
+                to1 = '2';
+                to2 = '3';
+                taken1 = '4';
+                taken2 = '5';
+                break;
+            case 4:
+                to1 = '4';
+                to2 = '5';
+                taken1 = '6';
+                taken2 = '7';
+                break;
+            }
+            header = (unsigned short *)((char *)bank + bank->offsets[cel->image]);
+            fn_46b872((char *)(header + 4), swapShort(header[2]), swapShort(header[1]),
+                      swapShort(header[0]), 1, 2, to1, to2, taken1, taken2, g_4a7f08[start]);
+        }
+    } else
+        fn_46b9a2(g_4b992c);
+    g_4b992c += 7;
+    if (g_4b992c > 1000)
+        g_4b992c = 1000;
+    drawCels(view);
+}
+
 /* A view update: runs the script, and when due redraws it. */
 /* Not exact: the original keeps `region` in esi (loaded once); here it is
    read from the stack at each use, `register` or not. */

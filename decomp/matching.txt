@@ -1038,6 +1038,7 @@
 0x0046b9a2 fn_46b9a2
 0x0046bb0c fn_46bb0c
 0x0046bbce fn_46bbce
+0x0046bc51 fn_46bc51
 0x0046be28 currentMap
 0x0046be2e fn_46be2e
 0x0046be3d fn_46be3d

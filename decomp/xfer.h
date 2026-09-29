@@ -14,6 +14,7 @@ extern long g_4b98e0; /* @data 0x4b98e0 */
 extern char g_4b98e4[17]; /* @data 0x4b98e4: the places' levels (fn_46b084) */
 extern short g_4a7ede; /* @data 0x4a7ede: in scene2Frame */
 extern short g_4a7ee0[4][5]; /* @data 0x4a7ee0: the places on each of g_4b9916's maps */
+extern Point g_4a7f08[16]; /* @data 0x4a7f08: where each map's grid starts */
 extern short g_4b98f6; /* @data 0x4b98f6 */
 extern short g_4b98f8[4]; /* @data 0x4b98f8 */
 extern short g_4b9900[2]; /* @data 0x4b9900 */
@@ -35,7 +36,7 @@ extern short g_4b9922; /* @data 0x4b9922 */
 extern short g_4b9924; /* @data 0x4b9924 */
 extern short g_4b9926; /* @data 0x4b9926 */
 extern short g_4b9928; /* @data 0x4b9928 */
-extern long g_4b992c; /* @data 0x4b992c */
+extern unsigned long g_4b992c; /* @data 0x4b992c: fn_46bc51's progress (per mille) */
 extern unsigned long g_4b9930; /* @data 0x4b9930 */
 extern unsigned long g_4b9934; /* @data 0x4b9934 */
 extern unsigned long g_4b9938; /* @data 0x4b9938: the grid's stride */
@@ -63,6 +64,7 @@ void fn_46b872(char *grid, unsigned long stride, unsigned long rows, unsigned lo
                 char taken2, Point &start);
 void fn_46bb0c(char *cell, long x, long y);
 void fn_46bbce(View *view);
+void fn_46bc51(View *view);
 void fn_46bdde(View *view, short region);
 long scene2Key(long);
 void fn_46b747(View *, short event);
