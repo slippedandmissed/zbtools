@@ -4,6 +4,8 @@
 
 #include "zoombinis.h"
 #include "bctwo.h"
+#include "features.h"
+#include "sound.h"
 #include "view.h"
 
 /* Resets scene 5's state. */
@@ -58,8 +60,8 @@ void fn_419e49(short n)
     g_4ab642 = g_4ab644 / 5;
     if (g_4ab640 > g_4ab642 - 5)
         g_4ab640 = g_4ab642 - 5;
-    ((short *)g_4ab64c)[0] = g_4ab640;
-    ((short *)g_4ab64c)[1] = g_4ab646;
+    g_4ab64c->row = g_4ab640;
+    g_4ab64c->count = g_4ab646;
 }
 
 /* The index of the last of 625 entries with a value, or 0. */
@@ -67,7 +69,7 @@ void fn_419e49(short n)
 short fn_419f1a()
 {
     for (short i = 0x270; i >= 0; i--)
-        if (g_4ab64c[i].value)
+        if (g_4ab64c->entries[i].zoombini)
             return i;
     return 0;
 }
@@ -80,4 +82,87 @@ void fn_41a225()
 
     if (view)
         view->nextUpdate = 0;
+}
+
+/* Drops the whole rows of empty entries at the start. */
+/* @zoombi32 0x0041a024 */
+void fn_41a024()
+{
+    short searching = 1;
+    short empty = -5;
+    short i;
+
+    for (i = 0; searching && i < 625; i++)
+        if (!g_4ab64c->entries[i].zoombini)
+            empty++;
+        else
+            searching = 0;
+    if (empty >= 5) {
+        empty = empty / 5 * 5;
+        if (empty) {
+            for (i = empty; i < 625; i++) {
+                g_4ab64c->entries[i - empty] = g_4ab64c->entries[i];
+                g_4ab64c->entries[i].zoombini = 0;
+            }
+            g_4ab648 -= empty;
+            g_4ab640 -= empty / 5;
+            if (g_4ab648 < 0)
+                g_4ab648 = 0;
+            if (g_4ab640 < 0)
+                g_4ab640 = 0;
+            g_4ab64c->row = g_4ab640;
+        }
+    }
+}
+
+/* Lights the scroll button pressed (g_4a0abc) if it can scroll that way,
+   with a sound when that changes; `quiet` puts it out. */
+/* @zoombi32 0x0041a11b */
+void fn_41a11b(short quiet, short)
+{
+    short sound = 0;
+    short lit;
+
+    if (g_4a0abc >= 0) {
+        lit = 0;
+        switch (g_4a0abc) {
+        case 1:
+            if (g_4ab640 > 4)
+                lit = 1;
+            break;
+        case 2:
+            if (g_4ab640 > 0)
+                lit = 1;
+            break;
+        case 3:
+            if (g_4ab640 < g_4ab642 - 5 && g_4ab640 + 1 <= 120)
+                lit = 1;
+            break;
+        case 4:
+            if (g_4ab640 < g_4ab642 - 9 && g_4ab640 + 5 <= 120)
+                lit = 1;
+            break;
+        }
+        if (lit != g_4ab652) {
+            g_4ab652 = lit;
+            switch (g_4ab652) {
+            case 0:
+                sound = 2001;
+                break;
+            case 1:
+                sound = 2000;
+                break;
+            }
+        }
+        if (quiet) {
+            if (g_4ab652)
+                sound = 2001;
+            g_4ab652 = 0;
+        }
+        if (sound) {
+            if (sound == 2001)
+                stopSounds(2000, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+            queueViewSound(sound, 0);
+        }
+    }
 }

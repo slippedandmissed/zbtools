@@ -715,13 +715,6 @@ struct Counters
     Triple counters;
 };
 
-/* A 22-byte entry with a value at +4. */
-struct Entry22
-{
-    long unknown0;
-    long value;
-    char unknown8[14];
-};
 
 /* A loaded sound (wave or MIDI), in the list at g_4a00a0. */
 struct Entry
