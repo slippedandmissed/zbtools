@@ -1026,6 +1026,7 @@
 0x00469669 askQuit
 0x004696f0 resetScene2
 0x0046ac6e closeScene2
+0x0046ace4 scene2Frame
 0x0046b00e scene2Clicked
 0x0046b07b scene2Key
 0x0046b084 fn_46b084

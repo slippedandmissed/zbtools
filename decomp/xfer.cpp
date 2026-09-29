@@ -6,6 +6,7 @@
 
 #include "zoombinis.h"
 #include "basecamp.h"
+#include "debug.h"
 #include "e2memory.h"
 #include "features.h"
 #include "module_4623b8.h"
@@ -403,6 +404,106 @@ void fn_46b761(View *view)
     }
 }
 
+/* Scene 2's frame: leaves for the scene due; else goes on to scene
+   g_4b0d54 after 300 ticks (and sound g_4b9914), and now and then starts
+   something moving: the next of the party (with fn_46b5ce), one of the
+   views g_4b98f8 or g_4b98f6, or g_4b990a's once g_4b9908 passes 4. */
+/* @zoombi32 0x0046ace4 */
+void scene2Frame()
+{
+    View *view;
+    Snoid *snoid;
+
+    if (g_4a7ede || !g_4b98d8)
+        return;
+    g_4a7ede = 1;
+    updateViews();
+    if (g_4b0d52) {
+        g_4b0d50 = g_4b0d52;
+        g_4b0d52 = 0;
+        if (g_4a7e68) {
+            g_4a7e68 = 0;
+            g_4b0d50 = 1;
+        }
+        fn_46be2e(0);
+        closeScene2();
+        g_4a7ede = 0;
+        return;
+    }
+    if (!g_4b9684) {
+        if (g_4b87fe && g_4b9914) {
+            if (!isSoundPlaying(g_4b9914, RESOURCE_TYPE(0, 'S', 'N', 'D')) && viewClock() > 300)
+                g_4b0d52 = g_4b0d54;
+        } else if (viewClock() > 300)
+            g_4b0d52 = g_4b0d54;
+        if (!g_4b0d52 && clockTime() > g_4b98e0) {
+            if (g_4b9908 > 4) {
+                g_4b9908 = -1;
+                view = findView(g_4b990a);
+                if (view) {
+                    setViewScript(view, 0, 1);
+                    view->notify = fn_46b747;
+                }
+            }
+            if (!g_4b9916) {
+                g_4b98e0 = randomBetween(3, 6) * 30 + clockTime();
+                if (randomBetween(1, 100) > 40 || !g_4b9912) {
+                    g_4b9912 = 1;
+                    if (g_4b9918 < g_4b991a) {
+                        view = findView(partyViews[g_4b9918]);
+                        if (view) {
+                            snoid = viewSnoid(view);
+                            snoid->unknownF2 = 0;
+                            snoid->unknownF0 = 0;
+                            startSnoidScript(snoid, snoid->features[3] + 5199, 0, 1);
+                            view->notify = fn_46b5ce;
+                            view->notifyEnd = 1;
+                        }
+                        g_4b9918++;
+                    }
+                } else {
+                    short n = randomBetween(0, 4);
+
+                    switch (n) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        view = findView(g_4b98f8[n]);
+                        if (view && !view->body.running)
+                            setViewScript(view, 0, 1);
+                        break;
+                    case 4:
+                        if (g_4b9910) {
+                            g_4b9910 = 0;
+                            view = findView(g_4b98f6);
+                            if (view && !view->body.running) {
+                                view->flags = 0x188000;
+                                setViewScript(view, 0, 1);
+                            }
+                        }
+                        break;
+                    }
+                }
+            } else if (g_4b9916 == 5) {
+                g_4b98e0 = randomBetween(3, 6) * 40 + clockTime();
+                if (g_4b9918 < g_4b991a) {
+                    view = findView(partyViews[g_4b9918]);
+                    if (view) {
+                        snoid = viewSnoid(view);
+                        snoid->unknownF2 = 0;
+                        startSnoidScript(snoid, snoid->features[3] + 6199, 0, 1);
+                        view->notify = fn_46b5ce;
+                        view->notifyEnd = 1;
+                    }
+                    g_4b9918++;
+                }
+            }
+        }
+    }
+    g_4a7ede = 0;
+}
+
 /* Scene 2's clicks: once a scene is due (g_4b0d52), leaves for it (for
    scene 1 if g_4a7e68); 1 goes on to scene g_4b0d54. */
 /* @zoombi32 0x0046b00e */
@@ -476,9 +577,9 @@ unsigned long fn_46b9a2(long permille)
 }
 
 /* @zoombi32 0x0046b747 */
-void fn_46b747(long, short id)
+void fn_46b747(View *, short event)
 {
-    if (id == 30)
+    if (event == 30)
         g_4b0d52 = g_4b0d54;
 }
 

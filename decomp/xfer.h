@@ -12,6 +12,7 @@ extern short g_4b98da; /* @data 0x4b98da: Zoombiniville's population, when the s
 extern short g_4b98dc; /* @data 0x4b98dc */
 extern long g_4b98e0; /* @data 0x4b98e0 */
 extern char g_4b98e4[17]; /* @data 0x4b98e4: the places' levels (fn_46b084) */
+extern short g_4a7ede; /* @data 0x4a7ede: in scene2Frame */
 extern short g_4a7ee0[4][5]; /* @data 0x4a7ee0: the places on each of g_4b9916's maps */
 extern short g_4b98f6; /* @data 0x4b98f6 */
 extern short g_4b98f8[4]; /* @data 0x4b98f8 */
@@ -21,6 +22,7 @@ extern short g_4b9906; /* @data 0x4b9906 */
 extern short g_4b9908; /* @data 0x4b9908 */
 extern short g_4b990a; /* @data 0x4b990a */
 extern short g_4b990c[3]; /* @data 0x4b990c */
+extern short g_4b9910; /* @data 0x4b9910 */
 extern short g_4b9912; /* @data 0x4b9912 */
 extern short g_4b9914; /* @data 0x4b9914 */
 extern short g_4b9916; /* @data 0x4b9916 */
@@ -52,6 +54,7 @@ void closeScene2();
 void fn_46b761(View *view);
 void fn_46b084(char *levels);
 void fn_46b326(View *view);
+void scene2Frame();
 void scene2Clicked(short which);
 unsigned long fn_46b9a2(long permille);
 void fn_46b5ce(View *view, short event);
@@ -62,6 +65,6 @@ void fn_46bb0c(char *cell, long x, long y);
 void fn_46bbce(View *view);
 void fn_46bdde(View *view, short region);
 long scene2Key(long);
-void fn_46b747(long, short id);
+void fn_46b747(View *, short event);
 
 #endif
