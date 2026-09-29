@@ -15,6 +15,7 @@
 #include "platform.h"
 #include "snoids.h"
 #include "sound.h"
+#include "town.h"
 #include "view.h"
 
 /* Resets the Zoombini being made (g_4b1484): no features, a new name. */

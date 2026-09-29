@@ -26,13 +26,16 @@ _SHARED = '#include "zoombinis.h"\n'
 _MODULE_INCLUDE = re.compile(r'^#include "(\w+)\.h"\n', re.MULTILINE)
 _STRUCT = re.compile(r"^struct\s+(\w+)", re.MULTILINE)
 _IDENTIFIER = re.compile(r"\b\w+\b")
+_INLINE = re.compile(r"^inline\b[^(;{]*?\b(\w+)\s*\(", re.MULTILINE)
 
 
 def declared_names(header: str) -> set[str]:
-    """What a module header declares: functions, globals and structs."""
+    """What a module header declares: functions (inline ones too), globals
+    and structs."""
     names = {prototype.name for prototype in declarations.prototypes_in(header)}
     names |= set(declarations.extern_names_in(header))
     names |= set(_STRUCT.findall(header))
+    names |= set(_INLINE.findall(header))
     return names
 
 

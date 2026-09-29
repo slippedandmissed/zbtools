@@ -11,6 +11,11 @@ struct PickerData
 
 extern PickerData pickerData; /* @data 0x4af8ac */
 extern short g_4afb14;
+
+inline short &pickerCount()
+{
+    return *(short *)(g_4a4ba0 + 0x4e);
+}
 void closeScene19();
 short fn_43297f();
 
@@ -25,6 +30,7 @@ def test_declared_names() -> None:
         "g_4afb14",
         "closeScene19",
         "fn_43297f",
+        "pickerCount",
     }
 
 
