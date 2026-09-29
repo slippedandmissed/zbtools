@@ -49,6 +49,213 @@ long fn_46b07b(long)
     return 0;
 }
 
+/* Fills `levels` (17) with the highest level (1-4) each place has
+   reached, by the game state's bits (or all g_4b754a); then notes the
+   place of scene g_4b0d54 in g_4b991c, and its level in g_4b991e. */
+/* @zoombi32 0x0046b084 */
+void fn_46b084(char *levels)
+{
+    short i;
+    short bits;
+    short value;
+    short saved;
+
+    for (i = 0; i <= 16; i++) {
+        if (g_4b754a)
+            value = g_4b754a;
+        else {
+            value = bits = 0;
+            switch (i) {
+            case 0:
+                bits = 1;
+                break;
+            case 1:
+            case 2:
+            case 3:
+                bits = g_4a4ba0[0x55 + i] & 0xf;
+                break;
+            case 4:
+                bits = g_4a4ba0[0x50] & 0xf;
+                break;
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+                bits = g_4a4ba0[0x54 + i] & 0xf;
+                break;
+            case 11:
+                bits = *(short *)(g_4a4ba0 + 0x52) & 0xf;
+                break;
+            case 12:
+            case 13:
+            case 14:
+                bits = g_4a4ba0[0x53 + i] & 0xf;
+                break;
+            case 15:
+                bits = g_4a4ba0[0x51] & 0xf;
+                break;
+            case 16:
+                bits = *(short *)(g_4a4ba0 + 0x52) & 0xf0;
+                bits = bits >> 4;
+                break;
+            }
+            if (bits & 1)
+                value = 1;
+            if (bits & 2)
+                value = 2;
+            if (bits & 4)
+                value = 3;
+            if (bits & 8)
+                value = 4;
+        }
+        levels[i] = value;
+    }
+    g_4b991c = i = 0;
+    saved = currentScene;
+    currentScene = g_4b0d54;
+    value = sceneLevel() + 1;
+    currentScene = saved;
+    switch (g_4b0d54) {
+    case 7:
+        i = 1;
+        bits = value;
+        break;
+    case 8:
+        i = 2;
+        bits = levels[1];
+        break;
+    case 9:
+        i = 3;
+        bits = levels[2];
+        break;
+    case 4:
+        i = 4;
+        bits = levels[3];
+        break;
+    case 10:
+        i = 5;
+        bits = value;
+        break;
+    case 11:
+        i = 6;
+        bits = levels[5];
+        break;
+    case 12:
+        i = 7;
+        bits = levels[6];
+        break;
+    case 5:
+        if (g_4b0d56 == 12) {
+            i = 11;
+            bits = levels[7];
+        } else {
+            i = 16;
+            bits = levels[10];
+        }
+        break;
+    case 13:
+        i = 8;
+        bits = value;
+        break;
+    case 14:
+        i = 9;
+        bits = levels[8];
+        break;
+    case 15:
+        i = 10;
+        bits = levels[9];
+        break;
+    case 16:
+        i = 12;
+        bits = value;
+        break;
+    case 17:
+        i = 13;
+        bits = levels[12];
+        break;
+    case 18:
+        i = 14;
+        bits = levels[13];
+        break;
+    case 6:
+        i = 15;
+        bits = levels[14];
+        break;
+    }
+    if (i) {
+        g_4b991c = i;
+        g_4b991e = bits;
+        levels[i] = bits - 1;
+        if (levels[i] < 1) {
+            if (g_4b98dc < 0)
+                g_4b98dc = bits - 1;
+            levels[i] = -1;
+        }
+    }
+}
+
+/* A Zoombini's view's script events: 250-253 face it that way; 240-243
+   note a way to face (g_4b9904, then 1-4) when it next turns round (0);
+   26 faces it left and moves it after g_4b9906; 10-11 start the view of
+   g_4b9900 for g_4b990c; 50 counts one more in town and starts
+   g_4b9926's view. */
+/* @zoombi32 0x0046b5ce */
+void fn_46b5ce(View *view, short event)
+{
+    Snoid *snoid = viewSnoid(view);
+    View *started;
+
+    switch (event) {
+    case 250:
+    case 251:
+    case 252:
+    case 253:
+        setSnoidFacing(snoid, event - 250);
+        break;
+    case 240:
+    case 241:
+    case 242:
+    case 243:
+        g_4b9904 = event - 239;
+        break;
+    case 26:
+        setSnoidFacing(snoid, 0);
+        moveView(view->id, 0, g_4b9906);
+        if (g_4b9908 >= 0)
+            g_4b9908++;
+        break;
+    case 0:
+        snoid->unknownF2 = !snoid->unknownF2;
+        if (g_4b9904) {
+            setSnoidFacing(snoid, g_4b9904 - 1);
+            g_4b9904 = 0;
+        }
+        snoid->unknownF0++;
+        if (!g_4b9916 && snoid->unknownF0 == 2)
+            moveView(view->id, 1, g_4b9906);
+        break;
+    case 10:
+    case 11:
+        if (g_4b990c[event - 10]) {
+            g_4b990c[event - 10] = 0;
+            started = findView(g_4b9900[event - 10]);
+            if (started) {
+                started->flags = 0x188000;
+                setViewScript(started, 0, 1);
+            }
+        }
+        break;
+    case 50:
+        g_4b98da++;
+        startView(g_4b9926, 0, 0, 0);
+        break;
+    case -1:
+        break;
+    }
+}
+
 /* Draws the population sign's view while it runs (then stops it): its
    cels and "zoombiniville population N", straight to the screen. */
 /* @zoombi32 0x0046b761 */

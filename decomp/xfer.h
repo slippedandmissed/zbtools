@@ -26,6 +26,7 @@ extern short g_4b9916; /* @data 0x4b9916 */
 extern short g_4b9918; /* @data 0x4b9918 */
 extern short g_4b991a; /* @data 0x4b991a */
 extern short g_4b991c; /* @data 0x4b991c */
+extern short g_4b991e; /* @data 0x4b991e */
 extern short g_4b9920; /* @data 0x4b9920 */
 extern short g_4b9922; /* @data 0x4b9922 */
 extern short g_4b9924; /* @data 0x4b9924 */
@@ -48,6 +49,8 @@ extern char g_4b99c3; /* @data 0x4b99c3 */
 void resetScene2();
 void closeScene2();
 void fn_46b761(View *view);
+void fn_46b084(char *levels);
+void fn_46b5ce(View *view, short event);
 void fn_46b872(char *grid, unsigned long stride, unsigned long rows, unsigned long columns,
                 unsigned char from1, unsigned char from2, char to1, char to2, char taken1,
                 char taken2, Point &start);
