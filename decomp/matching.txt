@@ -300,8 +300,12 @@
 0x004183ad updateCampScroll
 0x004184b7 fn_4184b7
 0x004184cd returnToCamp
+0x00418698 resetScene5
 0x004196a8 fn_4196a8
+0x00419867 fn_419867
+0x00419e49 fn_419e49
 0x00419f1a fn_419f1a
+0x0041a225 fn_41a225
 0x0041a404 startBridgeTimer
 0x0041a40f bridgeTimer
 0x0041a41b resetScene7
