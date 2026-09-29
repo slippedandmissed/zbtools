@@ -1025,6 +1025,7 @@
 0x00469627 askSaveGame
 0x00469669 askQuit
 0x004696f0 resetScene2
+0x004697f1 openScene2
 0x0046ac6e closeScene2
 0x0046ace4 scene2Frame
 0x0046b00e scene2Clicked

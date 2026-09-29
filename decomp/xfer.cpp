@@ -9,6 +9,9 @@
 #include "debug.h"
 #include "e2memory.h"
 #include "features.h"
+#include "focus.h"
+#include "game.h"
+#include "graphics.h"
 #include "module_4623b8.h"
 #include "snoids.h"
 #include "sound.h"
@@ -581,6 +584,807 @@ void fn_46b747(View *, short event)
 {
     if (event == 30)
         g_4b0d52 = g_4b0d54;
+}
+
+/* Opens scene 2, the journey on from a place (route g_4a7e68, 1-16: from
+   scene g_4b0d56 to g_4b0d54): the backdrop, views and sounds of the map
+   the next place is on (g_4b9916: 0 Zoombini Isle, 1-4 the maps, 5 the
+   town), a sound chosen by the camp's hint and the level, the party and,
+   on the maps, the grid being filled in under the map's name. */
+/* @zoombi32 0x004697f1 */
+void openScene2()
+{
+    short mapView;
+    short visits;
+    short to;
+    Point places[16];
+    short from;
+    short fromPlace;
+    short toPlace;
+    short scene;
+    short level;
+    short hint;
+    short scripts;
+    short backdrop;
+    short group;
+    short i;
+    View *view;
+    Font *font;
+
+    g_4b98d8 = 0;
+    g_4a7d3c++;
+    resetScene2();
+    addSoundRange(20000, 29999, 1);
+    setViewsLocked(0);
+    openGameFile(&g_4b98d4, "xfer.MHK");
+    fn_46be2e(g_4b98d4);
+    switch (g_4a7e68) {
+    case 1:
+        from = 3;
+        to = 7;
+        fromPlace = 0;
+        toPlace = 1;
+        break;
+    case 2:
+        from = 7;
+        to = 8;
+        fromPlace = 1;
+        toPlace = 2;
+        break;
+    case 3:
+        from = 8;
+        to = 9;
+        fromPlace = 2;
+        toPlace = 3;
+        break;
+    case 4:
+        from = 9;
+        to = 4;
+        fromPlace = 3;
+        toPlace = 4;
+        break;
+    case 5:
+        from = 4;
+        to = 10;
+        fromPlace = 4;
+        toPlace = 5;
+        break;
+    case 6:
+        from = 10;
+        to = 11;
+        fromPlace = 5;
+        toPlace = 6;
+        break;
+    case 7:
+        from = 11;
+        to = 12;
+        fromPlace = 6;
+        toPlace = 7;
+        break;
+    case 8:
+        from = 12;
+        to = 5;
+        fromPlace = 7;
+        toPlace = 11;
+        break;
+    case 9:
+        from = 4;
+        to = 13;
+        fromPlace = 4;
+        toPlace = 8;
+        break;
+    case 10:
+        from = 13;
+        to = 14;
+        fromPlace = 8;
+        toPlace = 9;
+        break;
+    case 11:
+        from = 14;
+        to = 15;
+        fromPlace = 9;
+        toPlace = 10;
+        break;
+    case 12:
+        from = 15;
+        to = 5;
+        fromPlace = 10;
+        toPlace = 16;
+        break;
+    case 13:
+        from = 5;
+        to = 16;
+        fromPlace = 11;
+        toPlace = 12;
+        break;
+    case 14:
+        from = 16;
+        to = 17;
+        fromPlace = 12;
+        toPlace = 13;
+        break;
+    case 15:
+        from = 17;
+        to = 18;
+        fromPlace = 13;
+        toPlace = 14;
+        break;
+    case 16:
+        from = 18;
+        to = 6;
+        fromPlace = 14;
+        toPlace = 15;
+        break;
+    default:
+        from = 0;
+        break;
+    }
+    if (from) {
+        g_4b0d56 = from;
+        g_4b0d54 = to;
+        fn_46b084(g_4b98e4);
+        if (g_4b98e4[fromPlace] < 0)
+            g_4b98e4[fromPlace] = 1;
+        g_4b98dc = g_4b98e4[toPlace];
+        g_4b98e4[toPlace] = -1;
+    } else
+        fn_46b084(g_4b98e4);
+    switch (g_4b0d54) {
+    case 5:
+        g_4b9916 = 2;
+        if (g_4b0d56 == 15)
+            g_4b9916 = 3;
+        visits = *(short *)(g_4a4ba0 + 0x3e);
+        break;
+    case 7:
+        g_4b9916 = 0;
+        visits = *(short *)(g_4a4ba0 + 0x2a);
+        break;
+    case 8:
+        g_4b9916 = 1;
+        visits = *(short *)(g_4a4ba0 + 0x2c);
+        break;
+    case 9:
+        g_4b9916 = 1;
+        visits = *(short *)(g_4a4ba0 + 0x2e);
+        break;
+    case 4:
+        g_4b9916 = 1;
+        visits = *(short *)(g_4a4ba0 + 0x30);
+        break;
+    case 10:
+        g_4b9916 = 2;
+        visits = *(short *)(g_4a4ba0 + 0x32);
+        break;
+    case 11:
+        g_4b9916 = 2;
+        visits = *(short *)(g_4a4ba0 + 0x34);
+        break;
+    case 12:
+        g_4b9916 = 2;
+        visits = *(short *)(g_4a4ba0 + 0x36);
+        break;
+    case 13:
+        g_4b9916 = 3;
+        visits = *(short *)(g_4a4ba0 + 0x38);
+        break;
+    case 14:
+        g_4b9916 = 3;
+        visits = *(short *)(g_4a4ba0 + 0x3a);
+        break;
+    case 15:
+        g_4b9916 = 3;
+        visits = *(short *)(g_4a4ba0 + 0x3c);
+        break;
+    case 16:
+        g_4b9916 = 4;
+        visits = *(short *)(g_4a4ba0 + 0x40);
+        break;
+    case 17:
+        g_4b9916 = 4;
+        visits = *(short *)(g_4a4ba0 + 0x42);
+        break;
+    case 18:
+        g_4b9916 = 4;
+        visits = *(short *)(g_4a4ba0 + 0x44);
+        break;
+    case 6:
+        visits = *(short *)(g_4a4ba0 + 0x46);
+        g_4b9916 = 5;
+        break;
+    }
+    scene = currentScene;
+    currentScene = g_4b0d54;
+    level = sceneLevel() + 1;
+    hint = campHint(&visits);
+    currentScene = scene;
+    scripts = 0;
+    switch (g_4b9916) {
+    case 0:
+        switch (hint) {
+        case 0:
+            if (level >= 2 && level <= 3)
+                switch (randomBetween(1, 6)) {
+                case 1:
+                    g_4b9914 = 20094;
+                    break;
+                case 2:
+                    g_4b9914 = 20095;
+                    break;
+                case 3:
+                    g_4b9914 = 20096;
+                    break;
+                case 4:
+                    g_4b9914 = 20097;
+                    break;
+                case 5:
+                    g_4b9914 = 20098;
+                    break;
+                case 6:
+                    g_4b9914 = 20099;
+                    break;
+                }
+            else
+                switch (randomBetween(1, 5)) {
+                case 1:
+                    g_4b9914 = 20094;
+                    break;
+                case 2:
+                    g_4b9914 = 20095;
+                    break;
+                case 3:
+                    g_4b9914 = 20096;
+                    break;
+                case 4:
+                    g_4b9914 = 20097;
+                    break;
+                case 5:
+                    g_4b9914 = 20099;
+                    break;
+                }
+            break;
+        case 1:
+            g_4b9914 = 20094;
+            break;
+        case 2:
+        case 12:
+            g_4b9914 = 20098;
+            break;
+        case 5:
+            if (level >= 2 && level <= 3)
+                g_4b9914 = 20098;
+            else
+                g_4b9914 = 20094;
+            break;
+        }
+        backdrop = 5000;
+        scripts = 9;
+        break;
+    case 1:
+        switch (g_4b0d54) {
+        case 8:
+            switch (hint) {
+            default:
+                switch (randomBetween(1, 3)) {
+                case 1:
+                    g_4b9914 = 20007;
+                    break;
+                case 2:
+                    g_4b9914 = 20008;
+                    break;
+                case 3:
+                    g_4b9914 = 20009;
+                    break;
+                }
+                break;
+            case 1:
+            case 2:
+            case 5:
+                g_4b9914 = 20008;
+                break;
+            }
+            break;
+        case 9:
+            switch (hint) {
+            default:
+                if (level >= 2)
+                    switch (randomBetween(1, 2)) {
+                    case 1:
+                        g_4b9914 = 20011;
+                        break;
+                    case 2:
+                        g_4b9914 = 20012;
+                        break;
+                    }
+                else
+                    switch (randomBetween(1, 2)) {
+                    case 1:
+                        g_4b9914 = 20010;
+                        break;
+                    case 2:
+                        g_4b9914 = 20012;
+                        break;
+                    }
+                break;
+            case 1:
+                g_4b9914 = 20010;
+                break;
+            case 2:
+            case 12:
+                g_4b9914 = 20011;
+                break;
+            case 5:
+                if (level >= 2)
+                    g_4b9914 = 20011;
+                else
+                    g_4b9914 = 20010;
+                break;
+            }
+            break;
+        case 4:
+            switch (randomBetween(1, 2)) {
+            case 1:
+                g_4b9914 = 20009;
+                break;
+            case 2:
+                g_4b9914 = 20012;
+                break;
+            }
+            break;
+        }
+        backdrop = 1000;
+        scripts = 3;
+        break;
+    case 2:
+        switch (g_4b0d54) {
+        case 10:
+            switch (hint) {
+            case 0:
+                if (level >= 2)
+                    switch (randomBetween(1, 4)) {
+                    case 1:
+                        g_4b9914 = 20013;
+                        break;
+                    case 2:
+                        g_4b9914 = 20014;
+                        break;
+                    case 3:
+                        g_4b9914 = 20015;
+                        break;
+                    case 4:
+                        g_4b9914 = 20016;
+                        break;
+                    }
+                else
+                    switch (randomBetween(1, 3)) {
+                    case 1:
+                        g_4b9914 = 20013;
+                        break;
+                    case 2:
+                        g_4b9914 = 20014;
+                        break;
+                    case 3:
+                        g_4b9914 = 20016;
+                        break;
+                    }
+                break;
+            case 1:
+            case 5:
+                g_4b9914 = 20014;
+                break;
+            case 2:
+            case 12:
+                g_4b9914 = 20015;
+                break;
+            }
+            break;
+        case 11:
+            switch (hint) {
+            case 0:
+                if (level >= 2)
+                    switch (randomBetween(1, 4)) {
+                    case 1:
+                        g_4b9914 = 20017;
+                        break;
+                    case 2:
+                        g_4b9914 = 20018;
+                        break;
+                    case 3:
+                        g_4b9914 = 20019;
+                        break;
+                    case 4:
+                        g_4b9914 = 20020;
+                        break;
+                    }
+                else
+                    switch (randomBetween(1, 3)) {
+                    case 1:
+                        g_4b9914 = 20017;
+                        break;
+                    case 2:
+                        g_4b9914 = 20018;
+                        break;
+                    case 3:
+                        g_4b9914 = 20020;
+                        break;
+                    }
+                break;
+            case 1:
+                g_4b9914 = 20018;
+                break;
+            case 2:
+            case 12:
+                g_4b9914 = 20019;
+                break;
+            case 5:
+                if (level >= 2)
+                    g_4b9914 = 20019;
+                else
+                    g_4b9914 = 20018;
+                break;
+            }
+            break;
+        case 12:
+            switch (hint) {
+            case 0:
+                switch (randomBetween(1, 3)) {
+                case 1:
+                    g_4b9914 = 20021;
+                    break;
+                case 2:
+                    g_4b9914 = 20022;
+                    break;
+                case 3:
+                    g_4b9914 = 20024;
+                    break;
+                }
+                break;
+            case 1:
+            case 2:
+            case 5:
+            case 12:
+                g_4b9914 = 20022;
+                break;
+            }
+            break;
+        case 5:
+            switch (randomBetween(1, 3)) {
+            case 1:
+                g_4b9914 = 20016;
+                break;
+            case 2:
+                g_4b9914 = 20020;
+                break;
+            case 3:
+                g_4b9914 = 20024;
+                break;
+            }
+            break;
+        }
+        backdrop = 2000;
+        scripts = 3;
+        break;
+    case 3:
+        switch (g_4b0d54) {
+        case 13:
+            switch (hint) {
+            case 0:
+                if (level == 1 || level == 3)
+                    switch (randomBetween(1, 3)) {
+                    case 1:
+                        g_4b9914 = 20025;
+                        break;
+                    case 2:
+                        g_4b9914 = 20026;
+                        break;
+                    case 3:
+                        g_4b9914 = 20028;
+                        break;
+                    }
+                else
+                    switch (randomBetween(1, 4)) {
+                    case 1:
+                        g_4b9914 = 20025;
+                        break;
+                    case 2:
+                        g_4b9914 = 20026;
+                        break;
+                    case 3:
+                        g_4b9914 = 20027;
+                        break;
+                    case 4:
+                        g_4b9914 = 20028;
+                        break;
+                    }
+                break;
+            case 1:
+            case 5:
+                g_4b9914 = 20026;
+                break;
+            case 2:
+            case 12:
+                g_4b9914 = 20026;
+                break;
+            }
+            break;
+        case 14:
+            switch (hint) {
+            case 0:
+                switch (randomBetween(1, 3)) {
+                case 1:
+                    g_4b9914 = 20029;
+                    break;
+                case 2:
+                    g_4b9914 = 20030;
+                    break;
+                case 3:
+                    g_4b9914 = 20031;
+                    break;
+                }
+                break;
+            case 1:
+            case 2:
+            case 5:
+            case 12:
+                g_4b9914 = 20030;
+                break;
+            }
+            break;
+        case 15:
+            switch (hint) {
+            case 0:
+                switch (randomBetween(1, 3)) {
+                case 1:
+                    g_4b9914 = 20032;
+                    break;
+                case 2:
+                    g_4b9914 = 20033;
+                    break;
+                case 3:
+                    g_4b9914 = 20034;
+                    break;
+                }
+                break;
+            case 1:
+            case 2:
+            case 5:
+            case 12:
+                g_4b9914 = 20033;
+                break;
+            }
+            break;
+        case 5:
+            switch (randomBetween(1, 3)) {
+            case 1:
+                g_4b9914 = 20028;
+                break;
+            case 2:
+                g_4b9914 = 20031;
+                break;
+            case 3:
+                g_4b9914 = 20034;
+                break;
+            }
+            break;
+        }
+        backdrop = 3000;
+        scripts = 3;
+        break;
+    case 4:
+        switch (g_4b0d54) {
+        case 16:
+            switch (hint) {
+            case 0:
+                switch (randomBetween(1, 3)) {
+                case 1:
+                    g_4b9914 = 20035;
+                    break;
+                case 2:
+                    g_4b9914 = 20036;
+                    break;
+                case 3:
+                    g_4b9914 = 20037;
+                    break;
+                }
+                break;
+            case 1:
+            case 2:
+            case 5:
+            case 12:
+                g_4b9914 = 20036;
+                break;
+            }
+            break;
+        case 17:
+            switch (hint) {
+            case 0:
+                if (level >= 2)
+                    switch (randomBetween(1, 4)) {
+                    case 1:
+                        g_4b9914 = 20000;
+                        break;
+                    case 2:
+                        g_4b9914 = 20001;
+                        break;
+                    case 3:
+                        g_4b9914 = 20002;
+                        break;
+                    case 4:
+                        g_4b9914 = 20003;
+                        break;
+                    }
+                else
+                    switch (randomBetween(1, 3)) {
+                    case 1:
+                        g_4b9914 = 20000;
+                        break;
+                    case 2:
+                        g_4b9914 = 20001;
+                        break;
+                    case 3:
+                        g_4b9914 = 20003;
+                        break;
+                    }
+                break;
+            case 1:
+                g_4b9914 = 20002;
+                break;
+            case 2:
+            case 5:
+            case 12:
+                if (level >= 2)
+                    g_4b9914 = 20002;
+                else
+                    g_4b9914 = 20001;
+                break;
+            }
+            break;
+        case 18:
+            switch (hint) {
+            case 0:
+                switch (randomBetween(1, 3)) {
+                case 1:
+                    g_4b9914 = 20004;
+                    break;
+                case 2:
+                    g_4b9914 = 20005;
+                    break;
+                case 3:
+                    g_4b9914 = 20006;
+                    break;
+                }
+                break;
+            case 1:
+            case 2:
+            case 5:
+            case 12:
+                g_4b9914 = 20005;
+                break;
+            }
+            break;
+        }
+        backdrop = 4000;
+        scripts = 3;
+        break;
+    case 5:
+        switch (hint) {
+        default:
+            switch (randomBetween(1, 4)) {
+            case 1:
+                g_4b9914 = 20100;
+                break;
+            case 2:
+                g_4b9914 = 20101;
+                break;
+            case 3:
+                g_4b9914 = 20102;
+                break;
+            case 4:
+                g_4b9914 = 20103;
+                break;
+            }
+            /* falls through: always 20100 */
+        case 1:
+        case 5:
+            g_4b9914 = 20100;
+            break;
+        }
+        backdrop = 6000;
+        scripts = 9;
+        break;
+    }
+    group = backdrop + 100;
+    mapView = 0;
+    drawBackdrop(backdrop);
+    if (scripts) {
+        loadFeatureGroup(group, 0, 0);
+        loadScripts(group, scripts);
+        if (backdrop >= 1000 && backdrop <= 4000) {
+            g_4b9920 = backdrop + 200;
+            loadFeatureGroup(g_4b9920, 1, 0);
+            addScripts(g_4b9920, 1, 0);
+        }
+        fn_4148da(10, 236);
+        if (!g_4b9916) {
+            for (i = 5102; i <= 5103; i++)
+                g_4b9900[i - 5102] = addView(0x1188000, drawCels, runViewScript, i, 6, 0, 0, 0);
+            for (i = 5104; i <= 5107; i++)
+                g_4b98f8[i - 5104] = addView(0x1188000, drawCels, runViewScript, i, 6, 0, 0, 0);
+            g_4b98f6 = addView(0x1188000, drawCels, runViewScript, 5108, 6, 0, 0, 0);
+            useAltSnoids(0);
+            for (i = 0; i < 16; i++) {
+                places[i].x = 200;
+                places[i].y = 235;
+            }
+            setViewPlaces(16, places, 1);
+            makePartySnoids(0);
+            g_4b9906 = addView(0, drawCels, runViewScript, 5100, 0, 0, 0, 0);
+            addView(0, drawCels, runViewScript, 5101, 0, 0, 0, 0);
+            loadSnoidScripts(5199, 1, 0);
+            addSnoidScripts(5200, 5, 0);
+        } else if (g_4b9916 < 5) {
+            mapView = addView(0xc10c000, drawCels, runViewScript, group, 6, 0, 0, 0);
+            view = findView(mapView);
+            if (view)
+                view->placed = fn_46b326;
+        } else {
+            g_4b990a = addView(0x1188000, drawCels, runViewScript, 6108, 6, 0, 0, 0);
+            g_4b9926 = addView(0, fn_46b761, runViewScript, 6105, 0, 0, 0, 0);
+            g_4b9906 = addView(0, drawCels, runViewScript, 6104, 0, 0, 0, 0);
+            for (i = 0; i < 16; i++) {
+                places[i].x = -22;
+                places[i].y = randomBetween(0, 3) * 6 + 282;
+            }
+            setViewPlaces(16, places, 1);
+            makePartySnoids(0);
+            for (i = 6100; i <= 6103; i++)
+                addView(0, drawCels, runViewScript, i, 0, 0, 0, 0);
+            loadSnoidScripts(5199, 1, 0);
+            addSnoidScripts(6200, 5, 0);
+            g_4b9922 = addView(0x1180000, drawCels, runViewScript, 6106, 6, 0, 0, 0);
+            g_4b9924 = addView(0x1180000, drawCels, runViewScript, 6107, 6, 0, 0, 0);
+        }
+    } else
+        fn_4148da(10, 236);
+    if (g_4b9916 >= 1 && g_4b9916 <= 4) {
+        g_4b9920 = addView(0x4000000, fn_46bc51, fn_46bdde, g_4b9920, 4, 0, 0, 0);
+        view = findView(g_4b9920);
+        if (view)
+            view->placed = fn_46bbce;
+        for (i = 0; i < 16; i++) {
+            places[i].x = -22;
+            places[i].y = 445;
+        }
+        setViewPlaces(16, places, 1);
+        makePartySnoids(0);
+        addView(0, drawCels, runViewScript, group + 1, 0, 0, 0, 0);
+        addView(0, drawCels, runViewScript, group + 2, 0, 0, 0, 0);
+    }
+    startView(g_4b9926, 0, 0, 0);
+    updateViews();
+    if (g_4b9916 >= 1 && g_4b9916 <= 4) {
+        Color saved;
+
+        font = setFont(fonts[2]);
+        saved = setForeColor(Color(10));
+        drawOutlinedText(45, 10, mapTitleRects[g_4b9916 - 1], 0x22, levelTexts[g_4b9916 + 5]);
+        copyPortBits(viewPort, workPort, gameRect, gameRect, 0);
+        setForeColor(saved);
+        setFont(font);
+        deleteView(mapView);
+    }
+    setGroupLists(xferGroups, 1, (short)0xc000);
+    if (g_4b9914)
+        queueViewSound(g_4b9914, 1);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    resetViewClock();
+    g_4b991a = countChosenSnoids();
+    g_4b98d8 = 1;
+    startView(g_4b9924, 0, 0, 0);
+    startView(g_4b9922, 0, 0, 0);
+    if (g_4b9916 >= 1 && g_4b9916 <= 4)
+        sendSnoids(670, 445, 90);
 }
 
 /* Closes scene 2. */

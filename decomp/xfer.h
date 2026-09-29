@@ -12,6 +12,8 @@ extern short g_4b98da; /* @data 0x4b98da: Zoombiniville's population, when the s
 extern short g_4b98dc; /* @data 0x4b98dc */
 extern long g_4b98e0; /* @data 0x4b98e0 */
 extern char g_4b98e4[17]; /* @data 0x4b98e4: the places' levels (fn_46b084) */
+extern GroupList xferGroups[1]; /* @data 0x4a7e9e */
+extern ShortRect mapTitleRects[4]; /* @data 0x4a7ebe: where each map's name goes */
 extern short g_4a7ede; /* @data 0x4a7ede: in scene2Frame */
 extern short g_4a7ee0[4][5]; /* @data 0x4a7ee0: the places on each of g_4b9916's maps */
 extern Point g_4a7f08[16]; /* @data 0x4a7f08: where each map's grid starts */
@@ -51,6 +53,7 @@ extern char g_4b99c2; /* @data 0x4b99c2 */
 extern char g_4b99c3; /* @data 0x4b99c3 */
 
 void resetScene2();
+void openScene2();
 void closeScene2();
 void fn_46b761(View *view);
 void fn_46b084(char *levels);
