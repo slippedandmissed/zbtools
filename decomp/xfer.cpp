@@ -44,7 +44,7 @@ void resetScene2()
 }
 
 /* @zoombi32 0x0046b07b */
-long fn_46b07b(long)
+long scene2Key(long)
 {
     return 0;
 }
@@ -403,6 +403,78 @@ void fn_46b761(View *view)
     }
 }
 
+/* Scene 2's clicks: once a scene is due (g_4b0d52), leaves for it (for
+   scene 1 if g_4a7e68); 1 goes on to scene g_4b0d54. */
+/* @zoombi32 0x0046b00e */
+void scene2Clicked(short which)
+{
+    if (g_4b98d8) {
+        if (g_4b0d52) {
+            g_4b0d50 = g_4b0d52;
+            g_4b0d52 = 0;
+            if (g_4a7e68) {
+                g_4a7e68 = 0;
+                g_4b0d50 = 1;
+            }
+            fn_46be2e(0);
+            closeScene2();
+        } else
+            switch (which) {
+            case 1:
+                g_4b0d52 = g_4b0d54;
+                break;
+            }
+    }
+}
+
+/* Spreads the marks in g_4b9944 over the grid (fn_46bb0c on each one's
+   neighbours) until `permille` thousandths of the cells counted by
+   fn_46b872 are taken, or a pass takes none; returns how many are left.
+   Only the right and bottom edges are checked. */
+/* @zoombi32 0x0046b9a2 */
+unsigned long fn_46b9a2(long permille)
+{
+    char *cell;
+    char *next;
+    unsigned long before;
+    unsigned long limit;
+    unsigned long i;
+    unsigned long x;
+    unsigned long y;
+
+    limit = g_4b9930 - g_4b9930 * permille / 1000;
+    while (g_4b9934 > limit) {
+        before = g_4b9934;
+        for (i = 0; i < 24; i++)
+            if (g_4b99a4[i]) {
+                g_4b99a4[i] = 0;
+                x = g_4b9944[i].x;
+                y = g_4b9944[i].y;
+                cell = y * g_4b9938 + x + g_4b99bc;
+                if (y + 1 < g_4b993c) {
+                    next = cell + g_4b9938;
+                    fn_46bb0c(next, x, y + 1);
+                    fn_46bb0c(next - 1, x - 1, y + 1);
+                    if (x + 1 < g_4b9940)
+                        fn_46bb0c(next + 1, x + 1, y + 1);
+                }
+                if (y - 1 > 0) { /* unsigned: true for row 0 too */
+                    next = cell - g_4b9938;
+                    fn_46bb0c(next, x, y - 1);
+                    fn_46bb0c(next - 1, x - 1, y - 1);
+                    if (x + 1 < g_4b9940)
+                        fn_46bb0c(next + 1, x + 1, y - 1);
+                }
+                fn_46bb0c(cell - 1, x - 1, y);
+                if (x + 1 < g_4b9940)
+                    fn_46bb0c(cell + 1, ++x, y);
+            }
+        if (before == g_4b9934)
+            g_4b9934 = 0;
+    }
+    return g_4b9934;
+}
+
 /* @zoombi32 0x0046b747 */
 void fn_46b747(long, short id)
 {
@@ -500,7 +572,7 @@ void fn_46b872(char *grid, unsigned long stride, unsigned long rows, unsigned lo
 /* Marks the cell at `cell` taken (g_4b99c0 becomes g_4b99c1, g_4b99c2
    becomes g_4b99c3), noting the point in a free one of g_4b9944. */
 /* @zoombi32 0x0046bb0c */
-void fn_46bb0c(char *cell, short x, short y)
+void fn_46bb0c(char *cell, long x, long y)
 {
     short i;
 

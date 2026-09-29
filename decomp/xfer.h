@@ -52,14 +52,16 @@ void closeScene2();
 void fn_46b761(View *view);
 void fn_46b084(char *levels);
 void fn_46b326(View *view);
+void scene2Clicked(short which);
+unsigned long fn_46b9a2(long permille);
 void fn_46b5ce(View *view, short event);
 void fn_46b872(char *grid, unsigned long stride, unsigned long rows, unsigned long columns,
                 unsigned char from1, unsigned char from2, char to1, char to2, char taken1,
                 char taken2, Point &start);
-void fn_46bb0c(char *cell, short x, short y);
+void fn_46bb0c(char *cell, long x, long y);
 void fn_46bbce(View *view);
 void fn_46bdde(View *view, short region);
-long fn_46b07b(long);
+long scene2Key(long);
 void fn_46b747(long, short id);
 
 #endif

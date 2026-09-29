@@ -1026,13 +1026,15 @@
 0x00469669 askQuit
 0x004696f0 resetScene2
 0x0046ac6e closeScene2
-0x0046b07b fn_46b07b
+0x0046b00e scene2Clicked
+0x0046b07b scene2Key
 0x0046b084 fn_46b084
 0x0046b326 fn_46b326
 0x0046b5ce fn_46b5ce
 0x0046b747 fn_46b747
 0x0046b761 fn_46b761
 0x0046b872 fn_46b872
+0x0046b9a2 fn_46b9a2
 0x0046bb0c fn_46bb0c
 0x0046bbce fn_46bbce
 0x0046be28 currentMap
