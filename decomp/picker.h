@@ -47,6 +47,7 @@ extern long g_4afb10; /* @data 0x4afb10: Picker.MHK */
 extern short g_4afb14; /* @data 0x4afb14: the scene is open */
 extern GroupList pickerGroups[1]; /* @data 0x4a1f34 */
 extern GroupList catchGroups[1]; /* @data 0x4a2046 */
+extern GroupList targetGroups[1]; /* @data 0x4a2090 */
 extern short g_4afbb8; /* @data 0x4afbb8 */
 extern basePort **g_4afb28; /* @data 0x4afb28 */
 extern short g_4afb34; /* @data 0x4afb34 */
@@ -80,6 +81,7 @@ extern short g_4afb5e; /* @data 0x4afb5e */
 void fn_42f920();
 void openScene1();
 void openScene19();
+void openScene20();
 extern short g_4afb72; /* @data 0x4afb72 */
 extern short g_4afb76; /* @data 0x4afb76 */
 void fn_430030(short n);

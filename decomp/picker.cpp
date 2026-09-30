@@ -180,6 +180,51 @@ void closeScene19()
     }
 }
 
+/* Opens scene 20, the targets: the state, the backdrop (filled first),
+   the views and sounds, and the opening line. */
+/* @zoombi32 0x004323cc */
+void openScene20()
+{
+    short i;
+    View *view;
+
+    g_4b0d52 = 0;
+    g_4afbbe = 0;
+    g_4afbbc = 0;
+    g_4afbb8 = g_4a4b98;
+    g_4a4b98 = 0;
+    for (i = 0; i < 6; i++)
+        g_4afb94[i] = 0;
+    g_4afb7a = g_4afb78 = g_4afb72 = g_4afbba = 0;
+    g_4afb76 = 3;
+    g_4afb74 = 100;
+    setViewsLocked(0);
+    g_4afb8c = g_4afb8a = g_4afb8e = g_4afb90 = 0;
+    g_4afb14 = 0;
+    openGameFile(&g_4afb10, "Picker.MHK");
+    fn_46be2e(g_4afb10);
+    drawBackdrop(2000);
+    loadFeatureGroup(1000, 0, 1);
+    loadScripts(1000, 31);
+    fillPortRect(Rect(gameRect), Color(44), 0);
+    copyBits(viewPort, workPort, &gameRect);
+    fn_432905();
+    addView(0, drawCels, runViewScript, 1012, 6, 0, 0, 0);
+    g_4afb78 = addView(0x100000, drawCels, runViewScript, 1014, 6, 0, 0, 0);
+    view = findView(g_4afb78);
+    if (view)
+        view->placed = fn_4333ef;
+    loadSoundByKey(3000, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    loadSoundByKey(3001, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    loadSoundByKey(3002, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    fn_4148da(10, 236);
+    setGroupLists(targetGroups, 1, (short)0xc000);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    g_4afb14 = 1;
+    queueViewSound(30035, 0);
+}
+
 /* Closes scene 20 (Picker.MHK), keeping g_4afbb8 in g_4a4b98. */
 /* @zoombi32 0x004325c4 */
 void closeScene20()
