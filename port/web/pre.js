@@ -3,9 +3,10 @@
 // installed files the data package carries (/c-default) that it lacks; and
 // waits for a click, which also lets the browser start the sound.
 //
-// zoombinis-config.js sets Module.zbArguments (the drives); `uv run port
-// package` writes it and zoombinis-data.js (the game's files, as /d and
-// /c-default) from the user's copy of the game.
+// zoombinis-config.js sets Module.zbArguments (the drives and the
+// SoundFont); `uv run port package` writes it and zoombinis-data.js (the
+// loaders of the packages holding the game's files, as /d and /c-default,
+// and the SoundFont).
 
 Module.arguments = (Module.zbArguments || []).slice();
 // ?screenshot: the game's screen, as /screenshot.bmp (for testing).
@@ -35,12 +36,51 @@ Module.preRun.push(function () {
     window.zbStart();
 });
 
-// Once the data package has loaded too (it's a run dependency of its own),
-// just before the game starts: fill C: with what it lacks.
+// Once the data packages have loaded too (each is a run dependency of its
+// own), just before the game starts: put back together the files packed in
+// parts, and fill C: with what it lacks.
 Module.onRuntimeInitialized = function () {
+  ['/c-default', '/d', '/soundfont'].forEach(joinParts);
   copyMissing('/c-default', '/c');
   Module.zbPersist();
 };
+
+// `uv run port package` splits files too big for a web host into NAME.part0,
+// NAME.part1, ...: joins them back into NAME.
+function joinParts(directory) {
+  var entries;
+  try {
+    entries = FS.readdir(directory);
+  } catch (e) {
+    return;
+  }
+  entries.forEach(function (name) {
+    var path = directory + '/' + name;
+    // (A part already joined, and removed, is still in the list.)
+    if (name === '.' || name === '..' || !FS.analyzePath(path).exists)
+      return;
+    if (FS.isDir(FS.stat(path).mode)) {
+      joinParts(path);
+      return;
+    }
+    var match = name.match(/^(.*)\.part0$/);
+    if (!match)
+      return;
+    var base = directory + '/' + match[1], parts = [], size = 0;
+    for (var n = 0; FS.analyzePath(base + '.part' + n).exists; n++) {
+      var part = FS.readFile(base + '.part' + n);
+      parts.push(part);
+      size += part.length;
+      FS.unlink(base + '.part' + n);
+    }
+    var whole = new Uint8Array(size), at = 0;
+    parts.forEach(function (part) {
+      whole.set(part, at);
+      at += part.length;
+    });
+    FS.writeFile(base, whole);
+  });
+}
 
 function copyMissing(from, to) {
   var entries;

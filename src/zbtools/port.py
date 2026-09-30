@@ -4,14 +4,15 @@ r"""The port: the decompiled game built for modern systems (port/).
 the music plays with (GeneralUser GS) into build/soundfont/. `build` compiles
 the game for a target with CMake (port/CMakeLists.txt): `web` (WebAssembly,
 the default) into build/port/web/, or `native` into build/port/native/.
-`package` lays out the game's C: drive (the installed game) from your copy of
-the game in build/port/data/c/ and, for the web, packs it and the CD (D:,
-build/disc/) next to the page; `serve` serves the page locally; `run` runs the native
-build on the drives.
+`package` builds the web page and packs the game for it into build/port/site/:
+only the files a web server needs, each small enough for hosts that cap file
+sizes, ready to upload. `serve` serves the site locally; `run` runs the native
+(or headless) build on the drives.
 
-The game's files come from `uv run extract-game` (build/disc/ and
-build/zoombi32/); they're never committed, and the packed data is only for
-your own use.
+The game's drives: C: (the installed game, and what it saves) is laid out in
+build/port/data/c/ from build/zoombi32/ (`uv run extract-game`); D:'s
+archives come from assets/ (packed by `uv run assets pack`) for the site, and
+from the extracted disc (build/disc/) for `run`.
 """
 
 import contextlib
@@ -22,11 +23,11 @@ import subprocess
 import sys
 from functools import partial
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, NamedTuple
 
 import typer
 
-from zbtools import download, paths
+from zbtools import assets, download, paths
 
 # The pinned Emscripten SDK: emsdk's release tarball, which installs the SDK
 # of the same version (its own downloads are pinned by emsdk's manifest).
@@ -198,38 +199,127 @@ def game_arguments(c: str, d: str, soundfont: str) -> list[str]:
     ]
 
 
+# Hosts cap the size of a file (Cloudflare Pages at 25 MiB): the site's files
+# stay under this.
+SITE_FILE_LIMIT = 24 * 1024 * 1024
+# The page's files the web build makes, which the site serves as they are.
+_WEB_PROGRAM = (WEB_PAGE, "zoombinis.js", "zoombinis.wasm")
+
+
+class SitePiece(NamedTuple):
+    """Part of a file for the page's file system: `size` bytes of `source`
+    from `offset`, at `target` (with `.part<n>` added if the file is split;
+    pre.js joins the parts)."""
+
+    source: Path
+    target: str
+    offset: int
+    size: int
+
+
+def site_pieces(files: list[tuple[Path, str, int]], limit: int) -> list[SitePiece]:
+    """Files (source, target, size) as pieces of at most `limit` bytes."""
+    pieces = []
+    for source, target, size in files:
+        if size <= limit:
+            pieces.append(SitePiece(source, target, 0, size))
+            continue
+        for n, offset in enumerate(range(0, size, limit)):
+            pieces.append(SitePiece(source, f"{target}.part{n}", offset, min(limit, size - offset)))
+    return pieces
+
+
+def site_packages(pieces: list[SitePiece], limit: int) -> list[list[SitePiece]]:
+    """Pieces grouped into packages of at most `limit` bytes (first fit,
+    largest first), each package's pieces in the order given."""
+    order = {piece: i for i, piece in enumerate(pieces)}
+    packages: list[list[SitePiece]] = []
+    sizes: list[int] = []
+    for piece in sorted(pieces, key=lambda p: -p.size):
+        for i, used in enumerate(sizes):
+            if used + piece.size <= limit:
+                packages[i].append(piece)
+                sizes[i] += piece.size
+                break
+        else:
+            packages.append([piece])
+            sizes.append(piece.size)
+    return [sorted(package, key=order.__getitem__) for package in packages]
+
+
+def _page_files(c: Path, data: Path, soundfont: Path) -> list[tuple[Path, str, int]]:
+    """What the page's file system holds: C:'s first contents as /c-default
+    (pre.js copies them into IndexedDB), D:'s DATA directory as /d/DATA, and
+    the SoundFont."""
+    found = [(f, f"/c-default/{f.relative_to(c).as_posix()}") for f in sorted(c.rglob("*"))]
+    found += [(f, f"/d/DATA/{f.name}") for f in sorted(data.iterdir())]
+    found.append((soundfont, _WEB_SOUNDFONT))
+    return [(f, target, f.stat().st_size) for f, target in found if f.is_file()]
+
+
 def package_web() -> Path:
-    """Packs the drives for the page: zoombinis-data.data (and its loader)
-    holds D: as /d, C:'s first contents as /c-default (pre.js copies them
-    into IndexedDB) and the SoundFont; zoombinis-config.js gives the game its
-    drives and the SoundFont."""
+    """Builds the web page and packs the game for it into build/port/site/,
+    holding only what a web server needs, each file under SITE_FILE_LIMIT:
+    the page (zoombinis.html, .js, .wasm), zoombinis-config.js (the game's
+    drives and the SoundFont), and the page's file system in
+    zoombinis-data-<n>.data packages, loaded by zoombinis-data.js. D:'s
+    archives are packed from assets/; the movies are left out, since the port
+    can't play them yet."""
+    web = build_dir("web")
+    build("web", _build_type(web) or "RelWithDebInfo")
     c = lay_out_drives()
     soundfont = setup_soundfont()
-    out = build_dir("web")
-    out.mkdir(parents=True, exist_ok=True)
+    for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
+        print(line)
+    pieces = site_pieces(
+        _page_files(c, paths.PACKED_ASSETS_DIR / "DATA", soundfont), SITE_FILE_LIMIT
+    )
+    site, staging = paths.PORT_SITE_DIR, paths.PORT_SITE_STAGING
+    for directory in (site, staging):
+        shutil.rmtree(directory, ignore_errors=True)
+        directory.mkdir(parents=True)
+    for name in _WEB_PROGRAM:
+        shutil.copyfile(web / name, site / name)
     setup_emsdk()
     packager = _emscripten_dir() / "tools" / "file_packager.py"
-    subprocess.run(
-        [
-            sys.executable,
-            str(packager),
-            f"{WEB_DATA}.data",
-            "--preload",
-            f"{(paths.DISC_DIR / 'DATA').resolve()}@/d/DATA",
-            f"{c.resolve()}@/c-default",
-            f"{soundfont.resolve()}@{_WEB_SOUNDFONT}",
-            f"--js-output={WEB_DATA}.js",
-            "--use-preload-cache",
-            "--no-node",
-        ],
-        check=True,
-        cwd=out,
-        env=_emsdk_env(),
-    )
+    loaders = []
+    for n, package in enumerate(site_packages(pieces, SITE_FILE_LIMIT)):
+        preload = []
+        for piece in package:
+            source = piece.source
+            if piece.size != source.stat().st_size:  # part of a split file
+                source = staging / f"{n}-{Path(piece.target).name}"
+                with piece.source.open("rb") as f:
+                    f.seek(piece.offset)
+                    source.write_bytes(f.read(piece.size))
+            preload.append(f"{source.resolve()}@{piece.target}")
+        loader = staging / f"{WEB_DATA}-{n}.js"
+        subprocess.run(
+            [
+                sys.executable,
+                str(packager),
+                f"{WEB_DATA}-{n}.data",
+                "--preload",
+                *preload,
+                f"--js-output={loader}",
+                "--use-preload-cache",
+                "--no-node",
+            ],
+            check=True,
+            cwd=site,
+            env=_emsdk_env(),
+        )
+        loaders.append(loader.read_text())
+    # Each loader is a script of its own, so one file can hold them all.
+    (site / f"{WEB_DATA}.js").write_text("\n".join(loaders))
     arguments = ", ".join(f'"{a}"' for a in game_arguments("/c", "/d", _WEB_SOUNDFONT))
     arguments = arguments.replace("\\", "\\\\")
-    (out / WEB_CONFIG).write_text(f"Module.zbArguments = [{arguments}];\n")
-    return out
+    (site / WEB_CONFIG).write_text(f"Module.zbArguments = [{arguments}];\n")
+    shutil.rmtree(staging)
+    too_big = [f.name for f in site.iterdir() if f.stat().st_size > SITE_FILE_LIMIT]
+    if too_big:
+        raise PortError(f"over {SITE_FILE_LIMIT} bytes: {', '.join(too_big)}")
+    return site
 
 
 class _Handler(http.server.SimpleHTTPRequestHandler):
@@ -280,23 +370,23 @@ def build_command(
 
 @app.command()
 def package() -> None:
-    """Lay out the game's drives from your copy of the game, and pack them
-    for the web build."""
+    """Build the web page and pack the game for it into build/port/site/:
+    everything a web server needs, and nothing else."""
     try:
         out = package_web()
     except (PortError, subprocess.CalledProcessError) as e:
         _fail(e)
-    print(f"Packed the game's data into {out.relative_to(paths.REPO_ROOT)}")
+    print(f"The site is in {out.relative_to(paths.REPO_ROOT)}")
 
 
 @app.command()
 def serve(
     port: Annotated[int, typer.Option(help="The port to serve on")] = 8000,
 ) -> None:
-    """Serve the web build on localhost (after `build` and `package`)."""
-    out = build_dir("web")
-    if not (out / WEB_PAGE).exists() or not (out / f"{WEB_DATA}.data").exists():
-        _fail(PortError("build and package first: uv run port build && uv run port package"))
+    """Serve the site on localhost (after `package`)."""
+    out = paths.PORT_SITE_DIR
+    if not (out / WEB_PAGE).exists() or not (out / f"{WEB_DATA}.js").exists():
+        _fail(PortError("package it first: uv run port package"))
     handler = partial(_Handler, directory=str(out))
     server = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
     print(f"Serving http://127.0.0.1:{port}/{WEB_PAGE} (Ctrl-C to stop)")

@@ -237,7 +237,7 @@ uv run trace build/vm/trace.log                       # the functions the traced
 ```sh
 uv run port setup                 # the pinned Emscripten SDK, into build/emsdk/ (~1.8 GB), and the SoundFont
 uv run port build                 # the web build: build/port/web/zoombinis.html
-uv run port package               # your copy of the game's data, packed for it
+uv run port package               # the page and the game's data, ready to host: build/port/site/
 uv run port serve                 # then open http://127.0.0.1:8000/zoombinis.html
 uv run port run --headless --seconds 30 --screenshot build/port/shot.bmp
 ```
@@ -254,7 +254,7 @@ Borland C++'s dialect (byte packing, its runtime's extras) is handled by `port/i
 
 - **Targets:** `web` (WebAssembly, via Asyncify, which lets the game's blocking loops and fibers hand control back to the browser), `headless` (the same WebAssembly under Node, with no screen or sound, reading the drives' directories directly; `--screenshot` writes the screen to a BMP, `--record` writes what's played to a WAV file, and `--seconds` quits after a while), and `native` (SDL2 from the system, or a pinned release built from source).
 - **32-bit only for now:** the decompiled code assumes 4-byte `long`s and pointers, so CMake refuses 64-bit native targets. WebAssembly is 32-bit.
-- **Your data stays yours:** `package` lays out C: in `build/port/data/c/` from `build/zoombi32/`, and packs it with the CD's `DATA/` and the SoundFont into `build/port/web/zoombinis-data.data`. That's your own copy of the game, so don't publish it.
+- **Hosting it:** `package` builds the web page and writes everything a web server needs, and nothing else, to `build/port/site/`: the page (`zoombinis.html`, `.js`, `.wasm`), `zoombinis-config.js` (the game's drives), and the game's files in `zoombinis-data-<n>.data` packages loaded by `zoombinis-data.js`. Upload the directory as it is to any static host. No file is over 24 MiB, for hosts that cap file sizes (Cloudflare Pages allows 25 MiB): files are grouped into packages under that, and a file bigger than that (the SoundFont) is split into parts that the page joins back together when it starts. The CD's `DATA/` is packed from `assets/` (as `uv run assets pack` does), leaving out the movies, which the port can't play yet; C: is laid out in `build/port/data/c/` from `build/zoombi32/`. The browser keeps the packages in IndexedDB, so a return visit doesn't download them again.
 - **The page:** it keeps C: in the browser's IndexedDB, so saved games survive a reload. Clicking Start begins the game, and also lets the browser play sound. `?noalert` sends the game's message boxes to the console instead of an alert (for automated testing), and `?screenshot` writes `/screenshot.bmp` to the page's file system.
 
 ### Cleaning up
@@ -281,7 +281,7 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `rebuild` | the rebuilt executable and what went into it (`build/rebuild/`) | `uv run build` |
 | `packed-assets` | the archives `assets pack` built (`build/assets/`) | `uv run assets pack` |
 | `assets-cache` | compressed images, reused while unchanged (`build/assets-cache/`) | automatically by `uv run assets pack` or `verify` |
-| `port` | the port's builds (`build/port/web/`, `native/`, `headless/`) | `uv run port build` |
+| `port` | the port's builds (`build/port/web/`, `native/`, `headless/`) and the site (`build/port/site/`) | `uv run port build`, `uv run port package` |
 | `port-data` | the port's drives, **including what the native and headless builds saved** (`build/port/data/`) | `uv run port package` |
 | `emsdk` | the Emscripten SDK (`build/emsdk/`) | `uv run port setup` (downloads ~1 GB) |
 | `soundfont` | the port's SoundFont (`build/soundfont/`) | `uv run port setup` (downloads 32 MB) |
@@ -358,4 +358,4 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 
 ## Legal
 
-This repository does not distribute the original game's binaries or its disc. It holds source reconstructed from them: the decompiled code, and the game's resources converted to modern formats, from which the tools rebuild the original archives. It exists for preservation and interoperability, and you must supply your own copy of the game.
+This repository does not distribute the original game's binaries or its disc. It holds source reconstructed from them: the decompiled code, and the game's resources converted to modern formats, from which the tools rebuild the original archives. It exists for preservation and interoperability. Building it needs your own copy of the game; the port it builds (`uv run port package`) is made to be hosted and played in a browser.

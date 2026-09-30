@@ -171,6 +171,13 @@ def _pack(directory: Path, out_dir: Path) -> str:
     return f"{manifest.path}: {len(resources)} resources"
 
 
+def pack_all(assets_dir: Path, out_dir: Path) -> list[str]:
+    """Packs every archive in assets_dir into out_dir, laid out as on the disc;
+    a line about each."""
+    with ProcessPoolExecutor() as pool:
+        return list(pool.map(partial(_pack, out_dir=out_dir), asset_archives(assets_dir)))
+
+
 def _verify(directory: Path, disc_dir: Path) -> list[str]:
     """What packing an archive gives, compared with the disc's: an empty list
     if they're identical, else what differs."""
@@ -239,9 +246,8 @@ def pack(
     ] = paths.PACKED_ASSETS_DIR,
 ) -> None:
     """Pack assets/ into Mohawk archives."""
-    with ProcessPoolExecutor() as pool:
-        for line in pool.map(partial(_pack, out_dir=out_dir), asset_archives(assets_dir)):
-            print(line)
+    for line in pack_all(assets_dir, out_dir):
+        print(line)
 
 
 @app.command()

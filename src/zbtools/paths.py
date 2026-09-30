@@ -52,6 +52,10 @@ PORT_WEB_DIR = PORT_DIR / "web"
 PORT_NATIVE_DIR = PORT_DIR / "native"
 PORT_HEADLESS_DIR = PORT_DIR / "headless"
 PORT_DATA_DIR = PORT_DIR / "data"
+# The web build and the game's data, ready to host (`uv run port package`),
+# and what's made on the way.
+PORT_SITE_DIR = PORT_DIR / "site"
+PORT_SITE_STAGING = PORT_DIR / "site-staging"
 # The Emscripten SDK the web build uses (`uv run port setup`).
 EMSDK_DIR = BUILD_DIR / "emsdk"
 # The General MIDI SoundFont the port plays the music with.
@@ -132,7 +136,7 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "rebuild": [REBUILD_DIR],
     "packed-assets": [PACKED_ASSETS_DIR],
     "assets-cache": [ASSETS_CACHE],
-    "port": [PORT_WEB_DIR, PORT_NATIVE_DIR, PORT_HEADLESS_DIR],
+    "port": [PORT_WEB_DIR, PORT_NATIVE_DIR, PORT_HEADLESS_DIR, PORT_SITE_DIR, PORT_SITE_STAGING],
     # The native build's saved games live here: only removed when asked for.
     "port-data": [PORT_DATA_DIR],
     "emsdk": [EMSDK_DIR],
