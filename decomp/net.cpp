@@ -632,28 +632,28 @@ void openNet()
 
     snoidsOnTheirWay = snoidsArrived = hintSound = 0;
     netLevel = sceneLevel();
-    g_4b142e = 25;
+    codeEntryCount = 25;
     if (netLevel > 1)
-        g_4b142e = 125;
-    g_4b141a = g_4b141c = g_4b1420 = g_4b1422 = 0;
-    g_4b1424 = g_4b1426 = g_4b1428 = g_4b141e = 0;
-    g_4b1410 = g_4b1416 = g_4b142c = g_4b11a0 = 0;
-    g_4b142a = g_4b1408 = g_4b1450 = g_4b13c8 = markerStep = 0;
-    g_4b1466 = g_4b12ae = g_4b1414 = g_4b1412 = 0;
-    g_4b13fe = g_4b1400 = g_4b1402 = g_4b1404 = 0;
-    markerCount = g_4b0d5c = markerPlace = -1;
-    g_4b11a4 = g_4b1418 = 1;
+        codeEntryCount = 125;
+    markerStep1Group = markerStep2Group = markerStep3Group = markerStep4Group = 0;
+    markerStep5Group = unusedNet1 = unusedNet2 = guideGroup = 0;
+    codesDue = codesShown = netTriesOver = emptyNetPlaces = 0;
+    revealGroup = revealStep = markerMoved = unusedNet3 = markerStep = 0;
+    promptHeld = unusedNet4 = crossingStarted = lastAcross = 0;
+    promptView = code1View = code2View = code3View = 0;
+    markerCount = sentIndex = markerPlace = -1;
+    codesLocked = firstPrompt = 1;
     previousCode1 = previousCode2 = previousCode3 = -1;
-    g_4b144c = g_4b144e = g_4b11a6 = 0;
-    netPlaces[0] = netPlaces[1] = netPlaces[2] = g_4b144a = 0;
-    g_4b12b0[0] = g_4b12b0[1] = g_4b12b0[2] = 0;
-    g_4b1430 = g_4b1462 = g_4b11a8 = g_4b147e = 0;
-    g_4b1432 = g_4b1434 = g_4b1436 = 0;
-    g_4b119a = g_4b119c = movingSnoid = g_4b0e6c = 0;
-    g_4b145e = g_4b1460 = g_4b1458 = g_4b145a = 0;
-    g_4b1464 = g_4b145c = 0;
-    g_4b1406 = 1;
-    sceneDue = g_4b147c = 0;
+    promptHeld2 = markerMissed = allAcross = 0;
+    netPlaces[0] = netPlaces[1] = netPlaces[2] = sendAllowed = 0;
+    waitingOnNet[0] = waitingOnNet[1] = waitingOnNet[2] = 0;
+    sentCount = sendUnderway = acrossCount = lastCrossed = 0;
+    unusedNet5 = unusedNet6 = unusedNet7 = 0;
+    currentNetPlace = unusedNet8 = movingSnoid = snoidsFound = 0;
+    standingGroup = stepGroup = crossDue = groupToCross = 0;
+    markerGroup = sendsLeft = 0;
+    revealing = 1;
+    sceneDue = netFidgetsOn = 0;
     netOpen = netGoAllowed = 0;
     chosenCode1 = randomUpTo(4);
     chosenCode2 = randomUpTo(4);
@@ -681,15 +681,15 @@ void openNet()
     enterSnoids(0);
     netChosen = listChosenSnoids();
     netPartySize = netChosen->count;
-    g_4b1478 = 3;
+    netFidgetsAllowed = 3;
     if (*(short *)(gameState + 0x20))
-        g_4b1478 = 2;
-    g_4b147a = 0;
+        netFidgetsAllowed = 2;
+    netFidgets = 0;
     nextToSend = 0;
     splitIntoGroups();
-    g_4b140a = (netLevel == 3) + netGroupCount + 7;
-    g_4b140e = g_4b140a;
-    g_4b140c = 16 - g_4b140a;
+    revealSteps = (netLevel == 3) + netGroupCount + 7;
+    revealStepsAtOpen = revealSteps;
+    revealScript = 16 - revealSteps;
     addNetViews();
     updateViews();
     staggerSnoids(30, 0);
@@ -757,16 +757,16 @@ void drawNetButtons(View *)
 void updateNetButtons(View *, short region)
 {
     if (netGoAllowed) {
-        if (!g_4a2ea4) {
-            g_4a2ea4 = 1;
+        if (!netButton2Lit) {
+            netButton2Lit = 1;
             unionRgnRect(region, &netButtons[3].rect);
         }
-    } else if (g_4a2ea4) {
-        g_4a2ea4 = 0;
+    } else if (netButton2Lit) {
+        netButton2Lit = 0;
         unionRgnRect(region, &netButtons[3].rect);
     }
-    if (!g_4a2ea6) {
-        g_4a2ea6 = 1;
+    if (!netButton1Drawn) {
+        netButton1Drawn = 1;
         unionRgnRect(region, &netButtons[2].rect);
     }
 }
@@ -956,8 +956,8 @@ void moveMazeSnoidOn(View *view, short other)
 }
 
 /* Sends the next Zoombini of the party (nextToSend of netPartySize) to the
-   first free place of three (netPlaces, from the last), while g_4b144a lets
-   it (for g_4b145c more); counts in g_4b11a0 the places left when none
+   first free place of three (netPlaces, from the last), while sendAllowed lets
+   it (for sendsLeft more); counts in emptyNetPlaces the places left when none
    are left to send. */
 /* @zoombi32 0x0043cfc3 */
 void sendNextToNet()
@@ -971,27 +971,27 @@ void sendNextToNet()
     for (i = 2; i >= 0; i--)
         if (!netPlaces[i]) {
             if (nextToSend < netPartySize) {
-                if (!g_4b144a)
+                if (!sendAllowed)
                     return;
-                if (!--g_4b145c)
-                    g_4b144a = 0;
+                if (!--sendsLeft)
+                    sendAllowed = 0;
                 view = findView(partyViews[nextToSend]);
                 if (view) {
                     setSnoidAction((Snoid *)&view->body, 10, 0);
                     *(Point *)&((Snoid *)&view->body)->targetX = target;
-                    g_4b0d5c = nextToSend;
+                    sentIndex = nextToSend;
                     netPlaces[i] = partyViews[nextToSend];
                     nextToSend++;
-                    g_4b119a = i;
-                    g_4b1462 = 1;
+                    currentNetPlace = i;
+                    sendUnderway = 1;
                     return;
                 }
             } else {
-                g_4b11a0++;
+                emptyNetPlaces++;
             }
         }
-    g_4b145c = 0;
-    g_4b144a = 0;
+    sendsLeft = 0;
+    sendAllowed = 0;
 }
 
 /* Puts a maze Zoombini on its square (words 33 and 34) with its helper
@@ -1132,15 +1132,15 @@ void flyMarker(short n)
         markerX = 484;
         markerY = 318;
         markerCount++;
-        markerViews[markerCount] = addView(0x4100000, drawCels, updateFlyingMarker, scripts[g_4a2e58] + 7020, 6, 0, 0, 0);
+        markerViews[markerCount] = addView(0x4100000, drawCels, updateFlyingMarker, scripts[markerColumnKind] + 7020, 6, 0, 0, 0);
         View *view = findView(markerViews[markerCount]);
 
         if (view) {
             view->unknown1e = n;
-            g_4b1450++;
+            markerMoved++;
             view->placed = markerPlaced;
             view->interval = 3;
-            moveView(markerViews[markerCount], 0, g_4b12b6);
+            moveView(markerViews[markerCount], 0, netMarkerView);
         }
     }
 }
@@ -1164,7 +1164,7 @@ void updateFlyingMarker(View *view, short region)
 
 /* Lands the flying marker for place n: shows it (script 7023, or 7024 at
    the higher levels) there, and counts that place's group (placeGroups, by
-   markerPlace) into g_4b0e6c; a place with none counts in g_4b144e. */
+   markerPlace) into snoidsFound; a place with none counts in markerMissed. */
 /* @zoombi32 0x0043da30 */
 void landMarker(short n)
 {
@@ -1178,7 +1178,7 @@ void landMarker(short n)
             markerX = markerPlaces3d[n].x;
             markerY = markerPlaces3d[n].y;
         }
-        g_4b1450++;
+        markerMoved++;
         view = findView(markerViews[markerCount]);
         if (view) {
             if (netLevel < 2)
@@ -1196,15 +1196,15 @@ void landMarker(short n)
             view->placed = markerPlaced;
             moveView(markerViews[markerCount], 0, standingViews[0]);
         }
-        g_4b144e = 0;
-        if ((g_4b145a = placeGroups[markerPlace]) < 1) {
-            g_4b145a = 0;
-            g_4b1466 = 0;
-            g_4b144e++;
+        markerMissed = 0;
+        if ((groupToCross = placeGroups[markerPlace]) < 1) {
+            groupToCross = 0;
+            promptHeld = 0;
+            markerMissed++;
         } else {
-            g_4b147c++;
+            netFidgetsOn++;
         }
-        g_4b0e6c += g_4b145a;
+        snoidsFound += groupToCross;
         placeGroups[n] = -1;
     }
 }
@@ -1399,20 +1399,20 @@ void addNetViews()
 
     for (i = 0; i < 5; i++)
         standingViews[i] = addView(0x4188000, drawCels, runViewScript, i + 8000, 6, 0, 0, 0);
-    g_4b12b8 = addView(0x4188000, drawCels, runViewScript, 8005, 6, 0, 0, 0);
+    stepView = addView(0x4188000, drawCels, runViewScript, 8005, 6, 0, 0, 0);
     if (netLevel <= 1)
         netGuideView = addView(0x4108000, drawCels, runViewScript, 9151, 6, 0, 0, 0);
     else
         netGuideView = addView(0x4108000, drawCels, runViewScript, 9153, 6, 0, 0, 0);
-    g_4b141e = groupViews(netGuideView, netGuideView, 0, 0, 0, 0);
-    g_4b12b6 = addView(0x4181000, drawCels, runViewScript, 7018, 6, 0, 0, 0);
-    g_4b13fe = addView(0x188000, drawCels, runViewScript, 10018, 6, 0, 0, 0);
+    guideGroup = groupViews(netGuideView, netGuideView, 0, 0, 0, 0);
+    netMarkerView = addView(0x4181000, drawCels, runViewScript, 7018, 6, 0, 0, 0);
+    promptView = addView(0x188000, drawCels, runViewScript, 10018, 6, 0, 0, 0);
     if (netLevel >= 2)
-        g_4b1400 = addView(0x4108000, drawCels, runViewScript, chosenCode1 + 10002, 6, 0, 0, 0);
-    g_4b1402 = addView(0x4108000, drawCels, runViewScript, chosenCode2 + 10007, 6, 0, 0, 0);
-    g_4b1404 = addView(0x4108000, drawCels, runViewScript, chosenCode3 + 10012, 6, 0, 0, 0);
-    g_4b13c6 = addView(0x4188000, drawCels, runViewScript, 7000, 6, 0, 0, 0);
-    g_4b142a = groupViews(g_4b13c6, g_4b13c6, 0, 0, 0, 0);
+        code1View = addView(0x4108000, drawCels, runViewScript, chosenCode1 + 10002, 6, 0, 0, 0);
+    code2View = addView(0x4108000, drawCels, runViewScript, chosenCode2 + 10007, 6, 0, 0, 0);
+    code3View = addView(0x4108000, drawCels, runViewScript, chosenCode3 + 10012, 6, 0, 0, 0);
+    revealView = addView(0x4188000, drawCels, runViewScript, 7000, 6, 0, 0, 0);
+    revealGroup = groupViews(revealView, revealView, 0, 0, 0, 0);
 }
 
 /* Scene 15's keys (debugging ones only while debugging messages are on). */
@@ -1430,11 +1430,11 @@ short netKey(unsigned short key)
         drawCodesBox();
         return 1;
     case ' ':
-        g_4b140a = g_4b140e;
-        g_4b140c = 17 - g_4b140a;
-        if (g_4b142c) {
-            g_4b142c = 0;
-            g_4b1410++;
+        revealSteps = revealStepsAtOpen;
+        revealScript = 17 - revealSteps;
+        if (netTriesOver) {
+            netTriesOver = 0;
+            codesDue++;
         }
         return 1;
     }
@@ -1442,9 +1442,9 @@ short netKey(unsigned short key)
 }
 
 /*
- * Which entry (of g_4b142e) of the tables codeColumns and codeRows (and, from
+ * Which entry (of codeEntryCount) of the tables codeColumns and codeRows (and, from
  * level 2 (netLevel), codeLayers) holds the codes chosenCode3 and chosenCode2 (and
- * chosenCode1), in the order codeOrder1 (levels 0-1) or g_4b1468 (from level 2)
+ * chosenCode1), in the order codeOrder1 (levels 0-1) or codeOrderHigh (from level 2)
  * says; -1 if none.
  */
 /* @zoombi32 0x0043dbf3 */
@@ -1456,39 +1456,39 @@ short findCodeEntry()
     case 0:
     case 1:
         if (codeOrder1 == 2) {
-            for (i = 0; i < g_4b142e; i++)
+            for (i = 0; i < codeEntryCount; i++)
                 if (codeColumns[i] == chosenCode3 && codeRows[i] == chosenCode2)
                     return i;
         } else {
-            for (i = 0; i < g_4b142e; i++)
+            for (i = 0; i < codeEntryCount; i++)
                 if (codeRows[i] == chosenCode3 && codeColumns[i] == chosenCode2)
                     return i;
         }
         break;
     case 2:
     case 3:
-        if (g_4b1468 == 0) {
-            for (i = 0; i < g_4b142e; i++)
+        if (codeOrderHigh == 0) {
+            for (i = 0; i < codeEntryCount; i++)
                 if (codeColumns[i] == chosenCode3 && codeRows[i] == chosenCode2 && codeLayers[i] == chosenCode1)
                     return i;
-        } else if (g_4b1468 == 1) {
-            for (i = 0; i < g_4b142e; i++)
+        } else if (codeOrderHigh == 1) {
+            for (i = 0; i < codeEntryCount; i++)
                 if (codeColumns[i] == chosenCode2 && codeRows[i] == chosenCode3 && codeLayers[i] == chosenCode1)
                     return i;
-        } else if (g_4b1468 == 2) {
-            for (i = 0; i < g_4b142e; i++)
+        } else if (codeOrderHigh == 2) {
+            for (i = 0; i < codeEntryCount; i++)
                 if (codeColumns[i] == chosenCode1 && codeRows[i] == chosenCode3 && codeLayers[i] == chosenCode2)
                     return i;
-        } else if (g_4b1468 == 3) {
-            for (i = 0; i < g_4b142e; i++)
+        } else if (codeOrderHigh == 3) {
+            for (i = 0; i < codeEntryCount; i++)
                 if (codeColumns[i] == chosenCode3 && codeRows[i] == chosenCode1 && codeLayers[i] == chosenCode2)
                     return i;
-        } else if (g_4b1468 == 4) {
-            for (i = 0; i < g_4b142e; i++)
+        } else if (codeOrderHigh == 4) {
+            for (i = 0; i < codeEntryCount; i++)
                 if (codeColumns[i] == chosenCode2 && codeRows[i] == chosenCode1 && codeLayers[i] == chosenCode3)
                     return i;
-        } else if (g_4b1468 == 5) {
-            for (i = 0; i < g_4b142e; i++)
+        } else if (codeOrderHigh == 5) {
+            for (i = 0; i < codeEntryCount; i++)
                 if (codeColumns[i] == chosenCode1 && codeRows[i] == chosenCode2 && codeLayers[i] == chosenCode3)
                     return i;
         }
@@ -1708,7 +1708,7 @@ void enterNextScene()
  * The marker's placing: turns each of its cels' images (1-184) into the
  * ones for the codes chosen (chosenCode1, chosenCode2 and chosenCode3, and their
  * second parts previousCode1, previousCode2 and previousCode3; -1: none), by two tables
- * of five; with g_4b1450 set, also moves the cels to the marker's place
+ * of five; with markerMoved set, also moves the cels to the marker's place
  * (markerX, markerY). A cel below 1 stops it there for good.
  */
 /* @zoombi32 0x0043d70d */
@@ -1759,7 +1759,7 @@ void markerPlaced(View *view)
                 cels[i] += row2 * 22;
             else if (cels[i] && cels[i] >= 176 && row2b != -1)
                 cels[i] = row2b * 22 + 66;
-            if (g_4b1450) {
+            if (markerMoved) {
                 if (!i) {
                     cels[i + 1] = markerX;
                     cels[i + 2] = markerY;
@@ -1783,10 +1783,10 @@ void markerPlaced(View *view)
  * The notify of the Zoombinis crossing (movingSnoid the one moving): 0 flips
  * which way it faces and turns it the way netFacing says (then clears it); 2 runs
  * flyMarker; 4 starts the step onto the net (script 14000 on, by the place
- * g_4b119a) and puts the marker and the three places' views in order;
- * 20 takes the next Zoombini from place g_4b119a (a walk by its feet,
+ * currentNetPlace) and puts the marker and the three places' views in order;
+ * 20 takes the next Zoombini from place currentNetPlace (a walk by its feet,
  * 13016 on); 30 starts its crossing (13031 on) and stacks it on the one
- * before (g_4b147e); 240-243 note a turn to make (netFacing), 250-253 turn
+ * before (lastCrossed); 240-243 note a turn to make (netFacing), 250-253 turn
  * it. When a script ends: after a crossing, it walks on to the next spot
  * of acrossSpots, with sounds when the last one's across; else the Zoombini
  * waiting on the net in the view's place stops, and the net's view starts
@@ -1827,8 +1827,8 @@ void crossingNotify(View *view, short event)
         break;
     case 4:
         view = findView(movingSnoid);
-        anchor = onto[g_4b119a];
-        startSnoidScript((Snoid *)&view->body, g_4b119a + 14000, &anchor, 0);
+        anchor = onto[currentNetPlace];
+        startSnoidScript((Snoid *)&view->body, currentNetPlace + 14000, &anchor, 0);
         view->notifyEnd = 0;
         view->notify = crossingNotify;
         moveView(standingViews[0], 1, markerViews[markerCount]);
@@ -1837,75 +1837,75 @@ void crossingNotify(View *view, short event)
         moveView(movingSnoid, 1, standingViews[2]);
         break;
     case 20:
-        movingSnoid = netPlaces[g_4b119a];
+        movingSnoid = netPlaces[currentNetPlace];
         view = findView(movingSnoid);
         script = ((Snoid *)&view->body)->features[3] - 1;
-        script = 2 - g_4b119a + script * 3 + 13016;
+        script = 2 - currentNetPlace + script * 3 + 13016;
         startSnoidScript((Snoid *)&view->body, script, 0, 0);
         ((Snoid *)&view->body)->unknownF7 = 1;
         view->notifyEnd = 0;
         view->notify = crossingNotify;
-        g_4b0d5c = nextToSend;
-        movingSnoid = netPlaces[g_4b119a];
-        netPlaces[g_4b119a] = 0;
-        if (!g_4b11a0 && nextToSend < netPartySize)
-            g_4b145c++;
+        sentIndex = nextToSend;
+        movingSnoid = netPlaces[currentNetPlace];
+        netPlaces[currentNetPlace] = 0;
+        if (!emptyNetPlaces && nextToSend < netPartySize)
+            sendsLeft++;
         break;
     case 30:
-        anchor = across[g_4b119a];
+        anchor = across[currentNetPlace];
         view = findView(movingSnoid);
         script = ((Snoid *)&view->body)->features[3] - 1;
-        script = script * 3 + g_4b119a + 13031;
+        script = script * 3 + currentNetPlace + 13031;
         startSnoidScript((Snoid *)&view->body, script, &anchor, 0);
         view->notifyEnd = 1;
         view->notify = crossingNotify;
-        g_4b1414++;
-        if (g_4b147e)
-            moveView(movingSnoid, 0, g_4b147e);
-        g_4b147e = movingSnoid;
+        crossingStarted++;
+        if (lastCrossed)
+            moveView(movingSnoid, 0, lastCrossed);
+        lastCrossed = movingSnoid;
         break;
     case -1:
-        if (!g_4b1414) {
+        if (!crossingStarted) {
             for (i = 2; i >= 0; i--)
-                if (g_4b12b0[i] == view->id) {
-                    View *waiting = findView(g_4b12b0[i]);
+                if (waitingOnNet[i] == view->id) {
+                    View *waiting = findView(waitingOnNet[i]);
 
-                    g_4b12b0[i] = 0;
+                    waitingOnNet[i] = 0;
                     if (waiting) {
                         setSnoidAction((Snoid *)&waiting->body, 2, 0);
-                        if (!g_4b12b0[0] && !g_4b12b0[1] && !g_4b12b0[2]) {
-                            startView(g_4b13fe, 10018, 0, 0);
-                            g_4b1466 = g_4b144c = 0;
+                        if (!waitingOnNet[0] && !waitingOnNet[1] && !waitingOnNet[2]) {
+                            startView(promptView, 10018, 0, 0);
+                            promptHeld = promptHeld2 = 0;
                         }
                         return;
                     }
                 }
-            if (!g_4b145c && !netPlaces[0])
-                g_4b1466 = g_4b144c = 0;
+            if (!sendsLeft && !netPlaces[0])
+                promptHeld = promptHeld2 = 0;
         } else {
-            anchor = acrossSpots[g_4b11a8];
-            g_4b11a8++;
+            anchor = acrossSpots[acrossCount];
+            acrossCount++;
             view = findView(movingSnoid);
             setSnoidAction((Snoid *)&view->body, 7, 0);
             *(Point *)&((Snoid *)&view->body)->targetX = anchor;
             ((Snoid *)&view->body)->unknownF7 = 1;
             view->notifyEnd = 0;
             view->notify = crossingNotify;
-            g_4b1412 = movingSnoid;
+            lastAcross = movingSnoid;
             netGoAllowed = 1;
-            g_4b1414 = 0;
-            if (g_4b0e6c >= netPartySize || g_4b11a0)
-                g_4b1466 = g_4b144c = 0;
-            if (!g_4b145c && !netPlaces[0] && !netPlaces[1] && !netPlaces[2]) {
-                if (g_4b0e6c >= netPartySize)
+            crossingStarted = 0;
+            if (snoidsFound >= netPartySize || emptyNetPlaces)
+                promptHeld = promptHeld2 = 0;
+            if (!sendsLeft && !netPlaces[0] && !netPlaces[1] && !netPlaces[2]) {
+                if (snoidsFound >= netPartySize)
                     queueViewSound(randomBetween(20055, 20063), 0);
-                g_4b11a6++;
-                g_4b147c++;
-                g_4b1478 = netPartySize;
+                allAcross++;
+                netFidgetsOn++;
+                netFidgetsAllowed = netPartySize;
             }
-            if (g_4a28d0) {
-                g_4a28d0 = 0;
-                if (g_4b0e6c >= 1 && g_4b0e6c < netPartySize)
+            if (remarkAfterCross) {
+                remarkAfterCross = 0;
+                if (snoidsFound >= 1 && snoidsFound < netPartySize)
                     queueViewSound(randomBetween(20045, 20048), 0);
             }
         }
@@ -1923,7 +1923,7 @@ void crossingNotify(View *view, short event)
  * taken). Then places the party's Zoombinis (netGroups) at random free
  * entries of placeGroups, adds a view for each (script 9000 on, or 9025 on),
  * and picks the order of the codes (codeOrder1-codeOrder3, distinct from
- * level 3) and, from level 3, g_4b1468.
+ * level 3) and, from level 3, codeOrderHigh.
  */
 /* @zoombi32 0x0043c9e2 */
 void setUpCodes()
@@ -1995,16 +1995,16 @@ void setUpCodes()
     case 1:
         shifts = randomUpTo(1) + 2;
         for (j = 0; j < 5; j++)
-            g_4b1166[j] = codeRows[j];
+            codeRowsCopy[j] = codeRows[j];
         for (k = 1; k < 5; k++) {
             for (i = 0; i < shifts; i++) {
-                saved = g_4b1166[4];
+                saved = codeRowsCopy[4];
                 for (j = 4; j > 0; j--)
-                    g_4b1166[j] = g_4b1166[j - 1];
-                g_4b1166[0] = saved;
+                    codeRowsCopy[j] = codeRowsCopy[j - 1];
+                codeRowsCopy[0] = saved;
             }
             for (j = 0; j < 5; j++)
-                codeRows[k * 5 + j] = g_4b1166[j];
+                codeRows[k * 5 + j] = codeRowsCopy[j];
         }
         break;
     case 3:
@@ -2015,28 +2015,28 @@ void setUpCodes()
             for (i = 0; i < 5; i++)
                 for (k = 1; k < 5; k++) {
                     for (j = 0; j < 5; j++)
-                        g_4b1166[j] = codeColumns[k + i * 5 + j * 25 - 1];
+                        codeRowsCopy[j] = codeColumns[k + i * 5 + j * 25 - 1];
                     for (m = 0; m < shifts; m++) {
-                        saved = g_4b1166[4];
+                        saved = codeRowsCopy[4];
                         for (j = 4; j > 0; j--)
-                            g_4b1166[j] = g_4b1166[j - 1];
-                        g_4b1166[0] = saved;
+                            codeRowsCopy[j] = codeRowsCopy[j - 1];
+                        codeRowsCopy[0] = saved;
                     }
                     for (j = 0; j < 5; j++)
-                        codeColumns[i * 5 + k + j * 25] = g_4b1166[j];
+                        codeColumns[i * 5 + k + j * 25] = codeRowsCopy[j];
                 }
         } else {
-            for (k = 5; k < g_4b142e; k += 5) {
+            for (k = 5; k < codeEntryCount; k += 5) {
                 for (j = 0; j < 5; j++)
-                    g_4b1166[j] = codeLayers[k + j - 5];
+                    codeRowsCopy[j] = codeLayers[k + j - 5];
                 for (i = 0; i < shifts; i++) {
-                    saved = g_4b1166[4];
+                    saved = codeRowsCopy[4];
                     for (j = 4; j > 0; j--)
-                        g_4b1166[j] = g_4b1166[j - 1];
-                    g_4b1166[0] = saved;
+                        codeRowsCopy[j] = codeRowsCopy[j - 1];
+                    codeRowsCopy[0] = saved;
                 }
                 for (j = 0; j < 5; j++)
-                    codeLayers[k + j] = g_4b1166[j];
+                    codeLayers[k + j] = codeRowsCopy[j];
             }
         }
         break;
@@ -2053,14 +2053,14 @@ void setUpCodes()
         } while (placeGroups[k]);
         placeGroups[k] = netGroups[i];
     }
-    for (i = 0; i < g_4b142e; i++) {
-        g_4b12cc[i] = 0;
+    for (i = 0; i < codeEntryCount; i++) {
+        placeGroupViews[i] = 0;
         if (placeGroups[i]) {
-            g_4b12cc[i] = addView(0x4188000, drawCels, runViewScript, scriptBase + i + 9000, 6, 0, 0, 0);
+            placeGroupViews[i] = addView(0x4188000, drawCels, runViewScript, scriptBase + i + 9000, 6, 0, 0, 0);
             image = placeGroups[i] + 150;
             if (netLevel > 1)
                 image += 3;
-            View *view = findView(g_4b12cc[i]);
+            View *view = findView(placeGroupViews[i]);
 
             if (view) {
                 view->placed = placeSecondCel;
@@ -2068,7 +2068,7 @@ void setUpCodes()
 
                 parts[20] = image;
             }
-            moveView(g_4b12cc[i], 0, standingViews[0]);
+            moveView(placeGroupViews[i], 0, standingViews[0]);
         }
     }
     if (netLevel <= 2) {
@@ -2092,7 +2092,7 @@ void setUpCodes()
         } while (!distinct);
     }
     if (netLevel >= 3)
-        g_4b1468 = randomUpTo(5);
+        codeOrderHigh = randomUpTo(5);
 }
 
 /*
@@ -2119,15 +2119,15 @@ void chooseCode(short which, short value)
             previousCode1 = chosenCode1;
             chosenCode1 = value;
             if (previousCode1 != chosenCode1) {
-                startView(g_4b1400, value + 10002, 0, 0);
-                if (!g_4b142c && ready) {
-                    view = startView(g_4b12b6, 7027, 0, 0);
+                startView(code1View, value + 10002, 0, 0);
+                if (!netTriesOver && ready) {
+                    view = startView(netMarkerView, 7027, 0, 0);
                     if (view) {
-                        g_4b1450 = 0;
+                        markerMoved = 0;
                         view->placed = markerPlaced;
                     }
-                    if (!g_4b1466)
-                        startView(g_4b13fe, 10018, 0, 0);
+                    if (!promptHeld)
+                        startView(promptView, 10018, 0, 0);
                 }
             }
         }
@@ -2137,22 +2137,22 @@ void chooseCode(short which, short value)
         chosenCode2 = value;
         previousCode1 = chosenCode1;
         if (previousCode2 != chosenCode2) {
-            startView(g_4b1402, value + 10007, 0, 0);
-            if (!g_4b142c && ready) {
-                view = findView(g_4b12b6);
+            startView(code2View, value + 10007, 0, 0);
+            if (!netTriesOver && ready) {
+                view = findView(netMarkerView);
                 if (view) {
                     setViewScript(view, 7019, 1);
                     view->interval = 3;
                 } else {
-                    g_4b12b6 = addView(0x4108000, drawCels, runViewScript, 7019, 3, 0, 0, 0);
-                    view = findView(g_4b12b6);
+                    netMarkerView = addView(0x4108000, drawCels, runViewScript, 7019, 3, 0, 0, 0);
+                    view = findView(netMarkerView);
                 }
                 if (view) {
-                    g_4b1450 = 0;
+                    markerMoved = 0;
                     view->placed = markerPlaced;
                 }
-                if (!g_4b1466)
-                    startView(g_4b13fe, 10018, 0, 0);
+                if (!promptHeld)
+                    startView(promptView, 10018, 0, 0);
             }
         }
         break;
@@ -2162,15 +2162,15 @@ void chooseCode(short which, short value)
         previousCode1 = chosenCode1;
         chosenCode3 = value;
         if (previousCode3 != chosenCode3) {
-            startView(g_4b1404, value + 10012, 0, 0);
-            if (!g_4b142c && ready) {
-                view = startView(g_4b12b6, 7026, 0, 0);
+            startView(code3View, value + 10012, 0, 0);
+            if (!netTriesOver && ready) {
+                view = startView(netMarkerView, 7026, 0, 0);
                 if (view) {
-                    g_4b1450 = 0;
+                    markerMoved = 0;
                     view->placed = markerPlaced;
                 }
-                if (!g_4b1466)
-                    startView(g_4b13fe, 10018, 0, 0);
+                if (!promptHeld)
+                    startView(promptView, 10018, 0, 0);
             }
         }
         break;
@@ -2180,32 +2180,32 @@ void chooseCode(short which, short value)
         previousCode1 = chosenCode1;
         if ((netLevel <= 1 && chosenCode2 >= 0 && chosenCode3 >= 0)
             || (chosenCode1 >= 0 && chosenCode2 >= 0 && chosenCode3 >= 0)) {
-            startView(g_4b13fe, 10001, 0, 0);
-            g_4b1416 = 0;
+            startView(promptView, 10001, 0, 0);
+            codesShown = 0;
             markerPlace = findCodeEntry();
             if (netLevel < 2)
                 column = markerPlace % 5;
             else
                 column = markerPlace % 25 / 5;
             if (!column)
-                g_4a2e58 = 1;
+                markerColumnKind = 1;
             else if (column >= 1 && column < 4)
-                g_4a2e58 = 0;
+                markerColumnKind = 0;
             else
-                g_4a2e58 = 2;
-            view = startView(g_4b12b6, g_4a2e58 + 7028, crossingNotify, 0);
+                markerColumnKind = 2;
+            view = startView(netMarkerView, markerColumnKind + 7028, crossingNotify, 0);
             if (view) {
-                g_4b1450 = 0;
+                markerMoved = 0;
                 view->placed = markerPlaced;
                 view->interval = 6;
-                g_4b1464 = groupViews(g_4b12b6, g_4b12b6, 0, 0, 0, 0);
+                markerGroup = groupViews(netMarkerView, netMarkerView, 0, 0, 0, 0);
             }
         }
         break;
     }
-    if (!g_4b1416 && !g_4b142c) {
-        g_4b1410++;
-        g_4b1416++;
+    if (!codesShown && !netTriesOver) {
+        codesDue++;
+        codesShown++;
     }
 }
 
@@ -2230,7 +2230,7 @@ void netFrame()
 
     if (inNetFrame || !netOpen)
         return;
-    inNetFrame = g_4b1480 = 1;
+    inNetFrame = netFrameEntered = 1;
     updateViews();
     if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
@@ -2253,134 +2253,134 @@ void netFrame()
             sceneDue = 0;
         }
     }
-    if (g_4b1406 && g_4b142a && !groupLeader[g_4b142a]) {
-        if (++g_4b1408 < g_4b140a) {
-            startView(g_4b13c6, g_4b1408 + 7000, 0, 0);
-            g_4b142a = groupViews(g_4b13c6, g_4b13c6, 0, 0, 0, 0);
+    if (revealing && revealGroup && !groupLeader[revealGroup]) {
+        if (++revealStep < revealSteps) {
+            startView(revealView, revealStep + 7000, 0, 0);
+            revealGroup = groupViews(revealView, revealView, 0, 0, 0, 0);
         } else {
-            g_4b1406 = g_4b142a = 0;
-            g_4b145c = 3;
-            g_4b144a++;
+            revealing = revealGroup = 0;
+            sendsLeft = 3;
+            sendAllowed++;
             sendNextToNet();
-            g_4b1410 = 1;
-            g_4b1416 = 1;
+            codesDue = 1;
+            codesShown = 1;
         }
     }
-    if (g_4b141e && !groupLeader[g_4b141e]) {
-        g_4b141e = 0;
+    if (guideGroup && !groupLeader[guideGroup]) {
+        guideGroup = 0;
         setUpCodes();
     }
-    if (g_4b1464) {
-        if (!groupLeader[g_4b1464]) {
-            g_4b1464 = 0;
-            if (--g_4b140a < 0) {
-                g_4b142c++;
+    if (markerGroup) {
+        if (!groupLeader[markerGroup]) {
+            markerGroup = 0;
+            if (--revealSteps < 0) {
+                netTriesOver++;
                 if (randomBetween(0, 4) > netLevel || (*(short *)(gameState + 0x3c) & 0xfff) <= 3) {
-                    if (g_4b145a < 1) {
-                        if (g_4b0e6c >= 1 && g_4b0e6c < netPartySize)
+                    if (groupToCross < 1) {
+                        if (snoidsFound >= 1 && snoidsFound < netPartySize)
                             queueViewSound(randomBetween(20045, 20048), 0);
                     } else if (nextToSend < netPartySize) {
-                        g_4a28d0++;
+                        remarkAfterCross++;
                     }
                 }
             }
-            if (g_4b145a >= 1)
-                g_4b1458++;
+            if (groupToCross >= 1)
+                crossDue++;
             else
-                g_4b145a = 0;
+                groupToCross = 0;
         }
-    } else if (g_4b1410 && !g_4b142c) {
+    } else if (codesDue && !netTriesOver) {
         if ((netLevel <= 1 && chosenCode2 >= 0 && chosenCode3 >= 0) || (chosenCode1 >= 0 && chosenCode2 >= 0 && chosenCode3 >= 0)) {
-            g_4b1410 = 0;
-            startView(g_4b13c6, g_4b140c + 7031, 0, 0);
-            g_4b141a = groupViews(g_4b13c6, g_4b13c6, 0, 0, 0, 0);
-            if (++g_4b140c > 16)
-                g_4b140c = 16;
+            codesDue = 0;
+            startView(revealView, revealScript + 7031, 0, 0);
+            markerStep1Group = groupViews(revealView, revealView, 0, 0, 0, 0);
+            if (++revealScript > 16)
+                revealScript = 16;
         }
-    } else if (g_4b141a) {
-        g_4b141a = 0;
+    } else if (markerStep1Group) {
+        markerStep1Group = 0;
         previousCode2 = chosenCode2;
         previousCode3 = -1;
         previousCode1 = -1;
         if (netLevel <= 1)
             chosenCode1 = -1;
-        if (!g_4b142c) {
-            view = startView(g_4b12b6, 7018, 0, 0);
+        if (!netTriesOver) {
+            view = startView(netMarkerView, 7018, 0, 0);
             if (view) {
-                g_4b1450 = 0;
+                markerMoved = 0;
                 view->interval = 3;
                 view->placed = markerPlaced;
-                g_4b141c = groupViews(g_4b12b6, g_4b12b6, 0, 0, 0, 0);
+                markerStep2Group = groupViews(netMarkerView, netMarkerView, 0, 0, 0, 0);
             }
         }
-    } else if (g_4b141c) {
-        if (!groupLeader[g_4b141c]) {
-            g_4b141c = 0;
+    } else if (markerStep2Group) {
+        if (!groupLeader[markerStep2Group]) {
+            markerStep2Group = 0;
             sendNextToNet();
-            view = startView(g_4b12b6, 7025, 0, 0);
+            view = startView(netMarkerView, 7025, 0, 0);
             if (view) {
                 view->interval = 2;
-                g_4b1420 = groupViews(g_4b12b6, g_4b12b6, 0, 0, 0, 0);
+                markerStep3Group = groupViews(netMarkerView, netMarkerView, 0, 0, 0, 0);
             }
         }
-    } else if (g_4b1420) {
-        if (!groupLeader[g_4b1420]) {
-            g_4b1420 = 0;
-            view = startView(g_4b12b6, 7026, 0, 0);
+    } else if (markerStep3Group) {
+        if (!groupLeader[markerStep3Group]) {
+            markerStep3Group = 0;
+            view = startView(netMarkerView, 7026, 0, 0);
             if (view) {
-                g_4b1450 = 0;
+                markerMoved = 0;
                 view->placed = markerPlaced;
                 view->interval = 6;
-                g_4b1422 = groupViews(g_4b12b6, g_4b12b6, 0, 0, 0, 0);
+                markerStep4Group = groupViews(netMarkerView, netMarkerView, 0, 0, 0, 0);
             }
         }
-    } else if (g_4b1422) {
-        if (!groupLeader[g_4b1422]) {
-            g_4b1422 = g_4b11a4 = 0;
+    } else if (markerStep4Group) {
+        if (!groupLeader[markerStep4Group]) {
+            markerStep4Group = codesLocked = 0;
             if (netLevel <= 1) {
-                g_4b1424 = 0;
-                if (g_4b1418) {
-                    startView(g_4b13fe, 10017, 0, 0);
-                    g_4b1418 = 0;
-                    g_4b1470 = clockTime();
-                } else if (g_4b144e || g_4b0e6c >= netPartySize) {
-                    g_4b144c = g_4b144e = 0;
-                    startView(g_4b13fe, 10018, 0, 0);
+                markerStep5Group = 0;
+                if (firstPrompt) {
+                    startView(promptView, 10017, 0, 0);
+                    firstPrompt = 0;
+                    lastPromptTime = clockTime();
+                } else if (markerMissed || snoidsFound >= netPartySize) {
+                    promptHeld2 = markerMissed = 0;
+                    startView(promptView, 10018, 0, 0);
                 } else {
-                    g_4b144c = g_4b144e = 0;
+                    promptHeld2 = markerMissed = 0;
                 }
             } else {
                 previousCode1 = -1;
-                view = startView(g_4b12b6, 7027, 0, 0);
+                view = startView(netMarkerView, 7027, 0, 0);
                 if (view) {
-                    g_4b1424 = groupViews(g_4b12b6, g_4b12b6, 0, 0, 0, 0);
-                    g_4b1450 = 0;
+                    markerStep5Group = groupViews(netMarkerView, netMarkerView, 0, 0, 0, 0);
+                    markerMoved = 0;
                     view->placed = markerPlaced;
                 }
             }
         }
-    } else if (g_4b1424) {
-        if (!groupLeader[g_4b1424]) {
-            g_4b1424 = 0;
-            if (g_4b1418) {
-                startView(g_4b13fe, 10017, 0, 0);
-                g_4b1418 = 0;
-                g_4b1470 = clockTime();
-            } else if (g_4b144e || g_4b0e6c >= netPartySize) {
-                g_4b144c = g_4b144e = 0;
-                startView(g_4b13fe, 10018, 0, 0);
+    } else if (markerStep5Group) {
+        if (!groupLeader[markerStep5Group]) {
+            markerStep5Group = 0;
+            if (firstPrompt) {
+                startView(promptView, 10017, 0, 0);
+                firstPrompt = 0;
+                lastPromptTime = clockTime();
+            } else if (markerMissed || snoidsFound >= netPartySize) {
+                promptHeld2 = markerMissed = 0;
+                startView(promptView, 10018, 0, 0);
             } else {
-                g_4b144c = g_4b144e = 0;
+                promptHeld2 = markerMissed = 0;
             }
         }
     }
-    if (g_4b1458 && g_4b145a) {
-        g_4b1458 = 0;
+    if (crossDue && groupToCross) {
+        crossDue = 0;
         if (nextToSend >= netPartySize)
-            g_4b145c = 0;
-        if (--g_4b145a <= 0) {
-            g_4b145a = 0;
-            if (g_4b0d5c < 0 && g_4b145c)
+            sendsLeft = 0;
+        if (--groupToCross <= 0) {
+            groupToCross = 0;
+            if (sentIndex < 0 && sendsLeft)
                 sendNextToNet();
         }
         if (netLevel < 2)
@@ -2390,65 +2390,65 @@ void netFrame()
         startView(standingViews[column], column + 8000, 0, 0);
         if (markerCount)
             moveView(standingViews[column], 1, markerViews[markerCount]);
-        g_4b145e = groupViews(standingViews[column], standingViews[column], 0, 0, 0, 0);
-        g_4b1466++;
-        g_4b1470 = clockTime();
-    } else if (g_4b145e) {
-        if (!groupLeader[g_4b145e]) {
-            g_4b145e = 0;
-            g_4b119a = 0;
+        standingGroup = groupViews(standingViews[column], standingViews[column], 0, 0, 0, 0);
+        promptHeld++;
+        lastPromptTime = clockTime();
+    } else if (standingGroup) {
+        if (!groupLeader[standingGroup]) {
+            standingGroup = 0;
+            currentNetPlace = 0;
             for (i = 0; i < 3; i++)
                 if (netPlaces[i]) {
-                    g_4b119a = i;
+                    currentNetPlace = i;
                     break;
                 }
-            if (netPlaces[g_4b119a]) {
-                view = startView(g_4b12b8, g_4b119a + 8005, crossingNotify, 0);
+            if (netPlaces[currentNetPlace]) {
+                view = startView(stepView, currentNetPlace + 8005, crossingNotify, 0);
                 if (view)
-                    g_4b1460 = groupViews(g_4b12b8, g_4b12b8, 0, 0, 0, 0);
+                    stepGroup = groupViews(stepView, stepView, 0, 0, 0, 0);
             }
         }
-    } else if (g_4b1460) {
-        if (!groupLeader[g_4b1460]) {
-            g_4b1460 = 0;
-            if (g_4b145a)
-                g_4b1458++;
+    } else if (stepGroup) {
+        if (!groupLeader[stepGroup]) {
+            stepGroup = 0;
+            if (groupToCross)
+                crossDue++;
             else
-                g_4b144a++;
-            if (g_4b0e6c >= netPartySize && !g_4b145a)
-                g_4b145a = g_4b1458 = 0;
+                sendAllowed++;
+            if (snoidsFound >= netPartySize && !groupToCross)
+                groupToCross = crossDue = 0;
         }
-    } else if (g_4b0d5c >= 0 && !g_4b142c && g_4b0d5c < netPartySize) {
-        view = idleSnoidView(partyViews[g_4b0d5c]);
+    } else if (sentIndex >= 0 && !netTriesOver && sentIndex < netPartySize) {
+        view = idleSnoidView(partyViews[sentIndex]);
         if (view) {
             script = ((Snoid *)&view->body)->features[3] - 1;
-            script = script + (2 - g_4b119a) * 5 + 13001;
+            script = script + (2 - currentNetPlace) * 5 + 13001;
             startSnoidScript((Snoid *)&view->body, script, 0, 0);
             view->notify = crossingNotify;
             view->notifyEnd = 1;
-            g_4b1430++;
-            g_4b12b0[g_4b119a] = netPlaces[g_4b119a];
-            g_4b0d5c = -1;
-            g_4b1462 = 0;
+            sentCount++;
+            waitingOnNet[currentNetPlace] = netPlaces[currentNetPlace];
+            sentIndex = -1;
+            sendUnderway = 0;
         }
     }
-    if (g_4b0d5c < 0 && g_4b145c)
+    if (sentIndex < 0 && sendsLeft)
         sendNextToNet();
-    if (g_4b147c && g_4b147a < g_4b1478) {
-        if (clockTime() - g_4b146c > 30) {
+    if (netFidgetsOn && netFidgets < netFidgetsAllowed) {
+        if (clockTime() - lastNetFidgetTime > 30) {
             done = 0;
             tries = 0;
-            g_4b146c = clockTime();
+            lastNetFidgetTime = clockTime();
             do {
-                i = allocateSlot(&g_4b1474, netPartySize, 0);
+                i = allocateSlot(&netFidgetersUsed, netPartySize, 0);
                 if (partyViews[i] != netPlaces[0] && partyViews[i] != netPlaces[1] && partyViews[i] != netPlaces[2]) {
-                    g_4b0d60 = idleSnoidView(partyViews[i]);
-                    if (g_4b0d60 && g_4b0d60->body.running && g_4b0d60->flags == 1) {
-                        if (!((Snoid *)&g_4b0d60->body)->unknownF7 || g_4b11a6) {
-                            fidget = ((Snoid *)&g_4b0d60->body)->features[3] - 1;
+                    netFidgeter = idleSnoidView(partyViews[i]);
+                    if (netFidgeter && netFidgeter->body.running && netFidgeter->flags == 1) {
+                        if (!((Snoid *)&netFidgeter->body)->unknownF7 || allAcross) {
+                            fidget = ((Snoid *)&netFidgeter->body)->features[3] - 1;
                             fidget += 13046;
-                            startSnoidScript((Snoid *)&g_4b0d60->body, fidget, 0, 0);
-                            g_4b147a++;
+                            startSnoidScript((Snoid *)&netFidgeter->body, fidget, 0, 0);
+                            netFidgets++;
                             done = 1;
                         }
                     } else if (++tries > 20) {
@@ -2459,26 +2459,26 @@ void netFrame()
                 }
             } while (!done);
         }
-    } else if (g_4b147a >= g_4b1478) {
-        g_4b147a = g_4b147c = g_4b146c = g_4b1474 = 0;
+    } else if (netFidgets >= netFidgetsAllowed) {
+        netFidgets = netFidgetsOn = lastNetFidgetTime = netFidgetersUsed = 0;
     }
-    if (g_4b1466) {
-        if (clockTime() - g_4b1470 > 720) {
-            g_4b1466 = g_4b144c = 0;
-            startView(g_4b13fe, 10018, 0, 0);
-            g_4b1470 = clockTime();
+    if (promptHeld) {
+        if (clockTime() - lastPromptTime > 720) {
+            promptHeld = promptHeld2 = 0;
+            startView(promptView, 10018, 0, 0);
+            lastPromptTime = clockTime();
         }
-    } else if (clockTime() - g_4b1470 > 7200) {
-        g_4b1466 = g_4b144c = g_4b1470 = 0;
-        startView(g_4b13fe, 10018, 0, 0);
-        g_4b1470 = clockTime();
+    } else if (clockTime() - lastPromptTime > 7200) {
+        promptHeld = promptHeld2 = lastPromptTime = 0;
+        startView(promptView, 10018, 0, 0);
+        lastPromptTime = clockTime();
     }
     playAmbientSound();
     inNetFrame = 0;
 }
 
 /*
- * Scene 15's buttons: leaves at once if asked to; unless g_4b11a4, 3 sends
+ * Scene 15's buttons: leaves at once if asked to; unless codesLocked, 3 sends
  * the marker off with the codes chosen, and 4-8, 9-13 and 14-18 choose the
  * first (from level 2), second and third code. 1 asks to leave for the map
  * (999, keeping the party); 2, once allowed (netGoAllowed), sends the
@@ -2496,13 +2496,13 @@ void netClicked(short button)
         closeNet();
         return;
     }
-    if (!g_4b11a4) {
+    if (!codesLocked) {
         switch (button) {
         case 3:
-            if (!g_4b1466 && !g_4b144c && !g_4b142c) {
-                g_4b1466++;
-                g_4b144c++;
-                g_4b1470 = clockTime();
+            if (!promptHeld && !promptHeld2 && !netTriesOver) {
+                promptHeld++;
+                promptHeld2++;
+                lastPromptTime = clockTime();
                 code = 0;
                 chooseCode(0, code);
             }
@@ -2512,7 +2512,7 @@ void netClicked(short button)
         case 6:
         case 7:
         case 8:
-            if (netLevel > 1 && (!g_4b144c || g_4b142c)) {
+            if (netLevel > 1 && (!promptHeld2 || netTriesOver)) {
                 code = button - 4;
                 chooseCode(1, code);
             }
@@ -2522,7 +2522,7 @@ void netClicked(short button)
         case 11:
         case 12:
         case 13:
-            if (!g_4b144c || g_4b142c) {
+            if (!promptHeld2 || netTriesOver) {
                 code = button - 9;
                 chooseCode(2, code);
             }
@@ -2532,7 +2532,7 @@ void netClicked(short button)
         case 16:
         case 17:
         case 18:
-            if (!g_4b144c || g_4b142c) {
+            if (!promptHeld2 || netTriesOver) {
                 code = button - 14;
                 chooseCode(3, code);
             }
