@@ -66,7 +66,7 @@
       bugs. Your progress is saved in this browser.
     </p>
     <button id="start">Play</button>
-    <div id="status" role="status">Loading…</div>
+    <div id="status" role="status"></div>
     <noscript>The game needs JavaScript.</noscript>
     <p class="links">
       <a href="https://github.com/slippedandmissed/zbtools">Source code and project on GitHub</a>
@@ -109,12 +109,17 @@
     canvas: document.getElementById("canvas"),
     print: function (text) { console.log(text); zbKeep(text); },
     printErr: function (text) { console.warn(text); zbKeep(text); },
+    // Emscripten's own messages ("Downloading data...") would stay up until
+    // the game runs, which waits for Play: show only the download's progress.
     setStatus: function (text) {
       var m = text.match(/\((\d+(\.\d+)?)\/(\d+)\)/);
       if (m)
         statusLine.textContent = 'Loading… ' + Math.round(100 * m[1] / m[3]) + '%';
-      else if (text)
-        statusLine.textContent = text;
+    },
+    // Once all the game waits for is Play (pre.js's zb-start), it's ready.
+    monitorRunDependencies: function (left) {
+      if (left <= 1 && !window.zbStartClicked)
+        statusLine.textContent = '';
     },
     onAbort: function (what) {
       overlay.style.display = 'flex';
