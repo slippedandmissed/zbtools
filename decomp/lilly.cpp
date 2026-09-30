@@ -153,7 +153,7 @@ void updateLillyBackdrop(View *view, short region)
 
     if (!dialogFlags && view->reset) {
         view->reset = 0;
-        unionRgnRect(region, &g_4a1dfc);
+        unionRgnRect(region, &lillyArea);
     }
 }
 
@@ -452,7 +452,7 @@ void startSnoidInRoom(short id)
         view->notifyEnd = 1;
         view->notify = hotelSnoidNotify;
         view->interval = 3;
-        g_4ac0d0 = groupViews(g_4abec6[hotelRoom], view->id, 0, 0, 0, 0);
+        roomGroup = groupViews(roomColumnViews[hotelRoom], view->id, 0, 0, 0, 0);
     }
 }
 
@@ -482,7 +482,7 @@ void updateMarkerView(View *view, short region)
             view->reset = 0;
             view->nextUpdate = 0;
             view->body.running = 0;
-            unionRgnRect(region, &g_4a1e32);
+            unionRgnRect(region, &markerArea);
         }
         if (view->body.running) {
             rect.left = view->body.bounds.left - 17;
@@ -516,7 +516,7 @@ void drawHotelButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)((char *)g_4a1a18 + g_4a1a18->offsets[image]), hotelButtons[which].rect.left,
+        drawImageData((unsigned short *)((char *)hotelButtonImages + hotelButtonImages->offsets[image]), hotelButtons[which].rect.left,
                       hotelButtons[which].rect.top, 8);
         if (show)
             showRect(&hotelButtons[which].rect);
@@ -544,7 +544,7 @@ void drawLillyButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)((char *)g_4a1d68 + g_4a1d68->offsets[image]), lillyButtons[which].rect.left,
+        drawImageData((unsigned short *)((char *)lillyButtonImages + lillyButtonImages->offsets[image]), lillyButtons[which].rect.left,
                       lillyButtons[which].rect.top, 8);
         if (show)
             showRect(&lillyButtons[which].rect);
@@ -562,7 +562,7 @@ void drawRoomView(View *view)
 
         if (hotelLevel == 2) {
             while (*cel) {
-                unsigned short *image = (unsigned short *)(g_4ac178->offsets[*cel++] + (char *)g_4ac178);
+                unsigned short *image = (unsigned short *)(roomImages->offsets[*cel++] + (char *)roomImages);
                 short x = *cel++;
                 short y = *cel++;
 
@@ -570,7 +570,7 @@ void drawRoomView(View *view)
             }
         } else if (hotelLevel == 3) {
             while (*cel) {
-                unsigned short *image = (unsigned short *)(g_4ac17c->offsets[*cel++] + (char *)g_4ac17c);
+                unsigned short *image = (unsigned short *)(roomImages3d->offsets[*cel++] + (char *)roomImages3d);
                 short x = *cel++;
                 short y = *cel++;
 
@@ -586,17 +586,17 @@ void startRoomColumnViews()
     short i;
 
     if (!hotelLevel) {
-        for (i = 4; i < g_4ac0ee; i += 5) {
-            startView(g_4abec6[i], i + 6063, 0, 0);
-            View *view = findView(g_4abec6[i]);
+        for (i = 4; i < roomCount; i += 5) {
+            startView(roomColumnViews[i], i + 6063, 0, 0);
+            View *view = findView(roomColumnViews[i]);
 
             view->notify = roomViewNotify;
             view->interval = 1;
         }
     } else if (hotelLevel <= 2) {
-        for (i = 0; i < g_4ac0ee; i++) {
-            startView(g_4abec6[i], i + 6063, 0, 0);
-            View *view = findView(g_4abec6[i]);
+        for (i = 0; i < roomCount; i++) {
+            startView(roomColumnViews[i], i + 6063, 0, 0);
+            View *view = findView(roomColumnViews[i]);
 
             view->notify = roomViewNotify;
             view->interval = 1;
@@ -609,8 +609,8 @@ void checkLillyArrivals()
 {
     short count = g_4af0ea;
 
-    for (short i = 0; i < g_4af102; i++) {
-        View *view = findView(g_4aed64[i]);
+    for (short i = 0; i < actorCount; i++) {
+        View *view = findView(actorViews[i]);
 
         if (view) {
             LillyActor *actor = (LillyActor *)&view->body;
@@ -626,7 +626,7 @@ void checkLillyArrivals()
         }
     }
     if (count < g_4af0e8)
-        if (randomBetween(0, 4) > g_4a1b1c - 1 || (*(short *)(gameState + 0x34) & 0xfff) <= 3)
+        if (randomBetween(0, 4) > lillyLevel - 1 || (*(short *)(gameState + 0x34) & 0xfff) <= 3)
             queueViewSound(randomBetween(20045, 20048), 0);
 }
 
@@ -639,16 +639,16 @@ void updateSquareHighlight(View *view, short region)
             view->body.running = 0;
             view->nextUpdate = 0;
             view->reset = 0;
-            unionRgnRect(region, &g_4a1e32);
+            unionRgnRect(region, &markerArea);
         }
         if (view->body.running) {
-            LillyCell *cell = &lillyBoard[g_4af346][g_4af344];
+            LillyCell *cell = &lillyBoard[cursorRow][cursorColumn];
 
-            g_4af5a8.left = cell->rect.left - 18;
-            g_4af5a8.top = cell->rect.top - 15;
-            g_4af5a8.right = cell->rect.right - 17;
-            g_4af5a8.bottom = cell->rect.bottom - 14;
-            unionRgnRect(region, &g_4af5a8);
+            cursorRect.left = cell->rect.left - 18;
+            cursorRect.top = cell->rect.top - 15;
+            cursorRect.right = cell->rect.right - 17;
+            cursorRect.bottom = cell->rect.bottom - 14;
+            unionRgnRect(region, &cursorRect);
         }
     }
 }
@@ -745,9 +745,9 @@ void lillyNotify54(View *view, short event)
         lillyBoard[actor->row][actor->column + 1].attributes[0] = 0;
         g_4acff2 = g_4acff0;
         for (short i = 0; i < 13; i++)
-            if (g_4aed64[i] == g_4acff2) {
-                for (; g_4aed64[i]; i++)
-                    g_4aed64[i] = g_4aed64[i + 1];
+            if (actorViews[i] == g_4acff2) {
+                for (; actorViews[i]; i++)
+                    actorViews[i] = actorViews[i + 1];
                 i = 13;
             }
         break;
@@ -1004,10 +1004,10 @@ short fitsRoom(short a, short b, short n)
 {
     short i;
 
-    if (g_4abec4)
+    if (hotelAnyFits)
         return 1;
     if (!roomRowValues[n] && !roomLayerValues[n]) {
-        for (i = 0; i < g_4ac0ee; i++) {
+        for (i = 0; i < roomCount; i++) {
             if (b == roomLayerValues[i])
                 return 0;
             if (a == roomRowValues[i])
@@ -1022,13 +1022,13 @@ short fitsRoom(short a, short b, short n)
     if (roomLayerValues[n] && b != roomLayerValues[n])
         return 0;
     if (a == roomRowValues[n] && !roomLayerValues[n]) {
-        for (i = 0; i < g_4ac0ee; i++)
+        for (i = 0; i < roomCount; i++)
             if (b == roomLayerValues[i])
                 return 0;
         return 1;
     }
     if (b == roomLayerValues[n] && !roomRowValues[n]) {
-        for (i = 0; i < g_4ac0ee; i++)
+        for (i = 0; i < roomCount; i++)
             if (a == roomRowValues[i])
                 return 0;
         return 1;
@@ -1045,10 +1045,10 @@ void placeViewOnSquare(short id, short row, short column)
 
     if (view) {
         view->body.running = 0;
-        view->body.bounds.left = lillyBoard[row][column].rect.left - g_4ac948[lillyBoard[row][column].attributes[2] + 1];
-        view->body.bounds.top = lillyBoard[row][column].rect.top - g_4ac94c[lillyBoard[row][column].attributes[2] + 1];
-        view->body.bounds.right = lillyBoard[row][column].rect.right - g_4ac948[lillyBoard[row][column].attributes[2] + 1];
-        view->body.bounds.bottom = lillyBoard[row][column].rect.bottom - g_4ac94c[lillyBoard[row][column].attributes[2] + 1];
+        view->body.bounds.left = lillyBoard[row][column].rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[2] + 1];
+        view->body.bounds.top = lillyBoard[row][column].rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[2] + 1];
+        view->body.bounds.right = lillyBoard[row][column].rect.right - squareHotSpotsX[lillyBoard[row][column].attributes[2] + 1];
+        view->body.bounds.bottom = lillyBoard[row][column].rect.bottom - squareHotSpotsY[lillyBoard[row][column].attributes[2] + 1];
         unionRgnRect(removedRgn, &view->body.bounds);
     }
 }
@@ -1066,15 +1066,15 @@ void drawSquareImage(short row, short column, char offset)
 
     if (image > 0 && image < 36) {
         data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
-        x = cell->rect.left - g_4ac948[lillyBoard[row][column].attributes[2] + 1];
-        y = cell->rect.top - g_4ac94c[lillyBoard[row][column].attributes[2] + 1];
+        x = cell->rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[2] + 1];
+        y = cell->rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[2] + 1];
         drawImageData(data, x, y, 8);
     }
     image = lillyBoard[row][column].attributes[4];
     if (image > 0 && image < 36) {
         data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
-        x = cell->rect.left - g_4ac948[lillyBoard[row][column].attributes[4]];
-        y = cell->rect.top - g_4ac94c[lillyBoard[row][column].attributes[4]];
+        x = cell->rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[4]];
+        y = cell->rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[4]];
         drawImageData(data, x, y, 8);
     }
 }
@@ -1301,15 +1301,15 @@ void drawSquare(short row, short column)
 
     if (image > 0 && image < 22) {
         data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
-        x = lillyBoard[row][column].rect.left - g_4ac948[lillyBoard[row][column].attributes[2] + 1];
-        y = lillyBoard[row][column].rect.top - g_4ac94c[lillyBoard[row][column].attributes[2] + 1];
+        x = lillyBoard[row][column].rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[2] + 1];
+        y = lillyBoard[row][column].rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[2] + 1];
         drawImageData(data, x, y, 8);
     }
     image = lillyBoard[row][column].attributes[4];
     if (image > 0 && image < 22) {
         data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
-        x = lillyBoard[row][column].rect.left - g_4ac948[lillyBoard[row][column].attributes[4]];
-        y = lillyBoard[row][column].rect.top - g_4ac94c[lillyBoard[row][column].attributes[4]];
+        x = lillyBoard[row][column].rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[4]];
+        y = lillyBoard[row][column].rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[4]];
         drawImageData(data, x, y, 8);
     }
 }
@@ -1328,15 +1328,15 @@ void drawBoard(View *)
             image = lillyBoard[row][column].attributes[2] + 1;
             if (image > 0 && image < 22) {
                 data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
-                x = lillyBoard[row][column].rect.left - g_4ac948[lillyBoard[row][column].attributes[2] + 1];
-                y = lillyBoard[row][column].rect.top - g_4ac94c[lillyBoard[row][column].attributes[2] + 1];
+                x = lillyBoard[row][column].rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[2] + 1];
+                y = lillyBoard[row][column].rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[2] + 1];
                 drawImageData(data, x, y, 8);
             }
             image = lillyBoard[row][column].attributes[4];
             if (image > 0 && image < 22) {
                 data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
-                x = lillyBoard[row][column].rect.left - g_4ac948[lillyBoard[row][column].attributes[4]];
-                y = lillyBoard[row][column].rect.top - g_4ac94c[lillyBoard[row][column].attributes[4]];
+                x = lillyBoard[row][column].rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[4]];
+                y = lillyBoard[row][column].rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[4]];
                 drawImageData(data, x, y, 8);
             }
         }
@@ -1347,23 +1347,23 @@ void drawBoard(View *)
 void drawCursorSquare(View *view)
 {
     if (view->body.running) {
-        LillyCell *cell = &lillyBoard[g_4af346][g_4af344];
-        short image = g_4a1e16[lillyBoard[g_4af346][g_4af344].attributes[2]] + g_4a1e28[g_4a1e30];
+        LillyCell *cell = &lillyBoard[cursorRow][cursorColumn];
+        short image = g_4a1e16[lillyBoard[cursorRow][cursorColumn].attributes[2]] + g_4a1e28[g_4a1e30];
         unsigned short *data;
         short x;
         short y;
 
         if (image > 0 && image < 36) {
             data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
-            x = cell->rect.left - g_4ac948[lillyBoard[g_4af346][g_4af344].attributes[2] + 1];
-            y = cell->rect.top - g_4ac94c[lillyBoard[g_4af346][g_4af344].attributes[2] + 1];
+            x = cell->rect.left - squareHotSpotsX[lillyBoard[cursorRow][cursorColumn].attributes[2] + 1];
+            y = cell->rect.top - squareHotSpotsY[lillyBoard[cursorRow][cursorColumn].attributes[2] + 1];
             drawImageData(data, x, y, 8);
         }
-        image = lillyBoard[g_4af346][g_4af344].attributes[4];
+        image = lillyBoard[cursorRow][cursorColumn].attributes[4];
         if (image > 0 && image < 36) {
             data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
-            x = cell->rect.left - g_4ac948[lillyBoard[g_4af346][g_4af344].attributes[4]];
-            y = cell->rect.top - g_4ac94c[lillyBoard[g_4af346][g_4af344].attributes[4]];
+            x = cell->rect.left - squareHotSpotsX[lillyBoard[cursorRow][cursorColumn].attributes[4]];
+            y = cell->rect.top - squareHotSpotsY[lillyBoard[cursorRow][cursorColumn].attributes[4]];
             drawImageData(data, x, y, 8);
         }
         if (clockTime() >= view->nextUpdate) {
@@ -1624,11 +1624,11 @@ void layOutLillyView(View *view, short region)
             } else if (word > 0) {
                 *cel++ = word;
                 if (hotelLevel == 2) {
-                    image = (unsigned short *)((char *)g_4ac178 + g_4ac178->offsets[word]);
+                    image = (unsigned short *)((char *)roomImages + roomImages->offsets[word]);
                     *cel++ = rect.left = offsetX + *at++ - g_4ac1a0[word];
                     *cel++ = rect.right = offsetY + *at++ - g_4ac1a4[word];
                 } else if (hotelLevel == 3) {
-                    image = (unsigned short *)((char *)g_4ac17c + g_4ac17c->offsets[word]);
+                    image = (unsigned short *)((char *)roomImages3d + roomImages3d->offsets[word]);
                     *cel++ = rect.left = offsetX + *at++;
                     *cel++ = rect.right = offsetY + *at++;
                 }
@@ -1800,7 +1800,7 @@ void placeJumperAt(View *view)
     }
 }
 
-/* Adds the lilly actors (g_4af102 of them), each dealt a random entry of
+/* Adds the lilly actors (actorCount of them), each dealt a random entry of
    g_4a1dcc/g_4a1de4. */
 /* @zoombi32 0x0042b857 */
 void addLillyActors()
@@ -1811,7 +1811,7 @@ void addLillyActors()
     g_4af5a6 = 11;
     for (i = 0; i < g_4af5a6 + 1; i++)
         g_4a1db2[i] = i;
-    for (i = 0; i < g_4af102; i++) {
+    for (i = 0; i < actorCount; i++) {
         actor.unknownBc = 0;
         actor.unknownBe = i;
         actor.unknownC0 = 0;
@@ -1854,8 +1854,8 @@ void addLillyActors()
         for (; k < g_4af5a6 + 1; k++)
             g_4a1db2[k] = g_4a1db2[k + 1];
         g_4af5a6--;
-        g_4aed64[i] = addView(0x180002, drawCels, runViewScript, i + 10043, 7, &actor, randomBetween(3, 6), 0);
-        View *view = findView(g_4aed64[i]);
+        actorViews[i] = addView(0x180002, drawCels, runViewScript, i + 10043, 7, &actor, randomBetween(3, 6), 0);
+        View *view = findView(actorViews[i]);
 
         if (view) {
             short *parts = (short *)&view->body;
@@ -2488,7 +2488,7 @@ short fitsRoom3d(short a, short b, short c, short n)
     short row;
     short i;
 
-    if (g_4abec4)
+    if (hotelAnyFits)
         return 1;
     column = n % 5;
     layer = n / 25;
@@ -2554,7 +2554,7 @@ short fitsRoom3d(short a, short b, short c, short n)
 
 /*
  * Sends the Zoombini `id` onto square hotelRoom: works out where it stands
- * (g_4ac510/g_4ac512) and the area it covers (g_4ac514), and starts its
+ * (standX/standY) and the area it covers (standArea), and starts its
  * script (by the level, the square and its feet).
  */
 /* Not exact: register allocation (the original keeps `lift` on the stack
@@ -2569,54 +2569,54 @@ void sendSnoidToRoom(short id)
     View *view = findView(id);
 
     if (hotelLevel != 3)
-        place = g_4a1788[hotelRoom];
+        place = roomPlaces[hotelRoom];
     else
-        place = g_4a17f0[hotelRoom];
+        place = roomPlaces3d[hotelRoom];
     if (hotelLevel != 3) {
         place.x += 24;
         place.y -= 7;
-        g_4ac512 = place.y - 2;
+        standY = place.y - 2;
         if (!hotelLevel) {
             if (hotelRoom == 4)
-                g_4ac510 = place.x - 5;
+                standX = place.x - 5;
             else if (hotelRoom == 9)
-                g_4ac510 = place.x - 7;
+                standX = place.x - 7;
             else if (hotelRoom == 14)
-                g_4ac510 = place.x - 3;
+                standX = place.x - 3;
             else if (hotelRoom == 19)
-                g_4ac510 = place.x - 3;
+                standX = place.x - 3;
             else if (hotelRoom == 24)
-                g_4ac510 = place.x - 3;
+                standX = place.x - 3;
         } else {
             if (hotelRoom <= 4)
-                g_4ac510 = place.x - 8;
+                standX = place.x - 8;
             else if (hotelRoom <= 9)
-                g_4ac510 = place.x - 6;
+                standX = place.x - 6;
             else if (hotelRoom <= 14)
-                g_4ac510 = place.x - 5;
+                standX = place.x - 5;
             else if (hotelRoom <= 19)
-                g_4ac510 = place.x - 4;
+                standX = place.x - 4;
             else if (hotelRoom <= 24)
-                g_4ac510 = place.x - 5;
+                standX = place.x - 5;
         }
         if (!g_4abdc0[hotelRoom] || g_4abdc0[hotelRoom] % 3 == 1) {
-            g_4ac510 -= 8;
-            g_4ac512 = g_4abdc0[hotelRoom] + g_4ac512 - 1;
+            standX -= 8;
+            standY = g_4abdc0[hotelRoom] + standY - 1;
         } else if (g_4abdc0[hotelRoom] % 3 == 2) {
-            g_4ac510--;
-            g_4ac512 = g_4abdc0[hotelRoom] + g_4ac512 - 1;
+            standX--;
+            standY = g_4abdc0[hotelRoom] + standY - 1;
         } else {
-            g_4ac510 += 6;
-            g_4ac512 = g_4abdc0[hotelRoom] + g_4ac512 - 1;
+            standX += 6;
+            standY = g_4abdc0[hotelRoom] + standY - 1;
         }
     } else {
         place.x += 5;
         place.y -= 15;
-        g_4ac510 = place.x;
-        g_4ac512 = place.y - 2;
+        standX = place.x;
+        standY = place.y - 2;
         if (g_4abdc0[hotelRoom] > 1) {
-            g_4ac510 -= (g_4abdc0[hotelRoom] - 1) * 2;
-            g_4ac512 -= g_4abdc0[hotelRoom] - 1;
+            standX -= (g_4abdc0[hotelRoom] - 1) * 2;
+            standY -= g_4abdc0[hotelRoom] - 1;
         }
     }
     if (view) {
@@ -2634,44 +2634,44 @@ void sendSnoidToRoom(short id)
                 script = 13040;
                 lift = 5;
             }
-            g_4ac514.left = g_4a1788[hotelRoom].x - 16;
-            g_4ac514.top = g_4a1788[hotelRoom].y - 30;
-            g_4ac514.right = g_4ac514.left + 52;
-            g_4ac514.bottom = g_4ac514.top + 82;
+            standArea.left = roomPlaces[hotelRoom].x - 16;
+            standArea.top = roomPlaces[hotelRoom].y - 30;
+            standArea.right = standArea.left + 52;
+            standArea.bottom = standArea.top + 82;
             if (hotelLevel == 1 || hotelLevel == 2) {
                 short column = hotelRoom % 5;
 
                 if (column <= 2)
-                    g_4ac514.top -= lift;
+                    standArea.top -= lift;
             }
             break;
         case 3: {
             script = hotelRoom % 5 * 5 + 13045;
-            g_4ac514.left = g_4ac190[hotelRoom / 5 + 1] + g_4a1a04[hotelRoom % 5];
-            g_4ac514.top = g_4ac194[hotelRoom / 5 + 1] + g_4a1a0e[hotelRoom % 5];
-            g_4ac514.right = g_4ac514.left + 22;
-            g_4ac514.bottom = g_4ac514.top + 72;
+            standArea.left = g_4ac190[hotelRoom / 5 + 1] + g_4a1a04[hotelRoom % 5];
+            standArea.top = g_4ac194[hotelRoom / 5 + 1] + g_4a1a0e[hotelRoom % 5];
+            standArea.right = standArea.left + 22;
+            standArea.bottom = standArea.top + 72;
             short row = hotelRoom % 25 / 5;
 
             if (hotelRoom % 25 == 1)
-                g_4ac514.left += 5;
+                standArea.left += 5;
             else if (hotelRoom % 25 == 3)
-                g_4ac514.left += 3;
+                standArea.left += 3;
             else
-                g_4ac514.left += 4;
+                standArea.left += 4;
             if (hotelRoom % 5 >= 3) {
                 extra = 1;
                 if (hotelRoom % 5 == 3) {
-                    g_4ac514.left--;
+                    standArea.left--;
                     extra++;
                 }
-                g_4ac514.left += extra;
-                g_4ac514.right += extra;
+                standArea.left += extra;
+                standArea.right += extra;
             }
             if (hotelRoom % 5 == 4)
-                g_4ac514.left--;
+                standArea.left--;
             else if (hotelRoom % 5 == 3 && row)
-                g_4ac514.left--;
+                standArea.left--;
             break;
         }
         }
@@ -2702,29 +2702,29 @@ void addLillyViews()
     short i;
 
     if (!hotelLevel) {
-        for (i = 4; i < g_4ac0ee; i += 5)
+        for (i = 4; i < roomCount; i += 5)
             g_4abfc0[i] = addView(0x4188000, drawCels, runViewScript, i + 6013, 6, 0, 0, 0);
         g_4ac0bc = addView(0x4008000, drawCels, runViewScript, 11504, 6, 0, 0, 0);
-        for (i = 4; i < g_4ac0ee; i += 5)
-            g_4abec6[i] = addView(0xc188000, drawCels, runViewScript, i + 6038, 3, 0, 0, 0);
+        for (i = 4; i < roomCount; i += 5)
+            roomColumnViews[i] = addView(0xc188000, drawCels, runViewScript, i + 6038, 3, 0, 0, 0);
     } else if (hotelLevel < 3) {
-        for (i = 0; i < g_4ac0ee; i++)
+        for (i = 0; i < roomCount; i++)
             g_4abfc0[i] = addView(0x4188000, drawCels, runViewScript, i + 6013, 6, 0, 0, 0);
         if (hotelLevel == 2) {
             count = 0;
-            for (i = 0; i < g_4ac0ee; i++)
+            for (i = 0; i < roomCount; i++)
                 if (g_4abdc0[i] == -1) {
                     place.x = g_4ac188[i + 1];
                     place.y = g_4ac18c[i + 1];
-                    deleteView(g_4ac216[i]);
-                    g_4ac216[i] = addView(0x808000, drawRoomView, layOutLillyView, g_4ac10e[count++] + 11004, 0, &place, 0, 0);
+                    deleteView(roomViews[i]);
+                    roomViews[i] = addView(0x808000, drawRoomView, layOutLillyView, g_4ac10e[count++] + 11004, 0, &place, 0, 0);
                 }
         }
         g_4ac0bc = addView(0x4008000, drawCels, runViewScript, 11503, 6, 0, 0, 0);
-        for (i = 0; i < g_4ac0ee; i++)
-            g_4abec6[i] = addView(0xc188000, drawCels, runViewScript, i + 6038, 3, 0, 0, 0);
+        for (i = 0; i < roomCount; i++)
+            roomColumnViews[i] = addView(0xc188000, drawCels, runViewScript, i + 6038, 3, 0, 0, 0);
     } else {
-        for (i = 0; i < g_4ac0ee; i++) {
+        for (i = 0; i < roomCount; i++) {
             short column = i % 5;
             short row = i / 5 + 1;
             short offsetX = g_4a1a04[column];
@@ -2735,7 +2735,7 @@ void addLillyViews()
             g_4ac310[i] = addView(0x4988000, drawCels, runViewScript, column + 9002, 6, &place, 0, 0);
         }
         g_4ac0bc = addView(0x4008000, drawCels, runViewScript, 11505, 6, 0, 0, 0);
-        for (i = 0; i < g_4ac0ee; i++) {
+        for (i = 0; i < roomCount; i++) {
             short column = i % 5;
             short row = i / 5 + 1;
             short offsetX = offsetsX[column];
@@ -2746,7 +2746,7 @@ void addLillyViews()
             g_4ac40a[i] = addView(0xc988000, drawCels, runViewScript, column + 9007, 3, &place, 0, 0);
         }
         count = 0;
-        for (i = 0; i < g_4ac0ee; i++)
+        for (i = 0; i < roomCount; i++)
             if (g_4abdc0[i] == -1) {
                 short column = i % 5;
                 short row = i / 5 + 1;
@@ -2759,21 +2759,21 @@ void addLillyViews()
                     place.y += 5;
                 if (column == 2)
                     place.y += 2;
-                g_4ac216[i] = addView(0x808000, drawRoomView, layOutLillyView, g_4ac10e[count++] + 12000, 0, &place, 0, 0);
+                roomViews[i] = addView(0x808000, drawRoomView, layOutLillyView, g_4ac10e[count++] + 12000, 0, &place, 0, 0);
             }
     }
     if (!hotelLevel) {
         g_4b755e += 10;
-        for (i = 4; i < g_4ac0ee; i += 5)
-            placedViews[(i - 4) / 5] = addView(0x508a000, drawCels, runViewScript, i + 10000, 7, &g_4a1788[i], 0, 0);
+        for (i = 4; i < roomCount; i += 5)
+            placedViews[(i - 4) / 5] = addView(0x508a000, drawCels, runViewScript, i + 10000, 7, &roomPlaces[i], 0, 0);
     } else if (hotelLevel < 3) {
         g_4b755e += 10;
-        for (i = 0; i < g_4ac0ee; i++)
-            placedViews[i] = addView(0x508a000, drawCels, runViewScript, i + 10000, 7, &g_4a1788[i], 0, 0);
+        for (i = 0; i < roomCount; i++)
+            placedViews[i] = addView(0x508a000, drawCels, runViewScript, i + 10000, 7, &roomPlaces[i], 0, 0);
     } else if (hotelLevel == 3) {
         g_4b755e = 10;
-        for (i = 0; i < g_4ac0ee; i++)
-            placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 10025, 6, &g_4a17f0[i], 0, 0);
+        for (i = 0; i < roomCount; i++)
+            placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 10025, 6, &roomPlaces3d[i], 0, 0);
     }
 }
 
@@ -2793,14 +2793,14 @@ void drawLillyButtons(View *)
     drawLillyButton(2, 0, 0);
 }
 
-/* Flashes square (g_4af34a, g_4af348) until g_4af352 reaches lillyStage. */
+/* Flashes square (flashRow, flashColumn) until flashCount reaches lillyStage. */
 /* @zoombi32 0x0042c52f */
 void flashSquare(View *view)
 {
     if (view->body.running) {
-        if (g_4af352 >= lillyStage) {
+        if (flashCount >= lillyStage) {
             view->body.running = 0;
-            unionRgnRect(removedRgn, &lillyBoard[g_4af34a][g_4af348].rect);
+            unionRgnRect(removedRgn, &lillyBoard[flashRow][flashColumn].rect);
         } else {
             if (clockTime() >= view->nextUpdate) {
                 view->nextUpdate = clockTime() + view->interval;
@@ -2808,7 +2808,7 @@ void flashSquare(View *view)
                 if (g_4a1e3a > 1)
                     g_4a1e3a = 0;
             }
-            drawSquareImage(g_4af34a, g_4af348, g_4a1e3a);
+            drawSquareImage(flashRow, flashColumn, g_4a1e3a);
         }
     }
 }
@@ -2840,7 +2840,7 @@ short hotelKey(unsigned short key)
             g_4ac0d6++;
         return 1;
     case 'R':
-        g_4abec4 = 1;
+        hotelAnyFits = 1;
         return 1;
     case 'W':
     case 'w': {
@@ -2874,8 +2874,8 @@ short hotelKey(unsigned short key)
         g_4ac0fe = g_4ac102;
         g_4ac100 = g_4ac104;
         if (hotelLevel != 3)
-            startView(g_4ac0fa, g_4ac0fe + 6000, 0, 0);
-        fadePalette(g_4ac51c, 10, 236, 0, 0, 0);
+            startView(guideView, g_4ac0fe + 6000, 0, 0);
+        fadePalette(savedPalette, 10, 236, 0, 0, 0);
         return 1;
     default:
         return 0;
@@ -2903,8 +2903,8 @@ void startPlan(LillyActor *actor)
 /* @zoombi32 0x00428cb7 */
 void closeLilly()
 {
-    if (g_4af368) {
-        g_4af368 = 0;
+    if (lillyOpen) {
+        lillyOpen = 0;
         short saved = setFreeAtOnce(1);
 
         requestViewSort();
@@ -2919,10 +2919,10 @@ void closeLilly()
         freeLockedResource(&g_4ac98c, &g_4ac994);
         freeLockedResource(&g_4ac998, &g_4ac9a0);
         freeLockedResource(&g_4ac9a4, &g_4ac9ac);
-        freeResource(&g_4a1be8);
+        freeResource(&lillyButtonResource);
         unloadSounds();
         setFreeAtOnce(saved);
-        closeGameFile(&g_4af364);
+        closeGameFile(&lillyFile);
         fadeOutViews();
         showBusyCursor();
     }
@@ -2932,14 +2932,14 @@ void closeLilly()
 /* @zoombi32 0x00424a53 */
 void closeHotel()
 {
-    if (g_4abec0) {
-        g_4abec0 = 0;
+    if (hotelOpen) {
+        hotelOpen = 0;
         short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
-        freeResource(&g_4ac144);
-        freeResource(&g_4ac148);
+        freeResource(&hotelButtonResource);
+        freeResource(&roomImagesResource);
         freeResource(&g_4ac14c);
         freeResource(&g_4ac150);
         freeResource(&g_4ac170);
@@ -2954,7 +2954,7 @@ void closeHotel()
         freeResource(&g_4ac158);
         useAltSnoids(1);
         setFreeAtOnce(saved);
-        closeGameFile(&g_4abebc);
+        closeGameFile(&hotelFile);
         fadeOutViews();
         showBusyCursor();
     }
@@ -2976,13 +2976,13 @@ void hotelFrame()
     View *view;
     View *other;
 
-    if (g_4a1ab0 || !g_4abec0)
+    if (inHotelFrame || !hotelOpen)
         return;
-    g_4a1ab0 = 1;
+    inHotelFrame = 1;
     updateViews();
     if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-            g_4a1ab0 = 0;
+            inHotelFrame = 0;
             return;
         }
         if (!dialogQuestion || dialogQuestion == 3) {
@@ -2993,7 +2993,7 @@ void hotelFrame()
                 sceneDue = 0;
                 setCurrentMap(0);
                 closeHotel();
-                g_4a1ab0 = 0;
+                inHotelFrame = 0;
                 return;
             }
         } else if (dialogQuestion == 2) {
@@ -3019,7 +3019,7 @@ void hotelFrame()
             hotelGoReady = 1;
         }
     } else if (g_4ac0f2) {
-        g_4ac140 = clockTime();
+        hotelIdleSince = clockTime();
         if (!groupLeader[g_4ac0f2] || g_4ac13c) {
             g_4ac0f2 = 0;
             if (g_4ac0ba && g_4ac0be != 4)
@@ -3045,18 +3045,18 @@ void hotelFrame()
                 fillPortRect(Rect(g_4a19fc), Color(0x25), 0);
             }
             setPort(saved);
-            setViewPlaces(16, g_4a1a1c, 1);
+            setViewPlaces(16, lillyPlaces, 1);
             makePartySnoids(0);
             addView(0x1000, drawHotelButtons, updateHotelButtons, 0, 0, 0, 0, 0);
             addLillyViews();
             if (hotelLevel != 3) {
-                g_4ac140 = clockTime();
+                hotelIdleSince = clockTime();
                 if (g_4ac13c) {
                     g_4ac0f2 = g_4ac0c0 = 0;
                     g_4ac0f4 = g_4ac13a = g_4ac13c = 0;
                     if (g_4ac0ba)
                         deleteHotelTalker();
-                    g_4ac0fa = addView(0x108000, drawCels, runViewScript, g_4ac100 + 6000, 6, 0, 0, 0);
+                    guideView = addView(0x108000, drawCels, runViewScript, g_4ac100 + 6000, 6, 0, 0, 0);
                     queueViewSound(hotelLevel + 30020, 0);
                 } else if (!g_4ac0be || g_4ac0be == 4 && g_4ac0c0) {
                     g_4ac0ba = addView(0x8188000, drawCels, runViewScript, hotelLevel + 7500, 6, 0, 0, 0);
@@ -3069,8 +3069,8 @@ void hotelFrame()
                     g_4ac0f4 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
                 } else {
                     g_4ac0f4 = g_4ac13a = g_4ac13c = 0;
-                    g_4ac0fa = addView(0x108000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
-                    g_4ac0fc = groupViews(g_4ac0fa, g_4ac0fa, 0, 0, 0, 0);
+                    guideView = addView(0x108000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
+                    g_4ac0fc = groupViews(guideView, guideView, 0, 0, 0, 0);
                     queueViewSound(hotelLevel + 30020, 0);
                 }
             } else {
@@ -3087,7 +3087,7 @@ void hotelFrame()
             resetViewClock();
         }
     } else if ((!g_4ac0be || g_4ac0be == 4) && g_4ac0c0 && !g_4ac13c) {
-        if (clockTime() - g_4ac140 > 180) {
+        if (clockTime() - hotelIdleSince > 180) {
             g_4ac0c0 = 0;
             startView(g_4ac0ba, hotelLevel + 7500, 0, 0);
             loadViewSounds(g_4ac0ba, 1);
@@ -3107,26 +3107,26 @@ void hotelFrame()
                 if (g_4ac0ba)
                     deleteHotelTalker();
                 if (hotelLevel != 3)
-                    g_4ac0fa = addView(0x108000, drawCels, runViewScript, g_4ac100 + 6000, 6, 0, 0, 0);
+                    guideView = addView(0x108000, drawCels, runViewScript, g_4ac100 + 6000, 6, 0, 0, 0);
             } else if (hotelLevel != 3) {
-                g_4ac0fa = addView(0x108000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
-                g_4ac0fc = groupViews(g_4ac0fa, g_4ac0fa, 0, 0, 0, 0);
+                guideView = addView(0x108000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
+                g_4ac0fc = groupViews(guideView, guideView, 0, 0, 0, 0);
             }
         }
     } else if (g_4ac0fc) {
         g_4ac0fc = 0;
-        other = findView(g_4ac0fa);
+        other = findView(guideView);
         if (g_4ac0fe <= g_4ac100) {
             if (!other)
-                g_4ac0fa = addView(0x108000, drawCels, runViewScript, g_4ac0fe + 6000, 6, 0, 0, 0);
+                guideView = addView(0x108000, drawCels, runViewScript, g_4ac0fe + 6000, 6, 0, 0, 0);
             else
-                startView(g_4ac0fa, g_4ac0fe + 6000, 0, 0);
-            g_4ac0fc = groupViews(g_4ac0fa, g_4ac0fa, 0, 0, 0, 0);
+                startView(guideView, g_4ac0fe + 6000, 0, 0);
+            g_4ac0fc = groupViews(guideView, guideView, 0, 0, 0, 0);
             g_4ac0fe++;
         }
-    } else if (g_4ac0d0) {
-        if (!groupLeader[g_4ac0d0])
-            g_4ac0d0 = 0;
+    } else if (roomGroup) {
+        if (!groupLeader[roomGroup])
+            roomGroup = 0;
     } else if (g_4ac504) {
         view = idleSnoidView(g_4ac504);
         if (view) {
@@ -3145,12 +3145,12 @@ void hotelFrame()
                         startView9002(hotelRoom);
                     g_4abdc0[hotelRoom]++;
                 }
-                g_4ac136 = view->id;
+                hotelWalker = view->id;
             } else {
                 g_4ac0ce = 1;
                 if (hotelLevel < 3) {
                     if (g_4ac0fe < 11)
-                        startView(g_4abec6[hotelRoom], hotelRoom + 6038, 0, 0);
+                        startView(roomColumnViews[hotelRoom], hotelRoom + 6038, 0, 0);
                     else
                         startRoomColumnViews();
                 } else {
@@ -3160,12 +3160,12 @@ void hotelFrame()
                         other->notify = roomViewNotify;
                     }
                 }
-                g_4ac136 = view->id;
-                startSnoidInRoom(g_4ac136);
+                hotelWalker = view->id;
+                startSnoidInRoom(hotelWalker);
                 if (hotelLevel != 3) {
                     if (!g_4ac0da) {
-                        startView(g_4ac0fa, ++g_4ac0fe + 6000, 0, 0);
-                        g_4ac0f0 = groupViews(g_4ac0fa, g_4ac0fa, 0, 0, 0, 0);
+                        startView(guideView, ++g_4ac0fe + 6000, 0, 0);
+                        g_4ac0f0 = groupViews(guideView, guideView, 0, 0, 0, 0);
                     }
                 } else {
                     g_4ac0fe++;
@@ -3200,7 +3200,7 @@ void hotelFrame()
                     setSnoidAction(viewSnoid(other), 0, 0);
                 else
                     setSnoidAction(viewSnoid(other), 7, 0);
-                *(Point *)&viewSnoid(other)->targetX = *(Point *)&g_4ac510;
+                *(Point *)&viewSnoid(other)->targetX = *(Point *)&standX;
                 g_4ac0dc = 0;
                 if (g_4ac0e4 >= g_4ac0e8) {
                     if (hotelLevel < 3) {
@@ -3223,7 +3223,7 @@ void hotelFrame()
     }
     if (g_4ac0d6 == 2 && hotelLevel == 1)
         startRoomAnimations();
-    g_4a1ab0 = 0;
+    inHotelFrame = 0;
 }
 
 /* Told of a Zoombini's script's events on the puzzle. */
@@ -3244,33 +3244,33 @@ void hotelSnoidNotify(View *view, short event)
     case 241:
     case 242:
     case 243:
-        g_4ac13e = event - 239;
+        hotelFacing = event - 239;
         break;
     case 0:
         snoid->unknownF2 = !snoid->unknownF2;
-        if (g_4ac13e) {
-            setSnoidFacing(snoid, g_4ac13e - 1);
-            g_4ac13e = 0;
+        if (hotelFacing) {
+            setSnoidFacing(snoid, hotelFacing - 1);
+            hotelFacing = 0;
         }
         break;
     case 15:
-        moveView(g_4ac136, 0, g_4ac0bc);
-        other = findView(g_4ac136);
+        moveView(hotelWalker, 0, g_4ac0bc);
+        other = findView(hotelWalker);
         if (other)
             other->flags |= 0x4008000;
         view->body.clipped = 1;
-        view->body.clip = g_4ac514;
+        view->body.clip = standArea;
         break;
     case -1:
-        other = findView(g_4ac136);
+        other = findView(hotelWalker);
         if (other) {
             Point place;
             short script;
 
             if (hotelLevel < 3)
-                place.x = g_4a1788[hotelRoom].x - 23;
+                place.x = roomPlaces[hotelRoom].x - 23;
             else
-                place.x = g_4a17f0[hotelRoom].x - 15;
+                place.x = roomPlaces3d[hotelRoom].x - 15;
             if (hotelLevel != 3) {
                 place.y = hotelRoom / 5 * 5 + 410;
                 script = hotelRoom + 14000;
@@ -3340,14 +3340,14 @@ struct LayerToSearch
 };
 
 /*
- * Swaps the attributes of squares (g_4af34a, g_4af348) and (g_4af34e,
+ * Swaps the attributes of squares (flashRow, flashColumn) and (g_4af34e,
  * g_4af34c), and replans every actor whose kind either square now has,
  * searching their layers again.
  */
 /* @zoombi32 0x0042c6dc */
 void swapSquares()
 {
-    LillyCell *a = &lillyBoard[g_4af34a][g_4af348];
+    LillyCell *a = &lillyBoard[flashRow][flashColumn];
     LillyCell *b = &lillyBoard[g_4af34e][g_4af34c];
     short first = a->attributes[1];
     short second = a->attributes[2];
@@ -3365,15 +3365,15 @@ void swapSquares()
     b->attributes[2] = second;
     b->attributes[3] = third;
     b->attributes[4] = fourth;
-    for (i = 0; i < g_4af102; i++) {
-        View *view = findView(g_4aed64[i]);
+    for (i = 0; i < actorCount; i++) {
+        View *view = findView(actorViews[i]);
 
         if (view) {
             actor = (LillyActor *)&view->body;
             if (actor->unknownC2) {
-                actor->grid[g_4af34a][g_4af348] = 0;
+                actor->grid[flashRow][flashColumn] = 0;
                 actor->grid[g_4af34e][g_4af34c] = 0;
-                if (lillyBoard[g_4af34a][g_4af348].attributes[actor->unknownDe] == actor->unknownDf
+                if (lillyBoard[flashRow][flashColumn].attributes[actor->unknownDe] == actor->unknownDf
                     || lillyBoard[g_4af34e][g_4af34c].attributes[actor->unknownDe] == actor->unknownDf)
                     startPlan(actor);
             }
@@ -3387,9 +3387,9 @@ void swapSquares()
         if (view) {
             actor = (LillyActor *)&view->body;
             if (actor->unknownC2) {
-                actor->grid[g_4af34a][g_4af348] = 0;
+                actor->grid[flashRow][flashColumn] = 0;
                 actor->grid[g_4af34e][g_4af34c] = 0;
-                if (lillyBoard[g_4af34a][g_4af348].attributes[actor->unknownDe] == actor->unknownDf
+                if (lillyBoard[flashRow][flashColumn].attributes[actor->unknownDe] == actor->unknownDf
                     || lillyBoard[g_4af34e][g_4af34c].attributes[actor->unknownDe] == actor->unknownDf) {
                     startPlan(actor);
                     layers[actor->unknownDf].attribute = actor->unknownDe;
@@ -3410,20 +3410,20 @@ void swapSquares()
 void flashSwap(View *view)
 {
     if (view->body.running) {
-        if (!g_4af352) {
+        if (!flashCount) {
             swapSquares();
             drawSquareImage(g_4af34e, g_4af34c, 1);
-            drawSquareImage(g_4af34a, g_4af348, 1);
+            drawSquareImage(flashRow, flashColumn, 1);
         }
-        if (g_4af352 >= lillyStage) {
-            g_4af352 = 0;
+        if (flashCount >= lillyStage) {
+            flashCount = 0;
             g_4af358 = 4;
             view->body.running = 0;
             unionRgnRect(removedRgn, &lillyBoard[g_4af34e][g_4af34c].rect);
         } else {
             if (clockTime() >= view->nextUpdate) {
                 view->nextUpdate = clockTime() + view->interval;
-                g_4af352++;
+                flashCount++;
                 g_4a1e3b++;
                 if (g_4a1e3b > 1)
                     g_4a1e3b = 0;
@@ -3441,7 +3441,7 @@ void lillyViewNotify3(View *view, short event)
 
     switch (event) {
     case 3:
-        if (g_4a1b1c > 1)
+        if (lillyLevel > 1)
             for (i = 0; i < g_4af0e8; i++)
                 if (i == g_4af0e8 - 2 || i == g_4af0e8 - 1) {
                     other = findView(g_4aed3a[i]);
@@ -3462,16 +3462,16 @@ void lillyViewNotify3(View *view, short event)
 
             actor->body.running = 1;
         }
-        if (g_4a1b1c > 2)
+        if (lillyLevel > 2)
             for (i = 0; i < g_4af342; i++)
                 searchLayer(g_4aece6[0].attribute, i);
         break;
     case 5:
         switch (g_4af358) {
         case 4:
-            g_4af348 = g_4a1d40[g_4af104].x;
-            g_4af34a = g_4a1d54[g_4af104].x;
-            showViewOnSquare(g_4af33e, g_4af34a, g_4af348);
+            flashColumn = g_4a1d40[g_4af104].x;
+            flashRow = g_4a1d54[g_4af104].x;
+            showViewOnSquare(g_4af33e, flashRow, flashColumn);
             g_4af358 = 5;
             g_4af104++;
             break;
@@ -3578,11 +3578,11 @@ void setUpLillyPuzzle()
     }
     if (hotelLevel == 2) {
         ok = 0;
-        for (i = 0; i < g_4ac0ee; i++)
+        for (i = 0; i < roomCount; i++)
             if (g_4abdc0[i] == -1) {
                 place.x = g_4ac180[i + 1];
                 place.y = g_4ac184[i + 1];
-                g_4ac216[i] = addView(0x808000, drawRoomView, layOutLillyView, g_4ac10e[ok++] + 11000, 0, &place, 0, 0);
+                roomViews[i] = addView(0x808000, drawRoomView, layOutLillyView, g_4ac10e[ok++] + 11000, 0, &place, 0, 0);
             }
     }
     fillMemory(roomRowValues, 0, 50);
@@ -3786,11 +3786,11 @@ void openHotel()
     g_4ac504 = g_4ac0be = g_4ac0c0 = 0;
     g_4ac0f2 = g_4ac0f4 = g_4ac0fc = g_4ac0f6 = 0;
     g_4ac0de = g_4ac0e0 = g_4ac0e2 = g_4ac0f0 = 0;
-    g_4ac0ce = g_4ac0d0 = g_4ac0f8 = g_4ac0ea = 0;
+    g_4ac0ce = roomGroup = g_4ac0f8 = g_4ac0ea = 0;
     g_4ac0e6 = g_4ac0e4 = g_4ac13c = 0;
     g_4ac138 = g_4ac0dc = 0;
     g_4ac13a = 1;
-    g_4ac0ee = g_4ac0c4 = g_4ac0c6 = 25;
+    roomCount = g_4ac0c4 = g_4ac0c6 = 25;
     g_4ac0da = 1;
     g_4b7554 = 0;
     hintSound = g_4ac0d6 = 0;
@@ -3810,12 +3810,12 @@ void openHotel()
     g_4ac102 = g_4ac0fe;
     g_4ac104 = g_4ac100;
     if (hotelLevel == 3)
-        g_4ac0ee = 125;
-    sceneDue = g_4abec4 = 0;
-    g_4abec0 = hotelGoReady = 0;
+        roomCount = 125;
+    sceneDue = hotelAnyFits = 0;
+    hotelOpen = hotelGoReady = 0;
     useAltSnoids(0);
-    openGameFile(&g_4abebc, "Hotel.MHK");
-    setCurrentMap(g_4abebc);
+    openGameFile(&hotelFile, "Hotel.MHK");
+    setCurrentMap(hotelFile);
     loadTerrain(100);
     drawBackdrop(5000);
     setViewPlaces(20, places, 1);
@@ -3851,7 +3851,7 @@ void openHotel()
         addSnoidScripts(13025, 45, 5);
     }
     if (hotelLevel == 2) {
-        g_4ac178 = loadImageBank(11000, &g_4ac148);
+        roomImages = loadImageBank(11000, &roomImagesResource);
         g_4ac180 = loadShortTable(11000, &g_4ac14c);
         g_4ac184 = loadShortTable(11001, &g_4ac150);
         g_4ac1a0 = loadShortTable(11002, &g_4ac170);
@@ -3860,7 +3860,7 @@ void openHotel()
         g_4ac18c = loadShortTable(11005, &g_4ac158);
     }
     if (hotelLevel == 3) {
-        g_4ac17c = loadImageBank(12000, &g_4ac148);
+        roomImages3d = loadImageBank(12000, &roomImagesResource);
         g_4ac190 = loadShortTable(9000, &g_4ac160);
         g_4ac194 = loadShortTable(9001, &g_4ac164);
         g_4ac198 = loadShortTable(9002, &g_4ac168);
@@ -3868,7 +3868,7 @@ void openHotel()
         g_4ac188 = loadShortTable(12004, &g_4ac154);
         g_4ac18c = loadShortTable(12005, &g_4ac158);
     }
-    g_4a1a18 = loadImageBank(8000, &g_4ac144);
+    hotelButtonImages = loadImageBank(8000, &hotelButtonResource);
     {
         short labels = hotelLevel;
 
@@ -3917,8 +3917,8 @@ void openHotel()
     g_4ac0f2 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
     showRect(&shownGameRect);
     fadeInViews();
-    getColors(&g_4ac51c[10], 10, 236);
-    g_4abec0 = 1;
+    getColors(&savedPalette[10], 10, 236);
+    hotelOpen = 1;
 }
 
 /* The other puzzle's clicks: 1 the leave button, 2 the other button, 3 a
@@ -4093,8 +4093,8 @@ void dragLillyPiece(View *piece, Point where0)
             start.x = 38;
             start.y = 415;
         }
-        g_4af344 = 0;
-        g_4af346 = -1;
+        cursorColumn = 0;
+        cursorRow = -1;
         lastRow = -1;
         if (hideDragCursor)
             hideCursor();
@@ -4135,7 +4135,7 @@ void dragLillyPiece(View *piece, Point where0)
                             break;
                         }
                         if (found) {
-                            g_4af346 = column;
+                            cursorRow = column;
                             marker->body.running = 1;
                             column = placedViewCount;
                         }
@@ -4149,7 +4149,7 @@ void dragLillyPiece(View *piece, Point where0)
                     if (g_4af664 != 4) {
                         short d;
 
-                        if (!ptInRect(&g_4a1dfc, where)) {
+                        if (!ptInRect(&lillyArea, where)) {
                             cancel = 1;
                         } else if (g_4af664 == 2) {
                             if (ptInRect(&g_4a1e04, where)) {
@@ -4203,10 +4203,10 @@ void dragLillyPiece(View *piece, Point where0)
                         if (hit && !lillyBoard[hitRow][hitColumn].attributes[0]) {
                             switch (g_4af358) {
                             case 4:
-                                g_4af348 = hitColumn;
-                                g_4af34a = hitRow;
+                                flashColumn = hitColumn;
+                                flashRow = hitRow;
                                 queueViewSound(g_4a1f16++ + 12000, 0);
-                                showViewOnSquare(g_4af33e, g_4af34a, g_4af348);
+                                showViewOnSquare(g_4af33e, flashRow, flashColumn);
                                 g_4af358 = 5;
                                 g_4af360 = 1;
                                 break;
@@ -4216,7 +4216,7 @@ void dragLillyPiece(View *piece, Point where0)
                                 queueViewSound(g_4a1f16++ + 12000, 0);
                                 showViewOnSquare(g_4af340, g_4af34e, g_4af34c);
                                 g_4af358 = 6;
-                                if (g_4af34c != g_4af348 || g_4af34e != g_4af34a)
+                                if (g_4af34c != flashColumn || g_4af34e != flashRow)
                                     if (++g_4ac926 >= g_4ac924 && g_4ac922 < 6) {
                                         g_4ac922++;
                                         g_4ac926 = 0;
@@ -4235,7 +4235,7 @@ void dragLillyPiece(View *piece, Point where0)
                     actor->body.x = start.x;
                     actor->body.y = start.y;
                     if (g_4af358 == 5)
-                        placeViewOnSquare(g_4af33e, g_4af34a, g_4af348);
+                        placeViewOnSquare(g_4af33e, flashRow, flashColumn);
                     g_4af360 = 0;
                     g_4af664 = 0;
                 }
@@ -4243,21 +4243,21 @@ void dragLillyPiece(View *piece, Point where0)
             if (!found) {
                 if (marker->body.running && lastRow >= 0 && lastRow <= 11) {
                     marker->body.running = 0;
-                    rect.left = lillyBoard[lastRow][g_4af344].rect.left - 17;
-                    rect.top = lillyBoard[lastRow][g_4af344].rect.top - 14;
-                    rect.right = lillyBoard[lastRow][g_4af344].rect.right - 17;
-                    rect.bottom = lillyBoard[lastRow][g_4af344].rect.bottom - 14;
+                    rect.left = lillyBoard[lastRow][cursorColumn].rect.left - 17;
+                    rect.top = lillyBoard[lastRow][cursorColumn].rect.top - 14;
+                    rect.right = lillyBoard[lastRow][cursorColumn].rect.right - 17;
+                    rect.bottom = lillyBoard[lastRow][cursorColumn].rect.bottom - 14;
                     unionRgnRect(removedRgn, &rect);
                 }
             } else {
-                if (lastRow != g_4af346 && lastRow >= 0 && lastRow <= 11) {
-                    rect.left = lillyBoard[lastRow][g_4af344].rect.left - 17;
-                    rect.top = lillyBoard[lastRow][g_4af344].rect.top - 14;
-                    rect.right = lillyBoard[lastRow][g_4af344].rect.right - 17;
-                    rect.bottom = lillyBoard[lastRow][g_4af344].rect.bottom - 14;
+                if (lastRow != cursorRow && lastRow >= 0 && lastRow <= 11) {
+                    rect.left = lillyBoard[lastRow][cursorColumn].rect.left - 17;
+                    rect.top = lillyBoard[lastRow][cursorColumn].rect.top - 14;
+                    rect.right = lillyBoard[lastRow][cursorColumn].rect.right - 17;
+                    rect.bottom = lillyBoard[lastRow][cursorColumn].rect.bottom - 14;
                     unionRgnRect(removedRgn, &rect);
                 }
-                lastRow = g_4af346;
+                lastRow = cursorRow;
             }
             if (!cancel)
                 mainLoopEvents();
@@ -4266,19 +4266,19 @@ void dragLillyPiece(View *piece, Point where0)
         if (hideDragCursor)
             showCursor();
         if (found) {
-            lillyClaim = g_4af346;
-            *(Point *)&actor->targetX = placedViewPoints[g_4af346];
+            lillyClaim = cursorRow;
+            *(Point *)&actor->targetX = placedViewPoints[cursorRow];
             if (marker->body.running) {
                 marker->body.running = 0;
-                rect.left = lillyBoard[g_4af346][g_4af344].rect.left - 17;
-                rect.top = lillyBoard[g_4af346][g_4af344].rect.top - 14;
-                rect.right = lillyBoard[g_4af346][g_4af344].rect.right - 17;
-                rect.bottom = lillyBoard[g_4af346][g_4af344].rect.bottom - 14;
+                rect.left = lillyBoard[cursorRow][cursorColumn].rect.left - 17;
+                rect.top = lillyBoard[cursorRow][cursorColumn].rect.top - 14;
+                rect.right = lillyBoard[cursorRow][cursorColumn].rect.right - 17;
+                rect.bottom = lillyBoard[cursorRow][cursorColumn].rect.bottom - 14;
                 unionRgnRect(removedRgn, &rect);
                 mainLoopEvents();
             }
         } else {
-            g_4af346 = -1;
+            cursorRow = -1;
             lillyClaim = -1;
         }
         view->id = id;
@@ -4320,16 +4320,16 @@ void setUpBoard()
     for (row = 0; row < 12; row++)
         for (column = 0; column < 13; column++)
             lillyBoard[row][column].attributes[0] = 0;
-    if (g_4a1b1c == 1 || g_4a1b1c == 2) {
+    if (lillyLevel == 1 || lillyLevel == 2) {
         limit = 0;
         g_4af342 = 0;
-        if (g_4a1b1c == 1)
+        if (lillyLevel == 1)
             column = 12 - g_4a1e84[g_4af0e8];
         else
             column = 12;
     } else {
         column = 12;
-        if (g_4a1b1c == 3) {
+        if (lillyLevel == 3) {
             limit = 2;
             if (g_4a1e84[g_4af0e8] < 8) {
                 switch (randomBetween(3, 5)) {
@@ -4350,7 +4350,7 @@ void setUpBoard()
                 g_4af342 = 4;
                 turnGrid(g_4ac9b4, 0);
             }
-        } else if (g_4a1b1c == 4) {
+        } else if (lillyLevel == 4) {
             limit = 3;
             if (g_4a1e84[g_4af0e8] < 8) {
                 if (randomBetween(4, 5) == 4) {
@@ -4458,7 +4458,7 @@ void setUpBoard()
                         lillyBoard[row][column].attributes[g_4af616[value].a] = g_4af616[value].b;
                         break;
                     }
-                    if ((g_4a1b1c == 3 || g_4a1b1c == 4) && count < limit && !row)
+                    if ((lillyLevel == 3 || lillyLevel == 4) && count < limit && !row)
                         switch (g_4af342) {
                         case 3:
                             if (value >= 1 && value <= 3) {
@@ -4503,14 +4503,14 @@ void setUpBoard()
             lillyBoard[row][column].rect.right = lillyBoard[row][column].rect.left + 36;
             lillyBoard[row][column].rect.bottom = lillyBoard[row][column].rect.top + 30;
         }
-    if (g_4a1b1c > 1) {
-        g_4af348 = g_4a1d40[0].x;
-        g_4af34a = g_4a1d54[0].x;
+    if (lillyLevel > 1) {
+        flashColumn = g_4a1d40[0].x;
+        flashRow = g_4a1d54[0].x;
         g_4af34c = g_4a1d40[1].x;
         g_4af34e = g_4a1d54[1].x;
         swapSquares();
-        g_4af348 = g_4a1d40[2].x;
-        g_4af34a = g_4a1d54[2].x;
+        flashColumn = g_4a1d40[2].x;
+        flashRow = g_4a1d54[2].x;
         g_4af34c = g_4a1d40[3].x;
         g_4af34e = g_4a1d54[3].x;
         swapSquares();
@@ -4538,11 +4538,11 @@ void openLilly()
     lillyGoReady = 0;
     sceneDue = 0;
     g_4af36c = 0;
-    g_4af368 = 0;
+    lillyOpen = 0;
     g_4af332 = 0;
     g_4ac91c = 0;
     g_4af100 = 0;
-    g_4af102 = 12;
+    actorCount = 12;
     g_4af33a = 0;
     g_4af342 = 0;
     g_4af0f0 = 0;
@@ -4555,11 +4555,11 @@ void openLilly()
     g_4af35e = 0;
     g_4af360 = 0;
     lillyStage = 0;
-    g_4af352 = 0;
+    flashCount = 0;
     g_4af0f6 = 1;
     hintSound = 0;
     fillMemory(g_4aed3a, 0, 42);
-    fillMemory(g_4aed64, 0, 28);
+    fillMemory(actorViews, 0, 28);
     fillMemory(g_4aefc0, 0, 288);
     fillMemory(g_4aed0e, 0, 20);
     fillMemory(g_4aed22, 0, 24);
@@ -4603,9 +4603,9 @@ void openLilly()
     g_4acdc8 = 0;
     g_4ace1c = 0;
     g_4ace70 = 0;
-    openGameFile(&g_4af364, "Lilly.MHK");
-    setCurrentMap(g_4af364);
-    g_4a1d68 = loadImageBank(7000, &g_4a1be8);
+    openGameFile(&lillyFile, "Lilly.MHK");
+    setCurrentMap(lillyFile);
+    lillyButtonImages = loadImageBank(7000, &lillyButtonResource);
     drawBackdrop(5000);
     loadFeatureGroup(11000, 0, 0);
     loadFeatureGroup(14000, 1, 0);
@@ -4618,10 +4618,10 @@ void openLilly()
     g_4af5a0 = loadImageBank(13000, &g_4a1b44);
     loadTablePair(g_4ac928, 100, &g_4ac940, &g_4ac944);
     loadTablePair(g_4ac938, 10000, &actorHotSpotsX, &actorHotSpotsY);
-    loadTablePair(g_4ac930, 200, &g_4ac948, &g_4ac94c);
+    loadTablePair(g_4ac930, 200, &squareHotSpotsX, &squareHotSpotsY);
     makePartySnoids(0);
     g_4af0e8 = listChosenSnoids()->count;
-    setLillyLevel(g_4a1b1c = sceneLevel() + 1);
+    setLillyLevel(lillyLevel = sceneLevel() + 1);
     loadLockedTable(&g_4ac98c, &g_4ac994, 15000, (short **)&g_4ac9b0);
     loadLockedTable(&g_4ac998, &g_4ac9a0, 15001, (short **)&g_4ac9b4);
     loadLockedTable(&g_4ac9a4, &g_4ac9ac, 15002, (short **)&g_4ac9b8);
@@ -4658,7 +4658,7 @@ void openLilly()
                 parts[15] = 0;
                 if (n == g_4af0e8 - 2 || n == g_4af0e8 - 1) {
                     other->body.running = 0;
-                    if (g_4a1b1c == 1) {
+                    if (lillyLevel == 1) {
                         setViewScript(other, n + 10089, 1);
                         other->body.running = 1;
                         other->placed = placeByHotSpot;
@@ -4674,7 +4674,7 @@ void openLilly()
     addLillyActors();
     for (i = 14000; i <= 14004; i++)
         g_4aed0e[i - 14000] = addView(0x4000000, drawCels, runViewScript, i, 0, 0, 0, 0);
-    if (g_4a1b1c > 1) {
+    if (lillyLevel > 1) {
         g_4af338 = addView(0x180000, drawCels, runViewScript, 11000, 5, 0, 0, 0);
         actor.unknownC2 = 0;
         actor.unknownC0 = 2;
@@ -4700,11 +4700,11 @@ void openLilly()
     drawLillyButton(2, 0, 0);
     showRect(&shownGameRect);
     fadeInViews();
-    if (g_4a1b1c == 1)
+    if (lillyLevel == 1)
         queueViewSound(997, 0);
     chooseSnoids(0, 0);
     resetViewClock();
-    g_4af368 = 1;
+    lillyOpen = 1;
     addSoundRange(996, 997, 0);
     addSoundRange(20000, 29999, 1);
     addSoundRange(11000, 11001, 1);
@@ -4722,14 +4722,14 @@ void openLilly()
         hintSound = randomBetween(20076, 20077);
         break;
     default:
-        if (g_4a1b1c > 1)
+        if (lillyLevel > 1)
             hintSound = randomBetween(20075, 20077);
         else
             hintSound = 20075;
         break;
     }
     setLillyStage(3);
-    if (g_4a1b1c > 1) {
+    if (lillyLevel > 1) {
         other = findView(g_4af338);
         if (other) {
             setViewScript(other, 11000, 1);
@@ -4756,7 +4756,7 @@ void lillyFrame()
     LillyActor *actor;
     short script;
 
-    if (g_4a1d88 || !g_4af368)
+    if (g_4a1d88 || !lillyOpen)
         return;
     g_4a1d88 = 1;
     updateViews();
@@ -4905,7 +4905,7 @@ void lillyFrame()
                 }
             } else {
                 g_4af5a4 = 1;
-                if (g_4a1b1c > 2 && !g_4af360) {
+                if (lillyLevel > 2 && !g_4af360) {
                     if (snoidsOnTheirWay <= 0) {
                         while (g_4acfe6) {
                             view = findView(g_4acec6[--g_4acfe6]);
