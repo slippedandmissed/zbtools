@@ -8,6 +8,8 @@ The target is the 1996 Windows release by Broderbund. The disc ships two builds 
 
 Every function in `zoombi32.exe`'s game code and Mohawk engine (about 2,100 functions) has been decompiled to C++ in `decomp/`. 1,915 of them compile, with Borland C++ 4.5, to exactly the original bytes (`decomp/matching.txt`); 176 differ only slightly, mostly in which registers the compiler picks, and 37 are written as portable code in place of the original's inline assembly. The Borland runtime and QuickTime's SDK glue are library code and aren't decompiled.
 
+Every function, global, source module and most struct fields now has a descriptive name (the address markers keep the link to the binary); fields nothing reads keep their offset names (`unknown66`).
+
 The code doesn't build into a working executable yet: the game's data, its resources and the link are next (see the [roadmap](#roadmap)).
 
 ## Setup
@@ -141,7 +143,7 @@ uv run match                      # check every marked function in decomp/
 uv run match decomp/platform.cpp -r 4.5 --flags "-O2"   # one file, one release, extra BCC32 options
 ```
 
-Functions are named for what they do once that's clear (`isMousePresent`), and after their address until then (`fn_46be2e`; globals `g_4a7f58`); the marker keeps the address either way. Rerun `uv run ghidra label` after renaming to carry the names into Ghidra.
+Functions are named for what they do once that's clear (`isMousePresent`), and after their address until then (`fn_46be2e`; globals `g_4a7f58`); the marker keeps the address either way (a renamed global keeps it in `/* @data 0x... */`, which a test checks). Rerun `uv run ghidra label` after renaming to carry the names into Ghidra.
 
 Whether a function matches is measured, not declared: `decomp/matching.txt` records the functions that match, `uv run match` fails if one of them stops matching (a regression) and lists new matches, and `uv run match --update` records them (the pre-commit hook runs it when `decomp/` changes; if it rewrites the file, add it and commit again). The decompiled code is portable C++, so a function the original wrote in machine code (inline assembly) is written portably and marked `/* @zoombi32-functional 0x... */`: complete, but not byte-exact by design. The report shows each function's recorded status and what's measured now, with a badge where they disagree.
 
