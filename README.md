@@ -167,6 +167,15 @@ Globals are declared in the headers as they're found (`extern short primes[5]; /
 
 Declarations are split so that cache stays useful: `decomp/zoombinis.h` has the types and what several modules share, and each game module's functions (and the globals and types only it uses) are declared in `decomp/<module>.h`, which its own source and its callers' include. Adding a declaration to a module's header then recompiles only the sources including it. `uv run includes` updates each source's module-header includes to what it uses (run it after adding a call into another module; give it files to update just those).
 
+### Reviewing the near-misses
+
+```sh
+uv run near-misses           # every near-miss, sorted by what differs
+uv run near-misses decomp/midisound.cpp
+```
+
+A function that doesn't match can still do the same thing (the compiler allocated its registers differently), or not. `near-misses` compares what each near-miss and the original compute (their operations, branch conditions, calls and constants, counted, written so equivalent forms are alike) and which stack slots' addresses they take, and sorts them into *allocation only*, *frame layout* (a local laid out elsewhere, which a buffer too small could overrun) and *needs a look*, listing what each version computes that the other doesn't, with the function's note from the source.
+
 ### Choosing what to decompile, and tracking progress
 
 ```sh

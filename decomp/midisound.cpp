@@ -349,7 +349,7 @@ audioObj *__cdecl newMidiSound(short data)
     }
     midi->seek(0);
     midi->seek(-1);
-    midi->looping = midi->loopEnd != 0;
+    midi->audioObj::looping = midi->loopEnd != 0; /* the sound loops (not midiObj::looping) */
     midi->seek(0);
     midi->resetLoop();
     return midi;
