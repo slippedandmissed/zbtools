@@ -937,8 +937,8 @@ long scriptFrameOffset(short *script, short *frame, short second)
 unsigned long resetViewClock()
 {
     viewClockStart = viewClockMark = clockTime();
-    if (g_4a4b98)
-        g_4a4b98 = 0x40;
+    if (snoidIdleDelay)
+        snoidIdleDelay = 0x40;
     return viewClockMark;
 }
 

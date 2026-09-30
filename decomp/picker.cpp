@@ -30,44 +30,44 @@ void openMap()
     View *view;
     long saved;
 
-    g_4afb14 = 0;
+    pickerOpen = 0;
     resetMap();
     addSoundRange(20000, 29999, 1);
     party()->count = 0;
-    openGameFile(&g_4afb10, "Map.MHK");
-    setCurrentMap(g_4afb10);
+    openGameFile(&pickerFile, "Map.MHK");
+    setCurrentMap(pickerFile);
     drawBackdrop(300);
     port = getPort();
     setPort(viewPort);
     for (i = 0; i < 6; i++)
-        saveRect(&g_4afb18[i], &g_4a1f54[i], 1, 0);
+        saveRect(&mapSaves[i], &mapSaveRects[i], 1, 0);
     setPort(port);
     loadFeatureGroup(1000, 0, 0);
     loadScripts(1000, 6);
     copyPaletteRange(10, 236);
-    g_4afb3a = addView(0x8108000, drawCels, runViewScript, 1000, 6, 0, 0, 0);
-    g_4afb3c = addView(0x8108000, drawCels, runViewScript, 1001, 6, 0, 0, 0);
-    view = findView(g_4afb3a);
+    openHotspotsView = addView(0x8108000, drawCels, runViewScript, 1000, 6, 0, 0, 0);
+    hotspotLevelsView = addView(0x8108000, drawCels, runViewScript, 1001, 6, 0, 0, 0);
+    view = findView(openHotspotsView);
     if (view)
         view->placed = placeOpenHotspots;
-    view = findView(g_4afb3c);
+    view = findView(hotspotLevelsView);
     if (view)
         view->placed = placeHotspotLevels;
-    g_4afb3e = addView(0x100000, drawTextView, updateTextView, 1004, 6, 0, 0, 0);
-    view = findView(g_4afb3e);
+    placeNameView = addView(0x100000, drawTextView, updateTextView, 1004, 6, 0, 0, 0);
+    view = findView(placeNameView);
     if (view)
         view->body.running = 0;
-    g_4afb40 = addView(0x1000, drawCels, runViewScript, 1005, 3, 0, 0, 0);
+    helpButtonView = addView(0x1000, drawCels, runViewScript, 1005, 3, 0, 0, 0);
     setGroupLists(pickerGroups, 1, (short)0xc000);
     makeMapViews(1);
-    view = findView(g_4afb40);
+    view = findView(helpButtonView);
     if (view) {
-        g_4afb42 = view->body.bounds;
+        helpButtonRect = view->body.bounds;
         view->placed = placePressed;
     }
     showRect(&shownGameRect);
     fadeInViews();
-    g_4afb14 = 1;
+    pickerOpen = 1;
     introClickState = 0;
     saved = currentMapFile;
     setCurrentMap(soundsMap);
@@ -119,17 +119,17 @@ void openCatch()
     pickerData.game.leave.right = pickerData.game.leave.bottom = 41;
     pickerData.game.speed = 8;
     for (i = 0; i < 3; i++)
-        g_4afb60[i] = 0;
+        catchCrossers[i] = 0;
     pickerData.game.caught = 0;
-    g_4afb14 = 0;
-    pickerData.game.overView = g_4afb3a = g_4afb3c = g_4afb3e = 0;
+    pickerOpen = 0;
+    pickerData.game.overView = openHotspotsView = hotspotLevelsView = placeNameView = 0;
     pickerData.game.count = 0;
     pickerData.game.throws = 9;
     pickerData.game.remaining = 99 - pickerData.game.count - pickerData.game.throws;
     pickerData.game.streak = 0;
-    g_4afb68 = 0;
-    openGameFile(&g_4afb10, "Picker.MHK");
-    setCurrentMap(g_4afb10);
+    nextCatchSendTime = 0;
+    openGameFile(&pickerFile, "Picker.MHK");
+    setCurrentMap(pickerFile);
     drawBackdrop(1001);
     loadFeatureGroup(1100, 0, 0);
     loadFeatureGroup(1200, 1, 1);
@@ -144,8 +144,8 @@ void openCatch()
     pickerData.game.againView = addView(0x801000, drawCels, updateCursorView, 1105, 1, &at, 0, 0);
     at.x = 0;
     at.y = 480;
-    g_4afb3c = addView(0x1980000, drawCels, runViewScript, 1200, 1, &at, 0, 0);
-    g_4afb3e = addView(0x1981000, drawCels, runViewScript, 1201, 1, &at, 0, 0);
+    hotspotLevelsView = addView(0x1980000, drawCels, runViewScript, 1200, 1, &at, 0, 0);
+    placeNameView = addView(0x1981000, drawCels, runViewScript, 1201, 1, &at, 0, 0);
     addView(0, drawCels, runViewScript, 1202, 0, 0, 0, 0);
     levelListView = addView(0x100000, drawCels, runViewScript, 1203, 1, 0, 0, 0);
     view = findView(levelListView);
@@ -157,7 +157,7 @@ void openCatch()
     setGroupLists(catchGroups, 1, (short)0xc000);
     showRect(&shownGameRect);
     fadeInViews();
-    g_4afb14 = 1;
+    pickerOpen = 1;
     queueViewSound(30025, 0);
 }
 
@@ -165,16 +165,16 @@ void openCatch()
 /* @zoombi32 0x0043190d */
 void closeCatch()
 {
-    if (g_4afb14) {
+    if (pickerOpen) {
         showCursor();
-        g_4afb14 = 0;
+        pickerOpen = 0;
         short saved = setFreeAtOnce(1);
 
         removeDeadViews();
         clearViews();
         unloadSounds();
         setFreeAtOnce(saved);
-        closeGameFile(&g_4afb10);
+        closeGameFile(&pickerFile);
         fadeOutViews();
         showBusyCursor();
     }
@@ -189,20 +189,20 @@ void openTargets()
     View *view;
 
     sceneDue = 0;
-    g_4afbbe = 0;
-    g_4afbbc = 0;
-    g_4afbb8 = g_4a4b98;
-    g_4a4b98 = 0;
+    bigTargetView = 0;
+    bigTargetOut = 0;
+    savedIdleDelay = snoidIdleDelay;
+    snoidIdleDelay = 0;
     for (i = 0; i < 6; i++)
         targetBounds[i] = 0;
-    g_4afb7a = g_4afb78 = targetScore = g_4afbba = 0;
+    gameOverView = scoreView = targetScore = targetsOut = 0;
     shipsLeft = 3;
-    g_4afb74 = 100;
+    nextHundred = 100;
     setViewsLocked(0);
     shotsStarted = firstShotStopped = targetHit = targetBursting = 0;
-    g_4afb14 = 0;
-    openGameFile(&g_4afb10, "Picker.MHK");
-    setCurrentMap(g_4afb10);
+    pickerOpen = 0;
+    openGameFile(&pickerFile, "Picker.MHK");
+    setCurrentMap(pickerFile);
     drawBackdrop(2000);
     loadFeatureGroup(1000, 0, 1);
     loadScripts(1000, 31);
@@ -210,8 +210,8 @@ void openTargets()
     copyBits(viewPort, workPort, &gameRect);
     resetShip();
     addView(0, drawCels, runViewScript, 1012, 6, 0, 0, 0);
-    g_4afb78 = addView(0x100000, drawCels, runViewScript, 1014, 6, 0, 0, 0);
-    view = findView(g_4afb78);
+    scoreView = addView(0x100000, drawCels, runViewScript, 1014, 6, 0, 0, 0);
+    view = findView(scoreView);
     if (view)
         view->placed = placeTargetScore;
     loadSoundByKey(3000, RESOURCE_TYPE(0, 'S', 'N', 'D'));
@@ -221,41 +221,41 @@ void openTargets()
     setGroupLists(targetGroups, 1, (short)0xc000);
     showRect(&shownGameRect);
     fadeInViews();
-    g_4afb14 = 1;
+    pickerOpen = 1;
     queueViewSound(30035, 0);
 }
 
-/* Closes scene 20 (Picker.MHK), keeping g_4afbb8 in g_4a4b98. */
+/* Closes scene 20 (Picker.MHK), keeping savedIdleDelay in snoidIdleDelay. */
 /* @zoombi32 0x004325c4 */
 void closeTargets()
 {
-    if (g_4afb14) {
-        g_4a4b98 = g_4afbb8;
+    if (pickerOpen) {
+        snoidIdleDelay = savedIdleDelay;
         requestViewSort();
-        g_4afb14 = 0;
+        pickerOpen = 0;
         short saved = setFreeAtOnce(1);
 
         removeDeadViews();
         clearViews();
         unloadSounds();
         setFreeAtOnce(saved);
-        closeGameFile(&g_4afb10);
+        closeGameFile(&pickerFile);
         fadeOutViews();
         showBusyCursor();
     }
 }
 
-/* Copies g_4a1f74 from the port *g_4afb28 to the screen and starts the
+/* Copies mapBoxRect from the port *mapBoxBackdrop to the screen and starts the
    view mapBoxView on script 1002. */
 /* @zoombi32 0x0043151e */
 void showMapBox()
 {
-    copyPortBits(viewPort, *g_4afb28, g_4a1f74, g_4a1f74, 0);
+    copyPortBits(viewPort, *mapBoxBackdrop, mapBoxRect, mapBoxRect, 0);
     startView(mapBoxView, 1002, 0, 0);
 }
 
 /* A notify: 0 deletes the view caught (pickerData.game.caught); at the end
-   (-1), g_4afb3a (2
+   (-1), openHotspotsView (2
    calls requestViewSort) is cleared. */
 /* @zoombi32 0x00431e5e */
 void caughtNotify(View *, short event)
@@ -269,9 +269,9 @@ void caughtNotify(View *, short event)
         deleteView(id);
         break;
     case -1:
-        if (g_4afb3a == 2)
+        if (openHotspotsView == 2)
             requestViewSort();
-        g_4afb3a = 0;
+        openHotspotsView = 0;
         break;
     }
 }
@@ -329,7 +329,7 @@ void driftView(View *view)
     body->cels[0].y = body->y;
 }
 
-/* Resets shipDirection-g_4afb88 (g_4afb82, g_4afb84: the screen's centre) and
+/* Resets shipDirection-shipDy (shipX, shipY: the screen's centre) and
    makes the view shipView again (script 1010, placed callback
    placeShip). */
 /* @zoombi32 0x00432905 */
@@ -337,11 +337,11 @@ void resetShip()
 {
     View *view;
 
-    g_4afb80 = 0;
-    g_4afb82 = 320;
-    g_4afb84 = 240;
+    shipBurstFrame = 0;
+    shipX = 320;
+    shipY = 240;
     shipDirection = 0;
-    g_4afb86 = g_4afb88 = 0;
+    shipDx = shipDy = 0;
     deleteView(shipView);
     shipView = addView(0, drawCels, runViewCels, 1010, 4, 0, 0, 0);
     view = findView(shipView);
@@ -404,13 +404,13 @@ void resetMap()
                         {490, 182}, {487, 95},  {540, 125}, {578, 65}};
     short i;
 
-    g_4afb16 = 0;
-    g_4afb5e = 0;
+    askingTransition = 0;
+    practicePartySize = 0;
     for (i = 0; i < 6; i++)
-        g_4afb18[i] = 0;
+        mapSaves[i] = 0;
     sceneDue = 0;
     levelListView = mapBoxView = pickedHotspot = 0;
-    g_4afb36 = -1;
+    namedHotspot = -1;
     for (i = 0; i <= 15; i++) {
         pickerData.hotspots[i].rect.left = points[i].x - 20;
         pickerData.hotspots[i].rect.right = points[i].x + 20;
@@ -421,12 +421,12 @@ void resetMap()
     pickerData.hotspots[16].rect.top = 0;
     pickerData.hotspots[16].rect.right = 640;
     pickerData.hotspots[16].rect.bottom = 480;
-    g_4afb3a = g_4afb3c = g_4afb3e = g_4afb40 = 0;
-    g_4afb42 = noRect;
+    openHotspotsView = hotspotLevelsView = placeNameView = helpButtonView = 0;
+    helpButtonRect = noRect;
 }
 
 /* Picks hotspot `n` (1-16; -1 for none) as pickedHotspot and redraws the view
-   g_4afb3a: with practiceLevel any of them, except 5, 12 and 16 until the
+   openHotspotsView: with practiceLevel any of them, except 5, 12 and 16 until the
    roster says they're open (+0x50, +0x52, +0x51); otherwise only 1, 5, 12
    and 16. */
 /* @zoombi32 0x00430030 */
@@ -469,7 +469,7 @@ void pickHotspot(short n)
         picked = 0;
     }
     if (picked) {
-        view = startView(g_4afb3a, 0, 0, 0);
+        view = startView(openHotspotsView, 0, 0, 0);
         if (view)
             view->reset = 1;
     }
@@ -511,7 +511,7 @@ void placeTargetScore(View *view)
 }
 
 /* Starts a drifting view (script 1011, placed callback placeShot) from the
-   centre view's place (g_4afb82, g_4afb84), moving 14 a step in direction
+   centre view's place (shipX, shipY), moving 14 a step in direction
    shipDirection (0 up, clockwise in eighths), and counts it (shotsStarted). */
 /* @zoombi32 0x0043297f */
 short fireShot()
@@ -556,8 +556,8 @@ short fireShot()
         dx = -14;
         break;
     }
-    x = g_4afb82 + dx;
-    y = g_4afb84 + dy;
+    x = shipX + dx;
+    y = shipY + dy;
     id = addView(0, drawCels, runViewCels, 1011, 3, 0, 0, 0);
     view = findView(id);
     if (view) {
@@ -871,20 +871,20 @@ void drawTerrainNames()
         }
     for (i = 0; i < 4; i++)
         if (shown[i])
-            drawOutlinedText(45, 10, g_4a1f54[i], 0x22, levelTexts[6 + i]);
+            drawOutlinedText(45, 10, mapSaveRects[i], 0x22, levelTexts[6 + i]);
     setForeColor(saved);
     for (i = 0; i < 4; i++) {
-        unionRgnRect(removedRgn, &g_4a1f54[i]);
+        unionRgnRect(removedRgn, &mapSaveRects[i]);
         if (shown[i]) {
-            g_4a1f54[i].left--;
-            g_4a1f54[i].top--;
-            g_4a1f54[i].right++;
-            g_4a1f54[i].bottom++;
-            copyPortBits(viewPort, workPort, g_4a1f54[i], g_4a1f54[i], 0);
-            g_4a1f54[i].left++;
-            g_4a1f54[i].top++;
-            g_4a1f54[i].right--;
-            g_4a1f54[i].bottom--;
+            mapSaveRects[i].left--;
+            mapSaveRects[i].top--;
+            mapSaveRects[i].right++;
+            mapSaveRects[i].bottom++;
+            copyPortBits(viewPort, workPort, mapSaveRects[i], mapSaveRects[i], 0);
+            mapSaveRects[i].left++;
+            mapSaveRects[i].top++;
+            mapSaveRects[i].right--;
+            mapSaveRects[i].bottom--;
         }
     }
 }
@@ -938,7 +938,7 @@ void placeShot(View *view)
         targetHit = i + 1;
         hit = 1;
         queueViewSound(3000, 0);
-        other = findView(g_4afbac[i]);
+        other = findView(targetViews[i]);
         if (other) {
             if (other->kind >= 1021)
                 targetScore += 15;
@@ -949,12 +949,12 @@ void placeShot(View *view)
             else if (other->kind >= 1000)
                 targetScore += 5;
         }
-        if (targetScore >= g_4afb74) {
-            g_4afb74 += 100;
+        if (targetScore >= nextHundred) {
+            nextHundred += 100;
             if (shipsLeft < 9)
                 shipsLeft++;
         }
-        startView(g_4afb78, 0, 0, 0);
+        startView(scoreView, 0, 0, 0);
     }
     body->cels[0].x = body->x;
     body->cels[0].y = body->y;
@@ -1063,10 +1063,10 @@ short sendRandomZoombini()
     return n;
 }
 
-/* Starts a target in a free slot of the six (targetBounds, g_4afbac): of kind
+/* Starts a target in a free slot of the six (targetBounds, targetViews): of kind
    1-4 (script 1000, 1016, 1021 or 1026 on, and 1005 otherwise, plus 0-4;
    3 and 4 fly fast one way), at a random speed and direction from a random
-   edge, or where g_4afb6c-g_4afb70 say when `preset`. Returns its view (0
+   edge, or where splitX-splitDirection say when `preset`. Returns its view (0
    if there's no free slot). */
 /* @zoombi32 0x004330f3 */
 short startTarget(short kind, short preset)
@@ -1090,7 +1090,7 @@ short startTarget(short kind, short preset)
     if (!slot)
         return 0;
     slot--;
-    g_4afbac[slot] = 0;
+    targetViews[slot] = 0;
     targetBounds[slot] = 0;
     switch (randomBetween(1, 10)) {
     case 1:
@@ -1129,9 +1129,9 @@ short startTarget(short kind, short preset)
         break;
     }
     if (preset) {
-        x = g_4afb6c;
-        y = g_4afb6e;
-        direction = g_4afb70;
+        x = splitX;
+        y = splitY;
+        direction = splitDirection;
     } else if (direction == 0 || direction == 4) {
         x = randomBetween(20, 620);
         y = -10;
@@ -1171,8 +1171,8 @@ short startTarget(short kind, short preset)
         dx = -speed;
         break;
     }
-    g_4afbac[slot] = addView(0, drawCels, runViewCels, script, 5, 0, 0, 0);
-    view = findView(g_4afbac[slot]);
+    targetViews[slot] = addView(0, drawCels, runViewCels, script, 5, 0, 0, 0);
+    view = findView(targetViews[slot]);
     if (view) {
         body = (DriftingBody *)&view->body;
         body->unknown28 = 0;
@@ -1183,15 +1183,15 @@ short startTarget(short kind, short preset)
         body->unknown32 = direction;
         view->placed = driftView;
         targetBounds[slot] = &view->body.bounds;
-        g_4afbba++;
+        targetsOut++;
     }
-    return g_4afbac[slot];
+    return targetViews[slot];
 }
 
 /* Closes scene 1 (the map). Leaving it for a level (practiceLevel), the first
    time switches the user file to ZBtemp (keeping the player's in
    savedUserFile) and saves; then fills the roster's party with 16 (or
-   g_4afb5e) Zoombinis at random (with the 0x800 modifier, all alike by
+   practicePartySize) Zoombinis at random (with the 0x800 modifier, all alike by
    fives). */
 /* @zoombi32 0x0042fca8 */
 void closeMap()
@@ -1201,8 +1201,8 @@ void closeMap()
     short j;
     short alike;
 
-    if (g_4afb14) {
-        g_4afb14 = 0;
+    if (pickerOpen) {
+        pickerOpen = 0;
         saved = setFreeAtOnce(1);
         if (!practiceLevel && !viewsLocked) {
             viewsLocked = 1;
@@ -1222,8 +1222,8 @@ void closeMap()
                 g_4afb30 = 1;
             }
             *(short *)(gameState + 0xa92e) = 16;
-            if (g_4afb5e)
-                *(short *)(gameState + 0xa92e) = g_4afb5e;
+            if (practicePartySize)
+                *(short *)(gameState + 0xa92e) = practicePartySize;
             alike = addModifierKeys(0) == 0x800;
             for (i = 0; i < *(short *)(gameState + 0xa92e); i++) {
                 for (j = 0; j < 4; j++)
@@ -1237,20 +1237,20 @@ void closeMap()
             }
         }
         for (i = 0; i < 6; i++)
-            freeSave(&g_4afb18[i]);
+            freeSave(&mapSaves[i]);
         unloadSounds();
         setFreeAtOnce(saved);
-        closeGameFile(&g_4afb10);
+        closeGameFile(&pickerFile);
         fadeOutViews();
         showBusyCursor();
     }
 }
 
-/* The ship's placed callback (the view shipView): moves it by g_4afb86,
-   g_4afb88 wrapping round the screen and shows it facing shipDirection (images
-   17-24). Touching a target, it bursts (g_4afb80 counts images 11-14,
+/* The ship's placed callback (the view shipView): moves it by shipDx,
+   shipDy wrapping round the screen and shows it facing shipDirection (images
+   17-24). Touching a target, it bursts (shipBurstFrame counts images 11-14,
    then it's gone) and loses one of shipsLeft; the last starts the view
-   g_4afb7a (script 1013). */
+   gameOverView (script 1013). */
 /* @zoombi32 0x00432cec */
 void placeShip(View *view)
 {
@@ -1259,53 +1259,53 @@ void placeShip(View *view)
     short i;
 
     body = &view->body;
-    if (g_4afb80) {
-        if (g_4afb80 > 4) {
+    if (shipBurstFrame) {
+        if (shipBurstFrame > 4) {
             body->cels[0].image = 0;
             return;
         }
-        g_4afb82 += g_4afb86;
-        g_4afb84 += g_4afb88;
-        if (g_4afb82 > 650)
-            g_4afb82 = -10;
-        else if (g_4afb82 < -10)
-            g_4afb82 = 650;
-        if (g_4afb84 > 490)
-            g_4afb84 = -10;
-        else if (g_4afb84 < -10)
-            g_4afb84 = 490;
-        body->cels[0].image = g_4afb80 + 10;
-        g_4afb80++;
-        body->cels[0].x = g_4afb82;
-        body->cels[0].y = g_4afb84;
+        shipX += shipDx;
+        shipY += shipDy;
+        if (shipX > 650)
+            shipX = -10;
+        else if (shipX < -10)
+            shipX = 650;
+        if (shipY > 490)
+            shipY = -10;
+        else if (shipY < -10)
+            shipY = 490;
+        body->cels[0].image = shipBurstFrame + 10;
+        shipBurstFrame++;
+        body->cels[0].x = shipX;
+        body->cels[0].y = shipY;
         return;
     }
-    for (i = 0; !g_4afb80 && i < 6; i++) {
+    for (i = 0; !shipBurstFrame && i < 6; i++) {
         if (!targetBounds[i])
             continue;
         target = *targetBounds[i];
         if (!sectRect(&target, &view->body.bounds))
             continue;
-        g_4afb80 = 1;
+        shipBurstFrame = 1;
         queueViewSound(3001, 0);
         shipsLeft--;
         if (!shipsLeft)
-            g_4afb7a = addView(0, drawCels, runViewScript, 1013, 6, 0, 0, 0);
-        startView(g_4afb78, 0, 0, 0);
+            gameOverView = addView(0, drawCels, runViewScript, 1013, 6, 0, 0, 0);
+        startView(scoreView, 0, 0, 0);
     }
-    g_4afb82 += g_4afb86;
-    g_4afb84 += g_4afb88;
-    if (g_4afb82 > 650)
-        g_4afb82 = -10;
-    else if (g_4afb82 < -10)
-        g_4afb82 = 650;
-    if (g_4afb84 > 490)
-        g_4afb84 = -10;
-    else if (g_4afb84 < -10)
-        g_4afb84 = 490;
+    shipX += shipDx;
+    shipY += shipDy;
+    if (shipX > 650)
+        shipX = -10;
+    else if (shipX < -10)
+        shipX = 650;
+    if (shipY > 490)
+        shipY = -10;
+    else if (shipY < -10)
+        shipY = 490;
     body->cels[0].image = shipDirection + 17;
-    body->cels[0].x = g_4afb82;
-    body->cels[0].y = g_4afb84;
+    body->cels[0].x = shipX;
+    body->cels[0].y = shipY;
 }
 
 /* A view's update like runViewCels, drawing its script's frame at the
@@ -1395,7 +1395,7 @@ void updateCursorView(View *view, short region)
 }
 
 /* Scene 20's keys (the practice game): space starts again (once the game
-   is over, g_4afb7a) or brings back a burst ship, 5 fires (up to three
+   is over, gameOverView) or brings back a burst ship, 5 fires (up to three
    shots), 4 and 6 turn the ship, 8 pushes it on (up to 12 each way). */
 /* @zoombi32 0x00432a79 */
 short targetsKey(unsigned short key)
@@ -1405,81 +1405,81 @@ short targetsKey(unsigned short key)
 
     switch (key) {
     case ' ':
-        if (g_4afb7a) {
-            if (g_4afbbe) {
-                deleteView(g_4afbbe);
-                g_4afbba = 0;
-                g_4afbbe = 0;
+        if (gameOverView) {
+            if (bigTargetView) {
+                deleteView(bigTargetView);
+                targetsOut = 0;
+                bigTargetView = 0;
                 for (i = 0; i < 6; i++)
                     targetBounds[i] = 0;
             }
-            id = g_4afb7a;
-            g_4afb7a = 0;
+            id = gameOverView;
+            gameOverView = 0;
             deleteView(id);
             targetScore = 0;
             shipsLeft = 3;
-            g_4afb74 = 100;
-            g_4afbbc = 0;
-            startView(g_4afb78, 0, 0, 0);
+            nextHundred = 100;
+            bigTargetOut = 0;
+            startView(scoreView, 0, 0, 0);
             resetShip();
-        } else if (g_4afb80) {
+        } else if (shipBurstFrame) {
             resetShip();
         }
         break;
     case '5':
-        if (shotsStarted < 3 && !g_4afb80) {
+        if (shotsStarted < 3 && !shipBurstFrame) {
             fireShot();
             queueViewSound(3002, 0);
         }
         break;
     case '4':
-        if (!g_4afb80)
+        if (!shipBurstFrame)
             shipDirection = (shipDirection - 1) & 7;
         break;
     case '6':
-        if (!g_4afb80)
+        if (!shipBurstFrame)
             shipDirection = (shipDirection + 1) & 7;
         break;
     case '8':
-        if (!g_4afb80) {
+        if (!shipBurstFrame) {
             switch (shipDirection) {
             case 0:
-                g_4afb88 += -4;
+                shipDy += -4;
                 break;
             case 1:
-                g_4afb88 += -4;
-                g_4afb86 += 4;
+                shipDy += -4;
+                shipDx += 4;
                 break;
             case 2:
-                g_4afb86 += 4;
+                shipDx += 4;
                 break;
             case 3:
-                g_4afb88 += 4;
-                g_4afb86 += 4;
+                shipDy += 4;
+                shipDx += 4;
                 break;
             case 4:
-                g_4afb88 += 4;
+                shipDy += 4;
                 break;
             case 5:
-                g_4afb88 += 4;
-                g_4afb86 += -4;
+                shipDy += 4;
+                shipDx += -4;
                 break;
             case 6:
-                g_4afb86 += -4;
+                shipDx += -4;
                 break;
             case 7:
-                g_4afb88 += -4;
-                g_4afb86 += -4;
+                shipDy += -4;
+                shipDx += -4;
                 break;
             }
-            if (g_4afb88 < -12)
-                g_4afb88 = -12;
-            if (g_4afb88 > 12)
-                g_4afb88 = 12;
-            if (g_4afb86 < -12)
-                g_4afb86 = -12;
-            if (g_4afb86 > 12)
-                g_4afb86 = 12;
+            if (shipDy < -12)
+                shipDy = -12;
+            if (shipDy > 12)
+                shipDy = 12;
+            if (shipDx < -12)
+                shipDx = -12;
+            if (shipDx > 12)
+                shipDx = 12;
         }
         break;
     }
@@ -1608,7 +1608,7 @@ void makeMapViews(short update)
 }
 
 /* Scene 19's frame: deletes the Zoombinis that have finished crossing
-   (g_4afb60) and, while pickerData.game.throws, now and then (every
+   (catchCrossers) and, while pickerData.game.throws, now and then (every
    20-120 ticks) sends new ones, more of them together as
    pickerData.game.count grows. */
 /* @zoombi32 0x0043195a */
@@ -1617,20 +1617,20 @@ void catchFrame()
     short id;
     short i;
 
-    if (!g_4a2066 && g_4afb14) {
-        g_4a2066 = 1;
+    if (!inCatchFrame && pickerOpen) {
+        inCatchFrame = 1;
         updateViews();
         for (i = 0; i < 3; i++)
-            if (idleSnoidView(g_4afb60[i])) {
-                id = g_4afb60[i];
-                g_4afb60[i] = 0;
+            if (idleSnoidView(catchCrossers[i])) {
+                id = catchCrossers[i];
+                catchCrossers[i] = 0;
                 deleteView(id);
             }
-        if (clockTime() > g_4afb68 && pickerData.game.throws) {
+        if (clockTime() > nextCatchSendTime && pickerData.game.throws) {
             for (i = 0; viewsSorted && i < 3; i++) {
-                if (!g_4afb60[i]) {
-                    g_4afb60[i] = sendRandomZoombini();
-                    g_4afb68 = randomBetween(20, 120) + clockTime();
+                if (!catchCrossers[i]) {
+                    catchCrossers[i] = sendRandomZoombini();
+                    nextCatchSendTime = randomBetween(20, 120) + clockTime();
                 }
                 if (pickerData.game.count < 10) {
                     i = 3;
@@ -1653,12 +1653,12 @@ void catchFrame()
                 }
             }
         }
-        g_4a2066 = 0;
+        inCatchFrame = 0;
     }
 }
 
 /* Scene 1's frame (the map): shows the name of the open hotspot under the
-   cursor in the view g_4afb3e and picks it (pickHotspot), or hides the name;
+   cursor in the view placeNameView and picks it (pickHotspot), or hides the name;
    leaves when a choice was made (sceneDue). */
 /* @zoombi32 0x0042feaf */
 void mapFrame()
@@ -1668,11 +1668,11 @@ void mapFrame()
     short i;
     short open;
 
-    if (!g_4a2008 && g_4afb14) {
-        g_4a2008 = 1;
+    if (!inMapFrame && pickerOpen) {
+        inMapFrame = 1;
         view = 0;
         if (!dialogFlags)
-            view = findView(g_4afb3e);
+            view = findView(placeNameView);
         if (view && !dialogFlags) {
             getCursorPosition(&where);
             for (i = 0; i < 16; i++) {
@@ -1682,7 +1682,7 @@ void mapFrame()
                     open = openHotspots[i];
                 if (open && ptInRect(&pickerData.hotspots[i].rect, where)) {
                     view->nextUpdate = clockTime();
-                    if (i != g_4afb36) {
+                    if (i != namedHotspot) {
                         view->body.running = 0;
                         view->reset = 1;
                         pickHotspot(-1);
@@ -1691,7 +1691,7 @@ void mapFrame()
                         char *to;
                         char *from;
 
-                        g_4afb36 = i;
+                        namedHotspot = i;
                         to = (char *)&view->body.cels[10];
                         from = placeNames[i];
                         while (*from)
@@ -1713,7 +1713,7 @@ void mapFrame()
             setCurrentMap(0);
             closeMap();
         }
-        g_4a2008 = 0;
+        inMapFrame = 0;
     }
 }
 
@@ -1732,10 +1732,10 @@ void targetsFrame()
     short size;
     short turn;
 
-    if (!g_4a20b0 && g_4afb14) {
-        g_4a20b0 = 1;
+    if (!inTargetsFrame && pickerOpen) {
+        inTargetsFrame = 1;
         updateViews();
-        if (!g_4afbba) {
+        if (!targetsOut) {
             startTarget(2, 0);
             if (randomBetween(1, 10) <= 4)
                 startTarget(2, 0);
@@ -1752,7 +1752,7 @@ void targetsFrame()
             if (!targetBursting) {
                 n = targetHit;
                 n--;
-                targetBursting = -g_4afbac[n];
+                targetBursting = -targetViews[n];
                 view = findView(-targetBursting);
                 if (view) {
                     size = 0;
@@ -1762,8 +1762,8 @@ void targetsFrame()
                         size = 1;
                     if (size) {
                         body = (DriftingBody *)&view->body;
-                        g_4afb6c = body->x;
-                        g_4afb6e = body->y;
+                        splitX = body->x;
+                        splitY = body->y;
                         if (randomBetween(1, 100) <= 33) {
                             turn = 2;
                             split = 6;
@@ -1771,12 +1771,12 @@ void targetsFrame()
                             turn = 1;
                             split = 7;
                         }
-                        g_4afb70 = (turn + body->unknown32) & 7;
+                        splitDirection = (turn + body->unknown32) & 7;
                         startTarget(size - 1, 1);
-                        g_4afb70 = (body->unknown32 + split) & 7;
+                        splitDirection = (body->unknown32 + split) & 7;
                         startTarget(size - 1, 1);
                         if (size == 1 && randomBetween(1, 100) <= 33) {
-                            g_4afb70 = (body->unknown32 + 4) & 7;
+                            splitDirection = (body->unknown32 + 4) & 7;
                             startTarget(--size, 1);
                         }
                     }
@@ -1786,31 +1786,31 @@ void targetsFrame()
                     view->notify = burstNotify;
                     view->notifyEnd = 1;
                 }
-                g_4afbac[n] = 0;
+                targetViews[n] = 0;
                 targetBounds[n] = 0;
-                g_4afbba--;
-                if (g_4afbba <= 0) {
-                    g_4afbba = 0;
-                    g_4afbbc = !g_4afbbc;
-                    if (g_4afbbc) {
+                targetsOut--;
+                if (targetsOut <= 0) {
+                    targetsOut = 0;
+                    bigTargetOut = !bigTargetOut;
+                    if (bigTargetOut) {
                         if (randomBetween(1, 10) <= 5)
                             n = 3;
                         else
                             n = 4;
-                        g_4afbbe = startTarget(n, 0);
+                        bigTargetView = startTarget(n, 0);
                     }
                 }
             } else if (targetBursting > 0) {
-                if (targetBursting == g_4afbbe) {
-                    g_4afbbc = 0;
-                    g_4afbbe = 0;
+                if (targetBursting == bigTargetView) {
+                    bigTargetOut = 0;
+                    bigTargetView = 0;
                 }
                 n = targetBursting;
                 targetBursting = targetHit = 0;
                 deleteView(n);
             }
         }
-        g_4a20b0 = 0;
+        inTargetsFrame = 0;
     }
 }
 
@@ -1828,7 +1828,7 @@ void leavePractice()
     level = practiceLevel;
     practiceLevel = 0;
     for (i = 0; i < 6; i++)
-        copyPortBits(viewPort, g_4afb18[i]->port, g_4a1f54[i], g_4a1f54[i], 0);
+        copyPortBits(viewPort, mapSaves[i]->port, mapSaveRects[i], mapSaveRects[i], 0);
     makeMapViews(0);
     view = findView(levelListView);
     if (view) {
@@ -1840,10 +1840,10 @@ void leavePractice()
     for (i = 0; i < 2; i++) {
         switch (i) {
         case 0:
-            id = g_4afb3c;
+            id = hotspotLevelsView;
             break;
         case 1:
-            id = g_4afb3a;
+            id = openHotspotsView;
             break;
         }
         startView(id, 0, 0, 0);
@@ -1866,7 +1866,7 @@ void leavePractice()
 
 /* Scene 1's keys (the map): 1-4 pick the practice level while practising,
    0x10 starts practice (level 1); with debugging on, + and - change how
-   many Zoombinis to practise with (g_4afb5e, 1-16), T asks for a
+   many Zoombinis to practise with (practicePartySize, 1-16), T asks for a
    transition, and a-p then shows it (scene 7). Returns whether the level
    changed. */
 /* @zoombi32 0x0043041f */
@@ -1879,9 +1879,9 @@ short mapKey(unsigned short key)
     short id;
 
     used = 0;
-    if (debugMessagesOn && g_4afb16) {
+    if (debugMessagesOn && askingTransition) {
         unionRgnRect(removedRgn, &debugRect);
-        g_4afb16 = 0;
+        askingTransition = 0;
         journeyRoute = 0;
         if (key >= 'a' && key <= 'p') {
             journeyRoute = key - 0x60;
@@ -1895,16 +1895,16 @@ short mapKey(unsigned short key)
     case '+':
         if (!debugMessagesOn)
             return 0;
-        g_4afb5e += 2;
+        practicePartySize += 2;
     case '-':
         if (!debugMessagesOn)
             return 0;
-        g_4afb5e--;
-        if (g_4afb5e < 1)
-            g_4afb5e = 1;
-        if (g_4afb5e > 16)
-            g_4afb5e = 16;
-        debugMessage(g_4afb5e, "Snoids to practice with = ", 0, 0, 0);
+        practicePartySize--;
+        if (practicePartySize < 1)
+            practicePartySize = 1;
+        if (practicePartySize > 16)
+            practicePartySize = 16;
+        debugMessage(practicePartySize, "Snoids to practice with = ", 0, 0, 0);
         break;
     case '1':
     case '2':
@@ -1925,11 +1925,11 @@ short mapKey(unsigned short key)
             break;
         if ((!old && practiceLevel) || (old && !practiceLevel)) {
             for (i = 0; i < 6; i++)
-                copyPortBits(viewPort, g_4afb18[i]->port, g_4a1f54[i], g_4a1f54[i], 0);
+                copyPortBits(viewPort, mapSaves[i]->port, mapSaveRects[i], mapSaveRects[i], 0);
             makeMapViews(0);
         }
         if (practiceLevel) {
-            copyPortBits(viewPort, *g_4afb2c, g_4a1f7c, g_4a1f7c, 0);
+            copyPortBits(viewPort, *levelListBackdrop, levelListRect, levelListRect, 0);
             findOpenHotspots(openHotspots);
             view = findView(levelListView);
             if (view) {
@@ -1942,10 +1942,10 @@ short mapKey(unsigned short key)
         for (i = 0; i < 2; i++) {
             switch (i) {
             case 0:
-                id = g_4afb3c;
+                id = hotspotLevelsView;
                 break;
             case 1:
-                id = g_4afb3a;
+                id = openHotspotsView;
                 break;
             }
             startView(id, 0, 0, 0);
@@ -1960,7 +1960,7 @@ short mapKey(unsigned short key)
     case 'T':
         if (debugMessagesOn && practiceLevel) {
             debugMessage(-1, "Which Transition (a-p):", 0, 0, 0);
-            g_4afb16 = 1;
+            askingTransition = 1;
         }
         break;
     }
@@ -1968,9 +1968,9 @@ short mapKey(unsigned short key)
 }
 
 /* Scene 19's clicks (catching Zoombinis): the leave area goes back to the
-   map; otherwise, with throws left, throws at the cursor (the view g_4afb3e,
-   or g_4afb3c on a catch): a Zoombini within 12 pixels of its middle (and
-   not behind the areas g_4a2068) is caught, scoring and, every other catch
+   map; otherwise, with throws left, throws at the cursor (the view placeNameView,
+   or hotspotLevelsView on a catch): a Zoombini within 12 pixels of its middle (and
+   not behind the areas catchMissAreas) is caught, scoring and, every other catch
    in a row, bonus throws; the Zoombinis speed up as more are caught. Out of
    throws, "again" (pickerData.game.again) starts over. */
 /* @zoombi32 0x00431ab5 */
@@ -2000,12 +2000,12 @@ void catchClicked(short)
         if (x > 12 || y > 12)
             view = 0;
         for (y = 0; view && y < 3; y++)
-            if (ptInRect(&g_4a2068[y], where))
+            if (ptInRect(&catchMissAreas[y], where))
                 view = 0;
     }
-    if (!g_4afb3a && pickerData.game.throws) {
+    if (!openHotspotsView && pickerData.game.throws) {
         pickerData.game.throws--;
-        g_4afb3a = 1;
+        openHotspotsView = 1;
         if (view) {
             pickerData.game.streak++;
             switch (pickerData.game.streak) {
@@ -2035,12 +2035,12 @@ void catchClicked(short)
                 else
                     pickerData.game.throws += pickerData.game.remaining;
             }
-            thrown = g_4afb3c;
+            thrown = hotspotLevelsView;
             view->nextUpdate = clockTime() + 240;
             pickerData.game.caught = view->id;
             for (y = 0; y < 3; y++)
-                if (g_4afb60[y] == pickerData.game.caught)
-                    g_4afb60[y] = 0;
+                if (catchCrossers[y] == pickerData.game.caught)
+                    catchCrossers[y] = 0;
             pickerData.game.count++;
             if (pickerData.game.count == 5)
                 pickerData.game.speed = 7;
@@ -2057,16 +2057,16 @@ void catchClicked(short)
             if (pickerData.game.count == 90)
                 pickerData.game.speed = 1;
             setViewsLocked(0);
-            g_4afb3a = 2;
+            openHotspotsView = 2;
         } else {
             pickerData.game.streak = 0;
-            thrown = g_4afb3e;
+            thrown = placeNameView;
         }
         shown = findView(thrown);
         if (shown)
             *(Point *)&shown->body.x = where;
         startView(thrown, 0, caughtNotify, 1);
-        if (g_4afb3a == 2)
+        if (openHotspotsView == 2)
             moveView(thrown, 1, pickerData.game.caught);
         pickerData.game.remaining = 99 - pickerData.game.count - pickerData.game.throws;
         startView(levelListView, 0, 0, 0);
@@ -2100,7 +2100,7 @@ void catchClicked(short)
 /* Scene 1's clicks, by hotspot (`which`): each goes to its scene (in
    practice; the camps also in the game once the roster has reached them,
    leaving practice), two with cheats to other scenes; 17 (the rest of the
-   screen) presses the help button (g_4afb42) or picks a level from the
+   screen) presses the help button (helpButtonRect) or picks a level from the
    list. */
 /* @zoombi32 0x0043010b */
 void mapClicked(short which)
@@ -2192,8 +2192,8 @@ void mapClicked(short which)
         break;
     case 17:
         clicked = 0;
-        if (ptInRect(&g_4afb42, where)) {
-            view = findView(g_4afb40);
+        if (ptInRect(&helpButtonRect, where)) {
+            view = findView(helpButtonView);
             if (view) {
                 queueViewSound(999, 0);
                 setViewScript(view, 0, 1);
@@ -2208,7 +2208,7 @@ void mapClicked(short which)
             }
         } else if (practiceLevel) {
             for (i = 0; !clicked && i < 4; i++)
-                if (ptInRect(&g_4a1fa8[i], where)) {
+                if (ptInRect(&levelLines[i], where)) {
                     mapKey(i + '1');
                     clicked = 1;
                 }

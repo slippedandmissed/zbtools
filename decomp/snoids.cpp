@@ -636,7 +636,7 @@ void updateSnoidView(View *view, short region)
             snoid->unknownF5 = 0;
             changed = 1;
         }
-        if (g_4a4b98 && !dialogFlags && snoid->unknownF8++ > g_4a4b98) {
+        if (snoidIdleDelay && !dialogFlags && snoid->unknownF8++ > snoidIdleDelay) {
             snoid->unknownF8 = 0;
             if (!altSnoids && randomBetween(0, 100) < 10) {
                 snoid->unknownF5 = randomBetween(0, 7);
@@ -848,8 +848,8 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
         limits = *bounds;
     else
         limits = gameRect;
-    savedBlink = g_4a4b98;
-    g_4a4b98 = hit = prevId = 0;
+    savedBlink = snoidIdleDelay;
+    snoidIdleDelay = hit = prevId = 0;
     heldPlace = placeHeld = 0;
     id = view->id;
     if (g_4b7556)
@@ -1018,7 +1018,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
     dragged->id = id;
     dragged->flags = savedFlags;
     dragged->interval = savedInterval;
-    g_4a4b98 = savedBlink;
+    snoidIdleDelay = savedBlink;
     if (g_4b7556)
         moveView(id, 1, prevId);
     g_4b7556 = 0;
@@ -1964,7 +1964,7 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
             script = snoid->unknownF5 + 38;
             break;
         }
-        if (g_4a4b98 && soundOn) {
+        if (snoidIdleDelay && soundOn) {
             if (randomBetween(1, 100) <= 50)
                 which = 4;
             else

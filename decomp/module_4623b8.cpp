@@ -31,11 +31,11 @@ short mainLoopUpdate()
     if (g_4a4a10) {
         if (pendingScene != -1)
             enterNextScene();
-        if (g_4a4b98 && viewTimeSinceMark() > 3600) {
+        if (snoidIdleDelay && viewTimeSinceMark() > 3600) {
             markViewTime();
-            g_4a4b98 /= 2;
-            if (!g_4a4b98)
-                g_4a4b98 = 1;
+            snoidIdleDelay /= 2;
+            if (!snoidIdleDelay)
+                snoidIdleDelay = 1;
         }
         if (cursorMode == 1) {
             if (g_4a79c0) {
@@ -248,7 +248,7 @@ void gameKey(unsigned short key)
             break;
         case 42:
             if (debugMessagesOn)
-                g_4a4b98 = g_4a7af8 = 0;
+                snoidIdleDelay = g_4a7af8 = 0;
             break;
         case 91:
             if (debugMessagesOn) {

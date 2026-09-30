@@ -29,27 +29,27 @@ void openStoneRise()
 
     hintSound = 0;
     snoidsOnTheirWay = snoidsArrived = 0;
-    sceneDue = listedCount = g_4b2410 = 0;
-    g_4b1930 = slidesGoReady = 0;
-    g_4b2524 = g_4b1a34 = g_4b1a3e = g_4b1a40 = 0;
-    g_4b2540 = g_4b2542 = g_4b1a3c = 0;
-    g_4b2526 = -1;
-    openGameFile(&g_4b1928, "Slides.MHK");
-    setCurrentMap(g_4b1928);
-    fillMemory(g_4b1936, 0, 20);
+    sceneDue = listedCount = pathStart = 0;
+    stoneRiseOpen = slidesGoReady = 0;
+    alikeTarget = markerView = cellMarked = slidesDragLocked = 0;
+    g_4b2540 = g_4b2542 = cyclingColours = 0;
+    savedPartyFlags = -1;
+    openGameFile(&slidesFile, "Slides.MHK");
+    setCurrentMap(slidesFile);
+    fillMemory(slidesRowViews, 0, 20);
     fillMemory(hexCells, 0, sizeof hexCells);
     fillMemory(cellLinkBits, 0, sizeof cellLinkBits);
-    fillMemory(g_4b194a, 0, sizeof g_4b194a);
-    fillMemory(g_4b241c, 0, 20);
+    fillMemory(unusedCellTable, 0, sizeof unusedCellTable);
+    fillMemory(startCells, 0, 20);
     for (i = 0; i < 117; i++)
         hexCells[i].state = 500;
-    g_4b241a = g_4b2518 = g_4b251a = g_4b2528 = g_4b2412 = 0;
-    g_4b1934 = sceneLevel();
-    if (g_4b1934 == 3)
+    startCellCount = startCellsGroup = finishGroup = slidesGoPressed = solveTyped = 0;
+    stoneRiseLevel = sceneLevel();
+    if (stoneRiseLevel == 3)
         loadPaths(1000);
     loadTerrain(100);
     drawBackdrop(5000);
-    g_4a3fc4 = loadImageBank(6000, &g_4a3fc8);
+    slidesButtonImages = loadImageBank(6000, &slidesButtonResource);
     loadFeatureGroup(7000, 0, 0);
     loadFeatureGroup(8000, 1, 0);
     loadScripts(7000, 14);
@@ -61,20 +61,20 @@ void openStoneRise()
     copyPaletteRange(10, 236);
     makePartySnoids(0);
     enterSnoids(0);
-    g_4b192c = listChosenSnoids();
-    g_4b253c = partySize = g_4b192c->count;
+    slidesChosen = listChosenSnoids();
+    slidesFidgetsAllowed = partySize = slidesChosen->count;
     layOutGrid();
-    moveView(g_4b1936[1], 0, hexCells[9].view);
-    moveView(g_4b1936[2], 0, hexCells[27].view);
-    moveView(g_4b1936[3], 0, hexCells[45].view);
-    moveView(g_4b1936[4], 0, hexCells[63].view);
-    moveView(g_4b1936[5], 0, hexCells[81].view);
-    moveView(g_4b1936[6], 0, hexCells[99].view);
+    moveView(slidesRowViews[1], 0, hexCells[9].view);
+    moveView(slidesRowViews[2], 0, hexCells[27].view);
+    moveView(slidesRowViews[3], 0, hexCells[45].view);
+    moveView(slidesRowViews[4], 0, hexCells[63].view);
+    moveView(slidesRowViews[5], 0, hexCells[81].view);
+    moveView(slidesRowViews[6], 0, hexCells[99].view);
     for (i = 0; i < listedCount; i++) {
-        placedViews[i] = addView(0x188a000, drawCels, runViewScript, 7013, 7, &g_4b1a4c[i], 0, 0);
+        placedViews[i] = addView(0x188a000, drawCels, runViewScript, 7013, 7, &listedCellPlaces[i], 0, 0);
         findView(placedViews[i])->placed = placeListedCell;
     }
-    moveView(g_4b1936[7], 1, placedViews[listedCount - 1]);
+    moveView(slidesRowViews[7], 1, placedViews[listedCount - 1]);
     updateViews();
     staggerSnoids(45, 30);
     chooseSnoids(0, 0);
@@ -92,7 +92,7 @@ void openStoneRise()
     fadeInViews();
     unloadSounds();
     queueViewSound(997, 0);
-    g_4b1930 = 1;
+    stoneRiseOpen = 1;
     campHint((short *)(gameState + 0x36));
     hintSound = 20078;
 }
@@ -101,15 +101,15 @@ void openStoneRise()
 /* @zoombi32 0x00447124 */
 void closeStoneRise()
 {
-    if (g_4b1930) {
-        g_4b1930 = 0;
+    if (stoneRiseOpen) {
+        stoneRiseOpen = 0;
         short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
-        freeResource(&g_4a3fc8);
+        freeResource(&slidesButtonResource);
         setFreeAtOnce(saved);
-        closeGameFile(&g_4b1928);
+        closeGameFile(&slidesFile);
         fadeOutViews();
         showBusyCursor();
     }
@@ -121,16 +121,16 @@ void closeStoneRise()
 void updateSlidesButtons(View *, short region)
 {
     if (slidesGoReady) {
-        if (!g_4a41e0) {
-            g_4a41e0 = 1;
+        if (!slidesButton2Lit) {
+            slidesButton2Lit = 1;
             unionRgnRect(region, &slidesButtons[1].rect);
         }
-    } else if (g_4a41e0) {
-        g_4a41e0 = 0;
+    } else if (slidesButton2Lit) {
+        slidesButton2Lit = 0;
         unionRgnRect(region, &slidesButtons[1].rect);
     }
-    if (!g_4a41e2) {
-        g_4a41e2 = 1;
+    if (!slidesButton1Drawn) {
+        slidesButton1Drawn = 1;
         unionRgnRect(region, &slidesButtons[0].rect);
     }
 }
@@ -216,7 +216,7 @@ void remarkOnLit()
             }
             queueViewSound(8500, 0);
         }
-    } else if (litSum != g_4b1a46) {
+    } else if (litSum != lastLitSum) {
         queueViewSound(8502, 0);
     }
 }
@@ -243,7 +243,7 @@ void drawSlidesButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)(g_4a3fc4->offsets[image] + (char *)g_4a3fc4), slidesButtons[which - 1].rect.left,
+        drawImageData((unsigned short *)(slidesButtonImages->offsets[image] + (char *)slidesButtonImages), slidesButtons[which - 1].rect.left,
                       slidesButtons[which - 1].rect.top, 8);
         if (show)
             showRect(&slidesButtons[which - 1].rect);
@@ -251,7 +251,7 @@ void drawSlidesButton(short which, short lit, short show)
 }
 
 /* Counts, for each feature, how many of its values the chosen Zoombinis
-   (g_4b192c, partySize of them) show, into g_4b251c. */
+   (slidesChosen, partySize of them) show, into featureValueCounts. */
 /* @zoombi32 0x004488e8 */
 void countPartyValues()
 {
@@ -259,20 +259,20 @@ void countPartyValues()
     short i;
     short j;
 
-    g_4b251c[0] = 0;
-    g_4b251c[1] = 0;
-    g_4b251c[2] = 0;
-    g_4b251c[3] = 0;
-    g_4b192c = listChosenSnoids();
-    partySize = g_4b192c->count;
+    featureValueCounts[0] = 0;
+    featureValueCounts[1] = 0;
+    featureValueCounts[2] = 0;
+    featureValueCounts[3] = 0;
+    slidesChosen = listChosenSnoids();
+    partySize = slidesChosen->count;
     fillMemory(counts, 0, sizeof counts);
     for (i = 0; i < partySize; i++)
         for (j = 0; j < 4; j++)
-            counts[j][g_4b192c->features[i][j]]++;
+            counts[j][slidesChosen->features[i][j]]++;
     for (i = 0; i < 4; i++)
         for (j = 1; j < 6; j++)
             if (counts[i][j])
-                g_4b251c[i]++;
+                featureValueCounts[i]++;
 }
 
 /* Cycles palette colours 19-21 by one (the last to the first). */
@@ -527,7 +527,7 @@ void layerSnoidViews()
 /* A cell's placed callback: keeps image 109 only on cells in state 502, 504
    or 508 unless startState is 505, and image 110 on cells in state 502, 505
    or 508 while startState is 505; images 4, 8 and 24 only where the cell has
-   that link (cellLinkBits), moved on by g_4b2514. */
+   that link (cellLinkBits), moved on by linkImageOffset. */
 /* @zoombi32 0x00448d9d */
 void placeCellImages(View *view)
 {
@@ -559,7 +559,7 @@ void placeCellImages(View *view)
                 removeFirstCel(cel);
                 removed++;
             } else {
-                cel->image += g_4b2514;
+                cel->image += linkImageOffset;
             }
             break;
         case 8:
@@ -567,7 +567,7 @@ void placeCellImages(View *view)
                 removeFirstCel(cel);
                 removed++;
             } else {
-                cel->image += g_4b2514;
+                cel->image += linkImageOffset;
             }
             break;
         case 24:
@@ -575,7 +575,7 @@ void placeCellImages(View *view)
                 removeFirstCel(cel);
                 removed++;
             } else {
-                cel->image += g_4b2514;
+                cel->image += linkImageOffset;
             }
             break;
         }
@@ -603,8 +603,8 @@ void cycleColorsUpdate(View *view, short)
 }
 
 /* Marks the cell at (x, y) (within 45 by 22 of its point in cellPoints),
-   unless one is already (g_4b1a3e): notes it in g_4b1a36 and shows the
-   marker view g_4b1a34 there (script 8000-8002 by row, notify walkToMarkNotify),
+   unless one is already (cellMarked): notes it in markedCell and shows the
+   marker view markerView there (script 8000-8002 by row, notify walkToMarkNotify),
    layered with the row. */
 /* Not exact: register allocation in the loop's tests (the original keeps
    `y` in ecx and uses esi for scratch; here `y` shares esi with `kind`). */
@@ -616,29 +616,29 @@ void markCellAt(short x, short y)
     short i;
     short kind;
 
-    if (!g_4b1a3e) {
+    if (!cellMarked) {
         for (i = 0; i < 117; i++) {
             if (y >= points[i].y - 22 && y <= points[i].y && x >= points[i].x
                 && x <= points[i].x + 45) {
-                g_4b1a3e = 1;
+                cellMarked = 1;
                 kind = 0;
-                g_4b1a36 = i;
+                markedCell = i;
                 if (i < 36)
                     kind = 2;
                 else if (i < 89)
                     kind = 1;
                 at.x = points[i].x + 19;
                 at.y = points[i].y + 24;
-                if (g_4b1a34)
-                    deleteView(g_4b1a34);
-                g_4b1a34 = addView(0x908000, drawCels, runViewScript, kind + 8000, 6, &at, 0, 0);
-                findView(g_4b1a34)->notify = walkToMarkNotify;
+                if (markerView)
+                    deleteView(markerView);
+                markerView = addView(0x908000, drawCels, runViewScript, kind + 8000, 6, &at, 0, 0);
+                findView(markerView)->notify = walkToMarkNotify;
                 if (i % 18)
-                    moveView(g_4b1a34, 0, g_4b1936[7]);
+                    moveView(markerView, 0, slidesRowViews[7]);
                 else {
                     short row = i / 18 + 1;
 
-                    moveView(g_4b1a34, 0, g_4b1936[row]);
+                    moveView(markerView, 0, slidesRowViews[row]);
                 }
                 return;
             }
@@ -647,9 +647,9 @@ void markCellAt(short x, short y)
 }
 
 /* The notify of the Zoombini walking to the marked cell (the view
-   g_4b1a38): 90-92 walk it on (scripts 14000-14002) toward its own place
+   markWalker): 90-92 walk it on (scripts 14000-14002) toward its own place
    raised 50, 93 off to a random spot (14003, unmarking the cell); 240-243
-   note a facing to take at the end (g_4b1a3a), 250-253 face it at once; the
+   note a facing to take at the end (pendingMarkFacing), 250-253 face it at once; the
    end (0) flips it and takes the noted facing. */
 /* @zoombi32 0x0044af15 */
 void walkToMarkNotify(View *view, short event)
@@ -659,7 +659,7 @@ void walkToMarkNotify(View *view, short event)
     Snoid *snoid;
 
     snoid = viewSnoid(view);
-    walker = findView(g_4b1a38);
+    walker = findView(markWalker);
     at.x = walker->body.x;
     at.y = -50;
     switch (event) {
@@ -673,44 +673,44 @@ void walkToMarkNotify(View *view, short event)
     case 241:
     case 242:
     case 243:
-        g_4b1a3a = event - 239;
+        pendingMarkFacing = event - 239;
         break;
     case 0:
         snoid->unknownF2 = !snoid->unknownF2;
-        if (g_4b1a3a) {
-            setSnoidFacing(snoid, g_4b1a3a - 1);
-            g_4b1a3a = 0;
+        if (pendingMarkFacing) {
+            setSnoidFacing(snoid, pendingMarkFacing - 1);
+            pendingMarkFacing = 0;
         }
         break;
     case 90:
-        walker = findView(g_4b1a38);
+        walker = findView(markWalker);
         startSnoidScript(viewSnoid(walker), 14000, &at, 0);
         walker->notifyEnd = 0;
         walker->notify = walkToMarkNotify;
-        g_4b1a3e = 1;
+        cellMarked = 1;
         break;
     case 91:
-        walker = findView(g_4b1a38);
+        walker = findView(markWalker);
         startSnoidScript(viewSnoid(walker), 14001, &at, 0);
         walker->notifyEnd = 0;
         walker->notify = walkToMarkNotify;
-        g_4b1a3e = 1;
+        cellMarked = 1;
         break;
     case 92:
-        walker = findView(g_4b1a38);
+        walker = findView(markWalker);
         startSnoidScript(viewSnoid(walker), 14002, &at, 0);
         walker->notifyEnd = 0;
         walker->notify = walkToMarkNotify;
-        g_4b1a3e = 1;
+        cellMarked = 1;
         break;
     case 93:
-        walker = findView(g_4b1a38);
+        walker = findView(markWalker);
         at.x = randomUpTo(42) + 70;
         at.y = randomUpTo(200) + 152;
         startSnoidScript(viewSnoid(walker), 14003, &at, 0);
         walker->notifyEnd = 0;
         walker->notify = walkToMarkNotify;
-        g_4b1a3e = 0;
+        cellMarked = 0;
         break;
     }
 }
@@ -1032,9 +1032,9 @@ short placeUnalike(short cell, short dir)
 }
 
 /* Scene 12's frame: leaves after a choice (sceneDue) once the sound and the
-   Zoombinis are done; cycles colours (g_4b1a3c) every 6 ticks; when the
-   group g_4b251a has arrived, sends the Zoombinis on the finished cells
-   off (by the level, g_4b1934) and ends; and has an idle Zoombini fidget
+   Zoombinis are done; cycles colours (cyclingColours) every 6 ticks; when the
+   group finishGroup has arrived, sends the Zoombinis on the finished cells
+   off (by the level, stoneRiseLevel) and ends; and has an idle Zoombini fidget
    now and then while g_4b2540. */
 /* @zoombi32 0x00447171 */
 void stoneRiseFrame()
@@ -1043,12 +1043,12 @@ void stoneRiseFrame()
     short done;
     short tries;
 
-    if (!g_4a41e4 && g_4b1930) {
-        g_4a41e4 = 1;
+    if (!inStoneRiseFrame && stoneRiseOpen) {
+        inStoneRiseFrame = 1;
         updateViews();
         if (sceneDue) {
             if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-                g_4a41e4 = 0;
+                inStoneRiseFrame = 0;
                 return;
             }
             if (!dialogQuestion || dialogQuestion == 3) {
@@ -1059,7 +1059,7 @@ void stoneRiseFrame()
                     sceneDue = 0;
                     setCurrentMap(0);
                     closeStoneRise();
-                    g_4a41e4 = 0;
+                    inStoneRiseFrame = 0;
                     return;
                 }
             } else if (dialogQuestion == 2) {
@@ -1067,17 +1067,17 @@ void stoneRiseFrame()
                 sceneDue = 0;
             }
         }
-        if (g_4b1a3c && clockTime() - g_4b2534 > 6) {
+        if (cyclingColours && clockTime() - lastColourCycle > 6) {
             cycleColors();
-            g_4b2534 = clockTime();
+            lastColourCycle = clockTime();
         }
-        if (g_4b251a && !groupLeader[g_4b251a]) {
+        if (finishGroup && !groupLeader[finishGroup]) {
             queueViewSound(7001, 0);
             updateViews();
             waitForEventFor(0, 60, 0, 1);
             queueViewSound(996, 0);
-            g_4b251a = 0;
-            if (g_4b1934 == 3) {
+            finishGroup = 0;
+            if (stoneRiseLevel == 3) {
                 chooseSnoids(0, 0);
                 if (hexCells[55].state == 508)
                     ((Snoid *)&findView(hexCells[55].snoid)->body)->unknownF7 = 1;
@@ -1087,7 +1087,7 @@ void stoneRiseFrame()
                     ((Snoid *)&findView(hexCells[74].snoid)->body)->unknownF7 = 1;
                 sendSnoids(800, 200, 45);
                 markLitSnoids();
-            } else if (g_4b1934 <= 1) {
+            } else if (stoneRiseLevel <= 1) {
                 sendSnoids(1280, 240, 45);
             } else {
                 chooseSnoids(0, 0);
@@ -1102,12 +1102,12 @@ void stoneRiseFrame()
             }
             sceneDue = 5;
         }
-        if (!g_4b2542 && g_4b2540 && g_4b253e < g_4b253c) {
+        if (!g_4b2542 && g_4b2540 && slidesFidgets < slidesFidgetsAllowed) {
             g_4b2542++;
-            if (clockTime() - g_4b252c > 30) {
+            if (clockTime() - lastSlidesFidgetTime > 30) {
                 done = 0;
                 tries = 0;
-                g_4b252c = clockTime();
+                lastSlidesFidgetTime = clockTime();
                 do {
                     view = idleSnoidView(partyViews[allocateSlot(&slidesFidgetersUsed, partySize, 0)]);
                     if (view && view->body.running && view->flags == 1) {
@@ -1115,18 +1115,18 @@ void stoneRiseFrame()
 
                         script += 13001;
                         startSnoidScript((Snoid *)&view->body, script, 0, 0);
-                        g_4b253e++;
+                        slidesFidgets++;
                         done = 1;
                     } else if (++tries > 20) {
                         done = 1;
                     }
                 } while (!done);
             }
-        } else if (g_4b253e >= g_4b253c) {
-            g_4b253e = g_4b2540 = g_4b252c = slidesFidgetersUsed = 0;
+        } else if (slidesFidgets >= slidesFidgetsAllowed) {
+            slidesFidgets = g_4b2540 = lastSlidesFidgetTime = slidesFidgetersUsed = 0;
         }
         playAmbientSound();
-        g_4a41e4 = 0;
+        inStoneRiseFrame = 0;
     }
 }
 
@@ -1364,7 +1364,7 @@ void seatPair(short cell)
         placeUnalike(cell + 5, 7);
 }
 
-/* Lights the path: from the listed cell listedCells[g_4b2410] (taken, 507),
+/* Lights the path: from the listed cell listedCells[pathStart] (taken, 507),
    finds the cell before the first in state startState, then walks back along
    the links: Zoombinis' cells go to 508; a feature stone (510-513) lights
    when the Zoombinis on either side share its feature; a plain stone
@@ -1393,7 +1393,7 @@ void lightPath()
     short otherEyes;
     short otherFeet;
 
-    cell = listedCells[g_4b2410];
+    cell = listedCells[pathStart];
     view = findView(hexCells[cell].snoid);
     hexCells[cell].state = 507;
     view = findView(hexCells[cell].view);
@@ -1503,7 +1503,7 @@ void lightPath()
                     setViewScript(view, 7000, 1);
                     view->placed = placeCellViewImages;
                 }
-            } else if (g_4b1934 == 1 && !hexCells[cell].snoid && hexCells[cell - 1].state == 508) {
+            } else if (stoneRiseLevel == 1 && !hexCells[cell].snoid && hexCells[cell - 1].state == 508) {
                 hexCells[cell].state = 502;
                 view = findView(hexCells[cell].view);
                 setViewScript(view, 7000, 1);
@@ -1843,10 +1843,10 @@ void lightFromStarts()
 }
 
 /* Lights the cell after `cell` if a Zoombini waits there, then every cell
-   of g_4a41e6 with a Zoombini next to a lit stone, and follows the moves
+   of lightCells with a Zoombini next to a lit stone, and follows the moves
    around each lit one (tryMovesAround); on level 3, with cells 57, 59 and 61
    lit and four Zoombinis on the listed cells, the colours start cycling
-   (g_4b1a3c) and showZoneMessage follows. */
+   (cyclingColours) and showZoneMessage follows. */
 /* @zoombi32 0x0044a180 */
 void lightFrom(short cell)
 {
@@ -1863,32 +1863,32 @@ void lightFrom(short cell)
     view = findView(hexCells[after].view);
     setViewScript(view, 7000, 1);
     view->placed = placeCellViewImages;
-    for (i = 0; i < g_4a4224; i++) {
-        if (hexCells[g_4a41e6[i]].state == 507) {
+    for (i = 0; i < lightCellCount; i++) {
+        if (hexCells[lightCells[i]].state == 507) {
             for (j = 0; j <= 5; j++) {
-                next = hexCells[g_4a41e6[i]].links[j];
+                next = hexCells[lightCells[i]].links[j];
                 if (next != -1 && hexCells[next].state == 502) {
-                    hexCells[g_4a41e6[i]].state = 508;
+                    hexCells[lightCells[i]].state = 508;
                     break;
                 }
             }
         }
-        if (hexCells[g_4a41e6[i]].state == 502 || hexCells[g_4a41e6[i]].state == 508)
-            tryMovesAround(g_4a41e6[i]);
+        if (hexCells[lightCells[i]].state == 502 || hexCells[lightCells[i]].state == 508)
+            tryMovesAround(lightCells[i]);
     }
     checkAllFilled();
-    if (!g_4b1a3c && g_4b1934 == 3 && hexCells[57].state == 508 && hexCells[59].state == 508
+    if (!cyclingColours && stoneRiseLevel == 3 && hexCells[57].state == 508 && hexCells[59].state == 508
         && hexCells[61].state == 508) {
-        g_4b1a3c = 0;
+        cyclingColours = 0;
         for (i = 1; i <= listedCount; i++)
             if (hexCells[listedCells[i]].state == 507 || hexCells[listedCells[i]].state == 508)
-                g_4b1a3c++;
-        if (g_4b1a3c == 4) {
-            g_4b1a3c = 1;
-            g_4b2534 = clockTime();
+                cyclingColours++;
+        if (cyclingColours == 4) {
+            cyclingColours = 1;
+            lastColourCycle = clockTime();
             showZoneMessage();
         } else {
-            g_4b1a3c = 0;
+            cyclingColours = 0;
         }
     }
 }
@@ -1914,14 +1914,14 @@ void relightPath()
             view->placed = placeCellViewImages;
         }
     }
-    if (g_4b1934 == 3)
+    if (stoneRiseLevel == 3)
         lightFrom(54);
     else
         lightFromStarts();
 }
 
 /* Scene 12's keys (with debugging on, debugMessagesOn, or else only 0x16f): typing
-   "solve" (g_4b2412 counts the letters) solves level 3. */
+   "solve" (solveTyped counts the letters) solves level 3. */
 /* @zoombi32 0x00448231 */
 short stoneRiseKey(unsigned short key)
 {
@@ -1932,25 +1932,25 @@ short stoneRiseKey(unsigned short key)
         replayHint();
         return 1;
     case 's':
-        if (!g_4b2412)
-            g_4b2412 = 1;
+        if (!solveTyped)
+            solveTyped = 1;
         return 1;
     case 'o':
-        if (g_4b2412 == 1)
-            g_4b2412 = 2;
+        if (solveTyped == 1)
+            solveTyped = 2;
         return 1;
     case 'v':
-        if (g_4b2412 == 2)
-            g_4b2412 = 3;
+        if (solveTyped == 2)
+            solveTyped = 3;
         return 1;
     case 'l':
-        if (g_4b2412 == 3)
-            g_4b2412 = 4;
+        if (solveTyped == 3)
+            solveTyped = 4;
         return 1;
     case 'e':
-        if (g_4b2412 == 4) {
-            g_4b2412 = 5;
-            if (g_4b1934 == 3) {
+        if (solveTyped == 4) {
+            solveTyped = 5;
+            if (stoneRiseLevel == 3) {
                 standPlacedSnoids();
                 relightPath();
                 slidesGoReady = 1;
@@ -1993,12 +1993,12 @@ void stoneRiseClicked(short which)
         closeStoneRise();
         return;
     }
-    if (g_4b2526 != -1) {
+    if (savedPartyFlags != -1) {
         for (i = 0; i < partySize; i++) {
             cellView = findView(partyViews[i]);
-            cellView->flags = g_4b2526;
+            cellView->flags = savedPartyFlags;
         }
-        g_4b2526 = -1;
+        savedPartyFlags = -1;
     }
     switch (which) {
     case 1:
@@ -2010,14 +2010,14 @@ void stoneRiseClicked(short which)
         askKeepParty();
         break;
     case 2:
-        if (!slidesGoReady || g_4b2528)
+        if (!slidesGoReady || slidesGoPressed)
             break;
         if (g_4b2540)
             standFilledCells();
         drawSlidesButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawSlidesButton(which, 0, 1);
-        g_4b2528++;
+        slidesGoPressed++;
         first = 1;
         markLitSnoids();
         updateCellLinks();
@@ -2027,7 +2027,7 @@ void stoneRiseClicked(short which)
                 setViewScript(cellView, 7002, 1);
                 cellView->placed = placeCellImages;
                 if (first) {
-                    g_4b251a = groupViews(hexCells[i].view, hexCells[i].view, 0, 0, 0, 0);
+                    finishGroup = groupViews(hexCells[i].view, hexCells[i].view, 0, 0, 0, 0);
                     first = 0;
                 }
             }
@@ -2037,32 +2037,32 @@ void stoneRiseClicked(short which)
                 groupViews(hexCells[i].snoid, hexCells[i].view, 0, 0, 0, 0);
             }
         }
-        g_4b1a40++;
+        slidesDragLocked++;
         queueViewSound(7000, 0);
-        moveView(g_4b1936[1], 0, hexCells[9].view);
-        moveView(g_4b1936[2], 0, hexCells[27].view);
-        moveView(g_4b1936[3], 0, hexCells[45].view);
-        moveView(g_4b1936[4], 0, hexCells[63].view);
-        moveView(g_4b1936[5], 0, hexCells[81].view);
-        moveView(g_4b1936[6], 0, hexCells[99].view);
+        moveView(slidesRowViews[1], 0, hexCells[9].view);
+        moveView(slidesRowViews[2], 0, hexCells[27].view);
+        moveView(slidesRowViews[3], 0, hexCells[45].view);
+        moveView(slidesRowViews[4], 0, hexCells[63].view);
+        moveView(slidesRowViews[5], 0, hexCells[81].view);
+        moveView(slidesRowViews[6], 0, hexCells[99].view);
         layerSnoidViews();
         break;
     case 3:
-        if (g_4b1a40)
+        if (slidesDragLocked)
             break;
         if (g_4b2540) {
             standFilledCells();
             break;
         }
-        if (snoidsOnTheirWay > 0 || g_4b1a3e || g_4b251a)
+        if (snoidsOnTheirWay > 0 || cellMarked || finishGroup)
             break;
         getCursorPosition(&where);
         view = viewAt(where, 1, 1);
         if (view)
             view = idleSnoidView(view->id);
         lastLitCount = countLitCells();
-        g_4b1a46 = litSum;
-        if (g_4b1934 <= 1) {
+        lastLitSum = litSum;
+        if (stoneRiseLevel <= 1) {
             if (!view)
                 break;
             dropped = dragSnoid(view, where, 0, 0);
@@ -2071,10 +2071,10 @@ void stoneRiseClicked(short which)
             moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
             if (!place && dropped && moved)
                 pickSlidesPlace((Point *)&snoid->targetX);
-            g_4b2410 = place;
-            if (g_4b2410) {
+            pathStart = place;
+            if (pathStart) {
                 for (i = 1; i <= listedCount; i++) {
-                    if (hexCells[listedCells[i]].snoid == view->id && i != g_4b2410) {
+                    if (hexCells[listedCells[i]].snoid == view->id && i != pathStart) {
                         hexCells[listedCells[i]].snoid = 0;
                         hexCells[listedCells[i]].state = 506;
                         cellView = findView(hexCells[listedCells[i]].view);
@@ -2103,7 +2103,7 @@ void stoneRiseClicked(short which)
                         break;
                     }
                 }
-                hexCells[listedCells[g_4b2410]].snoid = view->id;
+                hexCells[listedCells[pathStart]].snoid = view->id;
                 lightPath();
                 remarkOnLit();
                 checkAllFilled();
@@ -2139,11 +2139,11 @@ void stoneRiseClicked(short which)
                 }
                 x = view->body.x;
                 y = view->body.y;
-                g_4b1a38 = view->id;
+                markWalker = view->id;
                 markCellAt(x, y);
                 remarkOnLit();
             }
-        } else if (g_4b1934 == 2) {
+        } else if (stoneRiseLevel == 2) {
             if (!view)
                 break;
             dropped = dragSnoid(view, where, 0, 0);
@@ -2152,18 +2152,18 @@ void stoneRiseClicked(short which)
             moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
             if (!place && dropped && moved)
                 pickSlidesPlace((Point *)&snoid->targetX);
-            g_4b2410 = place;
-            if (g_4b2410) {
+            pathStart = place;
+            if (pathStart) {
                 for (i = 1; i <= listedCount; i++)
-                    if (hexCells[listedCells[i]].snoid == view->id && i != g_4b2410) {
+                    if (hexCells[listedCells[i]].snoid == view->id && i != pathStart) {
                         hexCells[listedCells[i]].snoid = 0;
                         hexCells[listedCells[i]].state = 506;
                         cellView = findView(hexCells[listedCells[i]].view);
                         setViewScript(cellView, 7000, 1);
                         cellView->placed = placeCellViewImages;
                     }
-                hexCells[listedCells[g_4b2410]].snoid = view->id;
-                hexCells[listedCells[g_4b2410]].state = 507;
+                hexCells[listedCells[pathStart]].snoid = view->id;
+                hexCells[listedCells[pathStart]].state = 507;
                 relightPath();
                 remarkOnLit();
             } else {
@@ -2179,7 +2179,7 @@ void stoneRiseClicked(short which)
                     }
                 x = view->body.x;
                 y = view->body.y;
-                g_4b1a38 = view->id;
+                markWalker = view->id;
                 markCellAt(x, y);
                 remarkOnLit();
             }
@@ -2192,18 +2192,18 @@ void stoneRiseClicked(short which)
             moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
             if (!place && dropped && moved)
                 pickSlidesPlace((Point *)&snoid->targetX);
-            g_4b2410 = place;
-            if (g_4b2410) {
+            pathStart = place;
+            if (pathStart) {
                 for (i = 1; i <= listedCount; i++)
-                    if (hexCells[listedCells[i]].snoid == view->id && i != g_4b2410) {
+                    if (hexCells[listedCells[i]].snoid == view->id && i != pathStart) {
                         hexCells[listedCells[i]].snoid = 0;
                         hexCells[listedCells[i]].state = 506;
                         cellView = findView(hexCells[listedCells[i]].view);
                         setViewScript(cellView, 7000, 1);
                         cellView->placed = placeCellViewImages;
                     }
-                hexCells[listedCells[g_4b2410]].snoid = view->id;
-                hexCells[listedCells[g_4b2410]].state = 507;
+                hexCells[listedCells[pathStart]].snoid = view->id;
+                hexCells[listedCells[pathStart]].state = 507;
                 relightPath();
                 remarkOnLit();
             } else {
@@ -2219,7 +2219,7 @@ void stoneRiseClicked(short which)
                     }
                 x = view->body.x;
                 y = view->body.y;
-                g_4b1a38 = view->id;
+                markWalker = view->id;
                 markCellAt(x, y);
                 remarkOnLit();
             }

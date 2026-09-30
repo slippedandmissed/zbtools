@@ -764,7 +764,7 @@ void moveFleenZoombinisOn()
 
 /*
  * The fleens' updateSnoidView, for a fleen: when due,
- * idles (now and then, by g_4a4b98, fidgeting with 2 or 3) or runs its
+ * idles (now and then, by snoidIdleDelay, fidgeting with 2 or 3) or runs its
  * script a frame; at the script's end, back to 4000 and tells the notify
  * (-1).
  */
@@ -791,7 +791,7 @@ void updateFleen(View *view, short region)
         if (snoid->unknownF5) {
             snoid->unknownF5 = 0;
             changed = 1;
-        } else if (g_4a4b98 && snoid->unknownF8++ > g_4a4b98 + 16) {
+        } else if (snoidIdleDelay && snoid->unknownF8++ > snoidIdleDelay + 16) {
             short which = randomBetween(1, 100) <= 50 ? 2 : 3;
             short script = fleenScript(view, which);
 
@@ -1347,7 +1347,7 @@ void fleensLeaderNotify(View *view, short event)
         }
         break;
     case -1:
-        g_4a4b98 = 64;
+        snoidIdleDelay = 64;
         leaderWalking = 0;
         leaderBusy = 0;
         activeFleen = activeSnoid = 0;
@@ -1562,7 +1562,7 @@ void fleensFrame()
                 activeFleen = putDownFleen;
                 putDownFleen = 0;
                 activeSnoid = view->id;
-                g_4a4b98 = 0;
+                snoidIdleDelay = 0;
                 leaderBusy = 1;
                 unloadSounds();
                 for (i = 0; i < 3; i++)

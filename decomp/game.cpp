@@ -1202,7 +1202,7 @@ void startNextCrossing(short)
         groupViews(view->id, view->id, 0, 0, 0, 0);
 }
 
-/* Lays out the hex grid for level g_4b1934 (0-3), with the start cells
+/* Lays out the hex grid for level stoneRiseLevel (0-3), with the start cells
    (state startState, 504 or at level 3 perhaps 505), the cells open (506)
    and blocked (501), the Zoombinis already placed (507) and the cells'
    link bits (cellLinkBits); notes the open cells (listedCount of them, where to
@@ -1225,15 +1225,15 @@ void layOutGrid()
 
     fillMemory(placedSnoids, 0, 4);
     startState = 504;
-    g_4b2514 = 48;
-    if (g_4b1934 == 3) {
+    linkImageOffset = 48;
+    if (stoneRiseLevel == 3) {
         startState = randomUpTo(1) + 504;
         if (startState != 504)
-            g_4b2514 = 24;
+            linkImageOffset = 24;
     }
     k = 0;
     readPartyFeatures();
-    switch (g_4b1934) {
+    switch (stoneRiseLevel) {
     case 0:
         pairByFeatures();
         base = g_4a4374[groupCount];
@@ -1702,12 +1702,12 @@ void layOutGrid()
             hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &cellPoints[cell], 0, 0);
             view = findView(hexCells[cell].view);
             view->placed = placeCellViewImages;
-            g_4b241a++;
-            g_4b241c[g_4b241a - 1] = cell;
+            startCellCount++;
+            startCells[startCellCount - 1] = cell;
             if (startState == 505)
-                g_4b241c[g_4b241a - 1] += 20;
-            if (g_4b241a == 1)
-                g_4b2518 = groupViews(hexCells[cell].view, hexCells[cell].view, 0, 0, 0, 0);
+                startCells[startCellCount - 1] += 20;
+            if (startCellCount == 1)
+                startCellsGroup = groupViews(hexCells[cell].view, hexCells[cell].view, 0, 0, 0, 0);
         } else {
             hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &cellPoints[cell], 0, 0);
             view = findView(hexCells[cell].view);
@@ -1715,12 +1715,12 @@ void layOutGrid()
         }
     }
     for (cell = 1; cell < 9; cell++)
-        g_4b1936[cell] = addView(0x188000, drawCels, runViewScript, cell + 7003, 6, 0, 0, 0);
+        slidesRowViews[cell] = addView(0x188000, drawCels, runViewScript, cell + 7003, 6, 0, 0, 0);
     view = findView(partyViews[0]);
-    g_4b2526 = (short)view->flags;
+    savedPartyFlags = (short)view->flags;
     for (cell = partySize - 1; cell >= 0; cell--) {
         view = findView(partyViews[cell]);
-        moveView(partyViews[cell], 0, g_4b1936[8]);
+        moveView(partyViews[cell], 0, slidesRowViews[8]);
         view->flags |= 0x4008000;
     }
 }
@@ -1827,7 +1827,7 @@ short growGrid(short cell)
     if (target) {
         n = placeAlike(cell, 4);
         if (n == -1) {
-            g_4b2524 = -1;
+            alikeTarget = -1;
             return -1;
         }
     }
@@ -1838,7 +1838,7 @@ short growGrid(short cell)
         n = placeAlike(cell, 5);
         if (n == -1) {
             hexCells[far5].state = 501;
-            return g_4b2524 = target;
+            return alikeTarget = target;
         }
     }
     if (hexCells[target].state == 507) {
@@ -1852,7 +1852,7 @@ short growGrid(short cell)
         n = placeAlike(cell, 3);
         if (n == -1) {
             hexCells[far3].state = 501;
-            return g_4b2524 = target;
+            return alikeTarget = target;
         }
         if (hexCells[target].state == 507) {
             n = sharedStone(target, far3);

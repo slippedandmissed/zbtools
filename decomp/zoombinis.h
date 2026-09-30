@@ -992,7 +992,7 @@ extern short g_4a4a0c;
 extern short g_4a4a10;
 extern long buttonKeys[3]; /* @data 0x4a4abc */
 extern UINT buttonUpMessages[3]; /* @data 0x4a4ac8 */
-extern short g_4a4b98;
+extern short snoidIdleDelay;
 extern char *gameState;
 /* Per puzzle scene (from scene 7): bits 0-3, left at level 0-3; bits 4-7,
    passed at level 0-3. */
@@ -3901,6 +3901,6 @@ extern short g_4afb30; /* @data 0x4afb30 */
 extern short g_4b807e; /* @data 0x4b807e */
 extern short ferryVisits; /* @data 0x4abafc */
 extern unsigned long returnRoutesUsed; /* @data 0x4abb00: slots used (allocateSlot) for the ferry's routes (scene 10) */
-extern short g_4afb86; /* @data 0x4afb86 */
+extern short shipDx; /* @data 0x4afb86 */
 
 #endif

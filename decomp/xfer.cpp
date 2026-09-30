@@ -39,7 +39,7 @@ void resetJourney()
     for (i = 0; i < 17; i++)
         placeLevels[i] = 0;
     view5108 = destinationPlace = destinationPlace = 0;
-    g_4a4b98 = 0;
+    snoidIdleDelay = 0;
     xferMap = 0;
     shownPopulation = population();
     placeLevelShown = -1;
@@ -1404,7 +1404,7 @@ void closeJourney()
         closeGameFile(&journeyFile);
         fadeOutViews();
         showBusyCursor();
-        g_4a4b98 = 64;
+        snoidIdleDelay = 64;
         if (busyCount)
             busyCount--;
     }

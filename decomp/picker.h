@@ -43,41 +43,41 @@ void showMapBox();
 void placePressed(View *view);
 long catchKey(long);
 void burstNotify(View *, short event);
-extern long g_4afb10; /* @data 0x4afb10: Picker.MHK */
-extern short g_4afb14; /* @data 0x4afb14: the scene is open */
+extern long pickerFile; /* @data 0x4afb10: Picker.MHK */
+extern short pickerOpen; /* @data 0x4afb14: the scene is open */
 extern GroupList pickerGroups[1]; /* @data 0x4a1f34 */
 extern GroupList catchGroups[1]; /* @data 0x4a2046 */
 extern GroupList targetGroups[1]; /* @data 0x4a2090 */
-extern short g_4afbb8; /* @data 0x4afbb8 */
-extern basePort **g_4afb28; /* @data 0x4afb28 */
+extern short savedIdleDelay; /* @data 0x4afbb8 */
+extern basePort **mapBoxBackdrop; /* @data 0x4afb28 */
 extern short mapBoxView; /* @data 0x4afb34 */
-extern short g_4afb3a; /* @data 0x4afb3a */
-extern ShortRect g_4a1f74; /* @data 0x4a1f74 */
+extern short openHotspotsView; /* @data 0x4afb3a */
+extern ShortRect mapBoxRect; /* @data 0x4a1f74 */
 void closeCatch();
 void closeTargets();
 void caughtNotify(View *, short event);
 extern short shipView; /* @data 0x4afb7c */
 extern short shipDirection; /* @data 0x4afb7e */
-extern short g_4afb80; /* @data 0x4afb80 */
-extern short g_4afb82; /* @data 0x4afb82 */
-extern short g_4afb84; /* @data 0x4afb84 */
-extern short g_4afb88; /* @data 0x4afb88 */
+extern short shipBurstFrame; /* @data 0x4afb80 */
+extern short shipX; /* @data 0x4afb82 */
+extern short shipY; /* @data 0x4afb84 */
+extern short shipDy; /* @data 0x4afb88 */
 void placeLevelMarker(View *view);
 void driftView(View *view);
 void resetShip();
 void drawTextView(View *view);
 
 void placeCatchScore(View *view);
-extern short g_4afb16; /* @data 0x4afb16 */
-extern MapSave *g_4afb18[6]; /* @data 0x4afb18 */
-extern short g_4afb36; /* @data 0x4afb36 */
+extern short askingTransition; /* @data 0x4afb16 */
+extern MapSave *mapSaves[6]; /* @data 0x4afb18 */
+extern short namedHotspot; /* @data 0x4afb36 */
 extern short levelListView; /* @data 0x4afb38 */
-extern short g_4afb3c; /* @data 0x4afb3c */
-extern short g_4afb3e; /* @data 0x4afb3e */
-extern short g_4afb40; /* @data 0x4afb40 */
-extern ShortRect g_4afb42; /* @data 0x4afb42 */
+extern short hotspotLevelsView; /* @data 0x4afb3c */
+extern short placeNameView; /* @data 0x4afb3e */
+extern short helpButtonView; /* @data 0x4afb40 */
+extern ShortRect helpButtonRect; /* @data 0x4afb42 */
 extern short pickedHotspot; /* @data 0x4afb5c */
-extern short g_4afb5e; /* @data 0x4afb5e */
+extern short practicePartySize; /* @data 0x4afb5e */
 void resetMap();
 void openMap();
 void openCatch();
@@ -96,30 +96,30 @@ void drawLevelList(ShortRect *rect);
 void targetsClicked(short which);
 void updateTextView(View *view, volatile short region);
 void drawLevelListView(View *view);
-extern ShortRect g_4a1f54[6]; /* @data 0x4a1f54: the map's areas saved (g_4afb18); the first four hold the terrains' names */
+extern ShortRect mapSaveRects[6]; /* @data 0x4a1f54: the map's areas saved (mapSaves); the first four hold the terrains' names */
 void drawTerrainNames();
-extern short g_4afb74; /* @data 0x4afb74: the next hundred to score */
-extern short g_4afb78; /* @data 0x4afb78 */
+extern short nextHundred; /* @data 0x4afb74: the next hundred to score */
+extern short scoreView; /* @data 0x4afb78 */
 extern short firstShotStopped; /* @data 0x4afb8a: the first shot stopped */
 extern short targetHit; /* @data 0x4afb8e: the target hit (from 1) */
 extern ShortRect *targetBounds[6]; /* @data 0x4afb94: the targets' bounds */
-extern short g_4afbac[6]; /* @data 0x4afbac: the targets' views */
+extern short targetViews[6]; /* @data 0x4afbac: the targets' views */
 void placeShot(View *view);
 
 short sendRandomZoombini();
-extern short g_4afb6c; /* @data 0x4afb6c */
-extern short g_4afb6e; /* @data 0x4afb6e */
-extern short g_4afb70; /* @data 0x4afb70 */
-extern short g_4afbba; /* @data 0x4afbba: targets started */
+extern short splitX; /* @data 0x4afb6c */
+extern short splitY; /* @data 0x4afb6e */
+extern short splitDirection; /* @data 0x4afb70 */
+extern short targetsOut; /* @data 0x4afbba: targets started */
 short startTarget(short kind, short preset);
 extern char savedUserFile[]; /* @data 0x4a1f84: the user file while practising (in ZBtemp) */
 void closeMap();
-extern short g_4afb7a; /* @data 0x4afb7a */
+extern short gameOverView; /* @data 0x4afb7a */
 void placeShip(View *view);
 
 void updateCursorView(View *view, short region);
-extern unsigned short g_4afbbc; /* @data 0x4afbbc: a big target is out */
-extern unsigned short g_4afbbe; /* @data 0x4afbbe: its view */
+extern unsigned short bigTargetOut; /* @data 0x4afbbc: a big target is out */
+extern unsigned short bigTargetView; /* @data 0x4afbbe: its view */
 short targetsKey(unsigned short key);
 extern char *placeNames[16]; /* @data 0x4a5278: the hotspots' names ("zoombini isle", ...) */
 /* The map's box: 0-3 the camps ("zoombini isle", "shelter rock", "shade
@@ -129,23 +129,23 @@ extern char *mapTexts[21]; /* @data 0x4a52b8 */
 void drawMapBox(ShortRect *rect);
 void drawMapBoxView(View *view);
 void makeMapViews(short update);
-extern short g_4a2008; /* @data 0x4a2008: mapFrame is running */
-extern short g_4a2066; /* @data 0x4a2066: catchFrame is running */
-extern short g_4afb60[3]; /* @data 0x4afb60: the Zoombinis crossing */
-extern unsigned long g_4afb68; /* @data 0x4afb68: when to send more */
+extern short inMapFrame; /* @data 0x4a2008: mapFrame is running */
+extern short inCatchFrame; /* @data 0x4a2066: catchFrame is running */
+extern short catchCrossers[3]; /* @data 0x4afb60: the Zoombinis crossing */
+extern unsigned long nextCatchSendTime; /* @data 0x4afb68: when to send more */
 void catchFrame();
 void mapFrame();
-extern short g_4a20b0; /* @data 0x4a20b0: targetsFrame is running */
+extern short inTargetsFrame; /* @data 0x4a20b0: targetsFrame is running */
 extern short targetBursting; /* @data 0x4afb90: the target hit bursting (negated until it's done) */
 void targetsFrame();
 
 void leavePractice();
-extern basePort **g_4afb2c; /* @data 0x4afb2c */
-extern ShortRect g_4a1f7c; /* @data 0x4a1f7c */
+extern basePort **levelListBackdrop; /* @data 0x4afb2c */
+extern ShortRect levelListRect; /* @data 0x4a1f7c */
 short mapKey(unsigned short key);
-extern ShortRect g_4a2068[3]; /* @data 0x4a2068: where a click catches nothing */
+extern ShortRect catchMissAreas[3]; /* @data 0x4a2068: where a click catches nothing */
 void catchClicked(short);
-extern ShortRect g_4a1fa8[4]; /* @data 0x4a1fa8: the levels' lines in the list */
+extern ShortRect levelLines[4]; /* @data 0x4a1fa8: the levels' lines in the list */
 void mapClicked(short which);
 
 #endif
