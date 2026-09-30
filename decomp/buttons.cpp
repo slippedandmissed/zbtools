@@ -11,6 +11,13 @@
 #include "graphics.h"
 #include "jointext.h"
 
+short buttonColors[6] = {0};
+
+ButtonGroup buttonGroups[10];
+char *buttonText;
+char *buttonError;
+short buttonsOffscreen;
+
 /* @zoombi32 0x004121cc */
 void drawButtonOn(InputItem *item)
 {

@@ -17,6 +17,34 @@
 #include "sound.h"
 #include "view.h"
 
+char aboutText[182] = {
+    76, 111, 103, 105, 99, 97, 108, 32, 74, 111, 117, 114, 110, 101, 121, 32, 111, 102, 32, 116,
+    104, 101, 32, 90, 111, 111, 109, 98, 105, 110, 105, 115, 13, 86, 101, 114, 115, 105, 111, 110,
+    32, 49, 46, 48, 13, 13, -87, 32, 67, 111, 112, 121, 114, 105, 103, 104, 116, 32, 49, 57, 57, 54,
+    32, 66, 114, -40, 100, 101, 114, 98, 117, 110, 100, 13, 83, 111, 102, 116, 119, 97, 114, 101,
+    44, 32, 73, 110, 99, 46, 32, 97, 110, 100, 32, 84, 69, 82, 67, 13, 65, 108, 108, 32, 82, 105,
+    103, 104, 116, 115, 32, 82, 101, 115, 101, 114, 118, 101, 100, 46, 0, 78, 111, 114, 109, 97,
+    108, 32, 69, 120, 105, 116, 46, 0, 80, 114, 111, 103, 114, 97, 109, 32, 114, 101, 113, 117, 105,
+    114, 101, 115, 32, 87, 105, 110, 100, 111, 119, 115, 32, 116, 111, 32, 114, 117, 110, 32, 105,
+    110, 32, 101, 110, 104, 97, 110, 99, 101, 100, 32, 109, 111, 100, 101, 46,
+};
+short busyCursorFresh = 1;
+unsigned long lastClickTime = 0;
+unsigned long clickInterval = 0;
+ShortRect debugRect = {0, 0, 310, 16};
+unsigned short midiTests[18] = {
+    0x7530, 0x7531, 0x7544, 0x7545, 0x7546, 0x7547, 0x7549, 0x754a, 0x754b, 0x754c, 0x754e, 0x754f,
+    0x7550, 0x7551, 0x7553, 0x7554, 0x7555, 0x7556,
+};
+short unusedDebugFlag = 64;
+
+short buttonDown;
+unsigned long busyCursorSince;
+unsigned long lastEventTime;
+unsigned short midiTest;
+short midiTestIndex;
+short viewStep;
+
 /*
  * One pass of the main loop (WinMain runs it and mainLoopEvents until it's
  * told to quit); always carries on. While gameActive is set it runs the game's

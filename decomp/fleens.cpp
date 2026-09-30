@@ -19,6 +19,66 @@
 #include "sound.h"
 #include "view.h"
 
+SceneButton fleensButtons[2] = {{{600, 403, 639, 440}}, {{600, 441, 639, 478}}};
+ImageBank *fleensButtonImages = 0;
+short feetLayers[6] = {0, 275, 290, 305, 328, 347};
+short noseLayers[6] = {0, 15, 30, 45, 60, 75};
+short eyesLayers[6] = {0, 90, 109, 128, 147, 166};
+short hairLayers[6] = {0, 185, 203, 221, 239, 257};
+short fleensButton2Lit = 0;
+short fleensButton1Drawn = 0;
+short inFleensFrame = 0;
+short swapFeatures[4] = {1, 2, 3, 4};
+
+short pendingFleensFacing;
+short fleensFidgetsAllowed;
+short view1000;
+short pickedFleensFound;
+short fleensViews[7];
+short fleensView0Started;
+short activeFleen;
+short activeSnoid;
+short pickedFleens[3];
+short walkerStep9Due;
+short walkerStep3Due;
+short walkerStep4Due;
+short lineMoveDue;
+short fleenBehindDue;
+short snoidBehindDue;
+short lineLength;
+short fleensFidgets;
+short lineSnoids[7];
+short lineFleens[7];
+short walkerSnoid;
+short walkerFleen;
+short fleensLevel;
+short lineStepDue;
+short putDownSnoid;
+short putDownFleen;
+long fleensFile;
+short fleensOpen;
+short fleensGoReady;
+short fleensEntered;
+short leaderBusy;
+short leaderWalking;
+long fleensButtonResource;
+long fleenImagesResource;
+long fleenHotXResource;
+long fleenHotYResource;
+ImageBank *fleenImages;
+short *fleenHotX;
+short *fleenHotY;
+short fleensPartySize;
+short fleenViews[16];
+char fleenClicked[16];
+long fleenScriptResources[59];
+short *fleenScripts[59];
+short fleenScriptsToLoad;
+unsigned long lastFleensFidgetTime;
+unsigned long fleensFidgetInterval;
+unsigned long fleensFidgetersUsed;
+short fleensTravellers;
+
 /* The buttons' view update: redraws button 2 as fleensGoReady and fleensEntered
    together change, and button 1 once. */
 /* @zoombi32 0x00421bfc */

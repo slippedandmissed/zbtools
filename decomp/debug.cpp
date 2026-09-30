@@ -13,6 +13,22 @@
 #include "platform.h"
 #include "random.h"
 
+Callback frameHook = 0;
+unsigned long starvationLimit = 200;
+char msgStarvation[] = "System starvation warning!";
+Callback clickHook = 0;
+Callback paintHook = 0;
+
+short loadingAnimation;
+short clockInTicks;
+unsigned long clockStoppedAt;
+unsigned long clockOffset;
+unsigned long timers[4];
+short starvationChecking;
+short starvationPaused;
+unsigned long lastCheck;
+unsigned long thisCheck;
+
 /* @zoombi32 0x00415604 */
 void setFrameHook(Callback callback)
 {

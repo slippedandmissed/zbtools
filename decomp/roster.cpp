@@ -21,6 +21,109 @@
 #include "sound.h"
 #include "view.h"
 
+long cavesButtonResource = 0;
+long glyphShape = 0;
+short unusedCaves2 = 0;
+short cavesFullPartyAtOpen = 0;
+short cavesGoReady = 0;
+short cavesFullParty = 0;
+short cavesOpen = 0;
+short cavesBusy = 0;
+short caveValueCount = 5;
+short caveFeatureCount = 0;
+short unusedCaves1 = 0;
+short walkerFrontView = 0;
+short walkScriptsBase = 0;
+short walkScript = 0;
+short firstFrame = 0;
+short finalFrame = 0;
+short currentFrame = 0;
+short walkOnDue = 0;
+short unusedCaves3 = 0;
+short unusedCaves4 = 0;
+short firstCave = 0;
+short cavesPlacedCount = 0;
+short droppedCave = 0;
+short assignedCave = 0;
+short chosenCount = 0;
+short missingSnoids = 0;
+short forceHairFirst = 1;
+short featureTableShown = 0;
+short glyphView = 0;
+ImageBank *cavesButtonImages = 0;
+SceneButton cavesButtons[2] = {{{589, 392, 628, 429}}, {{589, 430, 628, 467}}};
+ShortRect caveWaitAreas[12] = {
+    {0}, {0, 0, 195, 130}, {0, 128, 175, 147}, {0, 146, 155, 165}, {0, 164, 135, 191},
+    {0, 190, 120, 214}, {0, 213, 100, 236}, {0, 235, 87, 250}, {0, 249, 67, 269}, {0, 268, 40, 289},
+    {0, 288, 27, 357}, {0, 356, 36, 394},
+};
+Point chosenSpots[20] = {
+    {180, 110}, {160, 136}, {130, 167}, {106, 193}, {86, 232}, {140, 100}, {120, 126}, {100, 157},
+    {76, 183}, {46, 222}, {100, 90}, {80, 116}, {60, 147}, {36, 173}, {60, 80}, {40, 106},
+    {20, 137}, {10, 167}, {20, 90}, {20, 116},
+};
+ShortRect glyphArea = {314, 24, 436, 102};
+short caveSnoidF1[21] = {
+    0, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1,
+};
+short caveSnoidF2[21] = {0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1};
+short inCavesFrame = 0;
+short cavesButton2Lit = 0;
+short cavesButton1Drawn = 0;
+short kind4Images[6] = {0, 383, 493, 671, 721, 823};
+short kind3Images[6] = {0, 343, 351, 359, 367, 375};
+short kind2Images[6] = {0, 183, 215, 248, 279, 312};
+short kind1Images[6] = {0, 23, 55, 87, 119, 151};
+unsigned long tunnelRemarksUnused = 0;
+unsigned long tunnelRemarks2Used = 0;
+unsigned long tunnelRemarks3bUsed = 0;
+unsigned long tunnelRemarks3cUsed = 0;
+unsigned long tunnelRemarks3aUsed = 0;
+
+long cavesFile;
+short glyphPlaced[11];
+short glyphImages[11];
+short blinkingGlyph;
+short lastBlinkedGlyph;
+short exitDue;
+short exitStage;
+short walkerView;
+short walkDue;
+short cavesLevel;
+short caveFeatures[2];
+short caveValues[2][5];
+short caveValueCounts[6][6];
+short walkFromView;
+short walkToView;
+Point claimedSpotPoint;
+Point *walkerAnchor;
+Point *cheerAnchor;
+short spotSnoids[21];
+short cavePlaceValues[2][21];
+short caveViews[21];
+short framesChanged;
+short cheerQueue[20];
+short cheerQueueCount;
+short cavesNextWalker;
+short cavesView6000;
+short cavesView6001;
+short cavesView6002;
+short frameView;
+unsigned long lastCheerTime;
+unsigned long cheerersUsed;
+short cheersAllowed;
+short cheersDone;
+short allPlaced;
+long unusedCaves5;
+Point walkBackPoints[20];
+short walkBackCount;
+short *caveRegs200;
+short *glyphRaise;
+long caveRegsResources[2];
+short caveRegsHandles[2];
+long rosterFile;
+char *rosterError;
+
 /*
  * The notify of the Zoombinis cheering on the roster screen (cavesFrame),
  * which returns its event plus one (ignored).

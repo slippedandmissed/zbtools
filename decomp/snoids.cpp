@@ -18,6 +18,96 @@
 #include "sound.h"
 #include "view.h"
 
+short snoidIdleDelay = 64;
+unsigned short showPositions = 0;
+short nextPathToDraw = 0;
+char *gameState = 0;
+short feetImages[6] = {0, 191, 246, 335, 360, 411};
+short noseImages[6] = {0, 171, 175, 179, 183, 187};
+short eyesImages[6] = {0, 91, 107, 123, 139, 155};
+short hairImages[6] = {0, 11, 27, 43, 59, 75};
+short altFeetImages[6] = {0, 288, 306, 324, 342, 360};
+short altNoseImages[6] = {0, 198, 216, 234, 252, 270};
+short altEyesImages[6] = {0, 108, 126, 144, 162, 180};
+short altHairImages[6] = {0, 18, 72, 36, 54, 90};
+short snoidTablesLoaded = 0;
+long snoidImages3Resource = 0;
+char vowelSounds[] = "a a a e e e e i i i o o o u u y eeooyoyayeeiieaiiaauuauoouaeea";
+char consonants[] = "bbccdddfghjkkllmmnnprrssssttvwxz";
+char nameEndings[] = "aeiouy";
+char consonantPairs[] = "blbrchclcrdrdwflfrghglgrklknkrkwldmpndnhnnphplprququrhrnscslsmsnspsrstswthtrtwwr";
+ShortRect nameTagRect = {277, 458, 364, 477};
+ShortRect largeNameTagRect = {257, 458, 387, 477};
+Paths *paths = 0;
+PathNodes *pathNodes = 0;
+long pathsResource = 0;
+long pathNodesResource = 0;
+short spotRadius = 36;
+short spotCorner = 0;
+short dragging = 0;
+short altSnoids = 0;
+short otherFeetImages[6] = {0, 131, 174, 227, 235, 278};
+short otherNoseImages[6] = {0, 111, 115, 119, 123, 127};
+short otherEyesImages[6] = {0, 91, 95, 99, 103, 107};
+short otherHairImages[6] = {0, 11, 27, 43, 59, 75};
+Point spotOrigin = {0};
+
+short practiceLevel;
+short endDragNow;
+short dragX;
+short dragY;
+short keepDragPose;
+short claimOnArrival;
+short dragInPlace;
+short levelJustRaised;
+short snoidsOnTheirWay;
+short snoidsArrived;
+short placeSnapRadius;
+short placesClaimable;
+short skipJourneyMap;
+short noPaths;
+short hideArrivedPlaced;
+short dragInProgress;
+short snoidMode;
+short partyViews[32];
+short sortedCount;
+short sortedX[32];
+short sortedIds[32];
+long baseSnoidScriptResources[51];
+long snoidScriptResources[110];
+short *baseSnoidScripts[51];
+short *snoidScripts[110];
+short heldPlace;
+short placeHeld;
+short *snoidTables[4];
+long soundsMap;
+long midiMapFile;
+long snoidImagesResource;
+long snoidImages2Resource;
+ImageBank *snoidImages;
+ImageBank *snoidImages2;
+ImageBank *snoidImages3;
+SnoidArrived arrivalHook;
+long snoidTableResources[4];
+short snoidScriptGroupFirst[2];
+short snoidScriptGroupCount[2];
+short snoidScriptGroups;
+short staggerDue;
+ChosenSnoids chosenSnoids;
+short ambientCounter;
+Point spots[32];
+short spotIds[32];
+short spotCount;
+short dragButtonDown;
+short clickToDrag;
+long altSnoidResources[3];
+ImageBank *savedSnoidImages;
+short *savedSnoidTables[2];
+short savedFeetImages[6];
+short savedNoseImages[6];
+short savedEyesImages[6];
+short savedHairImages[6];
+
 /* @zoombi32 0x00456c00 */
 void resetSnoids()
 {

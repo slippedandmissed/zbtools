@@ -21,6 +21,168 @@
 #include "sound.h"
 #include "view.h"
 
+SceneButton pizzaButtons[13] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{33, 97, 120, 157}}, {{33, 183, 85, 209}},
+    {{33, 210, 85, 236}}, {{33, 237, 85, 263}}, {{33, 264, 85, 288}}, {{33, 289, 85, 317}},
+    {{88, 195, 115, 234}}, {{88, 236, 115, 273}}, {{88, 276, 115, 314}}, {{130, 99, 174, 308}},
+    {{0, 0, 640, 480}},
+};
+SceneButton pizzaButtonsLevel0[13] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{33, 97, 120, 157}}, {{48, 185, 100, 210}},
+    {{48, 211, 100, 236}}, {{48, 237, 100, 263}}, {{48, 264, 100, 288}}, {{48, 289, 100, 317}},
+    {{88, 195, 115, 234}}, {{88, 236, 115, 273}}, {{88, 276, 115, 314}}, {{130, 99, 174, 308}},
+    {{0, 0, 640, 480}},
+};
+SceneButton pizzaButtonsLevel1[13] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{33, 97, 120, 157}}, {{33, 196, 85, 221}},
+    {{33, 222, 85, 247}}, {{33, 248, 85, 275}}, {{33, 276, 85, 301}}, {{33, 289, 85, 317}},
+    {{88, 215, 115, 254}}, {{88, 255, 115, 294}}, {{88, 276, 115, 314}}, {{130, 99, 174, 308}},
+    {{0, 0, 640, 480}},
+};
+SceneButton pizzaButtonsLevel2[13] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{33, 97, 120, 157}}, {{33, 182, 85, 210}},
+    {{33, 211, 85, 236}}, {{33, 237, 85, 262}}, {{33, 263, 85, 288}}, {{33, 289, 85, 316}},
+    {{88, 215, 115, 254}}, {{88, 255, 115, 295}}, {{88, 296, 115, 314}}, {{130, 99, 174, 308}},
+    {{0, 0, 640, 480}},
+};
+SceneButton pizzaButtonsLevel3[13] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{33, 97, 120, 157}}, {{33, 182, 85, 210}},
+    {{33, 211, 85, 236}}, {{33, 237, 85, 262}}, {{33, 263, 85, 288}}, {{33, 289, 85, 316}},
+    {{88, 195, 115, 232}}, {{88, 237, 115, 274}}, {{88, 276, 115, 314}}, {{130, 99, 174, 308}},
+    {{0, 0, 640, 480}},
+};
+short pizzaButtonsView = 0;
+long pizzaButtonResource = 0;
+short lastPilingTroll = 0;
+short zoombiniAtPizza = -1;
+Point pizzaSpot = {270, 334};
+Point pizzaPlaces[16] = {
+    {288, 389}, {240, 386}, {257, 434}, {202, 396}, {224, 437}, {186, 443}, {158, 400}, {151, 455},
+    {126, 391}, {118, 446}, {89, 403}, {86, 456}, {48, 396}, {51, 440}, {20, 416}, {18, 457},
+};
+ImageBank *pizzaButtonImages = 0;
+short pizzaButton2Lit = 0;
+short pizzaButton1Drawn = 0;
+short inPizzaFrame = 0;
+short debugArnoScript = 0;
+short debugWillaScript = 0;
+short debugShylerScript = 0;
+short thrownScriptsUsedUp = 0;
+
+long pizzaFile;
+short pizzaPartySize;
+short nextZoombini;
+short zoombiniSettled;
+short zoombiniDone;
+ChosenSnoids *pizzaChosen;
+View *departingZoombini;
+short pizzaOpen;
+short pizzaGoReady;
+short cheatArmed;
+short zoombiniBack;
+short cheerGroup;
+short zoombinisSent;
+short pizzaView7000;
+short pizzaView7000Group;
+short pizzaViewGroup;
+short judgeGroup;
+short zoombiniRestartGroup;
+short zoombiniWalkGroup;
+short serveGroup;
+short trollTurnDue;
+short arnoGroup;
+short willaGroup;
+short shylerGroup;
+short reactGroup;
+short trollTurnsGroup;
+short nextZoombiniGroup;
+short pileGroup;
+short arnoView;
+short willaView;
+short shylerView;
+short trollTurn;
+short pizzaAnchorView;
+short arnoState;
+short willaState;
+short shylerState;
+short pizzaLevel;
+short pizzasLeft;
+short trollsAtLevel;
+short toppingCount;
+short toppingChance;
+short toppingsWanted;
+short pizzaLevelFrom2;
+short unusedPizzaLevel5;
+short mealView;
+short toppingsSliding;
+short unusedPizza1;
+short debugPizzasLeft;
+short toppingViews[8];
+short pizzasRemain;
+short outOfPizzas;
+short mealShown0;
+short mealShown1;
+short mealShown2;
+short mealShown3;
+short mealShown4;
+short mealShown5;
+short mealShown6;
+short mealShown7;
+short partyThrough;
+short satisfiedThisPizza;
+short trollTurnStep;
+short levelTrollStarted;
+short pizzaSolved;
+short pizzaView;
+short toppingsDx;
+short toppingsDy;
+short unusedPizza2;
+short paceBeforePizza;
+short zoombiniJustBrought;
+short pickedTrollTurn;
+short debugDraggedView;
+short pizzaWasTried;
+short pickedToppings[8];
+short arnoWants[8];
+short willaWants[8];
+short shylerWants[8];
+short arnoMoreScript;
+short arnoRejectScript;
+short arnoRejectManyScript;
+short lastPizzaEaten;
+short willaMoreScript;
+short willaRejectScript;
+short willaRejectManyScript;
+short shylerMoreScript;
+short shylerRejectScript;
+short shylerRejectManyScript;
+short mealToppings[8];
+short pizzaToppings[8];
+short satisfiedInARow;
+char triedPizzas[28];
+short lastTriedPizza;
+short unusedPizza3;
+short pendingPizzaFacing;
+short pizzaScriptStep;
+short judgedPizzaPlace;
+short lastShownPizza;
+short arnoPileTop;
+short willaPileTop;
+short shylerPileTop;
+short noPathWalk;
+short zoombiniComing;
+short skipPizzaReorder;
+short arnoPile[3];
+short willaPile[3];
+short shylerPile[3];
+ShownPizza shownPizzas[28];
+unsigned long lastPizzaFidgetTime;
+unsigned long pizzaFidgetersUsed;
+short pizzaFidgetsAllowed;
+short pizzaFidgets;
+short pizzaFidgeting;
+unsigned long lastKeyTime;
+
 /* A view's update: redraws button 2 when pizzaGoReady changes, and button 1
    once. */
 /* @zoombi32 0x00441127 */

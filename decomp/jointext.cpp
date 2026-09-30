@@ -8,6 +8,13 @@
 #include "loading.h"
 #include "platform.h"
 
+char allocationFailed;
+char outOfMemory;
+char portFailed;
+char loadFailed;
+char joinedText[0x100];
+short reportingJoinedError;
+
 /* Joins two texts into *joined (a JoinNode) unless it's already set. */
 /* @zoombi32 0x00413c24 */
 void joinText(char **joined, const char *first, const char *second)

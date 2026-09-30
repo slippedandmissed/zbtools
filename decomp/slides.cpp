@@ -19,6 +19,88 @@
 #include "sound.h"
 #include "view.h"
 
+SceneButton slidesButtons[2] = {{{600, 403, 639, 440}}, {{600, 441, 639, 478}}};
+ImageBank *slidesButtonImages = 0;
+long slidesButtonResource = 0;
+Point cellPoints[117] = {
+    {477, 152}, {435, 152}, {393, 152}, {351, 152}, {309, 152}, {267, 152}, {225, 152}, {183, 152},
+    {141, 152}, {461, 170}, {419, 170}, {377, 170}, {335, 170}, {293, 170}, {251, 170}, {209, 170},
+    {167, 170}, {125, 170}, {487, 188}, {445, 188}, {403, 188}, {361, 188}, {319, 188}, {277, 188},
+    {235, 188}, {193, 188}, {151, 188}, {471, 206}, {429, 206}, {387, 206}, {345, 206}, {303, 206},
+    {261, 206}, {219, 206}, {177, 206}, {135, 206}, {497, 224}, {455, 224}, {413, 224}, {371, 224},
+    {329, 224}, {287, 224}, {245, 224}, {203, 224}, {161, 224}, {481, 242}, {439, 242}, {397, 242},
+    {355, 242}, {313, 242}, {271, 242}, {229, 242}, {187, 242}, {145, 242}, {507, 260}, {465, 260},
+    {423, 260}, {381, 260}, {339, 260}, {297, 260}, {255, 260}, {213, 260}, {171, 260}, {491, 278},
+    {449, 278}, {407, 278}, {365, 278}, {323, 278}, {281, 278}, {239, 278}, {197, 278}, {155, 278},
+    {517, 296}, {475, 296}, {433, 296}, {391, 296}, {349, 296}, {307, 296}, {265, 296}, {223, 296},
+    {181, 296}, {501, 314}, {459, 314}, {417, 314}, {375, 314}, {333, 314}, {291, 314}, {249, 314},
+    {207, 314}, {165, 314}, {527, 332}, {485, 332}, {443, 332}, {401, 332}, {359, 332}, {317, 332},
+    {275, 332}, {233, 332}, {191, 332}, {511, 350}, {469, 350}, {427, 350}, {385, 350}, {343, 350},
+    {301, 350}, {259, 350}, {217, 350}, {175, 350}, {537, 368}, {495, 368}, {453, 368}, {411, 368},
+    {369, 368}, {327, 368}, {285, 368}, {243, 368}, {201, 368},
+};
+Point slidesPlaces[16] = {
+    {482, 127}, {428, 128}, {375, 129}, {318, 127}, {272, 129}, {226, 128}, {184, 127}, {140, 129},
+    {87, 128}, {110, 170}, {122, 246}, {84, 212}, {140, 327}, {77, 293}, {40, 157}, {44, 232},
+};
+short slidesButton2Lit = 0;
+short slidesButton1Drawn = 0;
+short inStoneRiseFrame = 0;
+short lightCells[31] = {
+    55, 57, 59, 61, 38, 74, 40, 76, 42, 78, 44, 80, 19, 91, 21, 93, 23, 95, 25, 97, 2, 110, 4, 112,
+    6, 114, 57, 59, 61, 97, 25,
+};
+short lightCellCount = 31;
+
+long slidesFile;
+ChosenSnoids *slidesChosen;
+short stoneRiseOpen;
+short slidesGoReady;
+short stoneRiseLevel;
+short slidesRowViews[10];
+short unusedCellTable[117];
+short markerView;
+short markedCell;
+short markWalker;
+short pendingMarkFacing;
+short cyclingColours;
+short cellMarked;
+short slidesDragLocked;
+short lastLitCount;
+short litSum;
+short lastLitSum;
+short listedCells[27];
+HexCell hexCells[117];
+short cellLinkBits[117];
+short listedCount;
+short pathStart;
+short solveTyped;
+short partySize;
+short startCellCount;
+short startCells[10];
+short waitingSnoids[16];
+short groupCount;
+short pairFeatures[16];
+short partyHair[16];
+short partyEyes[16];
+short partyNoses[16];
+short partyFeet[16];
+short partyTaken[16];
+short startState;
+short linkImageOffset;
+short sharedFeature;
+short startCellsGroup;
+short finishGroup;
+short featureValueCounts[4];
+short alikeTarget;
+short savedPartyFlags;
+short slidesGoPressed;
+unsigned long lastSlidesFidgetTime;
+unsigned long lastColourCycle;
+unsigned long slidesFidgetersUsed;
+short slidesFidgetsAllowed;
+short slidesFidgets;
+
 /* Opens scene 12 (Stone Rise): Slides.MHK, the board (all cells empty,
    500, until layOutGrid lays it out for the level), the cells' views, the
    buttons and the party. */

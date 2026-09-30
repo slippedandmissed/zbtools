@@ -9,9 +9,11 @@
 #include "loading.h"
 #include "mainloop.h"
 
+short dataFromInstallSource = 0;
 char installFromDirKey[] = "INSTALLFROMDIR";
 char dataDirName[] = "Data\\";
 char installToDirKey[] = "INSTALLTODIR";
+char configFileName[] = "Zoombi32.CFG";
 
 /* @zoombi32 0x0044695c */
 void refreshCursor()

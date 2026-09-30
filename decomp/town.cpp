@@ -22,6 +22,106 @@
 #include "town.h"
 #include "view.h"
 
+char monumentBuildings[16] = {7, 1, 4, 5, 13, 3, 10, 11, 14, 15, 0, 8, 12, 9, 2, 6};
+char *monumentTexts[16] = {
+    "this monument was made to\rhonor the zoombinis who:",
+    "this windmill was wrought\rto honor the zoombinis who:",
+    "this observatory observes\rthe zoombinis who:",
+    "this bowling alley\rhonors the zoombinis who:",
+    "this general store was\rerected for the zoombinis who:",
+    "this swimming pool\rsalutes the zoombinis who:",
+    "this playground was pitched\rto honor the zoombinis who:",
+    "this band shell was built to\rhonor the zoombinis who:",
+    "this schoolhouse salutes\rthe zoombinis who:",
+    "this library was raised to\rhonor the zoombinis who:",
+    "this firehouse honors\rthe zoombinis who:",
+    "this opera house sings\rpraises to the zoombinis who:",
+    "this city hall celebrates\rthe zoombinis who:",
+    "this clock tower was\rconstructed for the zoombinis who:",
+    "this paper clip museum was made\rfor the zoombinis who:",
+    "this courthouse was constructed\rfor the zoombinis who:",
+};
+char *featTexts[16] = {
+    "ambled past allergic cliffs,\rcruised on by\rstone cold caves,\rand\rappeased arno the\ralmost omnivorous",
+    "braved blustery bridges,\routsmarted onyx's\rstone faced crew,\rand\rwon over willomaen\rthe pizza eating troll",
+    "bested bridge watchers,\rcrept cautiously\rpast cave guards, \rand\rsatiated shyler the\rpizza loving troll",
+    "outsmarted sneezing cliffs, conquered crusty\rcave guards,\rand\rplacated picky pizza trolls\rwithout hearing\r\"Yuck!\"",
+    "calmed captain cajun,\rrode tattooed toads,\rand\rknew how to network",
+    "finagled the ferryboat,\rsuccessfully swapped\rlily pads,\rand\rconnected the current",
+    "finessed the ferryboat,\rcrept cautiously past\rlily pad crabs,\rand\rsurmounted\rstone elevators",
+    "calmed captain cajun,\rrode tattooed toads,\rand\rknew how to network",
+    "flushed the finicky fleens,\rin hotel dimensia had\rpleasant dreams\rand\rcatapulted cleanly\rover Mudball Wall",
+    "flustered the fleens,\rdidn't dally at\rhotel dimensia,\rand\rmastered the\rmudball making machine",
+    "sent the fleens flying,\rwrangled with\rransacked rooms,\rand\rvaulted the wall\rwith hardly a fall",
+    "finally foiled the fleens,\rresolved the hotel\rrooming scene,\rand\rmastered the\rmudball wall machine",
+    "did not lag in lion's lair,\rsolved the secrets of\rthe mirror machine,\rand\rflew above\rbubblewonder abyss",
+    "overcame their fear\rin lion's lair,\rhad things go fine\rin the mirror machine,\rand\rrode a wonderous\rbubble ship",
+    "deciphered the lion's logic,\rcorrectly calculated\rthe crystals,\rand\rascended the airy abyss",
+    "raised up high the lion's paw,\rlined up the right crystals\rthat they clearly saw,\rand\rmastered bubblewonder\rwithout\rfalling in its maw",
+};
+const char *toggleTexts[15] = {
+    "*", "music on", "music off", "sound on", "sound off", "less action", "more action",
+    "hide cursor", "show cursor", "sticky mouse", "non-sticky mouse", "transitions on",
+    "transitions off", "auto sticky on", "auto sticky off",
+};
+char introClickState = 0;
+short inIntroFrame = 0;
+SceneButton townButtons[1] = {{{600, 403, 639, 440}}};
+long townButtonResource = 0;
+ImageBank *townButtonImages = 0;
+short townSounds[5] = {0x4e79, 0x4e7a, 0x4e7b, 0x4e7c, 0x4e7d};
+unsigned long townSoundsUsed = 0;
+short townDialogView = -1;
+Point recordHotspotPoints[16] = {
+    {72, 70}, {118, 126}, {81, 118}, {77, 63}, {65, 227}, {144, 83}, {107, 81}, {144, 186},
+    {49, 97}, {57, 148}, {86, 46}, {67, 119}, {108, 80}, {76, 97}, {47, 181}, {119, 65},
+};
+unsigned char clockMinute = 0;
+unsigned char clockHour = 0;
+short inTownFrame = 0;
+char monumentScripts[16] = {2, 2, 4, 4, 2, 3, 3, 1, 4, 1, 1, 2, 4, 2, 3, 4};
+char nextCheatRecord = 0;
+short plaqueLines[6] = {0, 36, 196, 210, 230, 244};
+
+short introStep;
+unsigned long introStepDue;
+short introOpen;
+unsigned short logoFailed;
+short introSkip;
+char logoPath[258];
+long townFile;
+short townOpen;
+Camp *townSlots;
+short townsfolkAnchorView;
+short highestTownCel;
+ShortRect recordHotspots[16];
+short recordHotspotNumbers[16];
+short recordHotspotCount;
+short onRecordHotspot;
+short hotspotRecord;
+short hotspotScript;
+short cheatPlaque;
+unsigned long townSoundPause;
+unsigned long townSoundEnded;
+short townSound;
+short townSoundWasGreeting;
+short townSoundPlaying;
+short draggingInTown;
+short townFull;
+short walkerViews[16];
+short clockWinds;
+short clockShown;
+unsigned long lastClockRead;
+short townFidgetsLeft;
+short townPartySize;
+unsigned long lastTownFidgetTime;
+unsigned long townFidgetInterval;
+unsigned long townFidgetersUsed;
+short townsfolkGone;
+short townspeopleToAdd;
+unsigned char windStartMinute;
+unsigned char windStartHour;
+
 /* Opens scene 0. */
 /* @zoombi32 0x0045c12e */
 void openIntro()

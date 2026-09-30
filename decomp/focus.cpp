@@ -13,6 +13,28 @@
 #include "focus.h"
 #include "platform.h"
 
+GroupList *groupLists = 0;
+short keyboardMoved = 0;
+
+InputItem *highlightedItem;
+unsigned char inputFlagsHigh;
+short groupListCount;
+GroupList *currentList;
+Group *currentGroup;
+InputItem *currentItem;
+Cursor searchCursor;
+InputItem *enteredItem;
+short searchKind;
+Point *searchPoint;
+InputItem *searchItem;
+short searchColumn;
+short searchRow;
+short searchKey;
+unsigned short searchFlags;
+short inputMode;
+short hovering;
+void (*mouseHook)(Point *where);
+
 /* Installs the lists of groups to move the focus over, and numbers their
    items. */
 /* @zoombi32 0x004124a4 */

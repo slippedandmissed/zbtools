@@ -5,6 +5,9 @@
 #include "zoombinis.h"
 #include "random.h"
 
+unsigned long randomSeed = 0;
+short seedPending = 1;
+
 /* @zoombi32 0x00415514 */
 void seedRandom()
 {

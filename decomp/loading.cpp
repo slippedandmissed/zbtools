@@ -16,6 +16,25 @@
 
 #define MIDI RESOURCE_TYPE('t', 'M', 'I', 'D')
 
+char oneCharString[2] = {0};
+Callback fatalHook = 0;
+void (*errorReporter)(const char *prefix, const char *format, va_list args) = showError;
+
+const char *usualFatalMessage = 0;
+
+va_list formatArgs;
+short lockedCount;
+long lockedResources[10];
+char *lockedData[10];
+short (*isFormatCharacter)(char c);
+
+char *(*formatCharacter)(char c);
+
+char numberText[8];
+short debugMode;
+short debugging;
+short reportingError;
+
 /* @zoombi32 0x00414f30 */
 unsigned short loadMidi(short key)
 {

@@ -18,6 +18,53 @@
 #include "town.h"
 #include "view.h"
 
+short scrollPressed = 0;
+short bookHalfLine = 0;
+ResourceList *bookImages = 0;
+ResourceList *camp2Images = 0;
+SceneButton camp2Buttons[7] = {
+    {{599, 320, 638, 357}}, {{599, 396, 638, 433}}, {{599, 358, 638, 395}}, {{114, 121, 131, 208}},
+    {{131, 117, 144, 205}}, {{337, 107, 350, 195}}, {{350, 110, 361, 198}},
+};
+ShortRect bookArea = {112, 0, 377, 293};
+ShortRect campThingRects[10] = {
+    {52, 290, 136, 332}, {469, 169, 521, 241}, {499, 289, 566, 308}, {455, 301, 504, 319},
+    {568, 304, 604, 320}, {570, 36, 624, 66}, {229, 304, 273, 317}, {242, 324, 292, 336},
+    {253, 348, 305, 361}, {520, 259, 545, 300},
+};
+short inCamp2Frame = 0;
+ShortRect camp2ButtonsRect = {0};
+short cellX[11] = {143, 163, 183, 203, 223, 243, 263, 283, 303, 323, 343};
+short cellY[11][5] = {
+    {53, 100, 147, 194, 244}, {55, 102, 149, 196, 243}, {55, 101, 148, 196, 243},
+    {55, 102, 150, 196, 243}, {56, 103, 149, 196, 243}, {54, 102, 149, 196, 243},
+    {54, 100, 147, 195, 242}, {52, 99, 146, 193, 240}, {47, 97, 144, 191, 237},
+    {46, 93, 141, 187, 235}, {43, 90, 138, 184, 231},
+};
+ShortRect camp2EmptyRect = {0};
+
+short bookRow;
+short bookRows;
+short bookSlots;
+short bookCount;
+short bookHighest;
+short chosenCamp2Button;
+CampEntries *bookEntries;
+short bookView;
+short camp2HoverButton;
+long unusedCamp2Long;
+long camp2File;
+short enoughChosen;
+short camp2EnoughDrawn;
+short camp2Open;
+short camp2ClicksOff;
+short camp2Dragging;
+short view6002Next;
+short view6000Running;
+short view6000;
+short populationFull;
+Snoid bookSnoid;
+
 /* Resets scene 5's state. */
 /* @zoombi32 0x00418698 */
 void resetCamp2()

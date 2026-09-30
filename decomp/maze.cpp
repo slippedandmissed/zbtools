@@ -18,6 +18,186 @@
 #include "sound.h"
 #include "view.h"
 
+short hotSpotTableUsed = 0;
+short hotSpotTableKeys[4] = {0};
+short turnSoundToggle = 0;
+long mazeButtonResource = 0;
+Point startPlacePoints[14] = {
+    {101, 283}, {148, 282}, {188, 280}, {195, 275}, {203, 297}, {210, 316}, {95, 65}, {100, 81},
+    {104, 96}, {622, 271}, {576, 288}, {545, 287}, {543, 286}, {554, 308},
+};
+short startPlaceF2[14] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1};
+short startPlaceF1[14] = {0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 2, 2};
+short startPlaceDirections[14] = {0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 3, 3};
+short startPlaceIndex[14] = {0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 2, 2};
+short pieceHasSecond[14] = {0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1};
+short pieceLineKinds[14] = {0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2};
+short pieceScripts[14] = {
+    0x2328, 0x2328, 0x2328, 0x2329, 0x2329, 0x2329, 0x2329, 0x2329, 0x2329, 0x2328, 0x2328, 0x2328,
+    0x232b, 0x232b,
+};
+short lineSecondScripts[3] = {0x232d, 0x232e, 0x232f};
+Point piecePoints[14] = {
+    {91, 295}, {138, 294}, {178, 292}, {185, 287}, {193, 309}, {201, 328}, {85, 77}, {90, 93},
+    {94, 108}, {612, 283}, {576, 300}, {535, 299}, {533, 298}, {544, 320},
+};
+Point startPlaceSquares[14] = {
+    {0, 9}, {1, 9}, {2, 9}, {4, 10}, {4, 11}, {4, 12}, {3}, {3, 1}, {3, 2}, {12, 10}, {11, 10},
+    {10, 10}, {8, 11}, {8, 12},
+};
+short squareKindTable[18] = {
+    20, 20, 20, 20, 20, 21, 21, 21, 21, 22, 22, 22, 22, 23, 23, 23, 23, 23,
+};
+short squareKindCells[18][2] = {
+    {0, 10}, {1, 10}, {2, 10}, {2, 11}, {2, 12}, {0, 2}, {1, 2}, {1, 1}, {1}, {10, 12}, {10, 11},
+    {11, 11}, {12, 10}, {10}, {10, 1}, {10, 2}, {11, 2}, {12, 3},
+};
+Point mazeExitSpots[4][20] = {
+    {{287, 394}, {260, 426}, {224, 447}, {188, 441}, {157, 455}, {263, 384}, {219, 397}, {184, 388}, {155, 402}, {121, 417}, {226, 354}, {189, 349}, {156, 354}, {131, 375}, {85, 394}, {164, 311}, {125, 324}, {79, 352}, {29, 318}, {15, 285}},
+    {{4, 86}, {29, 70}, {50, 68}, {70, 68}, {94, 63}, {7, 102}, {30, 86}, {55, 79}, {72, 79}, {8, 116}, {33, 100}, {56, 93}, {73, 93}, {9, 131}, {34, 115}, {99, 108}, {74, 108}, {57, 108}, {97, 79}, {98, 93}},
+    {{633, 311}, {613, 311}, {590, 336}, {571, 340}, {551, 345}, {632, 297}, {612, 297}, {589, 321}, {570, 325}, {550, 330}, {629, 281}, {609, 281}, {588, 307}, {569, 311}, {549, 316}, {589, 291}, {566, 296}, {546, 300}, {634, 336}, {614, 336}},
+    {{621, 18}, {624, 40}, {624, 64}, {625, 84}, {594, 20}, {598, 40}, {593, 60}, {594, 75}, {594, 90}, {556, 32}, {560, 50}, {555, 72}, {563, 94}, {511, 42}, {515, 60}, {521, 80}, {529, 100}, {476, 67}, {484, 89}, {594, 104}},
+};
+unsigned long sortFlags1 = 0x8001;
+unsigned long sortFlags2 = 0x4008001;
+short unusedMaze5 = 0;
+short unusedMaze6 = 0;
+ShortRect startDragAreas[4] = {
+    {0, 250, 300, 479}, {0, 0, 200, 175}, {450, 230, 639, 400}, {400, 0, 639, 200},
+};
+short mazeButton2Lit = 0;
+short mazeButton1Drawn = 0;
+short inMazeFrame = 0;
+short lineOrder[11] = {0, 31, 52, 73, 94, 115, 136, 157, 178};
+short valueParts[21][2] = {
+    {0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5}, {1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5}, {2, 1},
+    {2, 2}, {2, 3}, {2, 4}, {2, 5}, {3, 1}, {3, 2}, {3, 3}, {3, 4}, {3, 5},
+};
+short featureOffsets[4] = {0, 5, 10, 15};
+short valueKinds[21] = {
+    0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4,
+};
+short largestLimitByRows[34] = {
+    0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0,
+    8,
+};
+short rowTotals[17] = {1, 1, 1, 1, 4, 4, 4, 7, 7, 7, 10, 10, 10, 13, 13, 13, 16};
+short mazeReady = 0;
+
+ImageBank *mazeImages;
+long mazeImagesResource;
+long partHotXResource;
+long partHotYResource;
+short *partHotX;
+short *partHotY;
+long unusedMazeResource;
+long loadedHotSpotTable;
+long mazeHotSpotsXResource;
+long mazeHotSpotsYResource;
+short *mazeHotSpotsX;
+short *mazeHotSpotsY;
+Point *squarePlaces;
+long hotSpotTableResource;
+short hotSpotTableHandle;
+short *squareOffsets;
+short mazeAnchorView2;
+short unusedMaze3;
+short mazeEvent10Seen;
+short mazeLevel;
+short featureRowCount;
+short partsSetUp;
+short unusedMaze2;
+short dragFromStart;
+short unusedDragFlag;
+short startPlace;
+short mazeAnchorView1;
+short pieceView1;
+short pieceView2;
+short mazeSnoidCount;
+long mazeFile;
+short mazeOpen;
+short mazeGoReady;
+short startPlaceGroups[19];
+short pieceViews7000[14];
+short lineSecondViews[3];
+short pieceViews[14];
+short pieceSecondViews[34];
+short lineAnchorViews[16];
+short unusedMazeTable2[3];
+short exitSpotNext1;
+short exitSpotNext2;
+short exitSpotNext3;
+short exitSpotNext4;
+short featureRows[40][4];
+short valueCounts[21];
+short emptyValues[21];
+short emptyValues2[21];
+short emptyValueList[21];
+short emptyValueList2[21];
+short unusedMazeTable[10];
+short sequenceLength;
+short unusedSequenceIndex;
+short sequenceIndex;
+short emptyValueCount;
+short anyEmptyValue;
+short emptyValueCount2;
+short anyEmptyValue2;
+short unusedMaze4;
+short takenRowCount;
+short squareOccupants[13][13][3];
+short squareViews[13][13];
+short squareKinds[13][13];
+short *snoidPartsTable;
+short takenRows[20][4];
+short takenRowsCopy[20][4];
+short mazeSnoidTotal;
+short unusedMaze7;
+short nextSnoidParts;
+short poseDoneList[20];
+short arrivedList[20];
+short helperDoneList[20];
+short partnerList[20];
+short finishedList[20];
+short meetingList[20];
+short placedQueue[20];
+short pose3List[20];
+short arrivedCount;
+short poseDoneCount;
+short helperDoneCount;
+short partnerCount;
+short finishedCount;
+short meetingCount;
+short placedQueueCount;
+short pose3Count;
+short unusedMaze8;
+short gate1CloseDue;
+short gate3CloseDue;
+short lineViews[175];
+short lineList1[25];
+short lineList2[25];
+short lineList3[25];
+short lineList4[25];
+short lineList5[25];
+short lineList6[25];
+short lineList7[25];
+short unusedMazeTable3[25];
+short lineViewCount;
+short lineCount1;
+short lineCount2;
+short lineCount3;
+short lineCount4;
+short lineCount5;
+short lineCount6;
+short lineCount7;
+short unusedMaze1;
+short lineValues[11];
+short poseReachedCount;
+unsigned long lastMazeFidgetTime;
+unsigned long mazeFidgetersUsed;
+short mazeFidgetsAllowed;
+short mazeFidgetsDone;
+short mazeFidgeting;
+
 /* @zoombi32 0x0043595f */
 void mazeNoDraw(View *)
 {

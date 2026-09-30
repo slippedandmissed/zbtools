@@ -21,6 +21,77 @@
 #include "sound.h"
 #include "view.h"
 
+short fillViews = 0;
+unsigned short showFps = 0;
+unsigned short soundTests = 0;
+short viewsPaused = 0;
+short viewsStep = 0;
+short viewsReady = 0;
+short removedRgn = 0;
+short currentViewRgn = 0;
+short featureClipRgn = 0;
+Terrain *terrain = 0;
+short viewsSorted = 1;
+ShortRect noRect = {0};
+long terrainResource = 0;
+basePort *viewPort = 0;
+View *views = 0;
+View *lastActorView = 0;
+short viewsBusy = 0;
+ShortRect viewTailBounds = {40, 0, 120, 20};
+ShortRect fpsRect = {0, 0, 110, 16};
+
+short viewsShown;
+short viewsLocked;
+long viewUnlocks;
+short placedViewCount;
+short placedViews[125];
+Point placedViewPoints[125];
+short placeClaims[125];
+short viewPlaceCount;
+Point viewPlaces[125];
+short viewPlaceOwners[125];
+long dragCursorResource;
+ImageBank *dragCursors;
+long dragHotXResource;
+long dragHotYResource;
+short *dragHotX;
+short *dragHotY;
+short dragWidth;
+short dragHeight;
+ShortRect dragRect;
+unsigned short *dragImage;
+Point dragWhere;
+char soundOn;
+char musicOn;
+char debugMessagesOn;
+unsigned long viewClockStart;
+unsigned long viewClockMark;
+View viewHead;
+unsigned short dragCursor;
+ResourceList *backdropImages;
+short scriptGroupFirst[8];
+short scriptGroupCount[8];
+short scriptGroups;
+short backdropView;
+SoundChannels viewSounds;
+SoundChannels viewSounds2;
+short groupLeader[17];
+char groupFlagsA[17];
+char groupFlagsB[17];
+unsigned long updateTime;
+long scriptResources[300];
+short *scripts[300];
+short soundRanges;
+short soundRangeLow[32];
+short soundRangeHigh[32];
+short soundRangeValue[32];
+char fpsText[22];
+unsigned long fpsTime;
+unsigned long fpsFrames;
+unsigned long fpsMin;
+unsigned long fpsMax;
+
 /* Sets up the views: the view port, the list's ends (the tail draws the
    drag cursor) and the regions. */
 /* @zoombi32 0x0046310c */

@@ -19,6 +19,56 @@
 #include "view.h"
 #include "xfer.h"
 
+short journeyRoute = 0;
+short inJourneyFrame = 0;
+short mapPlaces[4][5] = {
+    {0, 1, 2, 3, 4}, {4, 5, 6, 7, 11}, {4, 8, 9, 10, 16}, {11, 12, 13, 14, 15},
+};
+Point gridStarts[16] = {
+    {3, 105}, {130, 146}, {1, 2}, {6, 60}, {42, 194}, {1, 106}, {1, 1}, {1, 4}, {1, 1}, {1, 1},
+    {1, 53}, {102, 162}, {1, 12}, {57, 154}, {1, 1}, {2, 109},
+};
+
+long journeyFile;
+short journeyOpen;
+short shownPopulation;
+short placeLevelShown;
+long nextJourneyMoveTime;
+char placeLevels[17];
+short view5108;
+short views5104[4];
+short views5102[2];
+short pendingJourneyFacing;
+short journeyAnchorView;
+short snoidsPastAnchor;
+short view6108;
+short view5108Due;
+short journeyFirstMoveDone;
+short xferSound;
+short xferMap;
+short nextWalker;
+short journeyPartySize;
+short destinationPlace;
+short destinationLevel;
+short gridView;
+short view6106;
+short view6107;
+short populationSignView;
+short destinationImage;
+unsigned long gridProgress;
+unsigned long gridCellsTotal;
+unsigned long gridCellsLeft;
+unsigned long gridStride;
+unsigned long gridRows;
+unsigned long gridColumns;
+Point gridMarks[24];
+char gridMarkUsed[24];
+char *gridCells;
+char gridFree1;
+char gridTaken1;
+char gridFree2;
+char gridTaken2;
+
 /* Resets scene 2's state. */
 /* @zoombi32 0x004696f0 */
 void resetJourney()

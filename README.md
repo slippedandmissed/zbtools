@@ -12,7 +12,7 @@ Every function, global, source module and most struct fields now has a descripti
 
 The game's resources are in `assets/`, converted from its Mohawk archives to modern formats: 1,333 sounds as WAV, about 10,000 images as PNG, the music as MIDI, and its animation scripts, palettes and tables as TOML. `uv run assets pack` turns them back into archives identical, byte for byte, to the disc's.
 
-The code doesn't build into a working executable yet: the game's initialised data and the link are next (see the [roadmap](#roadmap)).
+The code doesn't build into a working executable yet. Nearly all of the game's globals are now defined with the original's initial values (`uv run define-data`, checked by `uv run match-data`); the rest, and the link, are next (see the [roadmap](#roadmap)).
 
 ## Setup
 
@@ -158,6 +158,8 @@ uv run match-data                 # every file's data
 uv run match-data decomp/view.cpp # one file's
 uv run match-data -q              # just the totals
 ```
+
+Globals are declared in the headers as they're found (`extern short primes[5]; /* @data 0x4a0800 */`); `uv run define-data` defines those no source defines yet, in the module whose code uses them in the original (or, where several modules or none do, the module of the globals around it), with the original's initial values as typed initialisers: numbers, text, pointers as the function, global or string they point to, structs and arrays in braces. Each goes among its module's other definitions in address order, so the compiled data follows the original's layout. It checks each type's size against BCC32's own `sizeof`, and leaves a global for a person, saying why, where it can't do it exactly: a declared type that runs into the next global, a pointer to data nothing names, a module it can't tell. `--dry-run` prints the definitions instead of writing them.
 
 Declarations are split so that cache stays useful: `decomp/zoombinis.h` has the types and what several modules share, and each game module's functions (and the globals and types only it uses) are declared in `decomp/<module>.h`, which its own source and its callers' include. Adding a declaration to a module's header then recompiles only the sources including it. `uv run includes` updates each source's module-header includes to what it uses (run it after adding a call into another module; give it files to update just those).
 

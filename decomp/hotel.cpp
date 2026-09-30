@@ -21,6 +21,119 @@
 #include "view.h"
 
 
+Point roomPlaces[25] = {
+    {135, 78}, {138, 142}, {142, 204}, {146, 263}, {149, 324}, {223, 84}, {222, 147}, {227, 210},
+    {228, 267}, {234, 328}, {315, 88}, {311, 152}, {313, 213}, {314, 272}, {314, 333}, {402, 94},
+    {398, 157}, {399, 220}, {397, 277}, {396, 338}, {491, 100}, {489, 164}, {489, 226}, {488, 284},
+    {485, 346},
+};
+Point roomPlaces3d[25] = {
+    {16, 40}, {39, 50}, {60, 54}, {86, 58}, {111, 60}, {19, 115}, {42, 125}, {63, 129}, {89, 133},
+    {114, 135}, {21, 188}, {44, 198}, {65, 202}, {91, 206}, {116, 208}, {24, 261}, {47, 271},
+    {68, 275}, {94, 279}, {119, 281}, {28, 333}, {51, 343}, {73, 347}, {99, 351}, {124, 353},
+};
+ShortRect hotelBlankRect1 = {138, 293, 345, 351};
+ShortRect hotelBlankRect2 = {386, 309, 516, 362};
+ShortRect hotelBlankRect3 = {120, 45, 526, 362};
+ShortRect hotelBlankRect4 = {11, 1, 638, 396};
+short roomColumnDx[5] = {0, 23, 46, 69, 94};
+short roomColumnDy[5] = {0, 7, 11, 14, 17};
+ImageBank *hotelButtonImages = 0;
+Point hotelPlaces[16] = {
+    {504, 458}, {467, 453}, {428, 453}, {384, 454}, {344, 451}, {297, 454}, {270, 441}, {244, 453},
+    {217, 448}, {188, 453}, {160, 449}, {130, 455}, {103, 446}, {74, 454}, {50, 445}, {17, 453},
+};
+short hotelButton2Lit = 0;
+short hotelButton1Drawn = 0;
+short inHotelFrame = 0;
+ShortRect viewIdBoxRect = {500, 1, 600, 27};
+
+short roomOccupancy[25];
+long hotelFile;
+short hotelOpen;
+short hotelGoReady;
+short hotelAnyFits;
+short roomColumnViews[125];
+short roomDoorViews[125];
+short hotelTalkerView;
+short roomAnchorView;
+short talkerStage;
+short talkerPending;
+short debugTalkerScript1;
+short debugTalkerScript2;
+short hotelLabelView;
+short view11800;
+short snoidRejected;
+short roomGroup;
+short heldRoomPlace;
+short roomAnimStage;
+short hotelLevel;
+short firstPlacementFree;
+short snoidArriving;
+short rowSortFeature;
+short columnSortFeature;
+short layerSortFeature;
+short roomsFilled;
+short hotelFails;
+short hotelPartySize;
+short arrivingSnoid;
+short hotelRoom;
+short roomCount;
+short guideRemarkGroup;
+short roundResetGroup;
+short talkerGroup;
+short talkerDoneGroup;
+short arrivingGroup;
+short guideView;
+short guideStepGroup;
+short guideStep;
+short guideLastStep;
+short savedGuideStep;
+short savedGuideLastStep;
+short hotelValueCounts[4];
+short roomViewScripts[20];
+short hotelWalker;
+short unusedHotel1;
+short talkerStarted;
+short skipGuide;
+short hotelFacing;
+unsigned long hotelIdleSince;
+long hotelButtonResource;
+long roomImagesResource;
+long hotelPlaceXResource;
+long hotelPlaceYResource;
+long roomViewXResource;
+long roomViewYResource;
+long roomColumnXResource;
+long roomColumnYResource;
+long layerRowXResource;
+long layerRowYResource;
+long roomViewHotXResource;
+long roomViewHotYResource;
+ImageBank *roomImages;
+ImageBank *roomImages3d;
+short *hotelPlaceX;
+short *hotelPlaceY;
+short *roomViewX;
+short *roomViewY;
+short *roomColumnX;
+short *roomColumnY;
+short *layerRowX;
+short *layerRowY;
+short *roomViewHotX;
+short *roomViewHotY;
+short roomRowValues[25];
+short roomLayerValues[25];
+short roomViews[25];
+short room9002Views[125];
+short room9007Views[125];
+short droppedSnoid;
+ChosenSnoids *hotelChosen;
+short standX;
+short standY;
+ShortRect standArea;
+PALETTEENTRY savedPalette[256];
+
 /* @zoombi32 0x00427e1a */
 void roomViewNotify(View *view, short event)
 {

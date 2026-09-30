@@ -11,6 +11,16 @@
 #include "os_fixed.h"
 #include "platform.h"
 
+short breakpointKey = 2;
+
+short breakpointKeyEnabled;
+short dispatchingEvents;
+short breakpointRequested;
+Event eventQueue[32];
+short eventHead;
+short eventTail;
+Fade *defaultFade;
+
 /* How many events are queued (eventHead is where reading starts, eventTail
    where writing does). */
 /* @zoombi32 0x00413dc0 */

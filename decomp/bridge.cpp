@@ -19,6 +19,63 @@
 #include "tunnels.h"
 #include "view.h"
 
+SceneButton bridgeButtons[2] = {{{600, 403, 639, 440}}, {{600, 441, 639, 478}}};
+long bridgeButtonResource = 0;
+Point upperPlaces[16] = {
+    {618, 45}, {582, 49}, {552, 36}, {524, 32}, {493, 25}, {464, 27}, {422, 36}, {618, 86},
+    {588, 81}, {556, 76}, {615, 129}, {580, 122}, {550, 116}, {522, 112}, {493, 106}, {530, 69},
+};
+Point lowerPlaces[16] = {
+    {610, 369}, {593, 340}, {579, 303}, {549, 290}, {522, 281}, {492, 271}, {621, 319}, {602, 283},
+    {573, 267}, {533, 248}, {622, 257}, {596, 242}, {561, 235}, {621, 197}, {594, 187}, {566, 178},
+};
+ShortRect upperWaitArea = {10, 50, 57, 105};
+ShortRect lowerWaitArea = {10, 165, 65, 212};
+ShortRect bridgeDragArea = {0, 0, 280, 480};
+short bridgeButton2Lit = 0;
+short bridgeButton1Drawn = 0;
+short inBridgeFrame = 0;
+
+long bridgeFile;
+short bridgeOpen;
+short bridgeGoReady;
+short upperCount;
+short lowerCount;
+short bridgeLevel;
+short upperViews[16];
+short lowerViews[16];
+unsigned long bridgeTimerStart;
+short bridgeDragStarted;
+short sentBackCount;
+short view1201;
+short view1202;
+short view1200;
+short view1105;
+short view1103;
+short cliffSpoke;
+short crosserPasses;
+short crossingUnderway;
+short crossingBridge;
+short crossersOut;
+short crossingGroup;
+short reactingView;
+short queueBridges[2];
+short queueViews[2];
+short queuePasses[2];
+short queuedCount;
+short crossingEvent;
+FeatureRules bridgeRules;
+ImageBank *bridgeButtonImages;
+short sentBackWalking;
+short debugBridgeScript;
+short debugBridgeEvent;
+short bridgeFidgetsAllowed;
+short bridgeFidgets;
+short bridgePartySize;
+unsigned long lastBridgeFidgetTime;
+unsigned long bridgeFidgetInterval;
+unsigned long bridgeFidgetersUsed;
+
 /* Starts the timer. */
 /* @zoombi32 0x0041a404 */
 void startBridgeTimer()

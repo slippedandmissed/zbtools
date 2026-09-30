@@ -28,6 +28,13 @@ basePort **screenPortRef = &screenPort;
 unsigned char animOpcodes[13] = {0, 1, 2, 3, 4, 5, 6, 7, 0x10, 0x14, 0x20, 0x60, 0x80};
 unsigned char animOperandSizes[13] = {0, 4, 2, 2, 2, 2, 1, 0, 2, 4, 4, 4, 4};
 
+short loadWholeCast;
+short keepFrameRate;
+ShortRect animArea;
+char *scriptText;
+long castInfo;
+short animDrawing;
+
 /* Frees an animation: its cast, background and script. */
 /* @zoombi32 0x0041008c */
 void freeAnim(Anim **anim)

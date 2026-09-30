@@ -17,6 +17,87 @@
 #include "sound.h"
 #include "view.h"
 
+short cajunGreetings[4] = {0x708, 0x709, 0x70a, 0x70b};
+unsigned long cajunGreetingsUsed = 0;
+short cajunIdleRemarks[5] = {0x71f, 0x720, 0x721, 0x722, 0x723};
+unsigned long cajunIdleRemarksUsed = 0;
+short goodPlacingRemarks[2] = {0x719, 0x71a};
+unsigned long goodPlacingRemarksUsed = 0;
+short badPlacingRemarks[11] = {
+    0x70c, 0x70d, 0x70e, 0x70f, 0x710, 0x711, 0x712, 0x713, 0x714, 0x715, 0x716,
+};
+unsigned long badPlacingRemarksUsed = 0;
+short returnSounds[5] = {0x724, 0x725, 0x726, 0x727, 0x728};
+unsigned long returnSoundsUsed = 0;
+short movedRemarks[3] = {0x71c, 0x71d, 0x71e};
+unsigned long movedRemarksUsed = 0;
+short placeViewScripts[10] = {
+    0x6a5, 0x6a4, 0x6a4, 0x6a6, 0x6a6, 0x6a7, 0x6a7, 0x6a4, 0x6a6, 0x6a7,
+};
+short returnScripts[10] = {
+    0x76e, 0x76c, 0x76c, 0x770, 0x770, 0x772, 0x772, 0x76c, 0x770, 0x772,
+};
+short returnNextScripts[10] = {
+    0x76f, 0x76d, 0x771, 0x76d, 0x771, 0x76d, 0x771, 0x773, 0x773, 0x773,
+};
+ImageBank *ferryButtonImages = 0;
+SceneButton ferryButtons[2] = {{{600, 403, 639, 440}}, {{600, 441, 639, 478}}};
+long ferryButtonResource = 0;
+Point ferryPlaces[20] = {
+    {370, 160}, {395, 196}, {332, 156}, {348, 196}, {294, 168}, {316, 196}, {253, 166}, {276, 196},
+    {214, 157}, {237, 196}, {175, 160}, {196, 190}, {135, 152}, {150, 191}, {94, 145}, {110, 186},
+    {57, 146}, {71, 182}, {25, 145}, {27, 183},
+};
+short ferryButton2Lit = 0;
+short ferryButton1Drawn = 0;
+short inFerryFrame = 0;
+
+unsigned long nextIdleRemarkTime;
+short forcedFerryCount;
+short ferryLevel;
+Point returnPlace;
+short returnUnderway;
+Point returnTarget;
+Point *returnAnchor;
+Point returnLanding;
+short cajunRemarkDue;
+short returnDue;
+short ferryHelpersDue;
+short cajunLeavingGroup;
+long ferryFile;
+short ferryOpen;
+short ferryHasPassengers;
+short cajunGreeted;
+short view1601;
+short cajunView;
+short view1602;
+short view1603;
+short view1704;
+short view1705;
+short view1706;
+short returnPlaceView;
+short movingPlaceView;
+short lastSceneryView;
+short ferryPlaceViews[20];
+short returnRoute;
+short nextReturner;
+short returner;
+short ferryLeaving;
+char (*ferryLinks)[8];
+
+short ferryVisits;
+unsigned long returnRoutesUsed;
+short sharedFeatureBits;
+short sharedFeatureView;
+short goodPlacings;
+short badPlacings;
+short nextPraiseAt;
+short ferrySnoidCount;
+short praisedOnce;
+short cajunRemarkGroup;
+short debugCajunScript;
+short cajunScript;
+
 /* Draws button `which` (1 or 2; 2 is dim unless ferryHasPassengers), lit or not,
    and shows it if asked. */
 /* @zoombi32 0x0041fdee */

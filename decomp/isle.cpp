@@ -18,6 +18,48 @@
 #include "town.h"
 #include "view.h"
 
+SceneButton isleSceneButtons[8] = {
+    {{159, 436, 198, 478}}, {{205, 304, 260, 342}}, {{205, 347, 273, 420}}, {{201, 419, 287, 437}},
+    {{205, 440, 260, 478}}, {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+};
+Point isleQueuePlaces[16] = {
+    {542, 446}, {505, 447}, {466, 451}, {425, 448}, {380, 450}, {342, 451}, {522, 402}, {488, 408},
+    {444, 416}, {403, 413}, {364, 413}, {498, 360}, {463, 367}, {426, 370}, {389, 373}, {352, 374},
+};
+Point isleEntry = {172, 226};
+Point isleExit = {0};
+short isleBusy = 0;
+ShortRect isleButtonsRect = {0};
+ShortRect featureButtonsRect = {0};
+char isleImageHotX[22] = {
+    0, 22, 25, 28, 19, 10, 29, 15, 7, 17, 24, 24, 7, 7, 7, 7, 7, 23, 24, 13, 15, 23,
+};
+char isleImageHotY[22] = {
+    0, 23, 30, 29, 27, 31, 30, 11, 11, 11, 9, 6, -2, -2, -2, -2, -2, -22, -22, -20, -21, -23,
+};
+short isleEnoughDrawn = 0;
+short isleMakeAllowedDrawn = 0;
+
+char madeName[11];
+long isleFile;
+long featureButtonResource;
+long isleImagesResource;
+long isleButtonResource;
+ImageBank *featureButtonImages;
+ImageBank *isleImages;
+ImageBank *isleButtonImages;
+short isleOpen;
+short isleCheatButtonLit;
+short enoughToLeaveChosen;
+short zoombiniMakeAllowed;
+short isleButton22Due;
+short enoughToLeave;
+short settingView1;
+short settingView2;
+short view4100;
+short isleRemark;
+short isleSendingOff;
+
 /* Resets the Zoombini being made (snoidBeingMade): no features, a new name. */
 /* @zoombi32 0x0043e620 */
 void resetZoombiniMade()

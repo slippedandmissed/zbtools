@@ -20,6 +20,103 @@
 #include "tunnels.h"
 #include "view.h"
 
+short speaker0BackLines[10] = {
+    0xfa0, 0xfa1, 0xfa2, 0xfa3, 0xfa4, 0xfa5, 0xfa6, 0xfa7, 0xfa8, 0xfa9,
+};
+unsigned long speaker0BackLinesUsed = 0;
+short speaker0Replies[11] = {
+    0xfaa, 0xfab, 0xfac, 0xfad, 0xfae, 0xfaf, 0xfb0, 0xfb1, 0xfb2, 0xfb3, 0xfb4,
+};
+unsigned long speaker0RepliesUsed = 0;
+short speaker2BackLines[8] = {
+    0x1068, 0x1069, 0x106a, 0x106b, 0x106c, 0x106d, 0x106e, 0x106f,
+};
+unsigned long speaker2BackLinesUsed = 0;
+short doors34Lines[8] = {
+    0x1070, 0x1071, 0x1072, 0x1073, 0x1074, 0x1075, 0x1076, 0x1077,
+};
+unsigned long doors34LinesUsed = 0;
+short speaker3BackLines[7] = {0x1134, 0x1133, 0x113d, 0x113e, 0x113f, 0x1140, 0x1130};
+unsigned long speaker3BackLinesUsed = 0;
+short speaker3Replies[6] = {0x1141, 0x1135, 0x1136, 0x1137, 0x1131, 0x1142};
+unsigned long speaker3RepliesUsed = 0;
+short speaker1BackLines[4] = {0x11f8, 0x11f9, 0x11fa, 0x11fb};
+unsigned long speaker1BackLinesUsed = 0;
+short doors16Lines[6] = {0x11fc, 0x11fd, 0x11fe, 0x11ff, 0x1200, 0x1201};
+unsigned long doors16LinesUsed = 0;
+SceneButton tunnelsButtons[2] = {{{600, 403, 639, 440}}, {{600, 441, 639, 478}}};
+long tunnelsButtonResource = 0;
+ImageBank *tunnelsButtonImages = 0;
+short doorSpeakers[8] = {0, 1, 0, 2, 2, 3, 1, 3};
+Point tunnelPlaces[16] = {
+    {399, 402}, {367, 398}, {337, 397}, {306, 400}, {274, 400}, {240, 403}, {381, 424}, {351, 424},
+    {322, 428}, {292, 422}, {261, 426}, {371, 458}, {342, 459}, {310, 457}, {277, 457}, {245, 459},
+};
+Point door1Places[16] = {
+    {277, 62}, {264, 63}, {247, 64}, {230, 66}, {274, 84}, {255, 86}, {236, 90}, {214, 92},
+    {273, 102}, {255, 104}, {235, 108}, {215, 112}, {258, 120}, {239, 128}, {220, 130}, {200, 133},
+};
+Point door4Places[16] = {
+    {403, 60}, {381, 61}, {362, 64}, {346, 69}, {412, 80}, {392, 84}, {372, 87}, {353, 93},
+    {414, 98}, {401, 103}, {382, 107}, {363, 110}, {415, 118}, {403, 121}, {387, 123}, {370, 127},
+};
+Point door2Places[16] = {
+    {288, 213}, {273, 219}, {257, 223}, {238, 226}, {222, 230}, {283, 235}, {268, 239}, {252, 245},
+    {237, 248}, {221, 252}, {287, 257}, {270, 260}, {253, 262}, {240, 265}, {220, 270}, {259, 280},
+};
+Point door3Places[16] = {
+    {414, 217}, {389, 223}, {373, 228}, {357, 233}, {415, 238}, {399, 247}, {382, 249}, {362, 255},
+    {419, 259}, {400, 263}, {381, 267}, {363, 276}, {420, 271}, {401, 278}, {387, 283}, {371, 268},
+};
+short inTunnelsFrame = 0;
+Point backScriptAnchors[4] = {{145, 455}, {210, 434}, {430, 434}, {476, 455}};
+
+FeatureRules tunnelRules;
+short door1Views[16];
+short door4Views[16];
+short door2Views[16];
+short door3Views[16];
+long tunnelsFile;
+short tunnelsOpen;
+short tunnelsGoReady;
+short closedDoorPair;
+short tunnelsLevel;
+short turnBacksLeft;
+short view7000;
+short tunnelsSpeakers[4];
+short tunnelsButtonsView;
+short sentThroughDoors;
+short closingRemarkDone;
+short entryUnderway;
+short followingSpeaker;
+short followingLine;
+short followingDropsEntry;
+short tunnelsButton2Lit;
+short tunnelsButton1Drawn;
+unsigned long nextTunnelRemarkTime;
+short pendingFacing;
+short doorPassesInARow[4];
+short closingStep;
+TunnelList tunnelQueue;
+short wPressed;
+short door1Count;
+short door4Count;
+short door2Count;
+short door3Count;
+short speaker0BackCount;
+short speaker3BackCount;
+short doorAnchorView;
+short warningPlaying;
+short warningSound;
+short warningView;
+short tunnelsPartySize;
+short pendingTunnelSound;
+short fidgetsAllowed;
+short fidgetsDone;
+long lastFidgetTime;
+long fidgetInterval;
+unsigned long fidgetersUsed;
+
 /* Resets scene 8's state (the rules, the entries, the counts; the pace
    fidgetInterval by fidgetPaceFlag) and picks closedDoorPair at random. */
 /* @zoombi32 0x0045e2d8 */

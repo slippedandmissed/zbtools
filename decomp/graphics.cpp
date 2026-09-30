@@ -13,6 +13,26 @@
 #include "loading.h"
 #include "platform.h"
 
+basePort *screenPort;
+ShortRect gameRect;
+ShortRect screenRect;
+ShortRect shownGameRect;
+basePort *workPort;
+short staticColorsSetting;
+DisplayMode displayMode;
+DisplayMode savedDisplayMode;
+PALETTEENTRY loadedPalette[256];
+PALETTEENTRY targetPalette[256];
+Palette *palette;
+short bitsPerPixel;
+PALETTEENTRY colors[256];
+PALETTEENTRY *paletteEntries;
+char *backPortErrorName;
+char *backPortErrorText;
+char *mapSaveErrorText;
+char *saveRectErrorText;
+short displayPalettized;
+
 /*
  * Sets up graphics in a display mode: the engine, the main window, the
  * palette (all reserved entries) and the work port the game draws into.

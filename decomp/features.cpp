@@ -21,6 +21,87 @@
 #include "sound.h"
 #include "view.h"
 
+short busyCount = 0;
+short loadCancelAlt = 1;
+short currentDialogSound = 0;
+ShortRect saveField = {192, 298, 456, 316};
+SavedGameList *savedGameList = 0;
+MapSave *saveFieldSave = 0;
+ShortRect creditsLineRect = {190, 451, 450, 466};
+ShortRect creditsScrollFrom = {190, 16, 450, 467};
+ShortRect creditsScrollTo = {190, 15, 450, 466};
+ShortRect creditsClip = {190, 15, 450, 466};
+ShortRect optionsTitleRect = {250, 58, 380, 80};
+ShortRect loadTitleRect = {250, 67, 408, 95};
+ShortRect saveTitleRect = {250, 57, 408, 85};
+ShortRect saveAsRect = {187, 271, 380, 290};
+ShortRect togglesRect = {166, 190, 465, 210};
+ShortRect messageTitleRect = {154, 145, 487, 220};
+ShortRect onRect = {197, 320, 260, 345};
+ShortRect offRect = {197, 345, 260, 365};
+ShortRect menuItemRect = {196, 0, 470, 1};
+short menuItemTops[8] = {102, 124, 145, 166, 221, 243, 264, 285};
+
+short quitRequested;
+short newGameAsked;
+short savedGames;
+short nextSaveId;
+long groupBankResources[8];
+ImageBank *groupBanks[8];
+long groupHotXResources[8];
+long groupHotYResources[8];
+short *groupHotX[8];
+short *groupHotY[8];
+short firstGameShown;
+short selectedGame;
+long lastGameClickTime;
+short dialogStage;
+short hintSound;
+long creditsImagesResource;
+long creditsBackdropResource;
+ImageBank *creditsImages;
+short *creditsBackdrop;
+short creditsShowing;
+short creditHeading;
+short dialogFlags;
+short dialogClosing;
+short dialogQuestion;
+const char *dialogText;
+const char *dialogButton2Text;
+const char *dialogButton1Text;
+char confirmText[256];
+long dialogResource;
+ImageBank *dialogImages;
+long dialogScriptResources[11];
+short *dialogScripts[11];
+Point dialogWhere;
+short dialogPressed;
+short dialogView;
+short dialogButton1;
+short dialogButton2;
+short creditsView;
+short gamesDialogView;
+short gamesDialogPart2;
+short gamesDialogButtons;
+short confirmDialogView;
+short confirmDialogButtons;
+char saveName[22];
+unsigned short saveNameLength;
+short caretBlink;
+ShortRect dialogOkRect;
+ShortRect dialogCancelRect;
+ShortRect dialogButton2Rect;
+ShortRect dialogButton1Rect;
+ShortRect dialogFrame;
+char buttonPressed[17];
+long lastCaretBlink;
+short askingReplace;
+short tooManyGames;
+short pendingDialogPress;
+short creditTick;
+short creditLine;
+short thirdButtonPresses;
+
 /* Loads group `group`'s image bank (id `id`), and with `hotspots` its
    images' hotspots (ids `id` and `id` + 1). */
 /* @zoombi32 0x00465bd0 */

@@ -13,6 +13,18 @@
 #include "platform.h"
 #include "sound.h"
 
+short soundLevel = 0;
+long streamedSoundArg = 0x3e8;
+unsigned long largestLoadedSound = 0x2ba0;
+SoundEntry *soundEntries = 0;
+short channelCounts[2] = {1, 1};
+char currentChannel[2] = {-1, -1};
+SoundChannel soundChannels[2][4] = {
+    {{0xffff}, {0xffff}, {0xffff}, {0xffff}}, {{0xffff}, {0xffff}, {0xffff}, {0xffff}},
+};
+long soundTypes[2] = {
+    RESOURCE_TYPE('t', 'W', 'A', 'V'), RESOURCE_TYPE('t', 'M', 'I', 'D'),
+};
 /* The module's messages (named, not literals: the original addresses each
    directly). */
 char msgUnableToCreate[] = "unable to create";
@@ -28,6 +40,14 @@ char formatJoin[] = "%s%s";
 char formatErrorNumber[] = ":error #%d";
 char formatSoundId[] = "%s id #%u";
 char msgDeviceFailed[] = " sound device or driver has failed to respond.";
+
+short checkSoundLoaded;
+short quietSoundErrors;
+short reportMissingSounds;
+char *soundErrorText;
+char *soundErrorKindText;
+char *soundErrorNameText;
+short soundErrorsIgnored;
 
 /* Loads the sound with a key (of a type): the key if it's loaded, else -1. */
 /* @zoombi32 0x00411350 */

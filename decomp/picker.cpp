@@ -19,6 +19,79 @@
 #include "sound.h"
 #include "view.h"
 
+ShortRect mapBoxRect = {23, 23, 197, 127};
+ShortRect levelListRect = {459, 373, 617, 457};
+char savedUserFile[36] = {0};
+ShortRect levelLines[4] = {
+    {464, 395, 612, 409}, {464, 409, 612, 424}, {464, 424, 612, 438}, {464, 438, 612, 454},
+};
+short inMapFrame = 0;
+short inCatchFrame = 0;
+ShortRect catchMissAreas[3] = {
+    {529, 125, 639, 197}, {227, 155, 356, 205}, {415, 425, 639, 479},
+};
+short inTargetsFrame = 0;
+char *placeNames[16] = {
+    "zoombini isle", "allergic cliffs", "stone cold caves", "pizza pass", "shelter rock",
+    "captain cajun's ferryboat", "titanic tattooed toads", "stone rise", "fleens!",
+    "hotel dimensia", "mudball wall", "shade tree", "the lion's lair", "mirror machine",
+    " bubblewonder abyss", "zoombiniville",
+};
+char *mapTexts[21] = {
+    "zoombini isle", "shelter rock", "shade tree", "zoombiniville", "practice mode",
+    "to return to game:", "go to zoombini isle", " ", " ", "to return to game:",
+    "go to zoombini isle", "or shelter rock", " ", "to return to game:", "go to zoombini isle,",
+    "shelter rock or", "shade tree", "to return to game:", "go to zoombini isle,",
+    "either camp site", "or zoombiniville",
+};
+
+PickerData pickerData;
+long pickerFile;
+short pickerOpen;
+short askingTransition;
+basePort **mapBoxBackdrop;
+basePort **levelListBackdrop;
+short switchedToTemp;
+short rosterChanged;
+short mapBoxView;
+short namedHotspot;
+short levelListView;
+short openHotspotsView;
+short hotspotLevelsView;
+short placeNameView;
+short helpButtonView;
+ShortRect helpButtonRect;
+char openHotspots[17];
+short pickedHotspot;
+short practicePartySize;
+short catchCrossers[3];
+unsigned long nextCatchSendTime;
+short splitX;
+short splitY;
+short splitDirection;
+short targetScore;
+short nextHundred;
+short shipsLeft;
+short scoreView;
+short gameOverView;
+short shipView;
+short shipDirection;
+short shipBurstFrame;
+short shipX;
+short shipY;
+short shipDx;
+short shipDy;
+short firstShotStopped;
+short shotsStarted;
+short targetHit;
+short targetBursting;
+ShortRect *targetBounds[6];
+short targetViews[6];
+short savedIdleDelay;
+short targetsOut;
+unsigned short bigTargetOut;
+unsigned short bigTargetView;
+
 /* Opens scene 1, the map: its sounds, backdrop and saved areas, the
    map's views (their placed callbacks), and loads sounds 998-999 from
    the sounds' map. */

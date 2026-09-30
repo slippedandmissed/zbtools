@@ -26,12 +26,56 @@
 
 Wipe wipe;
 Blinds blinds;
+short campRow;
+short campRows;
+short campShown;
+short campCount;
+short campLast;
+short pressedCampButton;
+Camp *camp;
+short campView;
+short campScrolling;
+long campScrollWay;
+long campMap;
+short campEnoughChosen;
+short campEnoughDrawn;
+short campActive;
+short campClicksOff;
+short campDragging;
+short campPopulationFull;
+short camp1ThingViews[5];
+Snoid draggedSnoid;
 long cheatCode;
 long cheatHash = -1;
 long shapeListKind = RESOURCE_TYPE('S', 'H', 'P', 'L');
 long soundListKind = RESOURCE_TYPE('S', 'N', 'D', 'L');
 long noPreloadKind;
 short primes[5] = {2, 3, 5, 7, 11};
+short campScrollAsked = 0;
+short campHalfRow = 0;
+SceneButton campButtons[7] = {
+    {{599, 310, 638, 347}}, {{599, 386, 638, 423}}, {{599, 348, 638, 385}}, {{19, 78, 35, 205}},
+    {{35, 78, 52, 205}}, {{257, 78, 273, 205}}, {{273, 78, 290, 205}},
+};
+ShortRect campArea = {55, 19, 255, 252};
+long campButtonsResource = 0;
+long campFrameResource = 0;
+ImageBank *campButtonImages = 0;
+ImageBank *campFrameImages = 0;
+short campX[10] = {55, 75, 95, 115, 135, 155, 175, 195, 215, 235};
+short campY[10][5] = {
+    {37, 84, 131, 178, 225}, {39, 86, 133, 180, 227}, {39, 86, 133, 180, 227},
+    {40, 87, 134, 181, 228}, {40, 87, 134, 181, 228}, {39, 86, 133, 180, 227},
+    {38, 85, 132, 179, 226}, {36, 83, 130, 177, 224}, {34, 81, 128, 175, 222},
+    {31, 78, 125, 172, 219},
+};
+ShortRect camp1ThingRects[5] = {
+    {527, 90, 562, 113}, {550, 119, 588, 128}, {589, 112, 639, 162}, {324, 287, 391, 323},
+    {25, 432, 122, 477},
+};
+short campBusy = 0;
+ShortRect campButtonsBounds = {0};
+ShortRect campArrival = {0};
 short preloaded;
 short preloadedCount;
 

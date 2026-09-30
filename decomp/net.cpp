@@ -17,6 +17,189 @@
 #include "sound.h"
 #include "view.h"
 
+short bridgeSounds[9] = {924, 933, 904, 905, 906, 942, 943, 944, 902};
+unsigned long bridgeSoundsUsed = 0;
+short tunnelsSounds[9] = {911, 914, 915, 942, 943, 944, 904, 933, 934};
+unsigned long tunnelsSoundsUsed = 0;
+short pizzaSounds[12] = {940, 941, 943, 921, 917, 918, 919, 920, 905, 911, 912, 916};
+unsigned long pizzaSoundsUsed = 0;
+short campSounds[15] = {
+    924, 933, 904, 905, 906, 925, 926, 927, 928, 929, 917, 918, 919, 920, 936,
+};
+unsigned long campSoundsUsed = 0;
+short ferrySounds[19] = {
+    924, 933, 904, 905, 906, 937, 938, 939, 902, 903, 925, 926, 927, 928, 929, 917, 918, 919, 920,
+};
+unsigned long ferrySoundsUsed = 0;
+short lillySounds[20] = {
+    930, 931, 932, 937, 938, 939, 925, 926, 927, 928, 929, 917, 918, 919, 920, 904, 905, 906, 924,
+    933,
+};
+unsigned long lillySoundsUsed = 0;
+short stoneRiseSounds[13] = {
+    911, 912, 913, 914, 921, 936, 904, 905, 906, 917, 918, 919, 920,
+};
+unsigned long stoneRiseSoundsUsed = 0;
+short camp2Sounds[10] = {924, 904, 905, 906, 933, 936, 917, 918, 919, 920};
+unsigned long camp2SoundsUsed = 0;
+short fleensSounds[13] = {
+    911, 912, 913, 914, 921, 936, 904, 905, 906, 917, 918, 919, 920,
+};
+unsigned long fleensSoundsUsed = 0;
+short netSounds[17] = {
+    924, 933, 904, 905, 906, 931, 932, 938, 925, 926, 927, 928, 929, 917, 918, 919, 920,
+};
+unsigned long netSoundsUsed = 0;
+unsigned long cavesSoundsUsed = 0;
+short mazeSounds[10] = {922, 923, 935, 907, 908, 909, 900, 901, 934, 910};
+unsigned long mazeSoundsUsed = 0;
+short smokeSounds[10] = {922, 923, 935, 907, 908, 909, 900, 901, 934, 910};
+unsigned long smokeSoundsUsed = 0;
+short remarkAfterCross = 0;
+Point markerPlaces[25] = {
+    {102, 117}, {204, 106}, {306, 94}, {409, 79}, {507, 69}, {102, 157}, {204, 143}, {306, 129},
+    {407, 115}, {507, 104}, {102, 195}, {204, 180}, {306, 166}, {407, 151}, {507, 140}, {102, 232},
+    {204, 217}, {306, 205}, {407, 191}, {507, 178}, {102, 272}, {204, 257}, {306, 245}, {407, 229},
+    {507, 214},
+};
+Point markerPlaces3d[125] = {
+    {74, 121}, {94, 119}, {114, 116}, {135, 113}, {156, 111}, {177, 109}, {197, 107}, {217, 104},
+    {237, 102}, {257, 99}, {278, 98}, {298, 95}, {319, 93}, {340, 89}, {360, 87}, {380, 84},
+    {398, 82}, {418, 79}, {438, 77}, {458, 74}, {481, 72}, {499, 70}, {519, 67}, {538, 65},
+    {559, 63}, {74, 160}, {93, 158}, {113, 155}, {133, 152}, {154, 149}, {177, 147}, {197, 145},
+    {217, 143}, {237, 140}, {257, 139}, {279, 135}, {299, 132}, {319, 130}, {341, 127}, {362, 124},
+    {382, 121}, {400, 118}, {420, 115}, {439, 112}, {459, 110}, {480, 109}, {499, 107}, {518, 105},
+    {538, 103}, {558, 101}, {72, 200}, {93, 198}, {113, 195}, {134, 192}, {156, 190}, {177, 188},
+    {197, 185}, {216, 181}, {236, 178}, {256, 176}, {279, 173}, {299, 170}, {319, 168}, {338, 164},
+    {358, 162}, {380, 158}, {399, 156}, {419, 153}, {438, 150}, {458, 148}, {479, 147}, {500, 144},
+    {519, 141}, {538, 138}, {557, 136}, {74, 239}, {94, 236}, {114, 233}, {135, 230}, {156, 227},
+    {178, 224}, {198, 221}, {219, 218}, {238, 216}, {256, 214}, {278, 212}, {298, 209}, {319, 206},
+    {338, 203}, {359, 200}, {380, 196}, {399, 194}, {419, 191}, {438, 189}, {459, 186}, {479, 184},
+    {499, 181}, {518, 178}, {538, 177}, {556, 175}, {75, 278}, {95, 276}, {115, 273}, {135, 269},
+    {156, 267}, {177, 263}, {197, 261}, {217, 258}, {237, 255}, {257, 253}, {280, 250}, {300, 248},
+    {319, 245}, {339, 241}, {359, 238}, {380, 235}, {400, 232}, {419, 229}, {439, 226}, {457, 223},
+    {480, 219}, {499, 216}, {519, 214}, {538, 211}, {556, 209},
+};
+GroupList netGroupList[1] = {{(Group *)&acrossSpots[19], 1, 0, netClicked}};
+long netButtonResource = 0;
+short markerColumnKind = 0;
+ImageBank *netButtonImages = 0;
+short netButton2Lit = 0;
+short netButton1Drawn = 0;
+short inNetFrame = 0;
+
+unsigned long ambientSoundTime;
+short ambientSound;
+unsigned short transitionsOn;
+short puzzleLeft;
+short currentScene;
+short pendingScene;
+short sceneDue;
+short journeyTo;
+short journeyFrom;
+short ambientSoundCount;
+short sentIndex;
+View *netFidgeter;
+ChosenSnoids *netChosen;
+short netPartySize;
+short nextToSend;
+short movingSnoid;
+short snoidsFound;
+short netGroupCount;
+short codeColumns[125];
+short codeRows[125];
+short codeLayers[125];
+short codeRowsCopy[5];
+short codeOrder1;
+short codeOrder2;
+short codeOrder3;
+short markerDx;
+short markerDy;
+short currentNetPlace;
+short unusedNet8;
+short markerPlace;
+short emptyNetPlaces;
+short netFacing;
+short codesLocked;
+short allAcross;
+short acrossCount;
+short placeGroups[125];
+long netFile;
+short netOpen;
+short netGoAllowed;
+short netLevel;
+short unusedNet4;
+short waitingOnNet[3];
+short netMarkerView;
+short stepView;
+short standingViews[5];
+short netGuideView;
+short placeGroupViews[125];
+short revealView;
+short unusedNet3;
+short markerCount;
+short markerViews[25];
+short promptView;
+short code1View;
+short code2View;
+short code3View;
+short revealing;
+short revealStep;
+short revealSteps;
+short revealScript;
+short revealStepsAtOpen;
+short codesDue;
+short lastAcross;
+short crossingStarted;
+short codesShown;
+short firstPrompt;
+short markerStep1Group;
+short markerStep2Group;
+short guideGroup;
+short markerStep3Group;
+short markerStep4Group;
+short markerStep5Group;
+short unusedNet1;
+short unusedNet2;
+short revealGroup;
+short netTriesOver;
+short codeEntryCount;
+short sentCount;
+short unusedNet5;
+short unusedNet6;
+short unusedNet7;
+short netPlaces[3];
+short chosenCode1;
+short previousCode1;
+short chosenCode2;
+short previousCode2;
+short chosenCode3;
+short previousCode3;
+short sendAllowed;
+short promptHeld2;
+short markerMissed;
+short markerMoved;
+short markerX;
+short markerY;
+short markerStep;
+short crossDue;
+short groupToCross;
+short sendsLeft;
+short standingGroup;
+short stepGroup;
+short sendUnderway;
+short markerGroup;
+short promptHeld;
+short codeOrderHigh;
+unsigned long lastNetFidgetTime;
+unsigned long lastPromptTime;
+unsigned long netFidgetersUsed;
+short netFidgetsAllowed;
+short netFidgets;
+short netFidgetsOn;
+short lastCrossed;
+short netFrameEntered;
+
 /*
  * Lays out a maze Zoombini's cels (unless it's in state 1; 3 and others
  * become 1), by its move (word 30), placed by the hot spots in

@@ -59,6 +59,203 @@ struct LillyActor
     short grid[12][13]; /* +0xf2 */
 };
 
+short lillyLevel = 1;
+short squareSetC[5] = {0, 1, 2, 3, 4};
+short attributeImageIndex[4] = {0, 0, 3, 7};
+short boardView = 0;
+long lillyImagesResource = 0;
+long unusedLillyResource = 0;
+long lillyButtonResource = 0;
+Point padPlaces[42] = {
+    {101, 27}, {100, 42}, {95, 55}, {88, 69}, {78, 80}, {88, 24}, {85, 39}, {80, 54}, {72, 67},
+    {62, 81}, {74, 25}, {70, 40}, {64, 53}, {56, 67}, {46, 79}, {59, 25}, {55, 39}, {49, 53},
+    {41, 65}, {44, 31}, {44, 31}, {629, 348}, {628, 363}, {623, 376}, {616, 389}, {606, 400},
+    {616, 345}, {613, 360}, {609, 374}, {601, 385}, {592, 401}, {604, 343}, {601, 358}, {595, 370},
+    {587, 385}, {578, 399}, {589, 346}, {584, 359}, {580, 371}, {570, 384}, {574, 349}, {574, 349},
+};
+Point jumpPlaces[13] = {
+    {66, 118}, {60, 147}, {46, 177}, {58, 205}, {44, 232}, {52, 262}, {39, 289}, {18, 313},
+    {47, 327}, {17, 345}, {43, 363}, {53, 393},
+};
+ShortRect rowEntryRects[12] = {
+    {134, 65, 168, 93}, {131, 94, 165, 122}, {129, 122, 163, 150}, {127, 152, 161, 180},
+    {124, 181, 158, 209}, {117, 210, 151, 238}, {113, 239, 147, 267}, {109, 268, 143, 296},
+    {100, 297, 134, 331}, {93, 326, 127, 354}, {91, 355, 125, 383}, {88, 384, 120, 532},
+};
+Point presetSwapColumns[5] = {{4}, {3}, {8}, {10}};
+Point presetSwapRows[5] = {{4}, {6}, {3}, {5}};
+ImageBank *lillyButtonImages = 0;
+short lillyButton2Lit = 0;
+short lillyButton1Drawn = 0;
+short columnDy[12] = {2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12};
+short inLillyFrame = 0;
+short hopDirections[4][4] = {
+    {0x2711, 0x271a, 0x271f, 0x2718}, {0x2715, 0x2712, 0x271b, 0x2720},
+    {0x271d, 0x2716, 0x2713, 0x271c}, {0x2719, 0x271e, 0x2717, 0x2714},
+};
+short actorDealOrder[13] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+short actorDealKinds[12] = {1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3};
+short actorDealValues[12] = {0, 1, 2, 0, 1, 2, 3, 0, 1, 2, 3, 4};
+ShortRect lillyArea = {83, 62, 556, 430};
+ShortRect lillyArea1 = {83, 62, 130, 337};
+ShortRect lillyArea2 = {509, 155, 556, 430};
+short cursorImageBase[5] = {20, 22, 24, 26};
+short squareImageBase[4] = {28, 30, 32, 34};
+short cursorFrameOffsets[4] = {0, 0, 1, 1};
+short cursorSquareFrame = 0;
+ShortRect markerArea = {83, 62, 556, 460};
+char flashFrame = 0;
+char swapFlashFrame = 0;
+short squareSetA[12] = {1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3};
+short squareSetB[12] = {0, 1, 2, 0, 1, 2, 3, 0, 1, 2, 3, 4};
+short overlayImageBase[10] = {5, 8, 11, 14, 17, 0, 0, 10, 11, 12};
+short levelLeftOut[21] = {
+    1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10,
+};
+short rowColumnAllowed[12] = {0, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+short valueUses[12] = {0};
+short rowValueUsed[14] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+short columnValueUsed[14] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+short swapSound = 0;
+
+short firstArrivals;
+short unusedLillyLevel;
+short lillyLevelParam;
+short swapToolStage;
+short swapsPerStage;
+short swapsThisStage;
+long rowPlaceResources[2];
+long squareHotSpotResources[2];
+long actorHotSpotResources[2];
+short *rowLeft;
+short *rowTop;
+short *squareHotSpotsX;
+short *squareHotSpotsY;
+short *actorHotSpotsX;
+short *actorHotSpotsY;
+short unusedLilly1;
+short dealtKinds[12];
+short dealtValues[12];
+long grid1Resource;
+short grid1Handle;
+long grid2Resource;
+short grid2Handle;
+long grid3Resource;
+short grid3Handle;
+short (*grid1)[12];
+
+short (*grid2)[12];
+
+short (*grid3)[12];
+
+short unusedLillyTable2[20];
+short unusedLilly13;
+short hopperQueue[144];
+short hopperQueueCount;
+short unusedLillyTable4[144];
+short unusedLilly11;
+short hopperWaiting[144];
+short hopperWaitingCount;
+short planQueue[20];
+short planQueueCount;
+short planWaiting[20];
+short planWaitingCount;
+short jumperQueue[20];
+short jumperQueueCount;
+short landerQueue[20];
+short landerQueueCount;
+short event60Views[20];
+short event60Count;
+short event44Views[20];
+short event44Count;
+short unusedLillyTable3[20];
+short unusedLilly14;
+short event2Views[20];
+short event2Count;
+short event3Views[20];
+short event3Count;
+short replanQueue[144];
+short replanQueueCount;
+short landedJumper;
+short unusedLilly12;
+short jumper2Busy;
+short jumperBusy;
+short landerBusy;
+short finishedLander;
+LillySearch layerSearches[5];
+short squareClaims[12][13];
+LillyStart lillyStarts[3];
+short lillyLayerView1;
+short lillyLayerView3;
+short rowAnchorViews[12];
+short snoidPadViews[21];
+short actorViews[14];
+short event80Views[144];
+short actorsOut[144];
+short unusedLillyTable1[144];
+short event80Count;
+short unusedLilly10;
+short nextStart;
+short actorsOutCount;
+short lillyPartySize;
+short padsArrived;
+short padsPlaced;
+short unusedLilly4;
+short unusedLilly6;
+short unusedLilly7;
+short unusedLilly9;
+short startCount;
+short unusedLilly5;
+unsigned long nextActorTime;
+short unusedLilly3;
+short actorCount;
+short presetSwapIndex;
+long lillyScriptResources[91];
+short lillyScriptHandles[91];
+short claimedRow;
+short lillyView11000;
+short event4Pad;
+short cursorSquareView;
+short swapFirstMarker;
+short swapSecondMarker;
+short layersToSearchCount;
+short cursorColumn;
+short cursorRow;
+short flashColumn;
+short flashRow;
+short swapColumn;
+short swapRow;
+short lillyStage;
+short flashCount;
+short swapToolView;
+short swapStep;
+short lillyClaim;
+short unusedLilly8;
+short swapPending;
+long lillyFile;
+short lillyOpen;
+short lillyGoReady;
+short unusedLilly2;
+ImageBank *lillyImages;
+short planTick;
+short actorDealLast;
+ShortRect cursorRect;
+short *squareSets[3];
+short squareSetA3[4];
+short squareSetB3[4];
+short squareSetC3[4];
+short squareSetA4[5];
+short squareSetB4[5];
+short squareSetC4[5];
+short squareSetA5[6];
+short squareSetB5[6];
+short squareSetC5[6];
+LillyDeal squareDeals[13];
+short lillyDragState;
+Point searchQueue[144];
+short searchQueueEnd;
+short searchQueueStart;
+
 /* @zoombi32 0x0042c10b */
 void lillyNoDraw(View *)
 {

@@ -19,6 +19,52 @@
 #include "os_manager.h"
 #include "platform.h"
 
+void (*gameActivateHook)(short active) = 0;
+
+HWND mainWindow = 0;
+char *appName = emptyString;
+short minimizeWhenInactive = 0;
+short gameActive = 0;
+Callback aboutHook = 0;
+long platformPair1 = 0;
+long platformPair2 = 0;
+char minimumOfText[] = "a minimum of ";
+char colors256Text[] = "256 colors";
+char svgaRequiredFormat[] = "This program requires an SVGA card set to %s%s and a minimum resolution of %u x %u.";
+char color16Text[] = "16 bit color";
+char color24Text[] = "24 bit color";
+long savedDisk = -1;
+unsigned short resolutionWidths[4] = {640, 800, 0x400, 0x500};
+unsigned short resolutionHeights[4] = {480, 600, 768, 0x400};
+long buttonKeys[3] = {1, 2, 4};
+UINT buttonUpMessages[3] = {514, 517, 520};
+short deactivateOnNcActivate = 1;
+char messageLogName[] = "msgxxx.txt";
+unsigned short appActive = 0;
+ShortRect paletteChartRect = {0, 0, 256, 64};
+
+short fidgetPaceFlag;
+short keepDisplayMode;
+char programPath[0x100];
+char savedDirectory[256];
+WNDCLASS windowClass;
+short classRegistered;
+short wasActivated;
+short windowClosing;
+short appPaused;
+short inputIgnored;
+short windowed;
+short screenSaverRunning;
+short pauseLoopRunning;
+short savedCursorLevel;
+short cursorLevelSaved;
+short messageLogCount;
+long loggedMessages[0x400];
+long loggedWParams[0x400];
+long loggedLParams[0x400];
+long loggedResults[0x400];
+short loggedAfter[0x400];
+
 /*
  * Checks the display mode asked for, and switches to it: the smallest of
  * 640x480 to 1280x1024 that fits it, at 256 colours (or 16/24-bit), falling

@@ -28,6 +28,261 @@
 #include "sound.h"
 #include "view.h"
 
+short level3OpenCells[26] = {
+    2, 4, 6, 19, 21, 23, 25, 38, 40, 42, 44, 55, 57, 59, 61, 74, 76, 78, 80, 91, 93, 95, 97, 110,
+    112, 114,
+};
+short level3BlockedCells[43] = {
+    10, 11, 12, 13, 14, 15, 28, 29, 30, 31, 32, 33, 34, 46, 47, 48, 49, 50, 51, 52, 56, 58, 60, 64,
+    65, 66, 67, 68, 69, 70, 82, 83, 84, 85, 86, 87, 88, 100, 101, 102, 103, 104, 105,
+};
+short level3Links36Cells[20] = {
+    10, 12, 14, 29, 31, 33, 46, 48, 50, 52, 65, 67, 69, 82, 84, 86, 88, 101, 103, 105,
+};
+short level3Links9Cells[20] = {
+    11, 13, 15, 28, 30, 32, 34, 47, 49, 51, 64, 66, 68, 70, 83, 85, 87, 100, 102, 104,
+};
+short rowFirstCells[14] = {0, 54, 45, 36, 27, 18, 9, 0, 18, 18, 9, 9};
+short rowSteps[14] = {0, 0, 18, 18, 18, 18, 18, 18, 9, 9, 9, 9, 9, 9};
+short level2BlockedCells[18] = {
+    10, 12, 14, 28, 30, 32, 46, 48, 50, 64, 66, 68, 82, 84, 86, 100, 102, 104,
+};
+short level2OpenCells[18] = {
+    11, 29, 47, 65, 83, 101, 13, 31, 49, 67, 85, 103, 24, 60, 96, 19, 55, 91,
+};
+short level2StartCells[3] = {18, 54, 90};
+short level2Links5Cells[3] = {24, 60, 96};
+short level2Links18Cells[12] = {11, 13, 29, 31, 47, 49, 65, 67, 83, 85, 101, 103};
+ShortRect zoneMessageRect = {100, 20, 540, 47};
+Point crossingStart = {530, 384};
+Point crossingStart2 = {-8, 258};
+Point smokeSpotPoint = {43, 258};
+Point randomPlaces[8] = {
+    {459, 26}, {535, 25}, {429, 80}, {500, 84}, {619, 76}, {423, 168}, {525, 167}, {605, 163},
+};
+Point rowPlaces[8] = {
+    {0}, {441, 66}, {531, 70}, {605, 67}, {421, 160}, {483, 153}, {612, 153}, {548, 255},
+};
+Point dealtPlaces[4] = {{187, 255}, {247, 255}, {424, 255}, {484, 255}};
+Point spot4Point = {548, 255};
+Point smokeRowStart = {616, 253};
+ShortRect spot4Rect = {525, 211, 582, 300};
+Point leftRowPlaces[3][3] = {
+    {{211, 255}}, {{187, 255}, {247, 255}}, {{164, 255}, {211, 255}, {258, 255}},
+};
+Point rightRowPlaces[3][3] = {
+    {{457, 255}}, {{424, 255}, {484, 255}}, {{409, 255}, {457, 255}, {505, 255}},
+};
+ShortRect leftRowSpots[3][3] = {
+    {{185, 230, 245, 293}}, {{137, 230, 197, 293}, {236, 230, 296, 293}},
+    {{124, 230, 184, 293}, {197, 230, 257, 293}, {265, 230, 325, 293}},
+};
+ShortRect rightRowSpots[3][3] = {
+    {{426, 230, 486, 293}}, {{372, 230, 432, 293}, {474, 230, 534, 293}},
+    {{350, 230, 400, 293}, {419, 230, 469, 293}, {485, 230, 535, 293}},
+};
+ShortRect dealButtonRect = {9, 300, 75, 364};
+Point madePlaces2[2] = {{317, 254}, {354, 254}};
+Point movePlaces3[14] = {
+    {317, 263}, {317, 248}, {317, 236}, {317, 210}, {317, 201}, {317, 192}, {317, 201}, {317, 210},
+    {317, 236}, {317, 248}, {317, 263}, {317, 254}, {317, 254},
+};
+Point movePlaces4[14] = {
+    {354, 263}, {354, 248}, {354, 236}, {354, 210}, {354, 201}, {354, 192}, {354, 201}, {354, 210},
+    {354, 236}, {354, 248}, {354, 263}, {354, 254}, {354, 254},
+};
+Point movePlaces1[17] = {
+    {317, 257}, {317, 261}, {317, 264}, {317, 267}, {317, 270}, {317, 274}, {317, 277}, {317, 280},
+    {317, 277}, {317, 270}, {317, 267}, {317, 264}, {317, 261}, {317, 257}, {317, 254}, {317, 254},
+    {317, 254},
+};
+Point movePlaces2[8] = {
+    {354, 257}, {354, 261}, {354, 264}, {354, 267}, {354, 270}, {354, 274}, {354, 277}, {354, 280},
+};
+ShortRect smokeGoRect = {600, 441, 639, 478};
+long smokeButtonResource = 0;
+long smokeDragOriginStart = 0;
+ShortRect smokeWaitArea = {0, 31, 262, 244};
+short smokeWaitRows[5] = {38, 81, 126, 176, 221};
+Point smokePlaces[20] = {
+    {214, 128}, {175, 126}, {135, 127}, {94, 126}, {53, 128}, {237, 176}, {196, 177}, {150, 178},
+    {110, 176}, {69, 178}, {234, 36}, {195, 37}, {155, 36}, {114, 35}, {73, 38}, {237, 79},
+    {196, 78}, {150, 80}, {110, 78}, {69, 79},
+};
+short dealerRunning = 0;
+short smokeButton2Lit = 0;
+short smokeButton1Drawn = 0;
+short inSmokeFrame = 0;
+Point freeSpotOrigin = {0};
+ShortRect smokeButtonsRect = {275, 0, 375, 18};
+unsigned long leastFreeMemory = 0x98967f;
+unsigned short showMemoryStats = 0;
+short leavingGame = 0;
+short tempFileExists = 0;
+char userFileName[] = "ZBUser";
+char rosterFileName[42] = {
+    90, 111, 111, 109, 98, 105, 110, 105, 46, 119, 104, 111, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 122, 111, 111, 109, 115, 105, 116, 101,
+};
+short aboveWindows311 = 0;
+short shuttingDown = 0;
+short saveBeforeQuitting = 0;
+short loadingImages = 0;
+short cursorAnimation[12] = {2, 4, 2, 3, 2, 5, 2, 5, 2, 4, 3, 5};
+ShortRect memoryStatsRect = {300, 0, 639, 14};
+char msgRequiresQuickTime[97] = {
+    82, 101, 113, 117, 105, 114, 101, 115, 32, 81, 117, 105, 99, 107, 84, 105, 109, 101, 32, 102,
+    111, 114, 32, 87, 105, 110, 100, 111, 119, 115, 32, 118, 101, 114, 115, 105, 111, 110, 32, 50,
+    46, 49, 46, 0, 82, 101, 113, 117, 105, 114, 101, 115, 32, 83, 111, 117, 110, 100, 32, 77, 97,
+    110, 97, 103, 101, 114, 32, 51, 46, 49, 32, 111, 114, 32, 108, 97, 116, 101, 114, 32, 116, 111,
+    32, 98, 101, 32, 105, 110, 115, 116, 97, 108, 108, 101, 100, 46,
+};
+char msgInitOs[] = "unable to initialize os";
+char msgInitTimer[] = "unable to initialize timer";
+char msgInitHeap[] = "unable to initialize heap";
+char msgNotEnoughMemory[] = "Not enough free memory";
+char msgNotEnoughPhysicalMemory[] = "Not enough free physical memory";
+char msgInitFileManager[] = "unable to initialize file manager";
+char msgInitResourceManager[] = "unable to initialize resource manager";
+char msgInitConfiguration[] = "unable to initialize configuration file manager";
+char msgInitSound[] = "unable to initialize sound";
+char msgNoWaveDevices[] = "no digital sound devices found";
+char msgNoMidiDevices[261] = {
+    110, 111, 32, 109, 105, 100, 105, 32, 115, 111, 117, 110, 100, 32, 100, 101, 118, 105, 99, 101,
+    115, 32, 102, 111, 117, 110, 100, 0, 71, 101, 116, 86, 111, 108, 32, 102, 97, 105, 108, 101,
+    100, 46, 32, 32, 66, 111, 111, 116, 32, 100, 114, 105, 118, 101, 46, 0, 71, 101, 116, 86, 73,
+    110, 102, 111, 32, 102, 97, 105, 108, 101, 100, 46, 0, 83, 101, 116, 86, 111, 108, 32, 102, 97,
+    105, 108, 101, 100, 46, 32, 32, 66, 111, 111, 116, 32, 100, 114, 105, 118, 101, 46, 0, 83, 101,
+    116, 86, 111, 108, 32, 102, 97, 105, 108, 101, 100, 46, 32, 32, 68, 101, 102, 97, 117, 108, 116,
+    32, 100, 105, 114, 101, 99, 116, 111, 114, 121, 46, 0, 71, 101, 116, 86, 111, 108, 32, 102, 97,
+    105, 108, 101, 100, 46, 32, 32, 68, 101, 102, 97, 117, 108, 116, 32, 100, 105, 114, 101, 99,
+    116, 111, 114, 121, 46, 0, 83, 121, 115, 69, 110, 118, 105, 114, 111, 110, 115, 32, 102, 97,
+    105, 108, 101, 100, 46, 0, 82, 101, 113, 117, 105, 114, 101, 115, 32, 97, 116, 32, 108, 101, 97,
+    115, 116, 32, 51, 48, 48, 75, 32, 111, 102, 32, 102, 114, 101, 101, 32, 115, 112, 97, 99, 101,
+    32, 111, 110, 32, 98, 111, 111, 116, 32, 100, 114, 105, 118, 101, 46, 0, 68, 105, 114, 67, 114,
+    101, 97, 116, 101, 32, 102, 97, 105, 108, 101, 100, 46,
+};
+char msgOutOfMemory[] = "Out of Memory.";
+
+PlacedSnoid placedSnoids[17];
+short view11076;
+short view11009;
+short pairView1;
+short pairView2;
+short view11018;
+short view11019;
+short dealerView;
+short view11077;
+short moverView1;
+short moverView2;
+short leftRowView;
+short rightRowView;
+short view11036;
+short view11008;
+short dealButtonView;
+short crossedMarkers[20];
+short crossedSnoids[20];
+short crossingViews[21];
+short crossingCount;
+short smokeLevel;
+ImageBank *smokeImages;
+long smokeImagesResource;
+char targetFeatures[8];
+short view11017Due;
+short unusedSmoke1;
+long smokeHotSpotsXResource;
+long smokeHotSpotsYResource;
+short *smokeHotSpotsX;
+short *smokeHotSpotsY;
+short randomViewCount;
+short rowViewCount;
+short dealtViewCount;
+short slotPairViewCount;
+short comparedViewCount;
+short crossedCount;
+short crossOnceFlag;
+short crossedChosen;
+short randomViews[8];
+short dealtViews[4];
+short slotPairViews[3];
+short comparedViews[2];
+short randomDragSlot;
+short crossingSnoid;
+short leftRow;
+short rightRow;
+short rowViews[9];
+short unusedSpot4Block;
+short pairScripts[4];
+short crossScripts[2];
+short moverScript;
+short crossScript1;
+short crossScript2;
+short crossScript3;
+short dealerScript;
+short dealerScript2;
+short nextCrossing;
+short crossedDue;
+short unusedSmoke2;
+short featuresTaken;
+short pairMismatch;
+short pairScriptIndex;
+short slotsDiffer;
+short useSecondMover;
+short level4Stage;
+short anchorDue;
+short dealLightDue;
+short dealDimDue;
+short unusedSmoke3;
+short soundOnBeforeSmoke;
+short leadersDue;
+short dealLit;
+short dealButtonState;
+long lastSmokeFidgetTime;
+unsigned long smokeFidgetersUsed;
+short smokeFidgets;
+short smokeFidgeting;
+long unusedSmoke4;
+short slotViews[7];
+short movePlace;
+long smokeFile;
+short smokeOpen;
+short smokeGoReady;
+long smokeDragOrigin;
+short cheatMode;
+short leaderGroup;
+short leftChosenValues[4];
+short rightChosenValues[4];
+short featureOrder[5];
+short valueOrder[6];
+short featurePick;
+short featurePickMax;
+short valuePick;
+short valuePickMax;
+short rowFeatures[9][4];
+short rowFeatures2[9][4];
+short rowChanges[9][4];
+short leftTargetFeatures[4];
+short rightTargetFeatures[4];
+short leftFeatureMarks[4];
+short rightFeatureMarks[4];
+Font *fonts[3];
+char moduleFileName[256];
+char rosterDirectory[256];
+short movieShowing;
+short introPending;
+long currentMovie;
+long movieController;
+unsigned short instanceAtom;
+basePort *portBeforeMovie;
+short quickTimeReady;
+short rosterReady;
+short startedWithoutModifier;
+short cursorFrame;
+HINSTANCE appInstance;
+HINSTANCE appPreviousInstance;
+char *appCommandLine;
+long cursors[6];
+
 /*
  * The game's part of each pass of the main loop (WinMain registers it with
  * setFrameHook; mainLoopEvents calls it): runs the current scene's frame

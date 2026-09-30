@@ -16,6 +16,10 @@
 #include "platform.h"
 #include "sound.h"
 
+short freeAtOnce;
+char dataPath[256];
+short dataPathLength;
+char dataDrive;
 char *shapeText;
 char *arrayText;
 char *arrayErrorText;

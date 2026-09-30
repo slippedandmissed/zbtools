@@ -20,6 +20,10 @@ static char frameSizeKey[] = "ulFrameSize";
 static char stereoKey[] = "fStereo";
 static char enableKey[] = "fEnable";
 
+short useDirectSound = 0;
+short wavebufCache = 0;
+HINSTANCE directSoundLibrary = 0;
+
 /* @zoombi32 0x0047af1c */
 __cdecl wavebuf::~wavebuf()
 {
