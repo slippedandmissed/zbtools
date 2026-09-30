@@ -340,7 +340,10 @@ async def _supervise(
     try:
         await _connect(qmp, paths.VM_QMP)
         workers = [asyncio.ensure_future(watch_events())]
-        workers += [asyncio.ensure_future(task(qmp)) for task in tasks]
+        for task in tasks:
+            worker = asyncio.ensure_future(task(qmp))
+            worker.add_done_callback(_report_failure)
+            workers.append(worker)
         await proc.wait()
         # QEMU sends SHUTDOWN just before exiting; let the reader catch up.
         with contextlib.suppress(TimeoutError):
@@ -360,6 +363,12 @@ async def _supervise(
         for sock in (paths.VM_QMP, paths.VM_QMP_CONTROL):
             sock.unlink(missing_ok=True)
     return reason
+
+
+def _report_failure(worker: "asyncio.Future[None]") -> None:
+    """Say so when a task against the VM fails (the VM runs on)."""
+    if not worker.cancelled() and worker.exception() is not None:
+        print(f"  error: {worker.exception()}", file=sys.stderr, flush=True)
 
 
 def run_qemu(
@@ -438,12 +447,24 @@ async def when_screen(
 
 
 async def run_in_guest(qmp: QMPClient, command: str) -> None:
-    """Run a command through the Run box (Windows+R: Ctrl+Esc, then R, finds the
-    Recycle Bin instead when the Start menu is slow to open)."""
-    await press(qmp, "meta_l-r")
-    await asyncio.sleep(2.5)
-    await type_text(qmp, command)
-    await press(qmp, "ret")
+    """Run a command through the Start menu's Run box, once it's open: the
+    Start menu (Ctrl+Esc) can take a moment to open, and an R pressed before it
+    has goes to the desktop instead (selecting the Recycle Bin); Windows+R isn't
+    recognised. So each try is checked on the screen."""
+    for _ in range(3):
+        await press(qmp, "ctrl-esc")
+        await asyncio.sleep(3)
+        await press(qmp, "r")
+        for _ in range(10):  # it can take seconds to open
+            await asyncio.sleep(1)
+            if screen.is_run_dialog(await screenshot(qmp, paths.VM_SCREEN_CHECK)):
+                await asyncio.sleep(0.5)
+                await type_text(qmp, command)
+                await press(qmp, "ret")
+                return
+        await press(qmp, "esc")  # close a Start menu left open
+        await asyncio.sleep(1)
+    raise RuntimeError(f"couldn't open the Run box to run {command!r}")
 
 
 async def answer_logon_prompt(qmp: QMPClient) -> None:

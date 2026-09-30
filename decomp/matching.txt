@@ -1210,7 +1210,6 @@
 0x0046f43a syncHandle
 0x0046f442 syncOf
 0x0046f599 event::~event
-0x0046f68f freeContext
 0x0046f78e setThreadError
 0x004764bc setSoundsActive
 0x00476622 disposeSound

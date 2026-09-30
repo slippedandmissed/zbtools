@@ -44,3 +44,15 @@ def is_idle_desktop(img: Image.Image) -> bool:
         return False
     background = [(400, 60), (600, 150), (250, 350), (550, 400)]
     return all(_rgb(img, x, y) == _TEAL for x, y in background) and (_rgb(img, 320, 470) == _GREY)
+
+
+def is_run_dialog(img: Image.Image) -> bool:
+    """The Start menu's Run box, where it opens (above the Start button): its
+    navy title bar and grey body."""
+    if img.size != (640, 480):
+        return False
+    title = [(150, 296), (250, 296), (300, 296)]  # clear of the title's text
+    body = [(60, 400), (200, 400), (40, 440), (340, 360)]  # clear of text and the icon
+    return all(_rgb(img, x, y) == _NAVY for x, y in title) and all(
+        _rgb(img, x, y) == _GREY for x, y in body
+    )
