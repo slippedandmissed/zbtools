@@ -23,7 +23,7 @@ Module.preRun.push(function () {
       console.warn('IndexedDB unavailable; nothing will be saved:', error);
     removeRunDependency('zb-drive-c');
   });
-  // The page's Start button (shell.html); without one, start at once.
+  // The page's Play button (shell.html); without one, start at once.
   window.zbStart = function () {
     window.zbStart = null;
     var overlay = document.getElementById('overlay');
