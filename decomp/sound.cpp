@@ -34,7 +34,7 @@ char msgDeviceFailed[] = " sound device or driver has failed to respond.";
 unsigned short loadSoundByKey(short key, long type)
 {
     unsigned short result = 0xffff;
-    Entry *entry;
+    SoundEntry *entry;
 
     if ((entry = getSound(key, type)) != 0 && loadSound(entry))
         result = key;
@@ -47,20 +47,20 @@ unsigned short loadSoundByKey(short key, long type)
  * no larger than g_4a009c are loaded by loadSoundByKey.
  */
 /* @zoombi32 0x00411382 */
-unsigned short fn_411382(short key, long type)
+unsigned short findAndLoadSound(short key, long type)
 {
-    Entry *entry;
+    SoundEntry *entry;
     unsigned short result;
 
     if (g_4aa428)
         return loadSoundByKey(key, type);
     result = 0xffff;
-    if (fn_4121a5(1))
+    if (soundAtMost(1))
         return 0;
     if ((entry = findOrAddSound(key, type)) != 0) {
         if (entry->handle)
             return key;
-        if (!(entry->unknownA = fn_46c402(type, key, 1))) {
+        if (!(entry->unknownA = findMapResource(type, key, 1))) {
             if (g_4aa42c)
                 reportSoundError(key, type, 0, 0);
             removeSound(&entry);
@@ -82,53 +82,53 @@ unsigned short fn_411382(short key, long type)
 /* @zoombi32 0x0041153c */
 void unloadSound(short key, long type)
 {
-    Entry *entry;
+    SoundEntry *entry;
 
-    if ((entry = fn_4115f5(key, type)) != 0) {
+    if ((entry = findSound(key, type)) != 0) {
         stopSounds(key, type);
-        fn_4117a8(entry);
-        fn_46c5b7(&entry->unknownA);
-        if (fn_46bee2() == 1)
+        disposeSoundHandle(entry);
+        purgeGameResource(&entry->unknownA);
+        if (getFreeAtOnce() == 1)
             removeSound(&entry);
     }
 }
 
-/* unloadSound with fn_46bee9's setting at 1. */
+/* unloadSound with setFreeAtOnce's setting at 1. */
 /* @zoombi32 0x0041158c */
-void fn_41158c(short key, long type)
+void unloadSoundNow(short key, long type)
 {
-    short saved = fn_46bee9(1);
+    short saved = setFreeAtOnce(1);
 
     unloadSound(key, type);
-    fn_46bee9(saved);
+    setFreeAtOnce(saved);
 }
 
 /* The sound with a key (of a type), loading its resource and type (a
    big-endian tag, as on the Mac) if it isn't loaded. */
 /* @zoombi32 0x00411478 */
-Entry *getSound(short key, long type)
+SoundEntry *getSound(short key, long type)
 {
-    Entry *entry;
+    SoundEntry *entry;
 
-    if (fn_4121a5(1))
+    if (soundAtMost(1))
         return 0;
     if (!(entry = findOrAddSound(key, type)))
         return 0;
     if (entry->handle)
         return entry;
-    fn_46c4fe(&entry->unknownA, type, key, textSound, g_4aa42c);
+    loadResourceAs(&entry->unknownA, type, key, textSound, g_4aa42c);
     if (!entry->unknownA)
         removeSound(&entry);
     else
-        setSoundType(&entry, key, swapLong(*(long *)(fn_46cafb(entry->unknownA) + 8)));
+        setSoundType(&entry, key, swapLong(*(long *)(resourceData(entry->unknownA) + 8)));
     return entry;
 }
 
 /* The sound with a key (of a type), added to the list if it isn't there. */
 /* @zoombi32 0x004115b1 */
-Entry *findOrAddSound(short key, long type)
+SoundEntry *findOrAddSound(short key, long type)
 {
-    Entry *entry = fn_4115f5(key, type);
+    SoundEntry *entry = findSound(key, type);
 
     if (!entry) {
         entry = addSound(key, type);
@@ -140,9 +140,9 @@ Entry *findOrAddSound(short key, long type)
 
 /* Finds the sound with a key, of a type ('SND' matches any). */
 /* @zoombi32 0x004115f5 */
-Entry *fn_4115f5(short key, long tag)
+SoundEntry *findSound(short key, long tag)
 {
-    Entry *entry = g_4a00a0;
+    SoundEntry *entry = g_4a00a0;
     while (entry && (key != entry->key || (tag != 0x534e44 && tag != soundTypes[entry->type])))
         entry = entry->next;
     return entry;
@@ -150,14 +150,14 @@ Entry *fn_4115f5(short key, long tag)
 
 /* Adds a sound (of a key and type) at the end of the list; the new entry. */
 /* @zoombi32 0x0041162c */
-Entry *addSound(short key, long type)
+SoundEntry *addSound(short key, long type)
 {
-    Entry **link;
+    SoundEntry **link;
 
     for (link = &g_4a00a0; *link; link = &(*link)->next)
         ;
-    if (allocateBlock((void **)link, sizeof(Entry))) {
-        memset(*link, 0, sizeof(Entry));
+    if (allocateBlock((void **)link, sizeof(SoundEntry))) {
+        memset(*link, 0, sizeof(SoundEntry));
         (*link)->key = key;
         setSoundType(link, key, type);
     }
@@ -166,13 +166,13 @@ Entry *addSound(short key, long type)
 
 /* Frees a sound and takes it out of the list. */
 /* @zoombi32 0x0041167a */
-void removeSound(Entry **entry)
+void removeSound(SoundEntry **entry)
 {
-    Entry **link;
-    Entry *next;
+    SoundEntry **link;
+    SoundEntry *next;
 
-    fn_4117a8(*entry);
-    fn_46c602(&(*entry)->unknownA);
+    disposeSoundHandle(*entry);
+    freeResource(&(*entry)->unknownA);
     for (link = &g_4a00a0; *link != *entry; link = &(*link)->next)
         ;
     next = (*link)->next;
@@ -184,7 +184,7 @@ void removeSound(Entry **entry)
 /* Sets a sound's type from its resource type: waves and MIDI ('SND' leaves
    it); anything else is reported, or the sound dropped. */
 /* @zoombi32 0x004116c1 */
-void setSoundType(Entry **entry, short key, long type)
+void setSoundType(SoundEntry **entry, short key, long type)
 {
     short kind;
 
@@ -203,17 +203,17 @@ void setSoundType(Entry **entry, short key, long type)
 
 /* Loads a sound into the engine if it isn't loaded; whether it is. */
 /* @zoombi32 0x00411728 */
-short loadSound(Entry *entry)
+short loadSound(SoundEntry *entry)
 {
-    if (fn_4121a5(2))
+    if (soundAtMost(2))
         return 0;
     if (!entry->handle) {
         if (entry->unknown2) {
-            fn_41585f();
+            checkStarvationKeepingFlags();
             entry->handle = newStreamedSound(entry->unknownA, g_4a0098);
             mainLoopEvents();
         } else
-            entry->handle = newSound(fn_46beac(entry->unknownA));
+            entry->handle = newSound(usedResourceHandle(entry->unknownA));
         if (!entry->handle && !g_4aa42a)
             reportSoundError(0, 0, entry, msgUnableToCreate);
     }
@@ -221,7 +221,7 @@ short loadSound(Entry *entry)
 }
 
 /* @zoombi32 0x004117a8 */
-void fn_4117a8(Entry *entry)
+void disposeSoundHandle(SoundEntry *entry)
 {
     if (entry->handle) {
         disposeSound(entry->handle);
@@ -237,14 +237,14 @@ void fn_4117a8(Entry *entry)
  * by the channel count instead.)
  */
 /* @zoombi32 0x004117c7 */
-short prepareSound(Entry *entry, short channel)
+short prepareSound(SoundEntry *entry, short channel)
 {
     char message[0x100];
     int answer;
     short type, i;
     char *kind;
 
-    if (fn_4121a5(3))
+    if (soundAtMost(3))
         return 0;
     do {
         answer = IDOK;
@@ -259,7 +259,7 @@ short prepareSound(Entry *entry, short channel)
         }
     } while (answer == IDRETRY);
     if (answer == IDABORT)
-        fatalError(g_4a07b4);
+        fatalError(usualFatalMessage);
     else if (answer == IDIGNORE) {
         soundErrorsIgnored = 1;
         return 0;
@@ -273,25 +273,25 @@ short prepareSound(Entry *entry, short channel)
 }
 
 /* @zoombi32 0x00411910 */
-void fn_411910(Entry *entry, short channel)
+void closeSoundOnChannel(SoundEntry *entry, short channel)
 {
     closeSound(entry->handle);
     soundChannels[entry->type][channel].id = 0xffff;
 }
 
 /* Starts a sound on a channel (unless sound is off); whether it's playing.
-   The engine reports on it to fn_411d2c, with its type and channel. */
+   The engine reports on it to soundNoticeCallback, with its type and channel. */
 /* @zoombi32 0x0041193e */
-short startSound(Entry *entry, short channel)
+short startSound(SoundEntry *entry, short channel)
 {
     short type;
 
-    if (fn_4121a5(4))
+    if (soundAtMost(4))
         return 0;
     type = entry->type;
     soundChannels[type][channel].playing = 1;
     currentChannel[type] = 0;
-    if (playSound(entry->handle, fn_411d2c,
+    if (playSound(entry->handle, soundNoticeCallback,
                   ((unsigned long)(unsigned short)type << 16) + (unsigned short)channel)) {
         if (g_4aa42a)
             soundChannels[type][channel].playing = 0;
@@ -303,7 +303,7 @@ short startSound(Entry *entry, short channel)
 
 /* Stops a sound playing on a channel. */
 /* @zoombi32 0x004119f3 */
-void fn_4119f3(Entry *entry, short channel)
+void stopSoundOnChannel(SoundEntry *entry, short channel)
 {
     short type = entry->type;
 
@@ -316,7 +316,7 @@ void fn_4119f3(Entry *entry, short channel)
 /* Reports a problem with a sound: its kind and id, the engine's error if
    any, and the message. */
 /* @zoombi32 0x00411a4c */
-void reportSoundError(short id, long type, Entry *entry, const char *message)
+void reportSoundError(short id, long type, SoundEntry *entry, const char *message)
 {
     char name[0x14];
     char error[0x10];
@@ -359,11 +359,11 @@ void reportSoundError(short id, long type, Entry *entry, const char *message)
 short playSoundOn(short key, long type, short channel)
 {
     short result = 0;
-    Entry *entry;
+    SoundEntry *entry;
 
     waitWhilePaused();
     if (loadSoundByKey(key, type) != 0xffff) {
-        entry = fn_4115f5(key, type);
+        entry = findSound(key, type);
         key = entry->type; /* from here on, the sound's type */
         if (channel == -1)
             channel = findChannel(key);
@@ -383,13 +383,13 @@ short playSoundOn(short key, long type, short channel)
     return result;
 }
 
-/* playSoundOn, finding the sound's resource first (fn_411382). */
+/* playSoundOn, finding the sound's resource first (findAndLoadSound). */
 /* @zoombi32 0x00411bfe */
-short fn_411bfe(short key, long type, short channel)
+short findAndPlaySound(short key, long type, short channel)
 {
     short result = 0;
 
-    if (fn_411382(key, type) != 0xffff)
+    if (findAndLoadSound(key, type) != 0xffff)
         result = playSoundOn(key, type, channel);
     return result;
 }
@@ -425,7 +425,7 @@ short findChannel(short type)
 /* The engine's notice about a sound (the cookie holds its type and
    channel). The empty `if` is as in the original (compiled-out debug code?). */
 /* @zoombi32 0x00411d2c */
-void fn_411d2c(long, SoundNotice *notice, long cookie)
+void soundNoticeCallback(long, SoundNotice *notice, long cookie)
 {
     short type = (unsigned long)cookie >> 16;
     short channel = cookie;
@@ -447,7 +447,7 @@ void fn_411d2c(long, SoundNotice *notice, long cookie)
 /* @zoombi32 0x00411d8f */
 void stopSounds(unsigned short id, long type)
 {
-    Entry *entry;
+    SoundEntry *entry;
     short t, channel;
     unsigned short current = id;
 
@@ -457,9 +457,9 @@ void stopSounds(unsigned short id, long type)
                 if (id == 0xffff)
                     current = soundChannels[t][channel].id;
                 if (soundChannels[t][channel].id != 0xffff && current == soundChannels[t][channel].id) {
-                    entry = fn_4115f5(current, soundTypes[t]);
-                    fn_4119f3(entry, channel);
-                    fn_411910(entry, channel);
+                    entry = findSound(current, soundTypes[t]);
+                    stopSoundOnChannel(entry, channel);
+                    closeSoundOnChannel(entry, channel);
                 }
             }
         }
@@ -468,7 +468,7 @@ void stopSounds(unsigned short id, long type)
 
 /* Ends the looping of each matching sound that's playing. */
 /* @zoombi32 0x00411e4c */
-void fn_411e4c(unsigned short id, long type)
+void endSoundLoops(unsigned short id, long type)
 {
     short t, channel;
     unsigned short current;
@@ -482,7 +482,7 @@ void fn_411e4c(unsigned short id, long type)
                     current = soundChannels[t][channel].id;
                 if (soundChannels[t][channel].id != 0xffff && current == soundChannels[t][channel].id
                     && soundChannels[t][channel].playing)
-                    endSoundLoop(fn_4115f5(id, soundTypes[t])->handle);
+                    endSoundLoop(findSound(id, soundTypes[t])->handle);
             }
         }
     }
@@ -513,13 +513,13 @@ short isSoundPlaying(unsigned short id, long type)
 /* @zoombi32 0x00411fd3 */
 void unloadSounds()
 {
-    Entry *entry;
+    SoundEntry *entry;
 
     freeText((void **)&g_4aa430);
     freeText((void **)&g_4aa434);
     freeText((void **)&g_4aa438);
     while ((entry = g_4a00a0) != 0)
-        fn_41158c(entry->key, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+        unloadSoundNow(entry->key, RESOURCE_TYPE(0, 'S', 'N', 'D'));
 }
 
 /*
@@ -545,19 +545,19 @@ short waitForSound(unsigned short id, long type, short eventType, short discard)
     do {
         mainLoopEvents();
         interrupted = isEventWaiting(eventType, discard);
-    } while (fn_4120a2(id, type, interrupted));
+    } while (soundPlayingOrStop(id, type, interrupted));
     return !interrupted;
 }
 
 /* @zoombi32 0x00412084 */
-short fn_412084(unsigned short id, long type, short eventType, short discard)
+short awaitSound(unsigned short id, long type, short eventType, short discard)
 {
     return waitForSound(id, type, eventType, discard);
 }
 
 /* With `stop`, stops the sound (and answers 0); else whether it's playing. */
 /* @zoombi32 0x004120a2 */
-short fn_4120a2(unsigned short id, long type, short stop)
+short soundPlayingOrStop(unsigned short id, long type, short stop)
 {
     if (stop) {
         stopSounds(id, type);
@@ -568,7 +568,7 @@ short fn_4120a2(unsigned short id, long type, short stop)
 
 /* Whether a sound type has no current value, or one at least `value`. */
 /* @zoombi32 0x004120c8 */
-short fn_4120c8(char value, long type)
+short soundValueReached(char value, long type)
 {
     short i;
 
@@ -582,7 +582,7 @@ short fn_4120c8(char value, long type)
     return 1;
 }
 
-/* Waits until a sound type's value reaches `value` (fn_4120c8), running the
+/* Waits until a sound type's value reaches `value` (soundValueReached), running the
    main loop; an input event cuts it short (thrown away with `discard`).
    Whether it wasn't cut short. */
 /* @zoombi32 0x0041210a */
@@ -593,21 +593,21 @@ short waitForSoundValue(char value, long type, short eventType, short discard)
     do {
         mainLoopEvents();
         interrupted = isEventWaiting(eventType, 0);
-    } while (!interrupted && !fn_4120c8(value, type));
+    } while (!interrupted && !soundValueReached(value, type));
     if (interrupted && discard)
         discardEvents(eventType);
     return !interrupted;
 }
 
 /* @zoombi32 0x00412159 */
-short fn_412159(char value, long type, short eventType, short discard)
+short awaitSoundValue(char value, long type, short eventType, short discard)
 {
     return waitForSoundValue(value, type, eventType, discard);
 }
 
 /* Resets a sound type's current channel, if it has one. */
 /* @zoombi32 0x00412176 */
-void fn_412176(long type)
+void resetSoundChannel(long type)
 {
     short i;
 
@@ -622,7 +622,7 @@ void fn_412176(long type)
 
 /* Whether sound is on and at most `level`. */
 /* @zoombi32 0x004121a5 */
-short fn_4121a5(short level)
+short soundAtMost(short level)
 {
     if (soundLevel && soundLevel <= level)
         return 1;

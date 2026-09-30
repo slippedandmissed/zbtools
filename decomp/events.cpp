@@ -125,7 +125,7 @@ void postMouseEvent(Point *where, short button)
 
     dispatchingEvents = 0;
     if (dispatching) {
-        if (!fn_455e85(where, button))
+        if (!platformHandlesMouse(where, button))
             fn_4624bd(where, button);
     } else {
         event.type = 2;

@@ -45,9 +45,9 @@ void loadFeatureGroup(short id, short group, short hotspots)
 void freeFeatureGroups()
 {
     for (short i = 0; i < 8; i++) {
-        fn_46c602(&groupBankResources[i]);
-        fn_46c602(&groupHotXResources[i]);
-        fn_46c602(&groupHotYResources[i]);
+        freeResource(&groupBankResources[i]);
+        freeResource(&groupHotXResources[i]);
+        freeResource(&groupHotYResources[i]);
         groupHotX[i] = 0;
         groupHotY[i] = 0;
         groupBanks[i] = 0;
@@ -617,13 +617,13 @@ void loadDialogs()
         g_4b9686 = g_4b97fc = g_4b9688 = 0;
         dialogView = dialogButton1 = dialogButton2 = g_4b9804 = 0;
         g_4b9806 = g_4b9808 = g_4b980a = g_4b980c = g_4b980e = 0;
-        saved = g_4a7f58;
-        fn_46be2e(g_4b7b4c);
+        saved = currentMapFile;
+        setCurrentMap(g_4b7b4c);
         dialogImages = loadImageBank(1, &dialogResource);
         for (short i = 0; i < 11; i++)
             dialogScripts[i] = loadSwappedResource(&dialogScriptResources[i], i + 1,
                                                    RESOURCE_TYPE('S', 'C', 'R', 'B'));
-        g_4a7f58 = saved;
+        currentMapFile = saved;
     }
 }
 
@@ -642,9 +642,9 @@ void freeDialogs()
         saveFieldSave = 0;
     }
     if (dialogResource) {
-        fn_46c602(&dialogResource);
+        freeResource(&dialogResource);
         for (short i = 0; i < 11; i++)
-            fn_46c602(&dialogScriptResources[i]);
+            freeResource(&dialogScriptResources[i]);
     }
 }
 
@@ -918,13 +918,13 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
             long interval;
 
             g_4a7d3c++;
-            saved = g_4a7f58;
-            fn_46be2e(g_4b7b4c);
+            saved = currentMapFile;
+            setCurrentMap(g_4b7b4c);
             creditsImages = loadImageBank(20, &g_4b9670);
             creditsBackdrop = loadSwappedResource(&g_4b9674, 20, RESOURCE_TYPE('S', 'C', 'R', 'B'));
             interval = 1;
             g_4b9804 = addView(0x4001000, drawCredits, tickView, 0, interval, 0, 0, 0);
-            g_4a7f58 = saved;
+            currentMapFile = saved;
             queueViewSound(20104, 0);
         }
         break;
@@ -996,8 +996,8 @@ void closeDialog(short kind)
         }
         deleteView(g_4b9804);
         g_4b9804 = 0;
-        fn_46c602(&g_4b9670);
-        fn_46c602(&g_4b9674);
+        freeResource(&g_4b9670);
+        freeResource(&g_4b9674);
         unionRgnRect(removedRgn, &gameRect);
         if (g_4a7d3c)
             g_4a7d3c--;

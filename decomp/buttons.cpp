@@ -124,7 +124,7 @@ void addButtonGroup(ResourceList **images, short id, short kind, Group *group, c
         reportJoinedError(buttonError);
     }
     joinText(&buttonText, name, "graphic button");
-    fn_46c011(images, id, buttonText, 1);
+    loadShapeList(images, id, buttonText, 1);
     freeText((void **)&buttonText);
     buttonGroups[index].images = *images;
     buttonGroups[index].kind = kind;
@@ -135,15 +135,15 @@ void freeButtonGroup(ResourceList **images)
 {
     freeText((void **)&buttonText);
     freeText((void **)&buttonError);
-    fn_46c2db(images);
+    freeShapeList(images);
 }
 
-/* freeButtonGroup with fn_46bee9's setting at 1. */
+/* freeButtonGroup with setFreeAtOnce's setting at 1. */
 /* @zoombi32 0x00412482 */
 void fn_412482(ResourceList **images)
 {
-    short saved = fn_46bee9(1);
+    short saved = setFreeAtOnce(1);
 
     freeButtonGroup(images);
-    fn_46bee9(saved);
+    setFreeAtOnce(saved);
 }

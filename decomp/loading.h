@@ -7,7 +7,7 @@
 #define LOADING_H
 
 extern char g_4a07a8[2]; /* a one-character string (the second byte is an empty one) */
-extern Callback g_4a07ac; /* called before a fatal error is reported */
+extern Callback fatalHook; /* called before a fatal error is reported */
 /* reports an error (showError, as the game sets it up) */
 extern void (*errorReporter)(const char *prefix, const char *format, va_list args); /* @data 0x4a07b0 */
 extern va_list formatArgs; /* @data 0x4ab40c: formatString's arguments */
@@ -26,18 +26,18 @@ void __cdecl fn_4150c7(long size, char *buffer, const char *format, ...);
 /* loading */
 unsigned short loadMidi(short key);
 void unloadMidi(short key);
-void fn_414f5c(short key);
+void unloadMidiNow(short key);
 short playMidiOn(short key, short channel);
 void stopMidi(unsigned short id);
-void fn_414fa3(unsigned short id);
+void endMidiLoops(unsigned short id);
 short isMidiPlaying(unsigned short id);
 short playMidi(short key, short channel, short eventType, short discard);
 short waitForMidi(unsigned short id, short eventType, short discard);
-short fn_415014(unsigned short id, short eventType, short discard);
-short fn_415034(unsigned short id, short stop);
-short fn_41504f(char value);
+short awaitMidi(unsigned short id, short eventType, short discard);
+short midiPlayingOrStop(unsigned short id, short stop);
+short midiValueReached(char value);
 short waitForMidiValue(char value, short eventType, short discard);
-short fn_415083(char value, short eventType, short discard);
+short awaitMidiValue(char value, short eventType, short discard);
 void stopAllMidi();
 void setFormatCharacters(short (*isSpecial)(char c), char *(*text)(char c));
 char *__cdecl formatText(long size, char *text, const char *format, ...);
@@ -50,8 +50,8 @@ void __cdecl notEnoughMemory(const char *format, ...);
 void __cdecl notEnoughNearMemory(const char *format, ...);
 void __cdecl unableToAllocatePort(const char *format, ...);
 void reportFatalError(const char *prefix, const char *format, va_list args);
-void fn_4153b0(Callback callback);
+void setFatalHook(Callback callback);
 void setErrorReporter(void (*reporter)(const char *prefix, const char *format, va_list args));
-void fn_4153ce(const char *message);
+void setUsualFatalMessage(const char *message);
 
 #endif

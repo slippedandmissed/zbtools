@@ -52,7 +52,7 @@ extern unsigned long g_4abdb0; /* @data 0x4abdb0 */
 extern unsigned long g_4abdb4; /* @data 0x4abdb4 */
 extern unsigned long g_4abdb8; /* @data 0x4abdb8 */
 
-void fn_42403b(View *view, short event);
+void fleensMovingOnNotify(View *view, short event);
 extern short fleensViews[7]; /* @data 0x4abb20: the backdrop's views (scripts 1200-1206) */
 
 extern short feetLayers[6]; /* @data 0x4a1654: the feature layers by value, for layOutFleen */
@@ -79,30 +79,30 @@ extern short g_4abb70; /* @data 0x4abb70: the fleen of the Zoombini put down (g_
 void resetScene13();
 void scene13Frame();
 void openScene13();
-void fn_42365a(View *view, short event);
-void fn_424195(View *view, short event);
+void fleensLeaderNotify(View *view, short event);
+void fleensExtraNotify(View *view, short event);
 void scene13Clicked(short which);
 void addFleens();
 void updateFleen(View *view, short region);
 short addFleen(Snoid *snoid);
-void fn_423ebb(View *view, short event);
+void fleensWalkerNotifyE(View *view, short event);
 void drawFleensButtons(View *);
 void startFleenScript(View *view, short id, Point *anchor);
-void fn_423f84();
+void moveFleenZoombinisOn();
 short layOutFleen(Snoid *snoid, short *event);
-void fn_423512(View *view, short event);
+void fleensViewNotify(View *view, short event);
 short fleenScript(View *view, short which);
 void drawFleensButton(short which, short lit, short show);
 void closeScene13();
 short fleensSnoidScript(View *view, short which);
-void fn_423d9d(View *view, short event);
-void fn_423e2c(View *view, short event);
-void fn_424104(View *view, short event);
-void fn_421bfc(View *view, short region);
+void fleensWalkerNotifyC(View *view, short event);
+void fleensWalkerNotifyA(View *view, short event);
+void fleensWalkerStopNotify(View *view, short event);
+void updateFleensButtons(View *view, short region);
 short scene13Key(unsigned short key);
 void drawFleen(View *view);
 void loadFleenScripts();
 void loadFleenScript(short id);
-void fn_4234c9(View *, short event);
+void fleensStartNotify(View *, short event);
 
 #endif

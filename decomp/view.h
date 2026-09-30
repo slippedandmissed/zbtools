@@ -100,6 +100,6 @@ extern short soundRangeValue[32]; /* @data 0x4b953a */
 extern View viewHead; /* @data 0x4b880c: the list's ends (plain views) */
 extern View viewTail; /* @data 0x4b88f8 */
 extern long scriptResources[300]; /* @data 0x4b8b58 */
-void fn_465175();
+void requestViewSort();
 
 #endif

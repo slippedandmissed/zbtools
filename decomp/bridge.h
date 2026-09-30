@@ -66,11 +66,11 @@ void scene7Frame();
 void drawBridgeButtons(View *);
 void openScene7();
 void drawBridgeButton(short which, short lit, short show);
-void fn_41a965(View *, short region);
+void updateBridgeButtons(View *, short region);
 void closeScene7();
-void fn_41b357(View *view, short event);
+void bridgeViewNotify(View *view, short event);
 short scene7Key(unsigned short key);
-void fn_41b453(View *view, short event);
+void bridgeSnoidNotify(View *view, short event);
 void makeBridgeRule();
 short turnedBack(FeatureRules *rules, short edge, Snoid *snoid);
 

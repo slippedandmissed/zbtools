@@ -9,7 +9,7 @@
 extern short soundLevel; /* @data 0x4a0090 */
 extern long g_4a0098;
 extern unsigned long g_4a009c; /* sounds larger than this are loaded differently */
-extern Entry *g_4a00a0;
+extern SoundEntry *g_4a00a0;
 extern short channelCounts[2]; /* @data 0x4a00a4 */
 extern char currentChannel[2]; /* @data 0x4a00a8 */
 extern long soundTypes[2]; /* @data 0x4a00dc */
@@ -31,37 +31,37 @@ extern char *g_4aa434;
 extern char *g_4aa438;
 extern short soundErrorsIgnored; /* @data 0x4aa43c */
 unsigned short loadSoundByKey(short key, long type);
-unsigned short fn_411382(short key, long type);
+unsigned short findAndLoadSound(short key, long type);
 void unloadSound(short key, long type);
-void fn_41158c(short key, long type);
+void unloadSoundNow(short key, long type);
 short playSoundOn(short key, long type, short channel);
-short fn_411bfe(short key, long type, short channel);
+short findAndPlaySound(short key, long type, short channel);
 void unloadSounds();
-Entry *fn_4115f5(short key, long tag);
-void fn_411910(Entry *entry, short channel);
-Entry *addSound(short key, long type);
-void removeSound(Entry **entry);
-void setSoundType(Entry **entry, short key, long type);
-void reportSoundError(short id, long type, Entry *entry, const char *message);
+SoundEntry *findSound(short key, long tag);
+void closeSoundOnChannel(SoundEntry *entry, short channel);
+SoundEntry *addSound(short key, long type);
+void removeSound(SoundEntry **entry);
+void setSoundType(SoundEntry **entry, short key, long type);
+void reportSoundError(short id, long type, SoundEntry *entry, const char *message);
 short findChannel(short type);
-short fn_4120c8(char value, long type);
-Entry *findOrAddSound(short key, long type);
+short soundValueReached(char value, long type);
+SoundEntry *findOrAddSound(short key, long type);
 short isSoundPlaying(unsigned short id, long type);
-short startSound(Entry *entry, short channel);
+short startSound(SoundEntry *entry, short channel);
 void stopSounds(unsigned short id, long type);
-void fn_411e4c(unsigned short id, long type);
-short fn_4120a2(unsigned short id, long type, short stop);
+void endSoundLoops(unsigned short id, long type);
+short soundPlayingOrStop(unsigned short id, long type, short stop);
 short waitForSound(unsigned short id, long type, short eventType, short discard);
-short fn_412084(unsigned short id, long type, short eventType, short discard);
+short awaitSound(unsigned short id, long type, short eventType, short discard);
 short waitForSoundValue(char value, long type, short eventType, short discard);
-short fn_412159(char value, long type, short eventType, short discard);
-short loadSound(Entry *entry);
-Entry *getSound(short key, long type);
-short prepareSound(Entry *entry, short channel);
-void fn_4119f3(Entry *entry, short channel);
-void fn_411d2c(long, SoundNotice *notice, long cookie);
-void fn_412176(long type);
-short fn_4121a5(short level);
-void fn_4117a8(Entry *entry);
+short awaitSoundValue(char value, long type, short eventType, short discard);
+short loadSound(SoundEntry *entry);
+SoundEntry *getSound(short key, long type);
+short prepareSound(SoundEntry *entry, short channel);
+void stopSoundOnChannel(SoundEntry *entry, short channel);
+void soundNoticeCallback(long, SoundNotice *notice, long cookie);
+void resetSoundChannel(long type);
+short soundAtMost(short level);
+void disposeSoundHandle(SoundEntry *entry);
 
 #endif

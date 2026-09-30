@@ -72,7 +72,7 @@ void initViews()
 /* @zoombi32 0x004632af */
 void closeViews()
 {
-    short saved = fn_46bee9(1);
+    short saved = setFreeAtOnce(1);
 
     setViewsLocked(0);
     viewsBusy = 1;
@@ -94,7 +94,7 @@ void closeViews()
     }
     unloadSounds();
     destroyPort(&viewPort, 1);
-    fn_46bee9(saved);
+    setFreeAtOnce(saved);
 }
 
 /* Removes every view (but the list's ends) and what they use. */
@@ -136,8 +136,8 @@ void clearViews()
         freeScripts();
         freeTerrain();
         freeSnoidScripts();
-        fn_46c602(&g_4b9670);
-        fn_46c602(&g_4b9674);
+        freeResource(&g_4b9670);
+        freeResource(&g_4b9674);
         for (short i = 0; i < 17; i++) {
             groupLeader[i] = 0;
             g_4b8b32[i] = 0;
@@ -334,7 +334,7 @@ void initView(View *view, View *prev, View *next, short id)
 void drawBackdropList(ResourceList *images)
 {
     drawImage(images, 1, 0, 0, 0, 0x11);
-    fn_46c602(&images->resources[0]);
+    freeResource(&images->resources[0]);
     copyBits(viewPort, workPort, &gameRect);
 }
 
@@ -441,9 +441,9 @@ void freeDragCursors()
 {
     dragImage = 0;
     dragCursor = 0;
-    fn_46c602(&dragCursorResource);
-    fn_46c602(&dragHotXResource);
-    fn_46c602(&dragHotYResource);
+    freeResource(&dragCursorResource);
+    freeResource(&dragHotXResource);
+    freeResource(&dragHotYResource);
     dragCursors = 0;
     dragRect = noRect;
     setDragCursor(0);
@@ -575,7 +575,7 @@ long countViews()
 /* @zoombi32 0x00464202 */
 void drawBackdrop(short id)
 {
-    fn_46c011(&backdropImages, id, 0, 1);
+    loadShapeList(&backdropImages, id, 0, 1);
     drawBackdropList(backdropImages);
     disposeShapeList(&backdropImages);
 }
@@ -669,7 +669,7 @@ void freeScripts()
         scriptGroupCount[i] = 0;
     }
     for (i = 0; i < 300; i++)
-        fn_46c602(&scriptResources[i]);
+        freeResource(&scriptResources[i]);
     for (i = 0; i < 125; i++)
         g_4b83e4[i] = 0;
     for (i = 0; i < 125; i++)
@@ -686,7 +686,7 @@ void loadTerrain(short id)
     short handle;
 
     loadShape(&terrainResource, id, "Terrain");
-    handle = fn_46beac(terrainResource);
+    handle = usedResourceHandle(terrainResource);
     terrain = (Terrain *)fn_48ea00(handle);
     terrain->width = swapShort(terrain->width);
     terrain->height = swapShort(terrain->height);
@@ -696,7 +696,7 @@ void loadTerrain(short id)
 /* @zoombi32 0x004645ab */
 void freeTerrain()
 {
-    fn_46c602(&terrainResource);
+    freeResource(&terrainResource);
     terrain = 0;
 }
 
@@ -978,7 +978,7 @@ void setViewsLocked(short locked)
 }
 
 /* @zoombi32 0x00465175 */
-void fn_465175()
+void requestViewSort()
 {
     viewsSorted = 1;
 }
@@ -1023,19 +1023,19 @@ ImageBank *loadImageBank(short id, long *resource)
 
     g_4a4974 = 1;
     while (error && tries) {
-        fn_46c4fe(resource, RESOURCE_TYPE('t', 'B', 'M', 'P'), id, 0, 0);
+        loadResourceAs(resource, RESOURCE_TYPE('t', 'B', 'M', 'P'), id, 0, 0);
         if (*resource) {
-            fn_46beac(*resource);
-            error = decompressImage(fn_46beac(*resource));
+            usedResourceHandle(*resource);
+            error = decompressImage(usedResourceHandle(*resource));
             if (!error)
                 error = getPortError();
         }
         if (error)
-            fn_46c602(resource);
+            freeResource(resource);
         tries--;
     }
     if (!error) {
-        ImageBank *bank = (ImageBank *)fn_48ea00(fn_46beac(*resource));
+        ImageBank *bank = (ImageBank *)fn_48ea00(usedResourceHandle(*resource));
 
         bank->count = swapShort(bank->count);
         for (short i = 1; i <= bank->count; i++)
@@ -1055,8 +1055,8 @@ short *loadSwappedResource(long *resource, short id, long type)
     short *at;
     short *data;
 
-    fn_46c4fe(resource, type, id, 0, 1);
-    handle = fn_46beac(*resource);
+    loadResourceAs(resource, type, id, 0, 1);
+    handle = usedResourceHandle(*resource);
     at = (short *)fn_48ea00(handle);
     data = at;
     for (unsigned long size = handleSize(handle); size; size -= 2) {
@@ -1173,20 +1173,20 @@ void loadViewSounds(short id, short now)
         View *view = findView(id);
 
         if (view) {
-            saved = g_4a7f58;
+            saved = currentMapFile;
             count = 4;
             viewSoundList(view, &count, sounds);
             for (short i = 0; i < count; i++) {
                 if (sounds[i] < 1000 || sounds[i] >= 20000)
-                    fn_46be2e(g_4b7b4c);
+                    setCurrentMap(g_4b7b4c);
                 else
-                    g_4a7f58 = saved;
+                    currentMapFile = saved;
                 if (now)
-                    fn_411382(sounds[i], RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                    findAndLoadSound(sounds[i], RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 else
                     loadSoundByKey(sounds[i], RESOURCE_TYPE(0, 'S', 'N', 'D'));
             }
-            g_4a7f58 = saved;
+            currentMapFile = saved;
         }
     }
 }
@@ -1371,22 +1371,22 @@ short playViewSounds(SoundChannels *channels, short played, short pick)
                 pickViewSounds(channels);
             for (i = 0; i < 32; i++) {
                 if (channels->sounds[i] && !channels->state[i]) {
-                    saved = g_4a7f58;
+                    saved = currentMapFile;
                     type = RESOURCE_TYPE(0, 'S', 'N', 'D');
                     if (channels->sounds[i] >= 30000) {
-                        fn_46be2e(g_4b7b50);
+                        setCurrentMap(g_4b7b50);
                         type = RESOURCE_TYPE('t', 'M', 'I', 'D');
                     } else if (channels->sounds[i] < 1000) {
-                        fn_46be2e(g_4b7b4c);
+                        setCurrentMap(g_4b7b4c);
                     } else if (channels->sounds[i] >= 20000) {
-                        fn_46be2e(g_4b7b4c);
+                        setCurrentMap(g_4b7b4c);
                         channels->unknown42[i] = 1;
                     }
                     if (channels->unknown42[i]) {
                         short ok;
 
                         last = channels->sounds[i];
-                        ok = fn_411bfe(last, type, -1);
+                        ok = findAndPlaySound(last, type, -1);
                         if (ok)
                             channels->state[i] = 2;
                         if (g_4b8803) {
@@ -1406,7 +1406,7 @@ short playViewSounds(SoundChannels *channels, short played, short pick)
                         }
                         channels->state[i] = 1;
                     }
-                    g_4a7f58 = saved;
+                    currentMapFile = saved;
                 }
             }
             {

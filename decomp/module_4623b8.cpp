@@ -244,7 +244,7 @@ void fn_46293a(unsigned short key)
             break;
         case 38:
             if (g_4b8803)
-                fn_456a64();
+                drawPaletteChart();
             break;
         case 42:
             if (g_4b8803)

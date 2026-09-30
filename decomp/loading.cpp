@@ -29,9 +29,9 @@ void unloadMidi(short key)
 }
 
 /* @zoombi32 0x00414f5c */
-void fn_414f5c(short key)
+void unloadMidiNow(short key)
 {
-    fn_41158c(key, MIDI);
+    unloadSoundNow(key, MIDI);
 }
 
 /* @zoombi32 0x00414f72 */
@@ -47,9 +47,9 @@ void stopMidi(unsigned short id)
 }
 
 /* @zoombi32 0x00414fa3 */
-void fn_414fa3(unsigned short id)
+void endMidiLoops(unsigned short id)
 {
-    fn_411e4c(id, MIDI);
+    endSoundLoops(id, MIDI);
 }
 
 /* @zoombi32 0x00414fb9 */
@@ -71,21 +71,21 @@ short waitForMidi(unsigned short id, short eventType, short discard)
 }
 
 /* @zoombi32 0x00415014 */
-short fn_415014(unsigned short id, short eventType, short discard)
+short awaitMidi(unsigned short id, short eventType, short discard)
 {
-    return fn_412084(id, MIDI, eventType, discard);
+    return awaitSound(id, MIDI, eventType, discard);
 }
 
 /* @zoombi32 0x00415034 */
-short fn_415034(unsigned short id, short stop)
+short midiPlayingOrStop(unsigned short id, short stop)
 {
-    return fn_4120a2(id, MIDI, stop);
+    return soundPlayingOrStop(id, MIDI, stop);
 }
 
 /* @zoombi32 0x0041504f */
-short fn_41504f(char value)
+short midiValueReached(char value)
 {
-    return fn_4120c8(value, MIDI);
+    return soundValueReached(value, MIDI);
 }
 
 /* @zoombi32 0x00415064 */
@@ -95,15 +95,15 @@ short waitForMidiValue(char value, short eventType, short discard)
 }
 
 /* @zoombi32 0x00415083 */
-short fn_415083(char value, short eventType, short discard)
+short awaitMidiValue(char value, short eventType, short discard)
 {
-    return fn_412159(value, MIDI, eventType, discard);
+    return awaitSoundValue(value, MIDI, eventType, discard);
 }
 
 /* @zoombi32 0x004150a2 */
 void stopAllMidi()
 {
-    fn_412176(MIDI);
+    resetSoundChannel(MIDI);
 }
 
 /* @zoombi32 0x004150b0 */
@@ -134,7 +134,7 @@ char *formatTextV(long size, char *text, const char *format, va_list args)
     formatArgs = args;
     end = formatString(size, text, format);
     for (i = 0; i < lockedCount; i++)
-        fn_46cad1(lockedResources[i]);
+        unlockResource(lockedResources[i]);
     return end;
 }
 
@@ -223,7 +223,7 @@ void formatArgument(long size, char **text, const char **format)
                 if (lockedCount < 10) {
                     index = lockedCount++;
                     lockedResources[index] = va_arg(formatArgs, long);
-                    lockedData[index] = fn_46cabc(lockedResources[index]);
+                    lockedData[index] = lockResource(lockedResources[index]);
                 }
             } else if (index < lockedCount) {
                 which = va_arg(formatArgs, char);
@@ -241,9 +241,9 @@ void formatArgument(long size, char **text, const char **format)
 }
 
 /* @zoombi32 0x004153b0 */
-void fn_4153b0(Callback callback)
+void setFatalHook(Callback callback)
 {
-    g_4a07ac = callback;
+    fatalHook = callback;
 }
 
 /* @zoombi32 0x004153bf */
@@ -253,9 +253,9 @@ void setErrorReporter(void (*reporter)(const char *prefix, const char *format, v
 }
 
 /* @zoombi32 0x004153ce */
-void fn_4153ce(const char *message)
+void setUsualFatalMessage(const char *message)
 {
-    g_4a07b4 = message;
+    usualFatalMessage = message;
 }
 
 /* Shows an error without stopping (stopping in the debugger, in debug mode,
@@ -265,7 +265,7 @@ void __cdecl warning(const char *format, ...)
 {
     va_list args;
 
-    if (debugMode && format != g_4a07b4)
+    if (debugMode && format != usualFatalMessage)
         debugging = 1;
     va_start(args, format);
     showError(emptyString, format, args);
@@ -278,7 +278,7 @@ void __cdecl fatalError(const char *format, ...)
 {
     va_list args;
 
-    if (debugMode && format != g_4a07b4)
+    if (debugMode && format != usualFatalMessage)
         debugging = 1;
     va_start(args, format);
     reportFatalError(0, format, args);
@@ -320,15 +320,15 @@ void __cdecl unableToAllocatePort(const char *format, ...)
     reportFatalError("Unable to allocate port for ", format, args);
 }
 
-/* Reports a fatal error (once), through g_4a07ac and the error reporter,
+/* Reports a fatal error (once), through fatalHook and the error reporter,
    then quits. */
 /* @zoombi32 0x004154a3 */
 void reportFatalError(const char *prefix, const char *format, va_list args)
 {
     if (!reportingError) {
         reportingError = 1;
-        if (g_4a07ac)
-            g_4a07ac();
+        if (fatalHook)
+            fatalHook();
         if (!format) {
             format = prefix;
             prefix = emptyString;

@@ -49,22 +49,22 @@ extern short campX[10]; /* @data 0x4a09b0: each row's x, in two layouts (4a080e)
 extern short primes[5]; /* @data 0x4a0800 */
 /* basecamp */
 unsigned short loadWave(short key);
-unsigned short fn_415a46(short key);
+unsigned short findAndLoadWave(short key);
 void unloadWave(short key);
-void fn_415a72(short key);
+void unloadWaveNow(short key);
 short playWaveOn(short key, short channel);
-short fn_415aa3(short key, short channel);
+short findAndPlayWave(short key, short channel);
 void stopWaves(unsigned short id);
-void fn_415ad4(unsigned short id);
+void endWaveLoops(unsigned short id);
 short isWavePlaying(unsigned short id);
 short playWave(short key, short channel, short eventType, short discard);
 short loadAndPlayWave(short key, short channel, short eventType, short discard);
 short waitForWave(unsigned short id, short eventType, short discard);
-short fn_415b76(unsigned short id, short eventType, short discard);
-short fn_415b96(unsigned short id, short stop);
-short fn_415bb1(char value);
+short awaitWave(unsigned short id, short eventType, short discard);
+short wavePlayingOrStop(unsigned short id, short stop);
+short waveValueReached(char value);
 short waitForWaveValue(char value, short eventType, short discard);
-short fn_415be5(char value, short eventType, short discard);
+short awaitWaveValue(char value, short eventType, short discard);
 short runWipe(basePort *to, basePort *from, const ShortRect *toRect, const ShortRect *fromRect,
               short duration, unsigned short direction, short eventType, short discard);
 void startWipe(basePort *to, basePort *from, const ShortRect *toRect, const ShortRect *fromRect,
@@ -97,8 +97,8 @@ void getDateTime(short *year, char *month, char *day, char *hour, char *minute);
 void drawOutlinedText(unsigned short outline, unsigned short color, ShortRect rect,
                       unsigned short flags, const char *text);
 void nudgeRect(ShortRect *rect, short direction);
-void fn_416754();
-long fn_417906(long);
+void resetCamp();
+long campKey(long);
 void enterCamp();
 void leaveCamp();
 void campIdle();
@@ -107,7 +107,7 @@ void campMouse(short action);
 void drawSceneButtons(short button, short pressed, short group, short show); /* 0x41790f */
 void drawSceneButtons1(View *);
 void drawSceneButtons2(View *);
-void fn_417aec(View *, short region);
+void updateCampButtons(View *, short region);
 short findCampSlot(short start, ShortRect rect, short occupied);
 void scrollCamp(View *view, short);
 void drawCamp(View *);
@@ -116,7 +116,7 @@ short campSlotsUsed();
 void insertCampRow();
 void compactCamp();
 void updateCampScroll(short stop);
-void fn_4184b7();
+void refreshCampView();
 short returnToCamp();
 
 #endif

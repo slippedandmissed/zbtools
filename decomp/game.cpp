@@ -30,7 +30,7 @@
 
 /*
  * The game's part of each pass of the main loop (WinMain registers it with
- * fn_415604; mainLoopEvents calls it): runs the current scene's frame
+ * setFrameHook; mainLoopEvents calls it): runs the current scene's frame
  * function, and every 12 ticks steps through g_4a4976 (setCursorMode; an
  * animated cursor?).
  */
@@ -118,10 +118,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     g_4aa428 = 0;
     g_4a4a0c = 1;
     g_4aa7cc = 0;
-    fn_415604(gameFrame);
-    fn_4153b0(shutDownGame);
-    fn_415a11(fn_44695c);
-    fn_456a2f(fn_4625b8);
+    setFrameHook(gameFrame);
+    setFatalHook(shutDownGame);
+    setClickHook(fn_44695c);
+    setAboutHook(fn_4625b8);
     g_4b2aec = addModifierKeys(0) != 0x800;
 
     if (osStartup(instance, osBuffer, sizeof osBuffer))
@@ -152,7 +152,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     if (!midiOutGetNumDevs())
         fatalError(msgNoMidiDevices);
 
-    fn_415910();
+    enterGameDirectory();
     fn_446962(g_4b29d4, rosterFileName);
     readWriteSavedGames(0, 0);
     strcat(userFileName, ".txt");
@@ -173,8 +173,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
 
     for (i = 0; i < 3; i++)
         fonts[i] = 0;
-    fn_46cb10(&fonts[1], "CornerStone", 13, 0);
-    fn_46cb10(&fonts[2], "CornerStone", 18, 0);
+    loadFont(&fonts[1], "CornerStone", 13, 0);
+    loadFont(&fonts[2], "CornerStone", 18, 0);
     setFont(fonts[1]);
 
     g_4b754a = 0;
@@ -195,12 +195,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         cursors[i] = 0;
         g_4b80c4[i] = 0;
         if (i) {
-            fn_46c4fe(&cursors[i], RESOURCE_TYPE('C', 'U', 'R', 'S'), i, 0, 1);
-            g_4b80c4[i] = fn_46beac(cursors[i]);
+            loadResourceAs(&cursors[i], RESOURCE_TYPE('C', 'U', 'R', 'S'), i, 0, 1);
+            g_4b80c4[i] = usedResourceHandle(cursors[i]);
             fn_48ea00(g_4b80c4[i]);
         }
     }
-    fn_46be2e(0);
+    setCurrentMap(0);
 
     long quickTimeVersion = 0;
     if (QTInitialize(&quickTimeVersion) || quickTimeVersion < 0x2300)
@@ -533,7 +533,7 @@ void shutDownGame()
 
     if (shuttingDown)
         return;
-    if (!fn_456bf6() && !g_4b754a && viewsReady && g_4b2aea && g_4afb32 && !g_4b9684
+    if (!isWindowed() && !g_4b754a && viewsReady && g_4b2aea && g_4afb32 && !g_4b9684
         && currentScene >= 1 && currentScene <= 18) {
         g_4b80e0 = 2;
         i = g_4b9684;
@@ -556,8 +556,8 @@ void shutDownGame()
         }
     }
     g_4a48e6 = shuttingDown = 1;
-    fn_415604(0);
-    fn_46bee9(1);
+    setFrameHook(0);
+    setFreeAtOnce(1);
     stopMovie(1);
     unloadSounds();
     if (graphicsBufferSize())
@@ -566,7 +566,7 @@ void shutDownGame()
         if (scenes[i]->close)
             scenes[i]->close();
     for (i = 0; i < 6; i++)
-        fn_46c602(&cursors[i]);
+        freeResource(&cursors[i]);
     if (g_4b2aea) {
         if (!g_4b754a)
             readWriteSavedGames(0, 1);
@@ -578,7 +578,7 @@ void shutDownGame()
     for (i = 0; i < 3; i++)
         freeFont(&fonts[i]);
     closeGraphics();
-    fn_415916();
+    leaveGameDirectory();
     if (soundBufferSize())
         closeSounds();
     if (iniBufferSize())
@@ -676,16 +676,16 @@ void closeScene17()
 {
     if (scene17Open) {
         scene17Open = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
-        fn_46c602(&g_4a47c8);
-        fn_46c602(&g_4b2638);
-        fn_46c602(&g_4b2650);
-        fn_46c602(&g_4b2654);
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4b278c);
+        freeResource(&g_4a47c8);
+        freeResource(&g_4b2638);
+        freeResource(&g_4b2650);
+        freeResource(&g_4b2654);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4b278c);
         fadeOutViews();
         fn_4624fc();
     }
@@ -718,7 +718,7 @@ void scene17Frame()
             if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
-                fn_46be2e(0);
+                setCurrentMap(0);
                 closeScene17();
                 inScene17Frame = 0;
                 return;
@@ -2004,7 +2004,7 @@ void drawSmokeButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        handle = fn_46beac(g_4a47c8);
+        handle = usedResourceHandle(g_4a47c8);
         lockHandle(handle);
         bank = (ImageBank *)handleData(handle);
         unsigned short *data = (unsigned short *)(swapLong(bank->offsets[image]) + (char *)bank);
@@ -4326,7 +4326,7 @@ void openScene17()
         g_4b2732 = 11012;
     }
     openGameFile(&g_4b278c, "Smoke.MHK");
-    fn_46be2e(g_4b278c);
+    setCurrentMap(g_4b278c);
     loadTerrain(100);
     drawBackdrop(5000);
     loadFeatureGroup(11000, 0, 0);
@@ -4509,7 +4509,7 @@ void scene17Clicked(short action)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene17();
         return;
     }
@@ -4543,7 +4543,7 @@ void scene17Clicked(short action)
             if (ptInRect(&dealButtonRect, where)) {
                 dealButtonState = startRound();
                 pressDealButton(11004, 1);
-                fn_465175();
+                requestViewSort();
             }
             break;
         }

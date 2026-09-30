@@ -36,7 +36,7 @@ void freeAnim(Anim **anim)
 
     if (*anim) {
         for (i = 0; i < (*anim)->castCount; i++)
-            fn_46c602(&(*anim)->cast[i]);
+            freeResource(&(*anim)->cast[i]);
         destroyPort(&(*anim)->background, 1);
         freeScript(&(*anim)->script);
         freeAndClear((void **)anim);
@@ -136,7 +136,7 @@ short stepAnim(Anim *anim)
         case 6:
             if (!anim->wait.value)
                 anim->wait.value = *(char *)operands;
-            if (fn_4120c8(anim->wait.value, MIDI)) {
+            if (soundValueReached(anim->wait.value, MIDI)) {
                 anim->wait.value = 0;
                 advance = 2;
             }
@@ -353,7 +353,7 @@ void drawSprite(Anim *anim, Sprite *sprite)
     if (sprite->image) {
         if (sprite->flags.bits.mode == 10)
             sprite->flags.bits.mode = 8;
-        handle = fn_46beac(anim->cast[sprite->image - 1]);
+        handle = usedResourceHandle(anim->cast[sprite->image - 1]);
         drawImageData((unsigned short *)lockHandle(handle), sprite->x + anim->bounds.left,
                   sprite->y + anim->bounds.top, sprite->flags.bits.mode);
         unlockHandle(handle);
@@ -370,7 +370,7 @@ void markSprite(Anim *anim, short index, short which)
     unsigned short *image;
 
     if (sprite->image) {
-        image = (unsigned short *)fn_46cafb(anim->cast[sprite->image - 1]);
+        image = (unsigned short *)resourceData(anim->cast[sprite->image - 1]);
         rect.left = sprite->x;
         rect.right = swapShort(image[0]) + rect.left;
         rect.top = sprite->y;
@@ -473,9 +473,9 @@ void setupAnim(AnimSpec *spec)
     flags = &spec->flags;
     resource = spec->idOffset + spec->id;
     loadingAnimation = 1;
-    fn_46c6db(&castInfo, spec->id, &count, name);
-    first = swapShort(*(unsigned short *)fn_46cafb(castInfo));
-    fn_46c77c(&castInfo);
+    loadShapeListInfo(&castInfo, spec->id, &count, name);
+    first = swapShort(*(unsigned short *)resourceData(castInfo));
+    freeShapeListInfo(&castInfo);
     loadingAnimation = 0;
     mainLoopEvents();
     size = (char *)&spec->anim->cast[count] - (char *)spec->anim;
@@ -490,7 +490,7 @@ void setupAnim(AnimSpec *spec)
     for (i = 0; i < 32; i++)
         resetSprite(&anim->sprites[i]);
     loadScript(&anim->script, resource, name);
-    header = fn_46cae6(anim->script);
+    header = resourceShorts(anim->script);
     anim->pc = (unsigned char *)(header + 4);
     anim->bounds.left = header[1];
     anim->bounds.top = header[0];
@@ -501,11 +501,11 @@ void setupAnim(AnimSpec *spec)
         copyBits(anim->background, anim->port, &anim->bounds);
     }
     loadCast(anim, first, name);
-    fn_46c808(&anim->unknown352, spec->id, name, 0);
-    fn_46c86c(&anim->unknown352);
+    loadPalette(&anim->unknown352, spec->id, name, 0);
+    freePalette(&anim->unknown352);
     if (spec->colorCount)
         setColors(&g_4aa7e8[spec->firstColor], spec->firstColor, spec->colorCount);
-    fn_46c88c(&anim->sounds, resource, name);
+    loadSoundList(&anim->sounds, resource, name);
 }
 
 /*
@@ -556,7 +556,7 @@ void loadCast(Anim *anim, short first, const char *name)
     }
     for (i = 0; i < anim->castCount; i++) {
         if (used[i])
-            fn_46c148(&anim->cast[i], first, i + 1, name);
+            loadShapeMember(&anim->cast[i], first, i + 1, name);
         else
             anim->cast[i] = 0;
     }
@@ -588,17 +588,17 @@ short playAnim(AnimSpec *spec)
         mainLoopEvents();
     if (INTERRUPTED && spec->flags.finishOnInterrupt)
         skipAnim(anim, 0x7fff);
-    sounds = fn_46beac(anim->sounds);
+    sounds = usedResourceHandle(anim->sounds);
     count = i = *(short *)handleData(sounds); /* (through i, as the original does) */
     for (i = 0; i < count; i++) {
         if (INTERRUPTED)
             stopSounds(stopped = ((unsigned short *)handleData(sounds))[i + 1], SOUND);
         else
-            fn_411e4c(left = ((unsigned short *)handleData(sounds))[i + 1], SOUND);
+            endSoundLoops(left = ((unsigned short *)handleData(sounds))[i + 1], SOUND);
     }
     if (spec->flags.waitForSounds)
         for (i = 0; i < count; i++)
-            while (fn_4120a2(waited = ((unsigned short *)handleData(sounds))[i + 1], SOUND, INTERRUPTED))
+            while (soundPlayingOrStop(waited = ((unsigned short *)handleData(sounds))[i + 1], SOUND, INTERRUPTED))
                 mainLoopEvents();
     spritesBounds(anim, &animArea);
     if (spec->flags.restoreBackground && anim->background) {
@@ -612,11 +612,11 @@ short playAnim(AnimSpec *spec)
 /* @zoombi32 0x004110fd */
 void freeAnimSpec(AnimSpec *spec)
 {
-    fn_46c77c(&castInfo);
+    freeShapeListInfo(&castInfo);
     if (spec->anim) {
-        fn_46c86c(&spec->anim->unknown352);
-        fn_46c970(&spec->anim->sounds);
-        fn_46c77c(&spec->anim->unknown34e);
+        freePalette(&spec->anim->unknown352);
+        freeSoundListNow(&spec->anim->sounds);
+        freeShapeListInfo(&spec->anim->unknown34e);
         freeAnim(&spec->anim);
     }
 }
@@ -625,7 +625,7 @@ void freeAnimSpec(AnimSpec *spec)
 /* @zoombi32 0x00411145 */
 void restartAnim(Anim *anim, short run)
 {
-    anim->pc = (unsigned char *)fn_46cafb(anim->script) + 8;
+    anim->pc = (unsigned char *)resourceData(anim->script) + 8;
     anim->frameTicks = 0;
     anim->frame = 0;
     anim->drawn = 0;
@@ -649,7 +649,7 @@ void runFrame(Anim *anim)
 void loadScript(long *script, short id, const char *name)
 {
     joinText(&scriptText, name, "script");
-    fn_46c4fe(script, RESOURCE_TYPE(0, 'S', 'C', 'R'), id, scriptText, 1);
+    loadResourceAs(script, RESOURCE_TYPE(0, 'S', 'C', 'R'), id, scriptText, 1);
     freeText((void **)&scriptText);
 }
 
@@ -657,11 +657,11 @@ void loadScript(long *script, short id, const char *name)
 void freeScript(long *script)
 {
     freeText((void **)&scriptText);
-    fn_46c602(script);
+    freeResource(script);
 }
 
 /* @zoombi32 0x00411212 */
-short fn_411212()
+short animAlwaysTrue()
 {
     return 1;
 }
@@ -693,7 +693,7 @@ void spritesBounds(Anim *anim, ShortRect *into)
     for (i = 0; i < 32; i++) {
         sprite = &anim->sprites[i];
         if (sprite->image) {
-            image = (unsigned short *)fn_46cafb(anim->cast[sprite->image - 1]);
+            image = (unsigned short *)resourceData(anim->cast[sprite->image - 1]);
             rect.left = sprite->x;
             rect.top = sprite->y;
             rect.right = swapShort(image[0]) + rect.left;

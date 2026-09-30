@@ -562,13 +562,13 @@ void closeNet()
 {
     if (g_4b12a8) {
         g_4b12a8 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
-        fn_46c602(&g_4a2e54);
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4b12a4);
+        freeResource(&g_4a2e54);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4b12a4);
         fadeOutViews();
         fn_4624fc();
     }
@@ -661,7 +661,7 @@ void openNet()
     fillMemory(g_4b13cc, 0, 50);
     unloadSounds();
     openGameFile(&g_4b12a4, "Net.MHK");
-    fn_46be2e(g_4b12a4);
+    setCurrentMap(g_4b12a4);
     drawBackdrop((netLevel >= 2) + 5000);
     loadFeatureGroup(7000, 0, 1);
     loadFeatureGroup(8000, 1, 0);
@@ -1565,7 +1565,7 @@ void playAmbientSound()
                 ambientSoundCount %= 16;
                 if (!ambientSoundCount)
                     for (i = 900; i <= 944; i++)
-                        fn_41158c(i, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                        unloadSoundNow(i, RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 queueViewSound(sound, 0);
                 ambientSound = sound;
             }
@@ -2243,7 +2243,7 @@ void netFrame()
             if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
-                fn_46be2e(0);
+                setCurrentMap(0);
                 closeNet();
                 g_4a2ea8 = 0;
                 return;
@@ -2492,7 +2492,7 @@ void netClicked(short button)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeNet();
         return;
     }

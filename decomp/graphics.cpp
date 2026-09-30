@@ -93,7 +93,7 @@ void drawImage(ResourceList *images, short index, short x, short y, short mode, 
     short width, height;
 
     if (index > 0) {
-        handle = fn_46beac(images->resources[index - 1]);
+        handle = usedResourceHandle(images->resources[index - 1]);
         image = (unsigned short *)lockHandle(handle);
         if (anchor != 0x11) {
             width = swapShort(image[0]);

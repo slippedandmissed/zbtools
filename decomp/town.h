@@ -16,9 +16,9 @@ extern short g_4b7cf4; /* @data 0x4b7cf4: the scene is open */
 extern unsigned short g_4b7cf6; /* @data 0x4b7cf6 */
 extern unsigned long g_4b7efc; /* @data 0x4b7efc: when the clock was read (ticks) */
 extern short g_4b7e10; /* @data 0x4b7e10 */
-extern short g_4b7ece[20]; /* @data 0x4b7ece: views (negated once notified, fn_45e29e) */
-extern short g_4b7f02; /* @data 0x4b7f02: party views to set running (fn_45ccca) */
-extern short g_4b7f10; /* @data 0x4b7f10: views notified (fn_45e29e) */
+extern short g_4b7ece[20]; /* @data 0x4b7ece: views (negated once notified, townsfolkNotify) */
+extern short g_4b7f02; /* @data 0x4b7f02: party views to set running (setTownRunning) */
+extern short g_4b7f10; /* @data 0x4b7f10: views notified (townsfolkNotify) */
 
 extern long g_4a74c4; /* @data 0x4a74c4 */
 extern ImageBank *g_4a74c8; /* @data 0x4a74c8: the buttons' images */
@@ -49,7 +49,7 @@ extern unsigned long g_4b7f08; /* @data 0x4b7f08 */
 extern unsigned long g_4b7f0c; /* @data 0x4b7f0c */
 extern short g_4b7f12; /* @data 0x4b7f12: townspeople still to add */
 
-extern Point g_4a74de[16]; /* @data 0x4a74de: the groups' hotspots (fn_45db25) */
+extern Point g_4a74de[16]; /* @data 0x4a74de: the groups' hotspots (placeRecordHotspots) */
 extern unsigned char g_4b7f14; /* @data 0x4b7f14: the clock's minute hand when winding started */
 extern unsigned char g_4b7f15; /* @data 0x4b7f15: and hour hand */
 
@@ -95,7 +95,7 @@ void setTownFrames(short frame);
 void drawPlaque(View *view);
 void scene0Frame();
 void drawClock(View *view);
-void fn_45db25(View *view);
+void placeRecordHotspots(View *view);
 short scene0Key(unsigned short key);
 void resetScene6();
 void drawTownButtons(View *);
@@ -104,13 +104,13 @@ void closeScene0();
 void scrollTown(short left);
 void drawTownButton(short which, short lit, short show);
 void closeScene6();
-void fn_45d715(Point *where);
+void findTownHotspot(Point *where);
 void scene0Clicked(short which);
-void fn_45c4c9();
-void fn_45ccca(short running);
-void fn_45cf8b(View *view, short region);
-short fn_45d04c();
-void fn_45daf7(View *view);
-void fn_45e29e(View *view, short event);
+void readClock();
+void setTownRunning(short running);
+void updateTownButton(View *view, short region);
+short townScript();
+void placeTownCels(View *view);
+void townsfolkNotify(View *view, short event);
 
 #endif

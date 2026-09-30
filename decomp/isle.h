@@ -6,22 +6,22 @@
 #ifndef ISLE_H
 #define ISLE_H
 
-short fn_44027b(short group, short feature);
+short isleAllowsFeature(short group, short feature);
 extern short g_4b15ae;
 extern ImageBank *g_4b159c;
 extern char g_4a3386[];
 extern char g_4a339c[];
 extern short g_4b15b0;
 extern short g_4b15b2;
-void fn_440286();
-void fn_43f985(short which, short x, short y);
-void fn_440218();
+void checkEnoughChosen();
+void drawIsleImage(short which, short x, short y);
+void addIsleSettingViews();
 extern short g_4b15ac;
 extern short g_4b15b6;
 extern short g_4b15b8;
 void resetZoombiniMade();
 short zoombiniMadeAllowed();
-void fn_43ff1d(short keep);
+void showIsleSetting(short keep);
 extern short g_4b15a4; /* the scene is open */
 extern long g_4b1590;
 extern long g_4b158c;
@@ -33,9 +33,9 @@ extern ImageBank *g_4b1598;
 void drawFeatureButtons(short which, short lit, ShortRect *bounds);
 extern short g_4a33b2;
 extern short g_4a33b4;
-void fn_43fc9a(View *, short region);
+void updateIsleButtons(View *, short region);
 extern Point g_4a3324[16];
-void fn_43ffd5(Point *where, short *slot);
+void isleQueue(Point *where, short *slot);
 short isleKey(unsigned short key);
 short leaveIsleIfAsked();
 extern short isleBusy; /* @data 0x4a336c */

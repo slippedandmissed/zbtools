@@ -41,7 +41,7 @@ void loadSnoids(short files)
     if (files) {
         openGameFile(&g_4b7b50, "MidiMPC.MHK");
         openGameFile(&g_4b7b4c, "Zoombini.MHK");
-        fn_46be2e(g_4b7b4c);
+        setCurrentMap(g_4b7b4c);
     } else {
         snoidImages = loadImageBank(3000, &snoidImagesResource);
         snoidImages2 = loadImageBank(3100, &snoidImages2Resource);
@@ -60,7 +60,7 @@ void loadSnoids(short files)
 /* @zoombi32 0x00456d3b */
 void closeSnoids()
 {
-    short saved = fn_46bee9(1);
+    short saved = setFreeAtOnce(1);
 
     if (g_4a4ba0) {
         disposePtr(g_4a4ba0);
@@ -71,12 +71,12 @@ void closeSnoids()
     useAltSnoids(1);
     freeBaseSnoidScripts();
     freeSnoidTables();
-    fn_46c602(&snoidImagesResource);
-    fn_46c602(&snoidImages2Resource);
-    fn_46c602(&snoidImages3Resource);
-    fn_46bee9(saved);
-    fn_46ca9c(&g_4b7b4c);
-    fn_46ca9c(&g_4b7b50);
+    freeResource(&snoidImagesResource);
+    freeResource(&snoidImages2Resource);
+    freeResource(&snoidImages3Resource);
+    setFreeAtOnce(saved);
+    closeGameFile(&g_4b7b4c);
+    closeGameFile(&g_4b7b50);
 }
 
 /* Loads a table of big-endian words ('REGS'), swapping them. */
@@ -88,8 +88,8 @@ short *loadShortTable(short id, long *resource)
     short *data;
 
     *resource = 0;
-    fn_46c4fe(resource, RESOURCE_TYPE('R', 'E', 'G', 'S'), id, 0, 1);
-    handle = fn_46beac(*resource);
+    loadResourceAs(resource, RESOURCE_TYPE('R', 'E', 'G', 'S'), id, 0, 1);
+    handle = usedResourceHandle(*resource);
     at = (short *)fn_48ea00(handle);
     data = at;
     for (unsigned long size = handleSize(handle); size; size -= 2) {
@@ -103,7 +103,7 @@ short *loadShortTable(short id, long *resource)
 void freeSnoidTables()
 {
     for (short i = 0; i < 4; i++)
-        fn_46c602(&snoidTableResources[i]);
+        freeResource(&snoidTableResources[i]);
 }
 
 /* How many Zoombinis' views run with unknownF7 set. */
@@ -145,7 +145,7 @@ void loadBaseSnoidScripts()
 void freeBaseSnoidScripts()
 {
     for (short i = 0; i < 51; i++)
-        fn_46c602(&baseSnoidScriptResources[i]);
+        freeResource(&baseSnoidScriptResources[i]);
 }
 
 /* Loads `count` Zoombini scripts from id `first` as the first group,
@@ -251,7 +251,7 @@ void loadSnoidScript(short id)
 void freeSnoidScripts()
 {
     for (short i = 0; i < 110; i++)
-        fn_46c602(&snoidScriptResources[i]);
+        freeResource(&snoidScriptResources[i]);
     snoidScriptGroups = 0;
     g_4b7564 = 0;
 }
@@ -1138,8 +1138,8 @@ void loadPaths(short id)
     short handle;
 
     pathNodes = (PathNodes *)loadSwappedResource(&pathNodesResource, id, RESOURCE_TYPE('N', 'O', 'D', 'E'));
-    fn_46c4fe(&pathsResource, RESOURCE_TYPE('P', 'A', 'T', 'H'), id, 0, 1);
-    handle = fn_46beac(pathsResource);
+    loadResourceAs(&pathsResource, RESOURCE_TYPE('P', 'A', 'T', 'H'), id, 0, 1);
+    handle = usedResourceHandle(pathsResource);
     paths = (Paths *)fn_48ea00(handle);
     swapInPlace(paths->count);
 }
@@ -1147,8 +1147,8 @@ void loadPaths(short id)
 /* @zoombi32 0x004591cc */
 void freePaths()
 {
-    fn_46c602(&pathsResource);
-    fn_46c602(&pathNodesResource);
+    freeResource(&pathsResource);
+    freeResource(&pathNodesResource);
     paths = 0;
     pathNodes = 0;
     g_4a4b9c = 0;
@@ -1972,7 +1972,7 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
             g_4b7bda = ++g_4b7bda % 32;
             if (!g_4b7bda)
                 for (sound = 100; sound <= 424; sound++)
-                    fn_41158c(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                    unloadSoundNow(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
             queueViewSound(snoidSound(snoid, which), 0);
         }
         break;
@@ -2512,7 +2512,7 @@ void useAltSnoids(short restore)
                 hairImages[i] = savedHairImages[i];
             }
             for (i = 0; i < 3; i++)
-                fn_46c602(&altSnoidResources[i]);
+                freeResource(&altSnoidResources[i]);
         }
     } else if (!altSnoids) {
         altSnoids = 1;
@@ -2529,13 +2529,13 @@ void useAltSnoids(short restore)
             eyesImages[i] = otherEyesImages[i];
             hairImages[i] = otherHairImages[i];
         }
-        long saved = g_4a7f58;
+        long saved = currentMapFile;
 
-        fn_46be2e(g_4b7b4c);
+        setCurrentMap(g_4b7b4c);
         snoidImages = loadImageBank(0xc80, &altSnoidResources[0]);
         snoidTables[0] = loadShortTable(0xc80, &altSnoidResources[1]);
         snoidTables[1] = loadShortTable(0xc81, &altSnoidResources[2]);
-        g_4a7f58 = saved;
+        currentMapFile = saved;
     }
 }
 

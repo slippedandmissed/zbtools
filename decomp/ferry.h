@@ -82,14 +82,14 @@ void layOutFerry(short id);
 void layOutFerryLevel();
 void linkFerryPlaces(short draw);
 void findFerryPlace(short *spot);
-void fn_420f85(short n);
-void fn_420a60(View *view, short event);
+void startNextCrosser(short n);
+void crosserNotify(View *view, short event);
 void drawFerryButton(short which, short lit, short show);
-void fn_41fea4(View *, short region);
+void updateFerryButtons(View *, short region);
 void closeScene10();
-void fn_4209b8();
-void fn_420a08(short group, short script, ViewNotify notify, char unknownF8);
-void fn_420c82(View *view, short event);
-void fn_42113f(View *, short dx);
+void moveFerryOn();
+void startCrosserScript(short group, short script, ViewNotify notify, char unknownF8);
+void ferryHelperNotify(View *view, short event);
+void slideFerryViews(View *, short dx);
 
 #endif

@@ -44,7 +44,7 @@ inline unsigned long swapLong(unsigned long value)
    constants put the bytes the other way round in Borland C++). */
 #define RESOURCE_TYPE(a, b, c, d) (((long)(a) << 24) | ((long)(b) << 16) | ((long)(c) << 8) | (d))
 
-/* A function registered to be called back later (e.g. by fn_415604). */
+/* A function registered to be called back later (e.g. by setFrameHook). */
 class basePort;
 class Palette;
 class Font;
@@ -701,14 +701,14 @@ struct MemoryInfo
 };
 
 /* A loaded sound (wave or MIDI), in the list at g_4a00a0. */
-struct Entry
+struct SoundEntry
 {
     short type; /* 0 a wave, 1 MIDI (see soundTypes) */
     short unknown2; /* which way loadSound loads it */
     short key;
     long handle; /* the engine's */
     long unknownA; /* its resource, for loadSound */
-    Entry *next;
+    SoundEntry *next;
 };
 
 /* One of a sound type's 4 channels. */
@@ -719,7 +719,7 @@ struct SoundChannel
     unsigned short started;
 };
 
-/* What the engine tells a sound's owner (fn_411d2c). */
+/* What the engine tells a sound's owner (soundNoticeCallback). */
 struct SoundNotice
 {
     unsigned short what; /* 0 a value (in data), 1 finished */
@@ -977,15 +977,15 @@ extern SoundChannel soundChannels[2][4]; /* @data 0x4a00aa */
 extern char emptyString[]; /* @data 0x4a01b8 */
 extern char msgPrematureExit[]; /* @data 0x4a026d */
 extern char msgNoScreenPort[]; /* @data 0x4a0313: graphics and placeGamePort share it */
-extern const char *g_4a07b4; /* the message for a fatal error */
-extern Callback g_4a07e8;
-extern Callback g_4a07ec; /* draws the window's contents, if set */
+extern const char *usualFatalMessage; /* the message for a fatal error */
+extern Callback clickHook;
+extern Callback paintHook; /* draws the window's contents, if set */
 extern Scene *scenes[]; /* @data 0x4a26e8 */
 extern char installFromDirKey[]; /* @data 0x4a3f06 */
 extern char userFileName[]; /* @data 0x4a4900 */
 extern char rosterFileName[]; /* @data 0x4a4920 */
 extern short g_4a4974;
-extern void (*g_4a4a00)(short active); /* told when the window is (de)activated */
+extern void (*gameActivateHook)(short active); /* told when the window is (de)activated */
 extern HWND mainWindow; /* @data 0x4a4a04 */
 extern char *appName; /* @data 0x4a4a08 */
 extern short g_4a4a0c;
@@ -1062,7 +1062,7 @@ extern char msgOutOfMemory[]; /* @data 0x4a5063 */
 extern char *levelTexts[24]; /* @data 0x4a530c */
 extern unsigned long lastClickTime; /* @data 0x4a79c4 */
 extern short viewsSorted; /* @data 0x4a7b94: sort the views on the next update */
-extern long g_4a7f58;
+extern long currentMapFile;
 extern DeferLock *locks; /* @data 0x4a8dcc */
 extern short loadWholeCast; /* @data 0x4aa410 */
 extern short g_4aa428;

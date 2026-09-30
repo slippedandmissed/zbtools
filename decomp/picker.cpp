@@ -35,7 +35,7 @@ void openScene1()
     addSoundRange(20000, 29999, 1);
     party()->count = 0;
     openGameFile(&g_4afb10, "Map.MHK");
-    fn_46be2e(g_4afb10);
+    setCurrentMap(g_4afb10);
     drawBackdrop(300);
     port = getPort();
     setPort(viewPort);
@@ -69,11 +69,11 @@ void openScene1()
     fadeInViews();
     g_4afb14 = 1;
     g_4a7410 = 0;
-    saved = g_4a7f58;
-    fn_46be2e(g_4b7b4c);
+    saved = currentMapFile;
+    setCurrentMap(g_4b7b4c);
     loadSoundByKey(998, RESOURCE_TYPE(0, 'S', 'N', 'D'));
     loadSoundByKey(999, RESOURCE_TYPE(0, 'S', 'N', 'D'));
-    g_4a7f58 = saved;
+    currentMapFile = saved;
 }
 
 /* A view's placed callback: with interval 2, shows the image before its
@@ -129,7 +129,7 @@ void openScene19()
     pickerData.game.streak = 0;
     g_4afb68 = 0;
     openGameFile(&g_4afb10, "Picker.MHK");
-    fn_46be2e(g_4afb10);
+    setCurrentMap(g_4afb10);
     drawBackdrop(1001);
     loadFeatureGroup(1100, 0, 0);
     loadFeatureGroup(1200, 1, 1);
@@ -168,13 +168,13 @@ void closeScene19()
     if (g_4afb14) {
         showCursor();
         g_4afb14 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         removeDeadViews();
         clearViews();
         unloadSounds();
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4afb10);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4afb10);
         fadeOutViews();
         fn_4624fc();
     }
@@ -202,7 +202,7 @@ void openScene20()
     shotsStarted = firstShotStopped = targetHit = targetBursting = 0;
     g_4afb14 = 0;
     openGameFile(&g_4afb10, "Picker.MHK");
-    fn_46be2e(g_4afb10);
+    setCurrentMap(g_4afb10);
     drawBackdrop(2000);
     loadFeatureGroup(1000, 0, 1);
     loadScripts(1000, 31);
@@ -231,15 +231,15 @@ void closeScene20()
 {
     if (g_4afb14) {
         g_4a4b98 = g_4afbb8;
-        fn_465175();
+        requestViewSort();
         g_4afb14 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         removeDeadViews();
         clearViews();
         unloadSounds();
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4afb10);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4afb10);
         fadeOutViews();
         fn_4624fc();
     }
@@ -256,7 +256,7 @@ void showMapBox()
 
 /* A notify: 0 deletes the view caught (pickerData.game.caught); at the end
    (-1), g_4afb3a (2
-   calls fn_465175) is cleared. */
+   calls requestViewSort) is cleared. */
 /* @zoombi32 0x00431e5e */
 void caughtNotify(View *, short event)
 {
@@ -270,7 +270,7 @@ void caughtNotify(View *, short event)
         break;
     case -1:
         if (g_4afb3a == 2)
-            fn_465175();
+            requestViewSort();
         g_4afb3a = 0;
         break;
     }
@@ -804,7 +804,7 @@ void targetsClicked(short which)
     switch (which) {
     case 1:
         g_4b0d50 = 1;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene20();
         break;
     }
@@ -1203,7 +1203,7 @@ void closeScene1()
 
     if (g_4afb14) {
         g_4afb14 = 0;
-        saved = fn_46bee9(1);
+        saved = setFreeAtOnce(1);
         if (!g_4b754a && !viewsLocked) {
             viewsLocked = 1;
             *(short *)(g_4a4ba0 + 0xa92e) = 0;
@@ -1239,8 +1239,8 @@ void closeScene1()
         for (i = 0; i < 6; i++)
             freeSave(&g_4afb18[i]);
         unloadSounds();
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4afb10);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4afb10);
         fadeOutViews();
         fn_4624fc();
     }
@@ -1710,7 +1710,7 @@ void scene1Frame()
         if (g_4b0d52) {
             g_4b0d50 = g_4b0d52;
             g_4b0d52 = 0;
-            fn_46be2e(0);
+            setCurrentMap(0);
             closeScene1();
         }
         g_4a2008 = 0;
@@ -1886,7 +1886,7 @@ short scene1Key(unsigned short key)
         if (key >= 'a' && key <= 'p') {
             g_4a7e68 = key - 0x60;
             g_4b0d50 = 7;
-            fn_46be2e(0);
+            setCurrentMap(0);
             closeScene1();
             return 1;
         }
@@ -1987,7 +1987,7 @@ void scene19Clicked(short)
     getCursorPosition(&where);
     if (ptInRect(&pickerData.game.leave, where)) {
         g_4b0d50 = 1;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene19();
         return;
     }
@@ -2222,7 +2222,7 @@ void scene1Clicked(short which)
         queueViewSound(998, 0);
         waitForEventFor(0, 2, 0, 1);
         g_4b0d50 = scene;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene1();
     }
 }

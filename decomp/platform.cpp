@@ -148,17 +148,17 @@ char *unsignedToDecimal(unsigned long value, char *buffer)
 }
 
 /* @zoombi32 0x00455e26 */
-void fn_455e26(long)
+void unusedPlatformHook1(long)
 {
 }
 
 /* @zoombi32 0x00455e2d */
-void fn_455e2d(long)
+void unusedPlatformHook2(long)
 {
 }
 
 /* @zoombi32 0x00455e85 */
-short fn_455e85(Point *, short)
+short platformHandlesMouse(Point *, short)
 {
     return 0;
 }
@@ -300,26 +300,26 @@ void releaseControlKeys()
 }
 
 /* @zoombi32 0x00456a2f */
-void fn_456a2f(Callback callback)
+void setAboutHook(Callback callback)
 {
-    g_4a4a14 = callback;
+    aboutHook = callback;
 }
 
 /* @zoombi32 0x00456a3e */
-void fn_456a3e(long first, long second)
+void setPlatformPair(long first, long second)
 {
     g_4a4a18 = first;
     g_4a4a1c = second;
 }
 
 /* @zoombi32 0x00456a55 */
-void fn_456a55(void (*callback)(short active))
+void setGameActivateHook(void (*callback)(short active))
 {
-    g_4a4a00 = callback;
+    gameActivateHook = callback;
 }
 
 /* @zoombi32 0x00456bf6 */
-short fn_456bf6()
+short isWindowed()
 {
     return windowed;
 }
@@ -459,7 +459,7 @@ void restoreDirectory()
 }
 
 /* @zoombi32 0x004568d8 */
-short fn_4568d8()
+short realizeFullScreenPalette()
 {
     if (!windowed && palette) {
         if (realizePalette(palette, 1))
@@ -535,7 +535,7 @@ short isInputWaiting(short which)
  * cursor ones are logged before and after (logMessage), and clear g_4b2b00
  * unless they're keys. Keys and clicks become game events; closing the
  * window, or the session ending, is a fatal error (it quits); the window is
- * repainted by g_4a07ec (or showRect) and blacked out around it.
+ * repainted by paintHook (or showRect) and blacked out around it.
  */
 /* @zoombi32 0x0045605e */
 LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
@@ -563,8 +563,8 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     switch (message) {
     case WM_SETCURSOR:
         hitTest = LOWORD(lParam);
-        if (hitTest == HTCLIENT && g_4a07e8) {
-            g_4a07e8();
+        if (hitTest == HTCLIENT && clickHook) {
+            clickHook();
             return 1;
         }
         break;
@@ -605,7 +605,7 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     case WM_SETFOCUS:
         windowed = 0;
         setTakeStatic(g_4aa7ce);
-        fn_4568d8();
+        realizeFullScreenPalette();
         activateApp(1);
         g_4b2d3a = 0;
         if (g_4b2d40) {
@@ -631,8 +631,8 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     case WM_ACTIVATE:
         if (!g_4b2d34) {
             active = LOWORD(wParam);
-            if (g_4a4a00)
-                g_4a4a00(active != WA_INACTIVE);
+            if (gameActivateHook)
+                gameActivateHook(active != WA_INACTIVE);
         }
         break;
     case WM_SYSCOMMAND:
@@ -656,12 +656,12 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     case WM_ENDSESSION:
         if (!g_4b2d32) {
             g_4b2d32 = 1;
-            fatalError(g_4a07b4);
+            fatalError(usualFatalMessage);
         }
         return 0;
     case WM_PALETTECHANGED:
         if ((HWND)wParam != mainWindow)
-            fn_4568d8();
+            realizeFullScreenPalette();
         break;
     case WM_QUERYNEWPALETTE:
         return 1;
@@ -672,8 +672,8 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
         if (screenPort && workPort) {
             setPort(screenPort);
             beginPortUpdate();
-            if (g_4a07ec)
-                g_4a07ec();
+            if (paintHook)
+                paintHook();
             else
                 showRect(&gameRect);
             endPortUpdate();
@@ -814,17 +814,17 @@ void activateApp(long active)
                 if (MessageBox(mainWindow, "Sound driver missing or unavailable.", appName,
                                MB_RETRYCANCEL)
                     == IDCANCEL)
-                    fatalError(g_4a07b4);
+                    fatalError(usualFatalMessage);
             runClock(1);
             g_4b2d34 = 0;
             g_4b2d30 = 1;
             g_4a4a10 = 1;
             if (g_4a4a10)
-                fn_456b2e(1);
+                gameActivated(1);
         } else {
             g_4a4a10 = 0;
             if (!g_4a4a10)
-                fn_456b2e(0);
+                gameActivated(0);
             g_4b2d34 = 1;
             runClock(0);
             setSoundsActive(0);
@@ -877,7 +877,7 @@ void placeGamePort()
 /* Draws the palette as a chart of 8-pixel squares, 32 to a row, keeping the
    current colour. */
 /* @zoombi32 0x00456a64 */
-void fn_456a64()
+void drawPaletteChart()
 {
     ShortRect cell;
     ShortRect saved;
@@ -901,7 +901,7 @@ void fn_456a64()
    fillPortRect) when g_4b2ad4 and g_4b2ad8 are set; deactivating calls
    stopMovie then, and clears the area. */
 /* @zoombi32 0x00456b2e */
-void fn_456b2e(short active)
+void gameActivated(short active)
 {
     if (screenPort) {
         if (active) {

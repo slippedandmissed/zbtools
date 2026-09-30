@@ -22,7 +22,7 @@
 /* @zoombi32 0x00418698 */
 void resetScene5()
 {
-    g_4ab650 = g_4ab652 = g_4b0d52 = 0;
+    bookView = g_4ab652 = g_4b0d52 = 0;
     g_4ab662 = g_4ab668 = g_4ab664 = 0;
     g_4ab64a = 0;
     g_4ab666 = 1;
@@ -53,13 +53,13 @@ void openScene5()
     addSoundRange(20000, 29999, 1);
     addSoundRange(2000, 2099, 0);
     addSoundRange(6000, 6099, 1);
-    g_4ab64c = (CampEntries *)(g_4a4ba0 + 0x3688);
-    g_4ab640 = g_4ab64c->row;
-    g_4ab646 = g_4ab64c->count;
-    g_4ab648 = fn_419f1a();
-    fn_419e49(-1);
+    bookEntries = (CampEntries *)(g_4a4ba0 + 0x3688);
+    bookRow = bookEntries->row;
+    bookCount = bookEntries->count;
+    bookHighest = lastBookEntry();
+    countBookEntry(-1);
     openGameFile(&g_4ab658, "bctwo.mhk");
-    fn_46be2e(g_4ab658);
+    setCurrentMap(g_4ab658);
     loadPaths(1000);
     loadDragCursors(10000);
     loadTerrain(100);
@@ -68,11 +68,11 @@ void openScene5()
     loadFeatureGroup(7000, 1, 0);
     loadScripts(6000, 14);
     addScripts(7000, 16, 0);
-    fn_46c011(&g_4a0ac0, 8000, 0, 1);
-    fn_46c011(&g_4a0ac4, 9000, 0, 1);
-    g_4ab650 = addView(0xc000, fn_419c3a, fn_419a59, 0, 6, 0, 0, 0);
-    addView(0x9000, fn_419853, 0, 0, 0, 0, 0, 0);
-    addView(0x1000, fn_41983f, fn_419867, 0, 0, 0, 0, 0);
+    loadShapeList(&g_4a0ac0, 8000, 0, 1);
+    loadShapeList(&g_4a0ac4, 9000, 0, 1);
+    bookView = addView(0xc000, drawBook, scrollBook, 0, 6, 0, 0, 0);
+    addView(0x9000, drawCamp2Buttons2, 0, 0, 0, 0, 0, 0);
+    addView(0x1000, drawCamp2Buttons1, updateCamp2Button0, 0, 0, 0, 0, 0);
     for (n = 0; n < 16; n++)
         placedViews[n] = addView(0x108a000, drawCels, runViewScript, n + 7000, 7, &places[n], 0, 0);
     g_4ab66a[9] = addView(0x5188000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
@@ -97,14 +97,14 @@ void openScene5()
     waitingParties()[2].unknown4 = 1;
     if (n) {
         if (!party()->unknown2 && fn_4572bf()) {
-            highest = g_4ab648;
-            m = fn_41a23b();
-            g_4ab646 += fn_4572bf();
-            g_4ab648 = fn_419f1a();
-            fn_419e49(-1);
+            highest = bookHighest;
+            m = addPartyToBook();
+            bookCount += fn_4572bf();
+            bookHighest = lastBookEntry();
+            countBookEntry(-1);
             if (m) {
-                g_4ab640 = (highest + 1) / 5 % g_4ab642;
-                fn_419e49(-1);
+                bookRow = (highest + 1) / 5 % bookRows;
+                countBookEntry(-1);
             }
             party()->unknown2 = 1;
         }
@@ -122,16 +122,16 @@ void openScene5()
     if (g_4ab67e) {
         short count = countChosenSnoids();
 
-        g_4ab65c = count
+        enoughChosen = count
                    && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c)
                               + waitingParties()[0].count
                           <= count;
-        g_4ab65e = g_4ab65c;
+        g_4ab65e = enoughChosen;
     } else
-        g_4ab65e = g_4ab65c = countChosenSnoids() >= 16;
+        g_4ab65e = enoughChosen = countChosenSnoids() >= 16;
     setGroupLists(campGroups, 2, (short)0xc000);
     highlightItemAt(1, 1);
-    fn_4196b1(0, 0, 0, 0);
+    drawCamp2Button(0, 0, 0, 0);
     showRect(&g_4aa7b8);
     fadeInViews();
     g_4ab660 = 1;
@@ -192,7 +192,7 @@ void closeScene5()
 
     if (g_4ab660) {
         g_4ab660 = 0;
-        saved = fn_46bee9(1);
+        saved = setFreeAtOnce(1);
         clearViews();
         if (!viewsLocked) {
             if (g_4a48e6 || g_4b0d50 == 1) {
@@ -208,14 +208,14 @@ void closeScene5()
                 party()->unknown4 = 1;
                 *(short *)(g_4a4ba0 + 0x4c) -= fn_4572bf();
             }
-            fn_41a024();
-            fn_419e49(-1);
+            dropEmptyBookRows();
+            countBookEntry(-1);
         }
         unloadSounds();
-        fn_46c2db(&g_4a0ac4);
-        fn_46c2db(&g_4a0ac0);
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4ab658);
+        freeShapeList(&g_4a0ac4);
+        freeShapeList(&g_4a0ac0);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4ab658);
         fadeOutViews();
         fn_4624fc();
     }
@@ -244,7 +244,7 @@ void scene5Frame()
         if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
             g_4b0d50 = g_4b0d52;
             g_4b0d52 = 0;
-            fn_46be2e(0);
+            setCurrentMap(0);
             closeScene5();
         }
     } else {
@@ -269,7 +269,7 @@ void scene5Frame()
 }
 
 /* Scene 5's clicks: once a scene is due, leaves for it; 1 leaves for
-   the map (scene 16) when g_4ab65c, else says a line; 3 leaves for scene
+   the map (scene 16) when enoughChosen, else says a line; 3 leaves for scene
    1; 4-7 scroll the book while held. */
 /* @zoombi32 0x00418fa7 */
 void scene5Clicked(short which)
@@ -279,18 +279,18 @@ void scene5Clicked(short which)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene5();
         return;
     }
     getCursorPosition(&where);
     switch (which) {
     case 1:
-        if (g_4ab65c) {
+        if (enoughChosen) {
             queueViewSound(996, 0);
-            fn_4196b1(which, 1, 0, 1);
+            drawCamp2Button(which, 1, 0, 1);
             waitForEventFor(0, 2, 0, 1);
-            fn_4196b1(which, 0, 0, 1);
+            drawCamp2Button(which, 0, 0, 1);
             markPlacedSnoids();
             sendSnoids(680, 316, 45);
             g_4b0d52 = 16;
@@ -309,9 +309,9 @@ void scene5Clicked(short which)
         break;
     case 3:
         queueViewSound(999, 0);
-        fn_4196b1(which, 1, 0, 1);
+        drawCamp2Button(which, 1, 0, 1);
         waitForEventFor(0, 2, 0, 1);
-        fn_4196b1(which, 0, 0, 1);
+        drawCamp2Button(which, 0, 0, 1);
         g_4b0d50 = 1;
         closeScene5();
         break;
@@ -320,15 +320,15 @@ void scene5Clicked(short which)
     case 6:
     case 7:
         g_4ab64a = which;
-        fn_4196b1(which, 1, 0, 1);
+        drawCamp2Button(which, 1, 0, 1);
         do {
-            g_4a0abc = which - 3;
-            fn_41a11b(0, 0);
+            scrollPressed = which - 3;
+            lightScrollButton(0, 0);
             mainLoopEvents();
         } while (isButtonStillDown(1));
-        fn_41a11b(1, 0);
+        lightScrollButton(1, 0);
         g_4ab64a = 0;
-        fn_4196b1(which, 0, 0, 1);
+        drawCamp2Button(which, 0, 0, 1);
         break;
     }
 }
@@ -337,10 +337,10 @@ void scene5Clicked(short which)
    of the book (taken from its entry) or one on the ground is dragged;
    dropped on an empty cell of the book it goes in it, and a Zoombini
    picked out of the book goes back if dropped nowhere useful (or with over
-   32 about). g_4ab65c then says whether enough are chosen to leave.
+   32 about). enoughChosen then says whether enough are chosen to leave.
    Clicking elsewhere starts the camp's thing there (g_4a0c58). */
 /* @zoombi32 0x0041914d */
-void fn_41914d(short event)
+void campDragged(short event)
 {
     Point where;
     ShortRect rect;
@@ -359,7 +359,7 @@ void fn_41914d(short event)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene5();
         return;
     }
@@ -373,22 +373,22 @@ void fn_41914d(short event)
         if (!view) {
             rect.left = rect.right = where.x;
             rect.top = rect.bottom = where.y;
-            entry = fn_4198be(g_4ab640, rect, 1);
+            entry = bookEntryAt(bookRow, rect, 1);
             if (entry >= 0) {
-                if (g_4ab646 > 0)
-                    g_4ab646--;
+                if (bookCount > 0)
+                    bookCount--;
                 initSnoid(&g_4ab680);
-                g_4ab680.zoombini = g_4ab64c->entries[entry].zoombini;
+                g_4ab680.zoombini = bookEntries->entries[entry].zoombini;
                 for (i = 0; i < 10; i++)
-                    g_4ab680.name[i] = g_4ab64c->entries[entry].name[i];
+                    g_4ab680.name[i] = bookEntries->entries[entry].name[i];
                 g_4ab680.body.x = where.x;
                 g_4ab680.body.y = where.y;
-                g_4ab64c->entries[entry].zoombini = 0;
-                fn_41a225();
+                bookEntries->entries[entry].zoombini = 0;
+                refreshBook();
                 added = addSnoidView(&g_4ab680, 0);
                 if (added) {
                     view = findView(added);
-                    g_4a0abc = -1;
+                    scrollPressed = -1;
                     picked = 1;
                     event = 2;
                 }
@@ -417,15 +417,15 @@ void fn_41914d(short event)
             rect = view->body.bounds;
             if (sectRect(&rect, &g_4a0be8)) {
                 rect = view->body.bounds;
-                slot = fn_4198be(g_4ab640, rect, 0);
+                slot = bookEntryAt(bookRow, rect, 0);
                 if (slot >= 0) {
-                    fn_419e49(slot);
-                    g_4ab64c->entries[slot].zoombini = viewSnoid(view)->zoombini;
+                    countBookEntry(slot);
+                    bookEntries->entries[slot].zoombini = viewSnoid(view)->zoombini;
                     for (i = 0; i < 10; i++)
-                        g_4ab64c->entries[slot].name[i] = viewSnoid(view)->name[i];
+                        bookEntries->entries[slot].name[i] = viewSnoid(view)->name[i];
                     deleteView(view->id);
-                    fn_41a225();
-                    g_4a0abc = -1;
+                    refreshBook();
+                    scrollPressed = -1;
                     picked = 0;
                     i = 1;
                 }
@@ -436,12 +436,12 @@ void fn_41914d(short event)
                 if (!back && !place && moved)
                     back = 1;
                 if (back) {
-                    g_4ab64c->entries[entry].zoombini = g_4ab680.zoombini;
+                    bookEntries->entries[entry].zoombini = g_4ab680.zoombini;
                     for (i = 0; i < 10; i++)
-                        g_4ab64c->entries[entry].name[i] = g_4ab680.name[i];
+                        bookEntries->entries[entry].name[i] = g_4ab680.name[i];
                     removeView(added, 1);
                 }
-                g_4a0abc = -1;
+                scrollPressed = -1;
             } else if (dropped && !place && moved && !i) {
                 claimPlacedView(dropped, view->id);
                 snoid->unknownF7 = 1;
@@ -450,12 +450,12 @@ void fn_41914d(short event)
             if (g_4ab67e) {
                 short chosen = countChosenSnoids();
 
-                g_4ab65c = chosen
+                enoughChosen = chosen
                            && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c)
                                       + waitingParties()[0].count
                                   <= chosen;
             } else
-                g_4ab65c = countChosenSnoids() >= 16;
+                enoughChosen = countChosenSnoids() >= 16;
         } else
             for (i = 0; i < 10; i++)
                 if (ptInRect(&g_4a0c58[i], where)) {
@@ -500,17 +500,17 @@ void fn_41914d(short event)
 }
 
 /* @zoombi32 0x004196a8 */
-long fn_4196a8(long)
+long camp2Key(long)
 {
     return 0;
 }
 
 /* Draws the camp's button `button` (1-7), lit or not, or with 0 a group
    of them (`group` 1: 1-3, 2: 4-7, else all); button 1 is out while
-   g_4ab65c is clear, 4-7 lit for the one chosen (g_4ab64a). With `show`
+   enoughChosen is clear, 4-7 lit for the one chosen (g_4ab64a). With `show`
    shows them (redrawing the dragged view over 4-7). */
 /* @zoombi32 0x004196b1 */
-void fn_4196b1(short button, short lit, short group, short show)
+void drawCamp2Button(short button, short lit, short group, short show)
 {
     short y;
     ShortRect unused; /* unused, like `color`: they only take stack space */
@@ -551,7 +551,7 @@ void fn_4196b1(short button, short lit, short group, short show)
         switch (first) {
         case 0:
             image = 1;
-            if (!g_4ab65c) {
+            if (!enoughChosen) {
                 lit = 0;
                 image = 15;
             }
@@ -589,7 +589,7 @@ void fn_4196b1(short button, short lit, short group, short show)
 /* Not exact: the original keeps `column` in ebx (with `row`) and `n` in
    esi; here they are the other way round. */
 /* @zoombi32 0x004198be */
-short fn_4198be(short row, ShortRect rect, short taken)
+short bookEntryAt(short row, ShortRect rect, short taken)
 {
     short found = -1;
     short i;
@@ -604,7 +604,7 @@ short fn_4198be(short row, ShortRect rect, short taken)
     short zoombini;
     short area;
 
-    row %= g_4ab642;
+    row %= bookRows;
     where.x = rect.left;
     where.y = rect.top;
     count = 25;
@@ -612,11 +612,11 @@ short fn_4198be(short row, ShortRect rect, short taken)
     column = line = 0;
     best = 0;
     for (i = 0; i < count; i++, index++) {
-        n = index % g_4ab644;
-        zoombini = (short)g_4ab64c->entries[n].zoombini;
+        n = index % bookSlots;
+        zoombini = (short)bookEntries->entries[n].zoombini;
         if (taken && zoombini || !taken && !zoombini) {
             if (zoombini) {
-                cell = g_4ab64c->entries[n].rect;
+                cell = bookEntries->entries[n].rect;
                 if (ptInRect(&cell, where))
                     return n;
             } else {
@@ -643,22 +643,22 @@ short fn_4198be(short row, ShortRect rect, short taken)
 
 /* View draw callbacks: draw buttons 1-3, and 4-7. */
 /* @zoombi32 0x0041983f */
-void fn_41983f(View *)
+void drawCamp2Buttons1(View *)
 {
-    fn_4196b1(0, 0, 1, 0);
+    drawCamp2Button(0, 0, 1, 0);
 }
 
 /* @zoombi32 0x00419853 */
-void fn_419853(View *)
+void drawCamp2Buttons2(View *)
 {
-    fn_4196b1(0, 0, 2, 0);
+    drawCamp2Button(0, 0, 2, 0);
 }
 
-/* A view update: redraws button 0 whenever g_4ab65c changes. */
+/* A view update: redraws button 0 whenever enoughChosen changes. */
 /* @zoombi32 0x00419867 */
-void fn_419867(View *, short region)
+void updateCamp2Button0(View *, short region)
 {
-    if (g_4ab65c) {
+    if (enoughChosen) {
         if (!g_4ab65e) {
             g_4ab65e = 1;
             unionRgnRect(region, &camp2Buttons[0].rect);
@@ -669,38 +669,38 @@ void fn_419867(View *, short region)
     }
 }
 
-/* Counts entry `n` (0-624) in: g_4ab646 of them, g_4ab648 the highest;
-   g_4ab644 is then that rounded up past a multiple of 5 (50-625), and
-   g_4ab642 a fifth of it; g_4ab640 stays within 5 of the end. The first
-   entry keeps g_4ab640 and the count. */
+/* Counts entry `n` (0-624) in: bookCount of them, bookHighest the highest;
+   bookSlots is then that rounded up past a multiple of 5 (50-625), and
+   bookRows a fifth of it; bookRow stays within 5 of the end. The first
+   entry keeps bookRow and the count. */
 /* @zoombi32 0x00419e49 */
-void fn_419e49(short n)
+void countBookEntry(short n)
 {
-    if (n >= 0 && n < 625 && g_4ab646 < 625) {
-        g_4ab646++;
-        if (n > g_4ab648)
-            g_4ab648 = n;
+    if (n >= 0 && n < 625 && bookCount < 625) {
+        bookCount++;
+        if (n > bookHighest)
+            bookHighest = n;
     }
-    g_4ab644 = (g_4ab648 + 10) / 5 * 5;
-    if (g_4ab644 > 625)
-        g_4ab644 = 625;
-    if (g_4ab644 < 50)
-        g_4ab644 = 50;
-    g_4ab642 = g_4ab644 / 5;
-    if (g_4ab640 > g_4ab642 - 5)
-        g_4ab640 = g_4ab642 - 5;
-    g_4ab64c->row = g_4ab640;
-    g_4ab64c->count = g_4ab646;
+    bookSlots = (bookHighest + 10) / 5 * 5;
+    if (bookSlots > 625)
+        bookSlots = 625;
+    if (bookSlots < 50)
+        bookSlots = 50;
+    bookRows = bookSlots / 5;
+    if (bookRow > bookRows - 5)
+        bookRow = bookRows - 5;
+    bookEntries->row = bookRow;
+    bookEntries->count = bookCount;
 }
 
 /* Draws the camp's book of waiting Zoombinis (a view draw callback): 25
-   of them from row g_4ab640 on, in 5 lines of 5 (half a line lower, and
-   one line more, while g_4a0abe), noting where each is drawn. */
+   of them from row bookRow on, in 5 lines of 5 (half a line lower, and
+   one line more, while bookHalfLine), noting where each is drawn. */
 /* Not exact: the original keeps `column` in ebx, `n` in esi and `line` in
    edi; here they get edi, ebx and esi (declaration order and `register`
-   don't change that; fn_4198be has the same swap). */
+   don't change that; bookEntryAt has the same swap). */
 /* @zoombi32 0x00419c3a */
-void fn_419c3a(View *)
+void drawBook(View *)
 {
     short image;
     short count;
@@ -716,11 +716,11 @@ void fn_419c3a(View *)
     short x;
 
     initSnoid(&snoid);
-    g_4ab640 %= g_4ab642;
+    bookRow %= bookRows;
     count = 25;
-    index = g_4ab640 * 5;
+    index = bookRow * 5;
     column = line = 0;
-    if (g_4a0abe) {
+    if (bookHalfLine) {
         image = 1;
         count += 5;
         dy = -3;
@@ -732,9 +732,9 @@ void fn_419c3a(View *)
     }
     drawImage(g_4a0ac0, image, 140, 23, 0, 17);
     for (i = 0; i < count; i++, index++) {
-        n = index % g_4ab644;
-        if (g_4ab64c->entries[n].zoombini) {
-            if (g_4a0abe) {
+        n = index % bookSlots;
+        if (bookEntries->entries[n].zoombini) {
+            if (bookHalfLine) {
                 x = cellX[line * 2];
                 y = cellY[line * 2][column];
             } else {
@@ -745,12 +745,12 @@ void fn_419c3a(View *)
             snoid.unknownC0 = -1;
             snoid.body.frame = 0;
             snoid.body.frameOffset = 2;
-            snoid.zoombini = g_4ab64c->entries[n].zoombini;
+            snoid.zoombini = bookEntries->entries[n].zoombini;
             snoid.body.x = x;
             snoid.body.y = y;
             setSnoidFacing(&snoid, 0);
             layOutSnoid(&snoid, 0);
-            g_4ab64c->entries[n].rect = snoid.body.bounds;
+            bookEntries->entries[n].rect = snoid.body.bounds;
             drawSnoid(&snoid);
         }
         if (++column >= 5) {
@@ -763,10 +763,10 @@ void fn_419c3a(View *)
 }
 
 /* The book's view update: when due, scrolls the book the way pressed
-   (g_4a0abc: 1 up a page, 2 up, 3 down, 4 down a page), half a line at a
-   time (g_4a0abe), making room at the start when at the top. */
+   (scrollPressed: 1 up a page, 2 up, 3 down, 4 down a page), half a line at a
+   time (bookHalfLine), making room at the start when at the top. */
 /* @zoombi32 0x00419a59 */
-void fn_419a59(View *view, short)
+void scrollBook(View *view, short)
 {
     short steps;
 
@@ -775,57 +775,57 @@ void fn_419a59(View *view, short)
         if (view->reset) {
             view->reset = 0;
             view->body.bounds = g_4a0be8;
-        } else if (g_4a0abc) {
+        } else if (scrollPressed) {
             view->changed = 1;
             steps = 1;
-            switch (g_4a0abc) {
+            switch (scrollPressed) {
             case 1:
                 steps += 4;
-                if (!g_4a0abe && g_4ab640 - steps < 0)
+                if (!bookHalfLine && bookRow - steps < 0)
                     steps = 0;
                 /* falls through: 5 steps up */
             case 2:
-                if (steps && !g_4ab640)
-                    fn_419f3a();
+                if (steps && !bookRow)
+                    makeBookRoom();
                 if (steps)
                     do {
-                        if (!g_4a0abe && g_4ab640 > 0) {
-                            g_4ab640--;
-                            if (g_4ab640 < 0) {
-                                g_4ab640 = 0;
+                        if (!bookHalfLine && bookRow > 0) {
+                            bookRow--;
+                            if (bookRow < 0) {
+                                bookRow = 0;
                                 steps = 1;
                             }
-                            g_4a0abe = 1;
+                            bookHalfLine = 1;
                         } else
-                            g_4a0abe = 0;
+                            bookHalfLine = 0;
                     } while (--steps);
                 break;
             case 4:
                 steps += 4;
-                if (!g_4a0abe && g_4ab640 + steps > g_4ab642 - 5)
+                if (!bookHalfLine && bookRow + steps > bookRows - 5)
                     steps = 0;
                 /* falls through: 5 steps down */
             case 3:
                 if (steps)
                     do {
-                        if (!g_4a0abe) {
-                            if (g_4ab640 + 1 <= 120 && g_4ab640 < g_4ab642 - 5)
-                                g_4a0abe = 1;
+                        if (!bookHalfLine) {
+                            if (bookRow + 1 <= 120 && bookRow < bookRows - 5)
+                                bookHalfLine = 1;
                         } else {
-                            g_4a0abe = 0;
-                            g_4ab640++;
-                            if (g_4ab640 >= g_4ab642 - 5) {
-                                g_4ab640 = g_4ab642 - 5;
-                                if (g_4ab640 > 120)
-                                    g_4ab640 = 120;
+                            bookHalfLine = 0;
+                            bookRow++;
+                            if (bookRow >= bookRows - 5) {
+                                bookRow = bookRows - 5;
+                                if (bookRow > 120)
+                                    bookRow = 120;
                                 steps = 1;
                             }
                         }
                     } while (--steps);
                 break;
             }
-            if (!g_4a0abe)
-                g_4a0abc = 0;
+            if (!bookHalfLine)
+                scrollPressed = 0;
         }
     }
 }
@@ -833,48 +833,48 @@ void fn_419a59(View *view, short)
 /* Makes room for a row at the start, when one is taken, there are under
    125 rows and the last row is free: moves every entry down a row. */
 /* @zoombi32 0x00419f3a */
-void fn_419f3a()
+void makeBookRoom()
 {
     short taken = 0;
     short free = 1;
     short i;
 
     for (i = 0; !taken && i < 5; i++)
-        if (g_4ab64c->entries[i].zoombini)
+        if (bookEntries->entries[i].zoombini)
             taken = 1;
-    if (taken && g_4ab642 < 125) {
+    if (taken && bookRows < 125) {
         for (i = 620; free && i < 625; i++)
-            if (g_4ab64c->entries[i].zoombini)
+            if (bookEntries->entries[i].zoombini)
                 free = 0;
         if (free) {
             for (i = 619; i >= 0; i--) {
-                g_4ab64c->entries[i + 5] = g_4ab64c->entries[i];
-                g_4ab64c->entries[i].zoombini = 0;
+                bookEntries->entries[i + 5] = bookEntries->entries[i];
+                bookEntries->entries[i].zoombini = 0;
             }
-            g_4ab648 += 5;
-            fn_419e49(-1);
-            g_4ab640++;
-            g_4ab64c->row = g_4ab640;
-            fn_41a11b(0, 1);
+            bookHighest += 5;
+            countBookEntry(-1);
+            bookRow++;
+            bookEntries->row = bookRow;
+            lightScrollButton(0, 1);
         }
     }
 }
 
 /* The index of the last of 625 entries with a value, or 0. */
 /* @zoombi32 0x00419f1a */
-short fn_419f1a()
+short lastBookEntry()
 {
     for (short i = 0x270; i >= 0; i--)
-        if (g_4ab64c->entries[i].zoombini)
+        if (bookEntries->entries[i].zoombini)
             return i;
     return 0;
 }
 
-/* Has view g_4ab650 update at once. */
+/* Has view bookView update at once. */
 /* @zoombi32 0x0041a225 */
-void fn_41a225()
+void refreshBook()
 {
-    View *view = findView(g_4ab650);
+    View *view = findView(bookView);
 
     if (view)
         view->nextUpdate = 0;
@@ -882,14 +882,14 @@ void fn_41a225()
 
 /* Drops the whole rows of empty entries at the start. */
 /* @zoombi32 0x0041a024 */
-void fn_41a024()
+void dropEmptyBookRows()
 {
     short searching = 1;
     short empty = -5;
     short i;
 
     for (i = 0; searching && i < 625; i++)
-        if (!g_4ab64c->entries[i].zoombini)
+        if (!bookEntries->entries[i].zoombini)
             empty++;
         else
             searching = 0;
@@ -897,45 +897,45 @@ void fn_41a024()
         empty = empty / 5 * 5;
         if (empty) {
             for (i = empty; i < 625; i++) {
-                g_4ab64c->entries[i - empty] = g_4ab64c->entries[i];
-                g_4ab64c->entries[i].zoombini = 0;
+                bookEntries->entries[i - empty] = bookEntries->entries[i];
+                bookEntries->entries[i].zoombini = 0;
             }
-            g_4ab648 -= empty;
-            g_4ab640 -= empty / 5;
-            if (g_4ab648 < 0)
-                g_4ab648 = 0;
-            if (g_4ab640 < 0)
-                g_4ab640 = 0;
-            g_4ab64c->row = g_4ab640;
+            bookHighest -= empty;
+            bookRow -= empty / 5;
+            if (bookHighest < 0)
+                bookHighest = 0;
+            if (bookRow < 0)
+                bookRow = 0;
+            bookEntries->row = bookRow;
         }
     }
 }
 
-/* Lights the scroll button pressed (g_4a0abc) if it can scroll that way,
+/* Lights the scroll button pressed (scrollPressed) if it can scroll that way,
    with a sound when that changes; `quiet` puts it out. */
 /* @zoombi32 0x0041a11b */
-void fn_41a11b(short quiet, short)
+void lightScrollButton(short quiet, short)
 {
     short sound = 0;
     short lit;
 
-    if (g_4a0abc >= 0) {
+    if (scrollPressed >= 0) {
         lit = 0;
-        switch (g_4a0abc) {
+        switch (scrollPressed) {
         case 1:
-            if (g_4ab640 > 4)
+            if (bookRow > 4)
                 lit = 1;
             break;
         case 2:
-            if (g_4ab640 > 0)
+            if (bookRow > 0)
                 lit = 1;
             break;
         case 3:
-            if (g_4ab640 < g_4ab642 - 5 && g_4ab640 + 1 <= 120)
+            if (bookRow < bookRows - 5 && bookRow + 1 <= 120)
                 lit = 1;
             break;
         case 4:
-            if (g_4ab640 < g_4ab642 - 9 && g_4ab640 + 5 <= 120)
+            if (bookRow < bookRows - 9 && bookRow + 5 <= 120)
                 lit = 1;
             break;
         }
@@ -968,7 +968,7 @@ void fn_41a11b(short quiet, short)
    party's Zoombini with the entry's number, as the original does).
    Returns whether they fitted after the last. */
 /* @zoombi32 0x0041a23b */
-short fn_41a23b()
+short addPartyToBook()
 {
     short added;
     short count;
@@ -981,7 +981,7 @@ short fn_41a23b()
     count = fn_4572bf();
     added = found = 0;
     for (i = 624; !found && i >= 0; i--)
-        if (g_4ab64c->entries[i].zoombini) {
+        if (bookEntries->entries[i].zoombini) {
             found = 1;
             last = i + 1;
         }
@@ -989,19 +989,19 @@ short fn_41a23b()
         last = 0;
     if (last + count <= 624) {
         for (i = 0; i < count; i++) {
-            g_4ab64c->entries[last + i].zoombini = party()->travellers[i].zoombini;
-            g_4ab64c->entries[last + i].rect = empty;
+            bookEntries->entries[last + i].zoombini = party()->travellers[i].zoombini;
+            bookEntries->entries[last + i].rect = empty;
             for (j = 0; j < 10; j++)
-                g_4ab64c->entries[last + i].name[j] = party()->travellers[i].name[j];
+                bookEntries->entries[last + i].name[j] = party()->travellers[i].name[j];
         }
         added = 1;
     } else
         for (last = 0, i = 0; last < count && i < 625; i++)
-            if (!g_4ab64c->entries[i].zoombini) {
-                g_4ab64c->entries[i].zoombini = party()->travellers[i].zoombini;
-                g_4ab64c->entries[i].rect = empty;
+            if (!bookEntries->entries[i].zoombini) {
+                bookEntries->entries[i].zoombini = party()->travellers[i].zoombini;
+                bookEntries->entries[i].rect = empty;
                 for (j = 0; j < 10; j++)
-                    g_4ab64c->entries[i].name[j] = party()->travellers[i].name[j];
+                    bookEntries->entries[i].name[j] = party()->travellers[i].name[j];
                 last++;
             }
     return added;

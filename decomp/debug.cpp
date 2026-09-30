@@ -14,9 +14,9 @@
 #include "random.h"
 
 /* @zoombi32 0x00415604 */
-void fn_415604(Callback callback)
+void setFrameHook(Callback callback)
 {
-    g_4a07c4 = callback;
+    frameHook = callback;
 }
 
 /* Runs the main loop until an event of a type is waiting (returning 0) or a
@@ -34,7 +34,7 @@ short waitForEventOrTimer(short timer, short type, short discard)
 }
 
 /* @zoombi32 0x004156a3 */
-short fn_4156a3(short timer, short type, short discard)
+short waitForEventOrTimerWrapped(short timer, short type, short discard)
 {
     return waitForEventOrTimer(timer, type, discard);
 }
@@ -48,7 +48,7 @@ short waitForEventFor(unsigned short timer, long ticks, short type, short discar
 }
 
 /* @zoombi32 0x004156e3 */
-short fn_4156e3(unsigned short timer, long ticks, short type, short discard)
+short waitForEventForWrapped(unsigned short timer, long ticks, short type, short discard)
 {
     return waitForEventFor(timer, ticks, type, discard);
 }
@@ -120,30 +120,30 @@ void runClock(short running)
 
 /* Returns whether either flag was set, and clears both. */
 /* @zoombi32 0x004157f3 */
-short fn_4157f3()
+short takeStarvationFlags()
 {
-    short either = g_4ab49c | g_4ab49e;
-    g_4ab49c = g_4ab49e = 0;
+    short either = starvationChecking | starvationPaused;
+    starvationChecking = starvationPaused = 0;
     return either;
 }
 
 /* @zoombi32 0x00415811 */
-void fn_415811()
+void pauseStarvationCheck()
 {
-    g_4ab49e = 1;
+    starvationPaused = 1;
 }
 
 /*
  * The main loop's other half (see mainLoopUpdate): handles a waiting
- * message, calls the game's registered callback (g_4a07c4, set by
- * fn_415604), and in debug mode stops at a requested breakpoint.
+ * message, calls the game's registered callback (frameHook, set by
+ * setFrameHook), and in debug mode stops at a requested breakpoint.
  */
 /* @zoombi32 0x00415613 */
 void mainLoopEvents()
 {
     handleWaitingMessage();
-    if (!loadingAnimation && g_4a07c4)
-        g_4a07c4();
+    if (!loadingAnimation && frameHook)
+        frameHook();
     if (debugMode && breakpointRequested) {
         breakpointRequested = 0;
         debugPrintf("generic breakpoint");
@@ -153,10 +153,10 @@ void mainLoopEvents()
 }
 
 /* @zoombi32 0x0041581b */
-void fn_41581b(short flag)
+void pauseStarvationCheckIf(short flag)
 {
     if (flag)
-        fn_415811();
+        pauseStarvationCheck();
 }
 
 /* Sets the longest time allowed between main loop passes, in ms (or ticks,
@@ -170,13 +170,13 @@ void setStarvationLimit(unsigned long limit)
 }
 
 /* @zoombi32 0x0041585f */
-void fn_41585f()
+void checkStarvationKeepingFlags()
 {
-    short either = g_4ab49c | g_4ab49e;
+    short either = starvationChecking | starvationPaused;
 
     checkStarvation();
-    fn_4157f3();
-    fn_41581b(either);
+    takeStarvationFlags();
+    pauseStarvationCheckIf(either);
 }
 
 /* In debug mode, stops in the debugger when the main loop hasn't run for
@@ -185,33 +185,33 @@ void fn_41585f()
 void checkStarvation()
 {
     if (debugMode) {
-        if (g_4ab49c) {
+        if (starvationChecking) {
             thisCheck = clockMs();
             if (lastCheck + starvationLimit < thisCheck) {
-                g_4ab49c = 0;
-                g_4ab49e = 1;
+                starvationChecking = 0;
+                starvationPaused = 1;
                 debugPrintf(msgStarvation);
                 debugBreak(0);
             }
             lastCheck = thisCheck;
-        } else if (g_4ab49e) {
-            g_4ab49c = 1;
-            g_4ab49e = 0;
+        } else if (starvationPaused) {
+            starvationChecking = 1;
+            starvationPaused = 0;
             lastCheck = thisCheck = clockMs();
         }
     }
 }
 
 /* @zoombi32 0x00415910 */
-void fn_415910()
+void enterGameDirectory()
 {
     enterProgramDirectory();
 }
 
 /* @zoombi32 0x00415916 */
-void fn_415916()
+void leaveGameDirectory()
 {
-    fn_46be3d();
+    freeLoadTexts();
     restoreDirectory();
 }
 
@@ -279,13 +279,13 @@ unsigned short toUpperAscii(unsigned short c)
 }
 
 /* @zoombi32 0x00415a11 */
-void fn_415a11(Callback callback)
+void setClickHook(Callback callback)
 {
-    g_4a07e8 = callback;
+    clickHook = callback;
 }
 
 /* @zoombi32 0x00415a20 */
-void fn_415a20(Callback callback)
+void setPaintHook(Callback callback)
 {
-    g_4a07ec = callback;
+    paintHook = callback;
 }

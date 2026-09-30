@@ -44,9 +44,9 @@ unsigned short loadWave(short key)
 }
 
 /* @zoombi32 0x00415a46 */
-unsigned short fn_415a46(short key)
+unsigned short findAndLoadWave(short key)
 {
-    return fn_411382(key, WAVE);
+    return findAndLoadSound(key, WAVE);
 }
 
 /* @zoombi32 0x00415a5c */
@@ -56,9 +56,9 @@ void unloadWave(short key)
 }
 
 /* @zoombi32 0x00415a72 */
-void fn_415a72(short key)
+void unloadWaveNow(short key)
 {
-    fn_41158c(key, WAVE);
+    unloadSoundNow(key, WAVE);
 }
 
 /* @zoombi32 0x00415a88 */
@@ -68,9 +68,9 @@ short playWaveOn(short key, short channel)
 }
 
 /* @zoombi32 0x00415aa3 */
-short fn_415aa3(short key, short channel)
+short findAndPlayWave(short key, short channel)
 {
-    return fn_411bfe(key, WAVE, channel);
+    return findAndPlaySound(key, WAVE, channel);
 }
 
 /* @zoombi32 0x00415abe */
@@ -80,9 +80,9 @@ void stopWaves(unsigned short id)
 }
 
 /* @zoombi32 0x00415ad4 */
-void fn_415ad4(unsigned short id)
+void endWaveLoops(unsigned short id)
 {
-    fn_411e4c(id, WAVE);
+    endSoundLoops(id, WAVE);
 }
 
 /* @zoombi32 0x00415aea */
@@ -101,7 +101,7 @@ short playWave(short key, short channel, short eventType, short discard)
 /* @zoombi32 0x00415b25 */
 short loadAndPlayWave(short key, short channel, short eventType, short discard)
 {
-    fn_411382(key, WAVE);
+    findAndLoadSound(key, WAVE);
     return playSound(key, WAVE, channel, eventType, discard);
 }
 
@@ -112,21 +112,21 @@ short waitForWave(unsigned short id, short eventType, short discard)
 }
 
 /* @zoombi32 0x00415b76 */
-short fn_415b76(unsigned short id, short eventType, short discard)
+short awaitWave(unsigned short id, short eventType, short discard)
 {
-    return fn_412084(id, WAVE, eventType, discard);
+    return awaitSound(id, WAVE, eventType, discard);
 }
 
 /* @zoombi32 0x00415b96 */
-short fn_415b96(unsigned short id, short stop)
+short wavePlayingOrStop(unsigned short id, short stop)
 {
-    return fn_4120a2(id, WAVE, stop);
+    return soundPlayingOrStop(id, WAVE, stop);
 }
 
 /* @zoombi32 0x00415bb1 */
-short fn_415bb1(char value)
+short waveValueReached(char value)
 {
-    return fn_4120c8(value, WAVE);
+    return soundValueReached(value, WAVE);
 }
 
 /* @zoombi32 0x00415bc6 */
@@ -136,9 +136,9 @@ short waitForWaveValue(char value, short eventType, short discard)
 }
 
 /* @zoombi32 0x00415be5 */
-short fn_415be5(char value, short eventType, short discard)
+short awaitWaveValue(char value, short eventType, short discard)
 {
-    return fn_412159(value, WAVE, eventType, discard);
+    return awaitSoundValue(value, WAVE, eventType, discard);
 }
 
 /*
@@ -284,7 +284,7 @@ int isCheat(long hash, long code)
 void getShapeSize(ResourceList *list, unsigned short index, short *height, short *width)
 {
     if (index) {
-        unsigned short *data = (unsigned short *)fn_46cafb(list->resources[index - 1]);
+        unsigned short *data = (unsigned short *)resourceData(list->resources[index - 1]);
 
         *height = swapShort(data[1]);
         *width = swapShort(data[0]);
@@ -433,7 +433,7 @@ void preloadResource(long type, short id, long *kind)
 {
     long resource;
 
-    if ((resource = findResource(type, id, g_4a7f58)) != 0)
+    if ((resource = findResource(type, id, currentMapFile)) != 0)
         startPreload(resource, preloadDone, *kind);
 }
 
@@ -452,14 +452,14 @@ void *preloadDone(long event, long id, void *kind)
             preloadedCount++;
         }
         if (*(long *)kind == shapeListKind) {
-            unsigned short *data = (unsigned short *)fn_46cafb(id);
+            unsigned short *data = (unsigned short *)resourceData(id);
             short count = swapShort(data[1]);
             short first = swapShort(data[0]);
 
             for (short i = 0; i < count; i++)
                 preloadResource(RESOURCE_TYPE('S', 'H', 'A', 'P'), i + first, &noPreloadKind);
         } else if (*(long *)kind == soundListKind) {
-            short handle = fn_46beac(id);
+            short handle = usedResourceHandle(id);
             short count = *(short *)handleData(handle);
 
             for (short i = 0; i < count; i++)
@@ -572,7 +572,7 @@ void nudgeRect(ShortRect *rect, short direction)
 }
 
 /* @zoombi32 0x00416754 */
-void fn_416754()
+void resetCamp()
 {
     g_4ab518 = g_4ab51a = g_4b0d52 = 0;
     g_4ab52a = g_4ab52c = 0;
@@ -581,7 +581,7 @@ void fn_416754()
 }
 
 /* @zoombi32 0x00417906 */
-long fn_417906(long)
+long campKey(long)
 {
     return 0;
 }
@@ -612,7 +612,7 @@ void enterCamp()
     short limit;
 
     campActive = 0;
-    fn_416754();
+    resetCamp();
     saved = g_4b87fe;
     g_4b87fe = 0;
     g_4afb32 = 1;
@@ -625,7 +625,7 @@ void enterCamp()
     campLast = campSlotsUsed();
     noteCampSlot(-1);
     openGameFile(&campMap, "BaseCamp.MHK");
-    fn_46be2e(campMap);
+    setCurrentMap(campMap);
     loadPaths(1000);
     loadDragCursors(9000);
     loadTerrain(100);
@@ -639,7 +639,7 @@ void enterCamp()
     fn_4148da(0xec, 10);
     g_4ab518 = addView(0xc000, drawCamp, scrollCamp, 0, 6, 0, 0, 0);
     addView(0x9000, drawSceneButtons2, 0, 0, 0, 0, 0, 0);
-    addView(0x1000, drawSceneButtons1, fn_417aec, 0, 0, 0, 0, 0);
+    addView(0x1000, drawSceneButtons1, updateCampButtons, 0, 0, 0, 0, 0);
     for (short i = 0; i < 16; i++)
         placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 0x4b0, 7, &places[i], 0, 0);
     g_4ab530[0] = addView(0x1180000, drawCels, runViewScript, 0x452, 6, 0, 0, 0);
@@ -790,7 +790,7 @@ void leaveCamp()
 {
     if (campActive) {
         campActive = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         clearViews();
         if (!viewsLocked) {
@@ -811,10 +811,10 @@ void leaveCamp()
             noteCampSlot(-1);
         }
         unloadSounds();
-        fn_46c602(&campButtonsResource);
-        fn_46c602(&campFrameResource);
-        fn_46bee9(saved);
-        fn_46ca9c(&campMap);
+        freeResource(&campButtonsResource);
+        freeResource(&campFrameResource);
+        setFreeAtOnce(saved);
+        closeGameFile(&campMap);
         fadeOutViews();
         fn_4624fc();
     }
@@ -838,7 +838,7 @@ void campIdle()
             if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
-                fn_46be2e(0);
+                setCurrentMap(0);
                 leaveCamp();
             }
         } else {
@@ -871,7 +871,7 @@ void campButtonClicked(short button)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         leaveCamp();
     } else {
         getCursorPosition(&where);
@@ -983,7 +983,7 @@ void campMouse(short action)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         leaveCamp();
     } else if (!g_4ab52a || action == 2) {
         getCursorPosition(&where);
@@ -1004,7 +1004,7 @@ void campMouse(short action)
                     draggedSnoid.body.x = where.x;
                     draggedSnoid.body.y = where.y;
                     camp->slots[slot].zoombini = 0;
-                    fn_4184b7();
+                    refreshCampView();
                     dragged = addSnoidView(&draggedSnoid, 0);
                     if (dragged) {
                         view = findView(dragged);
@@ -1046,7 +1046,7 @@ void campMouse(short action)
                         for (i = 0; i < 10; i++)
                             camp->slots[drop].name[i] = viewSnoid(view)->name[i];
                         deleteView(view->id);
-                        fn_4184b7();
+                        refreshCampView();
                         g_4a080c = -1;
                         picked = 0;
                         placed = 1;
@@ -1224,7 +1224,7 @@ void drawSceneButtons2(View *)
 }
 
 /* @zoombi32 0x00417aec */
-void fn_417aec(View *, short region)
+void updateCampButtons(View *, short region)
 {
     if (g_4ab524) {
         if (!g_4ab526) {
@@ -1585,7 +1585,7 @@ void updateCampScroll(short stop)
 }
 
 /* @zoombi32 0x004184b7 */
-void fn_4184b7()
+void refreshCampView()
 {
     View *view = findView(g_4ab518);
 

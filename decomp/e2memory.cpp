@@ -36,17 +36,17 @@ unsigned long memoryInUse2;
 /* @zoombi32 0x0046be28 */
 long currentMap()
 {
-    return g_4a7f58;
+    return currentMapFile;
 }
 
 /* @zoombi32 0x0046be2e */
-void fn_46be2e(long value)
+void setCurrentMap(long value)
 {
-    g_4a7f58 = value;
+    currentMapFile = value;
 }
 
 /* @zoombi32 0x0046be3d */
-void fn_46be3d()
+void freeLoadTexts()
 {
     freeText((void **)&shapeText);
     freeText((void **)&arrayText);
@@ -58,12 +58,12 @@ void fn_46be3d()
     freeText((void **)&shapeListText);
     freeText((void **)&soundListText);
     freeText((void **)&paletteText);
-    fn_46c77c(&pendingShapeList);
+    freeShapeListInfo(&pendingShapeList);
 }
 
 /* A loaded resource's handle (a fatal error if it isn't loaded). */
 /* @zoombi32 0x0046beac */
-short fn_46beac(long resource)
+short usedResourceHandle(long resource)
 {
     short handle = resourceHandle(resource);
 
@@ -73,17 +73,17 @@ short fn_46beac(long resource)
 }
 
 /* @zoombi32 0x0046bee2 */
-short fn_46bee2()
+short getFreeAtOnce()
 {
-    return g_4b99d4;
+    return freeAtOnce;
 }
 
-/* Sets g_4b99d4, returning its old value. */
+/* Sets freeAtOnce, returning its old value. */
 /* @zoombi32 0x0046bee9 */
-short fn_46bee9(short value)
+short setFreeAtOnce(short value)
 {
-    short old = g_4b99d4;
-    g_4b99d4 = value;
+    short old = freeAtOnce;
+    freeAtOnce = value;
     return old;
 }
 
@@ -97,14 +97,14 @@ void e2AllocHandle(short *handle, unsigned long size, char *what)
     trackHandle(*handle, 0, 1);
 }
 
-/* Marks a handle purgeable (or, with g_4b99d4 at 1, disposes of it). */
+/* Marks a handle purgeable (or, with freeAtOnce at 1, disposes of it). */
 /* @zoombi32 0x0046bf43 */
 void e2FreeHandle(short *handle)
 {
     if (*handle) {
         setHandleLocks(*handle, 0);
         trackHandle(*handle, 1, 0);
-        if (g_4b99d4 == 1) {
+        if (freeAtOnce == 1) {
             disposeHandle(*handle);
             *handle = 0;
         }
@@ -114,10 +114,10 @@ void e2FreeHandle(short *handle)
 /* @zoombi32 0x0046bf85 */
 void e2DisposeHandle(short *handle)
 {
-    short saved = fn_46bee9(1);
+    short saved = setFreeAtOnce(1);
 
     e2FreeHandle(handle);
-    fn_46bee9(saved);
+    setFreeAtOnce(saved);
 }
 
 /* @zoombi32 0x0046bfa5 */
@@ -147,24 +147,24 @@ void e2FreePtr(void **pointer)
  * the list and palette resources are released once used.
  */
 /* @zoombi32 0x0046c011 */
-void fn_46c011(ResourceList **list, short id, const char *what, short release)
+void loadShapeList(ResourceList **list, short id, const char *what, short release)
 {
     short count;
     unsigned short first;
 
     loadingAnimation = 1;
-    fn_46c6db(&pendingShapeList, id, &count, what);
+    loadShapeListInfo(&pendingShapeList, id, &count, what);
     allocShapeList(list, id, count, what);
     (*list)->list = pendingShapeList;
     pendingShapeList = 0;
     loadingAnimation = 0;
     mainLoopEvents();
-    first = swapShort(*(unsigned short *)fn_46cafb((*list)->list));
+    first = swapShort(*(unsigned short *)resourceData((*list)->list));
     if (release)
         releaseShapeListInfo(&(*list)->list);
     for (short i = 0; i < count; i++)
-        fn_46c148(&(*list)->resources[i], first, i + 1, what);
-    fn_46c808(&(*list)->palette, id, what, 0);
+        loadShapeMember(&(*list)->resources[i], first, i + 1, what);
+    loadPalette(&(*list)->palette, id, what, 0);
     if (release)
         releasePalette(&(*list)->palette);
 }
@@ -175,14 +175,14 @@ long loadListedShape(long list, short member, const char *what)
 {
     long shape = 0;
 
-    fn_46c148(&shape, swapShort(*(unsigned short *)fn_46cafb(list)), member, what);
+    loadShapeMember(&shape, swapShort(*(unsigned short *)resourceData(list)), member, what);
     return shape;
 }
 
 /* Loads shape `member` (from 1) of a list whose first shape is `first`. */
 /* Not exact: the original subtracts the 1 as `add bx, 0xffff`. */
 /* @zoombi32 0x0046c148 */
-void fn_46c148(long *resource, unsigned short first, unsigned short member, const char *name)
+void loadShapeMember(long *resource, unsigned short first, unsigned short member, const char *name)
 {
     char text[16];
 
@@ -206,13 +206,13 @@ void loadShape(long *resource, short id, char *what)
     error = 1;
     g_4a4974 = 1;
     for (; error && tries; tries--) {
-        fn_46c4fe(resource, RESOURCE_TYPE('t', 'B', 'M', 'P'), id, what, 0);
+        loadResourceAs(resource, RESOURCE_TYPE('t', 'B', 'M', 'P'), id, what, 0);
         if (!*resource)
-            fn_46c4fe(resource, RESOURCE_TYPE('S', 'H', 'A', 'P'), id, what, 1);
-        if ((error = decompressImage(fn_46beac(*resource))) == 0)
+            loadResourceAs(resource, RESOURCE_TYPE('S', 'H', 'A', 'P'), id, what, 1);
+        if ((error = decompressImage(usedResourceHandle(*resource))) == 0)
             error = getPortError();
         if (error) {
-            fn_46c602(resource);
+            freeResource(resource);
             if (tries == 1)
                 reportJoinedError(what);
         }
@@ -240,15 +240,15 @@ void allocShapeList(ResourceList **list, short id, short count, const char *what
 }
 
 /* @zoombi32 0x0046c2db */
-void fn_46c2db(ResourceList **list)
+void freeShapeList(ResourceList **list)
 {
     releaseShapeListInfo(&pendingShapeList);
     if (*list) {
         releasePalette(&(*list)->palette);
         releaseShapeListInfo(&(*list)->list);
         for (short i = 0; i < (*list)->count; i++)
-            fn_46c5b7(&(*list)->resources[i]);
-        if (g_4b99d4 == 1)
+            purgeGameResource(&(*list)->resources[i]);
+        if (freeAtOnce == 1)
             freeAndClear((void **)list);
     }
 }
@@ -256,10 +256,10 @@ void fn_46c2db(ResourceList **list)
 /* @zoombi32 0x0046c341 */
 void disposeShapeList(ResourceList **list)
 {
-    short saved = fn_46bee9(1);
+    short saved = setFreeAtOnce(1);
 
-    fn_46c2db(list);
-    fn_46bee9(saved);
+    freeShapeList(list);
+    setFreeAtOnce(saved);
 }
 
 /* Disposes of a list unless it's list `id`. */
@@ -285,25 +285,25 @@ void loadSingleShape(ResourceList *list, short id, const char *what)
 /* @zoombi32 0x0046c3cf */
 void freeSingleShape(ResourceList *list)
 {
-    fn_46c5b7(&list->resources[0]);
+    purgeGameResource(&list->resources[0]);
 }
 
 /* @zoombi32 0x0046c3e2 */
 void disposeSingleShape(ResourceList *list)
 {
-    short saved = fn_46bee9(1);
+    short saved = setFreeAtOnce(1);
 
     freeSingleShape(list);
-    fn_46bee9(saved);
+    setFreeAtOnce(saved);
 }
 
 /* A resource of the current map (0 if there's none; then, with `note`,
    loadFailed is set). */
 /* Not exact: the original keeps `resource` in ebx, BCC32 4.5 in eax. */
 /* @zoombi32 0x0046c402 */
-long fn_46c402(long type, short id, short note)
+long findMapResource(long type, short id, short note)
 {
-    long resource = findResource(type, id, g_4a7f58);
+    long resource = findResource(type, id, currentMapFile);
 
     if (!resource && note)
         loadFailed = 1;
@@ -321,7 +321,7 @@ short loadGameResource(long resource)
     if (!handle) {
         short retry;
 
-        fn_41585f();
+        checkStarvationKeepingFlags();
         do {
             retry = 0;
             if ((handle = loadResource(resource, 0)) != 0) {
@@ -343,7 +343,7 @@ short findAndLoad(long *resource, long type, short id)
 {
     short handle = 0;
 
-    if ((*resource = fn_46c402(type, id, 1)) != 0) {
+    if ((*resource = findMapResource(type, id, 1)) != 0) {
         if ((handle = loadGameResource(*resource)) == 0) {
             *resource = 0;
             if (!outOfMemory)
@@ -359,7 +359,7 @@ short findAndLoad(long *resource, long type, short id)
  * there must be the same one.
  */
 /* @zoombi32 0x0046c4fe */
-void fn_46c4fe(long *resource, long type, unsigned short id, const char *what, short required)
+void loadResourceAs(long *resource, long type, unsigned short id, const char *what, short required)
 {
     char text[20];
     long old = *resource;
@@ -370,16 +370,16 @@ void fn_46c4fe(long *resource, long type, unsigned short id, const char *what, s
         reportJoinedError(resourceText);
     loadFailed = 0;
     if (old && *resource && old != *resource) {
-        fn_46c602(&old);
+        freeResource(&old);
         joinText(&resourceErrorText, resourceText, "e2GetRsrc error: resRef already in use by ");
         reportJoinedError(resourceErrorText);
     }
     freeText((void **)&resourceText);
 }
 
-/* Marks a resource purgeable (or, with g_4b99d4 at 1, releases it). */
+/* Marks a resource purgeable (or, with freeAtOnce at 1, releases it). */
 /* @zoombi32 0x0046c5b7 */
-void fn_46c5b7(long *resource)
+void purgeGameResource(long *resource)
 {
     short handle;
 
@@ -387,7 +387,7 @@ void fn_46c5b7(long *resource)
         if ((handle = resourceHandle(*resource)) != 0)
             setHandleLocks(handle, 0);
         trackResource(*resource, 1, 0);
-        if (g_4b99d4 == 1) {
+        if (freeAtOnce == 1) {
             releaseResource(*resource, 0);
             *resource = 0;
         }
@@ -395,12 +395,12 @@ void fn_46c5b7(long *resource)
 }
 
 /* @zoombi32 0x0046c602 */
-void fn_46c602(long *resource)
+void freeResource(long *resource)
 {
-    short saved = fn_46bee9(1);
+    short saved = setFreeAtOnce(1);
 
-    fn_46c5b7(resource);
-    fn_46bee9(saved);
+    purgeGameResource(resource);
+    setFreeAtOnce(saved);
 }
 
 /* Reads `size` bytes of a resource into `buffer` (all of them, with
@@ -415,12 +415,12 @@ void readGameResource(void *buffer, unsigned long size, long type, unsigned shor
 
     formatText(20, text, "id #%u", id);
     joinText(&resourceText, what, text);
-    if ((resource = findResource(type, id, g_4a7f58)) == 0) {
+    if ((resource = findResource(type, id, currentMapFile)) == 0) {
         loadFailed = 1;
         reportJoinedError(resourceText);
     }
     read = size;
-    fn_41585f();
+    checkStarvationKeepingFlags();
     readResourceBytes(resource, buffer, &read, 0);
     if (exact && size != read) {
         joinText(&readErrorText, "End of data reached for ", resourceText);
@@ -435,31 +435,31 @@ void readGameResource(void *buffer, unsigned long size, long type, unsigned shor
 /* Not exact: the original swaps the count's bytes through edx, BCC32 4.5
    through esi. */
 /* @zoombi32 0x0046c6db */
-void fn_46c6db(long *info, short id, short *count, const char *name)
+void loadShapeListInfo(long *info, short id, short *count, const char *name)
 {
     joinText(&shapeListText, name, "shape list");
-    fn_46c4fe(info, RESOURCE_TYPE('t', 'C', 'N', 'T'), id, shapeListText, 0);
+    loadResourceAs(info, RESOURCE_TYPE('t', 'C', 'N', 'T'), id, shapeListText, 0);
     if (!*info) {
-        fn_46c4fe(info, RESOURCE_TYPE('S', 'H', 'P', 'L'), id, shapeListText, 1);
-        applyPaletteResource((unsigned short *)(fn_46cafb(*info) + 4));
+        loadResourceAs(info, RESOURCE_TYPE('S', 'H', 'P', 'L'), id, shapeListText, 1);
+        applyPaletteResource((unsigned short *)(resourceData(*info) + 4));
     }
-    *count = swapShort(((unsigned short *)fn_46cafb(*info))[1]);
+    *count = swapShort(((unsigned short *)resourceData(*info))[1]);
     freeText((void **)&shapeListText);
 }
 
 /* @zoombi32 0x0046c76d */
 void releaseShapeListInfo(long *info)
 {
-    fn_46c5b7(info);
+    purgeGameResource(info);
 }
 
 /* @zoombi32 0x0046c77c */
-void fn_46c77c(long *resource)
+void freeShapeListInfo(long *resource)
 {
-    short saved = fn_46bee9(1);
+    short saved = setFreeAtOnce(1);
 
     releaseShapeListInfo(resource);
-    fn_46bee9(saved);
+    setFreeAtOnce(saved);
 }
 
 /* Colours from a palette resource (big-endian first colour and count, then
@@ -475,48 +475,48 @@ void applyPaletteResource(unsigned short *data)
 }
 
 /* @zoombi32 0x0046c808 */
-void fn_46c808(long *resource, short id, const char *name, short required)
+void loadPalette(long *resource, short id, const char *name, short required)
 {
     joinText(&paletteText, name, "palette");
-    fn_46c4fe(resource, RESOURCE_TYPE('t', 'P', 'A', 'L'), id, paletteText, required);
+    loadResourceAs(resource, RESOURCE_TYPE('t', 'P', 'A', 'L'), id, paletteText, required);
     freeText((void **)&paletteText);
     if (*resource)
-        applyPaletteResource((unsigned short *)fn_46cafb(*resource));
+        applyPaletteResource((unsigned short *)resourceData(*resource));
 }
 
 /* @zoombi32 0x0046c85d */
 void releasePalette(long *resource)
 {
-    fn_46c5b7(resource);
+    purgeGameResource(resource);
 }
 
 /* @zoombi32 0x0046c86c */
-void fn_46c86c(long *resource)
+void freePalette(long *resource)
 {
-    short saved = fn_46bee9(1);
+    short saved = setFreeAtOnce(1);
 
     releasePalette(resource);
-    fn_46bee9(saved);
+    setFreeAtOnce(saved);
 }
 
 /* Loads a sound list ('SNDL': a count, then sound ids) and its sounds. */
 /* Not exact (like freeSoundList): the original reads the count through ebx
    and keeps each key in a stack variable. */
 /* @zoombi32 0x0046c88c */
-void fn_46c88c(long *resource, short id, const char *name)
+void loadSoundList(long *resource, short id, const char *name)
 {
     short handle;
     short count;
 
     joinText(&soundListText, name, "sound list");
-    fn_46c4fe(resource, RESOURCE_TYPE('S', 'N', 'D', 'L'), id, soundListText, 1);
+    loadResourceAs(resource, RESOURCE_TYPE('S', 'N', 'D', 'L'), id, soundListText, 1);
     freeText((void **)&soundListText);
-    handle = fn_46beac(*resource);
+    handle = usedResourceHandle(*resource);
     count = *(short *)handleData(handle);
     for (short i = 0; i < count; i++) {
         short key = ((short *)handleData(handle))[1 + i];
 
-        fn_411382(key, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+        findAndLoadSound(key, RESOURCE_TYPE(0, 'S', 'N', 'D'));
     }
 }
 
@@ -531,23 +531,23 @@ void freeSoundList(long *resource)
     short i;
 
     if (*resource) {
-        handle = fn_46beac(*resource);
+        handle = usedResourceHandle(*resource);
         count = *(short *)handleData(handle);
         for (i = 0; i < count; i++) {
             key = ((short *)handleData(handle))[1 + i];
             unloadSound(key, RESOURCE_TYPE(0, 'S', 'N', 'D'));
         }
-        fn_46c5b7(resource);
+        purgeGameResource(resource);
     }
 }
 
 /* @zoombi32 0x0046c970 */
-void fn_46c970(long *resource)
+void freeSoundListNow(long *resource)
 {
-    short saved = fn_46bee9(1);
+    short saved = setFreeAtOnce(1);
 
     freeSoundList(resource);
-    fn_46bee9(saved);
+    setFreeAtOnce(saved);
 }
 
 /* Sets the directory the game's data files are read from. */
@@ -576,7 +576,7 @@ void openGameFile(long *map, const char *name)
         fatalError("e2OpenMap error: (%s) resFile already in use", name);
     dataPath[dataPathLength] = 0;
     strcat(dataPath, name);
-    fn_41585f();
+    checkStarvationKeepingFlags();
     if ((*map = openResourceFile(dataPath, 0)) == 0) {
         resourceError();
         fatalError("unable to open %s", name);
@@ -585,7 +585,7 @@ void openGameFile(long *map, const char *name)
 }
 
 /* @zoombi32 0x0046ca9c */
-void fn_46ca9c(long *handle)
+void closeGameFile(long *handle)
 {
     if (*handle) {
         closeResourceFile(*handle, 0, 0);
@@ -594,31 +594,31 @@ void fn_46ca9c(long *handle)
 }
 
 /* @zoombi32 0x0046cabc */
-char *fn_46cabc(long resource)
+char *lockResource(long resource)
 {
-    return (char *)lockHandle(fn_46beac(resource));
+    return (char *)lockHandle(usedResourceHandle(resource));
 }
 
 /* @zoombi32 0x0046cad1 */
-void fn_46cad1(long resource)
+void unlockResource(long resource)
 {
-    unlockHandle(fn_46beac(resource));
+    unlockHandle(usedResourceHandle(resource));
 }
 
 /* @zoombi32 0x0046cae6 */
-short *fn_46cae6(long resource)
+short *resourceShorts(long resource)
 {
-    return (short *)fn_48ea00(fn_46beac(resource));
+    return (short *)fn_48ea00(usedResourceHandle(resource));
 }
 
 /* @zoombi32 0x0046cafb */
-char *fn_46cafb(long resource)
+char *resourceData(long resource)
 {
-    return (char *)handleData(fn_46beac(resource));
+    return (char *)handleData(usedResourceHandle(resource));
 }
 
 /* @zoombi32 0x0046cb10 */
-void fn_46cb10(Font **font, const char *name, unsigned short size, unsigned short style)
+void loadFont(Font **font, const char *name, unsigned short size, unsigned short style)
 {
     if (*font)
         fatalError("Font already in use: %s %d", name, size);

@@ -56,8 +56,8 @@ void loadCaveResources()
 
     for (i = 0; i < 2; i++) {
         g_4aba70[i] = 0;
-        fn_46c4fe(&g_4aba70[i], RESOURCE_TYPE('R', 'E', 'G', 'S'), i + 200, 0, 1);
-        g_4aba78[i] = fn_46beac(g_4aba70[i]);
+        loadResourceAs(&g_4aba70[i], RESOURCE_TYPE('R', 'E', 'G', 'S'), i + 200, 0, 1);
+        g_4aba78[i] = usedResourceHandle(g_4aba70[i]);
         switch (i) {
         case 0:
             g_4aba68 = (short *)lockHandle(g_4aba78[i]);
@@ -80,7 +80,7 @@ void loadCaveResources()
 void freeGlyphShape()
 {
     if (glyphShape) {
-        fn_46c602(&glyphShape);
+        freeResource(&glyphShape);
         glyphShape = 0;
     }
 }
@@ -168,7 +168,7 @@ void freeCaveResources()
     for (i = 0; i < 2; i++)
         if (g_4aba78[i]) {
             unlockHandle(g_4aba78[i]);
-            fn_46c602(&g_4aba70[i]);
+            freeResource(&g_4aba70[i]);
             g_4aba78[i] = 0;
             g_4aba70[i] = 0;
         }
@@ -287,7 +287,7 @@ void drawFeatureImage(short kind, short n, ShortRect rect)
         image = g_4a1282[n];
         break;
     }
-    handle = fn_46beac(snoidImagesResource);
+    handle = usedResourceHandle(snoidImagesResource);
     lockHandle(handle);
     bank = (ImageBank *)handleData(handle);
     drawImageData((unsigned short *)((char *)bank + bank->offsets[image]), rect.left, rect.top, 8);
@@ -366,7 +366,7 @@ void openCaves()
     fillMemory(g_4ab9c4, 0, 44);
     fillMemory(g_4ab996, 0, 40);
     openGameFile(&g_4ab83c, "Caves.MHK");
-    fn_46be2e(g_4ab83c);
+    setCurrentMap(g_4ab83c);
     g_4a1020 = loadImageBank(11000, &g_4a0fd0);
     loadTerrain(100);
     loadPaths(1000);
@@ -487,15 +487,15 @@ void closeCaves()
 {
     if (cavesOpen) {
         cavesOpen = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         clearViews();
         freeGlyphShape();
         freeCaveResources();
-        fn_46c602(&g_4a0fd0);
+        freeResource(&g_4a0fd0);
         unloadSounds();
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4ab83c);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4ab83c);
         fadeOutViews();
         fn_4624fc();
     }
@@ -605,7 +605,7 @@ void walkerNotify(View *view, short event)
         startWalkerScript(view->body.group, g_4a0ffe + 1, walkerNotify, 0);
         break;
     case 4:
-        fn_465175();
+        requestViewSort();
         g_4ab994 = 1;
         currentFrame++;
         showFrame(currentFrame);
@@ -622,7 +622,7 @@ void walkerNotify(View *view, short event)
             g_4a0ff0 = 1;
         else
             g_4a0ff0 = 0;
-        fn_465175();
+        requestViewSort();
         break;
     case 21:
         walkerView = 0;
@@ -679,7 +679,7 @@ void drawGlyph(short which, short image, long)
     short x;
     short y;
 
-    handle = fn_46beac(glyphShape);
+    handle = usedResourceHandle(glyphShape);
     lockHandle(handle);
     bank = (ImageBank *)handleData(handle);
     data = (unsigned short *)(swapLong(bank->offsets[image]) + (char *)bank);
@@ -1355,7 +1355,7 @@ void cavesClicked(short which)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeCaves();
         return;
     }
@@ -1488,7 +1488,7 @@ void cavesFrame()
                     && (g_4ab872 == 3 || g_4b0d52 == 1 || viewsLocked)) {
                     g_4b0d50 = g_4b0d52;
                     g_4b0d52 = 0;
-                    fn_46be2e(0);
+                    setCurrentMap(0);
                     closeCaves();
                     g_4a1208 = 0;
                     return;

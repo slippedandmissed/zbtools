@@ -100,8 +100,8 @@ void releaseLillyClaim()
 /* @zoombi32 0x0042d64c */
 void freeResourcePair(long *resources)
 {
-    fn_46c602(resources);
-    fn_46c602(resources + 1);
+    freeResource(resources);
+    freeResource(resources + 1);
 }
 
 /* @zoombi32 0x0042b258 */
@@ -121,7 +121,7 @@ void freeLockedResource(long *resource, short *handle)
 {
     if (*handle) {
         unlockHandle(*handle);
-        fn_46c602(resource);
+        freeResource(resource);
         *handle = 0;
         *resource = 0;
     }
@@ -217,7 +217,7 @@ void freeLockedResources(long *resources, short *handles, short count)
     for (short i = 0; i < count; i++)
         if (handles[i]) {
             unlockHandle(handles[i]);
-            fn_46c602(&resources[i]);
+            freeResource(&resources[i]);
             handles[i] = 0;
             resources[i] = 0;
         }
@@ -387,8 +387,8 @@ void loadLockedTable(long *resource, short *handle, short id, short **locked)
     short *at;
 
     *resource = 0;
-    fn_46c4fe(resource, RESOURCE_TYPE('R', 'E', 'G', 'S'), id, 0, 1);
-    *handle = fn_46beac(*resource);
+    loadResourceAs(resource, RESOURCE_TYPE('R', 'E', 'G', 'S'), id, 0, 1);
+    *handle = usedResourceHandle(*resource);
     *locked = (short *)lockHandle(*handle);
     at = (short *)handleData(*handle);
     for (unsigned long size = handleSize(*handle); size; size -= 2) {
@@ -761,8 +761,8 @@ void loadLillyScripts(long *resources, short *handles, short count)
     for (short i = 0; i < count; i++) {
         short *at;
 
-        fn_46c4fe(&resources[i], RESOURCE_TYPE('S', 'C', 'R', 'B'), i + 10000L, 0, 1);
-        handles[i] = fn_46beac(resources[i]);
+        loadResourceAs(&resources[i], RESOURCE_TYPE('S', 'C', 'R', 'B'), i + 10000L, 0, 1);
+        handles[i] = usedResourceHandle(resources[i]);
         fn_48ea00(handles[i]);
         at = (short *)handleData(handles[i]);
         for (unsigned long size = handleSize(handles[i]); size; size -= 2) {
@@ -1643,7 +1643,7 @@ void layOutLillyView(View *view, short region)
             }
         } while (left);
         view->body.bounds = bounds;
-        fn_46c602(&resource);
+        freeResource(&resource);
     }
 }
 
@@ -2905,13 +2905,13 @@ void closeLilly()
 {
     if (g_4af368) {
         g_4af368 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
-        fn_465175();
+        requestViewSort();
         setSnoidsRunning(1);
         clearViews();
-        fn_46c602(&g_4a1b48);
-        fn_46c602(&g_4a1b44);
+        freeResource(&g_4a1b48);
+        freeResource(&g_4a1b44);
         freeLockedResources(g_4af108, g_4af278, 91);
         freeResourcePair(g_4ac928);
         freeResourcePair(g_4ac938);
@@ -2919,10 +2919,10 @@ void closeLilly()
         freeLockedResource(&g_4ac98c, &g_4ac994);
         freeLockedResource(&g_4ac998, &g_4ac9a0);
         freeLockedResource(&g_4ac9a4, &g_4ac9ac);
-        fn_46c602(&g_4a1be8);
+        freeResource(&g_4a1be8);
         unloadSounds();
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4af364);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4af364);
         fadeOutViews();
         fn_4624fc();
     }
@@ -2934,27 +2934,27 @@ void closeHotel()
 {
     if (g_4abec0) {
         g_4abec0 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
-        fn_46c602(&g_4ac144);
-        fn_46c602(&g_4ac148);
-        fn_46c602(&g_4ac14c);
-        fn_46c602(&g_4ac150);
-        fn_46c602(&g_4ac170);
-        fn_46c602(&g_4ac174);
-        fn_46c602(&g_4ac154);
-        fn_46c602(&g_4ac158);
-        fn_46c602(&g_4ac160);
-        fn_46c602(&g_4ac164);
-        fn_46c602(&g_4ac168);
-        fn_46c602(&g_4ac16c);
-        fn_46c602(&g_4ac154);
-        fn_46c602(&g_4ac158);
+        freeResource(&g_4ac144);
+        freeResource(&g_4ac148);
+        freeResource(&g_4ac14c);
+        freeResource(&g_4ac150);
+        freeResource(&g_4ac170);
+        freeResource(&g_4ac174);
+        freeResource(&g_4ac154);
+        freeResource(&g_4ac158);
+        freeResource(&g_4ac160);
+        freeResource(&g_4ac164);
+        freeResource(&g_4ac168);
+        freeResource(&g_4ac16c);
+        freeResource(&g_4ac154);
+        freeResource(&g_4ac158);
         useAltSnoids(1);
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4abebc);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4abebc);
         fadeOutViews();
         fn_4624fc();
     }
@@ -2991,7 +2991,7 @@ void hotelFrame()
             if (viewsLocked || !g_4b755a) {
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
-                fn_46be2e(0);
+                setCurrentMap(0);
                 closeHotel();
                 g_4a1ab0 = 0;
                 return;
@@ -3609,7 +3609,7 @@ void lillyClick(short action)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeHotel();
         return;
     }
@@ -3815,7 +3815,7 @@ void openHotel()
     g_4abec0 = hotelGoReady = 0;
     useAltSnoids(0);
     openGameFile(&g_4abebc, "Hotel.MHK");
-    fn_46be2e(g_4abebc);
+    setCurrentMap(g_4abebc);
     loadTerrain(100);
     drawBackdrop(5000);
     setViewPlaces(20, places, 1);
@@ -3937,7 +3937,7 @@ void otherClick(short action)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeLilly();
         return;
     }
@@ -4604,7 +4604,7 @@ void openLilly()
     g_4ace1c = 0;
     g_4ace70 = 0;
     openGameFile(&g_4af364, "Lilly.MHK");
-    fn_46be2e(g_4af364);
+    setCurrentMap(g_4af364);
     g_4a1d68 = loadImageBank(7000, &g_4a1be8);
     drawBackdrop(5000);
     loadFeatureGroup(11000, 0, 0);
@@ -4771,7 +4771,7 @@ void lillyFrame()
             if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
-                fn_46be2e(0);
+                setCurrentMap(0);
                 closeLilly();
                 g_4a1d88 = 0;
                 return;

@@ -8,22 +8,22 @@
 
 extern unsigned long starvationLimit; /* @data 0x4a07c8: longest gap between main loop passes */
 extern char msgStarvation[]; /* @data 0x4a07cc */
-extern Callback g_4a07c4;
+extern Callback frameHook;
 extern unsigned long clockStoppedAt; /* @data 0x4ab484 */
 extern unsigned long clockOffset; /* @data 0x4ab488 */
 extern unsigned long timers[4]; /* @data 0x4ab48c: when each expires */
-extern short g_4ab49c;
-extern short g_4ab49e;
+extern short starvationChecking;
+extern short starvationPaused;
 extern unsigned long lastCheck; /* @data 0x4ab4a0 */
 extern unsigned long thisCheck; /* @data 0x4ab4a4 */
-void fn_415910();
+void enterGameDirectory();
 unsigned long fn_41571f(); /* a tick count */
 unsigned long fn_415772(); /* a tick count */
 void checkStarvation();
 short waitForEventOrTimer(short timer, short type, short discard);
-short fn_4156a3(short timer, short type, short discard);
+short waitForEventOrTimerWrapped(short timer, short type, short discard);
 short waitForEventFor(unsigned short timer, long ticks, short type, short discard);
-short fn_4156e3(unsigned short timer, long ticks, short type, short discard);
+short waitForEventForWrapped(unsigned short timer, long ticks, short type, short discard);
 void runMainLoop(short passes);
 unsigned long clockTime();
 unsigned long clockMs();
@@ -31,19 +31,19 @@ unsigned long clockTicks();
 void setTimer(unsigned short timer, long ticks);
 short timerExpired(unsigned short timer);
 void setStarvationLimit(unsigned long limit);
-void fn_415916();
+void leaveGameDirectory();
 short isLastRepeated(char *items, unsigned short count, unsigned short size);
 short allocateSlot(unsigned long *used, short count, unsigned long reserved);
-void fn_41585f();
+void checkStarvationKeepingFlags();
 void runClock(short running);
-void fn_415604(Callback callback);
-short fn_4157f3();
-void fn_415811();
-void fn_41581b(short flag);
+void setFrameHook(Callback callback);
+short takeStarvationFlags();
+void pauseStarvationCheck();
+void pauseStarvationCheckIf(short flag);
 unsigned short toLowerAscii(unsigned short c);
 unsigned short toUpperAscii(unsigned short c);
-void fn_415a11(Callback callback);
-void fn_415a20(Callback callback);
+void setClickHook(Callback callback);
+void setPaintHook(Callback callback);
 void mainLoopEvents();
 
 #endif

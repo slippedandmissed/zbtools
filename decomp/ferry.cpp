@@ -49,7 +49,7 @@ void drawFerryButton(short which, short lit, short show)
 /* The buttons' view update: redraws button 2 as g_4abaae changes, and
    button 1 once. */
 /* @zoombi32 0x0041fea4 */
-void fn_41fea4(View *, short region)
+void updateFerryButtons(View *, short region)
 {
     if (g_4abaae) {
         if (!g_4a1570) {
@@ -72,17 +72,17 @@ void closeScene10()
 {
     if (g_4abaac) {
         g_4abaac = g_4abaa2 = g_4abaa4 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         clearViews();
-        fn_46c602(&g_4a151c);
+        freeResource(&g_4a151c);
         unloadSounds();
         if (ferryLinks) {
             disposePtr(ferryLinks);
             ferryLinks = 0;
         }
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4abaa8);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4abaa8);
         fadeOutViews();
         fn_4624fc();
     }
@@ -91,7 +91,7 @@ void closeScene10()
 /* Moves g_4abac0 to g_4abac2 and starts its view on g_4a1440's script
    for g_4abaee. */
 /* @zoombi32 0x004209b8 */
-void fn_4209b8()
+void moveFerryOn()
 {
     View *view;
 
@@ -108,7 +108,7 @@ void fn_4209b8()
 /* Starts g_4abaf2's Zoombini on `script` (anchored at g_4aba98) in
    `group`, with `notify` if given. */
 /* @zoombi32 0x00420a08 */
-void fn_420a08(short group, short script, ViewNotify notify, char unknownF8)
+void startCrosserScript(short group, short script, ViewNotify notify, char unknownF8)
 {
     View *view = findView(g_4abaf2);
 
@@ -124,7 +124,7 @@ void fn_420a08(short group, short script, ViewNotify notify, char unknownF8)
 /* A notify: 6 starts g_4ababe's script in this view's group; other events
    turn the Zoombini (turnSnoid). */
 /* @zoombi32 0x00420c82 */
-void fn_420c82(View *view, short event)
+void ferryHelperNotify(View *view, short event)
 {
     View *other;
 
@@ -145,7 +145,7 @@ void fn_420c82(View *view, short event)
 /* Moves the placed Zoombinis (flag 1 and unknownF7) and two kinds of
    view (flags 0x748c2000, 0x74980000) `dx` along, cels and all. */
 /* @zoombi32 0x0042113f */
-void fn_42113f(View *, short dx)
+void slideFerryViews(View *, short dx)
 {
     View *view;
     ViewCel *cel;
@@ -230,7 +230,7 @@ void findFerryPlace(short *spot)
    over 9: 0): Captain Cajun's view (g_4abab4) plays 1604-1607, and for 7-9
    the views g_4ababc and g_4ababe are made anew about g_4aba8c. */
 /* @zoombi32 0x00420f85 */
-void fn_420f85(short n)
+void startNextCrosser(short n)
 {
     View *view;
     Point at;
@@ -281,7 +281,7 @@ void fn_420f85(short n)
     setViewScript(view, g_4abb16, 1);
     loadViewSounds(g_4abab4, 1);
     g_4aba98 = 0;
-    view->notify = fn_420a60;
+    view->notify = crosserNotify;
     groupViews(view->id, g_4abac0, g_4abaf2, 0, 0, 0);
     setViewsLocked(0);
 }
@@ -292,14 +292,14 @@ void fn_420f85(short n)
    left at (93, 408), 5 walks it off to g_4aba9c; 6 picks a sound
    (g_4a1424) if none is due. */
 /* @zoombi32 0x00420a60 */
-void fn_420a60(View *view, short event)
+void crosserNotify(View *view, short event)
 {
     View *other;
 
     switch (event) {
     case 1:
-        fn_4209b8();
-        fn_420a08(view->body.group, g_4a1454[g_4abaee], fn_420a60, 1);
+        moveFerryOn();
+        startCrosserScript(view->body.group, g_4a1454[g_4abaee], crosserNotify, 1);
         break;
     case 2:
         if (g_4a1468[g_4abaee] == 1907) {
@@ -307,15 +307,15 @@ void fn_420a60(View *view, short event)
             g_4abaa4 = 1;
         } else {
             g_4aba98 = &g_4aba92;
-            fn_420a08(view->body.group, g_4a1468[g_4abaee], 0, 0);
+            startCrosserScript(view->body.group, g_4a1468[g_4abaee], 0, 0);
             g_4aba98 = 0;
             g_4aba90 = 0;
-            fn_465175();
+            requestViewSort();
         }
         break;
     case 3:
         g_4aba98 = &g_4aba92;
-        fn_420a08(view->body.group, g_4a1468[g_4abaee], 0, 1);
+        startCrosserScript(view->body.group, g_4a1468[g_4abaee], 0, 1);
         g_4aba98 = 0;
         break;
     case 6:
@@ -329,9 +329,9 @@ void fn_420a60(View *view, short event)
             other->body.x = 93;
             other->body.y = 408;
             startSnoidScript(viewSnoid(other), viewSnoid(other)->features[3] * 2 + 998, 0, 0);
-            other->notify = fn_420a60;
+            other->notify = crosserNotify;
             other->body.group = view->body.group;
-            fn_465175();
+            requestViewSort();
         }
         break;
     case 5:
@@ -340,7 +340,7 @@ void fn_420a60(View *view, short event)
             viewSnoid(other)->unknownF2 = 0;
             startSnoidScript(viewSnoid(other), viewSnoid(other)->features[3] * 2 + 999, &g_4aba9c, 0);
             other->body.group = view->body.group;
-            other->notify = fn_420c82;
+            other->notify = ferryHelperNotify;
         }
         g_4abaf2 = 0;
         g_4aba90 = 0;
@@ -595,7 +595,7 @@ void layOutFerry(short id)
         }
     }
     placedViewCount = count;
-    fn_46c602(&resource);
+    freeResource(&resource);
 }
 
 /* Lays out the places for the level (g_4aba8a, 0-4) and the number of
@@ -655,7 +655,7 @@ void openScene10()
     addSoundRange(1900, 1999, 0);
     addSoundRange(1700, 1799, 0);
     openGameFile(&g_4abaa8, "Ferry.MHK");
-    fn_46be2e(g_4abaa8);
+    setCurrentMap(g_4abaa8);
     drawBackdrop(1300);
     g_4a147c = loadImageBank(1400, &g_4a151c);
     loadFeatureGroup(1500, 0, 0);
@@ -688,7 +688,7 @@ void openScene10()
     for (i = 0; i < 3; i++)
         g_4abac4 = addView(0x4000000, drawCels, runViewScript, i + 1450, 0, 0, 0, 0);
     g_4abac0 = g_4abac2 = 0;
-    addView(0x1000, drawFerryButtons, fn_41fea4, 0, 0, 0, 0, 0);
+    addView(0x1000, drawFerryButtons, updateFerryButtons, 0, 0, 0, 0, 0);
     setViewPlaces(20, ferryPlaces, 1);
     setViewsLocked(0);
     fn_4148da(10, 236);
@@ -698,7 +698,7 @@ void openScene10()
     updateViews();
     linkFerryPlaces(0);
     staggerSnoids(45, 30);
-    fn_465175();
+    requestViewSort();
     setGroupLists(ferryGroups, 1, (short)0xc000);
     drawFerryButton(1, 0, 0);
     drawFerryButton(2, 0, 0);
@@ -727,7 +727,7 @@ void openScene10()
    leaves (1608-1609) and so does the scene; leaves when asked; plays a
    remark due (g_4abaa0) or picks one now and then (g_4a13f0); starts the
    ferry's two views (g_4abaa4); sends the next Zoombini to a free place
-   (g_4abaa2, fn_420f85, some routes needing places free on the right);
+   (g_4abaa2, startNextCrosser, some routes needing places free on the right);
    and greets once the sound 997 ends. */
 /* @zoombi32 0x0041ff89 */
 void scene10Frame()
@@ -746,7 +746,7 @@ void scene10Frame()
         g_4abab2 = 0;
         deleteView(g_4abab6);
         deleteView(g_4abab8);
-        startView(g_4abab4, randomBetween(1608, 1609), fn_42113f, 0);
+        startView(g_4abab4, randomBetween(1608, 1609), slideFerryViews, 0);
         loadViewSounds(g_4abab4, 1);
         g_4abaa6 = groupViews(g_4abab4, g_4abab4, 0, 0, 0, 0);
         g_4b0d52 = 11;
@@ -759,7 +759,7 @@ void scene10Frame()
             if (viewsLocked || !groupLeader[g_4abaa6]) {
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
-                fn_46be2e(0);
+                setCurrentMap(0);
                 closeScene10();
                 g_4a1574 = 0;
                 return;
@@ -779,8 +779,8 @@ void scene10Frame()
         }
     } else if (g_4abaa4) {
         g_4abaa4 = 0;
-        startView(g_4ababa, 0, fn_420a60, 0);
-        startView(g_4ababc, 0, fn_420a60, 0);
+        startView(g_4ababa, 0, crosserNotify, 0);
+        startView(g_4ababc, 0, crosserNotify, 0);
         groupViews(g_4ababa, g_4ababc, 0, 0, 0, 0);
     } else if (g_4abaa2) {
         if (!groupLeader[g_4abb12]) {
@@ -811,7 +811,7 @@ void scene10Frame()
                 }
             }
             g_4aba8c = ferryPlaces[spot];
-            fn_420f85(g_4abaee);
+            startNextCrosser(g_4abaee);
         }
     } else if (viewClock() > g_4aba84) {
         resetViewClock();
@@ -864,7 +864,7 @@ void scene10Clicked(short which)
             g_4b0d52 = 11;
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene10();
         return;
     }

@@ -51,7 +51,7 @@ void scene0Clicked(short which)
 /* Every 1800 ticks, reads the time for the clock: its minute hand
    (0-11, in fives) and hour hand (0-11). */
 /* @zoombi32 0x0045c4c9 */
-void fn_45c4c9()
+void readClock()
 {
     unsigned long now;
     short year;
@@ -69,7 +69,7 @@ void fn_45c4c9()
 /* Sets whether the views g_4b7ece and the first g_4b7f02 party views run
    their scripts. */
 /* @zoombi32 0x0045ccca */
-void fn_45ccca(short running)
+void setTownRunning(short running)
 {
     short i;
     View *view;
@@ -88,7 +88,7 @@ void fn_45ccca(short running)
 
 /* A view update: once reset, adds the button to `region`. */
 /* @zoombi32 0x0045cf8b */
-void fn_45cf8b(View *view, short region)
+void updateTownButton(View *view, short region)
 {
     if (view->reset) {
         view->reset = 0;
@@ -98,7 +98,7 @@ void fn_45cf8b(View *view, short region)
 
 /* A script from 3000-3002 by g_4a4ba0's +0x46. */
 /* @zoombi32 0x0045d04c */
-short fn_45d04c()
+short townScript()
 {
     short script;
 
@@ -112,7 +112,7 @@ short fn_45d04c()
 
 /* A view's placed callback: drops its cels whose image is past g_4b7e10. */
 /* @zoombi32 0x0045daf7 */
-void fn_45daf7(View *view)
+void placeTownCels(View *view)
 {
     ViewCel *cel;
 
@@ -126,7 +126,7 @@ void fn_45daf7(View *view)
 /* A notify: negates the view's entry in g_4b7ece (the first 19) and counts
    it in g_4b7f10. */
 /* @zoombi32 0x0045e29e */
-void fn_45e29e(View *view, short)
+void townsfolkNotify(View *view, short)
 {
     short id = view->id;
     short i;
@@ -146,7 +146,7 @@ void closeScene0()
 {
     if (g_4b7cf4) {
         g_4b7cf4 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         stopMovie(1);
         viewsShown = 1;
@@ -154,7 +154,7 @@ void closeScene0()
         realizePalette(getPortPalette(), 1);
         setClipRect(gameRect);
         discardEvents(3);
-        fn_46bee9(saved);
+        setFreeAtOnce(saved);
         fadeOutViews();
         fn_4624fc();
         loadSnoids(0);
@@ -224,7 +224,7 @@ void closeScene6()
 {
     if (g_4b7e00) {
         g_4b7e00 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         useAltSnoids(1);
         if (!viewsLocked) {
@@ -235,9 +235,9 @@ void closeScene6()
         }
         clearViews();
         unloadSounds();
-        fn_46c602(&g_4a74c4);
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4b7dfc);
+        freeResource(&g_4a74c4);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4b7dfc);
         fadeOutViews();
         fn_4624fc();
         g_4a74dc = -1;
@@ -248,7 +248,7 @@ void closeScene6()
    g_4b7eb2 non-empty rectangles g_4b7e12 holding it sets g_4b7eb4, its
    number (g_4b7e92, from 1) in g_4b7eb6 and a script by it in g_4b7eb8. */
 /* @zoombi32 0x0045d715 */
-void fn_45d715(Point *where)
+void findTownHotspot(Point *where)
 {
     short i;
 
@@ -304,7 +304,7 @@ void resetScene6()
     for (i = 0; i <= 19; i++)
         g_4b7ece[i] = 0;
     g_4b7efc = 0;
-    fn_45c4c9();
+    readClock();
     g_4b7ef6 = 0;
     g_4b7f12 = 0;
 }
@@ -344,7 +344,7 @@ void settleTravellers()
 
 /* The clock's view (two cels, its hands): hidden while g_4a74dc is set
    and unless g_4b7ef8 and on screen 1 or 2 (townScreen). Shows the time
-   (fn_45c4c9), or with g_4b7ef6 winds the hands round that many times
+   (readClock), or with g_4b7ef6 winds the hands round that many times
    (faster, from where they are). */
 /* @zoombi32 0x0045cd27 */
 void drawClock(View *view)
@@ -379,12 +379,12 @@ void drawClock(View *view)
                 if (!g_4b7ef6) {
                     view->interval = 6;
                     g_4b7efc = 0;
-                    fn_45c4c9();
+                    readClock();
                 }
             }
         }
     } else {
-        fn_45c4c9();
+        readClock();
     }
     cels[0].image = clockMinute + 1;
     cels[1].image = clockHour + 13;
@@ -406,7 +406,7 @@ inline unsigned short *bankImage(ImageBank *bank, short image)
    g_4a74de's point for the group plus the cel's; 4 also sets g_4b7ef8),
    the others are dropped. */
 /* @zoombi32 0x0045db25 */
-void fn_45db25(View *view)
+void placeRecordHotspots(View *view)
 {
     ShortRect rect;
     ImageBank *volatile bank = groupBanks[view->body.scriptGroup];
@@ -459,7 +459,7 @@ void scene0Frame()
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene0();
     } else if (g_4b7cf0) {
         switch (g_4b7cec) {
@@ -643,7 +643,7 @@ void addTownsperson()
                 view->body.x = randomBetween(100, 540);
                 view->body.y = y;
                 *(long *)&view->body.unknownAa = *(long *)&view->body.x;
-                view->notify = fn_45e29e;
+                view->notify = townsfolkNotify;
                 view->notifyEnd = 1;
                 moveView(id, 0, g_4b7e0e);
                 i = 3;
@@ -783,7 +783,7 @@ void scene6Clicked(short which)
     if (g_4a74dc > 0) {
         deleteView(g_4a74dc);
         g_4a74dc = -1;
-        fn_45ccca(1);
+        setTownRunning(1);
         g_4b7eb4 = 0;
         return;
     }
@@ -794,7 +794,7 @@ void scene6Clicked(short which)
         waitForEventFor(0, 2, 0, 1);
         drawTownButton(which, 0, 1);
         g_4b0d50 = 1;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene6();
         break;
     case 2:
@@ -839,7 +839,7 @@ void scene6Clicked(short which)
             updateViews();
             updateViews();
             g_4a74dc = addView(0x5000, drawPlaque, runViewCels, g_4b7eb8, g_4b7eb6, 0, 0, 0);
-            fn_45ccca(0);
+            setTownRunning(0);
             waitForEventFor(0, 2, 0, 1);
         }
         break;
@@ -876,7 +876,7 @@ void openScene6()
     addSoundRange(20000, 29999, 1);
     addSoundRange(996, 997, 0);
     openGameFile(&g_4b7dfc, "Town.MHK");
-    fn_46be2e(g_4b7dfc);
+    setCurrentMap(g_4b7dfc);
     useAltSnoids(0);
     population() += fn_4572bf();
     if (population() >= 625)
@@ -918,10 +918,10 @@ void openScene6()
             switch (i) {
             case 1:
             case 2:
-                view->placed = fn_45daf7;
+                view->placed = placeTownCels;
                 break;
             case 3:
-                view->placed = fn_45db25;
+                view->placed = placeRecordHotspots;
                 break;
             }
     }
@@ -992,7 +992,7 @@ void openScene6()
             }
         }
     }
-    addView(0x1000, drawTownButtons, fn_45cf8b, 0, 0, 0, 0, 0);
+    addView(0x1000, drawTownButtons, updateTownButton, 0, 0, 0, 0, 0);
     setTownFrames(townScreen());
     g_4b7ece[0] = addView(0x8001, drawCels, runViewCels, 6000, 6, &snoid, 0, 0);
     view = findView(g_4b7ece[0]);
@@ -1059,7 +1059,7 @@ void openScene6()
         g_4b7ec4 = 20086;
         break;
     default:
-        g_4b7ec4 = fn_45d04c();
+        g_4b7ec4 = townScript();
         g_4b7ec6 = 1;
         break;
     }
@@ -1124,7 +1124,7 @@ void scene6Frame()
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene6();
         g_4a7580 = 0;
         return;
@@ -1145,7 +1145,7 @@ void scene6Frame()
                     if (g_4b7ec4 >= 3003)
                         g_4b7ec4 = 3000;
                 } else {
-                    g_4b7ec4 = fn_45d04c();
+                    g_4b7ec4 = townScript();
                 }
                 g_4b7ec6 = 1;
                 i = g_4b7ec4;
@@ -1192,7 +1192,7 @@ void scene6Frame()
         }
     }
     if (!g_4b9684 && !g_4b7eca && g_4a74dc == -1) {
-        fn_45d715(&where);
+        findTownHotspot(&where);
         if (!ptInRect(&townButtons[0].rect, where) && where.y > 30 && where.y < 450 && where.x > 3
             && where.x < 637) {
             if (g_4b7eb4)

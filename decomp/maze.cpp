@@ -78,8 +78,8 @@ void loadMazeTable(long *resource, short *handle, short id, short **locked)
     short *at;
 
     *resource = 0;
-    fn_46c4fe(resource, RESOURCE_TYPE('R', 'E', 'G', 'S'), id, 0, 1);
-    *handle = fn_46beac(*resource);
+    loadResourceAs(resource, RESOURCE_TYPE('R', 'E', 'G', 'S'), id, 0, 1);
+    *handle = usedResourceHandle(*resource);
     *locked = (short *)lockHandle(*handle);
     at = (short *)handleData(*handle);
     for (unsigned long size = handleSize(*handle); size; size -= 2) {
@@ -94,7 +94,7 @@ void freeMazeTable(long *resource, short *handle)
 {
     if (*handle) {
         unlockHandle(*handle);
-        fn_46c602(resource);
+        freeResource(resource);
         *handle = 0;
         *resource = 0;
     }
@@ -124,7 +124,7 @@ void drawMazeButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        handle = fn_46beac(g_4a21b4);
+        handle = usedResourceHandle(g_4a21b4);
         lockHandle(handle);
         bank = (ImageBank *)handleData(handle);
         unsigned short *data = (unsigned short *)(swapLong(bank->offsets[image]) + (char *)bank);
@@ -170,21 +170,21 @@ void closeMaze()
 {
     if (g_4afc68) {
         g_4afc68 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
         freeMazeTable(&g_4afc18, &g_4afc20);
-        fn_46c602(&g_4a21b4);
-        fn_46c602(&g_4afbd8);
-        fn_46c602(&g_4afbdc);
-        fn_46c602(&g_4afbe0);
-        fn_46c602(&g_4afbe4);
-        fn_46c602(&g_4afbc4);
-        fn_46c602(&g_4afbc8);
-        fn_46c602(&g_4afbcc);
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4afc64);
+        freeResource(&g_4a21b4);
+        freeResource(&g_4afbd8);
+        freeResource(&g_4afbdc);
+        freeResource(&g_4afbe0);
+        freeResource(&g_4afbe4);
+        freeResource(&g_4afbc4);
+        freeResource(&g_4afbc8);
+        freeResource(&g_4afbcc);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4afc64);
         fadeOutViews();
         fn_4624fc();
     }
@@ -217,7 +217,7 @@ void mazeButtonClicked(short button)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeMaze();
         return;
     }
@@ -1080,7 +1080,7 @@ void mazeFrame()
             if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
-                fn_46be2e(0);
+                setCurrentMap(0);
                 closeMaze();
                 g_4a25c8 = 0;
                 return;
@@ -2610,7 +2610,7 @@ void openMaze()
     for (i = 0; i < 11; i++)
         g_4afc4a[i] = 0;
     openGameFile(&g_4afc64, "Maze2.MHK");
-    fn_46be2e(g_4afc64);
+    setCurrentMap(g_4afc64);
     loadTerrain(100);
     drawBackdrop(5000);
     loadFeatureGroup(7000, 0, 0);
@@ -2823,5 +2823,5 @@ void openMaze()
     queueViewSound(sceneLevel() + 30035, 0);
     campHint((short *)(g_4a4ba0 + 0x44));
     g_4b966e = 20068;
-    fn_465175();
+    requestViewSort();
 }

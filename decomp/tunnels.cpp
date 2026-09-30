@@ -60,14 +60,14 @@ void closeScene8()
 {
     if (g_4b7fb8) {
         g_4b7fb8 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
-        fn_46c602(&g_4a7708);
+        freeResource(&g_4a7708);
         g_4b7564 = 0;
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4b7fb4);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4b7fb4);
         fadeOutViews();
         fn_4624fc();
     }
@@ -76,7 +76,7 @@ void closeScene8()
 /* A notify: at the end (-1), clears g_4b7fd2 and moves g_4b7fee on from
    1 to 2. */
 /* @zoombi32 0x0045fa56 */
-void fn_45fa56(View *, short event)
+void remarkEndNotify(View *, short event)
 {
     switch (event) {
     case -1:
@@ -87,15 +87,15 @@ void fn_45fa56(View *, short event)
     }
 }
 
-/* A notify for the first entry's line: at the end (-1), fn_465175, and if
+/* A notify for the first entry's line: at the end (-1), requestViewSort, and if
    there's a line to follow, sets it up to say next (g_4b7fd4 and g_4b7fd6,
    clearing g_4b7fd8). */
 /* @zoombi32 0x0045fb10 */
-void fn_45fb10(View *, short event)
+void firstLineNotify(View *, short event)
 {
     switch (event) {
     case -1:
-        fn_465175();
+        requestViewSort();
         if (g_4b7ff0.entries[0].lineThen) {
             g_4b7fd4 = g_4b7ff0.entries[0].speaker;
             g_4b7fd6 = g_4b7ff0.entries[0].lineThen;
@@ -107,7 +107,7 @@ void fn_45fb10(View *, short event)
 
 /* Adds `entry` to `list` if it has room (five). */
 /* @zoombi32 0x00460527 */
-void fn_460527(TunnelList *list, TunnelEntry entry)
+void addTunnelEntry(TunnelList *list, TunnelEntry entry)
 {
     if (list->count < 5) {
         list->entries[list->count] = entry;
@@ -115,17 +115,17 @@ void fn_460527(TunnelList *list, TunnelEntry entry)
     }
 }
 
-/* A notify: at the end (-1), fn_465175 and g_4b7fd0; now and then (more
+/* A notify: at the end (-1), requestViewSort and g_4b7fd0; now and then (more
    often at higher levels, g_4b7fbe, or early in the roster), a remark if
    some but not all of the Zoombinis have been chosen. */
 /* @zoombi32 0x0045faa3 */
-void fn_45faa3(View *, short event)
+void tunnelRemarkNotify(View *, short event)
 {
     short chosen;
 
     switch (event) {
     case -1:
-        fn_465175();
+        requestViewSort();
         g_4b7fd0 = 1;
         if (randomBetween(0, 4) > g_4b7fbe || (*(short *)(g_4a4ba0 + 0x2c) & 0xfff) <= 3) {
             chosen = countChosenSnoids();
@@ -136,12 +136,12 @@ void fn_45faa3(View *, short event)
     }
 }
 
-/* The buttons' view update: redraws button 2 when g_4b7fba changes, and
+/* The buttons' view update: redraws button 2 when tunnelsGoReady changes, and
    button 1 the first time. */
 /* @zoombi32 0x0045e9b9 */
-void fn_45e9b9(View *, short region)
+void updateTunnelsButtons(View *, short region)
 {
-    if (g_4b7fba) {
+    if (tunnelsGoReady) {
         if (!g_4b7fda) {
             g_4b7fda = 1;
             unionRgnRect(region, &tunnelsButtons[1].rect);
@@ -156,7 +156,7 @@ void fn_45e9b9(View *, short region)
     }
 }
 
-/* Draws button `which` (1 or 2; 2 is dim unless g_4b7fba), lit or not,
+/* Draws button `which` (1 or 2; 2 is dim unless tunnelsGoReady), lit or not,
    showing it on screen if `show`. */
 /* @zoombi32 0x0045e903 */
 void drawTunnelsButton(short which, short lit, short show)
@@ -169,7 +169,7 @@ void drawTunnelsButton(short which, short lit, short show)
         break;
     case 2:
         image = 2;
-        if (!g_4b7fba) {
+        if (!tunnelsGoReady) {
             lit = 0;
             image = 1;
         }
@@ -188,7 +188,7 @@ void drawTunnelsButton(short which, short lit, short show)
 /* With the first entry of kind 1 (or 4), makes the view of the first other
    entry of kind 2 (or 3) solid again (clears flag 0x4000000). */
 /* @zoombi32 0x004622f5 */
-void fn_4622f5()
+void unghostDoorView()
 {
     View *view;
     short i;
@@ -215,7 +215,7 @@ void fn_4622f5()
 }
 
 /* Scene 8's keys (with debugging on, g_4b8803, or else only 0x16f): t, T,
-   w (W also sets g_4b807e) and e queue a remark (fn_460642), a shows the rules,
+   w (W also sets g_4b807e) and e queue a remark (queueRemark), a shows the rules,
    C, F, I and O step the views tunnelsSpeakers through their scripts, H
    adds 4 to g_4b8098. Returns whether the key was used. */
 /* @zoombi32 0x0045f63a */
@@ -332,16 +332,16 @@ short scene8Key(unsigned short key)
     case 'W':
         g_4b807e = 1;
     case 'w':
-        fn_460642(1);
+        queueRemark(1);
         break;
     case 't':
-        fn_460642(0);
+        queueRemark(0);
         break;
     case 'T':
-        fn_460642(2);
+        queueRemark(2);
         break;
     case 'e':
-        fn_460642(3);
+        queueRemark(3);
         break;
     }
     return used;
@@ -397,7 +397,7 @@ short removeTunnelEntry(TunnelList *list, short view)
 /* Not exact: register allocation (the original keeps `door`, `a`, `b` and
    `passes` on the stack and `snoid` in esi, using ebx and ecx as scratch). */
 /* @zoombi32 0x00460c41 */
-short fn_460c41(FeatureRules *rules, short door, Snoid *snoid, unsigned short *first)
+short turnedBackAtDoor(FeatureRules *rules, short door, Snoid *snoid, unsigned short *first)
 {
     unsigned short passes;
     unsigned short a;
@@ -457,7 +457,7 @@ short fn_460c41(FeatureRules *rules, short door, Snoid *snoid, unsigned short *f
    one of those values at random as the rule, which the door accepts or
    refuses at random (back). */
 /* @zoombi32 0x00460e3d */
-void fn_460e3d()
+void makeOneFeatureRule()
 {
     ChosenSnoids *chosen;
     unsigned long picked;
@@ -569,7 +569,7 @@ void fn_460e3d()
    row toward it to free one, and takes the first free place, into
    *spot. */
 /* @zoombi32 0x00460021 */
-void fn_460021(short *spot, short side)
+void findWaitingPlace(short *spot, short side)
 {
     short nearRight[2] = {15, 10};
     short nearLeft[2] = {11, 6};
@@ -680,7 +680,7 @@ void fn_460021(short *spot, short side)
    feature, and the second. Pairs leaving a way empty drop out; of the rest,
    those splitting most evenly tie, and one is picked at random. */
 /* @zoombi32 0x00461e1a */
-void fn_461e1a(ChosenSnoids *chosen, unsigned long *masks, unsigned long *pair, short pairs, short n)
+void pickBestMaskPair(ChosenSnoids *chosen, unsigned long *masks, unsigned long *pair, short pairs, short n)
 {
     char *score;
     char *both;
@@ -815,7 +815,7 @@ void fn_461e1a(ChosenSnoids *chosen, unsigned long *masks, unsigned long *pair, 
    shorter set once W has been pressed (g_4b807e); kind 3 depends on
    g_4b7fd0 and on whether every chosen Zoombini is on screen. */
 /* @zoombi32 0x00460642 */
-void fn_460642(short kind)
+void queueRemark(short kind)
 {
     short speaker;
     short line;
@@ -1083,16 +1083,16 @@ void fn_460642(short kind)
     entry.replier = replier;
     entry.reply = reply;
     entry.replyThen = replyThen;
-    fn_460527(&g_4b7ff0, entry);
+    addTunnelEntry(&g_4b7ff0, entry);
 }
 
 /* Makes a two-rule set (two feature values each): builds the 40 masks of
    two values of one feature (a byte of a long, a value per nibble, big-endian
-   like the Zoombinis' features), then as fn_461e1a picks the pair of masks
+   like the Zoombinis' features), then as pickBestMaskPair picks the pair of masks
    that best splits the chosen Zoombinis four ways, and makes each a rule
    with a random side. */
 /* @zoombi32 0x004612b1 */
-void fn_4612b1()
+void makeTwoValueRules()
 {
     char *both;
     char *firstOnly;
@@ -1263,9 +1263,9 @@ void fn_4612b1()
 
 /* Makes a two-rule set of one feature value each: the 20 masks of one
    value, and the pair of them that best splits the chosen Zoombinis
-   (fn_461e1a), each made a rule with a random side. */
+   (pickBestMaskPair), each made a rule with a random side. */
 /* @zoombi32 0x00461135 */
-void fn_461135()
+void makeOneValueRules()
 {
     ChosenSnoids *chosen;
     unsigned long pair[2];
@@ -1298,7 +1298,7 @@ void fn_461135()
             break;
         }
     }
-    fn_461e1a(chosen, masks, pair, 400, 20);
+    pickBestMaskPair(chosen, masks, pair, 400, 20);
     g_4b7f18.count = 2;
     for (i = 0; i < 2; i++) {
         g_4b7f18.rules[i].side = randomBetween(0, 1);
@@ -1322,10 +1322,10 @@ void fn_461135()
 /* Makes a two-rule set whose rules each name values of two features: the
    150 masks of a value of each of two features (six pairs of features,
    `low` and `high` giving each one's place), the pair of them that best
-   splits the chosen Zoombinis (fn_461e1a), each made a rule with a random
+   splits the chosen Zoombinis (pickBestMaskPair), each made a rule with a random
    side. */
 /* @zoombi32 0x00461bec */
-void fn_461bec()
+void makeTwoFeatureRules()
 {
     ChosenSnoids *chosen;
     unsigned long pair[2];
@@ -1351,7 +1351,7 @@ void fn_461bec()
                 value += low[f];
             }
         }
-    fn_461e1a(chosen, masks, pair, 22500, 150);
+    pickBestMaskPair(chosen, masks, pair, 22500, 150);
     g_4b7f18.count = 2;
     for (i = 0; i < 2; i++) {
         f = 0;
@@ -1389,7 +1389,7 @@ void dropFirstTunnelEntry(TunnelList *list)
 
 /* Says the next part of the remark first in g_4b7ff0 (its step: the
    speaker's line, the reply, the speaker's second line, the second reply;
-   a part with no view or script is skipped), ending with fn_45fa56; when
+   a part with no view or script is skipped), ending with remarkEndNotify; when
    there's nothing left to say, drops the remark. */
 /* @zoombi32 0x00460571 */
 void sayTunnelRemark()
@@ -1427,7 +1427,7 @@ void sayTunnelRemark()
         break;
     }
     if (view && script) {
-        startView(view, script, fn_45fa56, 1);
+        startView(view, script, remarkEndNotify, 1);
         loadViewSounds(view, 1);
         g_4b7fd2 = 1;
     } else {
@@ -1438,7 +1438,7 @@ void sayTunnelRemark()
 
 /* A notify: at the end (-1), drops the remark said and clears g_4b7fd2. */
 /* @zoombi32 0x0045fa80 */
-void fn_45fa80(View *, short event)
+void dropRemarkNotify(View *, short event)
 {
     switch (event) {
     case -1:
@@ -1452,7 +1452,7 @@ void fn_45fa80(View *, short event)
    through their doors (the entry's kind, 1-4), freeing the four places by
    the doors. */
 /* @zoombi32 0x0045f9c9 */
-void fn_45f9c9()
+void sendThroughDoors()
 {
     short doorX[4] = {141, 198, 426, 479};
     short i;
@@ -1485,10 +1485,10 @@ void fn_45f9c9()
    kind) to the next place there, counts toward g_4b8098 (more as the
    chosen Zoombinis run out) and sets off the line; one turned back gets
    a remark (the first time) and walks to a free waiting place
-   (fn_460021) on its door's side. Either way the entry is dropped unless its line is
+   (findWaitingPlace) on its door's side. Either way the entry is dropped unless its line is
    being said. */
 /* @zoombi32 0x0045fb50 */
-void fn_45fb50(View *view, short event)
+void tunnelsSnoidNotify(View *view, short event)
 {
     short spot;
     Snoid *snoid;
@@ -1521,14 +1521,14 @@ void fn_45fb50(View *view, short event)
         break;
     case 10:
         side = ((g_4b7ff0.entries[0].backScript - 8000) / 2) & 3;
-        fn_4622f5();
+        unghostDoorView();
         startSnoidScript(snoid, g_4b7ff0.entries[0].backScript, &g_4a78a6[side], 0);
-        view->notify = fn_45fb50;
+        view->notify = tunnelsSnoidNotify;
         break;
     case 13:
         speaker = 0;
         if (g_4b7ff0.entries[0].line) {
-            startView(g_4b7ff0.entries[0].speaker, g_4b7ff0.entries[0].line, fn_45fb10, 1);
+            startView(g_4b7ff0.entries[0].speaker, g_4b7ff0.entries[0].line, firstLineNotify, 1);
             loadViewSounds(g_4b7ff0.entries[0].speaker, 1);
             speaker = findView(g_4b7ff0.entries[0].speaker);
         }
@@ -1614,8 +1614,8 @@ void fn_45fb50(View *view, short event)
                     }
                 }
             }
-            if (!g_4b7fba)
-                g_4b7fba = countChosenSnoids();
+            if (!tunnelsGoReady)
+                tunnelsGoReady = countChosenSnoids();
         } else if (g_4b7ff0.entries[0].back) {
             if (!g_4b808e && g_4b8090) {
                 g_4b808e = 1;
@@ -1632,11 +1632,11 @@ void fn_45fb50(View *view, short event)
                 side = 0;
                 break;
             }
-            fn_460021(&spot, side);
+            findWaitingPlace(&spot, side);
             view->flags = 1;
             *(Point *)&viewSnoid(view)->targetX = tunnelPlaces[spot];
             setSnoidAction(viewSnoid(view), 7, 0);
-            fn_4622f5();
+            unghostDoorView();
         }
         if (!g_4b7fd4) {
             dropFirstTunnelEntry(&g_4b7ff0);
@@ -1654,7 +1654,7 @@ void fn_45fb50(View *view, short event)
    to its door with its script (and the entry's reply is said); one turned
    back uses up a turn-back, with a warning (4700-4703) for the last four;
    otherwise the entry is a remark to say. With none left, sends the
-   waiting Zoombinis off (fn_45f9c9) and queues a closing remark. Also makes an idle remark now and then (every 5400-10800 view
+   waiting Zoombinis off (sendThroughDoors) and queues a closing remark. Also makes an idle remark now and then (every 5400-10800 view
    ticks), starts g_4b7fc2's script once (g_4b7fee), and every so often
    has an idle Zoombini fidget (8559 on), up to g_4b8098 times. */
 /* @zoombi32 0x0045ea81 */
@@ -1690,7 +1690,7 @@ void scene8Frame()
             if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
-                fn_46be2e(0);
+                setCurrentMap(0);
                 closeScene8();
                 g_4a7888 = 0;
                 return;
@@ -1710,10 +1710,10 @@ void scene8Frame()
             g_4b7fd4 = 0;
             if (g_4b8096) {
                 if (g_4b7fd8)
-                    fn_45fa80(0, -1);
+                    dropRemarkNotify(0, -1);
             } else {
                 if (g_4b7fd8)
-                    startView(id, g_4b7fd6, fn_45fa80, 1);
+                    startView(id, g_4b7fd6, dropRemarkNotify, 1);
                 else
                     startView(id, g_4b7fd6, 0, 1);
                 loadViewSounds(id, 1);
@@ -1740,7 +1740,7 @@ void scene8Frame()
                         if (view->body.cels[20].image < 4) /* +0xa8: not a cel here? */
                             snoid->unknownF2 = 1;
                         startSnoidScript(snoid, g_4b7ff0.entries[0].script, 0, 0);
-                        view->notify = fn_45fb50;
+                        view->notify = tunnelsSnoidNotify;
                         view->notifyEnd = 1;
                         groupViews(id, id, 0, 0, 0, 0);
                         if (g_4b7ff0.entries[0].back) {
@@ -1773,8 +1773,8 @@ void scene8Frame()
     } else if (!g_4b7fce && !g_4b7fd2) {
         if (!talking) {
             g_4b7fce = 1;
-            fn_45f9c9();
-            fn_460642(2);
+            sendThroughDoors();
+            queueRemark(2);
             g_4b7fee = 1;
         }
     } else if (g_4b7ff0.count && !g_4b7fd2 && !g_4b7ff0.entries[0].view && !talking) {
@@ -1782,7 +1782,7 @@ void scene8Frame()
     }
     if (!g_4b7fce && viewClock() > g_4b7fe0) {
         resetViewClock();
-        fn_460642(0);
+        queueRemark(0);
         g_4b7fe0 = randomBetween(5400, 10800);
     }
     if (g_4b7fee == 2) {
@@ -1792,7 +1792,7 @@ void scene8Frame()
             setViewScript(view, 0, 1);
             view->flags &= ~0x1000000;
             view->notifyEnd = 1;
-            view->notify = fn_45faa3;
+            view->notify = tunnelRemarkNotify;
             loadViewSounds(g_4b7fc2, 1);
             setViewsLocked(0);
         }
@@ -1818,7 +1818,7 @@ void scene8Frame()
 }
 
 /* Opens scene 8: its level's number of turn-backs allowed (16-22)
-   and rules (fn_460e3d, fn_461135, fn_4612b1, fn_461bec), Tunnels.MHK,
+   and rules (makeOneFeatureRule, makeOneValueRules, makeTwoValueRules, makeTwoFeatureRules), Tunnels.MHK,
    the backdrop, images and scripts, the views (the four placed at the
    doors, the characters, the buttons), the party, and a first remark. */
 /* @zoombi32 0x0045e441 */
@@ -1827,7 +1827,7 @@ void openScene8()
     Point places[4] = {{98, 424}, {178, 415}, {453, 421}, {533, 430}};
     short i;
 
-    g_4b7fb8 = g_4b7fba = 0;
+    g_4b7fb8 = tunnelsGoReady = 0;
     resetScene8();
     g_4b807e++;
     g_4b7fbe = sceneLevel();
@@ -1855,7 +1855,7 @@ void openScene8()
     addSoundRange(99, 99, 0);
     addSoundRange(8500, 8599, 0);
     openGameFile(&g_4b7fb4, "Tunnels.MHK");
-    fn_46be2e(g_4b7fb4);
+    setCurrentMap(g_4b7fb4);
     loadPaths(1000);
     loadTerrain(100);
     drawBackdrop(300);
@@ -1892,7 +1892,7 @@ void openScene8()
         addView(0, drawCels, runViewScript, i, 6, 0, 0, 0);
     g_4b7fc2 = addView(0xd181000, drawCels, runViewScript, 7000, 6, 0, 0, 0);
     fn_4148da(10, 236);
-    g_4b7fcc = addView(0x1000, drawTunnelsButtons, fn_45e9b9, 0, 0, 0, 0, 0);
+    g_4b7fcc = addView(0x1000, drawTunnelsButtons, updateTunnelsButtons, 0, 0, 0, 0, 0);
     moveView(g_4b7fc2, 0, g_4b7fcc);
     setViewPlaces(16, tunnelPlaces, 1);
     makePartySnoids(0);
@@ -1901,16 +1901,16 @@ void openScene8()
     staggerSnoids(45, 30);
     switch (g_4b7fbe) {
     case 0:
-        fn_460e3d();
+        makeOneFeatureRule();
         break;
     case 1:
-        fn_461135();
+        makeOneValueRules();
         break;
     case 2:
-        fn_4612b1();
+        makeTwoValueRules();
         break;
     case 3:
-        fn_461bec();
+        makeTwoFeatureRules();
         break;
     }
     setGroupLists(tunnelsGroups, 1, (short)0xc000);
@@ -1924,7 +1924,7 @@ void openScene8()
     g_4b8094 = countSnoidViews();
     campHint((short *)(g_4a4ba0 + 0x2c));
     g_4b966e = randomBetween(20069, 20070);
-    fn_460642(1);
+    queueRemark(1);
     g_4b7fe0 = randomBetween(5400, 10800);
 }
 
@@ -1932,7 +1932,7 @@ void openScene8()
    the Zoombinis on (once all have gone through or given up) with a closing
    remark, 3 drags a Zoombini. Dropped at a door (heldPlaceNumber), it
    queues an entry in g_4b7ff0 for it to go through or be turned back
-   (fn_460c41, under the rules; on level 0 the first rule's side decides a
+   (turnedBackAtDoor, under the rules; on level 0 the first rule's side decides a
    door's result), with what the characters say about it; a Zoombini taken
    off the queue goes back to a free waiting place. */
 /* Not exact: register allocation (the original keeps `view` in esi and
@@ -1961,7 +1961,7 @@ void scene8Clicked(short which)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene8();
         return;
     }
@@ -1975,7 +1975,7 @@ void scene8Clicked(short which)
         askKeepParty();
         break;
     case 2:
-        if (!g_4b7fba)
+        if (!tunnelsGoReady)
             break;
         if (g_4b7fce && !g_4b7fd0)
             break;
@@ -1989,7 +1989,7 @@ void scene8Clicked(short which)
             stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
             lastViewSound = 0;
         }
-        fn_460642(3);
+        queueRemark(3);
         break;
     case 3:
         if (!g_4b7fce && g_4b7ff0.count && !g_4b7ff0.entries[0].view) {
@@ -2026,7 +2026,7 @@ void scene8Clicked(short which)
             line = lineThen = 0;
             replier = reply = replyThen = 0;
             view->flags |= 0x4000000;
-            back = fn_460c41(&g_4b7f18, which, viewSnoid(view), (unsigned short *)&first);
+            back = turnedBackAtDoor(&g_4b7f18, which, viewSnoid(view), (unsigned short *)&first);
             switch (which) {
             case 1:
                 if (!first)
@@ -2128,7 +2128,7 @@ void scene8Clicked(short which)
             entry.reply = reply;
             entry.replyThen = replyThen;
             entry.kind = which;
-            fn_460527(&g_4b7ff0, entry);
+            addTunnelEntry(&g_4b7ff0, entry);
         } else if (removed) {
             if (snoid->body.x != snoid->targetX || snoid->body.y != snoid->targetY)
                 pickFreePlace((Point *)&snoid->targetX, tunnelPlaces, 16, 500);

@@ -7,7 +7,7 @@
 #define PLATFORM_H
 
 extern short g_4a4ad6;
-extern Callback g_4a4a14;
+extern Callback aboutHook;
 extern long g_4a4a18;
 extern long g_4a4a1c;
 extern char minimumOfText[]; /* @data 0x4a4a20 */
@@ -40,7 +40,7 @@ void fn_455ab0(short type);
 void fn_455f66();
 LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
 void fn_456914();
-void fn_456a64();
+void drawPaletteChart();
 void mouseButtonDown(short button, long keys, long where);
 short handleNextMessage();
 void flushInput(short which);
@@ -50,7 +50,7 @@ void placeGamePort();
 void destroyMainWindow();
 void showError(const char *prefix, const char *format, va_list args);
 void releaseControlKeys();
-void fn_456b2e(short active);
+void gameActivated(short active);
 void checkDisplayMode(DisplayMode *mode);
 void handleWaitingMessage();
 void waitWhilePaused();
@@ -74,13 +74,13 @@ int isMousePresent();
 void freeAndClear(void **block);
 char *intToDecimal(int value, char *buffer);
 char *unsignedToDecimal(unsigned long value, char *buffer);
-void fn_455e26(long);
-void fn_455e2d(long);
-short fn_455e85(Point *where, short button);
-void fn_456a2f(Callback callback);
-short fn_4568d8();
-void fn_456a3e(long first, long second);
-void fn_456a55(void (*callback)(short active));
-short fn_456bf6();
+void unusedPlatformHook1(long);
+void unusedPlatformHook2(long);
+short platformHandlesMouse(Point *where, short button);
+void setAboutHook(Callback callback);
+short realizeFullScreenPalette();
+void setPlatformPair(long first, long second);
+void setGameActivateHook(void (*callback)(short active));
+short isWindowed();
 
 #endif

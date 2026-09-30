@@ -35,7 +35,7 @@ void openScene12()
     g_4b2540 = g_4b2542 = g_4b1a3c = 0;
     g_4b2526 = -1;
     openGameFile(&g_4b1928, "Slides.MHK");
-    fn_46be2e(g_4b1928);
+    setCurrentMap(g_4b1928);
     fillMemory(g_4b1936, 0, 20);
     fillMemory(hexCells, 0, sizeof hexCells);
     fillMemory(cellLinkBits, 0, sizeof cellLinkBits);
@@ -103,13 +103,13 @@ void closeScene12()
 {
     if (g_4b1930) {
         g_4b1930 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
-        fn_46c602(&g_4a3fc8);
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4b1928);
+        freeResource(&g_4a3fc8);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4b1928);
         fadeOutViews();
         fn_4624fc();
     }
@@ -1057,7 +1057,7 @@ void scene12Frame()
                 if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
                     g_4b0d50 = g_4b0d52;
                     g_4b0d52 = 0;
-                    fn_46be2e(0);
+                    setCurrentMap(0);
                     closeScene12();
                     g_4a41e4 = 0;
                     return;
@@ -1989,7 +1989,7 @@ void scene12Clicked(short which)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene12();
         return;
     }

@@ -6,7 +6,7 @@
 #ifndef E2MEMORY_H
 #define E2MEMORY_H
 
-extern short g_4b99d4; /* 1: e2memory's frees free at once, else mark purgeable */
+extern short freeAtOnce; /* 1: e2memory's frees free at once, else mark purgeable */
 extern unsigned long memoryPeak; /* @data 0x4b99c4: e2memory's use, most and now */
 extern unsigned long memoryInUse; /* @data 0x4b99c8 */
 extern unsigned long memoryPeak2; /* @data 0x4b99cc */
@@ -26,29 +26,29 @@ extern long pendingShapeList; /* @data 0x4b9b04 */
 extern char dataPath[256]; /* @data 0x4b99d6 */
 extern short dataPathLength; /* @data 0x4b9ad6 */
 extern char dataDrive; /* @data 0x4b9ad8 */
-void fn_46be3d();
-short fn_46beac(long);
+void freeLoadTexts();
+short usedResourceHandle(long);
 /* Loads resource `id` of type `type` (e.g. 'CURS') into *handle. */
-void fn_46c4fe(long *resource, long type, unsigned short id, const char *what, short required);
+void loadResourceAs(long *resource, long type, unsigned short id, const char *what, short required);
 /* Creates the font `name` at `size` into *font. */
-void fn_46cb10(Font **font, const char *name, unsigned short size, unsigned short style);
-char *fn_46cafb(long resource); /* a resource's data */
-void fn_46c602(long *);
+void loadFont(Font **font, const char *name, unsigned short size, unsigned short style);
+char *resourceData(long resource); /* a resource's data */
+void freeResource(long *);
 /* Finds resource `id` of type `type`; 0 if there's none. */
-long fn_46c402(long type, short id, short note);
-void fn_46c5b7(long *resource); /* releases a resource */
-char *fn_46cabc(long resource); /* locks a resource */
-void fn_46cad1(long resource); /* unlocks it */
-short *fn_46cae6(long resource);
-void fn_46c6db(long *info, short id, short *count, const char *name);
-void fn_46c77c(long *resource);
-void fn_46c148(long *resource, unsigned short first, unsigned short member, const char *name);
-void fn_46c808(long *resource, short id, const char *name, short);
-void fn_46c86c(long *resource);
-void fn_46c88c(long *resource, short id, const char *name);
-void fn_46c970(long *resource);
-void fn_46c011(ResourceList **list, short id, const char *what, short); /* loads a resource list */
-void fn_46c2db(ResourceList **list);
+long findMapResource(long type, short id, short note);
+void purgeGameResource(long *resource); /* releases a resource */
+char *lockResource(long resource); /* locks a resource */
+void unlockResource(long resource); /* unlocks it */
+short *resourceShorts(long resource);
+void loadShapeListInfo(long *info, short id, short *count, const char *name);
+void freeShapeListInfo(long *resource);
+void loadShapeMember(long *resource, unsigned short first, unsigned short member, const char *name);
+void loadPalette(long *resource, short id, const char *name, short);
+void freePalette(long *resource);
+void loadSoundList(long *resource, short id, const char *name);
+void freeSoundListNow(long *resource);
+void loadShapeList(ResourceList **list, short id, const char *what, short); /* loads a resource list */
+void freeShapeList(ResourceList **list);
 /* e2memory */
 long currentMap(); /* 0x46be28 */
 void e2AllocHandle(short *handle, unsigned long size, char *what); /* 0x46bf01 */
@@ -78,10 +78,10 @@ void freeFont(Font **font); /* 0x46cb61 */
 unsigned short trackResource(long resource, short purgeable, short force); /* 0x46cb8d */
 unsigned short trackHandle(short handle, short purgeable, short force); /* 0x46cbc6 */
 void trackMemory(unsigned long size, short freed); /* 0x46cbff */
-void fn_46be2e(long value);
-short fn_46bee2();
-short fn_46bee9(short value);
+void setCurrentMap(long value);
+short getFreeAtOnce();
+short setFreeAtOnce(short value);
 void setDataPath(const char *path);
-void fn_46ca9c(long *handle);
+void closeGameFile(long *handle);
 
 #endif

@@ -92,7 +92,7 @@ void drawBridgeButton(short which, short lit, short show)
 /* The buttons' view update: redraws button 2 as g_4ab78a changes, and
    button 1 once. */
 /* @zoombi32 0x0041a965 */
-void fn_41a965(View *, short region)
+void updateBridgeButtons(View *, short region)
 {
     if (g_4ab78a) {
         if (!g_4a0f08) {
@@ -115,13 +115,13 @@ void closeScene7()
 {
     if (g_4ab788) {
         g_4ab788 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
-        fn_46c602(&g_4a0e24);
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4ab784);
+        freeResource(&g_4a0e24);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4ab784);
         fadeOutViews();
         fn_4624fc();
     }
@@ -132,7 +132,7 @@ void closeScene7()
    inverted unless the rule's side, and again for edge 2. */
 /* Not exact: register allocation (the original keeps `snoid` on the stack
    and `passes` in ebx, with ecx and esi as scratch; here `snoid` takes esi),
-   as in the tunnels' fn_460c41. */
+   as in the tunnels' turnedBackAtDoor. */
 /* @zoombi32 0x0041c00c */
 short turnedBack(FeatureRules *rules, short edge, Snoid *snoid)
 {
@@ -159,7 +159,7 @@ short turnedBack(FeatureRules *rules, short edge, Snoid *snoid)
    (-1), with fewer chosen than g_4ab82e, now and then a remark
    (20045-20048). */
 /* @zoombi32 0x0041b357 */
-void fn_41b357(View *view, short event)
+void bridgeViewNotify(View *view, short event)
 {
     View *other;
 
@@ -254,7 +254,7 @@ short scene7Key(unsigned short key)
  * up to 6); at the end (-1) it finds a spot back by its bridge.
  */
 /* @zoombi32 0x0041b453 */
-void fn_41b453(View *view, short event)
+void bridgeSnoidNotify(View *view, short event)
 {
     Point anchor;
     View *other;
@@ -603,7 +603,7 @@ void makeBridgeRule()
         }
         target += value;
         /* value (the step here) is unsigned, so the test is always false (as in the tunnels'
-           fn_460e3d). */
+           makeOneFeatureRule). */
         if (value < 0)
             value--;
         value++;
@@ -728,7 +728,7 @@ void openScene7()
     addSoundRange(1214, 1215, 1);
     addSoundRange(175, 199, 0);
     openGameFile(&g_4ab784, "bridge.mhk");
-    fn_46be2e(g_4ab784);
+    setCurrentMap(g_4ab784);
     loadTerrain(1600);
     drawBackdrop(1000);
     loadFeatureGroup(1100, 0, 0);
@@ -755,7 +755,7 @@ void openScene7()
         else
             addView(0, drawCels, runViewScript, i, 0, 0, 0, 0);
     addView(0x8000, drawCels, runViewScript, 1106, 0, 0, 0, 0);
-    addView(0x1000, drawBridgeButtons, fn_41a965, 0, 0, 0, 0, 0);
+    addView(0x1000, drawBridgeButtons, updateBridgeButtons, 0, 0, 0, 0, 0);
     setViewPlaces(16, places, 1);
     makePartySnoids(0);
     enterSnoids(0);
@@ -808,7 +808,7 @@ void scene7Frame()
             if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
-                fn_46be2e(0);
+                setCurrentMap(0);
                 closeScene7();
                 g_4a0f0c = 0;
                 return;
@@ -830,7 +830,7 @@ void scene7Frame()
         view = findView(g_4ab7de);
         if (view)
             setViewScript(view, 1235, 1);
-        if (startView(g_4ab7e0, 1221, fn_41b357, 1))
+        if (startView(g_4ab7e0, 1221, bridgeViewNotify, 1))
             loadViewSounds(g_4ab7e0, 1);
     }
     if (g_4ab800 && !g_4ab7ea) {
@@ -877,7 +877,7 @@ void scene7Frame()
             g_4ab828 = -1;
             /* the script for its feet (from 1) */
             startSnoidScript(viewSnoid(view), (n += viewSnoid(view)->features[3], n - 1), 0, 0);
-            view->notify = fn_41b453;
+            view->notify = bridgeSnoidNotify;
             view->notifyEnd = 1;
             g_4ab7f0 = groupViews(view->id, view->id, 0, 0, 0, 0);
         }
@@ -906,7 +906,7 @@ void scene7Frame()
                         n = g_4ab7da + 1208;
                         break;
                     }
-                    startView(g_4ab7e2, n, fn_41b357, 0);
+                    startView(g_4ab7e2, n, bridgeViewNotify, 0);
                     view->body.group = g_4ab7f0;
                     loadViewSounds(g_4ab7e2, 1);
                 }
@@ -973,7 +973,7 @@ void scene7Clicked(short which)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closeScene7();
         return;
     }

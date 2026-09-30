@@ -77,13 +77,13 @@ void closePizza()
     g_4b755e = g_4b166c;
     if (g_4b15e4) {
         g_4b15e4 = 0;
-        short saved = fn_46bee9(1);
+        short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
-        fn_46c602(&g_4a3d3c);
-        fn_46bee9(saved);
-        fn_46ca9c(&g_4b15d0);
+        freeResource(&g_4a3d3c);
+        setFreeAtOnce(saved);
+        closeGameFile(&g_4b15d0);
         fadeOutViews();
         fn_4624fc();
     }
@@ -2434,7 +2434,7 @@ void pizzaServedTo(short troll, short)
         g_4b181c = g_4b15d4 - 1;
 }
 
-/* Plays sound `sound` and waits for it (fn_412084); unloads it unless
+/* Plays sound `sound` and waits for it (awaitSound); unloads it unless
    `keep`. Returns whether it was cut short. */
 /* @zoombi32 0x00445feb */
 short playAndWait(short sound, short keep)
@@ -2443,9 +2443,9 @@ short playAndWait(short sound, short keep)
     short played;
 
     playSoundOn(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'), 0);
-    played = fn_412084(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'), 3, 1);
+    played = awaitSound(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'), 3, 1);
     if (!keep)
-        fn_41158c(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+        unloadSoundNow(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
     if (!played)
         stopped++;
     return stopped;
@@ -2515,7 +2515,7 @@ void pizzaButtonClicked(short button)
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
-        fn_46be2e(0);
+        setCurrentMap(0);
         closePizza();
         return;
     }
@@ -2633,7 +2633,7 @@ void pizzaFrame()
             if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
-                fn_46be2e(0);
+                setCurrentMap(0);
                 closePizza();
                 g_4a3d9c = 0;
                 return;
@@ -2980,7 +2980,7 @@ void openPizza()
     else if (pizzaLevel == 3)
         memcpy(pizzaButtons, g_4a3b34, sizeof g_4a3b34);
     openGameFile(&g_4b15d0, "Pizza.MHK");
-    fn_46be2e(g_4b15d0);
+    setCurrentMap(g_4b15d0);
     loadPaths(1000);
     loadTerrain(100);
     drawBackdrop(5000);

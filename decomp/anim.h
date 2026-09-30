@@ -33,7 +33,7 @@ void restartAnim(Anim *anim, short run);
 void runFrame(Anim *anim);
 void loadScript(long *script, short id, const char *name);
 void freeScript(long *script);
-short fn_411212();
+short animAlwaysTrue();
 void setupAnimOffscreen(AnimSpec *spec);
 void spritesBounds(Anim *anim, ShortRect *into);
 
