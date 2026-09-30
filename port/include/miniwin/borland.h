@@ -1,0 +1,53 @@
+/*
+ * The parts of Borland C++'s runtime the game uses that standard C++ lacks
+ * (dir.h, dos.h, stdlib.h and string.h extensions). Paths go through
+ * miniwin's drives (files.cpp), like the Win32 file functions.
+ */
+
+#ifndef MINIWIN_BORLAND_H
+#define MINIWIN_BORLAND_H
+
+#include <stdio.h>
+
+/* Borland declares these structures globally, where the C library's time()
+   can share the name. */
+struct time
+{
+    unsigned char ti_min;
+    unsigned char ti_hour;
+    unsigned char ti_hund;
+    unsigned char ti_sec;
+};
+
+struct dosdate_t
+{
+    unsigned char day;
+    unsigned char month;
+    unsigned int year;
+    unsigned char dayofweek;
+};
+
+namespace miniwin {
+
+void gettime(struct time *now);
+void _dos_getdate(struct dosdate_t *date);
+int getdisk();
+int setdisk(int drive);
+char *getcwd(char *buffer, int size);
+int chdir(const char *path);
+FILE *fopen(const char *path, const char *mode);
+
+char *itoa(int value, char *buffer, int radix);
+char *ltoa(long value, char *buffer, int radix);
+char *ultoa(unsigned long value, char *buffer, int radix);
+int stricmp(const char *a, const char *b);
+int strnicmp(const char *a, const char *b, size_t n);
+int memicmp(const void *a, const void *b, size_t n);
+char *strupr(char *s);
+char *strlwr(char *s);
+
+} /* namespace miniwin */
+
+using namespace miniwin;
+
+#endif

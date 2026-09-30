@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zoombinis</title>
+<style>
+  :root { --bg: #000; --fg: #c8c8c8; --accent: #ffd34d; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg);
+               font: 16px/1.4 system-ui, sans-serif; overflow: hidden; }
+  #canvas { position: absolute; inset: 0; margin: auto; display: block;
+            width: min(100vw, calc(100vh * 4 / 3)); height: min(100vh, calc(100vw * 3 / 4));
+            image-rendering: pixelated; outline: none; cursor: none; }
+  #overlay { position: absolute; inset: 0; display: flex; align-items: center;
+             justify-content: center; flex-direction: column; gap: 12px; text-align: center;
+             padding: 16px; background: var(--bg); }
+  #overlay button { font: inherit; font-size: 20px; padding: 12px 28px; border-radius: 8px;
+                    border: 2px solid var(--accent); background: transparent;
+                    color: var(--accent); cursor: pointer; }
+  #overlay button:disabled { opacity: 0.4; cursor: default; }
+  #status { min-height: 1.4em; }
+</style>
+</head>
+<body>
+<canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+<div id="overlay">
+  <div><strong>Logical Journey of the Zoombinis</strong></div>
+  <div id="status">Loading…</div>
+  <button id="start" disabled>Start</button>
+</div>
+<script>
+  // ?noalert: message boxes go to the console instead of blocking the page
+  // (for automated testing).
+  if (/[?&]noalert\b/.test(location.search)) {
+    window.alert = function (text) { console.error('alert: ' + text); };
+    window.confirm = function (text) { console.error('confirm: ' + text); return true; };
+  }
+  var overlay = document.getElementById('overlay');
+  var statusLine = document.getElementById('status');
+  var startButton = document.getElementById('start');
+  var Module = {
+    canvas: document.getElementById("canvas"),
+    print: function (text) { console.log(text); },
+    printErr: function (text) { console.warn(text); },
+    setStatus: function (text) {
+      var m = text.match(/\((\d+(\.\d+)?)\/(\d+)\)/);
+      if (m)
+        statusLine.textContent = 'Loading… ' + Math.round(100 * m[1] / m[3]) + '%';
+      else if (text)
+        statusLine.textContent = text;
+    },
+    onAbort: function (what) {
+      overlay.style.display = 'flex';
+      statusLine.textContent = 'The game stopped: ' + what;
+    },
+  };
+</script>
+<script src="zoombinis-config.js"></script>
+<script src="zoombinis-data.js"></script>
+{{{ SCRIPT }}}
+</body>
+</html>

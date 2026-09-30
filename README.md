@@ -18,6 +18,8 @@ The decompiled code builds into a `zoombi32.exe` (`uv run build`), linked by the
 
 The original game is playable from its disc image in the scripted Windows 98 VM.
 
+The decompiled game also runs in a web browser, as WebAssembly (`uv run port`, see [the port](#the-port-running-the-game-on-modern-systems)): it starts and reaches Zoombini Isle, where you can pick features for a Zoombini. Sound effects are mixed but not yet checked by ear, music is silent (there's no MIDI synthesizer yet) and movies don't play.
+
 ## Setup
 
 Supported hosts: macOS on Apple Silicon (tested) and Linux (should work, untested).
@@ -230,6 +232,31 @@ uv run trace build/vm/trace.log                       # the functions the traced
 
 `vm run --exe` carries an executable into the VM on a floppy, copies it into the game's directory as `REBUILT.EXE` (the original stays) and starts it. With `--trace`, QEMU logs every block of that executable's code it runs, from when it starts, until the log reaches 500 MB or two minutes have passed; `uv run trace` names the functions from the map, and after a crash the last of them is where it happened.
 
+### The port: running the game on modern systems
+
+```sh
+uv run port setup                 # the pinned Emscripten SDK, into build/emsdk/ (~1.8 GB)
+uv run port build                 # the web build: build/port/web/zoombinis.html
+uv run port package               # your copy of the game's data, packed for it
+uv run port serve                 # then open http://127.0.0.1:8000/zoombinis.html
+uv run port run --headless --seconds 30 --screenshot build/port/shot.bmp
+```
+
+`port/` builds the decompiled game (`decomp/`, unchanged, and `glue/`) for a modern system, with CMake (`port/CMakeLists.txt`) and SDL2. The game still calls the Win32 API; *miniwin* (`port/miniwin/`, headers in `port/include/`) implements the part of it the game uses on top of SDL, the way DevilutionX's "miniwin" did for Diablo:
+
+- **Windows and messages:** the game's own message loop, window procedures, timers and hooks run as they did on Windows.
+- **GDI:** drawing is done in software into a 640x480, 8-bit screen, shown through a simulated system palette. That covers device contexts, DIB sections, regions, blits with raster operations, palettes (including palette animation) and TrueType text (stb_truetype).
+- **Sound:** waveOut devices are mixed into SDL audio. midiOut accepts the music but has no synthesizer yet, so music is silent.
+- **Threads:** Win32 threads, and the fibers the engine runs its own threads on, are switched cooperatively on one host thread.
+- **Files:** Windows paths map to drives C: (the installed game and what it saves) and D: (the CD).
+
+Borland C++'s dialect (byte packing, its runtime's extras) is handled by `port/include/miniwin/prelude.h`, included before every decompiled source. `port/host/` holds what differs per target: fibers, yielding to a browser's event loop, and message boxes. A source in `port/decomp/` would replace `decomp/`'s file of the same name, for a module whose portable version has to differ; none does.
+
+- **Targets:** `web` (WebAssembly, via Asyncify, which lets the game's blocking loops and fibers hand control back to the browser), `headless` (the same WebAssembly under Node, with no screen or sound, reading the drives' directories directly; `--screenshot` writes the screen to a BMP, and `--seconds` quits after a while), and `native` (SDL2 from the system, or a pinned release built from source).
+- **32-bit only for now:** the decompiled code assumes 4-byte `long`s and pointers, so CMake refuses 64-bit native targets. WebAssembly is 32-bit.
+- **Your data stays yours:** `package` lays out C: in `build/port/data/c/` from `build/zoombi32/`, and packs it with the CD's `DATA/` into `build/port/web/zoombinis-data.data`. That's your own copy of the game, so don't publish it.
+- **The page:** it keeps C: in the browser's IndexedDB, so saved games survive a reload. Clicking Start begins the game, and also lets the browser play sound. `?noalert` sends the game's message boxes to the console instead of an alert (for automated testing), and `?screenshot` writes `/screenshot.bmp` to the page's file system.
+
 ### Cleaning up
 
 ```sh
@@ -254,10 +281,13 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `rebuild` | the rebuilt executable and what went into it (`build/rebuild/`) | `uv run build` |
 | `packed-assets` | the archives `assets pack` built (`build/assets/`) | `uv run assets pack` |
 | `assets-cache` | compressed images, reused while unchanged (`build/assets-cache/`) | automatically by `uv run assets pack` or `verify` |
+| `port` | the port's builds (`build/port/web/`, `native/`, `headless/`) | `uv run port build` |
+| `port-data` | the port's drives, **including what the native and headless builds saved** (`build/port/data/`) | `uv run port package` |
+| `emsdk` | the Emscripten SDK (`build/emsdk/`) | `uv run port setup` (downloads ~1 GB) |
 | `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
 | `all` | all of the above plus anything else in `build/` | |
 
-With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `rebuild`, `packed-assets`, `assets-cache` and `python`: everything that's cheap to rebuild, keeping the VM installs and the Wine download. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
+With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `rebuild`, `packed-assets`, `assets-cache`, `port` and `python`: everything that's cheap to rebuild, keeping the VM installs, the Wine and Emscripten downloads and the port's saved games. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
 
 ## Development
 

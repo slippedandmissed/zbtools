@@ -44,6 +44,17 @@ REPORT = REPORT_DIR / "index.html"
 # change: one directory per release.
 MATCH_CACHE = BUILD_DIR / "match-cache"
 
+# The port (port/): its source, its builds (one directory per target), and
+# the game's drives laid out for it (C: holds what the native build saves).
+PORT_SOURCE_DIR = REPO_ROOT / "port"
+PORT_DIR = BUILD_DIR / "port"
+PORT_WEB_DIR = PORT_DIR / "web"
+PORT_NATIVE_DIR = PORT_DIR / "native"
+PORT_HEADLESS_DIR = PORT_DIR / "headless"
+PORT_DATA_DIR = PORT_DIR / "data"
+# The Emscripten SDK the web build uses (`uv run port setup`).
+EMSDK_DIR = BUILD_DIR / "emsdk"
+
 # Borland C++ BIN, LIB and INCLUDE, one directory per release.
 TOOLCHAIN_DIR = BUILD_DIR / "toolchain"
 # Ghidra: the downloaded release, and the project holding the analysed game.
@@ -119,6 +130,10 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "rebuild": [REBUILD_DIR],
     "packed-assets": [PACKED_ASSETS_DIR],
     "assets-cache": [ASSETS_CACHE],
+    "port": [PORT_WEB_DIR, PORT_NATIVE_DIR, PORT_HEADLESS_DIR],
+    # The native build's saved games live here: only removed when asked for.
+    "port-data": [PORT_DATA_DIR],
+    "emsdk": [EMSDK_DIR],
     "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
     # The whole build/ directory, so stray files can't survive a full clean.
     "all": [BUILD_DIR, "python"],
@@ -132,5 +147,6 @@ CLEAN_DEFAULT: list[str] = [
     "rebuild",
     "packed-assets",
     "assets-cache",
+    "port",
     "python",
 ]
