@@ -41,7 +41,6 @@ extern ShortRect campButtonsBounds; /* @data 0x4a0a9e */
 extern ShortRect campArrival; /* @data 0x4a0aa6: where Zoombinis back from the journey stand */
 extern short campScrollAsked; /* @data 0x4a080c */
 extern short campHalfRow; /* @data 0x4a080e: the camp is scrolled half a row */
-extern ShortRect campArea; /* @data 0x4a0920 */
 extern Snoid draggedSnoid; /* @data 0x4ab53a */
 extern GroupList campGroupLists[2]; /* @data 0x4a0998 */
 extern long campScrollWay; /* @data 0x4ab51c: the way the camp is asked to scroll (1-4) */
@@ -98,7 +97,7 @@ void drawOutlinedText(unsigned short outline, unsigned short color, ShortRect re
                       unsigned short flags, const char *text);
 void nudgeRect(ShortRect *rect, short direction);
 void resetCamp();
-long campKey(long);
+short campKey(unsigned short);
 void enterCamp();
 void leaveCamp();
 void campIdle();
@@ -118,5 +117,9 @@ void compactCamp();
 void updateCampScroll(short stop);
 void refreshCampView();
 short returnToCamp();
+
+extern SceneButton campAreaItems[2]; /* @data 0x4a0920: the camp's second input group's items (campGroupLists[1]): [0].rect is its area */
+extern Scene g_4a0810[1]; /* pointed to by initialised data */
+extern Group g_4a0978[2]; /* pointed to by initialised data */
 
 #endif

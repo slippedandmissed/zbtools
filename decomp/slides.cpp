@@ -10,6 +10,7 @@
 #include "focus.h"
 #include "game.h"
 #include "graphics.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "net.h"
 #include "platform.h"
@@ -19,7 +20,14 @@
 #include "sound.h"
 #include "view.h"
 
-SceneButton slidesButtons[2] = {{{600, 403, 639, 440}}, {{600, 441, 639, 478}}};
+SceneButton slidesButtons[3] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+};
+Group g_4a3f94[1] = {{g_4a0766, (InputItem *)slidesButtons, 3, 0x2068}};
+GroupList slidesGroups[1] = {{g_4a3f94, 1, 0, stoneRiseClicked}};
+Scene g_4a3fb0[1] = {
+    {openStoneRise, closeStoneRise, stoneRiseFrame, 0, stoneRiseKey},
+};
 ImageBank *slidesButtonImages = 0;
 long slidesButtonResource = 0;
 Point cellPoints[117] = {
@@ -69,6 +77,7 @@ short slidesDragLocked;
 short lastLitCount;
 short litSum;
 short lastLitSum;
+Point listedCellPlaces[26];
 short listedCells[27];
 HexCell hexCells[117];
 short cellLinkBits[117];
@@ -100,6 +109,8 @@ unsigned long lastColourCycle;
 unsigned long slidesFidgetersUsed;
 short slidesFidgetsAllowed;
 short slidesFidgets;
+short slidesMoves;
+short slidesFidgetStarted;
 
 /* Opens scene 12 (Stone Rise): Slides.MHK, the board (all cells empty,
    500, until layOutGrid lays it out for the level), the cells' views, the

@@ -10,6 +10,7 @@
 #include "ferry.h"
 #include "focus.h"
 #include "graphics.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "net.h"
 #include "platform.h"
@@ -41,7 +42,12 @@ short returnNextScripts[10] = {
     0x76f, 0x76d, 0x771, 0x76d, 0x771, 0x76d, 0x771, 0x773, 0x773, 0x773,
 };
 ImageBank *ferryButtonImages = 0;
-SceneButton ferryButtons[2] = {{{600, 403, 639, 440}}, {{600, 441, 639, 478}}};
+SceneButton ferryButtons[3] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+};
+Group g_4a14ec[1] = {{g_4a0766, (InputItem *)ferryButtons, 3, 0x2068}};
+GroupList ferryGroups[1] = {{g_4a14ec, 1, 0, ferryClicked}};
+Scene g_4a1508[1] = {{openFerry, closeFerry, ferryFrame, 0, ferryKey}};
 long ferryButtonResource = 0;
 Point ferryPlaces[20] = {
     {370, 160}, {395, 196}, {332, 156}, {348, 196}, {294, 168}, {316, 196}, {253, 166}, {276, 196},

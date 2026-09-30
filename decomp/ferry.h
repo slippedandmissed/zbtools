@@ -24,7 +24,7 @@ extern unsigned long returnSoundsUsed; /* @data 0x4a1430: slots used (allocateSl
 extern short returnScripts[10]; /* @data 0x4a1454: scripts by returnRoute */
 extern short returnNextScripts[10]; /* @data 0x4a1468: and the next */
 extern ImageBank *ferryButtonImages; /* @data 0x4a147c: the buttons' images */
-extern SceneButton ferryButtons[2]; /* @data 0x4a1480 */
+extern SceneButton ferryButtons[3]; /* @data 0x4a1480: buttons 1 and 2, then the whole screen (the input group's items) */
 extern long ferryButtonResource; /* @data 0x4a151c */
 extern short ferryButton2Lit; /* @data 0x4a1570: button 2 is drawn lit */
 extern short ferryButton1Drawn; /* @data 0x4a1572: button 1 is drawn */
@@ -91,5 +91,8 @@ void moveFerryOn();
 void startCrosserScript(short group, short script, ViewNotify notify, char idleTicks);
 void ferryHelperNotify(View *view, short event);
 void slideFerryViews(View *, short dx);
+
+extern Group g_4a14ec[1]; /* pointed to by initialised data */
+extern Scene g_4a1508[1]; /* pointed to by initialised data */
 
 #endif

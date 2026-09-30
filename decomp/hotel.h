@@ -135,8 +135,11 @@ extern short hotelPartySize; /* @data 0x4ac0e8 */
 extern short hotelTalkerView; /* @data 0x4ac0ba */
 extern short roomRowValues[25]; /* @data 0x4ac1a8 */
 extern short roomLayerValues[25]; /* @data 0x4ac1da */
-extern short roomColumnValues[25]; /* @data 0x4ac20c */
+extern short roomColumnValues[5]; /* @data 0x4ac20c */
 extern short room9002Views[]; /* @data 0x4ac310 */
 extern short room9007Views[]; /* @data 0x4ac40a */
+
+extern Group g_4a1754[1]; /* pointed to by initialised data */
+extern Scene g_4a1770[1]; /* pointed to by initialised data */
 
 #endif

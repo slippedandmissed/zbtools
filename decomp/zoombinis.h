@@ -3696,14 +3696,14 @@ extern long snoidImagesResource; /* @data 0x4b7b54 */
 extern short *baseSnoidScripts[51]; /* @data 0x4b78b4 */
 extern short *snoidScripts[110]; /* @data 0x4b7980 */
 /* A lilly button (36 bytes). Partly known. */
-extern SceneButton hotelButtons[3]; /* @data 0x4a16c4 */
+extern SceneButton hotelButtons[3]; /* @data 0x4a16e8: buttons 1 and 2, then the whole screen (the input group's items) */
 /* A square of the lilly board (13 bytes). Partly known. */
 struct LillyCell
 {
     ShortRect rect;
     char attributes[5]; /* 0: taken; 2: its image; 4: an overlay's image */
 };
-extern LillyCell lillyBoard[13][13]; /* @data 0x4acff4 */
+extern LillyCell lillyBoard[12][13]; /* @data 0x4acff4: 12 rows of 13 cells */
 extern short hopDirections[4][4]; /* @data 0x4a1d8a */
 /* What a square is dealt (by dealSquares). */
 struct LillyDeal
@@ -3800,7 +3800,7 @@ extern Point rightRowPlaces[3][3]; /* @data 0x4a4560 */
 
 extern short mazeOpen; /* @data 0x4afc68: the scene is open */
 extern long mazeButtonResource; /* @data 0x4a21b4 */
-extern SceneButton mazeButtons[3]; /* @data 0x4a20f4: [0] isn't a button: the data before is a string */
+extern SceneButton mazeButtons[3]; /* @data 0x4a2118: buttons 1 and 2, then the whole screen (the input group's items) */
 extern long loadedHotSpotTable; /* @data 0x4afbdc */
 extern short featureRows[][4]; /* @data 0x4afe5a */
 extern short mazeFidgetsDone; /* @data 0x4b0d3a */
@@ -3848,13 +3848,12 @@ extern short *partHotY; /* @data 0x4afbd4 */
 extern GroupList mazeGroups; /* @data 0x4a2194 */
 
 extern short enoughToLeaveChosen; /* @data 0x4b15a8 */
-extern SceneButton netButtons[4]; /* @data 0x4a288a */
+extern SceneButton netButtons[18]; /* @data 0x4a28d2: the net's input items (netGroupList): its two buttons, then the rest */
 extern Snoid snoidBeingMade; /* @data 0x4b1484: the Zoombini being made */
 extern short isleCheatButtonLit; /* @data 0x4b15a6 */
 extern short zoombiniMakeAllowed; /* @data 0x4b15aa */
-extern SceneButton isleButtons[27]; /* @data 0x4a2efc: [0] isn't a button */
+extern SceneButton isleButtons[27]; /* @data 0x4a2f20: the last eight are the scene's own (from 19) */
 extern ImageBank *isleButtonImages; /* @data 0x4b15a0 */
-extern char madeName[]; /* @data 0x4b157d */
 extern short ambientSound; /* @data 0x4b0d48: the last one */
 extern short ambientSoundCount; /* @data 0x4b0d58 */
 extern char introClickState; /* @data 0x4a7410 */

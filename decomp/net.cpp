@@ -9,6 +9,7 @@
 #include "features.h"
 #include "focus.h"
 #include "graphics.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "maze.h"
 #include "net.h"
@@ -50,12 +51,20 @@ short netSounds[17] = {
     924, 933, 904, 905, 906, 931, 932, 938, 925, 926, 927, 928, 929, 917, 918, 919, 920,
 };
 unsigned long netSoundsUsed = 0;
+short cavesSounds[10] = {922, 923, 935, 907, 908, 909, 900, 901, 934, 910};
 unsigned long cavesSoundsUsed = 0;
 short mazeSounds[10] = {922, 923, 935, 907, 908, 909, 900, 901, 934, 910};
 unsigned long mazeSoundsUsed = 0;
 short smokeSounds[10] = {922, 923, 935, 907, 908, 909, 900, 901, 934, 910};
 unsigned long smokeSoundsUsed = 0;
 short remarkAfterCross = 0;
+SceneButton netButtons[18] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{450, 275, 587, 362}}, {{446, 378, 475, 407}},
+    {{476, 375, 498, 402}}, {{499, 373, 524, 399}}, {{525, 367, 549, 394}}, {{550, 363, 573, 390}},
+    {{446, 408, 475, 433}}, {{476, 403, 501, 428}}, {{499, 400, 526, 424}}, {{525, 395, 550, 421}},
+    {{550, 391, 577, 415}}, {{450, 434, 478, 459}}, {{479, 429, 501, 455}}, {{502, 425, 527, 451}},
+    {{528, 422, 553, 446}}, {{554, 416, 577, 441}},
+};
 Point markerPlaces[25] = {
     {102, 117}, {204, 106}, {306, 94}, {409, 79}, {507, 69}, {102, 157}, {204, 143}, {306, 129},
     {407, 115}, {507, 104}, {102, 195}, {204, 180}, {306, 166}, {407, 151}, {507, 140}, {102, 232},
@@ -80,7 +89,14 @@ Point markerPlaces3d[125] = {
     {319, 245}, {339, 241}, {359, 238}, {380, 235}, {400, 232}, {419, 229}, {439, 226}, {457, 223},
     {480, 219}, {499, 216}, {519, 214}, {538, 211}, {556, 209},
 };
+Point acrossSpots[19] = {
+    {16, 58}, {17, 45}, {15, 33}, {16, 19}, {47, 59}, {51, 48}, {46, 30}, {48, 20}, {77, 63},
+    {74, 47}, {76, 32}, {77, 18}, {146, 67}, {143, 58}, {141, 40}, {147, 32}, {327, 321},
+    {367, 314}, {404, 305},
+};
+Group g_4a2e22[1] = {{g_4a0766, (InputItem *)netButtons, 18, 0x2068}};
 GroupList netGroupList[1] = {{(Group *)&acrossSpots[19], 1, 0, netClicked}};
+Scene g_4a2e3e[1] = {{openNet, closeNet, netFrame, 0, netKey}};
 long netButtonResource = 0;
 short markerColumnKind = 0;
 ImageBank *netButtonImages = 0;
@@ -115,6 +131,7 @@ short codeOrder2;
 short codeOrder3;
 short markerDx;
 short markerDy;
+short netGroups[12];
 short currentNetPlace;
 short unusedNet8;
 short markerPlace;
@@ -919,10 +936,10 @@ void drawNetButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)(netButtonImages->offsets[image] + (char *)netButtonImages), netButtons[which].rect.left,
-                      netButtons[which].rect.top, 8);
+        drawImageData((unsigned short *)(netButtonImages->offsets[image] + (char *)netButtonImages), netButtons[which - 1].rect.left,
+                      netButtons[which - 1].rect.top, 8);
         if (show)
-            showRect(&netButtons[which].rect);
+            showRect(&netButtons[which - 1].rect);
     }
 }
 
@@ -942,15 +959,15 @@ void updateNetButtons(View *, short region)
     if (netGoAllowed) {
         if (!netButton2Lit) {
             netButton2Lit = 1;
-            unionRgnRect(region, &netButtons[3].rect);
+            unionRgnRect(region, &netButtons[1].rect);
         }
     } else if (netButton2Lit) {
         netButton2Lit = 0;
-        unionRgnRect(region, &netButtons[3].rect);
+        unionRgnRect(region, &netButtons[1].rect);
     }
     if (!netButton1Drawn) {
         netButton1Drawn = 1;
-        unionRgnRect(region, &netButtons[2].rect);
+        unionRgnRect(region, &netButtons[0].rect);
     }
 }
 
@@ -1880,7 +1897,7 @@ void enterNextScene()
         }
     }
     viewsLocked = 0;
-    viewsPaused = fillViews = 0;
+    fillViews = viewsPaused = 0;
     ambientSoundTime = clockTime() + 900;
     setClipRect(gameRect);
     if (scenes[currentScene]->open)
@@ -2058,13 +2075,13 @@ void crossingNotify(View *view, short event)
                         setSnoidAction((Snoid *)&waiting->body, 2, 0);
                         if (!waitingOnNet[0] && !waitingOnNet[1] && !waitingOnNet[2]) {
                             startView(promptView, 10018, 0, 0);
-                            promptHeld = promptHeld2 = 0;
+                            promptHeld2 = promptHeld = 0;
                         }
                         return;
                     }
                 }
             if (!sendsLeft && !netPlaces[0])
-                promptHeld = promptHeld2 = 0;
+                promptHeld2 = promptHeld = 0;
         } else {
             anchor = acrossSpots[acrossCount];
             acrossCount++;
@@ -2078,7 +2095,7 @@ void crossingNotify(View *view, short event)
             netGoAllowed = 1;
             crossingStarted = 0;
             if (snoidsFound >= netPartySize || emptyNetPlaces)
-                promptHeld = promptHeld2 = 0;
+                promptHeld2 = promptHeld = 0;
             if (!sendsLeft && !netPlaces[0] && !netPlaces[1] && !netPlaces[2]) {
                 if (snoidsFound >= netPartySize)
                     queueViewSound(randomBetween(20055, 20063), 0);

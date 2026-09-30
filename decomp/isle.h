@@ -41,7 +41,6 @@ short leaveIsleIfAsked();
 extern short isleBusy; /* @data 0x4a336c */
 void isleFrame();
 void drawZoombiniParts(Snoid *snoid);
-extern SceneButton isleSceneButtons[8]; /* @data 0x4a31cc: [7]: the whole screen */
 extern ShortRect isleButtonsRect; /* @data 0x4a3376 */
 void drawIsleButtons(short which, short lit, short show);
 void countZoombiniMade(short add);
@@ -54,5 +53,8 @@ extern Point isleEntry; /* @data 0x4a3364 */
 extern Point isleExit; /* @data 0x4a3368 */
 extern GroupList isleGroups[2]; /* @data 0x4a330c */
 void openIsle();
+
+extern Scene g_4a2f0c[1]; /* pointed to by initialised data */
+extern Group g_4a32ec[2]; /* pointed to by initialised data */
 
 #endif

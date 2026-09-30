@@ -107,6 +107,7 @@ short savedFeetImages[6];
 short savedNoseImages[6];
 short savedEyesImages[6];
 short savedHairImages[6];
+char hideDragCursor;
 
 /* @zoombi32 0x00456c00 */
 void resetSnoids()

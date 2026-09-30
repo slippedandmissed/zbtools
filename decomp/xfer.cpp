@@ -12,6 +12,7 @@
 #include "focus.h"
 #include "game.h"
 #include "graphics.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "snoids.h"
 #include "sound.h"
@@ -20,6 +21,13 @@
 #include "xfer.h"
 
 short journeyRoute = 0;
+InputItem g_4a7e6a[1] = {{{0, 0, 640, 480}}};
+Group g_4a7e8e[1] = {{g_4a0766, g_4a7e6a, 1, 0x2068}};
+GroupList xferGroups[1] = {{g_4a7e8e, 1, 0, journeyClicked}};
+Scene g_4a7eaa[1] = {{openJourney, closeJourney, journeyFrame, 0, journeyKey}};
+ShortRect mapTitleRects[4] = {
+    {43, 54, 226, 107}, {371, 33, 613, 65}, {127, 29, 299, 81}, {135, 29, 323, 82},
+};
 short inJourneyFrame = 0;
 short mapPlaces[4][5] = {
     {0, 1, 2, 3, 4}, {4, 5, 6, 7, 11}, {4, 8, 9, 10, 16}, {11, 12, 13, 14, 15},
@@ -42,7 +50,7 @@ short pendingJourneyFacing;
 short journeyAnchorView;
 short snoidsPastAnchor;
 short view6108;
-short view5108Due;
+short views5102Due[3];
 short journeyFirstMoveDone;
 short xferSound;
 short xferMap;
@@ -75,7 +83,7 @@ void resetJourney()
 {
     short i;
 
-    sceneDue = xferSound = 0;
+    xferSound = sceneDue = 0;
     pendingJourneyFacing = journeyAnchorView = snoidsPastAnchor = view6108 = 0;
     view6106 = view6107 = populationSignView = gridView = destinationImage = 0;
     journeyFirstMoveDone = 0;
@@ -98,7 +106,7 @@ void resetJourney()
 }
 
 /* @zoombi32 0x0046b07b */
-long journeyKey(long)
+short journeyKey(unsigned short)
 {
     return 0;
 }
@@ -527,8 +535,8 @@ void journeyFrame()
                             setViewScript(view, 0, 1);
                         break;
                     case 4:
-                        if (view5108Due) {
-                            view5108Due = 0;
+                        if (views5102Due[2]) {
+                            views5102Due[2] = 0;
                             view = findView(view5108);
                             if (view && !view->body.running) {
                                 view->flags = 0x188000;

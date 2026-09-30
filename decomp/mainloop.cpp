@@ -37,13 +37,19 @@ unsigned short midiTests[18] = {
     0x7550, 0x7551, 0x7553, 0x7554, 0x7555, 0x7556,
 };
 short unusedDebugFlag = 64;
+short labelActorsOnly = 0;
+short labelIds = 0;
 
 short buttonDown;
+short cursorMode;
 unsigned long busyCursorSince;
 unsigned long lastEventTime;
 unsigned short midiTest;
 short midiTestIndex;
 short viewStep;
+short lastViewSound;
+char clickToDragOption;
+char dragClicks;
 
 /*
  * One pass of the main loop (WinMain runs it and mainLoopEvents until it's

@@ -11,6 +11,7 @@
 #include "focus.h"
 #include "graphics.h"
 #include "isle.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "platform.h"
 #include "snoids.h"
@@ -18,9 +19,22 @@
 #include "town.h"
 #include "view.h"
 
-SceneButton isleSceneButtons[8] = {
-    {{159, 436, 198, 478}}, {{205, 304, 260, 342}}, {{205, 347, 273, 420}}, {{201, 419, 287, 437}},
-    {{205, 440, 260, 478}}, {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+Scene g_4a2f0c[1] = {{openIsle, closeIsle, isleFrame, 0, isleKey}};
+SceneButton isleButtons[27] = {
+    {{3, 304, 42, 346}}, {{42, 304, 81, 346}}, {{81, 304, 120, 346}}, {{120, 304, 159, 346}},
+    {{159, 304, 198, 346}}, {{3, 348, 42, 390}}, {{42, 348, 81, 390}}, {{81, 348, 120, 390}},
+    {{120, 348, 159, 390}}, {{159, 348, 198, 390}}, {{3, 392, 42, 434}}, {{42, 392, 81, 434}},
+    {{81, 392, 120, 434}}, {{120, 392, 159, 434}}, {{159, 392, 198, 434}}, {{3, 436, 42, 478}},
+    {{42, 436, 81, 478}}, {{81, 436, 120, 478}}, {{120, 436, 159, 478}}, {{159, 436, 198, 478}},
+    {{205, 304, 260, 342}}, {{205, 347, 273, 420}}, {{201, 419, 287, 437}}, {{205, 440, 260, 478}},
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+};
+Group g_4a32ec[2] = {
+    {g_4a0766, (InputItem *)isleButtons, 20, 0x2068},
+    {g_4a0766, (InputItem *)&isleButtons[20], 7, 0x2068},
+};
+GroupList isleGroups[2] = {
+    {g_4a32ec, 1, 0, featureButtonClicked}, {&g_4a32ec[1], 1, 0, isleButtonClicked},
 };
 Point isleQueuePlaces[16] = {
     {542, 446}, {505, 447}, {466, 451}, {425, 448}, {380, 450}, {342, 451}, {522, 402}, {488, 408},
@@ -40,7 +54,7 @@ char isleImageHotY[22] = {
 short isleEnoughDrawn = 0;
 short isleMakeAllowedDrawn = 0;
 
-char madeName[11];
+Snoid snoidBeingMade;
 long isleFile;
 long featureButtonResource;
 long isleImagesResource;
@@ -156,8 +170,8 @@ void openIsle()
     setGroupLists(isleGroups, 2, (short)0xc000);
     highlightItemAt(1, 1);
     visitAllItems();
-    snoidBeingMade.body.x = isleSceneButtons[2].rect.left + 39;
-    snoidBeingMade.body.y = isleSceneButtons[2].rect.top + 31;
+    snoidBeingMade.body.x = isleButtons[21].rect.left + 39;
+    snoidBeingMade.body.y = isleButtons[21].rect.top + 31;
     snoidBeingMade.chosen = 1;
     drawIsleButtons(0, 0, 0);
     drawFeatureButtons(0, 0, 0);
@@ -286,7 +300,7 @@ void featureButtonClicked(short button)
         stopSounds(isleRemark, RESOURCE_TYPE(0, 'S', 'N', 'D'));
         isleRemark = 0;
     }
-    rect = isleButtons[button].rect;
+    rect = isleButtons[button - 1].rect;
     group = 0;
     while (button >= 6) {
         button -= 5;
@@ -366,7 +380,7 @@ void isleButtonClicked(short button)
         stopSounds(isleRemark, RESOURCE_TYPE(0, 'S', 'N', 'D'));
         isleRemark = 0;
     }
-    rect = isleSceneButtons[button].rect;
+    rect = isleButtons[button + 19].rect;
     getCursorPosition(&cursor);
     switch (button) {
     case 1:
@@ -389,7 +403,7 @@ void isleButtonClicked(short button)
             drawIsleButtons(button, 0, 1);
             sortViews();
             checkEnoughChosen();
-            makeName(madeName, 10);
+            makeName(snoidBeingMade.name, 10);
             drawIsleButtons(3, 1, 1);
         }
         zoombiniMakeAllowed = zoombiniMadeAllowed();
@@ -400,7 +414,7 @@ void isleButtonClicked(short button)
     case 3:
         if (zoombiniMakeAllowed) {
             queueViewSound(1000, 0);
-            makeName(madeName, 10);
+            makeName(snoidBeingMade.name, 10);
             drawIsleButtons(button, 1, 1);
         }
         break;
@@ -536,7 +550,7 @@ void isleButtonClicked(short button)
                             ((Snoid *)&view->body)->features[slot] = 0;
                         }
                         for (slot = 0; slot < 10; slot++)
-                            madeName[slot] = ((Snoid *)&view->body)->name[slot];
+                            snoidBeingMade.name[slot] = ((Snoid *)&view->body)->name[slot];
                         countZoombiniMade(0);
                         drawFeatureButtons(0, 0, &rect);
                         showRect(&rect);
@@ -559,7 +573,7 @@ void isleButtonClicked(short button)
 
 /* Draws the panel's buttons (1-7, from the bank isleButtonImages; some lit, some
    greyed by the scene's state), or just button `which`, lit or not; the
-   second shows the Zoombini being made, the third its name (madeName, if
+   second shows the Zoombini being made, the third its name (snoidBeingMade.name, if
    zoombiniMakeAllowed). Shows the area drawn if `show`. */
 /* @zoombi32 0x0043f5ea */
 void drawIsleButtons(short which, short lit, short show)
@@ -576,16 +590,16 @@ void drawIsleButtons(short which, short lit, short show)
     if (!which) {
         i = 0;
         count = 7;
-        bounds = isleSceneButtons[1].rect;
-        unionRect(&bounds, &isleSceneButtons[7].rect);
+        bounds = isleButtons[20].rect;
+        unionRect(&bounds, &isleButtons[26].rect);
     } else {
         i = which - 1;
         count = i + 1;
-        bounds = isleSceneButtons[which].rect;
+        bounds = isleButtons[which + 19].rect;
     }
     for (; i < count; i++) {
-        x = isleSceneButtons[i + 1].rect.left;
-        y = isleSceneButtons[i + 1].rect.top;
+        x = isleButtons[i + 20].rect.left;
+        y = isleButtons[i + 20].rect.top;
         image = 0;
         switch (i) {
         case 0:
@@ -602,12 +616,12 @@ void drawIsleButtons(short which, short lit, short show)
             if (dialogFlags & 0x10)
                 return;
             drawImageData((unsigned short *)(isleButtonImages->offsets[13] + (char *)isleButtonImages), x, y, 8);
-            rect = isleSceneButtons[i + 1].rect;
+            rect = isleButtons[i + 20].rect;
             saved = setForeColor(Color(45));
             if (zoombiniMakeAllowed) {
                 rect.top++;
                 rect.left += 4;
-                drawText(rect, 0x22, madeName, 0xffff);
+                drawText(rect, 0x22, snoidBeingMade.name, 0xffff);
                 rect.top--;
                 rect.left -= 4;
             }
@@ -650,23 +664,23 @@ void drawFeatureButtons(short which, short lit, ShortRect *bounds)
     short image;
 
     if (!which) {
-        unionRect(&rect, &isleButtons[1].rect);
-        unionRect(&rect, &isleButtons[20].rect);
+        unionRect(&rect, &isleButtons[0].rect);
+        unionRect(&rect, &isleButtons[19].rect);
         for (i = 0; i < 20; i++) {
             image = i + i + 1;
             if (i % 5 + 1 == snoidBeingMade.features[i / 5])
                 image++;
-            drawImageData((unsigned short *)(featureButtonImages->offsets[image] + (char *)featureButtonImages), isleButtons[i + 1].rect.left,
-                          isleButtons[i + 1].rect.top, 8);
+            drawImageData((unsigned short *)(featureButtonImages->offsets[image] + (char *)featureButtonImages), isleButtons[i].rect.left,
+                          isleButtons[i].rect.top, 8);
         }
     } else {
-        rect = isleButtons[which].rect;
+        rect = isleButtons[which - 1].rect;
         i = which - 1;
         image = i + i + 1;
         if (lit)
             image++;
-        drawImageData((unsigned short *)(featureButtonImages->offsets[image] + (char *)featureButtonImages), isleButtons[i + 1].rect.left,
-                      isleButtons[i + 1].rect.top, 8);
+        drawImageData((unsigned short *)(featureButtonImages->offsets[image] + (char *)featureButtonImages), isleButtons[i].rect.left,
+                      isleButtons[i].rect.top, 8);
     }
     if (bounds)
         *bounds = rect;
@@ -771,7 +785,7 @@ void pickZoombiniMade(short rename)
             rename = 1;
     }
     if (rename)
-        makeName(madeName, 10);
+        makeName(snoidBeingMade.name, 10);
     isleButton22Due = 1;
 }
 
@@ -792,35 +806,35 @@ void updateIsleButtons(View *, short region)
     if (!dialogFlags && *(short *)(gameState + 0x48) < 625 && addModifierKeys(0) == 0x800) {
         if (!isleCheatButtonLit) {
             isleCheatButtonLit = 1;
-            unionRgnRect(region, &isleButtons[24].rect);
+            unionRgnRect(region, &isleButtons[23].rect);
         }
     } else if (isleCheatButtonLit) {
         isleCheatButtonLit = 0;
-        unionRgnRect(region, &isleButtons[24].rect);
+        unionRgnRect(region, &isleButtons[23].rect);
     }
     if (enoughToLeaveChosen) {
         if (!isleEnoughDrawn) {
             isleEnoughDrawn = 1;
-            unionRgnRect(region, &isleButtons[26].rect);
-            unionRgnRect(region, &isleButtons[21].rect);
+            unionRgnRect(region, &isleButtons[25].rect);
+            unionRgnRect(region, &isleButtons[20].rect);
         }
     } else if (isleEnoughDrawn) {
         isleEnoughDrawn = 0;
-        unionRgnRect(region, &isleButtons[26].rect);
-        unionRgnRect(region, &isleButtons[21].rect);
+        unionRgnRect(region, &isleButtons[25].rect);
+        unionRgnRect(region, &isleButtons[20].rect);
     }
     if (!zoombiniMakeAllowed) {
         if (isleMakeAllowedDrawn) {
             isleMakeAllowedDrawn = 0;
-            unionRgnRect(region, &isleButtons[21].rect);
+            unionRgnRect(region, &isleButtons[20].rect);
         }
     } else if (!isleMakeAllowedDrawn) {
         isleMakeAllowedDrawn = 1;
-        unionRgnRect(region, &isleButtons[21].rect);
+        unionRgnRect(region, &isleButtons[20].rect);
     }
     if (isleButton22Due) {
         isleButton22Due = 0;
-        unionRgnRect(region, &isleButtons[22].rect);
+        unionRgnRect(region, &isleButtons[21].rect);
     }
 }
 

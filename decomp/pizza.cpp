@@ -12,6 +12,7 @@
 #include "features.h"
 #include "focus.h"
 #include "graphics.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "net.h"
 #include "pizza.h"
@@ -51,6 +52,9 @@ SceneButton pizzaButtonsLevel3[13] = {
     {{88, 195, 115, 232}}, {{88, 237, 115, 274}}, {{88, 276, 115, 314}}, {{130, 99, 174, 308}},
     {{0, 0, 640, 480}},
 };
+Group g_4a3d08[1] = {{g_4a0766, (InputItem *)pizzaButtons, 13, 0x2068}};
+GroupList pizzaGroups[1] = {{g_4a3d08, 1, 0, pizzaButtonClicked}};
+Scene g_4a3d24[1] = {{openPizza, closePizza, pizzaFrame, 0, pizzaKey}};
 short pizzaButtonsView = 0;
 long pizzaButtonResource = 0;
 short lastPilingTroll = 0;

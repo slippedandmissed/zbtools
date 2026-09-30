@@ -11,6 +11,7 @@
 #include "features.h"
 #include "focus.h"
 #include "graphics.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "picker.h"
 #include "platform.h"
@@ -19,17 +20,29 @@
 #include "sound.h"
 #include "view.h"
 
-ShortRect mapBoxRect = {23, 23, 197, 127};
-ShortRect levelListRect = {459, 373, 617, 457};
+Group g_4a1f24[1] = {{g_4a0766, (InputItem *)&pickerData, 17, 0x2068}};
+GroupList pickerGroups[1] = {{g_4a1f24, 1, 0, mapClicked}};
+Scene g_4a1f40[1] = {{openMap, closeMap, mapFrame, 0, mapKey}};
+ShortRect mapSaveRects[6] = {
+    {15, 247, 140, 275}, {214, 47, 384, 62}, {327, 414, 439, 444}, {507, 193, 587, 223},
+    {23, 23, 197, 127}, {459, 373, 617, 457},
+};
 char savedUserFile[36] = {0};
 ShortRect levelLines[4] = {
     {464, 395, 612, 409}, {464, 409, 612, 424}, {464, 424, 612, 438}, {464, 438, 612, 454},
 };
 short inMapFrame = 0;
+InputItem g_4a2012[1] = {{{0, 0, 640, 480}}};
+Group g_4a2036[1] = {{g_4a0766, g_4a2012, 1, 0x2068}};
+GroupList catchGroups[1] = {{g_4a2036, 1, 0, catchClicked}};
+Scene g_4a2052[1] = {{openCatch, closeCatch, catchFrame, 0, catchKey}};
 short inCatchFrame = 0;
 ShortRect catchMissAreas[3] = {
     {529, 125, 639, 197}, {227, 155, 356, 205}, {415, 425, 639, 479},
 };
+Group g_4a2080[1] = {{g_4a0766, g_4a2012, 1, 0x2068}};
+GroupList targetGroups[1] = {{g_4a2080, 1, 0, targetsClicked}};
+Scene g_4a209c[1] = {{openTargets, closeTargets, targetsFrame, 0, targetsKey}};
 short inTargetsFrame = 0;
 char *placeNames[16] = {
     "zoombini isle", "allergic cliffs", "stone cold caves", "pizza pass", "shelter rock",
@@ -44,13 +57,19 @@ char *mapTexts[21] = {
     "shelter rock or", "shade tree", "to return to game:", "go to zoombini isle,",
     "either camp site", "or zoombiniville",
 };
+char *levelTexts[24] = {
+    "terrain key", "choose a level", "not so easy", "oh, so hard", "very hard", "very, very hard",
+    "the big, the bad\rand the hungry", "who's bayou", "deep, dark\rforest",
+    "mountains\rof despair", "zoombiniville\rpopulation ", "january", "february", "march", "april",
+    "may", "june", "july", "august", "september", "october", "november", "december",
+    "when traveling was",
+};
 
 PickerData pickerData;
 long pickerFile;
 short pickerOpen;
 short askingTransition;
-basePort **mapBoxBackdrop;
-basePort **levelListBackdrop;
+MapSave *mapSaves[6];
 short switchedToTemp;
 short rosterChanged;
 short mapBoxView;
@@ -164,7 +183,7 @@ void placePressed(View *view)
 }
 
 /* @zoombi32 0x004320da */
-long catchKey(long)
+short catchKey(unsigned short)
 {
     return 0;
 }
@@ -318,12 +337,12 @@ void closeTargets()
     }
 }
 
-/* Copies mapBoxRect from the port *mapBoxBackdrop to the screen and starts the
+/* Copies mapSaveRects[4] from its saved port (mapSaves[4]) to the screen and starts the
    view mapBoxView on script 1002. */
 /* @zoombi32 0x0043151e */
 void showMapBox()
 {
-    copyPortBits(viewPort, *mapBoxBackdrop, mapBoxRect, mapBoxRect, 0);
+    copyPortBits(viewPort, mapSaves[4]->port, mapSaveRects[4], mapSaveRects[4], 0);
     startView(mapBoxView, 1002, 0, 0);
 }
 
@@ -2002,7 +2021,7 @@ short mapKey(unsigned short key)
             makeMapViews(0);
         }
         if (practiceLevel) {
-            copyPortBits(viewPort, *levelListBackdrop, levelListRect, levelListRect, 0);
+            copyPortBits(viewPort, mapSaves[5]->port, mapSaveRects[5], mapSaveRects[5], 0);
             findOpenHotspots(openHotspots);
             view = findView(levelListView);
             if (view) {

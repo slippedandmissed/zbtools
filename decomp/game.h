@@ -49,7 +49,7 @@ extern short smokeOpen; /* @data 0x4b2790: the scene is open */
 extern short smokeGoReady; /* @data 0x4b2792 */
 extern short smokeButton2Lit; /* @data 0x4a483e */
 extern short smokeButton1Drawn; /* @data 0x4a4840 */
-extern SceneButton smokeButtons[3]; /* @data 0x4a4708 */
+extern SceneButton smokeButtons[3]; /* @data 0x4a472c: buttons 1 and 2, then the whole screen (the input group's items) */
 extern long smokeButtonResource; /* @data 0x4a47c8 */
 extern long smokeImagesResource; /* @data 0x4b2638 */
 extern long smokeHotSpotsXResource; /* @data 0x4b2650 */
@@ -60,8 +60,6 @@ void updateSmokeButtons(View *, short region);
 void closeSmoke();
 void smokeFrame();
 extern short inSmokeFrame; /* @data 0x4a4842: in smokeFrame */
-extern ShortRect smokeGoRect; /* @data 0x4a4750 */
-extern short moverScript; /* @data 0x4b2728 */
 extern short leaderGroup; /* @data 0x4b279a: the group the leaders move in */
 void drawSmokeSnoid(View *view);
 short sceneToReturnTo();
@@ -72,7 +70,7 @@ void standPlacedSnoids();
 long loadMovie(const char *path);
 void stopMovie(short shutdown);
 extern short smokeLevel; /* @data 0x4b2630 */
-extern short slotViews[7]; /* @data 0x4b2776 */
+extern short slotViews[6]; /* @data 0x4b2778 */
 void copyToSlotView(short id, short n);
 void recordLeftSlots();
 void recordRightSlots();
@@ -123,8 +121,6 @@ short playMovie(const char *path);
 void updateCellLinks();
 void settleCells();
 extern short randomDragSlot; /* @data 0x4b26b0 */
-extern short unusedSpot4Block; /* @data 0x4b2704 */
-extern Point spot4Point; /* @data 0x4a4528 */
 extern ShortRect spot4Rect; /* @data 0x4a4534 */
 short dragSnoidToSpot(View *view, Point where);
 void placePartyOnGrid();
@@ -174,7 +170,7 @@ extern short rowViewCount; /* @data 0x4b2662 */
 extern Point rowPlaces[8]; /* @data 0x4a44f0 */
 extern Point smokeRowStart; /* @data 0x4a4530 */
 void setOutSmokeSnoids();
-extern Point madePlaces1[2]; /* @data 0x4a4524 */
+extern Point madePlaces1[3]; /* @data 0x4a4524 */
 extern Point madePlaces2[2]; /* @data 0x4a462c */
 extern short randomViewCount; /* @data 0x4b2660 */
 extern short dealtViewCount; /* @data 0x4b2664 */
@@ -250,5 +246,8 @@ extern short level2OpenCells[18]; /* @data 0x4a43d0: its open cells */
 extern short level2StartCells[3]; /* @data 0x4a43f4: its start cells */
 extern short level2Links5Cells[3]; /* @data 0x4a43fa */
 extern short level2Links18Cells[12]; /* @data 0x4a4400 */
+
+extern Group g_4a4798[1]; /* pointed to by initialised data */
+extern Scene g_4a47b4[1]; /* pointed to by initialised data */
 
 #endif

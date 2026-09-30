@@ -7,7 +7,7 @@
 #define BRIDGE_H
 
 extern GroupList bridgeGroups[1]; /* @data 0x4a0e04 */
-extern SceneButton bridgeButtons[2]; /* @data 0x4a0d88 */
+extern SceneButton bridgeButtons[3]; /* @data 0x4a0d88: buttons 1 and 2, then the whole screen (the input group's items) */
 extern long bridgeButtonResource; /* @data 0x4a0e24 */
 extern Point upperPlaces[16]; /* @data 0x4a0e28: where the Zoombinis across the upper bridge stand */
 extern Point lowerPlaces[16]; /* @data 0x4a0e68: and the lower */
@@ -73,5 +73,8 @@ short bridgeKey(unsigned short key);
 void bridgeSnoidNotify(View *view, short event);
 void makeBridgeRule();
 short turnedBack(FeatureRules *rules, short edge, Snoid *snoid);
+
+extern Group g_4a0df4[1]; /* pointed to by initialised data */
+extern Scene g_4a0e10[1]; /* pointed to by initialised data */
 
 #endif

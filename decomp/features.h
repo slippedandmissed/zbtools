@@ -65,10 +65,6 @@ extern ShortRect onRect; /* @data 0x4a7da4 */
 extern ShortRect offRect; /* @data 0x4a7dac */
 extern ShortRect menuItemRect; /* @data 0x4a7db4 */
 extern short menuItemTops[8]; /* @data 0x4a7dbc */
-extern ShortRect dialogOkRect; /* @data 0x4b988a */
-extern ShortRect dialogCancelRect; /* @data 0x4b9892 */
-extern ShortRect dialogButton2Rect; /* @data 0x4b989a */
-extern ShortRect dialogButton1Rect; /* @data 0x4b98a2 */
 extern short caretBlink; /* @data 0x4b9828 */
 extern char buttonPressed[17]; /* @data 0x4b98b2: dialog hot spots shown pressed */
 extern char confirmText[]; /* @data 0x4b9698 */
@@ -89,7 +85,6 @@ extern ShortRect creditsClip; /* @data 0x4a7d6c */
 extern const char *dialogText; /* @data 0x4b968c */
 extern const char *dialogButton2Text; /* @data 0x4b9690 */
 extern const char *dialogButton1Text; /* @data 0x4b9694 */
-extern ShortRect dialogFrame; /* @data 0x4b98aa */
 extern long lastCaretBlink; /* @data 0x4b98c4 */
 extern short askingReplace; /* @data 0x4b98c8 */
 extern short tooManyGames; /* @data 0x4b98ca */

@@ -11,10 +11,9 @@ extern long slidesFile; /* @data 0x4b1928: Slides.MHK */
 extern short stoneRiseOpen; /* @data 0x4b1930: the scene is open */
 extern short slidesGoReady; /* @data 0x4b1932 */
 extern long slidesButtonResource; /* @data 0x4a3fc8 */
-extern SceneButton slidesButtons[2]; /* @data 0x4a3f28: buttons 1 and 2 */
+extern SceneButton slidesButtons[3]; /* @data 0x4a3f28: buttons 1 and 2, then the whole screen (the input group's items) */
 extern short slidesButton2Lit; /* @data 0x4a41e0: button 2 is drawn lit */
 extern short slidesButton1Drawn; /* @data 0x4a41e2: button 1 has been drawn */
-extern Point listedPoints[27]; /* @data 0x4b1a48: where to show them (from 1) */
 extern short listedCells[27]; /* @data 0x4b1ab4: cells (from 1, listedCount of them) */
 extern short listedCount; /* @data 0x4b240e */
 extern short lastLitCount; /* @data 0x4b1a42 */
@@ -98,10 +97,13 @@ extern short startCellsGroup; /* @data 0x4b2518 */
 extern short startCellCount; /* @data 0x4b241a */
 extern short unusedCellTable[117]; /* @data 0x4b194a */
 extern short startCells[10]; /* @data 0x4b241c */
-extern Point listedCellPlaces[27]; /* @data 0x4b1a4c: where the listed cells' views go */
+extern Point listedCellPlaces[26]; /* @data 0x4b1a4c: where the listed cells' views go */
 extern GroupList slidesGroups[1]; /* @data 0x4a3fa4 */
 void openStoneRise();
 
 void stoneRiseClicked(short which);
+
+extern Group g_4a3f94[1]; /* pointed to by initialised data */
+extern Scene g_4a3fb0[1]; /* pointed to by initialised data */
 
 #endif

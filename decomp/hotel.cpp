@@ -13,6 +13,7 @@
 #include "focus.h"
 #include "graphics.h"
 #include "hotel.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "platform.h"
 #include "random.h"
@@ -21,6 +22,12 @@
 #include "view.h"
 
 
+SceneButton hotelButtons[3] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+};
+Group g_4a1754[1] = {{g_4a0766, (InputItem *)hotelButtons, 3, 0x2068}};
+GroupList hotelGroups[1] = {{g_4a1754, 1, 0, hotelClicked}};
+Scene g_4a1770[1] = {{openHotel, closeHotel, hotelFrame, 0, hotelKey}};
 Point roomPlaces[25] = {
     {135, 78}, {138, 142}, {142, 204}, {146, 263}, {149, 324}, {223, 84}, {222, 147}, {227, 210},
     {228, 267}, {234, 328}, {315, 88}, {311, 152}, {313, 213}, {314, 272}, {314, 333}, {402, 94},
@@ -124,6 +131,7 @@ short *roomViewHotX;
 short *roomViewHotY;
 short roomRowValues[25];
 short roomLayerValues[25];
+short roomColumnValues[5];
 short roomViews[25];
 short room9002Views[125];
 short room9007Views[125];
@@ -239,15 +247,15 @@ void updateHotelButtons(View *view, short region)
     if (hotelGoReady) {
         if (!hotelButton2Lit) {
             hotelButton2Lit = 1;
-            unionRgnRect(region, &hotelButtons[2].rect);
+            unionRgnRect(region, &hotelButtons[1].rect);
         }
     } else if (hotelButton2Lit) {
         hotelButton2Lit = 0;
-        unionRgnRect(region, &hotelButtons[2].rect);
+        unionRgnRect(region, &hotelButtons[1].rect);
     }
     if (!hotelButton1Drawn) {
         hotelButton1Drawn = 1;
-        unionRgnRect(region, &hotelButtons[1].rect);
+        unionRgnRect(region, &hotelButtons[0].rect);
     }
 }
 
@@ -292,10 +300,10 @@ void drawHotelButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)((char *)hotelButtonImages + hotelButtonImages->offsets[image]), hotelButtons[which].rect.left,
-                      hotelButtons[which].rect.top, 8);
+        drawImageData((unsigned short *)((char *)hotelButtonImages + hotelButtonImages->offsets[image]), hotelButtons[which - 1].rect.left,
+                      hotelButtons[which - 1].rect.top, 8);
         if (show)
-            showRect(&hotelButtons[which].rect);
+            showRect(&hotelButtons[which - 1].rect);
     }
 }
 

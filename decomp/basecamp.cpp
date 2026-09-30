@@ -13,6 +13,7 @@
 #include "features.h"
 #include "focus.h"
 #include "graphics.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "net.h"
 #include "os_fixed.h"
@@ -46,22 +47,30 @@ short campPopulationFull;
 short camp1ThingViews[5];
 Snoid draggedSnoid;
 long cheatCode;
-long cheatHash = -1;
 long shapeListKind = RESOURCE_TYPE('S', 'H', 'P', 'L');
 long soundListKind = RESOURCE_TYPE('S', 'N', 'D', 'L');
-long noPreloadKind;
+long noPreloadKind = 0; /* initialised, as in the original: its data, not its BSS */
+long cheatHash = -1;
 short primes[5] = {2, 3, 5, 7, 11};
 short campScrollAsked = 0;
 short campHalfRow = 0;
+Scene g_4a0810[1] = {{enterCamp, leaveCamp, campIdle, 0, campKey}};
 SceneButton campButtons[7] = {
     {{599, 310, 638, 347}}, {{599, 386, 638, 423}}, {{599, 348, 638, 385}}, {{19, 78, 35, 205}},
     {{35, 78, 52, 205}}, {{257, 78, 273, 205}}, {{273, 78, 290, 205}},
 };
-ShortRect campArea = {55, 19, 255, 252};
+SceneButton campAreaItems[2] = {{{55, 19, 255, 252}}, {{0, 0, 640, 480}}};
 long campButtonsResource = 0;
 long campFrameResource = 0;
 ImageBank *campButtonImages = 0;
 ImageBank *campFrameImages = 0;
+Group g_4a0978[2] = {
+    {g_4a0766, (InputItem *)campButtons, 7, 0x2068},
+    {g_4a0766, (InputItem *)campAreaItems, 2, 0x2068},
+};
+GroupList campGroupLists[2] = {
+    {g_4a0978, 1, 0, campButtonClicked}, {&g_4a0978[1], 1, 0, campMouse},
+};
 short campX[10] = {55, 75, 95, 115, 135, 155, 175, 195, 215, 235};
 short campY[10][5] = {
     {37, 84, 131, 178, 225}, {39, 86, 133, 180, 227}, {39, 86, 133, 180, 227},
@@ -625,7 +634,7 @@ void resetCamp()
 }
 
 /* @zoombi32 0x00417906 */
-long campKey(long)
+short campKey(unsigned short)
 {
     return 0;
 }
@@ -1081,7 +1090,7 @@ void campMouse(short action)
                 if (snoid->chosen)
                     snoid->idleTicks = 1;
                 spot = view->body.bounds;
-                if (sectRect(&spot, &campArea)) {
+                if (sectRect(&spot, &campAreaItems[0].rect)) {
                     spot = view->body.bounds;
                     drop = findCampSlot(campRow, spot, 0);
                     if (drop >= 0) {
@@ -1358,7 +1367,7 @@ void scrollCamp(View *view, short)
     view->nextUpdate = clockTime() + view->interval;
     if (view->reset) {
         view->reset = 0;
-        view->body.bounds = campArea;
+        view->body.bounds = campAreaItems[0].rect;
         return;
     }
     if (!campScrollAsked)

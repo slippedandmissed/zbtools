@@ -40,7 +40,7 @@ short openRosterFile(const char *path, short mode);
 extern short firstFrame; /* @data 0x4a1000: the first of the frames showFrame shows */
 extern short finalFrame; /* @data 0x4a1002: their number */
 extern short currentFrame; /* @data 0x4a1004: the frame shown */
-extern SceneButton cavesButtons[2]; /* @data 0x4a1024: buttons 1 and 2 */
+extern SceneButton cavesButtons[3]; /* @data 0x4a1024: buttons 1 and 2, then the whole screen (the input group's items) */
 extern ImageBank *cavesButtonImages; /* @data 0x4a1020 */
 extern short kind4Images[6]; /* @data 0x4a1282 */
 extern short kind3Images[6]; /* @data 0x4a128e */
@@ -97,7 +97,7 @@ extern unsigned long tunnelRemarksUnused; /* @data 0x4a78cc */
 void fillRosterHeader(short reset);
 void readWriteSavedGames(SavedGameList *list, short mode);
 extern short cavesNextWalker; /* @data 0x4ab9c2: the roster's next Zoombini's view */
-extern short frameAnchorViews[26]; /* @data 0x4ab9c4: views, by frame */
+extern short frameAnchorViews[22]; /* @data 0x4ab9c4: views, by frame */
 extern short walkFromView; /* @data 0x4ab8da */
 extern short walkToView; /* @data 0x4ab8dc */
 extern short walkScriptsBase; /* @data 0x4a0ffc: the first of the walking scripts */
@@ -113,7 +113,7 @@ void setUpCaves();
 void walkToSpots();
 void sendToCaves();
 void changeCaveFeature(short feature);
-extern Point cavePoints[21]; /* @data 0x4a10a8 */
+extern Point cavePoints[20]; /* @data 0x4a10ac */
 extern ShortRect caveWaitAreas[12]; /* @data 0x4a10fc: the places' areas */
 extern short caveSnoidF1[21]; /* @data 0x4a11b4 */
 extern short caveSnoidF2[21]; /* @data 0x4a11de */
@@ -138,5 +138,8 @@ extern short cheersAllowed; /* @data 0x4aba04: how many cheer */
 extern short cheersDone; /* @data 0x4aba06: how many have */
 void cavesFrame();
 short cavesKey(unsigned short key);
+
+extern Scene g_4a0fbc[1]; /* pointed to by initialised data */
+extern Group g_4a1090[1]; /* pointed to by initialised data */
 
 #endif

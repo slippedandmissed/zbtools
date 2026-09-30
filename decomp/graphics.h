@@ -6,7 +6,7 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-extern char msgUnableToLockPort[]; /* @data 0x4a0710 */
+extern char msgUnableToLockPort[20]; /* @data 0x4a0710 */
 extern PALETTEENTRY colors[256]; /* @data 0x4aafee: the palette's colours */
 extern PALETTEENTRY *paletteEntries; /* @data 0x4ab3f0 */
 extern char *backPortErrorName; /* @data 0x4ab3f4 */

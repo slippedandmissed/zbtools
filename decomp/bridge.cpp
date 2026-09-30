@@ -19,7 +19,12 @@
 #include "tunnels.h"
 #include "view.h"
 
-SceneButton bridgeButtons[2] = {{{600, 403, 639, 440}}, {{600, 441, 639, 478}}};
+SceneButton bridgeButtons[3] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+};
+Group g_4a0df4[1] = {{g_4a0766, (InputItem *)bridgeButtons, 3, 0x2068}};
+GroupList bridgeGroups[1] = {{g_4a0df4, 1, 0, bridgeClicked}};
+Scene g_4a0e10[1] = {{openBridge, closeBridge, bridgeFrame, 0, bridgeKey}};
 long bridgeButtonResource = 0;
 Point upperPlaces[16] = {
     {618, 45}, {582, 49}, {552, 36}, {524, 32}, {493, 25}, {464, 27}, {422, 36}, {618, 86},
@@ -75,6 +80,7 @@ short bridgePartySize;
 unsigned long lastBridgeFidgetTime;
 unsigned long bridgeFidgetInterval;
 unsigned long bridgeFidgetersUsed;
+long lastRuleMask;
 
 /* Starts the timer. */
 /* @zoombi32 0x0041a404 */

@@ -40,6 +40,7 @@ View *lastActorView = 0;
 short viewsBusy = 0;
 ShortRect viewTailBounds = {40, 0, 120, 20};
 ShortRect fpsRect = {0, 0, 110, 16};
+long currentMapFile = 0;
 
 short viewsShown;
 short viewsLocked;
@@ -68,6 +69,13 @@ char debugMessagesOn;
 unsigned long viewClockStart;
 unsigned long viewClockMark;
 View viewHead;
+/* The original has room for only the first 0xe0 bytes of the tail view:
+   its body.running is dragCursor, and its clipped and clip the ten bytes
+   after that. initViews sets them as the tail's once, at startup, while
+   dragCursor is 0; after that only the debugging labels (drawViewLabels)
+   read the tail's running, and nothing else writes clipped or clip. So here
+   the tail view is whole, and dragCursor apart from it. */
+View viewTail;
 unsigned short dragCursor;
 ResourceList *backdropImages;
 short scriptGroupFirst[8];
@@ -97,7 +105,7 @@ unsigned long fpsMax;
 /* @zoombi32 0x0046310c */
 void initViews()
 {
-    viewsLocked = viewsShown = 0;
+    viewsShown = viewsLocked = 0;
     soundRanges = 0;
     addSoundRange(0x3e4, 0x3e5, 0);
     createPort(&viewPort, &gameRect, 1, "view port");
@@ -174,7 +182,7 @@ void clearViews()
 {
     View *view;
 
-    currentDialogSound = dialogQuestion = 0;
+    dialogQuestion = currentDialogSound = 0;
     soundRanges = 0;
     addSoundRange(0x3e4, 0x3e5, 0);
     if (viewsReady) {
@@ -214,7 +222,7 @@ void clearViews()
             groupFlagsA[i] = 0;
             groupFlagsB[i] = 0;
         }
-        endDragNow = backdropView = 0;
+        backdropView = endDragNow = 0;
         placeSnapRadius = 15;
         hideArrivedPlaced = 0;
         placesClaimable = 1;
@@ -1010,7 +1018,7 @@ unsigned long resetViewClock()
     viewClockStart = viewClockMark = clockTime();
     if (snoidIdleDelay)
         snoidIdleDelay = 0x40;
-    return viewClockMark;
+    return viewClockStart;
 }
 
 /* @zoombi32 0x00464d64 */

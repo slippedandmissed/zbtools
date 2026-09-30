@@ -41,7 +41,7 @@ extern PickerData pickerData; /* @data 0x4af8ac */
 
 void showMapBox();
 void placePressed(View *view);
-long catchKey(long);
+short catchKey(unsigned short);
 void burstNotify(View *, short event);
 extern long pickerFile; /* @data 0x4afb10: Picker.MHK */
 extern short pickerOpen; /* @data 0x4afb14: the scene is open */
@@ -49,10 +49,8 @@ extern GroupList pickerGroups[1]; /* @data 0x4a1f34 */
 extern GroupList catchGroups[1]; /* @data 0x4a2046 */
 extern GroupList targetGroups[1]; /* @data 0x4a2090 */
 extern short savedIdleDelay; /* @data 0x4afbb8 */
-extern basePort **mapBoxBackdrop; /* @data 0x4afb28 */
 extern short mapBoxView; /* @data 0x4afb34 */
 extern short openHotspotsView; /* @data 0x4afb3a */
-extern ShortRect mapBoxRect; /* @data 0x4a1f74 */
 void closeCatch();
 void closeTargets();
 void caughtNotify(View *, short event);
@@ -140,12 +138,18 @@ extern short targetBursting; /* @data 0x4afb90: the target hit bursting (negated
 void targetsFrame();
 
 void leavePractice();
-extern basePort **levelListBackdrop; /* @data 0x4afb2c */
-extern ShortRect levelListRect; /* @data 0x4a1f7c */
 short mapKey(unsigned short key);
 extern ShortRect catchMissAreas[3]; /* @data 0x4a2068: where a click catches nothing */
 void catchClicked(short);
 extern ShortRect levelLines[4]; /* @data 0x4a1fa8: the levels' lines in the list */
 void mapClicked(short which);
+
+extern Group g_4a1f24[1]; /* pointed to by initialised data */
+extern Scene g_4a1f40[1]; /* pointed to by initialised data */
+extern InputItem g_4a2012[1]; /* pointed to by initialised data */
+extern Group g_4a2036[1]; /* pointed to by initialised data */
+extern Scene g_4a2052[1]; /* pointed to by initialised data */
+extern Group g_4a2080[1]; /* pointed to by initialised data */
+extern Scene g_4a209c[1]; /* pointed to by initialised data */
 
 #endif

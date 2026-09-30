@@ -10,7 +10,6 @@ extern GroupList *groupLists; /* @data 0x4a01ac */
 extern short keyboardMoved; /* @data 0x4a01b0 */
 extern InputItem *highlightedItem; /* @data 0x4aa484 */
 extern unsigned short inputFlags; /* @data 0x4aa48a */
-extern unsigned char inputFlagsHigh; /* @data 0x4aa48b */
 extern short groupListCount; /* @data 0x4aa48c: how many lists groupLists has */
 extern GroupList *currentList; /* @data 0x4aa490 */
 extern Group *currentGroup; /* @data 0x4aa494 */

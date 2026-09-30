@@ -16,6 +16,8 @@
 
 #define MIDI RESOURCE_TYPE('t', 'M', 'I', 'D')
 
+char emptyString[1] = {0};
+InputHandlers g_4a0766[1] = {0};
 char oneCharString[2] = {0};
 Callback fatalHook = 0;
 void (*errorReporter)(const char *prefix, const char *format, va_list args) = showError;

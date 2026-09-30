@@ -129,3 +129,10 @@ def test_function_pointer_definitions_are_found() -> None:
     assert _definition_start("hook").search(text)
     assert _definition_start("grid").search(text)
     assert not _definition_start("hook").search("extern void (*hook)(short active);")
+
+
+def test_text_beyond_ascii_is_escaped_in_octal() -> None:
+    # A hex escape would swallow the "d" after it.
+    assert _text(b"Br\xd8derbund\0") == '"Br\\330derbund"'
+    assert _text(b"\0", whole=False) is None
+    assert _text(b"\0", whole=False, empty=True) == '""'

@@ -31,7 +31,7 @@ void fillCodeCube(short a, short b, short c, short n);
 void drawNetButton(short which, short lit, short show);
 void drawNetButtons(View *);
 void updateNetButtons(View *, short region);
-extern short netGroups[20]; /* @data 0x4b1182 */
+extern short netGroups[12]; /* @data 0x4b1182: splitIntoGroups can write past it (up to netPartySize), as the original does */
 extern short placeGroups[]; /* @data 0x4b11aa */
 extern short netGroupCount; /* @data 0x4b0e76 */
 extern short netPartySize; /* @data 0x4b0e66 */
@@ -133,7 +133,7 @@ void playAmbientSound();
 extern short previousCode1; /* @data 0x4b1440 */
 extern short previousCode2; /* @data 0x4b1444 */
 extern short previousCode3; /* @data 0x4b1448 */
-extern Point acrossSpots[]; /* @data 0x4a2dd6 */
+extern Point acrossSpots[19]; /* @data 0x4a2dd6 */
 extern short waitingOnNet[3]; /* @data 0x4b12b0 */
 extern short netFacing; /* @data 0x4b11a2 */
 extern short movingSnoid; /* @data 0x4b0e6a */
@@ -186,5 +186,8 @@ extern unsigned long lastNetFidgetTime; /* @data 0x4b146c */
 extern unsigned long netFidgetersUsed; /* @data 0x4b1474 */
 extern View *netFidgeter; /* @data 0x4b0d60 */
 void netFrame();
+
+extern Group g_4a2e22[1]; /* pointed to by initialised data */
+extern Scene g_4a2e3e[1]; /* pointed to by initialised data */
 
 #endif

@@ -33,6 +33,9 @@ char *mapSaveErrorText;
 char *saveRectErrorText;
 short displayPalettized;
 
+char msgNoScreenPort[] = "unable to create screen port";
+char msgUnableToLockPort[20] = "unable to lock port";
+
 /*
  * Sets up graphics in a display mode: the engine, the main window, the
  * palette (all reserved entries) and the work port the game draws into.

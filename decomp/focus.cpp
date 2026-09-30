@@ -17,7 +17,7 @@ GroupList *groupLists = 0;
 short keyboardMoved = 0;
 
 InputItem *highlightedItem;
-unsigned char inputFlagsHigh;
+unsigned short inputFlags;
 short groupListCount;
 GroupList *currentList;
 Group *currentGroup;
@@ -749,20 +749,20 @@ void moveMouseToFocus()
     }
 }
 
-/* Flag 0x80 of inputFlagsHigh applies with a mouse, 0x40 without one. */
+/* Flag 0x8000 of inputFlags applies with a mouse, 0x4000 without one. */
 /* @zoombi32 0x0041336f */
 short handlersOverridden()
 {
     short noMouse = !(unsigned short)isMousePresent();
-    return inputFlagsHigh & 0x80 && !noMouse || inputFlagsHigh & 0x40 && noMouse;
+    return inputFlags & 0x8000 && !noMouse || inputFlags & 0x4000 && noMouse;
 }
 
-/* Flag 0x20 of inputFlagsHigh applies with a mouse, 0x10 without one. */
+/* Flag 0x2000 of inputFlags applies with a mouse, 0x1000 without one. */
 /* @zoombi32 0x004133a4 */
 short moveOverridden()
 {
     short noMouse = !(unsigned short)isMousePresent();
-    return inputFlagsHigh & 0x20 && !noMouse || inputFlagsHigh & 0x10 && noMouse;
+    return inputFlags & 0x2000 && !noMouse || inputFlags & 0x1000 && noMouse;
 }
 
 /* Moves the focus to the first item at a point (by its group's hit test). */

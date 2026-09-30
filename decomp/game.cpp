@@ -9,25 +9,43 @@
 #include <string.h>
 #include "zoombinis.h"
 #include "basecamp.h"
+#include "bctwo.h"
+#include "bridge.h"
 #include "config.h"
 #include "debug.h"
 #include "e2memory.h"
 #include "features.h"
+#include "ferry.h"
+#include "fleens.h"
 #include "focus.h"
 #include "game.h"
 #include "graphics.h"
+#include "hotel.h"
+#include "isle.h"
+#include "lilly.h"
 #include "loading.h"
 #include "mainloop.h"
+#include "maze.h"
 #include "net.h"
 #include "os_manager.h"
+#include "picker.h"
+#include "pizza.h"
 #include "platform.h"
 #include "random.h"
 #include "roster.h"
 #include "slides.h"
 #include "snoids.h"
 #include "sound.h"
+#include "town.h"
+#include "tunnels.h"
 #include "view.h"
+#include "xfer.h"
 
+Scene *scenes[22] = {
+    g_4a73fc, g_4a1f40, g_4a7eaa, g_4a2f0c, g_4a0810, g_4a0ac8, g_4a74b0, g_4a0e10, g_4a76f4,
+    g_4a3d24, g_4a1508, g_4a1bd4, g_4a3fb0, g_4a163c, g_4a1770, g_4a2e3e, g_4a0fbc, g_4a47b4,
+    g_4a21a0, g_4a2052, g_4a209c, g_4a2052,
+};
 short level3OpenCells[26] = {
     2, 4, 6, 19, 21, 23, 25, 38, 40, 42, 44, 55, 57, 59, 61, 74, 76, 78, 80, 91, 93, 95, 97, 110,
     112, 114,
@@ -64,7 +82,7 @@ Point rowPlaces[8] = {
     {0}, {441, 66}, {531, 70}, {605, 67}, {421, 160}, {483, 153}, {612, 153}, {548, 255},
 };
 Point dealtPlaces[4] = {{187, 255}, {247, 255}, {424, 255}, {484, 255}};
-Point spot4Point = {548, 255};
+Point madePlaces1[3] = {{124, 255}, {548, 255}, {580, 258}};
 Point smokeRowStart = {616, 253};
 ShortRect spot4Rect = {525, 211, 582, 300};
 Point leftRowPlaces[3][3] = {
@@ -99,7 +117,12 @@ Point movePlaces1[17] = {
 Point movePlaces2[8] = {
     {354, 257}, {354, 261}, {354, 264}, {354, 267}, {354, 270}, {354, 274}, {354, 277}, {354, 280},
 };
-ShortRect smokeGoRect = {600, 441, 639, 478};
+SceneButton smokeButtons[3] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+};
+Group g_4a4798[1] = {{g_4a0766, (InputItem *)smokeButtons, 3, 0x2068}};
+GroupList smokeGroups = {g_4a4798, 1, 0, smokeClicked};
+Scene g_4a47b4[1] = {{openSmoke, closeSmoke, smokeFrame, 0, smokeKey}};
 long smokeButtonResource = 0;
 long smokeDragOriginStart = 0;
 ShortRect smokeWaitArea = {0, 31, 262, 244};
@@ -211,10 +234,10 @@ short crossingSnoid;
 short leftRow;
 short rightRow;
 short rowViews[9];
-short unusedSpot4Block;
+short featureSlots[8][4];
 short pairScripts[4];
 short crossScripts[2];
-short moverScript;
+short moverScripts[3];
 short crossScript1;
 short crossScript2;
 short crossScript3;
@@ -242,7 +265,8 @@ unsigned long smokeFidgetersUsed;
 short smokeFidgets;
 short smokeFidgeting;
 long unusedSmoke4;
-short slotViews[7];
+short rowPlaceOrder[8];
+short slotViews[6];
 short movePlace;
 long smokeFile;
 short smokeOpen;
@@ -281,7 +305,10 @@ short cursorFrame;
 HINSTANCE appInstance;
 HINSTANCE appPreviousInstance;
 char *appCommandLine;
+short blockScreenSaver;
 long cursors[6];
+short modeCursors[6];
+unsigned long nextCursorFrameTime;
 
 /*
  * The game's part of each pass of the main loop (WinMain registers it with
@@ -913,15 +940,15 @@ void updateSmokeButtons(View *, short region)
     if (smokeGoReady) {
         if (!smokeButton2Lit) {
             smokeButton2Lit = 1;
-            unionRgnRect(region, &smokeButtons[2].rect);
+            unionRgnRect(region, &smokeButtons[1].rect);
         }
     } else if (smokeButton2Lit) {
         smokeButton2Lit = 0;
-        unionRgnRect(region, &smokeButtons[2].rect);
+        unionRgnRect(region, &smokeButtons[1].rect);
     }
     if (!smokeButton1Drawn) {
         smokeButton1Drawn = 1;
-        unionRgnRect(region, &smokeButtons[1].rect);
+        unionRgnRect(region, &smokeButtons[0].rect);
     }
 }
 
@@ -1042,7 +1069,7 @@ void smokeFrame()
             crossedChosen++;
             if (crossedChosen == 1) {
                 smokeGoReady = 1;
-                unionRgnRect(removedRgn, &smokeGoRect);
+                unionRgnRect(removedRgn, &smokeButtons[1].rect);
             }
         }
         if (!crossedCount) {
@@ -1082,7 +1109,7 @@ void smokeFrame()
             else
                 view = findView(moverView1);
             if (view) {
-                setViewScript(view, moverScript, 1);
+                setViewScript(view, moverScripts[2], 1);
                 view->notify = smokeViewNotify;
             }
         }
@@ -1332,7 +1359,7 @@ void copyToSlotView(short id, short n)
     }
 }
 
-/* Records the features of the Zoombinis in the views slotViews[1-3] as
+/* Records the features of the Zoombinis in the views slotViews[0-2] as
    slots 1-3's (none if a view is gone). */
 /* @zoombi32 0x00450d5d */
 void recordLeftSlots()
@@ -1341,7 +1368,7 @@ void recordLeftSlots()
     View *view;
 
     for (i = 1; i < 4; i++) {
-        view = findView(slotViews[i]);
+        view = findView(slotViews[i - 1]);
         if (view) {
             Snoid *snoid = viewSnoid(view);
 
@@ -1366,7 +1393,7 @@ void recordRightSlots()
     View *view;
 
     for (i = 4; i < 7; i++) {
-        view = findView(slotViews[i]);
+        view = findView(slotViews[i - 1]);
         if (view) {
             Snoid *snoid = viewSnoid(view);
 
@@ -1461,7 +1488,7 @@ void startNextCrossing(short)
    (state startState, 504 or at level 3 perhaps 505), the cells open (506)
    and blocked (501), the Zoombinis already placed (507) and the cells'
    link bits (cellLinkBits); notes the open cells (listedCount of them, where to
-   show them in listedPoints), then adds every cell's view and the rows'
+   show them in listedCellPlaces), then adds every cell's view and the rows'
    views, and puts the party behind them. */
 /* @zoombi32 0x0044b550 */
 void layOutGrid()
@@ -1513,19 +1540,19 @@ void layOutGrid()
             hexCells[cell + extra].state = startState;
             hexCells[cell + extra + 1].state = 506;
             listedCount++;
-            listedPoints[listedCount] = cellPoints[cell + extra + 1];
+            listedCellPlaces[listedCount - 1] = cellPoints[cell + extra + 1];
             listedCells[listedCount] = extra + cell + 1;
-            listedPoints[listedCount].x += 24;
-            listedPoints[listedCount].y -= 5;
+            listedCellPlaces[listedCount - 1].x += 24;
+            listedCellPlaces[listedCount - 1].y -= 5;
             if (pairFeatures[k] != 501) {
                 hexCells[cell + extra + 2].snoid = pairFeatures[k];
                 hexCells[cell + extra + 2].state = 501;
                 hexCells[cell + extra + 3].state = 506;
                 listedCount++;
-                listedPoints[listedCount] = cellPoints[cell + extra + 3];
+                listedCellPlaces[listedCount - 1] = cellPoints[cell + extra + 3];
                 listedCells[listedCount] = extra + cell + 3;
-                listedPoints[listedCount].x += 24;
-                listedPoints[listedCount].y -= 5;
+                listedCellPlaces[listedCount - 1].x += 24;
+                listedCellPlaces[listedCount - 1].y -= 5;
                 cellLinkBits[cell + extra] |= 16;
                 cellLinkBits[cell + extra + 1] = 18;
                 cellLinkBits[cell + extra + 2] = 18;
@@ -1549,10 +1576,10 @@ void layOutGrid()
             hexCells[cell].state = startState;
             hexCells[cell + 1].state = 506;
             listedCount++;
-            listedPoints[listedCount] = cellPoints[cell + 1];
+            listedCellPlaces[listedCount - 1] = cellPoints[cell + 1];
             listedCells[listedCount] = cell + 1;
-            listedPoints[listedCount].x += 24;
-            listedPoints[listedCount].y -= 5;
+            listedCellPlaces[listedCount - 1].x += 24;
+            listedCellPlaces[listedCount - 1].y -= 5;
             if (++placed >= partySize) {
                 cellLinkBits[cell] = 16;
                 cellLinkBits[cell + 1] = 2;
@@ -1563,10 +1590,10 @@ void layOutGrid()
                 hexCells[cell + 2].state = 501;
                 hexCells[cell + 3].state = 506;
                 listedCount++;
-                listedPoints[listedCount] = cellPoints[cell + 3];
+                listedCellPlaces[listedCount - 1] = cellPoints[cell + 3];
                 listedCells[listedCount] = cell + 3;
-                listedPoints[listedCount].x += 24;
-                listedPoints[listedCount].y -= 5;
+                listedCellPlaces[listedCount - 1].x += 24;
+                listedCellPlaces[listedCount - 1].y -= 5;
                 cellLinkBits[cell] |= 16;
                 cellLinkBits[cell + 1] = 18;
                 cellLinkBits[cell + 2] = 18;
@@ -1579,10 +1606,10 @@ void layOutGrid()
                 hexCells[cell + 2].state = 501;
                 hexCells[cell + 3].state = 506;
                 listedCount++;
-                listedPoints[listedCount] = cellPoints[cell + 3];
+                listedCellPlaces[listedCount - 1] = cellPoints[cell + 3];
                 listedCells[listedCount] = cell + 3;
-                listedPoints[listedCount].x += 24;
-                listedPoints[listedCount].y -= 5;
+                listedCellPlaces[listedCount - 1].x += 24;
+                listedCellPlaces[listedCount - 1].y -= 5;
                 cellLinkBits[cell] |= 16;
                 cellLinkBits[cell + 1] = 18;
                 cellLinkBits[cell + 2] = 18;
@@ -1596,10 +1623,10 @@ void layOutGrid()
                 hexCells[cell + 4].state = 501;
                 hexCells[cell + 5].state = 506;
                 listedCount++;
-                listedPoints[listedCount] = cellPoints[cell + 5];
+                listedCellPlaces[listedCount - 1] = cellPoints[cell + 5];
                 listedCells[listedCount] = cell + 5;
-                listedPoints[listedCount].x += 24;
-                listedPoints[listedCount].y -= 5;
+                listedCellPlaces[listedCount - 1].x += 24;
+                listedCellPlaces[listedCount - 1].y -= 5;
                 cellLinkBits[cell + 3] |= 16;
                 cellLinkBits[cell + 4] = 18;
                 cellLinkBits[cell + 5] = 2;
@@ -1611,10 +1638,10 @@ void layOutGrid()
                 hexCells[cell + 4].state = 501;
                 hexCells[cell + 5].state = 506;
                 listedCount++;
-                listedPoints[listedCount] = cellPoints[cell + 5];
+                listedCellPlaces[listedCount - 1] = cellPoints[cell + 5];
                 listedCells[listedCount] = cell + 5;
-                listedPoints[listedCount].x += 24;
-                listedPoints[listedCount].y -= 5;
+                listedCellPlaces[listedCount - 1].x += 24;
+                listedCellPlaces[listedCount - 1].y -= 5;
                 cellLinkBits[cell + 3] |= 16;
                 cellLinkBits[cell + 4] = 18;
                 cellLinkBits[cell + 5] = 2;
@@ -1743,10 +1770,10 @@ void layOutGrid()
         for (cell = 0; cell < 18; cell++)
             if (hexCells[level2OpenCells[cell]].state == 507) {
                 listedCount++;
-                listedPoints[listedCount] = cellPoints[level2OpenCells[cell]];
+                listedCellPlaces[listedCount - 1] = cellPoints[level2OpenCells[cell]];
                 listedCells[listedCount] = level2OpenCells[cell];
-                listedPoints[listedCount].x += 24;
-                listedPoints[listedCount].y -= 5;
+                listedCellPlaces[listedCount - 1].x += 24;
+                listedCellPlaces[listedCount - 1].y -= 5;
             }
         break;
     case 3:
@@ -1937,10 +1964,10 @@ void layOutGrid()
             row = level3OpenCells[cell];
             if (hexCells[row].state == 507) {
                 listedCount++;
-                listedPoints[listedCount] = cellPoints[row];
+                listedCellPlaces[listedCount - 1] = cellPoints[row];
                 listedCells[listedCount] = row;
-                listedPoints[listedCount].x += 24;
-                listedPoints[listedCount].y -= 5;
+                listedCellPlaces[listedCount - 1].x += 24;
+                listedCellPlaces[listedCount - 1].y -= 5;
                 placedSnoids[count].cell = row;
                 placedSnoids[count].snoid = hexCells[row].snoid;
                 count++;
@@ -2264,10 +2291,10 @@ void drawSmokeButton(short which, short lit, short show)
         bank = (ImageBank *)handleData(handle);
         unsigned short *data = (unsigned short *)(swapLong(bank->offsets[image]) + (char *)bank);
 
-        drawImageData(data, smokeButtons[which].rect.left, smokeButtons[which].rect.top, 8);
+        drawImageData(data, smokeButtons[which - 1].rect.left, smokeButtons[which - 1].rect.top, 8);
         unlockHandle(handle);
         if (show)
-            showRect(&smokeButtons[which].rect);
+            showRect(&smokeButtons[which - 1].rect);
     }
 }
 
@@ -2426,7 +2453,7 @@ void dealRandomFeatures(short count)
 }
 
 /* Moves on the one feature (pose) of the Zoombinis in the views
-   slotViews[1-3] that change it: each takes the next value after its slot's (or
+   slotViews[0-2] that change it: each takes the next value after its slot's (or
    an earlier slot's, if its is unset), wrapping 5 round to 1, and records
    it in the next slot. */
 /* @zoombi32 0x00450e87 */
@@ -2437,7 +2464,7 @@ void advanceLeftFeatures()
     Snoid *snoid;
 
     for (i = 0; i < 3; i++) {
-        view = findView(slotViews[i + 1]);
+        view = findView(slotViews[i]);
         if (view) {
             snoid = (Snoid *)&view->body;
             snoid->action = 4;
@@ -2471,7 +2498,7 @@ void advanceLeftFeatures()
     }
 }
 
-/* The same from the other side: the views slotViews[6-4], from slots 7-5,
+/* The same from the other side: the views slotViews[5-3], from slots 7-5,
    recording in slots 6-4. */
 /* @zoombi32 0x00451020 */
 void advanceRightFeatures()
@@ -2481,7 +2508,7 @@ void advanceRightFeatures()
     Snoid *snoid;
 
     for (i = 5; i > 2; i--) {
-        view = findView(slotViews[i + 1]);
+        view = findView(slotViews[i]);
         if (view) {
             snoid = (Snoid *)&view->body;
             snoid->action = 4;
@@ -3034,7 +3061,7 @@ void settleCells()
 
 /*
  * Drags a Zoombini (from `where`), snapping it to the spot it's over: with
- * smokeLevel below 3, the one spot spot4Rect (4) unless unusedSpot4Block; otherwise
+ * smokeLevel below 3, the one spot spot4Rect (4) unless featureSlots[7][0]; otherwise
  * one of the three spots in row leftRow of leftRowSpots (0-2) or row rightRow
  * of rightRowSpots (3-5). Returns the spot it was over when released (-1:
  * none).
@@ -3076,10 +3103,10 @@ short dragSnoidToSpot(View *view, Point where)
         getCursorPosition(&current);
         spot = -1;
         if (smokeLevel < 3) {
-            if (ptInRect(&spot4Rect, current) && !unusedSpot4Block) {
+            if (ptInRect(&spot4Rect, current) && !featureSlots[7][0]) {
                 spot = 4;
-                current.x = spot4Point.x;
-                current.y = spot4Point.y;
+                current.x = madePlaces1[1].x;
+                current.y = madePlaces1[1].y;
             }
         } else {
             if (leftRow < 3)
@@ -4156,7 +4183,7 @@ void setOutSmokeSnoids()
                 *(Point *)&snoid->body.x = rowPlaces[rowPlaceOrder[i]];
             } else if (i == 7) {
                 snoid->angle = 0;
-                *(Point *)&snoid->body.x = spot4Point;
+                *(Point *)&snoid->body.x = madePlaces1[1];
             }
             if (i == 8) {
                 snoid->angle = 2;
@@ -4172,7 +4199,7 @@ void setOutSmokeSnoids()
     recordSlotFeatures(crossingSnoid, 0);
     rightRow = 0;
     leftRow = 0;
-    fillMemory(&slotViews[1], 0, 12);
+    fillMemory(&slotViews[0], 0, 12);
 }
 
 /* Adds `count` Zoombini views of one kind to the scene (1: random ones at
@@ -4535,7 +4562,7 @@ void openSmoke()
     smokeDragOrigin = smokeDragOriginStart;
     for (i = 0; i < 8; i++)
         rowPlaceOrder[i] = i;
-    fillMemory(&slotViews[1], 0, 12);
+    fillMemory(&slotViews[0], 0, 12);
     fillMemory(&view11009, 0, 42);
     fillMemory(crossedMarkers, 0, 40);
     fillMemory(crossedSnoids, 0, 40);
@@ -4931,20 +4958,20 @@ void smokeClicked(short action)
                         view->tag = 0;
                     }
                     for (m = 0; m < 6; m++)
-                        if (slotViews[m + 1] == view->id) {
+                        if (slotViews[m] == view->id) {
                             placed = 0;
-                            slotViews[m + 1] = 0;
+                            slotViews[m] = 0;
                             if (m > 2) {
                                 for (action = m; action <= 5; action++)
                                     if (action < 5)
-                                        slotViews[action + 1] = slotViews[action + 2];
+                                        slotViews[action] = slotViews[action + 1];
                                     else
-                                        slotViews[action + 1] = 0;
+                                        slotViews[action] = 0;
                                 rightRow -= 2;
                                 if (rightRow < 0)
                                     rightRow = 0;
                                 for (action = 3; action <= 5; action++) {
-                                    other = findView(slotViews[action + 1]);
+                                    other = findView(slotViews[action]);
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
@@ -4960,14 +4987,14 @@ void smokeClicked(short action)
                             } else {
                                 for (action = m; action <= 2; action++)
                                     if (action < 2)
-                                        slotViews[action + 1] = slotViews[action + 2];
+                                        slotViews[action] = slotViews[action + 1];
                                     else
-                                        slotViews[action + 1] = 0;
+                                        slotViews[action] = 0;
                                 leftRow -= 2;
                                 if (leftRow < 0)
                                     leftRow = 0;
                                 for (action = 0; action < 3; action++) {
-                                    other = findView(slotViews[action + 1]);
+                                    other = findView(slotViews[action]);
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
@@ -4992,13 +5019,13 @@ void smokeClicked(short action)
                             placed = 0;
                             if (result < 3) {
                                 snoid->angle = 0;
-                                if (slotViews[result + 1])
+                                if (slotViews[result])
                                     for (action = leftRow; action >= result; action--)
                                         if (action > 0)
-                                            slotViews[action + 1] = slotViews[action];
-                                slotViews[result + 1] = view->id;
+                                            slotViews[action] = slotViews[action - 1];
+                                slotViews[result] = view->id;
                                 for (action = 0; action <= 2; action++) {
-                                    other = findView(slotViews[action + 1]);
+                                    other = findView(slotViews[action]);
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
@@ -5008,18 +5035,18 @@ void smokeClicked(short action)
                                     }
                                 }
                                 leftRow++;
-                                slotViews[result + 1] = view->id;
+                                slotViews[result] = view->id;
                                 recordLeftSlots();
                                 advanceLeftFeatures();
                             } else {
                                 snoid->angle = 2;
-                                if (slotViews[result + 1])
+                                if (slotViews[result])
                                     for (action = rightRow + 3; action >= result; action--)
                                         if (action > 3)
-                                            slotViews[action + 1] = slotViews[action];
-                                slotViews[result + 1] = view->id;
+                                            slotViews[action] = slotViews[action - 1];
+                                slotViews[result] = view->id;
                                 for (action = 3; action <= 5; action++) {
-                                    other = findView(slotViews[action + 1]);
+                                    other = findView(slotViews[action]);
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
@@ -5029,7 +5056,7 @@ void smokeClicked(short action)
                                     }
                                 }
                                 rightRow++;
-                                slotViews[result + 1] = view->id;
+                                slotViews[result] = view->id;
                                 recordRightSlots();
                                 advanceRightFeatures();
                             }

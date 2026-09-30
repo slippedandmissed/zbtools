@@ -10,6 +10,7 @@
 #include "focus.h"
 #include "graphics.h"
 #include "lilly.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "maze.h"
 #include "net.h"
@@ -21,6 +22,12 @@
 short hotSpotTableUsed = 0;
 short hotSpotTableKeys[4] = {0};
 short turnSoundToggle = 0;
+SceneButton mazeButtons[3] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+};
+Group g_4a2184[1] = {{g_4a0766, (InputItem *)mazeButtons, 3, 0x2068}};
+GroupList mazeGroups = {g_4a2184, 1, 0, mazeButtonClicked};
+Scene g_4a21a0[1] = {{openMaze, closeMaze, mazeFrame, 0, mazeKey}};
 long mazeButtonResource = 0;
 Point startPlacePoints[14] = {
     {101, 283}, {148, 282}, {188, 280}, {195, 275}, {203, 297}, {210, 316}, {95, 65}, {100, 81},
@@ -113,6 +120,7 @@ short startPlace;
 short mazeAnchorView1;
 short pieceView1;
 short pieceView2;
+short mazeSnoidViews[11];
 short mazeSnoidCount;
 long mazeFile;
 short mazeOpen;
@@ -134,6 +142,7 @@ short emptyValues[21];
 short emptyValues2[21];
 short emptyValueList[21];
 short emptyValueList2[21];
+short mazeSequence[10];
 short unusedMazeTable[10];
 short sequenceLength;
 short unusedSequenceIndex;
@@ -309,10 +318,10 @@ void drawMazeButton(short which, short lit, short show)
         bank = (ImageBank *)handleData(handle);
         unsigned short *data = (unsigned short *)(swapLong(bank->offsets[image]) + (char *)bank);
 
-        drawImageData(data, mazeButtons[which].rect.left, mazeButtons[which].rect.top, 8);
+        drawImageData(data, mazeButtons[which - 1].rect.left, mazeButtons[which - 1].rect.top, 8);
         unlockHandle(handle);
         if (show)
-            showRect(&mazeButtons[which].rect);
+            showRect(&mazeButtons[which - 1].rect);
     }
 }
 
@@ -332,15 +341,15 @@ void updateMazeButtons(View *, short region)
     if (mazeGoReady) {
         if (!mazeButton2Lit) {
             mazeButton2Lit = 1;
-            unionRgnRect(region, &mazeButtons[2].rect);
+            unionRgnRect(region, &mazeButtons[1].rect);
         }
     } else if (mazeButton2Lit) {
         mazeButton2Lit = 0;
-        unionRgnRect(region, &mazeButtons[2].rect);
+        unionRgnRect(region, &mazeButtons[1].rect);
     }
     if (!mazeButton1Drawn) {
         mazeButton1Drawn = 1;
-        unionRgnRect(region, &mazeButtons[1].rect);
+        unionRgnRect(region, &mazeButtons[0].rect);
     }
 }
 
@@ -1456,7 +1465,7 @@ void putSnoidInMaze(View *view, short pose)
         snoid->chosen = 1;
         if (++poseReachedCount == 1) {
             mazeGoReady = 1;
-            unionRgnRect(removedRgn, &mazeButtons[2].rect);
+            unionRgnRect(removedRgn, &mazeButtons[1].rect);
         }
     }
     *(Point *)&view->body.x = (squarePlaces + parts[34])[parts[33] * 13];

@@ -13,6 +13,7 @@
 #include "focus.h"
 #include "graphics.h"
 #include "jointext.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "net.h"
 #include "platform.h"
@@ -21,6 +22,7 @@
 #include "sound.h"
 #include "view.h"
 
+Scene g_4a0fbc[1] = {{openCaves, closeCaves, cavesFrame, 0, cavesKey}};
 long cavesButtonResource = 0;
 long glyphShape = 0;
 short unusedCaves2 = 0;
@@ -51,7 +53,16 @@ short forceHairFirst = 1;
 short featureTableShown = 0;
 short glyphView = 0;
 ImageBank *cavesButtonImages = 0;
-SceneButton cavesButtons[2] = {{{589, 392, 628, 429}}, {{589, 430, 628, 467}}};
+SceneButton cavesButtons[3] = {
+    {{589, 392, 628, 429}}, {{589, 430, 628, 467}}, {{0, 0, 640, 480}},
+};
+Group g_4a1090[1] = {{g_4a0766, (InputItem *)cavesButtons, 3, 0x2068}};
+GroupList caveGroups[1] = {{g_4a1090, 1, 0, cavesClicked}};
+Point cavePoints[20] = {
+    {254, 140}, {296, 148}, {340, 146}, {373, 163}, {364, 187}, {337, 212}, {316, 234}, {301, 263},
+    {314, 292}, {346, 311}, {388, 316}, {429, 301}, {458, 281}, {482, 261}, {521, 247}, {556, 263},
+    {567, 290}, {543, 314}, {529, 342}, {554, 359},
+};
 ShortRect caveWaitAreas[12] = {
     {0}, {0, 0, 195, 130}, {0, 128, 175, 147}, {0, 146, 155, 165}, {0, 164, 135, 191},
     {0, 190, 120, 214}, {0, 213, 100, 236}, {0, 235, 87, 250}, {0, 249, 67, 269}, {0, 268, 40, 289},
@@ -74,6 +85,7 @@ short kind4Images[6] = {0, 383, 493, 671, 721, 823};
 short kind3Images[6] = {0, 343, 351, 359, 367, 375};
 short kind2Images[6] = {0, 183, 215, 248, 279, 312};
 short kind1Images[6] = {0, 23, 55, 87, 119, 151};
+unsigned long tunnelRemarks0Used = 0;
 unsigned long tunnelRemarksUnused = 0;
 unsigned long tunnelRemarks2Used = 0;
 unsigned long tunnelRemarks3bUsed = 0;
@@ -105,6 +117,7 @@ short framesChanged;
 short cheerQueue[20];
 short cheerQueueCount;
 short cavesNextWalker;
+short frameAnchorViews[22];
 short cavesView6000;
 short cavesView6001;
 short cavesView6002;
@@ -123,6 +136,7 @@ long caveRegsResources[2];
 short caveRegsHandles[2];
 long rosterFile;
 char *rosterError;
+short clickTime;
 
 /*
  * The notify of the Zoombinis cheering on the roster screen (cavesFrame),
@@ -510,11 +524,11 @@ void openCaves()
             ; /* the original tests this and does nothing */
     }
     for (i = 0; i < 4; i++)
-        placedViews[i] = addView(0x508a000, drawCels, runViewScript, i + 7000, 7, &cavePoints[i + 1], 0, 0);
+        placedViews[i] = addView(0x508a000, drawCels, runViewScript, i + 7000, 7, &cavePoints[i], 0, 0);
     for (i = 5; i < 12; i++) {
         caveViews[i] = addView(0x4108000, drawCels, runViewScript, i + 8999, 6, 0, 0, 0);
         frameAnchorViews[i] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
-        placedViews[i - 1] = addView(0x508a000, drawCels, runViewScript, i + 6999, 7, &cavePoints[i], 0, 0);
+        placedViews[i - 1] = addView(0x508a000, drawCels, runViewScript, i + 6999, 7, &cavePoints[i - 1], 0, 0);
     }
     caveViews[15] = addView(0x4108000, drawCels, runViewScript, 9014, 6, 0, 0, 0);
     frameAnchorViews[15] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
@@ -524,10 +538,10 @@ void openCaves()
     frameAnchorViews[13] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
     caveViews[12] = addView(0x4108000, drawCels, runViewScript, 9011, 6, 0, 0, 0);
     frameAnchorViews[12] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
-    placedViews[11] = addView(0x508a000, drawCels, runViewScript, 7011, 7, &cavePoints[12], 0, 0);
-    placedViews[12] = addView(0x508a000, drawCels, runViewScript, 7012, 7, &cavePoints[13], 0, 0);
-    placedViews[13] = addView(0x508a000, drawCels, runViewScript, 7013, 7, &cavePoints[14], 0, 0);
-    placedViews[14] = addView(0x508a000, drawCels, runViewScript, 7014, 7, &cavePoints[15], 0, 0);
+    placedViews[11] = addView(0x508a000, drawCels, runViewScript, 7011, 7, &cavePoints[11], 0, 0);
+    placedViews[12] = addView(0x508a000, drawCels, runViewScript, 7012, 7, &cavePoints[12], 0, 0);
+    placedViews[13] = addView(0x508a000, drawCels, runViewScript, 7013, 7, &cavePoints[13], 0, 0);
+    placedViews[14] = addView(0x508a000, drawCels, runViewScript, 7014, 7, &cavePoints[14], 0, 0);
     moveView(placedViews[11], 1, frameAnchorViews[12]);
     moveView(placedViews[12], 1, frameAnchorViews[13]);
     moveView(placedViews[13], 1, frameAnchorViews[14]);
@@ -535,7 +549,7 @@ void openCaves()
     for (i = 16; i < 21; i++) {
         caveViews[i] = addView(0x4108000, drawCels, runViewScript, i + 8999, 6, 0, 0, 0);
         frameAnchorViews[i] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
-        placedViews[i - 1] = addView(0x508a000, drawCels, runViewScript, i + 6999, 7, &cavePoints[i], 0, 0);
+        placedViews[i - 1] = addView(0x508a000, drawCels, runViewScript, i + 6999, 7, &cavePoints[i - 1], 0, 0);
     }
     frameAnchorViews[21] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
     for (i = 0; i < missingSnoids; i++)
@@ -1514,7 +1528,7 @@ void cavesClicked(short which)
                             unionRgnRect(removedRgn, &cavesButtons[1].rect);
                             cheerQueue[cheerQueueCount] = view->id;
                             cheerQueueCount++;
-                            cheerAnchor = &cavePoints[droppedCave];
+                            cheerAnchor = &cavePoints[droppedCave - 1];
                         } else if (cavesPlacedCount == chosenCount) {
                             allPlaced = 1;
                             cavesBusy = 1;
@@ -1522,7 +1536,7 @@ void cavesClicked(short which)
                         } else {
                             cheerQueue[cheerQueueCount] = view->id;
                             cheerQueueCount++;
-                            cheerAnchor = &cavePoints[droppedCave];
+                            cheerAnchor = &cavePoints[droppedCave - 1];
                         }
                         moveView(view->id, 1, frameAnchorViews[droppedCave]);
                     } else {

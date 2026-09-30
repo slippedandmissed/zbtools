@@ -332,7 +332,7 @@ short loadGameResource(long resource)
                 trackResource(resource, 0, 1);
             } else if (resourceError() == 0x284c) {
                 retry = 1;
-                warning("Insert the %s CD into drive %c:", appName, dataDrive);
+                warning("Insert the %s CD into drive %c.", appName, dataDrive);
             }
         } while (retry);
         mainLoopEvents();
@@ -577,7 +577,7 @@ void getDataPath(char *path)
 void openGameFile(long *map, const char *name)
 {
     if (*map)
-        fatalError("e2OpenMap error: (%s) resFile already in use", name);
+        fatalError("e2OpenMap error: %s - resFile already in use", name);
     dataPath[dataPathLength] = 0;
     strcat(dataPath, name);
     checkStarvationKeepingFlags();

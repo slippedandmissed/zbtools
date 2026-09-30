@@ -15,6 +15,8 @@ char dataDirName[] = "Data\\";
 char installToDirKey[] = "INSTALLTODIR";
 char configFileName[] = "Zoombi32.CFG";
 
+char installDir[256];
+
 /* @zoombi32 0x0044695c */
 void refreshCursor()
 {

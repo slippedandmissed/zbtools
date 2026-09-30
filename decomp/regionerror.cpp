@@ -7,6 +7,8 @@
 #include <string.h>
 #include "zoombinis.h"
 
+short regionErrorCode;
+
 /* @zoombi32 0x0048206c */
 short regionError()
 {

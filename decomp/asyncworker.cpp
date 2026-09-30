@@ -8,6 +8,8 @@
 #include "zoombinis.h"
 #include "os_threads.h"
 
+AsyncWorker *asyncWorkers = 0;
+
 /* @zoombi32 0x0048213c */
 __cdecl AsyncWorker::AsyncWorker()
 {

@@ -7,7 +7,7 @@
 #define TOWN_H
 
 extern GroupList townGroups[1]; /* @data 0x4a73f0 */
-extern SceneButton townButtons[1]; /* @data 0x4a7428 */
+extern SceneButton townButtons[3]; /* @data 0x4a7428: its button, the whole screen and an empty item (the input group's items) */
 extern unsigned char clockMinute; /* @data 0x4a751e: the clock's minute hand (0-11) */
 extern unsigned char clockHour; /* @data 0x4a751f: and hour hand (0-11) */
 extern short introStep; /* @data 0x4b7cec */
@@ -61,7 +61,6 @@ extern char *monumentTexts[16]; /* @data 0x4a537c: "this monument was made to ho
 extern char *featTexts[16]; /* @data 0x4a53bc: by group and level: "ambled past allergic cliffs, ...", ... */
 extern short plaqueLines[6]; /* @data 0x4a7594: the plaque's lines' tops */
 
-extern short townsfolkAnchorView; /* @data 0x4b7e0e */
 
 extern char nextCheatRecord; /* @data 0x4a7592: the next record the . key makes */
 
@@ -79,7 +78,6 @@ inline short &population()
 
 extern GroupList townGroups6[1]; /* @data 0x4a74a4 */
 extern unsigned long townSoundPause; /* @data 0x4b7ebc */
-extern short walkerViews[16]; /* @data 0x4b7ed0: the walkers' views (in townsfolkViews) */
 
 extern short townSounds[5]; /* @data 0x4a74cc: sounds for the town (townSoundsUsed picks) */
 extern unsigned long townSoundsUsed; /* @data 0x4a74d8: slots used (allocateSlot) */
@@ -112,5 +110,11 @@ void updateTownButton(View *view, short region);
 short townScript();
 void placeTownCels(View *view);
 void townsfolkNotify(View *view, short event);
+
+extern InputItem g_4a73bc[1]; /* pointed to by initialised data */
+extern Group g_4a73e0[1]; /* pointed to by initialised data */
+extern Scene g_4a73fc[1]; /* pointed to by initialised data */
+extern Group g_4a7494[1]; /* pointed to by initialised data */
+extern Scene g_4a74b0[1]; /* pointed to by initialised data */
 
 #endif

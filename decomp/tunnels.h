@@ -53,7 +53,7 @@ extern short tunnelsPartySize; /* @data 0x4b8094 */
 extern short tunnelsGoReady; /* @data 0x4b7fba: button 2 is live */
 extern short tunnelsButton2Lit; /* @data 0x4b7fda: button 2 is drawn lit */
 extern short tunnelsButton1Drawn; /* @data 0x4b7fdc: button 1 has been drawn */
-extern SceneButton tunnelsButtons[2]; /* @data 0x4a766c: buttons 1 and 2 */
+extern SceneButton tunnelsButtons[3]; /* @data 0x4a766c: buttons 1 and 2, then the whole screen (the input group's items) */
 extern ImageBank *tunnelsButtonImages; /* @data 0x4a770c: the buttons' images */
 void tunnelRemarkNotify(View *, short event);
 void updateTunnelsButtons(View *, short region);
@@ -129,5 +129,8 @@ void makeOneValueRules();
 void makeTwoFeatureRules();
 void makeTwoValueRules();
 void pickBestMaskPair(ChosenSnoids *chosen, unsigned long *masks, unsigned long *pair, short pairs, short n);
+
+extern Group g_4a76d8[1]; /* pointed to by initialised data */
+extern Scene g_4a76f4[1]; /* pointed to by initialised data */
 
 #endif

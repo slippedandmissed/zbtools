@@ -86,7 +86,7 @@ extern short pieceViews[]; /* @data 0x4afd2c */
 extern short pieceSecondViews[]; /* @data 0x4afd48 */
 extern short pieceScripts[]; /* @data 0x4a2308 */
 extern short pieceHasSecond[]; /* @data 0x4a22d0 */
-extern short mazeSnoidViews[12]; /* @data 0x4afc4a */
+extern short mazeSnoidViews[11]; /* @data 0x4afc4a */
 extern short mazeSnoidCount; /* @data 0x4afc60 */
 extern short finishedList[]; /* @data 0x4b0958 */
 extern short finishedCount; /* @data 0x4b0a00 */
@@ -111,7 +111,7 @@ extern short nextSnoidParts; /* @data 0x4b08b4 */
 extern short lineViewCount; /* @data 0x4b0cfe */
 extern short unusedMaze1; /* @data 0x4b0d0e */
 extern short lineValues[11]; /* @data 0x4b0d10: each line's value */
-extern short mazeSequence[20]; /* @data 0x4b0096: the maze's sequence of values */
+extern short mazeSequence[10]; /* @data 0x4b0096: the maze's sequence of values */
 extern short sequenceIndex; /* @data 0x4b00c2 */
 void addMazeSnoidView(Snoid *snoid);
 short takeRareRow(short exclude, short whole);
@@ -169,5 +169,8 @@ extern unsigned long sortFlags1; /* @data 0x4a2548 */
 extern unsigned long sortFlags2; /* @data 0x4a254c */
 void mazeButtonClicked(short button);
 void mazeFrame();
+
+extern Group g_4a2184[1]; /* pointed to by initialised data */
+extern Scene g_4a21a0[1]; /* pointed to by initialised data */
 
 #endif

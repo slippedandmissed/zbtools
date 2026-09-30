@@ -25,7 +25,6 @@ extern short journeyAnchorView; /* @data 0x4b9906 */
 extern short snoidsPastAnchor; /* @data 0x4b9908 */
 extern short view6108; /* @data 0x4b990a */
 extern short views5102Due[3]; /* @data 0x4b990c */
-extern short view5108Due; /* @data 0x4b9910 */
 extern short journeyFirstMoveDone; /* @data 0x4b9912 */
 extern short xferSound; /* @data 0x4b9914 */
 extern short xferMap; /* @data 0x4b9916 */
@@ -69,7 +68,11 @@ void markGridCell(char *cell, long x, long y);
 void placeMapPlace(View *view);
 void drawGridView(View *view);
 void updateGridView(View *view, short region);
-long journeyKey(long);
+short journeyKey(unsigned short);
 void xferEndNotify(View *, short event);
+
+extern InputItem g_4a7e6a[1]; /* pointed to by initialised data */
+extern Group g_4a7e8e[1]; /* pointed to by initialised data */
+extern Scene g_4a7eaa[1]; /* pointed to by initialised data */
 
 #endif

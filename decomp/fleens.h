@@ -6,7 +6,7 @@
 #ifndef FLEENS_H
 #define FLEENS_H
 
-extern SceneButton fleensButtons[2]; /* @data 0x4a15b4 */
+extern SceneButton fleensButtons[3]; /* @data 0x4a15b4: buttons 1 and 2, then the whole screen (the input group's items) */
 extern short fleensButton2Lit; /* @data 0x4a16cc: button 2 is drawn lit */
 extern short fleensButton1Drawn; /* @data 0x4a16ce: button 1 is drawn */
 extern short activeFleen; /* @data 0x4abb30 */
@@ -104,5 +104,8 @@ void drawFleen(View *view);
 void loadFleenScripts();
 void loadFleenScript(short id);
 void fleensStartNotify(View *, short event);
+
+extern Group g_4a1620[1]; /* pointed to by initialised data */
+extern Scene g_4a163c[1]; /* pointed to by initialised data */
 
 #endif

@@ -29,6 +29,13 @@ and, where what they point to has been placed (a marked function, a declared
 global, a placed piece), point to it. Uninitialised pieces have no bytes to
 compare.
 
+Each reference to data in a function (recorded as matching, or in an
+instruction that lines up with the original's, at the same offset, in one that isn't) must point
+where the original's does: the global's declared address, or where its piece is
+placed, plus the offset the instruction adds. `match` can't check this (it
+masks the addresses the linker fills in), so a function can match while
+reading the wrong global, or the wrong element of an array.
+
 A segment matches when its pieces are all placed, one after the other as in
 the compiled segment, and the same as the original. Until a module defines
 all its data, the original has more between the pieces; but a piece the
@@ -55,6 +62,10 @@ from zbtools.exe import Executable
 _DATA_SECTION = "DATA"
 _DATA_CLASSES = {"DATA", "BSS"}  # not _INIT_/_EXIT_: the runtime's startup tables
 _UNINITIALISED = "BSS"
+# How far before an array a reference can point (an array indexed from 1, or
+# `a[i - 1]`, with elements up to this size) and still be taken as a
+# reference to it. A reference only counts as right if it lands exactly.
+_INDEX_SLACK = 256
 
 
 @dataclass(frozen=True)
@@ -113,12 +124,28 @@ class Declared:
 
 
 @dataclass(frozen=True)
+class WrongReference:
+    """A reference to data in a marked function that points somewhere
+    other than the original's (which `match` can't see: it masks the
+    addresses the linker fills in)."""
+
+    source: Path
+    function: str
+    offset: int  # in the function
+    target: str  # what it refers to: a global, or a segment and offset
+    ours: int  # where that is in the original
+    theirs: int  # where the original's instruction points
+
+
+@dataclass(frozen=True)
 class Checked:
     placements: list[Placement]
     declared: list[Declared]
     initialised_range: tuple[int, int]  # of the original's DATA section
     uninitialised_range: tuple[int, int]
     errors: dict[Path, str]  # sources that couldn't be compiled
+    references: int  # data references checked in marked functions
+    wrong_references: list[WrongReference]
 
     def _addresses(self, *, initialised: bool) -> tuple[set[int], set[int]]:
         """The original's addresses placed pieces cover that match, and that differ."""
@@ -432,6 +459,120 @@ class _Matcher:
             s.cut()
         return [self.placement(s) for s in self.segments.values()]
 
+    def check_references(self, matching: set[int]) -> tuple[int, list[WrongReference]]:
+        """Whether each data reference in a marked function points where the
+        original's does: the global's declared address (or its placed piece)
+        plus the offset the instruction adds. In a function that doesn't
+        match, the references in instructions that line up with the
+        original's."""
+        count, wrong = 0, []
+        for source, obj in self.objects.items():
+            for target in self.targets[source]:
+                try:
+                    public, first, last = match.locate(obj, target)
+                    offsets = None if target.address in matching else self.aligned(obj, target)
+                except ValueError:
+                    continue
+                code = obj.segments[public.segment]
+                for f in code.fixups:
+                    if not first <= f.offset < last or f.self_relative or f.size != 4:
+                        continue
+                    if offsets is None:
+                        at = target.address + f.offset - first
+                    elif f.offset - first in offsets:
+                        at = target.address + offsets[f.offset - first]
+                    else:
+                        continue
+                    if at not in self.exe.relocations:
+                        continue
+                    found = self.reference(source, obj, f, _field(code.data, f))
+                    if found is None:
+                        continue
+                    label, candidates = found
+                    count += 1
+                    theirs = self.exe.pointer(at)
+                    if theirs not in candidates and not self.same_data(
+                        source, obj, f, _field(code.data, f), theirs
+                    ):
+                        wrong.append(
+                            WrongReference(
+                                source, target.name, f.offset - first, label, candidates[0], theirs
+                            )
+                        )
+        return count, wrong
+
+    def aligned(self, obj: omf.ObjectFile, target: match.Target) -> dict[int, int]:
+        """For a function that doesn't match: the offsets in its instructions
+        that are at the same offset in the original's, and equal to them but
+        for the addresses the linker fills in."""
+        result = match.compare(target, obj, self.exe)
+        found = {}
+        for row in match.aligned_rows(result):
+            ours, theirs = row.compiled, row.original
+            # Only where nothing has shifted: once masked, instructions look
+            # alike (every `push offset`), and the diff can pair the wrong ones.
+            if (
+                row.same
+                and ours is not None
+                and theirs is not None
+                and ours.address == theirs.address
+            ):
+                for k in range(len(ours.raw)):
+                    found[ours.address - target.address + k] = ours.address - target.address + k
+        return found
+
+    def same_data(
+        self, source: Path, obj: omf.ObjectFile, f: omf.Fixup, added: int, theirs: int
+    ) -> bool:
+        """Whether a reference into the object's own data points to the same
+        bytes as the original's does, placed elsewhere (the layout differs
+        there, not what's referred to): the rest of its piece, but for the
+        bytes the linker fills in."""
+        segment = self.target_segment(source, obj, f.target)
+        if segment is None or segment.segment.class_name == _UNINITIALISED:
+            return False
+        if not 0 <= added < segment.end:
+            return False
+        end = next(
+            p.offset + p.size for p in segment.pieces if p.offset <= added < p.offset + p.size
+        )
+        ours = segment.segment.data[added:end]
+        original = self.exe.read(theirs, len(ours))
+        pointers = {k for x in segment.segment.fixups for k in range(x.offset, x.offset + x.size)}
+        return all(ours[i] == original[i] for i in range(len(ours)) if added + i not in pointers)
+
+    def reference(
+        self, source: Path, obj: omf.ObjectFile, f: omf.Fixup, added: int
+    ) -> tuple[str, list[int]] | None:
+        """What a fixup refers to, and where that can be in the original: for a
+        global declared with an address, one place; for an offset in a segment
+        of the object, in its piece there or, just before a piece (an array
+        indexed from 1, say), relative to any of the pieces that follow.
+        None if unknown."""
+        segment = self.target_segment(source, obj, f.target)
+        if segment is None:
+            address = self.data.get(plain_name(f.target))
+            if address is None:
+                return None
+            name = qualified_name(f.target) if f.target.startswith("@") else f.target
+            label = name + (
+                f"{added - 2**32:+#x}" if added >= 2**31 else f"+{added:#x}" if added else ""
+            )
+            return label, [(address + added) & 0xFFFFFFFF]
+        offset = added - 2**32 if added >= 2**31 else added
+        candidates = []
+        inside = segment.address_of(offset)
+        if inside is not None:
+            candidates.append(inside)
+        candidates += [
+            p.address - (p.offset - offset)
+            for p in segment.pieces
+            if p.address is not None and 0 < p.offset - offset <= _INDEX_SLACK
+        ]
+        if not candidates:
+            return None
+        return f"{f.target}{offset:+#x}", candidates
+
     def defined(self) -> dict[str, Path]:
         """The sources defining each global, by upper-cased name."""
         return {
@@ -470,7 +611,9 @@ def check(sources: list[Path], exe: Executable, *, use_cache: bool = True) -> Ch
     objects = {s: c.obj for s, c in compiled.items() if not isinstance(c, str)}
     errors = {s: c for s, c in compiled.items() if isinstance(c, str)}
     matcher = _Matcher(objects, exe)
-    placements = matcher.run(set(match.load_baseline()))
+    matching = set(match.load_baseline())
+    placements = matcher.run(matching)
+    references, wrong = matcher.check_references(matching)
     defined = matcher.defined()
     initialised = initialised_range(exe)
     return Checked(
@@ -487,6 +630,8 @@ def check(sources: list[Path], exe: Executable, *, use_cache: bool = True) -> Ch
         initialised_range=initialised,
         uninitialised_range=(initialised[1], exe.sections[_DATA_SECTION][1]),
         errors=errors,
+        references=references,
+        wrong_references=wrong,
     )
 
 
@@ -513,7 +658,14 @@ def main(
     if not quiet:
         for p in result.placements:
             _print_placement(p)
+    for w in result.wrong_references:
+        print(
+            f"  WRONG REF  {w.source.name} {w.function}+{w.offset:#x}: {w.target} is at "
+            f"{w.ours:#x}, the original points to {w.theirs:#x}"
+        )
     _print_summary(result)
+    if result.wrong_references:
+        raise typer.Exit(1)
 
 
 def _print_placement(p: Placement) -> None:
@@ -559,6 +711,10 @@ def _print_summary(result: Checked) -> None:
     print(
         f"Compiled data not placed yet: {result.unplaced_bytes} bytes; "
         f"{result.misplaced} pieces out of place."
+    )
+    print(
+        f"Data references in decompiled functions: {result.references} checked, "
+        f"{len(result.wrong_references)} pointing elsewhere than the original's."
     )
     for initialised, kind in ((True, "initialised"), (False, "uninitialised")):
         defined = result.count(initialised=initialised, defined=True)

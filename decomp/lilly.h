@@ -42,7 +42,7 @@ extern ShortRect markerArea; /* @data 0x4a1e32 */
 void drawLillyButton(short which, short lit, short show);
 void checkLillyArrivals();
 void updateSquareHighlight(View *view, short region);
-extern SceneButton lillyButtons[3]; /* @data 0x4a1b28 */
+extern SceneButton lillyButtons[3]; /* @data 0x4a1b4c: buttons 1 and 2, then the whole screen (the input group's items) */
 extern ImageBank *lillyButtonImages; /* @data 0x4a1d68 */
 extern short padsArrived; /* @data 0x4af0ea */
 extern short actorCount; /* @data 0x4af102 */
@@ -168,7 +168,6 @@ extern short landerQueue[]; /* @data 0x4acdca */
 extern short landerQueueCount; /* @data 0x4acdf2 */
 extern short jumperQueue[]; /* @data 0x4acda0 */
 extern short jumperQueueCount; /* @data 0x4acdc8 */
-extern short lillyLayerView3; /* @data 0x4aed14 */
 void turnGrid(short (*grid)[12], short how);
 short moveActorDown(View *view);
 extern short squareImageBase[]; /* @data 0x4a1e20 */
@@ -181,7 +180,6 @@ void openLilly();
 void lillyFrame();
 extern short inLillyFrame; /* @data 0x4a1d88 */
 extern short planTick; /* @data 0x4af5a4 */
-extern short lillyLayerView1; /* @data 0x4aed10 */
 extern short unusedLilly1; /* @data 0x4ac958 */
 extern short unusedLilly2; /* @data 0x4af36c */
 extern short unusedLilly3; /* @data 0x4af100 */
@@ -239,5 +237,8 @@ extern short lillyButton1Drawn; /* @data 0x4a1d6e */
 extern short event2Views[20]; /* @data 0x4ace72 */
 extern short event2Count; /* @data 0x4ace9a */
 extern short *actorHotSpotsX; /* @data 0x4ac950 */
+
+extern Group g_4a1bb8[1]; /* pointed to by initialised data */
+extern Scene g_4a1bd4[1]; /* pointed to by initialised data */
 
 #endif

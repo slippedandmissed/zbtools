@@ -53,4 +53,6 @@ void setFatalHook(Callback callback);
 void setErrorReporter(void (*reporter)(const char *prefix, const char *format, va_list args));
 void setUsualFatalMessage(const char *message);
 
+extern InputHandlers g_4a0766[1]; /* pointed to by initialised data */
+
 #endif

@@ -11,6 +11,8 @@
 #include "os_localmem.h"
 #include "os_manager.h"
 
+WmxState wmx;
+
 /* @zoombi32 0x0047e0ec */
 __cdecl wmxDevice::wmxDevice()
 {

@@ -15,6 +15,7 @@
 #include "focus.h"
 #include "game.h"
 #include "graphics.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "platform.h"
 #include "snoids.h"
@@ -64,9 +65,16 @@ const char *toggleTexts[15] = {
     "hide cursor", "show cursor", "sticky mouse", "non-sticky mouse", "transitions on",
     "transitions off", "auto sticky on", "auto sticky off",
 };
+InputItem g_4a73bc[1] = {{{0, 0, 640, 480}}};
+Group g_4a73e0[1] = {{g_4a0766, g_4a73bc, 1, 0x2068}};
+GroupList townGroups[1] = {{g_4a73e0, 1, 0, introClicked}};
+Scene g_4a73fc[1] = {{openIntro, closeIntro, introFrame, 0, introKey}};
 char introClickState = 0;
 short inIntroFrame = 0;
-SceneButton townButtons[1] = {{{600, 403, 639, 440}}};
+SceneButton townButtons[3] = {{{600, 403, 639, 440}}, {{0, 0, 640, 480}}};
+Group g_4a7494[1] = {{g_4a0766, (InputItem *)townButtons, 3, 0x2068}};
+GroupList townGroups6[1] = {{g_4a7494, 1, 0, townClicked}};
+Scene g_4a74b0[1] = {{openTown, closeTown, townFrame, 0, townKey}};
 long townButtonResource = 0;
 ImageBank *townButtonImages = 0;
 short townSounds[5] = {0x4e79, 0x4e7a, 0x4e7b, 0x4e7c, 0x4e7d};
@@ -92,7 +100,7 @@ char logoPath[258];
 long townFile;
 short townOpen;
 Camp *townSlots;
-short townsfolkAnchorView;
+short townViews[4];
 short highestTownCel;
 ShortRect recordHotspots[16];
 short recordHotspotNumbers[16];
@@ -108,7 +116,7 @@ short townSoundWasGreeting;
 short townSoundPlaying;
 short draggingInTown;
 short townFull;
-short walkerViews[16];
+short townsfolkViews[20];
 short clockWinds;
 short clockShown;
 unsigned long lastClockRead;
@@ -745,7 +753,7 @@ void addTownsperson()
                 *(long *)&view->body.waypointX = *(long *)&view->body.x;
                 view->notify = townsfolkNotify;
                 view->notifyEnd = 1;
-                moveView(id, 0, townsfolkAnchorView);
+                moveView(id, 0, townViews[3]);
                 i = 3;
                 if (townspeopleToAdd > 0)
                     townspeopleToAdd--;
@@ -1053,8 +1061,8 @@ void openTown()
         if (extras)
             do {
                 slot = allocateSlot(&used, 16, 0);
-                walkerViews[i] = addView(1, drawCels, runViewScript, walkers[slot], randomBetween(4, 6), &snoid, 0, 0);
-                view = findView(walkerViews[i]);
+                townsfolkViews[1 + i] = addView(1, drawCels, runViewScript, walkers[slot], randomBetween(4, 6), &snoid, 0, 0);
+                view = findView(townsfolkViews[1 + i]);
                 if (view) {
                     viewSnoid(view)->features[0] = 0;
                     view->flags = 0x808002;

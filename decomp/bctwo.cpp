@@ -10,6 +10,7 @@
 #include "features.h"
 #include "focus.h"
 #include "graphics.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "net.h"
 #include "platform.h"
@@ -22,11 +23,17 @@ short scrollPressed = 0;
 short bookHalfLine = 0;
 ResourceList *bookImages = 0;
 ResourceList *camp2Images = 0;
+Scene g_4a0ac8[1] = {{openCamp2, closeCamp2, camp2Frame, 0, camp2Key}};
 SceneButton camp2Buttons[7] = {
     {{599, 320, 638, 357}}, {{599, 396, 638, 433}}, {{599, 358, 638, 395}}, {{114, 121, 131, 208}},
     {{131, 117, 144, 205}}, {{337, 107, 350, 195}}, {{350, 110, 361, 198}},
 };
-ShortRect bookArea = {112, 0, 377, 293};
+Group g_4a0bd8[1] = {{g_4a0766, (InputItem *)camp2Buttons, 7, 0x2068}};
+SceneButton bookAreaItems[2] = {{{112, 0, 377, 293}}, {{0, 0, 640, 480}}};
+Group g_4a0c30[1] = {{g_4a0766, (InputItem *)bookAreaItems, 2, 0x2068}};
+GroupList campGroups[2] = {
+    {g_4a0bd8, 1, 0, camp2Clicked}, {g_4a0c30, 1, 0, campDragged},
+};
 ShortRect campThingRects[10] = {
     {52, 290, 136, 332}, {469, 169, 521, 241}, {499, 289, 566, 308}, {455, 301, 504, 319},
     {568, 304, 604, 320}, {570, 36, 624, 66}, {229, 304, 273, 317}, {242, 324, 292, 336},
@@ -61,7 +68,7 @@ short camp2ClicksOff;
 short camp2Dragging;
 short view6002Next;
 short view6000Running;
-short view6000;
+short campThingViews[10];
 short populationFull;
 Snoid bookSnoid;
 
@@ -270,7 +277,7 @@ void closeCamp2()
 
 /* Scene 5's frame: leaves for the scene due (once sound 996 is done);
    else shows the drag cursor for the button (4-7) under the cursor, and
-   keeps view view6000's script 6001 going while view6000Running. */
+   keeps view campThingViews[9]'s script 6001 going while view6000Running. */
 /* @zoombi32 0x00418e62 */
 void camp2Frame()
 {
@@ -304,7 +311,7 @@ void camp2Frame()
         }
         setDragCursor(button);
         if (view6000Running) {
-            view = findView(view6000);
+            view = findView(campThingViews[9]);
             if (!view->body.running) {
                 setViewScript(view, 6001, 1);
                 view->flags = 0x88000;
@@ -462,7 +469,7 @@ void campDragged(short event)
             if (snoid->chosen)
                 snoid->idleTicks = 1;
             rect = view->body.bounds;
-            if (sectRect(&rect, &bookArea)) {
+            if (sectRect(&rect, &bookAreaItems[0].rect)) {
                 rect = view->body.bounds;
                 slot = bookEntryAt(bookRow, rect, 0);
                 if (slot >= 0) {
@@ -547,7 +554,7 @@ void campDragged(short event)
 }
 
 /* @zoombi32 0x004196a8 */
-long camp2Key(long)
+short camp2Key(unsigned short)
 {
     return 0;
 }
@@ -821,7 +828,7 @@ void scrollBook(View *view, short)
         view->nextUpdate = clockTime() + view->interval;
         if (view->reset) {
             view->reset = 0;
-            view->body.bounds = bookArea;
+            view->body.bounds = bookAreaItems[0].rect;
         } else if (scrollPressed) {
             view->changed = 1;
             steps = 1;

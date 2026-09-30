@@ -41,7 +41,6 @@ extern short camp2Dragging; /* @data 0x4ab664 */
 extern short view6002Next; /* @data 0x4ab666 */
 extern short view6000Running; /* @data 0x4ab668 */
 extern short campThingViews[10]; /* @data 0x4ab66a: their views */
-extern short view6000; /* @data 0x4ab67c */
 extern short populationFull; /* @data 0x4ab67e */
 extern Snoid bookSnoid; /* @data 0x4ab680: the Zoombini taken out of the book */
 extern short scrollPressed; /* @data 0x4a0abc: the scroll button pressed (1-4) */
@@ -52,7 +51,6 @@ extern ResourceList *bookImages; /* @data 0x4a0ac0: the book's images */
 extern ResourceList *camp2Images; /* @data 0x4a0ac4: the camp's images */
 extern short inCamp2Frame; /* @data 0x4a0ce8: in camp2Frame */
 extern ShortRect camp2ButtonsRect; /* @data 0x4a0cea */
-extern ShortRect bookArea; /* @data 0x4a0be8: the book's area */
 extern ShortRect campThingRects[10]; /* @data 0x4a0c58: the camp's things to click */
 extern ShortRect camp2EmptyRect; /* @data 0x4a0d76 */
 extern short cellX[11]; /* @data 0x4a0cf2: the book's cells' x, by half line */
@@ -60,7 +58,7 @@ extern short cellY[11][5]; /* @data 0x4a0d08: their y, by half line and column *
 void resetCamp2();
 void updateCamp2Button0(View *view, short region);
 void countBookEntry(short n);
-long camp2Key(long);
+short camp2Key(unsigned short);
 void refreshBook();
 void openCamp2();
 void closeCamp2();
@@ -78,5 +76,10 @@ void drawCamp2Buttons1(View *view);
 void drawCamp2Buttons2(View *view);
 void lightScrollButton(short quiet, short);
 short lastBookEntry();
+
+extern SceneButton bookAreaItems[2]; /* @data 0x4a0be8: the second input group's items (campGroups[1]): [0].rect is the book's area */
+extern Scene g_4a0ac8[1]; /* pointed to by initialised data */
+extern Group g_4a0bd8[1]; /* pointed to by initialised data */
+extern Group g_4a0c30[1]; /* pointed to by initialised data */
 
 #endif

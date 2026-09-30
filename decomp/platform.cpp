@@ -43,6 +43,8 @@ char messageLogName[] = "msgxxx.txt";
 unsigned short appActive = 0;
 ShortRect paletteChartRect = {0, 0, 256, 64};
 
+short allowModeChange;
+long appShowCommand;
 short fidgetPaceFlag;
 short keepDisplayMode;
 char programPath[0x100];

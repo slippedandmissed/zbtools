@@ -12,6 +12,7 @@
 #include "fleens.h"
 #include "focus.h"
 #include "graphics.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "net.h"
 #include "platform.h"
@@ -19,7 +20,12 @@
 #include "sound.h"
 #include "view.h"
 
-SceneButton fleensButtons[2] = {{{600, 403, 639, 440}}, {{600, 441, 639, 478}}};
+SceneButton fleensButtons[3] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+};
+Group g_4a1620[1] = {{g_4a0766, (InputItem *)fleensButtons, 3, 0x2068}};
+GroupList fleensGroups[1] = {{g_4a1620, 1, 0, fleensClicked}};
+Scene g_4a163c[1] = {{openFleens, closeFleens, fleensFrame, 0, fleensKey}};
 ImageBank *fleensButtonImages = 0;
 short feetLayers[6] = {0, 275, 290, 305, 328, 347};
 short noseLayers[6] = {0, 15, 30, 45, 60, 75};

@@ -76,10 +76,21 @@
       <div class="legend">
         <span>{{ data.unplaced_bytes }} bytes of compiled data nothing places yet</span>
         <span>{{ data.misplaced }} pieces out of order, or in the other kind of data</span>
+        <span>{{ data.wrong_references | length }} of {{ data.references }} data references in decompiled functions point elsewhere than the original's</span>
         {% if data.errors %}<span>{{ data.errors | length }} files didn't compile</span>{% endif %}
       </div>
     </div>
   </div>
+
+  {% if data.wrong_references %}
+  <div class="card" style="margin-top: 12px">
+    <h3>Data references pointing elsewhere</h3>
+    <div class="muted">Decompiled functions whose references to data point somewhere other than the original's (<span class="mono">match</span> masks these addresses).</div>
+    <ul>
+      {% for w in data.wrong_references %}<li class="mono">{{ w.source.name }} {{ w.function }}+{{ '%#x' % w.offset }}: {{ w.target }} is at {{ '%#x' % w.ours }}, the original points to {{ '%#x' % w.theirs }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
 
   {% set segments = data.placements | rejectattr('matches') | list %}
   <details class="section">

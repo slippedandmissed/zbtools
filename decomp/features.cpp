@@ -21,6 +21,62 @@
 #include "sound.h"
 #include "view.h"
 
+char gameName[] = "New Game";
+const char *dialogTexts[289] = {
+    "THE CURRENT PARTY OF ZOOMBINIS WILL BE LOST IF YOU GO TO THE MAP", "LOSE ' EM", "KEEP ' EM",
+    "OK", "CANCEL", "LOAD", "SAVE", "OPTIONS", "= ON", "= OFF", "ON/OFF TOGGLES:",
+    "NEW GAME (CTRL N)", "LOAD GAME (CTRL L)", "SAVE GAME (CTRL S)", "QUIT (CTRL Q)",
+    "DIALOG & SOUND FX (CTRL D)", "BACKGROUND MUSIC (CTRL B)", "STICKY MOUSE (CTRL J)",
+    "TRANSITIONS (CTRL T)", "NO SAVED GAMES", "OK",
+    "The current game has not been saved.\rCreate a new game ?", "NEW GAME", "REPLACE",
+    "SAVE A GAME", "SAVE GAME AS:", "LOAD A GAME",
+    "are you sure you want to\rreplace existing game\r\" ", "CREDITS", "save the current game ?",
+    "YES", "QUIT",
+    "the current game\rhas not been saved.\rdo you want to save your progress before quitting?",
+    "YES", "NO", "cannot save a game while in practice mode.",
+    "ARE YOU SURE YOU WANT TO MAKE A NEW GAME ?",
+    "cannot save more games than the number of states in the united states.",
+    "cannot load a game while in practice mode.",
+    "cannot create a new game while in practice mode.", "NEW GAME", "DO YOU REALLY WANT TO QUIT ?",
+    "PRODUCT CONCEPT AND DESIGN", "chris hancock and", "scot osterweil", "of TERC", "", "", "", "",
+    "", "", "", "", "", "", "ART DIRECTOR", "michelle bushneff", "", "PROGRAMMING LEAD",
+    "michael g. rivard", "", "SOUND DIRECTOR", "jonelle adkisson", "", "PRODUCT MANAGER",
+    "dennis leahy", "", "EXECUTIVE PUBLISHER", "laurie strand", "", "", "", "", "",
+    "ADDITIONAL DESIGN", "michelle bushneff", "daniel goodwin", "dennis leahy", "michael g. rivard",
+    "jonelle adkisson", "mark hanson", "karen boylan", "bob king", "rod nelsen", "michelle graham",
+    "", "", "", "PROTOTYPER", "daniel goodwin", "", "LEAD ANIMATOR", "bob king", "",
+    "CHARACTER ANIMATORS", "bob king", "jason sadler", "kevin dooley", "",
+    "COMBINATORIAL ANIMATORS", "michelle graham", "daniel goodwin", "", "EFFECTS ANIMATOR",
+    "michelle graham", "", "LAYOUT ARTISTS", "jason sadler", "kim farrah", "", "BACKGROUND PAINTER",
+    "kim farrah", "", "ANIMATION CLEAN-UP", "michelle shelfer", "monica dacany", "",
+    "GRAPHICS TECHNICIAN", "suzanne runo", "", "", "", "PROGRAMMING", "michael g. rivard",
+    "mark hanson", "rod nelsen", "", "PROGRAMMING PROJECT LEAD", "lance groody", "", "", "",
+    "ZOOMBINI MUSIC", "jonelle adkisson", "", "SOUND EFFECTS", "chris clanin", "gary schwantes", "",
+    "DIALOG EDITORS", "phillip royer", "chris clanin", "", "RECORDING ENGINEER", " chris clanin",
+    "", "FLUTE AND SAXOPHONE", "gary schwantes", "", "CHARACTER VOICES", "randall nazarian",
+    "max trax", "lorrin jones", "racer stevens", "deborah sale", "randy williams", "",
+    "ZOOMBINI VOICES", "jonelle adkisson", "michelle graham", "tom rettig", "norm macqueen",
+    "haroon tahir", "", "", "", "DIALOG WRITERS", "karen boylan", "dennis leahy", "",
+    "ADDITIONAL WRITERS", "amanda silber", "jonelle adkisson", "scot osterweil", "chris hancock",
+    "scott jones", "doug van ommeran", "matt o'hara", "", "ASSISTANT PRODUCT MANAGER",
+    "karen boylan", "", "MARKETING", "linda dalton", "aline yu", "jennifer apy", "veronica bowers",
+    "", "QUALITY ASSURANCE MANAGER", "ginny walters", "", "QUALITY ASSURANCE LEADS", "john crowell",
+    "warren yamashita", "", "KEY QA FOLKS", "lisa irwin", "john hamele", "margaret coholan",
+    "joy southern", "drew garske", "juan torres", "anne sete", "lisa bonelli", "mario magliocco",
+    "jeffrey 'hammer' blain", "joe lawrence", "kirk roulston", "brian campbell", "",
+    "LEGAL COUNSEL", "brett robertson", "", "PACKAGE DESIGN", "marcus badgley", "", "MANUAL DESIGN",
+    "marcus badgley", "", "MANUAL WRITER", "karen boylan", " ", "Parents' Corner:",
+    "scot osterweil", "chris hancock", "", "SPECIAL THANKS TO:", "zoombini team families",
+    "harry wilker", "jan gullett", "mason woodbury", "john baker", "barbara samson",
+    "dabney standley", "mickey mantle", "tom marcus", "marylyn rosenblum", "lucinda ray",
+    "tom rettig", "alex tkaczevski", "Br\330derbund's QA department", "ImageBuilder Software, Inc.",
+    "tomoko harada", "esteban ahn", "mike foulger", "seth jacobson", "matt o'hara", "hilary nation",
+    "wendy kern", "jim krouskop", "mandy crispel", "bacich elementary", "kent middle school",
+    "madera elementary", "apple blossom elementary", "cafe west", " ", "the fletcher school",
+    "cambridge, MA", " ", "the lincoln school", "brookline, MA", "", "", "", "copyright 1996", "",
+    "Br\330derbund Software, Inc.", "", " and TERC", "", "", "all rights reserved", "", "", "", "",
+    "", "", "", "", "", "", "", "", "", "", "",
+};
 short busyCount = 0;
 short loadCancelAlt = 1;
 short currentDialogSound = 0;
@@ -88,11 +144,7 @@ short confirmDialogButtons;
 char saveName[22];
 unsigned short saveNameLength;
 short caretBlink;
-ShortRect dialogOkRect;
-ShortRect dialogCancelRect;
-ShortRect dialogButton2Rect;
-ShortRect dialogButton1Rect;
-ShortRect dialogFrame;
+ShortRect dialogSpots[17];
 char buttonPressed[17];
 long lastCaretBlink;
 short askingReplace;
@@ -913,10 +965,10 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
         return;
     }
     if (kind == 2 || kind == 3) {
-        dialogFrame.left = 0xc0;
-        dialogFrame.right = 0x195;
-        dialogFrame.top = y;
-        dialogFrame.bottom = y + 0xa0;
+        dialogSpots[16].left = 0xc0;
+        dialogSpots[16].right = 0x195;
+        dialogSpots[16].top = y;
+        dialogSpots[16].bottom = y + 0xa0;
     }
     if (!flag)
         return;
@@ -1588,14 +1640,14 @@ void drawDialogPart(View *view)
             setFont(fonts[1]);
         }
         if (dialogButton2Text)
-            drawText(dialogButton2Rect, 0x22, dialogButton2Text, 0xffff);
+            drawText(dialogSpots[14], 0x22, dialogButton2Text, 0xffff);
         if (dialogButton1Text)
-            drawText(dialogButton1Rect, 0x22, dialogButton1Text, 0xffff);
+            drawText(dialogSpots[15], 0x22, dialogButton1Text, 0xffff);
     } else if (dialogFlags & 4) {
         if (view->changed) {
             if (view->id == gamesDialogButtons) {
-                drawText(dialogOkRect, 0x22, dialogTexts[textSave], 0xffff);
-                drawText(dialogCancelRect, 0x22, dialogTexts[textCancel], 0xffff);
+                drawText(dialogSpots[12], 0x22, dialogTexts[textSave], 0xffff);
+                drawText(dialogSpots[13], 0x22, dialogTexts[textCancel], 0xffff);
             } else if (view->id == gamesDialogView) {
                 saved = setForeColor(Color(0xd));
                 setFont(fonts[2]);
@@ -1674,8 +1726,8 @@ void drawDialogPart(View *view)
             }
             setFont(fonts[1]);
         } else if (view->id == gamesDialogButtons) {
-            drawText(dialogOkRect, 0x22, dialogTexts[textLoad], 0xffff);
-            drawText(dialogCancelRect, 0x22, dialogTexts[loadCancelAlt ? text40 : textCancel], 0xffff);
+            drawText(dialogSpots[12], 0x22, dialogTexts[textLoad], 0xffff);
+            drawText(dialogSpots[13], 0x22, dialogTexts[loadCancelAlt ? text40 : textCancel], 0xffff);
         }
         setForeColor(saved);
     } else if ((dialogFlags & 1) && view->changed) {
@@ -1918,7 +1970,7 @@ void placeDialogList(View *view)
             case 17:
                 if (!dialogClosing) {
                     now = clockTime();
-                    i = dialogWhere.y - dialogFrame.top;
+                    i = dialogWhere.y - dialogSpots[16].top;
                     if (i)
                         i /= 20;
                     if (i > 19)

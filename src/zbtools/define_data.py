@@ -206,6 +206,7 @@ class Global:
     declaration: str  # as the header has it, without `extern` and the semicolon
     type: CType | None  # None: one this can't lay out (fine uninitialised)
     problem: str | None = None  # why the type can't be laid out
+    module: str | None = None  # the module whose header declares it
 
     @property
     def unsized(self) -> bool:
@@ -231,8 +232,9 @@ def declared(types: Types) -> list[Global]:
                 if not names:
                     continue
                 name, ctype, problem = names[-1], None, str(e)
+            module = None if header == declarations.HEADER else header.stem
             if name in addresses:
-                found.append(Global(name, addresses[name], text, ctype, problem))
+                found.append(Global(name, addresses[name], text, ctype, problem, module))
     return sorted(found, key=lambda g: g.address)
 
 
@@ -251,9 +253,10 @@ def _defined_names() -> set[str]:
     return found
 
 
-def probe_sizes(names: list[str]) -> dict[str, int]:
-    """BCC32's sizeof for each global, from a probe file including every header."""
-    probe = paths.MATCH_CACHE / "probe" / "sizes.cpp"
+def probe_sizes(names: list[str], probe_name: str = "sizes") -> dict[str, int]:
+    """BCC32's sizeof for each global (or type), from a probe file including
+    every header."""
+    probe = paths.MATCH_CACHE / "probe" / f"{probe_name}.cpp"
     probe.parent.mkdir(parents=True, exist_ok=True)
     lines = [
         f'#include "{Path("../../..") / "decomp" / header.name}"'
@@ -314,8 +317,21 @@ def owners(
             elif len(set(candidates)) == 1:
                 found[g.name] = candidates[0]
             else:
-                found[g.name] = None
+                found[g.name] = _fallback_owner(g, users, [m for m in (before, after) if m])
     return found
+
+
+def _fallback_owner(g: Global, users: Counter[str], near: list[str]) -> str | None:
+    """A module for a global its neighbours don't settle: the one whose header
+    declares it, if that one uses it or is next to it; else the user (next to
+    it, if any is) that uses it most; else a neighbour. Only the layout
+    depends on it: any module would do for the game."""
+    if g.module is not None and (g.module in users or g.module in near or not users):
+        return g.module
+    if users:
+        close = [m for m in users if m in near]
+        return max(close or list(users), key=lambda m: users[m])
+    return near[0] if near else None
 
 
 @dataclass
@@ -368,7 +384,8 @@ class Renderer:
         g = self.containing(target)
         if g is not None:
             return self.address_of(g, target, ctype)
-        text = _text(self.exe.read(target, 256), whole=False)
+        is_text = ctype.pointee.removeprefix("const ") in ("char", "unsigned char")
+        text = _text(self.exe.read(target, 256), whole=False, empty=is_text)
         if text is not None:
             return text
         raise Unrenderable(f"a pointer at {address:#x} to {target:#x}, which has no name")
@@ -384,7 +401,13 @@ class Renderer:
         """An expression for an address in a global: `&x`, `list`, `&list[3]`."""
         offset = target - g.address
         if g.type is None:
-            raise Unrenderable(f"a pointer to {g.name}, whose type this can't lay out")
+            if offset == 0:  # its start needs no layout
+                return (
+                    f"&{g.name}"
+                    if ctype.pointee in ("", "void")
+                    else f"({ctype.pointee} *)&{g.name}"
+                )
+            raise Unrenderable(f"a pointer into {g.name}, whose type this can't lay out")
         element: CType = g.type
         name = g.name
         while isinstance(element, Array):
@@ -407,6 +430,141 @@ class Renderer:
         return f"({ctype.pointee} *){expression}"
 
 
+def pointer_fields(ctype: CType, address: int) -> Iterator[tuple[Pointer, int]]:
+    """The pointers in a value of this type at an address, with theirs."""
+    match ctype:
+        case Pointer():
+            yield ctype, address
+        case Array():
+            step = size_of(ctype.element)
+            for i in range(size_of(ctype) // step):
+                yield from pointer_fields(ctype.element, address + i * step)
+        case Struct():
+            offset = 0
+            for f in ctype.fields:
+                yield from pointer_fields(f.type, address + offset)
+                offset += size_of(f.type)
+        case Scalar():
+            return
+
+
+@dataclass
+class Unnamed:
+    """Finds the data initialised pointers point to that nothing declares, and
+    declares it: an array of what the pointer points to (`Group g_4a0df4[1]`),
+    up to the next known address, in the module whose data it's among (see
+    `neighbours`). What it holds is followed the same way."""
+
+    renderer: Renderer
+    starts: list[int]  # every known address in the data, sorted
+    boundary: int  # the end of the initialised data
+    owned: dict[str, str | None]
+    found: list[Global]
+    data_ends: dict[str, int]  # where each module's placed initialised data ends
+
+    def follow(self, globals_: list[Global]) -> None:
+        pending = [g for g in globals_ if g.address < self.boundary and g.type is not None]
+        while pending:
+            g = pending.pop()
+            ctype = g.type
+            assert ctype is not None
+            if isinstance(ctype, Array) and ctype.count is None:
+                size = self.renderer.sizes.get(g.name, 0)
+                ctype = Array(ctype.element, size // size_of(ctype.element))
+            try:
+                fields = list(pointer_fields(ctype, g.address))
+            except Unrenderable:
+                continue
+            for pointer, at in fields:
+                target = self.declare(pointer, at, self.owned.get(g.name))
+                if target is not None:
+                    pending.append(target)
+
+    def split(self, g: Global, target: int, pointee: CType) -> bool:
+        """Whether a pointer of another type into one of the arrays found here
+        ends that array: it was sized before what follows it was known."""
+        if g not in self.found or not isinstance(g.type, Array) or g.type.element == pointee:
+            return False
+        step = size_of(g.type.element)
+        count = (target - g.address) // step
+        if count < 1 or (target - g.address) % step:
+            return False
+        shorter = Global(
+            g.name,
+            g.address,
+            g.declaration.replace(f"[{g.type.count}]", f"[{count}]"),
+            Array(g.type.element, count),
+        )
+        for items in (self.found, self.renderer.globals_):
+            items[items.index(g)] = shorter
+        self.renderer.sizes[g.name] = count * step
+        return True
+
+    def neighbours(self, address: int, referrer: str | None) -> str | None:
+        """The module of new data at an address: each module's data is
+        contiguous, so it's that of the globals on one side or the other. That
+        of both, if they agree; else the referrer's, if it's one of them; else
+        the one before (whose data can run on past its last known global),
+        unless that one's data, which ends with its string literals, has
+        already ended."""
+        before = [g for g in self.renderer.globals_ if g.address < address]
+        after = [g for g in self.renderer.globals_ if g.address > address]
+        below = next(
+            (self.owned.get(g.name) for g in reversed(before) if self.owned.get(g.name)), None
+        )
+        above = next((self.owned.get(g.name) for g in after if self.owned.get(g.name)), None)
+        if below is not None and self.data_ends.get(below, address + 1) <= address:
+            return above or below  # past the end of below's data, literals and all
+        if below == above or referrer not in (below, above):
+            return below or above
+        return referrer
+
+    def target(self, pointer: Pointer, at: int) -> tuple[int, CType] | None:
+        """Where an initialised pointer points and to what, if that's data this
+        can declare: in the initialised data, typed, not text (a string
+        literal) nor a function."""
+        exe, renderer = self.renderer.exe, self.renderer
+        if at not in exe.relocations:
+            return None
+        target = exe.pointer(at)
+        start = exe.sections["DATA"][0]
+        untyped = pointer.pointee.removeprefix("const ") in ("", "void", "char", "unsigned char")
+        if untyped or not start <= target < self.boundary or target in renderer.functions:
+            return None
+        try:
+            pointee = renderer.types.resolve(pointer.pointee)
+            size_of(pointee)
+        except Unrenderable:
+            return None
+        return target, pointee
+
+    def declare(self, pointer: Pointer, at: int, owner: str | None) -> Global | None:
+        renderer = self.renderer
+        found = self.target(pointer, at) if owner is not None else None
+        if found is None:
+            return None
+        target, pointee = found
+        step = size_of(pointee)
+        inside = renderer.containing(target)
+        if inside is not None and not self.split(inside, target, pointee):
+            return None
+        # At least one element: the pointer's type says so, whatever else seems
+        # to start closer (a piece `match-data` placed wrong, say).
+        later = [s for s in self.starts if s >= target + step]
+        count = ((later[0] if later else self.boundary) - target) // step
+        if count < 1:
+            return None
+        name = f"g_{target:x}"
+        g = Global(name, target, f"{pointer.pointee} {name}[{count}]", Array(pointee, count))
+        owner = self.neighbours(target, owner)
+        bisect.insort(self.starts, target)
+        bisect.insort(renderer.globals_, g, key=lambda g: g.address)
+        renderer.sizes[name] = count * step
+        self.owned[name] = owner
+        self.found.append(g)
+        return g
+
+
 def _type_name(ctype: CType) -> str:
     match ctype:
         case Scalar():
@@ -427,16 +585,28 @@ def _number(value: int, ctype: Scalar) -> str:
     return f"-{-value:#x}" if value < 0 else f"{value:#x}"
 
 
-def _text(data: bytes, *, whole: bool = True) -> str | None:
-    """A string literal for text ending in a zero (then only zeros, if `whole`)."""
+def _text(data: bytes, *, whole: bool = True, empty: bool = False) -> str | None:
+    """A string literal for text ending in a zero (then only zeros, if `whole`);
+    an empty one only if `empty` (a pointer to text: elsewhere, zeros are
+    more likely data)."""
     end = data.find(b"\0")
-    if end < 0 or (whole and any(data[end:])) or (not whole and end == 0):
+    if end < 0 or (whole and any(data[end:])) or (not whole and end == 0 and not empty):
         return None
     text = data[:end]
-    if not all(32 <= c < 127 or c in (9, 10, 13) for c in text):
+    if not all(32 <= c < 127 or c in (9, 10, 13) or c >= 0xA0 for c in text):
         return None
-    escaped = text.decode().replace("\\", "\\\\").replace('"', '\\"')
-    return '"' + escaped.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t") + '"'
+    return '"' + "".join(_escape(c) for c in text) + '"'
+
+
+# Octal for the rest: a hex escape would swallow a following hex digit.
+_ESCAPES = {ord("\\"): "\\\\", ord('"'): '\\"', 9: "\\t", 10: "\\n", 13: "\\r"}
+
+
+def _escape(byte: int) -> str:
+    """One byte of a string literal (Windows-1252 text beyond ASCII as octal)."""
+    if byte in _ESCAPES:
+        return _ESCAPES[byte]
+    return chr(byte) if 32 <= byte < 127 else f"\\{byte:03o}"
 
 
 def _trimmed(items: list[str]) -> list[str]:
@@ -532,16 +702,14 @@ def insert(text: str, definition: Definition, existing: list[tuple[int, bool, st
 class Plan:
     definitions: list[Definition]
     skipped: dict[str, str]  # name -> why
+    declarations: dict[Path, list[Global]]  # new globals for each module header
 
 
 def plan(exe: Executable) -> Plan:
     types = Types("\n".join(h.read_text() for h in declarations.headers()))
     globals_ = declared(types)
-    skipped: dict[str, str] = {}
-    defined = _defined_names()
     boundary = match_data.initialised_range(exe)[1]
-    sized = [g for g in globals_ if not g.unsized]
-    sizes = probe_sizes([g.name for g in sized])
+    sizes = probe_sizes([g.name for g in globals_ if not g.unsized])
     placed = match_data.check(match.decomp_sources(), exe)
     starts = sorted(
         {g.address for g in globals_}
@@ -549,12 +717,10 @@ def plan(exe: Executable) -> Plan:
         | {boundary}
     )
     for g in globals_:  # a global without a length runs to whatever's next
-        if g.name not in sizes:
-            later = [s for s in starts if s > g.address]
-            if later:
-                sizes[g.name] = later[0] - g.address
-    refs = references(exe, globals_, sizes)
-    owned = owners(globals_, refs, boundary)
+        later = [s for s in starts if s > g.address]
+        if g.name not in sizes and later:
+            sizes[g.name] = later[0] - g.address
+    owned = owners(globals_, references(exe, globals_, sizes), boundary)
     functions = {
         t.address: t.name
         for source in match.decomp_sources()
@@ -562,38 +728,104 @@ def plan(exe: Executable) -> Plan:
         if "::" not in t.name and not t.name.startswith("<")
     }
     renderer = Renderer(exe, types, functions, globals_, sizes)
+    unnamed = Unnamed(renderer, starts, boundary, owned, [], _data_ends(placed))
+    unnamed.follow(list(globals_))
+    skipped: dict[str, str] = {}
+    new_declarations = _new_declarations(unnamed.found, owned, skipped)
     following = {a.name: b.address for a, b in itertools.pairwise(globals_)}
+    defined = _defined_names()
     definitions = []
     for g in globals_:
-        if g.name in defined:
+        if g.name in defined or g.name in skipped:
             continue
         reason = _check(g, sizes, following, owned, initialised=g.address < boundary)
-        if reason:
-            skipped[g.name] = reason
-            continue
-        owner = owned[g.name]
-        assert owner is not None
-        source = paths.DECOMP_DIR / f"{owner}.cpp"
-        initialised = g.address < boundary
-        length = None
-        ctype = g.type
-        if isinstance(ctype, Array) and ctype.count is None:
-            step = size_of(ctype.element)
-            length = sizes[g.name] // step
-            ctype = Array(ctype.element, length)
+        found = reason or _definition(g, renderer, owned, boundary)
+        if isinstance(found, str):
+            skipped[g.name] = found
+        else:
+            definitions.append(found)
+    return Plan(definitions, skipped, new_declarations)
+
+
+def _data_ends(placed: match_data.Checked) -> dict[str, int]:
+    """Where each module's placed initialised data ends."""
+    return {
+        p.source.stem: max(x.address + x.size for x in p.pieces if x.address is not None)
+        for p in placed.placements
+        if p.segment == "_DATA" and any(x.address is not None for x in p.pieces)
+    }
+
+
+def _new_declarations(
+    found: list[Global], owned: dict[str, str | None], skipped: dict[str, str]
+) -> dict[Path, list[Global]]:
+    """The newly found globals by the module header to declare them in; those
+    that can't be declared go in `skipped`, with the reason."""
+    new: dict[Path, list[Global]] = {}
+    checked = _check_types(found)
+    for g in found:
+        header = paths.DECOMP_DIR / f"{owned[g.name]}.h"
+        if g.name in checked:
+            skipped[g.name] = checked[g.name]
+        elif not header.exists():
+            skipped[g.name] = f"its module, {owned[g.name]}, has no header to declare it in"
+        else:
+            new.setdefault(header, []).append(g)
+    return new
+
+
+def _definition(
+    g: Global, renderer: Renderer, owned: dict[str, str | None], boundary: int
+) -> Definition | str:
+    """A global's definition, or why it can't be written."""
+    owner = owned[g.name]
+    assert owner is not None  # _check made sure
+    initialised = g.address < boundary
+    length = None
+    ctype = g.type
+    if isinstance(ctype, Array) and ctype.count is None:
+        length = renderer.sizes[g.name] // size_of(ctype.element)
+        ctype = Array(ctype.element, length)
+    value = None
+    if initialised:
+        assert ctype is not None  # _check made sure
         try:
-            value = None
-            if initialised:
-                assert ctype is not None  # _check made sure
-                value = renderer.value(ctype, g.address, top=True)
+            value = renderer.value(ctype, g.address, top=True)
         except Unrenderable as e:
-            skipped[g.name] = str(e)
-            continue
-        if value is not None and value.startswith('"') and length is not None:
-            length = None  # `char name[] = "text"` sizes itself
-        text = _definition_text(g, value, length)
-        definitions.append(Definition(g, source, initialised, text))
-    return Plan(definitions, skipped)
+            return str(e)
+    if value is not None and value.startswith('"') and length is not None:
+        length = None  # `char name[] = "text"` sizes itself
+    text = _definition_text(g, value, length)
+    return Definition(g, paths.DECOMP_DIR / f"{owner}.cpp", initialised, text)
+
+
+def _check_types(found: list[Global]) -> dict[str, str]:
+    """Why the new globals whose element type BCC32 lays out differently from
+    our model can't be declared."""
+    elements = {g.declaration.rpartition(" ")[0] for g in found}
+    if not elements:
+        return {}
+    theirs = probe_sizes(sorted(elements), "types")
+    problems = {}
+    for g in found:
+        assert isinstance(g.type, Array)
+        element = g.declaration.rpartition(" ")[0]
+        ours = size_of(g.type.element)
+        if ours != theirs[element]:
+            problems[g.name] = f"our layout of {element} ({ours} bytes) isn't BCC32's"
+    return problems
+
+
+def declare(new: dict[Path, list[Global]]) -> None:
+    """Add declarations to module headers, before their closing #endif."""
+    for header, found in new.items():
+        text = header.read_text()
+        lines = "".join(
+            f"extern {g.declaration}; /* pointed to by initialised data */\n"
+            for g in sorted(found, key=lambda g: g.address)
+        )
+        end = text.rfind("\n#endif")
+        header.write_text(text[:end] + "\n" + lines + text[end:] if end >= 0 else text + lines)
 
 
 def _check(
@@ -690,9 +922,13 @@ def main(
     for name, reason in sorted(result.skipped.items()):
         print(f"  skipped    {name}: {reason}")
     if dry_run:
+        for header, found in result.declarations.items():
+            for g in found:
+                print(f"{header.name}: extern {g.declaration};")
         for d in result.definitions:
             print(f"{d.source.name}: {d.text}")
     else:
+        declare(result.declarations)
         types = Types("\n".join(h.read_text() for h in declarations.headers()))
         changed = apply(result.definitions, match_data.initialised_range(exe)[1], declared(types))
         for source, error in _iter_errors(changed):

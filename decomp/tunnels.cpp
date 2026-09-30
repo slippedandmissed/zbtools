@@ -44,7 +44,12 @@ short speaker1BackLines[4] = {0x11f8, 0x11f9, 0x11fa, 0x11fb};
 unsigned long speaker1BackLinesUsed = 0;
 short doors16Lines[6] = {0x11fc, 0x11fd, 0x11fe, 0x11ff, 0x1200, 0x1201};
 unsigned long doors16LinesUsed = 0;
-SceneButton tunnelsButtons[2] = {{{600, 403, 639, 440}}, {{600, 441, 639, 478}}};
+SceneButton tunnelsButtons[3] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+};
+Group g_4a76d8[1] = {{g_4a0766, (InputItem *)tunnelsButtons, 3, 0x2068}};
+GroupList tunnelsGroups[1] = {{g_4a76d8, 1, 0, tunnelsClicked}};
+Scene g_4a76f4[1] = {{openTunnels, closeTunnels, tunnelsFrame, 0, tunnelsKey}};
 long tunnelsButtonResource = 0;
 ImageBank *tunnelsButtonImages = 0;
 short doorSpeakers[8] = {0, 1, 0, 2, 2, 3, 1, 3};
@@ -70,7 +75,9 @@ Point door3Places[16] = {
 };
 short inTunnelsFrame = 0;
 Point backScriptAnchors[4] = {{145, 455}, {210, 434}, {430, 434}, {476, 455}};
+unsigned long tunnelRemarks1Used = 0;
 
+short lastRuleCount;
 FeatureRules tunnelRules;
 short door1Views[16];
 short door4Views[16];
@@ -116,6 +123,7 @@ short fidgetsDone;
 long lastFidgetTime;
 long fidgetInterval;
 unsigned long fidgetersUsed;
+short debugTunnelScript;
 
 /* Resets scene 8's state (the rules, the entries, the counts; the pace
    fidgetInterval by fidgetPaceFlag) and picks closedDoorPair at random. */

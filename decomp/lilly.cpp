@@ -14,6 +14,7 @@
 #include "focus.h"
 #include "graphics.h"
 #include "lilly.h"
+#include "loading.h"
 #include "mainloop.h"
 #include "net.h"
 #include "platform.h"
@@ -65,6 +66,12 @@ short attributeImageIndex[4] = {0, 0, 3, 7};
 short boardView = 0;
 long lillyImagesResource = 0;
 long unusedLillyResource = 0;
+SceneButton lillyButtons[3] = {
+    {{600, 403, 639, 440}}, {{600, 441, 639, 478}}, {{0, 0, 640, 480}},
+};
+Group g_4a1bb8[1] = {{g_4a0766, (InputItem *)lillyButtons, 3, 0x2068}};
+GroupList lillyGroups[1] = {{g_4a1bb8, 1, 0, lillyClicked}};
+Scene g_4a1bd4[1] = {{openLilly, closeLilly, lillyFrame, 0, lillyKey}};
 long lillyButtonResource = 0;
 Point padPlaces[42] = {
     {101, 27}, {100, 42}, {95, 55}, {88, 69}, {78, 80}, {88, 24}, {85, 39}, {80, 54}, {72, 67},
@@ -182,11 +189,11 @@ short jumper2Busy;
 short jumperBusy;
 short landerBusy;
 short finishedLander;
+LillyCell lillyBoard[12][13];
 LillySearch layerSearches[5];
 short squareClaims[12][13];
 LillyStart lillyStarts[3];
-short lillyLayerView1;
-short lillyLayerView3;
+short lillyLayerViews[10];
 short rowAnchorViews[12];
 short snoidPadViews[21];
 short actorViews[14];
@@ -421,15 +428,15 @@ void updateLillyButtons(View *view, short region)
     if (lillyGoReady) {
         if (!lillyButton2Lit) {
             lillyButton2Lit = 1;
-            unionRgnRect(region, &lillyButtons[2].rect);
+            unionRgnRect(region, &lillyButtons[1].rect);
         }
     } else if (lillyButton2Lit) {
         lillyButton2Lit = 0;
-        unionRgnRect(region, &lillyButtons[2].rect);
+        unionRgnRect(region, &lillyButtons[1].rect);
     }
     if (!lillyButton1Drawn) {
         lillyButton1Drawn = 1;
-        unionRgnRect(region, &lillyButtons[1].rect);
+        unionRgnRect(region, &lillyButtons[0].rect);
     }
 }
 
@@ -576,10 +583,10 @@ void drawLillyButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)((char *)lillyButtonImages + lillyButtonImages->offsets[image]), lillyButtons[which].rect.left,
-                      lillyButtons[which].rect.top, 8);
+        drawImageData((unsigned short *)((char *)lillyButtonImages + lillyButtonImages->offsets[image]), lillyButtons[which - 1].rect.left,
+                      lillyButtons[which - 1].rect.top, 8);
         if (show)
-            showRect(&lillyButtons[which].rect);
+            showRect(&lillyButtons[which - 1].rect);
     }
 }
 
@@ -1092,7 +1099,7 @@ void lillyNotify30(View *view, short event)
         }
         lillyBoard[actor->row][actor->column].attributes[0] = 0;
         body->cels[2].image = 0;
-        moveView(actor->padView, 0, lillyLayerView3);
+        moveView(actor->padView, 0, lillyLayerViews[3]);
         View *other = findView(actor->padView);
 
         if (other) {
@@ -3386,7 +3393,7 @@ void lillyFrame()
                 view->placed = placeJumperAt;
                 view->notify = lillyNotify49;
                 view->flags = 0x4980002;
-                moveView(view->id, 0, lillyLayerView1);
+                moveView(view->id, 0, lillyLayerViews[1]);
             }
         }
         if (landedJumper) {

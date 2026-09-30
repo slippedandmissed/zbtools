@@ -178,4 +178,7 @@ extern short trollsAtLevel; /* @data 0x4b1622 */
 extern short pizzaLevelFrom2; /* @data 0x4b162a */
 void openPizza();
 
+extern Group g_4a3d08[1]; /* pointed to by initialised data */
+extern Scene g_4a3d24[1]; /* pointed to by initialised data */
+
 #endif

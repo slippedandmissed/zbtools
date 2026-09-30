@@ -9,6 +9,8 @@
 #include "os_manager.h"
 #include "os_refcount.h"
 
+DeferLock *locks = 0;
+
 /* Drops the calls waiting on a lock. */
 /* Not exact: the original computes &lock->queue in ebx (a saved register);
    BCC32 4.5 uses eax. */
