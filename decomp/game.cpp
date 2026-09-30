@@ -44,9 +44,9 @@ void gameFrame()
         setPort(saved);
     }
     if (g_4a4974)
-        fn_455023(1);
+        drawMemoryStats(1);
     else
-        fn_455023(0);
+        drawMemoryStats(0);
     if (g_4b80d2 >= 1) {
         unsigned long now = fn_41571f();
         if (now >= g_4b80d4) {
@@ -89,7 +89,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     appCommandLine = commandLine;
     appShowCommand = showCommand;
     aboveWindows311 = swapShort((WORD)GetVersion()) > 0x30b;
-    atexit(fn_454ca4);
+    atexit(shutDownAtExit);
 
     /* The window class is named after the program's file: if a window of
        that class exists, the game is running already. */
@@ -213,13 +213,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     g_4b0d50 = 0;
     while (mainLoopUpdate() && !g_4b80e0)
         mainLoopEvents();
-    fn_454c8e();
+    quitSilently();
     return 0;
 }
 
 /* Registered with atexit, which needs the C convention. */
 /* @zoombi32 0x00454ca4 */
-void __cdecl fn_454ca4()
+void __cdecl shutDownAtExit()
 {
     shutDownGame();
 }
@@ -229,7 +229,7 @@ void __cdecl fn_454ca4()
    then picks the first place without one, from either end at random (-1:
    none). */
 /* @zoombi32 0x00450540 */
-void fn_450540(short *result)
+void pickFreeSpot(short *result)
 {
     Point where = g_4a4846;
     short i;
@@ -263,9 +263,9 @@ void fn_450540(short *result)
 }
 
 /* @zoombi32 0x0045062d */
-void fn_45062d(short script)
+void lightDealButton(short script)
 {
-    View *view = findView(g_4b25b0);
+    View *view = findView(dealButtonView);
 
     if (view) {
         view->flags = 0x4008000;
@@ -274,23 +274,23 @@ void fn_45062d(short script)
 }
 
 /* @zoombi32 0x00450658 */
-void fn_450658(short script, short running)
+void pressDealButton(short script, short running)
 {
-    View *view = findView(g_4b25b0);
+    View *view = findView(dealButtonView);
 
     if (view) {
         unionRgnRect(removedRgn, &view->body.bounds);
         view->nextUpdate = 0;
         setViewScript(view, script, running);
         view->flags = 0x4188000;
-        view->notify = fn_45174e;
+        view->notify = smokeViewNotify;
     }
 }
 
 /* @zoombi32 0x004506a9 */
-void fn_4506a9(short script)
+void dimDealButton(short script)
 {
-    View *view = findView(g_4b25b0);
+    View *view = findView(dealButtonView);
 
     if (view) {
         unionRgnRect(removedRgn, &view->body.bounds);
@@ -301,19 +301,19 @@ void fn_4506a9(short script)
 }
 
 /* @zoombi32 0x004506f0 */
-void fn_4506f0()
+void startRowViews()
 {
     View *view;
 
-    if (g_4b26b4 < 3) {
-        view = findView(g_4b25a8);
+    if (leftRow < 3) {
+        view = findView(leftRowView);
         if (view) {
             view->flags = 0x4008000;
             setViewScript(view, 11006, 1);
         }
     }
-    if (g_4b26b6 < 3) {
-        view = findView(g_4b25aa);
+    if (rightRow < 3) {
+        view = findView(rightRowView);
         if (view) {
             view->flags = 0x4008000;
             setViewScript(view, 11007, 1);
@@ -322,16 +322,16 @@ void fn_4506f0()
 }
 
 /* @zoombi32 0x0045074d */
-void fn_45074d()
+void stopRowViews()
 {
     View *view;
 
-    view = findView(g_4b25a8);
+    view = findView(leftRowView);
     if (view) {
         view->flags = 0x5188000;
         setViewScript(view, 11006, 0);
     }
-    view = findView(g_4b25aa);
+    view = findView(rightRowView);
     if (view) {
         view->flags = 0x5188000;
         setViewScript(view, 11007, 0);
@@ -339,9 +339,9 @@ void fn_45074d()
 }
 
 /* @zoombi32 0x00450796 */
-void fn_450796()
+void startView11076()
 {
-    View *view = findView(g_4b2588);
+    View *view = findView(view11076);
 
     if (view) {
         view->flags = 0x4008000;
@@ -350,9 +350,9 @@ void fn_450796()
 }
 
 /* @zoombi32 0x004507bb */
-void fn_4507bb()
+void stopView11076()
 {
-    View *view = findView(g_4b2588);
+    View *view = findView(view11076);
 
     if (view) {
         view->flags = 0x5188000;
@@ -360,52 +360,52 @@ void fn_4507bb()
     }
 }
 
-/* Whether any of the first g_4b2414 entries of g_4b2430 is set (not -1). */
+/* Whether any of the first partySize entries of waitingSnoids is set (not -1). */
 /* @zoombi32 0x0044d102 */
-short fn_44d102()
+short anyLeftToPlace()
 {
     short any = 0;
     short i;
 
-    for (i = 0; i < g_4b2414; i++)
-        if (g_4b2430[i] != -1)
+    for (i = 0; i < partySize; i++)
+        if (waitingSnoids[i] != -1)
             any = 1;
     return any;
 }
 
 /* Resets a cell: state 500, no links. */
 /* @zoombi32 0x0044d5ad */
-void fn_44d5ad(short cell)
+void resetCell(short cell)
 {
     short i;
 
-    g_4b1aea[cell].state = 500;
+    hexCells[cell].state = 500;
     for (i = 0; i <= 5; i++)
-        g_4b1aea[cell].links[i] = -1;
-    g_4b2324[cell] = 0;
+        hexCells[cell].links[i] = -1;
+    cellLinkBits[cell] = 0;
 }
 
 /* Cuts a cell's link in one direction, clearing its bit. */
 /* @zoombi32 0x0044dca0 */
-void fn_44dca0(short cell, short direction, short bit)
+void cutLink(short cell, short direction, short bit)
 {
-    g_4b1aea[cell].links[direction] = -1;
-    g_4b2324[cell] |= bit;
-    g_4b2324[cell] ^= bit;
+    hexCells[cell].links[direction] = -1;
+    cellLinkBits[cell] |= bit;
+    cellLinkBits[cell] ^= bit;
 }
 
-/* Counts the cells in state 508, and once there are g_4b2414 of them
+/* Counts the cells in state 508, and once there are partySize of them
    (the first time only), plays a sound. */
 /* @zoombi32 0x0044e092 */
-void fn_44e092()
+void checkAllFilled()
 {
     short count = 0;
     short i;
 
     for (i = 0; i < 117; i++)
-        if (g_4b1aea[i].state == 508)
+        if (hexCells[i].state == 508)
             count++;
-    if (!g_4b2542 && count >= g_4b2414) {
+    if (!g_4b2542 && count >= partySize) {
         g_4b2540++;
         queueViewSound(randomBetween(20055, 20063), 0);
     }
@@ -414,76 +414,76 @@ void fn_44e092()
 /* Unlinks a cell from its neighbours (clearing the opposite direction's
    bit on each) and resets it. */
 /* @zoombi32 0x0044e314 */
-void fn_44e314(short cell)
+void unlinkCell(short cell)
 {
     short i;
     short other;
 
-    g_4b1aea[cell].state = 500;
+    hexCells[cell].state = 500;
     for (i = 0; i <= 5; i++) {
         switch (i) {
         case 0:
-            other = g_4b1aea[cell].links[i];
-            g_4b2324[other] |= 8;
-            g_4b2324[other] ^= 8;
+            other = hexCells[cell].links[i];
+            cellLinkBits[other] |= 8;
+            cellLinkBits[other] ^= 8;
             break;
         case 1:
-            other = g_4b1aea[cell].links[i];
-            g_4b2324[other] |= 0x10;
-            g_4b2324[other] ^= 0x10;
+            other = hexCells[cell].links[i];
+            cellLinkBits[other] |= 0x10;
+            cellLinkBits[other] ^= 0x10;
             break;
         case 2:
-            other = g_4b1aea[cell].links[i];
-            g_4b2324[other] |= 0x20;
-            g_4b2324[other] ^= 0x20;
+            other = hexCells[cell].links[i];
+            cellLinkBits[other] |= 0x20;
+            cellLinkBits[other] ^= 0x20;
             break;
         case 5:
-            other = g_4b1aea[cell].links[i];
-            g_4b2324[other] |= 4;
-            g_4b2324[other] ^= 4;
+            other = hexCells[cell].links[i];
+            cellLinkBits[other] |= 4;
+            cellLinkBits[other] ^= 4;
             break;
         case 4:
-            other = g_4b1aea[cell].links[i];
-            g_4b2324[other] |= 2;
-            g_4b2324[other] ^= 2;
+            other = hexCells[cell].links[i];
+            cellLinkBits[other] |= 2;
+            cellLinkBits[other] ^= 2;
             break;
         case 3:
-            other = g_4b1aea[cell].links[i];
-            g_4b2324[other] |= 1;
-            g_4b2324[other] ^= 1;
+            other = hexCells[cell].links[i];
+            cellLinkBits[other] |= 1;
+            cellLinkBits[other] ^= 1;
             break;
         }
-        g_4b1aea[cell].links[i] = -1;
+        hexCells[cell].links[i] = -1;
     }
-    g_4b2324[cell] = 0;
+    cellLinkBits[cell] = 0;
 }
 
 /* @zoombi32 0x00451238 */
-void fn_451238(short n)
+void clearFeatureSlot(short n)
 {
-    g_4b26cc[n][0] = 0;
-    g_4b26cc[n][1] = 0;
-    g_4b26cc[n][2] = 0;
-    g_4b26cc[n][3] = 0;
+    featureSlots[n][0] = 0;
+    featureSlots[n][1] = 0;
+    featureSlots[n][2] = 0;
+    featureSlots[n][3] = 0;
 }
 
 /* @zoombi32 0x00451276 */
-void fn_451276()
+void clearFeatureSlots()
 {
     short i;
 
     for (i = 0; i < 8; i++) {
-        g_4b26cc[i][0] = 0;
-        g_4b26cc[i][1] = 0;
-        g_4b26cc[i][2] = 0;
-        g_4b26cc[i][3] = 0;
+        featureSlots[i][0] = 0;
+        featureSlots[i][1] = 0;
+        featureSlots[i][2] = 0;
+        featureSlots[i][3] = 0;
     }
 }
 
 /* Starts a Zoombini view's script (see startSnoidScript), moving it into
    `group`, with `notify` if given. */
 /* @zoombi32 0x0045170a */
-void fn_45170a(short id, short script, short group, ViewNotify notify, char unknownF8)
+void startSmokeSnoidScript(short id, short script, short group, ViewNotify notify, char unknownF8)
 {
     View *view = findView(id);
 
@@ -497,7 +497,7 @@ void fn_45170a(short id, short script, short group, ViewNotify notify, char unkn
 
 /* Records the features of the Zoombini in view `id` as slot n's. */
 /* @zoombi32 0x00450d00 */
-void fn_450d00(short id, short n)
+void recordSlotFeatures(short id, short n)
 {
     View *view = findView(id);
 
@@ -505,16 +505,16 @@ void fn_450d00(short id, short n)
         Snoid *snoid = viewSnoid(view);
         char *features = snoid->features;
 
-        g_4b26cc[n][0] = features[0];
-        g_4b26cc[n][1] = features[1];
-        g_4b26cc[n][2] = features[2];
-        g_4b26cc[n][3] = features[3];
+        featureSlots[n][0] = features[0];
+        featureSlots[n][1] = features[1];
+        featureSlots[n][2] = features[2];
+        featureSlots[n][3] = features[3];
     }
 }
 
 /* Deletes the temporary file (ZBtemp), if one was made. */
 /* @zoombi32 0x00454f03 */
-void fn_454f03()
+void deleteTempFile()
 {
     fileSpec temp("ZBtemp");
 
@@ -531,7 +531,7 @@ void shutDownGame()
 {
     short i;
 
-    if (g_4a494c)
+    if (shuttingDown)
         return;
     if (!fn_456bf6() && !g_4b754a && viewsReady && g_4b2aea && g_4afb32 && !g_4b9684
         && currentScene >= 1 && currentScene <= 18) {
@@ -544,10 +544,10 @@ void shutDownGame()
         } while (g_4b9684);
         if (i == g_4b9684) {
             if (g_4b80e0 == 3)
-                g_4a494e = 1;
+                saveBeforeQuitting = 1;
             g_4b80e0 = 0;
         }
-        if (g_4a494e) {
+        if (saveBeforeQuitting) {
             askSaveGame();
             do {
                 mainLoopUpdate();
@@ -555,10 +555,10 @@ void shutDownGame()
             } while (g_4b9684);
         }
     }
-    g_4a48e6 = g_4a494c = 1;
+    g_4a48e6 = shuttingDown = 1;
     fn_415604(0);
     fn_46bee9(1);
-    fn_455273(1);
+    stopMovie(1);
     unloadSounds();
     if (graphicsBufferSize())
         fadeOutViews();
@@ -570,7 +570,7 @@ void shutDownGame()
     if (g_4b2aea) {
         if (!g_4b754a)
             readWriteSavedGames(0, 1);
-        fn_454f03();
+        deleteTempFile();
         if (viewsReady)
             closeViews();
         closeSnoids();
@@ -598,7 +598,7 @@ void shutDownGame()
 }
 
 /* @zoombi32 0x00454c8e */
-void fn_454c8e()
+void quitSilently()
 {
     g_4a48e6 = 1;
     fatalError(0, 0);
@@ -606,7 +606,7 @@ void fn_454c8e()
 
 /* Empties one of the Zoombini views (0 and 1, or 7 and 8): no features. */
 /* @zoombi32 0x004511c1 */
-void fn_4511c1(short n)
+void emptySlotView(short n)
 {
     View *view;
 
@@ -628,7 +628,7 @@ void fn_4511c1(short n)
 
 /* Stops and empties the two Zoombini views g_4b26ac. */
 /* @zoombi32 0x004512ac */
-void fn_4512ac()
+void emptyPairViews()
 {
     ShortRect unused[1];
     short i;
@@ -653,7 +653,7 @@ void fn_4512ac()
 /* A view's update: adds buttons 2 (when g_4b2792 changes) and 1 (the
    first time) to the region to redraw. */
 /* @zoombi32 0x0044f180 */
-void fn_44f180(View *, short region)
+void updateSmokeButtons(View *, short region)
 {
     if (g_4b2792) {
         if (!g_4a483e) {
@@ -672,10 +672,10 @@ void fn_44f180(View *, short region)
 
 /* Closes the scene. */
 /* @zoombi32 0x0044f1f2 */
-void fn_44f1f2()
+void closeScene17()
 {
-    if (g_4b2790) {
-        g_4b2790 = 0;
+    if (scene17Open) {
+        scene17Open = 0;
         short saved = fn_46bee9(1);
 
         clearViews();
@@ -703,13 +703,13 @@ void scene17Frame()
     short j;
     short done;
 
-    if (g_4a4842 || !g_4b2790)
+    if (inScene17Frame || !scene17Open)
         return;
-    g_4a4842 = 1;
+    inScene17Frame = 1;
     updateViews();
     if (g_4b0d52) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-            g_4a4842 = 0;
+            inScene17Frame = 0;
             return;
         }
         if (!g_4b9688 || g_4b9688 == 3) {
@@ -719,8 +719,8 @@ void scene17Frame()
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
                 fn_46be2e(0);
-                fn_44f1f2();
-                g_4a4842 = 0;
+                closeScene17();
+                inScene17Frame = 0;
                 return;
             }
         } else if (g_4b9688 == 2) {
@@ -730,7 +730,7 @@ void scene17Frame()
     }
     if (g_4b9684) {
         playAmbientSound();
-        g_4a4842 = 0;
+        inScene17Frame = 0;
         return;
     }
     if (g_4b2644) {
@@ -753,8 +753,8 @@ void scene17Frame()
         if (view) {
             setViewScript(view, g_4b2730, 0);
             g_4b2752 = 1;
-            g_4b2754 = 2;
-            fn_45062d(11003);
+            dealButtonState = 2;
+            lightDealButton(11003);
             g_4a483c = 1;
         }
     }
@@ -762,11 +762,11 @@ void scene17Frame()
         g_4b274a = 0;
         if (g_4b2630 == 1 || g_4b2630 == 2) {
             g_4b2752 = 0;
-            fn_4506a9(11002);
+            dimDealButton(11002);
         } else if (g_4b2630 == 3) {
             g_4b2752 = 1;
-            g_4b2754 = 2;
-            fn_45062d(11003);
+            dealButtonState = 2;
+            lightDealButton(11003);
         }
     }
     if (g_4b2736) {
@@ -828,22 +828,22 @@ void scene17Frame()
                 view = findView(g_4b25a4);
             if (view) {
                 setViewScript(view, g_4b2728, 1);
-                view->notify = fn_45174e;
+                view->notify = smokeViewNotify;
             }
         }
         if (g_4b2630 == 1 || g_4b2630 == 2)
             g_4b26b0 = 0;
         if (g_4b2630 < 4 || g_4b2630 == 4 && g_4b2744 == 1) {
             if (g_4b2630 == 4 || g_4b2630 == 3)
-                g_4b273a = fn_452035();
+                g_4b273a = takeNextTwoFeatures();
             else
-                g_4b273a = fn_451f4e();
+                g_4b273a = takeRandomFeatures();
             if (g_4b273a && g_4b266c <= g_4b262e && g_4b2630 < 4) {
-                g_4b2754 = 1;
-                fn_45062d(11005);
+                dealButtonState = 1;
+                lightDealButton(11005);
             } else {
-                g_4b2754 = 0;
-                fn_4506a9(11004);
+                dealButtonState = 0;
+                dimDealButton(11004);
             }
         }
     }
@@ -853,7 +853,7 @@ void scene17Frame()
             view = findView(g_4b25b4[i]);
             if (view) {
                 setViewScript(view, i + 11072, 1);
-                view->notify = fn_45174e;
+                view->notify = smokeViewNotify;
                 if (!i) {
                     groupViews(g_4b25b4[i], g_4b25b4[i], 0, 0, 0, 0);
                     g_4b279a = view->body.group;
@@ -902,20 +902,20 @@ void scene17Frame()
     } else if (g_4b2760 >= g_4b262e - 1)
         g_4b2760 = g_4b2762 = g_4b2758 = g_4b275c = 0;
     playAmbientSound();
-    g_4a4842 = 0;
+    inScene17Frame = 0;
 }
 
-/* A view's drawing: its cels from the bank g_4b2634, while it runs and
+/* A view's drawing: its cels from the bank smokeImages, while it runs and
    stands in the game's area. */
 /* Functional: the original reads each cel's words as it pushes them
    (`drawImageData(image(*cel++), *cel++, *cel++, 8)`, relying on BCC's
    left-to-right evaluation); this reads them first. */
 /* @zoombi32-functional 0x004541bf */
-void fn_4541bf(View *view)
+void drawSmokeSnoid(View *view)
 {
     if (view->body.running && ptInRect(&gameRect, *(Point *)&view->body.x)) {
         short *cel = (short *)view->body.cels;
-        ImageBank *bank = g_4b2634;
+        ImageBank *bank = smokeImages;
 
         while (*cel && *cel <= bank->count) {
             unsigned short *image = (unsigned short *)(bank->offsets[*cel++] + (char *)bank);
@@ -930,7 +930,7 @@ void fn_4541bf(View *view)
 /* The scene to go back to: the current one if it is the town, the camp, a
    waiting place or a puzzle with a party (setting g_4b7562), else 3. */
 /* @zoombi32 0x00454c10 */
-short fn_454c10()
+short sceneToReturnTo()
 {
     short scene;
 
@@ -946,7 +946,7 @@ short fn_454c10()
 
 /* Stands each Zoombini on a cell in state 508 at its cell. */
 /* @zoombi32 0x0044e0e2 */
-void fn_44e0e2()
+void standFilledCells()
 {
     Point where;
     short i;
@@ -954,41 +954,41 @@ void fn_44e0e2()
 
     g_4b2540 = 0;
     for (i = 0; i < 117; i++)
-        if (g_4b1aea[i].state == 508) {
-            view = findView(g_4b1aea[i].view);
+        if (hexCells[i].state == 508) {
+            view = findView(hexCells[i].view);
             where.x = view->body.x + 24;
             where.y = view->body.y - 5;
-            setSnoidAction((Snoid *)&findView(g_4b1aea[i].snoid)->body, 0, &where);
+            setSnoidAction((Snoid *)&findView(hexCells[i].snoid)->body, 0, &where);
         }
 }
 
-/* Stands the placed Zoombinis (g_4b2544) on their cells (state 507). */
+/* Stands the placed Zoombinis (placedSnoids) on their cells (state 507). */
 /* @zoombi32 0x0044e161 */
-void fn_44e161()
+void standPlacedSnoids()
 {
     Point where;
     short i;
     short cell;
     View *view;
 
-    for (i = 0; i < g_4b2414; i++)
-        if (g_4b2544[i].cell) {
-            cell = g_4b2544[i].cell;
-            view = findView(g_4b1aea[g_4b2544[i].cell].view);
+    for (i = 0; i < partySize; i++)
+        if (placedSnoids[i].cell) {
+            cell = placedSnoids[i].cell;
+            view = findView(hexCells[placedSnoids[i].cell].view);
             where.x = view->body.x + 24;
             where.y = view->body.y - 5;
-            view = findView(g_4b2544[i].snoid);
+            view = findView(placedSnoids[i].snoid);
             if (view) {
                 setSnoidAction(viewSnoid(view), 0, &where);
-                g_4b1aea[cell].state = 507;
-                g_4b1aea[cell].snoid = g_4b2544[i].snoid;
+                hexCells[cell].state = 507;
+                hexCells[cell].snoid = placedSnoids[i].snoid;
             }
         }
 }
 
 /* Loads a QuickTime movie from a file (0: failed). */
 /* @zoombi32 0x004552fd */
-long fn_4552fd(const char *path)
+long loadMovie(const char *path)
 {
     long movie;
     long id;
@@ -1011,7 +1011,7 @@ long fn_4552fd(const char *path)
 /* Stops the movie playing, if one is, and with `shutdown` closes
    QuickTime. */
 /* @zoombi32 0x00455273 */
-void fn_455273(short shutdown)
+void stopMovie(short shutdown)
 {
     if (g_4b2ad4) {
         g_4b2ad6 = 1;
@@ -1036,7 +1036,7 @@ void fn_455273(short shutdown)
    below 3, the Zoombini's view also stops and moves to the slot view's
    place in the list (moveView). */
 /* @zoombi32 0x00450c24 */
-void fn_450c24(short id, short n)
+void copyToSlotView(short id, short n)
 {
     View *to;
     char *features;
@@ -1080,7 +1080,7 @@ void fn_450c24(short id, short n)
 /* Records the features of the Zoombinis in the views g_4b2776[1-3] as
    slots 1-3's (none if a view is gone). */
 /* @zoombi32 0x00450d5d */
-void fn_450d5d()
+void recordLeftSlots()
 {
     short i;
     View *view;
@@ -1090,22 +1090,22 @@ void fn_450d5d()
         if (view) {
             Snoid *snoid = viewSnoid(view);
 
-            g_4b26cc[i][0] = snoid->features[0];
-            g_4b26cc[i][1] = snoid->features[1];
-            g_4b26cc[i][2] = snoid->features[2];
-            g_4b26cc[i][3] = snoid->features[3];
+            featureSlots[i][0] = snoid->features[0];
+            featureSlots[i][1] = snoid->features[1];
+            featureSlots[i][2] = snoid->features[2];
+            featureSlots[i][3] = snoid->features[3];
         } else {
-            g_4b26cc[i][0] = 0;
-            g_4b26cc[i][1] = 0;
-            g_4b26cc[i][2] = 0;
-            g_4b26cc[i][3] = 0;
+            featureSlots[i][0] = 0;
+            featureSlots[i][1] = 0;
+            featureSlots[i][2] = 0;
+            featureSlots[i][3] = 0;
         }
     }
 }
 
 /* The same for slots 4-6. */
 /* @zoombi32 0x00450df2 */
-void fn_450df2()
+void recordRightSlots()
 {
     short i;
     View *view;
@@ -1115,15 +1115,15 @@ void fn_450df2()
         if (view) {
             Snoid *snoid = viewSnoid(view);
 
-            g_4b26cc[i][0] = snoid->features[0];
-            g_4b26cc[i][1] = snoid->features[1];
-            g_4b26cc[i][2] = snoid->features[2];
-            g_4b26cc[i][3] = snoid->features[3];
+            featureSlots[i][0] = snoid->features[0];
+            featureSlots[i][1] = snoid->features[1];
+            featureSlots[i][2] = snoid->features[2];
+            featureSlots[i][3] = snoid->features[3];
         } else {
-            g_4b26cc[i][0] = 0;
-            g_4b26cc[i][1] = 0;
-            g_4b26cc[i][2] = 0;
-            g_4b26cc[i][3] = 0;
+            featureSlots[i][0] = 0;
+            featureSlots[i][1] = 0;
+            featureSlots[i][2] = 0;
+            featureSlots[i][3] = 0;
         }
     }
 }
@@ -1132,7 +1132,7 @@ void fn_450df2()
    g_4b2604 (from g_4b2734, up to g_4b262e) into g_4b263c; returns how many
    there were. */
 /* @zoombi32 0x00452035 */
-short fn_452035()
+short takeNextTwoFeatures()
 {
     short count = 0;
     View *view;
@@ -1175,7 +1175,7 @@ short fn_452035()
    Zoombini in view g_4b26b2 (script 12020 on, from g_4a44ac), grouping
    them. */
 /* @zoombi32 0x0045162e */
-void fn_45162e(short)
+void startNextCrossing(short)
 {
     View *view;
     View *other;
@@ -1183,7 +1183,7 @@ void fn_45162e(short)
     view = findView(g_4b25ac);
     if (view) {
         setViewScript(view, g_4b266c + 11036, 1);
-        view->notify = fn_45174e;
+        view->notify = smokeViewNotify;
         moveView(view->id, 0, g_4b25ae);
     }
     other = findView(g_4b26b2);
@@ -1193,7 +1193,7 @@ void fn_45162e(short)
         snoid->unknownF2 = 1;
         *(Point *)&snoid->body.x = g_4a44ac;
         startSnoidScript(viewSnoid(other), g_4b266c + 12020, 0, 0);
-        other->notify = fn_45174e;
+        other->notify = smokeViewNotify;
         moveView(other->id, 1, view->id);
     }
     if (other)
@@ -1203,9 +1203,9 @@ void fn_45162e(short)
 }
 
 /* Lays out the hex grid for level g_4b1934 (0-3), with the start cells
-   (state g_4b2512, 504 or at level 3 perhaps 505), the cells open (506)
+   (state startState, 504 or at level 3 perhaps 505), the cells open (506)
    and blocked (501), the Zoombinis already placed (507) and the cells'
-   link bits (g_4b2324); notes the open cells (g_4b240e of them, where to
+   link bits (cellLinkBits); notes the open cells (g_4b240e of them, where to
    show them in g_4b1a48), then adds every cell's view and the rows'
    views, and puts the party behind them. */
 /* @zoombi32 0x0044b550 */
@@ -1223,12 +1223,12 @@ void layOutGrid()
     short found;
     View *view;
 
-    fillMemory(g_4b2544, 0, 4);
-    g_4b2512 = 504;
+    fillMemory(placedSnoids, 0, 4);
+    startState = 504;
     g_4b2514 = 48;
     if (g_4b1934 == 3) {
-        g_4b2512 = randomUpTo(1) + 504;
-        if (g_4b2512 != 504)
+        startState = randomUpTo(1) + 504;
+        if (startState != 504)
             g_4b2514 = 24;
     }
     k = 0;
@@ -1244,41 +1244,41 @@ void layOutGrid()
             if (g_4b2450 > 7 && cell % 2) {
                 short c;
 
-                g_4b1aea[cell].state = g_4b2512;
-                g_4b2324[cell] = 16;
-                g_4b1aea[cell].links[4] = cell + 1;
+                hexCells[cell].state = startState;
+                cellLinkBits[cell] = 16;
+                hexCells[cell].links[4] = cell + 1;
                 for (c = cell + 1; c < cell + 4; c++) {
-                    g_4b1aea[c].state = g_4b2512;
-                    g_4b2324[c] = 18;
-                    g_4b1aea[c].links[4] = c + 1;
-                    g_4b1aea[c].links[1] = c - 1;
+                    hexCells[c].state = startState;
+                    cellLinkBits[c] = 18;
+                    hexCells[c].links[4] = c + 1;
+                    hexCells[c].links[1] = c - 1;
                 }
                 extra = 3;
             }
-            g_4b1aea[cell + extra].state = g_4b2512;
-            g_4b1aea[cell + extra + 1].state = 506;
+            hexCells[cell + extra].state = startState;
+            hexCells[cell + extra + 1].state = 506;
             g_4b240e++;
-            g_4b1a48[g_4b240e] = g_4a3fcc[cell + extra + 1];
+            g_4b1a48[g_4b240e] = cellPlaces[cell + extra + 1];
             g_4b1ab4[g_4b240e] = extra + cell + 1;
             g_4b1a48[g_4b240e].x += 24;
             g_4b1a48[g_4b240e].y -= 5;
             if (g_4b2452[k] != 501) {
-                g_4b1aea[cell + extra + 2].snoid = g_4b2452[k];
-                g_4b1aea[cell + extra + 2].state = 501;
-                g_4b1aea[cell + extra + 3].state = 506;
+                hexCells[cell + extra + 2].snoid = g_4b2452[k];
+                hexCells[cell + extra + 2].state = 501;
+                hexCells[cell + extra + 3].state = 506;
                 g_4b240e++;
-                g_4b1a48[g_4b240e] = g_4a3fcc[cell + extra + 3];
+                g_4b1a48[g_4b240e] = cellPlaces[cell + extra + 3];
                 g_4b1ab4[g_4b240e] = extra + cell + 3;
                 g_4b1a48[g_4b240e].x += 24;
                 g_4b1a48[g_4b240e].y -= 5;
-                g_4b2324[cell + extra] |= 16;
-                g_4b2324[cell + extra + 1] = 18;
-                g_4b2324[cell + extra + 2] = 18;
-                g_4b2324[cell + extra + 3] |= 2;
+                cellLinkBits[cell + extra] |= 16;
+                cellLinkBits[cell + extra + 1] = 18;
+                cellLinkBits[cell + extra + 2] = 18;
+                cellLinkBits[cell + extra + 3] |= 2;
                 k++;
             } else {
-                g_4b2324[cell + extra] |= 16;
-                g_4b2324[cell + extra + 1] |= 2;
+                cellLinkBits[cell + extra] |= 16;
+                cellLinkBits[cell + extra + 1] |= 2;
                 k++;
             }
         }
@@ -1291,80 +1291,80 @@ void layOutGrid()
         placed = 0;
         for (row = 0; row < g_4b2450; row++) {
             cell = row * step + base;
-            g_4b1aea[cell].state = g_4b2512;
-            g_4b1aea[cell + 1].state = 506;
+            hexCells[cell].state = startState;
+            hexCells[cell + 1].state = 506;
             g_4b240e++;
-            g_4b1a48[g_4b240e] = g_4a3fcc[cell + 1];
+            g_4b1a48[g_4b240e] = cellPlaces[cell + 1];
             g_4b1ab4[g_4b240e] = cell + 1;
             g_4b1a48[g_4b240e].x += 24;
             g_4b1a48[g_4b240e].y -= 5;
-            if (++placed >= g_4b2414) {
-                g_4b2324[cell] = 16;
-                g_4b2324[cell + 1] = 2;
+            if (++placed >= partySize) {
+                cellLinkBits[cell] = 16;
+                cellLinkBits[cell + 1] = 2;
                 break;
             }
             if (g_4b2452[k] && g_4b2452[k] != 501) {
-                g_4b1aea[cell + 2].snoid = g_4b2452[k];
-                g_4b1aea[cell + 2].state = 501;
-                g_4b1aea[cell + 3].state = 506;
+                hexCells[cell + 2].snoid = g_4b2452[k];
+                hexCells[cell + 2].state = 501;
+                hexCells[cell + 3].state = 506;
                 g_4b240e++;
-                g_4b1a48[g_4b240e] = g_4a3fcc[cell + 3];
+                g_4b1a48[g_4b240e] = cellPlaces[cell + 3];
                 g_4b1ab4[g_4b240e] = cell + 3;
                 g_4b1a48[g_4b240e].x += 24;
                 g_4b1a48[g_4b240e].y -= 5;
-                g_4b2324[cell] |= 16;
-                g_4b2324[cell + 1] = 18;
-                g_4b2324[cell + 2] = 18;
-                g_4b2324[cell + 3] |= 2;
+                cellLinkBits[cell] |= 16;
+                cellLinkBits[cell + 1] = 18;
+                cellLinkBits[cell + 2] = 18;
+                cellLinkBits[cell + 3] |= 2;
                 k++;
-                if (++placed >= g_4b2414)
+                if (++placed >= partySize)
                     break;
             } else if (g_4b2452[k]) {
-                g_4b1aea[cell + 2].snoid = 0;
-                g_4b1aea[cell + 2].state = 501;
-                g_4b1aea[cell + 3].state = 506;
+                hexCells[cell + 2].snoid = 0;
+                hexCells[cell + 2].state = 501;
+                hexCells[cell + 3].state = 506;
                 g_4b240e++;
-                g_4b1a48[g_4b240e] = g_4a3fcc[cell + 3];
+                g_4b1a48[g_4b240e] = cellPlaces[cell + 3];
                 g_4b1ab4[g_4b240e] = cell + 3;
                 g_4b1a48[g_4b240e].x += 24;
                 g_4b1a48[g_4b240e].y -= 5;
-                g_4b2324[cell] |= 16;
-                g_4b2324[cell + 1] = 18;
-                g_4b2324[cell + 2] = 18;
-                g_4b2324[cell + 3] |= 2;
+                cellLinkBits[cell] |= 16;
+                cellLinkBits[cell + 1] = 18;
+                cellLinkBits[cell + 2] = 18;
+                cellLinkBits[cell + 3] |= 2;
                 k++;
-                if (++placed >= g_4b2414)
+                if (++placed >= partySize)
                     break;
             }
             if (g_4b2452[k] && g_4b2452[k] != 501) {
-                g_4b1aea[cell + 4].snoid = g_4b2452[k];
-                g_4b1aea[cell + 4].state = 501;
-                g_4b1aea[cell + 5].state = 506;
+                hexCells[cell + 4].snoid = g_4b2452[k];
+                hexCells[cell + 4].state = 501;
+                hexCells[cell + 5].state = 506;
                 g_4b240e++;
-                g_4b1a48[g_4b240e] = g_4a3fcc[cell + 5];
+                g_4b1a48[g_4b240e] = cellPlaces[cell + 5];
                 g_4b1ab4[g_4b240e] = cell + 5;
                 g_4b1a48[g_4b240e].x += 24;
                 g_4b1a48[g_4b240e].y -= 5;
-                g_4b2324[cell + 3] |= 16;
-                g_4b2324[cell + 4] = 18;
-                g_4b2324[cell + 5] = 2;
+                cellLinkBits[cell + 3] |= 16;
+                cellLinkBits[cell + 4] = 18;
+                cellLinkBits[cell + 5] = 2;
                 k++;
-                if (++placed >= g_4b2414)
+                if (++placed >= partySize)
                     break;
             } else if (g_4b2452[k]) {
-                g_4b1aea[cell + 4].snoid = 0;
-                g_4b1aea[cell + 4].state = 501;
-                g_4b1aea[cell + 5].state = 506;
+                hexCells[cell + 4].snoid = 0;
+                hexCells[cell + 4].state = 501;
+                hexCells[cell + 5].state = 506;
                 g_4b240e++;
-                g_4b1a48[g_4b240e] = g_4a3fcc[cell + 5];
+                g_4b1a48[g_4b240e] = cellPlaces[cell + 5];
                 g_4b1ab4[g_4b240e] = cell + 5;
                 g_4b1a48[g_4b240e].x += 24;
                 g_4b1a48[g_4b240e].y -= 5;
-                g_4b2324[cell + 3] |= 16;
-                g_4b2324[cell + 4] = 18;
-                g_4b2324[cell + 5] = 2;
+                cellLinkBits[cell + 3] |= 16;
+                cellLinkBits[cell + 4] = 18;
+                cellLinkBits[cell + 5] = 2;
                 k++;
-                if (++placed >= g_4b2414)
+                if (++placed >= partySize)
                     break;
             }
         }
@@ -1372,26 +1372,26 @@ void layOutGrid()
         break;
     case 2:
         for (cell = 0; cell < 3; cell++) {
-            g_4b1aea[g_4a43f4[cell]].state = g_4b2512;
-            g_4b2324[g_4a43f4[cell]] = 16;
-            g_4b2324[g_4a43f4[cell] + 1] = 42;
-            g_4b2324[g_4a43f4[cell] - 8] |= 4;
-            g_4b2324[g_4a43f4[cell] + 10] |= 1;
+            hexCells[g_4a43f4[cell]].state = startState;
+            cellLinkBits[g_4a43f4[cell]] = 16;
+            cellLinkBits[g_4a43f4[cell] + 1] = 42;
+            cellLinkBits[g_4a43f4[cell] - 8] |= 4;
+            cellLinkBits[g_4a43f4[cell] + 10] |= 1;
         }
         for (cell = 0; cell < 3; cell++) {
-            g_4b1aea[g_4a43fa[cell]].state = 506;
-            g_4b2324[g_4a43fa[cell]] = 5;
-            g_4b2324[g_4a43fa[cell] - 10] |= 8;
-            g_4b2324[g_4a43fa[cell] + 8] |= 32;
+            hexCells[g_4a43fa[cell]].state = 506;
+            cellLinkBits[g_4a43fa[cell]] = 5;
+            cellLinkBits[g_4a43fa[cell] - 10] |= 8;
+            cellLinkBits[g_4a43fa[cell] + 8] |= 32;
         }
         for (cell = 0; cell < 18; cell++) {
-            g_4b1aea[g_4a43ac[cell]].state = 501;
-            g_4b1aea[g_4a43d0[cell]].state = 506;
+            hexCells[g_4a43ac[cell]].state = 501;
+            hexCells[g_4a43d0[cell]].state = 506;
         }
         for (cell = 0; cell < 12; cell++) {
-            g_4b2324[g_4a4400[cell]] |= 18;
-            g_4b2324[g_4a4400[cell] - 1] |= 16;
-            g_4b2324[g_4a4400[cell] + 1] |= 2;
+            cellLinkBits[g_4a4400[cell]] |= 18;
+            cellLinkBits[g_4a4400[cell] - 1] |= 16;
+            cellLinkBits[g_4a4400[cell] + 1] |= 2;
         }
         linkCells();
         fn_449c18();
@@ -1410,67 +1410,67 @@ void layOutGrid()
         }
         cell = fn_449f96(11, 13);
         if (cell)
-            g_4b1aea[12].snoid = cell;
+            hexCells[12].snoid = cell;
         cell = fn_449f96(29, 31);
         if (cell)
-            g_4b1aea[30].snoid = cell;
+            hexCells[30].snoid = cell;
         cell = fn_449f96(47, 49);
         if (cell)
-            g_4b1aea[48].snoid = cell;
+            hexCells[48].snoid = cell;
         cell = fn_449f96(65, 67);
         if (cell)
-            g_4b1aea[66].snoid = cell;
+            hexCells[66].snoid = cell;
         cell = fn_449f96(83, 85);
         if (cell)
-            g_4b1aea[84].snoid = cell;
+            hexCells[84].snoid = cell;
         cell = fn_449f96(101, 103);
         if (cell)
-            g_4b1aea[102].snoid = cell;
+            hexCells[102].snoid = cell;
         count = 0;
         for (cell = 0; cell < 18; cell++)
-            if (g_4b1aea[g_4a43d0[cell]].state == 507)
+            if (hexCells[g_4a43d0[cell]].state == 507)
                 count++;
-        if (count <= g_4b2414) {
-            count = g_4b2414 - count;
+        if (count <= partySize) {
+            count = partySize - count;
             do {
                 if (count) {
                     count--;
                     for (cell = 0; cell < 18; cell++)
-                        if (g_4b1aea[g_4a43d0[cell]].state != 507) {
-                            g_4b1aea[g_4a43d0[cell]].state = 507;
+                        if (hexCells[g_4a43d0[cell]].state != 507) {
+                            hexCells[g_4a43d0[cell]].state = 507;
                             break;
                         }
                 }
             } while (count);
         } else {
-            count -= g_4b2414;
+            count -= partySize;
             do {
                 found = 0;
                 for (cell = 0; cell < 6; cell++)
-                    if (g_4b1aea[g_4a43d0[cell]].state == 507 && g_4b1aea[g_4a43d0[cell] - 1].snoid == -1) {
-                        g_4b1aea[g_4a43d0[cell]].state = 501;
-                        g_4b1aea[g_4a43d0[cell]].snoid = -1;
+                    if (hexCells[g_4a43d0[cell]].state == 507 && hexCells[g_4a43d0[cell] - 1].snoid == -1) {
+                        hexCells[g_4a43d0[cell]].state = 501;
+                        hexCells[g_4a43d0[cell]].snoid = -1;
                         count--;
                         found++;
                         break;
                     }
                 if (!found)
                     for (cell = 6; cell < 12; cell++)
-                        if (g_4b1aea[g_4a43d0[cell]].state == 507
-                            && g_4b1aea[g_4a43d0[cell] + 1].snoid == -1) {
-                            g_4b1aea[g_4a43d0[cell]].state = 501;
-                            g_4b1aea[g_4a43d0[cell]].snoid = -1;
+                        if (hexCells[g_4a43d0[cell]].state == 507
+                            && hexCells[g_4a43d0[cell] + 1].snoid == -1) {
+                            hexCells[g_4a43d0[cell]].state = 501;
+                            hexCells[g_4a43d0[cell]].snoid = -1;
                             count--;
                             found++;
                             break;
                         }
                 if (!found)
                     for (cell = 12; cell < 15; cell++)
-                        if (g_4b1aea[g_4a43d0[cell]].state == 507
-                            && g_4b1aea[g_4a43d0[cell] - 10].snoid == -1
-                            && g_4b1aea[g_4a43d0[cell] + 8].snoid == -1) {
-                            g_4b1aea[g_4a43d0[cell]].state = 501;
-                            g_4b1aea[g_4a43d0[cell]].snoid = -1;
+                        if (hexCells[g_4a43d0[cell]].state == 507
+                            && hexCells[g_4a43d0[cell] - 10].snoid == -1
+                            && hexCells[g_4a43d0[cell] + 8].snoid == -1) {
+                            hexCells[g_4a43d0[cell]].state = 501;
+                            hexCells[g_4a43d0[cell]].snoid = -1;
                             count--;
                             found++;
                             break;
@@ -1480,15 +1480,15 @@ void layOutGrid()
             } while (count);
         }
         for (cell = 0; cell < 117; cell++)
-            if (g_4b1aea[cell].state == 506) {
-                g_4b1aea[cell].state = 501;
-                g_4b1aea[cell].snoid = -1;
+            if (hexCells[cell].state == 506) {
+                hexCells[cell].state = 501;
+                hexCells[cell].snoid = -1;
             }
         g_4b240e = 0;
         for (cell = 0; cell < 18; cell++)
-            if (g_4b1aea[g_4a43d0[cell]].state == 507) {
+            if (hexCells[g_4a43d0[cell]].state == 507) {
                 g_4b240e++;
-                g_4b1a48[g_4b240e] = g_4a3fcc[g_4a43d0[cell]];
+                g_4b1a48[g_4b240e] = cellPlaces[g_4a43d0[cell]];
                 g_4b1ab4[g_4b240e] = g_4a43d0[cell];
                 g_4b1a48[g_4b240e].x += 24;
                 g_4b1a48[g_4b240e].y -= 5;
@@ -1496,221 +1496,221 @@ void layOutGrid()
         break;
     case 3:
         for (cell = 0; cell < 43; cell++)
-            g_4b1aea[g_4a426c[cell]].state = 501;
+            hexCells[g_4a426c[cell]].state = 501;
         for (cell = 0; cell < 20; cell++)
-            g_4b2324[g_4a42c2[cell]] = 36;
+            cellLinkBits[g_4a42c2[cell]] = 36;
         for (cell = 0; cell < 20; cell++)
-            g_4b2324[g_4a42ea[cell]] = 9;
-        g_4b2324[54] = 16;
-        g_4b1aea[54].state = g_4b2512;
-        g_4b2324[55] = 58;
-        g_4b2324[57] = g_4b2324[59] = 63;
-        g_4b2324[56] = g_4b2324[58] = g_4b2324[60] = 18;
-        g_4b2324[38] = g_4b2324[40] = g_4b2324[42] = g_4b2324[21] = g_4b2324[74] = g_4b2324[76] = g_4b2324[78]
-            = g_4b2324[93] = g_4b2324[23] = g_4b2324[95] = 45;
-        g_4b2324[19] = g_4b2324[91] = 40;
-        g_4b2324[44] = g_4b2324[80] = 5;
-        g_4b2324[2] = g_4b2324[4] = g_4b2324[25] = g_4b2324[6] = 12;
-        g_4b2324[110] = g_4b2324[112] = g_4b2324[97] = g_4b2324[114] = 33;
-        g_4b2324[61] = 47;
-        g_4b2324[25] = 13;
-        g_4b2324[97] = 37;
+            cellLinkBits[g_4a42ea[cell]] = 9;
+        cellLinkBits[54] = 16;
+        hexCells[54].state = startState;
+        cellLinkBits[55] = 58;
+        cellLinkBits[57] = cellLinkBits[59] = 63;
+        cellLinkBits[56] = cellLinkBits[58] = cellLinkBits[60] = 18;
+        cellLinkBits[38] = cellLinkBits[40] = cellLinkBits[42] = cellLinkBits[21] = cellLinkBits[74] = cellLinkBits[76] = cellLinkBits[78]
+            = cellLinkBits[93] = cellLinkBits[23] = cellLinkBits[95] = 45;
+        cellLinkBits[19] = cellLinkBits[91] = 40;
+        cellLinkBits[44] = cellLinkBits[80] = 5;
+        cellLinkBits[2] = cellLinkBits[4] = cellLinkBits[25] = cellLinkBits[6] = 12;
+        cellLinkBits[110] = cellLinkBits[112] = cellLinkBits[97] = cellLinkBits[114] = 33;
+        cellLinkBits[61] = 47;
+        cellLinkBits[25] = 13;
+        cellLinkBits[97] = 37;
         for (cell = 0; cell < 26; cell++)
-            g_4b1aea[g_4a4238[cell]].state = 506;
+            hexCells[g_4a4238[cell]].state = 506;
         linkCells();
-        if (g_4b2414 > 5)
-            fn_44cc51(54);
+        if (partySize > 5)
+            startGrid(54);
         else {
             fn_449c18();
             for (cell = 0; cell < 117; cell++) {
-                g_4b2324[cell] = 0;
-                g_4b1aea[cell].state = 500;
+                cellLinkBits[cell] = 0;
+                hexCells[cell].state = 500;
             }
-            g_4b1aea[54].state = g_4b2512;
-            g_4b1aea[55].state = 507;
-            g_4b1aea[55].snoid = partyViews[0];
-            g_4b2324[54] = 16;
-            g_4b2324[55] = 2;
-            switch (g_4b2414) {
+            hexCells[54].state = startState;
+            hexCells[55].state = 507;
+            hexCells[55].snoid = partyViews[0];
+            cellLinkBits[54] = 16;
+            cellLinkBits[55] = 2;
+            switch (partySize) {
             case 2:
-                g_4b1aea[56].state = 501;
-                g_4b1aea[57].state = 507;
-                g_4b1aea[57].snoid = partyViews[1];
-                if (fn_44cd71(g_4b2430[0], g_4b2430[1]))
-                    g_4b1aea[56].snoid = g_4b2516 + 510;
-                g_4b2324[55] = 18;
-                g_4b2324[56] = 18;
-                g_4b2324[57] = 2;
-                g_4b2430[0] = g_4b2430[1] = -1;
+                hexCells[56].state = 501;
+                hexCells[57].state = 507;
+                hexCells[57].snoid = partyViews[1];
+                if (shareFeature(waitingSnoids[0], waitingSnoids[1]))
+                    hexCells[56].snoid = sharedFeature + 510;
+                cellLinkBits[55] = 18;
+                cellLinkBits[56] = 18;
+                cellLinkBits[57] = 2;
+                waitingSnoids[0] = waitingSnoids[1] = -1;
                 break;
             case 3:
-                g_4b1aea[56].state = 501;
-                g_4b1aea[57].state = 507;
-                g_4b1aea[57].snoid = partyViews[1];
-                g_4b1aea[58].state = 501;
-                g_4b1aea[59].state = 507;
-                g_4b1aea[59].snoid = partyViews[2];
-                if (fn_44cd71(g_4b2430[0], g_4b2430[1]))
-                    g_4b1aea[56].snoid = g_4b2516 + 510;
-                if (fn_44cd71(g_4b2430[1], g_4b2430[2]))
-                    g_4b1aea[58].snoid = g_4b2516 + 510;
-                g_4b2324[55] = 18;
-                g_4b2324[56] = 18;
-                g_4b2324[57] = 18;
-                g_4b2324[58] = 18;
-                g_4b2324[59] = 2;
-                g_4b2430[0] = g_4b2430[1] = g_4b2430[2] = -1;
+                hexCells[56].state = 501;
+                hexCells[57].state = 507;
+                hexCells[57].snoid = partyViews[1];
+                hexCells[58].state = 501;
+                hexCells[59].state = 507;
+                hexCells[59].snoid = partyViews[2];
+                if (shareFeature(waitingSnoids[0], waitingSnoids[1]))
+                    hexCells[56].snoid = sharedFeature + 510;
+                if (shareFeature(waitingSnoids[1], waitingSnoids[2]))
+                    hexCells[58].snoid = sharedFeature + 510;
+                cellLinkBits[55] = 18;
+                cellLinkBits[56] = 18;
+                cellLinkBits[57] = 18;
+                cellLinkBits[58] = 18;
+                cellLinkBits[59] = 2;
+                waitingSnoids[0] = waitingSnoids[1] = waitingSnoids[2] = -1;
                 break;
             case 4:
-                g_4b1aea[56].state = 501;
-                g_4b1aea[57].state = 507;
-                g_4b1aea[57].snoid = partyViews[1];
-                g_4b1aea[58].state = 501;
-                g_4b1aea[59].state = 507;
-                g_4b1aea[59].snoid = partyViews[2];
-                g_4b1aea[60].state = 501;
-                g_4b1aea[61].state = 507;
-                g_4b1aea[61].snoid = partyViews[3];
-                if (fn_44cd71(g_4b2430[0], g_4b2430[1]))
-                    g_4b1aea[56].snoid = g_4b2516 + 510;
-                if (fn_44cd71(g_4b2430[1], g_4b2430[2]))
-                    g_4b1aea[58].snoid = g_4b2516 + 510;
-                if (fn_44cd71(g_4b2430[2], g_4b2430[3]))
-                    g_4b1aea[60].snoid = g_4b2516 + 510;
-                g_4b2324[55] = 18;
-                g_4b2324[56] = 18;
-                g_4b2324[57] = 18;
-                g_4b2324[58] = 18;
-                g_4b2324[59] = 18;
-                g_4b2324[60] = 18;
-                g_4b2324[61] = 2;
-                g_4b2430[0] = g_4b2430[1] = -1;
-                g_4b2430[2] = g_4b2430[3] = -1;
+                hexCells[56].state = 501;
+                hexCells[57].state = 507;
+                hexCells[57].snoid = partyViews[1];
+                hexCells[58].state = 501;
+                hexCells[59].state = 507;
+                hexCells[59].snoid = partyViews[2];
+                hexCells[60].state = 501;
+                hexCells[61].state = 507;
+                hexCells[61].snoid = partyViews[3];
+                if (shareFeature(waitingSnoids[0], waitingSnoids[1]))
+                    hexCells[56].snoid = sharedFeature + 510;
+                if (shareFeature(waitingSnoids[1], waitingSnoids[2]))
+                    hexCells[58].snoid = sharedFeature + 510;
+                if (shareFeature(waitingSnoids[2], waitingSnoids[3]))
+                    hexCells[60].snoid = sharedFeature + 510;
+                cellLinkBits[55] = 18;
+                cellLinkBits[56] = 18;
+                cellLinkBits[57] = 18;
+                cellLinkBits[58] = 18;
+                cellLinkBits[59] = 18;
+                cellLinkBits[60] = 18;
+                cellLinkBits[61] = 2;
+                waitingSnoids[0] = waitingSnoids[1] = -1;
+                waitingSnoids[2] = waitingSnoids[3] = -1;
                 break;
             case 5:
-                g_4b1aea[56].state = 501;
-                g_4b1aea[57].state = 507;
-                g_4b1aea[57].snoid = partyViews[1];
-                g_4b1aea[58].state = 501;
-                g_4b1aea[59].state = 507;
-                g_4b1aea[59].snoid = partyViews[2];
-                g_4b1aea[60].state = 501;
-                g_4b1aea[61].state = 507;
-                g_4b1aea[61].snoid = partyViews[3];
-                g_4b1aea[52].state = 501;
-                g_4b1aea[44].state = 507;
-                g_4b1aea[44].snoid = partyViews[4];
-                if (fn_44cd71(g_4b2430[0], g_4b2430[1]))
-                    g_4b1aea[56].snoid = g_4b2516 + 510;
-                if (fn_44cd71(g_4b2430[1], g_4b2430[2]))
-                    g_4b1aea[58].snoid = g_4b2516 + 510;
-                if (fn_44cd71(g_4b2430[2], g_4b2430[3]))
-                    g_4b1aea[60].snoid = g_4b2516 + 510;
-                if (fn_44cd71(g_4b2430[3], g_4b2430[4]))
-                    g_4b1aea[52].snoid = g_4b2516 + 510;
-                g_4b2324[55] = 18;
-                g_4b2324[56] = 18;
-                g_4b2324[57] = 18;
-                g_4b2324[58] = 18;
-                g_4b2324[59] = 18;
-                g_4b2324[60] = 18;
-                g_4b2324[61] = 34;
-                g_4b2324[52] = 36;
-                g_4b2324[44] = 4;
-                g_4b2430[0] = g_4b2430[1] = -1;
-                g_4b2430[2] = g_4b2430[3] = -1;
-                g_4b2430[4] = -1;
+                hexCells[56].state = 501;
+                hexCells[57].state = 507;
+                hexCells[57].snoid = partyViews[1];
+                hexCells[58].state = 501;
+                hexCells[59].state = 507;
+                hexCells[59].snoid = partyViews[2];
+                hexCells[60].state = 501;
+                hexCells[61].state = 507;
+                hexCells[61].snoid = partyViews[3];
+                hexCells[52].state = 501;
+                hexCells[44].state = 507;
+                hexCells[44].snoid = partyViews[4];
+                if (shareFeature(waitingSnoids[0], waitingSnoids[1]))
+                    hexCells[56].snoid = sharedFeature + 510;
+                if (shareFeature(waitingSnoids[1], waitingSnoids[2]))
+                    hexCells[58].snoid = sharedFeature + 510;
+                if (shareFeature(waitingSnoids[2], waitingSnoids[3]))
+                    hexCells[60].snoid = sharedFeature + 510;
+                if (shareFeature(waitingSnoids[3], waitingSnoids[4]))
+                    hexCells[52].snoid = sharedFeature + 510;
+                cellLinkBits[55] = 18;
+                cellLinkBits[56] = 18;
+                cellLinkBits[57] = 18;
+                cellLinkBits[58] = 18;
+                cellLinkBits[59] = 18;
+                cellLinkBits[60] = 18;
+                cellLinkBits[61] = 34;
+                cellLinkBits[52] = 36;
+                cellLinkBits[44] = 4;
+                waitingSnoids[0] = waitingSnoids[1] = -1;
+                waitingSnoids[2] = waitingSnoids[3] = -1;
+                waitingSnoids[4] = -1;
                 break;
             }
         }
-        if (fn_44d102())
-            fn_44d5f5();
-        fn_44d127();
-        if (g_4b2414 > 5) {
-            fn_44e21a(83, 84, 93);
-            fn_44e21a(29, 30, 21);
-            fn_44e21a(102, 103, 112);
-            fn_44e21a(12, 13, 4);
-            fn_44e21a(85, 86, 95);
-            fn_44e21a(31, 32, 23);
-            fn_44e21a(68, 69, 78);
-            fn_44e21a(50, 51, 42);
-            fn_44e21a(66, 67, 76);
-            fn_44e21a(104, 105, 114);
-            fn_44e21a(14, 15, 6);
-            fn_44e21a(34, 52, 44);
-            fn_44e21a(70, 88, 80);
+        if (anyLeftToPlace())
+            fillFreeCells();
+        settleCells();
+        if (partySize > 5) {
+            clearLine(83, 84, 93);
+            clearLine(29, 30, 21);
+            clearLine(102, 103, 112);
+            clearLine(12, 13, 4);
+            clearLine(85, 86, 95);
+            clearLine(31, 32, 23);
+            clearLine(68, 69, 78);
+            clearLine(50, 51, 42);
+            clearLine(66, 67, 76);
+            clearLine(104, 105, 114);
+            clearLine(14, 15, 6);
+            clearLine(34, 52, 44);
+            clearLine(70, 88, 80);
         }
-        if (g_4b1aea[60].state == 501 && g_4b1aea[61].state == 501 && g_4b2414 > 5
-            && g_4b1aea[69].state == 500 && g_4b1aea[51].state == 500 && g_4b1aea[52].state == 500
-            && g_4b1aea[70].state == 500) {
-            fn_44e314(60);
-            fn_44e314(61);
+        if (hexCells[60].state == 501 && hexCells[61].state == 501 && partySize > 5
+            && hexCells[69].state == 500 && hexCells[51].state == 500 && hexCells[52].state == 500
+            && hexCells[70].state == 500) {
+            unlinkCell(60);
+            unlinkCell(61);
         }
-        if (g_4b2414 <= 2) {
-            fillMemory(g_4b2324, 0, 234);
-            fillMemory(g_4b1aea, 0, 2106);
+        if (partySize <= 2) {
+            fillMemory(cellLinkBits, 0, 234);
+            fillMemory(hexCells, 0, 2106);
             for (cell = 0; cell < 117; cell++)
-                g_4b1aea[cell].state = 500;
-            g_4b1aea[54].state = g_4b2512;
-            g_4b2324[54] = 16;
-            g_4b1aea[54].state = g_4b2512;
-            g_4b1aea[55].snoid = partyViews[0];
-            g_4b2324[55] = 2;
-            g_4b1aea[55].state = 507;
-            g_4b1aea[54].links[4] = 55;
-            g_4b1aea[55].links[1] = 54;
-            if (g_4b2414 == 2) {
-                g_4b1aea[57].snoid = partyViews[1];
-                g_4b1aea[55].links[4] = 56;
-                g_4b1aea[56].links[4] = 57;
-                g_4b1aea[56].links[1] = 55;
-                g_4b1aea[57].links[1] = 56;
-                g_4b2324[55] &= 16;
-                g_4b2324[56] = 18;
-                g_4b2324[57] = 2;
-                g_4b1aea[57].state = 507;
-                g_4b1aea[57].snoid = partyViews[1];
-                g_4b1aea[56].state = 501;
-                g_4b2430[0] = -1;
-                g_4b2430[1] = 1;
-                fn_44d3b8(55, 4);
+                hexCells[cell].state = 500;
+            hexCells[54].state = startState;
+            cellLinkBits[54] = 16;
+            hexCells[54].state = startState;
+            hexCells[55].snoid = partyViews[0];
+            cellLinkBits[55] = 2;
+            hexCells[55].state = 507;
+            hexCells[54].links[4] = 55;
+            hexCells[55].links[1] = 54;
+            if (partySize == 2) {
+                hexCells[57].snoid = partyViews[1];
+                hexCells[55].links[4] = 56;
+                hexCells[56].links[4] = 57;
+                hexCells[56].links[1] = 55;
+                hexCells[57].links[1] = 56;
+                cellLinkBits[55] &= 16;
+                cellLinkBits[56] = 18;
+                cellLinkBits[57] = 2;
+                hexCells[57].state = 507;
+                hexCells[57].snoid = partyViews[1];
+                hexCells[56].state = 501;
+                waitingSnoids[0] = -1;
+                waitingSnoids[1] = 1;
+                placeAlike(55, 4);
             }
         }
         count = 0;
         for (cell = 0; cell < 26; cell++) {
             row = g_4a4238[cell];
-            if (g_4b1aea[row].state == 507) {
+            if (hexCells[row].state == 507) {
                 g_4b240e++;
-                g_4b1a48[g_4b240e] = g_4a3fcc[row];
+                g_4b1a48[g_4b240e] = cellPlaces[row];
                 g_4b1ab4[g_4b240e] = row;
                 g_4b1a48[g_4b240e].x += 24;
                 g_4b1a48[g_4b240e].y -= 5;
-                g_4b2544[count].cell = row;
-                g_4b2544[count].snoid = g_4b1aea[row].snoid;
+                placedSnoids[count].cell = row;
+                placedSnoids[count].snoid = hexCells[row].snoid;
                 count++;
             }
         }
         break;
     }
     for (cell = 0; cell < 117; cell++) {
-        if (g_4b1aea[cell].state == 507)
-            g_4b1aea[cell].state = 506;
-        if (g_4b1aea[cell].state == 500)
-            g_4b1aea[cell].view = addView(0x988000, drawCels, runViewScript, 7001, 6, &g_4a3fcc[cell], 0, 0);
-        else if (g_4b1aea[cell].state == g_4b2512) {
-            g_4b1aea[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &g_4a3fcc[cell], 0, 0);
-            view = findView(g_4b1aea[cell].view);
+        if (hexCells[cell].state == 507)
+            hexCells[cell].state = 506;
+        if (hexCells[cell].state == 500)
+            hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7001, 6, &cellPlaces[cell], 0, 0);
+        else if (hexCells[cell].state == startState) {
+            hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &cellPlaces[cell], 0, 0);
+            view = findView(hexCells[cell].view);
             view->placed = fn_4489ce;
             g_4b241a++;
             g_4b241c[g_4b241a - 1] = cell;
-            if (g_4b2512 == 505)
+            if (startState == 505)
                 g_4b241c[g_4b241a - 1] += 20;
             if (g_4b241a == 1)
-                g_4b2518 = groupViews(g_4b1aea[cell].view, g_4b1aea[cell].view, 0, 0, 0, 0);
+                g_4b2518 = groupViews(hexCells[cell].view, hexCells[cell].view, 0, 0, 0, 0);
         } else {
-            g_4b1aea[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &g_4a3fcc[cell], 0, 0);
-            view = findView(g_4b1aea[cell].view);
+            hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &cellPlaces[cell], 0, 0);
+            view = findView(hexCells[cell].view);
             view->placed = fn_4489ce;
         }
     }
@@ -1718,7 +1718,7 @@ void layOutGrid()
         g_4b1936[cell] = addView(0x188000, drawCels, runViewScript, cell + 7003, 6, 0, 0, 0);
     view = findView(partyViews[0]);
     g_4b2526 = (short)view->flags;
-    for (cell = g_4b2414 - 1; cell >= 0; cell--) {
+    for (cell = partySize - 1; cell >= 0; cell--) {
         view = findView(partyViews[cell]);
         moveView(partyViews[cell], 0, g_4b1936[8]);
         view->flags |= 0x4008000;
@@ -1727,11 +1727,11 @@ void layOutGrid()
 
 /* Starts the hex grid at the cell after `cell`: puts the first of the
    party on it (the next one alike to the one before it), then grows the
-   grid from there (fn_44ce56) and from the 13 cells of g_4a4418 while
-   fn_44d102 allows. `cell` is reused for the search and fn_44ce56's
+   grid from there (growGrid) and from the 13 cells of g_4a4418 while
+   anyLeftToPlace allows. `cell` is reused for the search and growGrid's
    result, as in the original. */
 /* @zoombi32 0x0044cc51 */
-void fn_44cc51(short cell)
+void startGrid(short cell)
 {
     short order[13] = {55, 40, 76, 23, 95, 42, 78, 38, 74, 21, 93, 19, 91};
     short i = 0;
@@ -1739,35 +1739,35 @@ void fn_44cc51(short cell)
 
     fn_449c18();
     at = ++cell;
-    g_4b1aea[at].state = 507;
-    if (g_4b2414 == 1) {
-        g_4b1aea[at].snoid = partyViews[0];
-        g_4b2544[0].snoid = partyViews[0];
-        g_4b2430[0] = -1;
+    hexCells[at].state = 507;
+    if (partySize == 1) {
+        hexCells[at].snoid = partyViews[0];
+        placedSnoids[0].snoid = partyViews[0];
+        waitingSnoids[0] = -1;
         return;
     }
-    for (cell = 0; cell < g_4b2414; cell++)
-        if (fn_44cd71(cell, cell + 1)) {
-            g_4b1aea[at].snoid = partyViews[g_4b2430[cell + 1]];
-            g_4b2430[cell + 1] = -1;
+    for (cell = 0; cell < partySize; cell++)
+        if (shareFeature(cell, cell + 1)) {
+            hexCells[at].snoid = partyViews[waitingSnoids[cell + 1]];
+            waitingSnoids[cell + 1] = -1;
             break;
         }
-    cell = fn_44ce56(at);
+    cell = growGrid(at);
     if (!cell) {
         at += 2;
-        cell = fn_44ce56(at);
+        cell = growGrid(at);
         if (!cell) {
             at += 2;
-            fn_44ce56(at);
+            growGrid(at);
         }
     } else if (cell && cell != -1)
-        fn_44ce56(cell);
+        growGrid(cell);
     do {
         if (++i >= 13)
             break;
         at = order[i];
-        fn_44ce56(at);
-    } while (fn_44d102());
+        growGrid(at);
+    } while (anyLeftToPlace());
 }
 
 /* Grows the grid from `cell`: when it isn't taken (507), first from a
@@ -1779,94 +1779,94 @@ void fn_44cc51(short cell)
 /* Not exact: the original keeps `n` in edi (and far5 and far3 on the
    stack); here n stays in eax and far5 gets edi. */
 /* @zoombi32 0x0044ce56 */
-short fn_44ce56(short cell)
+short growGrid(short cell)
 {
     short n;
     short far5; /* two steps away in direction 5 */
     short far3; /* and in direction 3 */
     short target;
 
-    if (!fn_44d102())
+    if (!anyLeftToPlace())
         return -1;
-    if (g_4b1aea[cell].state != 507) {
-        short a = g_4b1aea[cell].links[5];
+    if (hexCells[cell].state != 507) {
+        short a = hexCells[cell].links[5];
         short b;
 
-        a = g_4b1aea[a].links[5];
-        b = g_4b1aea[cell].links[3];
-        b = g_4b1aea[b].links[3];
+        a = hexCells[a].links[5];
+        b = hexCells[cell].links[3];
+        b = hexCells[b].links[3];
 
-        if (a != -1 && g_4b1aea[a].state == 507) {
-            n = fn_44d3b8(a, 2);
+        if (a != -1 && hexCells[a].state == 507) {
+            n = placeAlike(a, 2);
             if (n == -1)
                 return -1;
-        } else if (b != -1 && g_4b1aea[b].state == 507) {
-            n = fn_44d3b8(b, 0);
+        } else if (b != -1 && hexCells[b].state == 507) {
+            n = placeAlike(b, 0);
             if (n == -1)
                 return -1;
         } else
             return -1;
     }
     {
-        short next = g_4b1aea[cell].links[5];
+        short next = hexCells[cell].links[5];
 
         far5 = -1;
         if (next != -1)
-            far5 = g_4b1aea[next].links[5];
+            far5 = hexCells[next].links[5];
     }
     {
-        short next = g_4b1aea[cell].links[3];
+        short next = hexCells[cell].links[3];
 
         far3 = -1;
         if (next != -1)
-            far3 = g_4b1aea[next].links[3];
+            far3 = hexCells[next].links[3];
     }
     target = 0;
     if (cell == 55 || cell == 59 || cell == 57)
         target = cell + 2;
     if (target) {
-        n = fn_44d3b8(cell, 4);
+        n = placeAlike(cell, 4);
         if (n == -1) {
             g_4b2524 = -1;
             return -1;
         }
     }
     target = cell + 2;
-    if (far5 != -1 && g_4b1aea[far5].state == 506) {
-        if (!fn_44d102())
+    if (far5 != -1 && hexCells[far5].state == 506) {
+        if (!anyLeftToPlace())
             return -1;
-        n = fn_44d3b8(cell, 5);
+        n = placeAlike(cell, 5);
         if (n == -1) {
-            g_4b1aea[far5].state = 501;
+            hexCells[far5].state = 501;
             return g_4b2524 = target;
         }
     }
-    if (g_4b1aea[target].state == 507) {
+    if (hexCells[target].state == 507) {
         n = fn_449f96(target, far5);
         if (n)
-            g_4b1aea[g_4b1aea[far5].links[3]].snoid = n;
+            hexCells[hexCells[far5].links[3]].snoid = n;
     }
-    if (far3 != -1 && g_4b1aea[far3].state == 506) {
-        if (!fn_44d102())
+    if (far3 != -1 && hexCells[far3].state == 506) {
+        if (!anyLeftToPlace())
             return -1;
-        n = fn_44d3b8(cell, 3);
+        n = placeAlike(cell, 3);
         if (n == -1) {
-            g_4b1aea[far3].state = 501;
+            hexCells[far3].state = 501;
             return g_4b2524 = target;
         }
-        if (g_4b1aea[target].state == 507) {
+        if (hexCells[target].state == 507) {
             n = fn_449f96(target, far3);
             if (n)
-                g_4b1aea[g_4b1aea[far3].links[5]].snoid = n;
+                hexCells[hexCells[far3].links[5]].snoid = n;
         }
     }
     return 0;
 }
 
-/* Whether two of the Zoombinis (g_4b2430) share a feature; g_4b2516 is
+/* Whether two of the Zoombinis (waitingSnoids) share a feature; sharedFeature is
    set to the first they share (0-3). */
 /* @zoombi32 0x0044cd71 */
-short fn_44cd71(short first, short second)
+short shareFeature(short first, short second)
 {
     short hair;
     short eyes;
@@ -1878,7 +1878,7 @@ short fn_44cd71(short first, short second)
     short feet2;
 
     {
-        Snoid *snoid = (Snoid *)&findView(partyViews[g_4b2430[first]])->body;
+        Snoid *snoid = (Snoid *)&findView(partyViews[waitingSnoids[first]])->body;
 
         hair = snoid->features[0];
         eyes = snoid->features[1];
@@ -1886,7 +1886,7 @@ short fn_44cd71(short first, short second)
         feet = snoid->features[3];
     }
     {
-        Snoid *snoid = (Snoid *)&findView(partyViews[g_4b2430[second]])->body;
+        Snoid *snoid = (Snoid *)&findView(partyViews[waitingSnoids[second]])->body;
 
         hair2 = snoid->features[0];
         eyes2 = snoid->features[1];
@@ -1894,19 +1894,19 @@ short fn_44cd71(short first, short second)
         feet2 = snoid->features[3];
     }
     if (hair == hair2) {
-        g_4b2516 = 0;
+        sharedFeature = 0;
         return 1;
     }
     if (eyes == eyes2) {
-        g_4b2516 = 1;
+        sharedFeature = 1;
         return 1;
     }
     if (nose == nose2) {
-        g_4b2516 = 2;
+        sharedFeature = 2;
         return 1;
     }
     if (feet2 == feet) {
-        g_4b2516 = 3;
+        sharedFeature = 3;
         return 1;
     }
     return 0;
@@ -1916,7 +1916,7 @@ short fn_44cd71(short first, short second)
    into g_4b263c, and from g_4b2630 3 on, the next one's after it; returns
    how many views there were. */
 /* @zoombi32 0x00451f4e */
-short fn_451f4e()
+short takeRandomFeatures()
 {
     short i;
     short count;
@@ -1965,7 +1965,7 @@ short fn_451f4e()
 /* The cheat's message: "You have entered the psychedelic ZB Zone!", in a
    box at g_4a447a. */
 /* @zoombi32 0x0044dcdc */
-void fn_44dcdc()
+void showZoneMessage()
 {
     ShortRect rect = g_4a447a;
     Color saved;
@@ -1983,7 +1983,7 @@ void fn_44dcdc()
 /* Draws button 1 (image 5 or 6) or 2 (2 or 3, or 1 or 2 without
    g_4b2792), lit or not, and with `show` shows it. */
 /* @zoombi32 0x0044f066 */
-void fn_44f066(short which, short lit, short show)
+void drawSmokeButton(short which, short lit, short show)
 {
     short image = 0;
     short handle;
@@ -2020,7 +2020,7 @@ void fn_44f066(short which, short lit, short show)
    and 7-4 (in that order, so later slots win), and returns 2 if the two
    then differ, else 0. */
 /* @zoombi32 0x004513ac */
-short fn_4513ac()
+short applySlotFeatures()
 {
     char *first;
     char *second;
@@ -2036,14 +2036,14 @@ short fn_4513ac()
         snoid->unknownF4 = 4;
         first = snoid->features;
         for (i = 0; i < 4; i++) {
-            if (g_4b26cc[i][0])
-                first[0] = g_4b26cc[i][0];
-            if (g_4b26cc[i][1])
-                first[1] = g_4b26cc[i][1];
-            if (g_4b26cc[i][2])
-                first[2] = g_4b26cc[i][2];
-            if (g_4b26cc[i][3])
-                first[3] = g_4b26cc[i][3];
+            if (featureSlots[i][0])
+                first[0] = featureSlots[i][0];
+            if (featureSlots[i][1])
+                first[1] = featureSlots[i][1];
+            if (featureSlots[i][2])
+                first[2] = featureSlots[i][2];
+            if (featureSlots[i][3])
+                first[3] = featureSlots[i][3];
         }
     }
     view = findView(g_4b26ac[1]);
@@ -2054,14 +2054,14 @@ short fn_4513ac()
         snoid->unknownF4 = 4;
         second = snoid->features;
         for (i = 7; i > 3; i--) {
-            if (g_4b26cc[i][0])
-                second[0] = g_4b26cc[i][0];
-            if (g_4b26cc[i][1])
-                second[1] = g_4b26cc[i][1];
-            if (g_4b26cc[i][2])
-                second[2] = g_4b26cc[i][2];
-            if (g_4b26cc[i][3])
-                second[3] = g_4b26cc[i][3];
+            if (featureSlots[i][0])
+                second[0] = featureSlots[i][0];
+            if (featureSlots[i][1])
+                second[1] = featureSlots[i][1];
+            if (featureSlots[i][2])
+                second[2] = featureSlots[i][2];
+            if (featureSlots[i][3])
+                second[3] = featureSlots[i][3];
         }
     }
     result = 0;
@@ -2079,7 +2079,7 @@ short fn_4513ac()
 /* Starts the scene's next move: view g_4b25a4 or g_4b25a6's script, and
    the pair of views g_4b258c and g_4b258e (scripts from g_4b2714), grouped. */
 /* @zoombi32 0x004514f6 */
-void fn_4514f6()
+void startNextMove()
 {
     View *view;
     View *first;
@@ -2103,12 +2103,12 @@ void fn_4514f6()
     if (first) {
         setViewScript(first, g_4b2714[g_4b273c], 1);
         loadViewSounds(first->id, 1);
-        first->notify = fn_45174e;
+        first->notify = smokeViewNotify;
     }
     second = findView(g_4b258e);
     if (second) {
         setViewScript(second, g_4b2714[g_4b273c + 1], 1);
-        second->notify = fn_45174e;
+        second->notify = smokeViewNotify;
     }
     view = findView(g_4b26b2);
     if (view && second)
@@ -2121,7 +2121,7 @@ void fn_4514f6()
    places (g_4a44cc), except that one of the first `count`, at random, gets
    the features set in g_4b263c. */
 /* @zoombi32 0x004520ec */
-void fn_4520ec(short count)
+void dealRandomFeatures(short count)
 {
     short j;
     char *features;
@@ -2175,7 +2175,7 @@ void fn_4520ec(short count)
    an earlier slot's, if its is unset), wrapping 5 round to 1, and records
    it in the next slot. */
 /* @zoombi32 0x00450e87 */
-void fn_450e87()
+void advanceLeftFeatures()
 {
     short i;
     View *view;
@@ -2189,26 +2189,26 @@ void fn_450e87()
             if (snoid->unknownF5) {
                 switch (i) {
                 case 0:
-                    snoid->features[snoid->unknownF5 - 1] = g_4b26cc[0][snoid->unknownF5 - 1] + 1;
+                    snoid->features[snoid->unknownF5 - 1] = featureSlots[0][snoid->unknownF5 - 1] + 1;
                     break;
                 case 1:
-                    if (g_4b26cc[1][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[1][snoid->unknownF5 - 1] + 1;
+                    if (featureSlots[1][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = featureSlots[1][snoid->unknownF5 - 1] + 1;
                     else
-                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[0][snoid->unknownF5 - 1] + 1;
+                        snoid->features[snoid->unknownF5 - 1] = featureSlots[0][snoid->unknownF5 - 1] + 1;
                     break;
                 case 2:
-                    if (g_4b26cc[2][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[2][snoid->unknownF5 - 1] + 1;
-                    else if (g_4b26cc[1][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[1][snoid->unknownF5 - 1] + 1;
+                    if (featureSlots[2][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = featureSlots[2][snoid->unknownF5 - 1] + 1;
+                    else if (featureSlots[1][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = featureSlots[1][snoid->unknownF5 - 1] + 1;
                     else
-                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[0][snoid->unknownF5 - 1] + 1;
+                        snoid->features[snoid->unknownF5 - 1] = featureSlots[0][snoid->unknownF5 - 1] + 1;
                     break;
                 }
                 if (snoid->features[snoid->unknownF5 - 1] > 5)
                     snoid->features[snoid->unknownF5 - 1] = 1;
-                g_4b26cc[i + 1][snoid->unknownF5 - 1] = snoid->features[snoid->unknownF5 - 1];
+                featureSlots[i + 1][snoid->unknownF5 - 1] = snoid->features[snoid->unknownF5 - 1];
                 view->unknown1e = snoid->features[snoid->unknownF5 - 1];
                 snoid->unknownF8 = 0;
             }
@@ -2219,7 +2219,7 @@ void fn_450e87()
 /* The same from the other side: the views g_4b2776[6-4], from slots 7-5,
    recording in slots 6-4. */
 /* @zoombi32 0x00451020 */
-void fn_451020()
+void advanceRightFeatures()
 {
     short i;
     View *view;
@@ -2233,26 +2233,26 @@ void fn_451020()
             if (snoid->unknownF5) {
                 switch (i) {
                 case 3:
-                    if (g_4b26cc[5][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[5][snoid->unknownF5 - 1] + 1;
-                    else if (g_4b26cc[6][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[6][snoid->unknownF5 - 1] + 1;
+                    if (featureSlots[5][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = featureSlots[5][snoid->unknownF5 - 1] + 1;
+                    else if (featureSlots[6][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = featureSlots[6][snoid->unknownF5 - 1] + 1;
                     else
-                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[7][snoid->unknownF5 - 1] + 1;
+                        snoid->features[snoid->unknownF5 - 1] = featureSlots[7][snoid->unknownF5 - 1] + 1;
                     break;
                 case 4:
-                    if (g_4b26cc[6][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[6][snoid->unknownF5 - 1] + 1;
+                    if (featureSlots[6][snoid->unknownF5 - 1])
+                        snoid->features[snoid->unknownF5 - 1] = featureSlots[6][snoid->unknownF5 - 1] + 1;
                     else
-                        snoid->features[snoid->unknownF5 - 1] = g_4b26cc[7][snoid->unknownF5 - 1] + 1;
+                        snoid->features[snoid->unknownF5 - 1] = featureSlots[7][snoid->unknownF5 - 1] + 1;
                     break;
                 case 5:
-                    snoid->features[snoid->unknownF5 - 1] = g_4b26cc[7][snoid->unknownF5 - 1] + 1;
+                    snoid->features[snoid->unknownF5 - 1] = featureSlots[7][snoid->unknownF5 - 1] + 1;
                     break;
                 }
                 if (snoid->features[snoid->unknownF5 - 1] > 5)
                     snoid->features[snoid->unknownF5 - 1] = 1;
-                g_4b26cc[i + 1][snoid->unknownF5 - 1] = snoid->features[snoid->unknownF5 - 1];
+                featureSlots[i + 1][snoid->unknownF5 - 1] = snoid->features[snoid->unknownF5 - 1];
                 view->unknown1e = snoid->features[snoid->unknownF5 - 1];
                 snoid->unknownF8 = 0;
             }
@@ -2261,12 +2261,12 @@ void fn_451020()
 }
 
 /* The scene's keys (with g_4b8803, the cheat keys; else only 0x16f): L shows
-   the level, 0x172 and 0x173 turn cheating (g_4b2798) on and off, 0x16f
+   the level, 0x172 and 0x173 turn cheating (cheatMode) on and off, 0x16f
    calls fn_466b93. Returns whether the key was used. */
 /* Not exact: the original keeps `key` in esi and `show` in ebx (saving esi
    around the arrays' initial copies); this swaps them. */
 /* @zoombi32 0x00450a58 */
-short fn_450a58(unsigned short key)
+short scene17Key(unsigned short key)
 {
     Color saved;
     char digits[52] = "01234";
@@ -2290,12 +2290,12 @@ short fn_450a58(unsigned short key)
     case 0x172:
         strcpy(text, " Cheat on ");
         show = 1;
-        g_4b2798 = 1;
+        cheatMode = 1;
         key = 1;
         break;
     case 0x173:
         show = 0;
-        g_4b2798 = 0;
+        cheatMode = 0;
         key = 1;
         break;
     case 0x16f:
@@ -2317,7 +2317,7 @@ short fn_450a58(unsigned short key)
 }
 
 /* Looks, two cells from `cell` in `direction`, for a waiting Zoombini
-   (g_4b2430) that shares a feature with the one on `cell` (starting from a
+   (waitingSnoids) that shares a feature with the one on `cell` (starting from a
    random feature); places it on the far cell (state 507) with the middle
    one showing the feature (state 501, view 510-513), and returns its
    index. -2: no such cells; -1: none shares a feature. (It reuses `cell`
@@ -2325,7 +2325,7 @@ short fn_450a58(unsigned short key)
 /* `direction` is volatile only to leave it on the stack, as the original
    does (BCC would otherwise give it edi until `differ` needs it). */
 /* @zoombi32 0x0044d3b8 */
-short fn_44d3b8(short cell, volatile short direction)
+short placeAlike(short cell, volatile short direction)
 {
     short feature;
     short differ;
@@ -2342,14 +2342,14 @@ short fn_44d3b8(short cell, volatile short direction)
     short tries;
 
     feature = randomUpTo(3);
-    next = g_4b1aea[cell].links[direction];
+    next = hexCells[cell].links[direction];
     if (next < 0)
         return -2;
-    further = g_4b1aea[next].links[direction];
+    further = hexCells[next].links[direction];
     if (further < 0)
         return -2;
     {
-        Snoid *snoid = (Snoid *)&findView(g_4b1aea[cell].snoid)->body;
+        Snoid *snoid = (Snoid *)&findView(hexCells[cell].snoid)->body;
 
         hair = snoid->features[0];
         eyes = snoid->features[1];
@@ -2357,9 +2357,9 @@ short fn_44d3b8(short cell, volatile short direction)
         feet = snoid->features[3];
     }
     differ = 1;
-    for (cell = 0; cell < g_4b2414; cell++)
-        if (g_4b2430[cell] != -1) {
-            Snoid *snoid = (Snoid *)&findView(partyViews[g_4b2430[cell]])->body;
+    for (cell = 0; cell < partySize; cell++)
+        if (waitingSnoids[cell] != -1) {
+            Snoid *snoid = (Snoid *)&findView(partyViews[waitingSnoids[cell]])->body;
 
             hair2 = snoid->features[0];
             eyes2 = snoid->features[1];
@@ -2383,11 +2383,11 @@ short fn_44d3b8(short cell, volatile short direction)
                 }
             } while (differ && tries);
             if (!differ) {
-                g_4b1aea[further].state = 507;
-                g_4b1aea[further].snoid = partyViews[g_4b2430[cell]];
-                g_4b1aea[next].state = 501;
-                g_4b1aea[next].snoid = feature + 510;
-                g_4b2430[cell] = -1;
+                hexCells[further].state = 507;
+                hexCells[further].snoid = partyViews[waitingSnoids[cell]];
+                hexCells[next].state = 501;
+                hexCells[next].snoid = feature + 510;
+                waitingSnoids[cell] = -1;
                 return cell;
             }
         }
@@ -2395,12 +2395,12 @@ short fn_44d3b8(short cell, volatile short direction)
 }
 
 /* The memory statistics line (with g_4a48e4): free, purgeable and the
-   least free seen (g_4a48e0), in thousands; with `clear`, unloads the
+   least free seen (leastFreeMemory), in thousands; with `clear`, unloads the
    sounds and blanks the line instead. */
 /* Not exact: the original gives `port` esi and `freeThousands` ebx (shared
    with `available`); this gives them the other way round. */
 /* @zoombi32 0x00455023 */
-void fn_455023(short clear)
+void drawMemoryStats(short clear)
 {
     unsigned long freeUnits;
     unsigned long freeThousands;
@@ -2420,48 +2420,48 @@ void fn_455023(short clear)
         port = getPort();
         setPort(workPort);
         text[0] = 0;
-        drawText(Rect(g_4a498e), 0x11, text, 0xffff);
+        drawText(Rect(memoryStatsRect), 0x11, text, 0xffff);
         setPort(port);
     } else if (g_4a48e4) {
         available = availableVirtualMemory();
         purgeable = purgeMemory(0, 0);
-        if (available < g_4a48e0)
-            g_4a48e0 = available;
+        if (available < leastFreeMemory)
+            leastFreeMemory = available;
         freeUnits = available % 1000;
         freeThousands = available / 1000;
         purgeableUnits = purgeable % 1000;
         purgeableThousands = purgeable / 1000;
-        leastUnits = g_4a48e0 % 1000;
-        leastThousands = g_4a48e0 / 1000;
+        leastUnits = leastFreeMemory % 1000;
+        leastThousands = leastFreeMemory / 1000;
         port = getPort();
         setPort(workPort);
         font = getFont();
         setFont(fonts[1]);
         sprintf(text, "Free:%d,%03d  Purg:%d,%03d  Min:%d,%03d", (short)freeThousands, (short)freeUnits,
                 (short)purgeableThousands, (short)purgeableUnits, (short)leastThousands, (short)leastUnits);
-        fillPortRect(Rect(g_4a498e), Color(0xff), 0);
+        fillPortRect(Rect(memoryStatsRect), Color(0xff), 0);
         saved = setForeColor(Color(0));
-        drawText(Rect(g_4a498e), 0x11, text, 0xffff);
+        drawText(Rect(memoryStatsRect), 0x11, text, 0xffff);
         setForeColor(saved);
         setFont(font);
         setPort(port);
-        showRect(&g_4a498e);
+        showRect(&memoryStatsRect);
     }
 }
 
 /* A view's drawing: buttons 1 and 2, unlit. */
 /* @zoombi32 0x0044f163 */
-void fn_44f163(View *)
+void drawSmokeButtons(View *)
 {
-    fn_44f066(1, 0, 0);
-    fn_44f066(2, 0, 0);
+    drawSmokeButton(1, 0, 0);
+    drawSmokeButton(2, 0, 0);
 }
 
 /* Lets the movie play (cmgr_09; MCIdle?); once it has stopped (flag 0x40
    clear; mcInfoIsPlaying?), closes it and returns 1. 0: still playing;
    -1: no movie. */
 /* @zoombi32 0x00455229 */
-short fn_455229()
+short idleMovie()
 {
     long flags;
 
@@ -2471,32 +2471,32 @@ short fn_455229()
     cmgr_09(g_4b2adc);
     if (flags & 0x40)
         return 0;
-    fn_455273(0);
+    stopMovie(0);
     return 1;
 }
 
-/* Sets the Zoombinis' features from the slots (fn_4513ac; g_4b2740 if the
+/* Sets the Zoombinis' features from the slots (applySlotFeatures; g_4b2740 if the
    two differ) and starts the views g_4b2590 and g_4b2592 (11018, 11019),
    grouped. */
 /* @zoombi32 0x00451315 */
-void fn_451315()
+void setPairFeatures()
 {
     View *first;
     View *second;
 
-    g_4b273c = fn_4513ac();
+    g_4b273c = applySlotFeatures();
     g_4b2740 = 0;
     if (g_4b273c)
         g_4b2740 = 1;
     first = findView(g_4b2590);
     if (first) {
         setViewScript(first, 11018, 1);
-        first->notify = fn_45174e;
+        first->notify = smokeViewNotify;
     }
     second = findView(g_4b2592);
     if (second) {
         setViewScript(second, 11019, 1);
-        second->notify = fn_45174e;
+        second->notify = smokeViewNotify;
     }
     if (first && second)
         groupViews(first->id, second->id, 0, 0, 0, 0);
@@ -2505,25 +2505,25 @@ void fn_451315()
 /* Fills the free cells of a set of 20 with waiting Zoombinis, while any
    are left. */
 /* Its loop runs to 22, past the end of the cells, and each Zoombini's view
-   is read after its entry in g_4b2430 is cleared (partyViews[-1]); both as
+   is read after its entry in waitingSnoids is cleared (partyViews[-1]); both as
    in the original. */
 /* @zoombi32 0x0044d5f5 */
-void fn_44d5f5()
+void fillFreeCells()
 {
     short cells[20] = {55, 57, 59, 61, 38, 74, 40, 76, 42, 78, 44, 80, 21, 93, 23, 95, 25, 97, 4, 112};
     short i;
     short j;
 
     for (i = 0; i < 22; i++)
-        if (g_4b1aea[cells[i]].state != 507) {
-            g_4b1aea[cells[i]].state = 507;
-            for (j = 0; j < g_4b2414; j++)
-                if (g_4b2430[j] != -1) {
-                    g_4b2430[j] = -1;
-                    g_4b1aea[cells[i]].snoid = partyViews[g_4b2430[j]];
+        if (hexCells[cells[i]].state != 507) {
+            hexCells[cells[i]].state = 507;
+            for (j = 0; j < partySize; j++)
+                if (waitingSnoids[j] != -1) {
+                    waitingSnoids[j] = -1;
+                    hexCells[cells[i]].snoid = partyViews[waitingSnoids[j]];
                     break;
                 }
-            if (!fn_44d102())
+            if (!anyLeftToPlace())
                 break;
         }
 }
@@ -2534,26 +2534,26 @@ void fn_44d5f5()
    second end if both ends hold Zoombinis or only the second does, the first
    if only the first does. */
 /* @zoombi32 0x0044e21a */
-void fn_44e21a(short first, short second, short middle)
+void clearLine(short first, short second, short middle)
 {
-    if (g_4b1aea[first].snoid < 510 && g_4b1aea[second].snoid < 510 && g_4b1aea[middle].state == 501) {
-        fn_44e314(first);
-        fn_44e314(second);
-        fn_44e314(middle);
-    } else if (g_4b1aea[first].snoid < 510 && g_4b1aea[second].snoid < 510 && g_4b1aea[middle].state == 507) {
-        fn_44e314(second);
-    } else if (g_4b1aea[first].snoid < 510 && g_4b1aea[second].snoid >= 510 && g_4b1aea[middle].state == 507) {
-        fn_44e314(first);
-    } else if (g_4b1aea[first].snoid >= 510 && g_4b1aea[second].snoid < 510 && g_4b1aea[middle].state == 507) {
-        fn_44e314(second);
+    if (hexCells[first].snoid < 510 && hexCells[second].snoid < 510 && hexCells[middle].state == 501) {
+        unlinkCell(first);
+        unlinkCell(second);
+        unlinkCell(middle);
+    } else if (hexCells[first].snoid < 510 && hexCells[second].snoid < 510 && hexCells[middle].state == 507) {
+        unlinkCell(second);
+    } else if (hexCells[first].snoid < 510 && hexCells[second].snoid >= 510 && hexCells[middle].state == 507) {
+        unlinkCell(first);
+    } else if (hexCells[first].snoid >= 510 && hexCells[second].snoid < 510 && hexCells[middle].state == 507) {
+        unlinkCell(second);
     }
 }
 
 /* Plays a QuickTime movie from a file, centred in the window: loads it
-   (fn_4552fd), makes or reuses the movie controller (g_4b2adc; qtim_38 is
+   (loadMovie), makes or reuses the movie controller (g_4b2adc; qtim_38 is
    NewMovieController?), and starts it. Returns 0, or 1 if it failed. */
 /* @zoombi32 0x0045537f */
-short fn_45537f(const char *path)
+short playMovie(const char *path)
 {
     POINT where;
     Point offset;
@@ -2562,7 +2562,7 @@ short fn_45537f(const char *path)
     short i;
 
     failed = 1;
-    g_4b2ad8 = fn_4552fd(path);
+    g_4b2ad8 = loadMovie(path);
     if (g_4b2ad8) {
         g_4b2ae4 = getPort();
         setPort(screenPort);
@@ -2596,10 +2596,10 @@ short fn_45537f(const char *path)
 
 /* Recomputes the cells' link bits: a cell in state 502, 504, 505 or 508
    clears its bit for each neighbour in state 501, 506 or 507; one in state
-   501, 506 or 507 for each neighbour in state 502, 508 or g_4b2512. Then
+   501, 506 or 507 for each neighbour in state 502, 508 or startState. Then
    starts script 7000 on the views of the cells in state 501, 506 or 507. */
 /* @zoombi32 0x0044ddc9 */
-void fn_44ddc9()
+void updateCellLinks()
 {
     short i;
     View *view;
@@ -2607,38 +2607,38 @@ void fn_44ddc9()
     short state;
 
     for (i = 0; i < 117; i++)
-        switch (g_4b1aea[i].state) {
+        switch (hexCells[i].state) {
         case 502:
         case 504:
         case 505:
         case 508:
             for (direction = 0; direction <= 5; direction++) {
-                state = g_4b1aea[g_4b1aea[i].links[direction]].state;
+                state = hexCells[hexCells[i].links[direction]].state;
                 if (state == 501 || state == 506 || state == 507)
                     switch (direction) {
                     case 0:
-                        g_4b2324[i] |= 1;
-                        g_4b2324[i] ^= 1;
+                        cellLinkBits[i] |= 1;
+                        cellLinkBits[i] ^= 1;
                         break;
                     case 1:
-                        g_4b2324[i] |= 2;
-                        g_4b2324[i] ^= 2;
+                        cellLinkBits[i] |= 2;
+                        cellLinkBits[i] ^= 2;
                         break;
                     case 2:
-                        g_4b2324[i] |= 4;
-                        g_4b2324[i] ^= 4;
+                        cellLinkBits[i] |= 4;
+                        cellLinkBits[i] ^= 4;
                         break;
                     case 3:
-                        g_4b2324[i] |= 8;
-                        g_4b2324[i] ^= 8;
+                        cellLinkBits[i] |= 8;
+                        cellLinkBits[i] ^= 8;
                         break;
                     case 4:
-                        g_4b2324[i] |= 0x10;
-                        g_4b2324[i] ^= 0x10;
+                        cellLinkBits[i] |= 0x10;
+                        cellLinkBits[i] ^= 0x10;
                         break;
                     case 5:
-                        g_4b2324[i] |= 0x20;
-                        g_4b2324[i] ^= 0x20;
+                        cellLinkBits[i] |= 0x20;
+                        cellLinkBits[i] ^= 0x20;
                         break;
                     }
             }
@@ -2647,40 +2647,40 @@ void fn_44ddc9()
         case 506:
         case 507:
             for (direction = 0; direction <= 5; direction++) {
-                state = g_4b1aea[g_4b1aea[i].links[direction]].state;
-                if (state == 502 || state == 508 || state == g_4b2512)
+                state = hexCells[hexCells[i].links[direction]].state;
+                if (state == 502 || state == 508 || state == startState)
                     switch (direction) {
                     case 0:
-                        g_4b2324[i] |= 1;
-                        g_4b2324[i] ^= 1;
+                        cellLinkBits[i] |= 1;
+                        cellLinkBits[i] ^= 1;
                         break;
                     case 1:
-                        g_4b2324[i] |= 2;
-                        g_4b2324[i] ^= 2;
+                        cellLinkBits[i] |= 2;
+                        cellLinkBits[i] ^= 2;
                         break;
                     case 2:
-                        g_4b2324[i] |= 4;
-                        g_4b2324[i] ^= 4;
+                        cellLinkBits[i] |= 4;
+                        cellLinkBits[i] ^= 4;
                         break;
                     case 3:
-                        g_4b2324[i] |= 8;
-                        g_4b2324[i] ^= 8;
+                        cellLinkBits[i] |= 8;
+                        cellLinkBits[i] ^= 8;
                         break;
                     case 4:
-                        g_4b2324[i] |= 0x10;
-                        g_4b2324[i] ^= 0x10;
+                        cellLinkBits[i] |= 0x10;
+                        cellLinkBits[i] ^= 0x10;
                         break;
                     case 5:
-                        g_4b2324[i] |= 0x20;
-                        g_4b2324[i] ^= 0x20;
+                        cellLinkBits[i] |= 0x20;
+                        cellLinkBits[i] ^= 0x20;
                         break;
                     }
             }
             break;
         }
     for (i = 0; i < 117; i++)
-        if (g_4b1aea[i].state == 501 || g_4b1aea[i].state == 506 || g_4b1aea[i].state == 507) {
-            view = findView(g_4b1aea[i].view);
+        if (hexCells[i].state == 501 || hexCells[i].state == 506 || hexCells[i].state == 507) {
+            view = findView(hexCells[i].view);
             setViewScript(view, 7000, 1);
             view->placed = fn_4489ce;
         }
@@ -2688,104 +2688,104 @@ void fn_44ddc9()
 }
 
 /* Turns cells in state 506 back to 501, lists the placed Zoombinis (state
-   507) in g_4b2544 (each one's view lands in the next entry, as in the
+   507) in placedSnoids (each one's view lands in the next entry, as in the
    original), and for each of a fixed set of cells (or pairs) found in state
    501, resets it and the cells next to it and cuts the neighbours' links
    to them. */
 /* @zoombi32 0x0044d127 */
-void fn_44d127()
+void settleCells()
 {
     short count = 0;
     short i;
 
     for (i = 0; i < 117; i++) {
-        if (g_4b1aea[i].state == 506)
-            g_4b1aea[i].state = 501;
-        if (g_4b1aea[i].state == 507) {
-            g_4b2544[count].cell = i;
+        if (hexCells[i].state == 506)
+            hexCells[i].state = 501;
+        if (hexCells[i].state == 507) {
+            placedSnoids[count].cell = i;
             count++;
-            g_4b2544[count].snoid = g_4b1aea[i].snoid;
+            placedSnoids[count].snoid = hexCells[i].snoid;
         }
     }
-    if (g_4b1aea[2].state == 501 && g_4b1aea[19].state == 501) {
-        fn_44d5ad(2);
-        fn_44d5ad(19);
-        fn_44d5ad(10);
-        fn_44d5ad(11);
-        fn_44d5ad(28);
-        fn_44dca0(38, 0, 1);
-        fn_44dca0(21, 0, 1);
+    if (hexCells[2].state == 501 && hexCells[19].state == 501) {
+        resetCell(2);
+        resetCell(19);
+        resetCell(10);
+        resetCell(11);
+        resetCell(28);
+        cutLink(38, 0, 1);
+        cutLink(21, 0, 1);
     }
-    if (g_4b1aea[91].state == 501 && g_4b1aea[110].state == 501) {
-        fn_44d5ad(91);
-        fn_44d5ad(110);
-        fn_44d5ad(100);
-        fn_44d5ad(82);
-        fn_44d5ad(101);
-        fn_44dca0(74, 2, 4);
-        fn_44dca0(93, 2, 4);
+    if (hexCells[91].state == 501 && hexCells[110].state == 501) {
+        resetCell(91);
+        resetCell(110);
+        resetCell(100);
+        resetCell(82);
+        resetCell(101);
+        cutLink(74, 2, 4);
+        cutLink(93, 2, 4);
     }
-    if (g_4b1aea[112].state == 501) {
-        fn_44d5ad(112);
-        fn_44d5ad(102);
-        fn_44d5ad(103);
-        fn_44dca0(93, 3, 8);
-        fn_44dca0(95, 2, 4);
+    if (hexCells[112].state == 501) {
+        resetCell(112);
+        resetCell(102);
+        resetCell(103);
+        cutLink(93, 3, 8);
+        cutLink(95, 2, 4);
     }
-    if (g_4b1aea[114].state == 501) {
-        fn_44d5ad(114);
-        fn_44d5ad(104);
-        fn_44d5ad(105);
-        fn_44dca0(95, 3, 8);
-        fn_44dca0(97, 2, 4);
+    if (hexCells[114].state == 501) {
+        resetCell(114);
+        resetCell(104);
+        resetCell(105);
+        cutLink(95, 3, 8);
+        cutLink(97, 2, 4);
     }
-    if (g_4b1aea[4].state == 501) {
-        fn_44d5ad(4);
-        fn_44d5ad(12);
-        fn_44d5ad(13);
-        fn_44dca0(21, 5, 0x20);
-        fn_44dca0(23, 0, 1);
+    if (hexCells[4].state == 501) {
+        resetCell(4);
+        resetCell(12);
+        resetCell(13);
+        cutLink(21, 5, 0x20);
+        cutLink(23, 0, 1);
     }
-    if (g_4b1aea[6].state == 501) {
-        fn_44d5ad(6);
-        fn_44d5ad(14);
-        fn_44d5ad(15);
-        fn_44dca0(23, 5, 0x20);
-        fn_44dca0(25, 0, 1);
+    if (hexCells[6].state == 501) {
+        resetCell(6);
+        resetCell(14);
+        resetCell(15);
+        cutLink(23, 5, 0x20);
+        cutLink(25, 0, 1);
     }
-    if (g_4b1aea[97].state == 501 && g_4b1aea[80].state == 501) {
-        fn_44d5ad(97);
-        fn_44d5ad(80);
-        fn_44d5ad(88);
-        fn_44d5ad(87);
-        fn_44d5ad(70);
-        fn_44d5ad(105);
-        fn_44dca0(78, 3, 8);
-        fn_44dca0(61, 3, 8);
-        fn_44dca0(114, 5, 0x20);
+    if (hexCells[97].state == 501 && hexCells[80].state == 501) {
+        resetCell(97);
+        resetCell(80);
+        resetCell(88);
+        resetCell(87);
+        resetCell(70);
+        resetCell(105);
+        cutLink(78, 3, 8);
+        cutLink(61, 3, 8);
+        cutLink(114, 5, 0x20);
     }
-    if (g_4b1aea[25].state == 501 && g_4b1aea[44].state == 501) {
-        fn_44d5ad(25);
-        fn_44d5ad(44);
-        fn_44d5ad(34);
-        fn_44d5ad(15);
-        fn_44d5ad(33);
-        fn_44d5ad(52);
-        fn_44dca0(42, 5, 0x20);
-        fn_44dca0(61, 5, 0x20);
-        fn_44dca0(6, 3, 8);
+    if (hexCells[25].state == 501 && hexCells[44].state == 501) {
+        resetCell(25);
+        resetCell(44);
+        resetCell(34);
+        resetCell(15);
+        resetCell(33);
+        resetCell(52);
+        cutLink(42, 5, 0x20);
+        cutLink(61, 5, 0x20);
+        cutLink(6, 3, 8);
     }
 }
 
 /*
  * Drags a Zoombini (from `where`), snapping it to the spot it's over: with
  * g_4b2630 below 3, the one spot g_4a4534 (4) unless g_4b2704; otherwise
- * one of the three spots in row g_4b26b4 of g_4a4584 (0-2) or row g_4b26b6
+ * one of the three spots in row leftRow of g_4a4584 (0-2) or row rightRow
  * of g_4a45cc (3-5). Returns the spot it was over when released (-1:
  * none).
  */
 /* @zoombi32 0x00453e8c */
-short fn_453e8c(View *view, Point where)
+short dragSnoidToSpot(View *view, Point where)
 {
     View *dragged;
     Snoid *snoid;
@@ -2814,9 +2814,9 @@ short fn_453e8c(View *view, Point where)
     dx = 0;
     dy = 0;
     if (g_4b2630 == 3 || g_4b2630 == 4)
-        fn_4506f0();
+        startRowViews();
     else if (!g_4b26b0)
-        fn_450796();
+        startView11076();
     while (keepDragging()) {
         getCursorPosition(&current);
         spot = -1;
@@ -2827,20 +2827,20 @@ short fn_453e8c(View *view, Point where)
                 current.y = g_4a4528.y;
             }
         } else {
-            if (g_4b26b4 < 3)
+            if (leftRow < 3)
                 for (i = 0; i < 3; i++)
-                    if (ptInRect(&g_4a4584[g_4b26b4][i], current)) {
+                    if (ptInRect(&g_4a4584[leftRow][i], current)) {
                         spot = i;
-                        current.x = g_4a4584[g_4b26b4][i].left + 25;
-                        current.y = g_4a4584[g_4b26b4][i].top + 31;
+                        current.x = g_4a4584[leftRow][i].left + 25;
+                        current.y = g_4a4584[leftRow][i].top + 31;
                         i = 3;
                     }
-            if (spot < 0 && g_4b26b6 < 3)
+            if (spot < 0 && rightRow < 3)
                 for (i = 0; i < 3; i++)
-                    if (ptInRect(&g_4a45cc[g_4b26b6][i], current)) {
+                    if (ptInRect(&g_4a45cc[rightRow][i], current)) {
                         spot = i + 3;
-                        current.x = g_4a45cc[g_4b26b6][i].left + 25;
-                        current.y = g_4a45cc[g_4b26b6][i].top + 31;
+                        current.x = g_4a45cc[rightRow][i].left + 25;
+                        current.y = g_4a45cc[rightRow][i].top + 31;
                         i = 3;
                     }
         }
@@ -2867,11 +2867,11 @@ short fn_453e8c(View *view, Point where)
 }
 
 /* Places the party on the 16 starting cells (g_4a445a: the first
-   g_4b2414 of them taken, state 507, by the Zoombinis in order; the rest
+   partySize of them taken, state 507, by the Zoombinis in order; the rest
    state 501), then marks the cells between each placed Zoombini and its
-   neighbours with a feature they share (fn_44d974). */
+   neighbours with a feature they share (markSharedFeature). */
 /* @zoombi32 0x0044d6a3 */
-void fn_44d6a3()
+void placePartyOnGrid()
 {
     short cells[16] = {19, 25, 91, 97, 57, 59, 40, 76, 78, 38, 74, 42, 21, 95, 23, 93};
     short i;
@@ -2879,75 +2879,75 @@ void fn_44d6a3()
 
     fn_449c18();
     for (i = 0; i < 16; i++)
-        g_4b1aea[cells[i]].state = 501;
-    for (i = 0; i < g_4b2414; i++) {
-        g_4b1aea[cells[i]].state = 507;
-        g_4b1aea[cells[i]].snoid = i;
+        hexCells[cells[i]].state = 501;
+    for (i = 0; i < partySize; i++) {
+        hexCells[cells[i]].state = 507;
+        hexCells[cells[i]].snoid = i;
     }
-    for (i = 0; i < g_4b2414; i++)
-        if (g_4b1aea[cells[i]].state == 507) {
-            index = g_4b1aea[cells[i]].snoid;
+    for (i = 0; i < partySize; i++)
+        if (hexCells[cells[i]].state == 507) {
+            index = hexCells[cells[i]].snoid;
             switch (cells[i]) {
             case 19:
-                fn_44d974(38, index, 28);
-                fn_44d974(21, index, 20);
+                markSharedFeature(38, index, 28);
+                markSharedFeature(21, index, 20);
                 break;
             case 21:
-                fn_44d974(38, index, 29);
-                fn_44d974(40, index, 30);
-                fn_44d974(23, index, 22);
+                markSharedFeature(38, index, 29);
+                markSharedFeature(40, index, 30);
+                markSharedFeature(23, index, 22);
                 break;
             case 23:
-                fn_44d974(40, index, 31);
-                fn_44d974(42, index, 32);
-                fn_44d974(25, index, 24);
+                markSharedFeature(40, index, 31);
+                markSharedFeature(42, index, 32);
+                markSharedFeature(25, index, 24);
                 break;
             case 25:
-                fn_44d974(42, index, 33);
+                markSharedFeature(42, index, 33);
                 break;
             case 38:
-                fn_44d974(40, index, 39);
-                fn_44d974(57, index, 47);
+                markSharedFeature(40, index, 39);
+                markSharedFeature(57, index, 47);
                 break;
             case 40:
-                fn_44d974(57, index, 48);
-                fn_44d974(59, index, 49);
-                fn_44d974(42, index, 41);
+                markSharedFeature(57, index, 48);
+                markSharedFeature(59, index, 49);
+                markSharedFeature(42, index, 41);
                 break;
             case 42:
-                fn_44d974(59, index, 50);
+                markSharedFeature(59, index, 50);
                 break;
             case 57:
-                fn_44d974(74, index, 65);
-                fn_44d974(76, index, 66);
-                fn_44d974(59, index, 58);
+                markSharedFeature(74, index, 65);
+                markSharedFeature(76, index, 66);
+                markSharedFeature(59, index, 58);
                 break;
             case 59:
-                fn_44d974(76, index, 67);
-                fn_44d974(78, index, 68);
+                markSharedFeature(76, index, 67);
+                markSharedFeature(78, index, 68);
                 break;
             case 74:
-                fn_44d974(91, index, 82);
-                fn_44d974(93, index, 83);
-                fn_44d974(76, index, 75);
+                markSharedFeature(91, index, 82);
+                markSharedFeature(93, index, 83);
+                markSharedFeature(76, index, 75);
                 break;
             case 76:
-                fn_44d974(93, index, 84);
-                fn_44d974(95, index, 85);
-                fn_44d974(78, index, 77);
+                markSharedFeature(93, index, 84);
+                markSharedFeature(95, index, 85);
+                markSharedFeature(78, index, 77);
                 break;
             case 78:
-                fn_44d974(95, index, 86);
-                fn_44d974(97, index, 87);
+                markSharedFeature(95, index, 86);
+                markSharedFeature(97, index, 87);
                 break;
             case 91:
-                fn_44d974(93, index, 92);
+                markSharedFeature(93, index, 92);
                 break;
             case 93:
-                fn_44d974(95, index, 94);
+                markSharedFeature(95, index, 94);
                 break;
             case 95:
-                fn_44d974(97, index, 96);
+                markSharedFeature(97, index, 96);
                 break;
             case 97:
                 break;
@@ -2959,55 +2959,55 @@ void fn_44d6a3()
    shares with the one on `neighbour` (if that one is placed, state 507),
    checking the features from a random one on. */
 /* @zoombi32 0x0044d974 */
-void fn_44d974(short neighbour, short index, short cell)
+void markSharedFeature(short neighbour, short index, short cell)
 {
     long other;
 
-    if (g_4b1aea[neighbour].state == 507)
+    if (hexCells[neighbour].state == 507)
         switch (randomUpTo(3)) {
         case 0:
-            other = g_4b1aea[neighbour].snoid;
+            other = hexCells[neighbour].snoid;
             if (partyHair[index] == partyHair[other])
-                g_4b1aea[cell].snoid = 510;
+                hexCells[cell].snoid = 510;
             else if (partyEyes[index] == partyEyes[other])
-                g_4b1aea[cell].snoid = 511;
+                hexCells[cell].snoid = 511;
             else if (partyNoses[index] == partyNoses[other])
-                g_4b1aea[cell].snoid = 512;
+                hexCells[cell].snoid = 512;
             else if (partyFeet[index] == partyFeet[other])
-                g_4b1aea[cell].snoid = 513;
+                hexCells[cell].snoid = 513;
             break;
         case 1:
-            other = g_4b1aea[neighbour].snoid;
+            other = hexCells[neighbour].snoid;
             if (partyEyes[index] == partyEyes[other])
-                g_4b1aea[cell].snoid = 511;
+                hexCells[cell].snoid = 511;
             else if (partyNoses[index] == partyNoses[other])
-                g_4b1aea[cell].snoid = 512;
+                hexCells[cell].snoid = 512;
             else if (partyFeet[index] == partyFeet[other])
-                g_4b1aea[cell].snoid = 513;
+                hexCells[cell].snoid = 513;
             else if (partyHair[index] == partyHair[other])
-                g_4b1aea[cell].snoid = 510;
+                hexCells[cell].snoid = 510;
             break;
         case 2:
-            other = g_4b1aea[neighbour].snoid;
+            other = hexCells[neighbour].snoid;
             if (partyNoses[index] == partyNoses[other])
-                g_4b1aea[cell].snoid = 512;
+                hexCells[cell].snoid = 512;
             else if (partyFeet[index] == partyFeet[other])
-                g_4b1aea[cell].snoid = 513;
+                hexCells[cell].snoid = 513;
             else if (partyHair[index] == partyHair[other])
-                g_4b1aea[cell].snoid = 510;
+                hexCells[cell].snoid = 510;
             else if (partyEyes[index] == partyEyes[other])
-                g_4b1aea[cell].snoid = 511;
+                hexCells[cell].snoid = 511;
             break;
         case 3:
-            other = g_4b1aea[neighbour].snoid;
+            other = hexCells[neighbour].snoid;
             if (partyFeet[index] == partyFeet[other])
-                g_4b1aea[cell].snoid = 513;
+                hexCells[cell].snoid = 513;
             else if (partyHair[index] == partyHair[other])
-                g_4b1aea[cell].snoid = 510;
+                hexCells[cell].snoid = 510;
             else if (partyEyes[index] == partyEyes[other])
-                g_4b1aea[cell].snoid = 511;
+                hexCells[cell].snoid = 511;
             else if (partyNoses[index] == partyNoses[other])
-                g_4b1aea[cell].snoid = 512;
+                hexCells[cell].snoid = 512;
             break;
         }
 }
@@ -3016,11 +3016,11 @@ void fn_44d974(short neighbour, short index, short cell)
  * Lays out a Zoombini's cels in this scene (unless it's in state 2, which
  * it's put in unless it's in 3 or 5): a part for its pose (unknownF1), then
  * its face (layer unknownC2[unknownF1], if all four features are set) and
- * its features on top, placed by the hot spots in g_4b2658/g_4b265c; then
- * its bounds from the images in g_4b2634.
+ * its features on top, placed by the hot spots in smokeHotSpotsX/smokeHotSpotsY; then
+ * its bounds from the images in smokeImages.
  */
 /* @zoombi32 0x00454374 */
-void fn_454374(Snoid *snoid)
+void layOutSmokeSnoid(Snoid *snoid)
 {
     short face;
     short dy;
@@ -3078,43 +3078,43 @@ void fn_454374(Snoid *snoid)
     }
     if (part) {
         *cel++ = part;
-        *cel++ = where.x - g_4b2658[part];
-        *cel++ = where.y - g_4b265c[part];
+        *cel++ = where.x - smokeHotSpotsX[part];
+        *cel++ = where.y - smokeHotSpotsY[part];
     }
     if (face) {
         *cel++ = base;
-        *cel++ = where.x - g_4b2658[base];
-        *cel++ = where.y - g_4b265c[base] - dy;
+        *cel++ = where.x - smokeHotSpotsX[base];
+        *cel++ = where.y - smokeHotSpotsY[base] - dy;
     }
     if (snoid->features[3]) {
         part = snoid->features[3] + base + 15;
         *cel++ = part;
-        *cel++ = where.x - g_4b2658[part];
-        *cel++ = where.y - g_4b265c[part] - dy;
+        *cel++ = where.x - smokeHotSpotsX[part];
+        *cel++ = where.y - smokeHotSpotsY[part] - dy;
     }
     if (snoid->features[1]) {
         part = snoid->features[1] + base + 5;
         *cel++ = part;
-        *cel++ = where.x - g_4b2658[part];
-        *cel++ = where.y - g_4b265c[part] - dy;
+        *cel++ = where.x - smokeHotSpotsX[part];
+        *cel++ = where.y - smokeHotSpotsY[part] - dy;
     }
     if (snoid->features[2]) {
         part = snoid->features[2] + base + 10;
         *cel++ = part;
-        *cel++ = where.x - g_4b2658[part];
-        *cel++ = where.y - g_4b265c[part] - dy;
+        *cel++ = where.x - smokeHotSpotsX[part];
+        *cel++ = where.y - smokeHotSpotsY[part] - dy;
     }
     if (snoid->features[0]) {
         part = snoid->features[0] + base;
         *cel++ = part;
-        *cel++ = where.x - g_4b2658[part];
-        *cel++ = where.y - g_4b265c[part] - dy;
+        *cel++ = where.x - smokeHotSpotsX[part];
+        *cel++ = where.y - smokeHotSpotsY[part] - dy;
     }
     *cel++ = 0;
     *cel++ = 0;
     *cel = 0;
     cel = (short *)snoid->body.cels;
-    bank = g_4b2634;
+    bank = smokeImages;
     while (*cel && *cel <= bank->count) {
         unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
 
@@ -3136,7 +3136,7 @@ void fn_454374(Snoid *snoid)
  * the Zoombini at g_4a4514[n].
  */
 /* @zoombi32 0x00452258 */
-void fn_452258(Snoid *snoid, short n)
+void giveSlotFeatures(Snoid *snoid, short n)
 {
     short *order = g_4b27ac;
     short left;
@@ -3172,7 +3172,7 @@ void fn_452258(Snoid *snoid, short n)
             snoid->unknownF1 = 0;
             if (g_4b279c[order[g_4b27c6]] != g_4b27b6[g_4b27c2]) {
                 snoid->features[order[g_4b27c6]] = g_4b27b6[g_4b27c2];
-                g_4b26cc[n + 1][order[g_4b27c6]] = g_4b27b6[g_4b27c2];
+                featureSlots[n + 1][order[g_4b27c6]] = g_4b27b6[g_4b27c2];
                 g_4b279c[order[g_4b27c6]] = g_4b27b6[g_4b27c2];
                 left--;
             }
@@ -3183,13 +3183,13 @@ void fn_452258(Snoid *snoid, short n)
             if (g_4b279c[k]) {
                 if ((r = randomBetween(0, 100)) > 65 || start == left && i == 3) {
                     snoid->features[k] = g_4b279c[k];
-                    g_4b26cc[n + 2][k] = g_4b279c[k];
+                    featureSlots[n + 2][k] = g_4b279c[k];
                     g_4b27a4[k] = g_4b279c[k];
                     left--;
                 }
             } else {
                 snoid->features[k] = g_4b263c[k];
-                g_4b26cc[n + 2][k] = g_4b263c[k];
+                featureSlots[n + 2][k] = g_4b263c[k];
                 g_4b27a4[k] = g_4b263c[k];
                 left--;
             }
@@ -3200,13 +3200,13 @@ void fn_452258(Snoid *snoid, short n)
             if (g_4b279c[k]) {
                 if ((r = randomBetween(0, 100)) > 65 || start == left && i == 3) {
                     snoid->features[k] = g_4b279c[k];
-                    g_4b26cc[n + 2][k] = g_4b279c[k];
+                    featureSlots[n + 2][k] = g_4b279c[k];
                     g_4b27a4[k] = g_4b279c[k];
                     left--;
                 }
             } else {
                 snoid->features[k] = g_4b263c[k];
-                g_4b26cc[n + 2][k] = g_4b263c[k];
+                featureSlots[n + 2][k] = g_4b263c[k];
                 g_4b27a4[k] = g_4b263c[k];
                 left--;
             }
@@ -3229,14 +3229,14 @@ void fn_452258(Snoid *snoid, short n)
         g_4b263c[3] = g_4b279c[3];
     if (n == 3) {
         for (j = 5; j > 3; j--) {
-            if (g_4b26cc[j][0])
-                g_4b27a4[0] = g_4b26cc[j][0];
-            if (g_4b26cc[j][1])
-                g_4b27a4[1] = g_4b26cc[j][1];
-            if (g_4b26cc[j][2])
-                g_4b27a4[2] = g_4b26cc[j][2];
-            if (g_4b26cc[j][3])
-                g_4b27a4[3] = g_4b26cc[j][3];
+            if (featureSlots[j][0])
+                g_4b27a4[0] = featureSlots[j][0];
+            if (featureSlots[j][1])
+                g_4b27a4[1] = featureSlots[j][1];
+            if (featureSlots[j][2])
+                g_4b27a4[2] = featureSlots[j][2];
+            if (featureSlots[j][3])
+                g_4b27a4[3] = featureSlots[j][3];
         }
         if (g_4b263c[0] == g_4b27a4[0])
             g_4b263c[0] = 0;
@@ -3253,7 +3253,7 @@ void fn_452258(Snoid *snoid, short n)
 
 /* Deals features to the four Zoombinis in the views g_4b269a. */
 /* @zoombi32 0x0045222d */
-void fn_45222d()
+void dealFeatures()
 {
     short i;
     View *view;
@@ -3261,22 +3261,22 @@ void fn_45222d()
     for (i = 0; i < 4; i++) {
         view = findView(g_4b269a[i]);
         if (view)
-            fn_452258((Snoid *)&view->body, i);
+            giveSlotFeatures((Snoid *)&view->body, i);
     }
 }
 
-/* Adds a view for a Zoombini of this scene (drawn by fn_4541bf, updated by
-   fn_454228) from `snoid`; returns its id. */
+/* Adds a view for a Zoombini of this scene (drawn by drawSmokeSnoid, updated by
+   updateSmokeSnoid) from `snoid`; returns its id. */
 /* @zoombi32 0x00454165 */
-short fn_454165(Snoid *snoid)
+short addSmokeSnoidView(Snoid *snoid)
 {
     short id;
     View *view;
 
-    id = addView(1, fn_4541bf, fn_454228, 0, 6, snoid, 0, 0);
+    id = addView(1, drawSmokeSnoid, updateSmokeSnoid, 0, 6, snoid, 0, 0);
     view = findView(id);
     if (view) {
-        fn_454374(snoid);
+        layOutSmokeSnoid(snoid);
         view->unknown1e = 0;
         view->nextUpdate = 0;
         view->body.frameOffset = 0;
@@ -3290,7 +3290,7 @@ short fn_454165(Snoid *snoid)
    else flashes it (every 30) between unknown1e and nothing; lays the
    Zoombini out again when it changes. */
 /* @zoombi32 0x00454228 */
-void fn_454228(View *view, short region)
+void updateSmokeSnoid(View *view, short region)
 {
     short changed = 0;
     Snoid *snoid;
@@ -3326,7 +3326,7 @@ void fn_454228(View *view, short region)
         }
         if (changed) {
             unionRgnRect(region, &view->body.bounds);
-            fn_454374(snoid);
+            layOutSmokeSnoid(snoid);
             view->changed = 1;
         }
     }
@@ -3339,7 +3339,7 @@ void fn_454228(View *view, short region)
  * Zoombini round.
  */
 /* @zoombi32 0x0045174e */
-void fn_45174e(View *view, short event)
+void smokeViewNotify(View *view, short event)
 {
     View *other;
     Snoid *first;
@@ -3362,14 +3362,14 @@ void fn_45174e(View *view, short event)
         g_4b2644 = 1;
         break;
     case 2:
-        fn_451315();
+        setPairFeatures();
         break;
     case 3:
         if (g_4b2630 > 0 && g_4b2630 < 4)
             g_4b274a = 1;
         break;
     case 4:
-        fn_4514f6();
+        startNextMove();
         break;
     case 10:
     case 11:
@@ -3380,7 +3380,7 @@ void fn_45174e(View *view, short event)
             if (other) {
                 Snoid *snoid = (Snoid *)&other->body;
 
-                fn_45170a(g_4b26b2, g_4b271c[g_4b2740] + snoid->features[3], view->body.group, fn_45174e, 1);
+                startSmokeSnoidScript(g_4b26b2, g_4b271c[g_4b2740] + snoid->features[3], view->body.group, smokeViewNotify, 1);
             }
         }
         break;
@@ -3416,7 +3416,7 @@ void fn_45174e(View *view, short event)
             if (g_4b273c)
                 g_4b26b2 = 0;
         }
-        fn_45162e(view->body.group);
+        startNextCrossing(view->body.group);
         break;
     case 30:
         if (g_4b2604[g_4b2734] && g_4b2734 < g_4b262e) {
@@ -3427,7 +3427,7 @@ void fn_45174e(View *view, short event)
                 Snoid *snoid = (Snoid *)&other->body;
 
                 *(Point *)&snoid->body.x = g_4a44b0;
-                fn_45170a(g_4b2604[g_4b2734], g_4b272a, view->body.group, fn_45174e, 0);
+                startSmokeSnoidScript(g_4b2604[g_4b2734], g_4b272a, view->body.group, smokeViewNotify, 0);
                 moveView(g_4b2604[g_4b2734], 1, view->id);
             }
         }
@@ -3438,7 +3438,7 @@ void fn_45174e(View *view, short event)
             moveView(g_4b25a6, 1, g_4b25a4);
             other->flags = 0x4108000;
             setViewScript(other, g_4b2724[1], 1);
-            other->notify = fn_45174e;
+            other->notify = smokeViewNotify;
         }
         break;
     case 35:
@@ -3449,7 +3449,7 @@ void fn_45174e(View *view, short event)
                 Snoid *snoid = (Snoid *)&other->body;
 
                 *(Point *)&snoid->body.x = g_4a44b0;
-                fn_45170a(g_4b2604[g_4b2734 + 1], g_4b272c, view->body.group, fn_45174e, 0);
+                startSmokeSnoidScript(g_4b2604[g_4b2734 + 1], g_4b272c, view->body.group, smokeViewNotify, 0);
                 moveView(g_4b2604[g_4b2734 + 1], 1, view->id);
             }
         }
@@ -3457,14 +3457,14 @@ void fn_45174e(View *view, short event)
     case 36:
         if (g_4b266e) {
             g_4b266e = 0;
-            fn_450c24(g_4b26b2, 0);
-            fn_450d00(g_4b26b2, 0);
+            copyToSlotView(g_4b26b2, 0);
+            recordSlotFeatures(g_4b26b2, 0);
         }
         break;
     case 37:
         if (g_4b2604[g_4b2734] && g_4b2734 < g_4b262e) {
             g_4b26b2 = g_4b2604[g_4b2734];
-            fn_45170a(g_4b2604[g_4b2734], g_4b272e, view->body.group, fn_45174e, 0);
+            startSmokeSnoidScript(g_4b2604[g_4b2734], g_4b272e, view->body.group, smokeViewNotify, 0);
             moveView(g_4b2604[g_4b2734], 1, view->id);
         }
         if (g_4b2742) {
@@ -3472,7 +3472,7 @@ void fn_45174e(View *view, short event)
             if (other) {
                 other->flags = 0x4108000;
                 setViewScript(other, g_4b2724[1], 1);
-                other->notify = fn_45174e;
+                other->notify = smokeViewNotify;
                 ViewBody *body = &other->body;
 
                 body->cels[0].image = 0;
@@ -3482,7 +3482,7 @@ void fn_45174e(View *view, short event)
             if (other) {
                 other->flags = 0x4108000;
                 setViewScript(other, g_4b2724[1], 1);
-                other->notify = fn_45174e;
+                other->notify = smokeViewNotify;
                 ViewBody *body = &other->body;
 
                 body->cels[0].image = 0;
@@ -3493,11 +3493,11 @@ void fn_45174e(View *view, short event)
         if (g_4b2630 == 4) {
             if (g_4b2744 == 3) {
                 if (g_4b26b2) {
-                    fn_450c24(g_4b26b2, 0);
-                    fn_450d00(g_4b26b2, 0);
-                    fn_450d5d();
-                    fn_450e87();
-                    fn_4512ac();
+                    copyToSlotView(g_4b26b2, 0);
+                    recordSlotFeatures(g_4b26b2, 0);
+                    recordLeftSlots();
+                    advanceLeftFeatures();
+                    emptyPairViews();
                     other = findView(g_4b26ba[7]);
                     if (other) {
                         first = (Snoid *)&other->body;
@@ -3509,14 +3509,14 @@ void fn_45174e(View *view, short event)
                         other = findView(g_4b2594);
                         if (other) {
                             setViewScript(other, g_4b2730, 1);
-                            other->notify = fn_451e5d;
+                            other->notify = stepBackNotify;
                             g_4a483c = 0;
                         }
                     }
                 }
             } else if (g_4b2744 == 1 && g_4b273a && g_4b266c <= g_4b262e) {
-                g_4b2754 = 1;
-                fn_45062d(11005);
+                dealButtonState = 1;
+                lightDealButton(11005);
             }
         }
         break;
@@ -3543,7 +3543,7 @@ void fn_45174e(View *view, short event)
  * Zoombini's first such feature is the one it changes (unknownF5).
  */
 /* @zoombi32 0x00452d5d */
-void fn_452d5d(Snoid *snoid, short n)
+void makeSmokeRows(Snoid *snoid, short n)
 {
     short pick;
     short last;
@@ -3865,10 +3865,10 @@ void fn_452d5d(Snoid *snoid, short n)
 }
 
 /* Sets out the scene's Zoombinis: shuffles the places of views 1-6 (unless
-   cheating), makes the puzzle's rows (fn_452d5d) and gives each view its
+   cheating), makes the puzzle's rows (makeSmokeRows) and gives each view its
    row's features and place, then fills slot 7 and slot 0. */
 /* @zoombi32 0x004508db */
-void fn_4508db()
+void setOutSmokeSnoids()
 {
     short values[8];
     short i;
@@ -3881,7 +3881,7 @@ void fn_4508db()
         values[i] = i;
         g_4b2768[i] = i;
     }
-    if (!g_4b2798) {
+    if (!cheatMode) {
         last = 6;
         for (i = 1; i < 7; i++) {
             pick = randomBetween(1, last);
@@ -3895,7 +3895,7 @@ void fn_4508db()
         view = findView(g_4b26ba[i]);
         if (view) {
             snoid = (Snoid *)&view->body;
-            fn_452d5d(snoid, i);
+            makeSmokeRows(snoid, i);
             if (i < 7) {
                 snoid->unknownF1 = 7;
                 *(Point *)&snoid->body.x = g_4a44f0[g_4b2768[i]];
@@ -3910,13 +3910,13 @@ void fn_4508db()
             snoid->unknownF4 = 4;
         }
     }
-    fn_450c24(g_4b26ba[7], 7);
-    fn_450d00(g_4b26ba[7], 7);
+    copyToSlotView(g_4b26ba[7], 7);
+    recordSlotFeatures(g_4b26ba[7], 7);
     g_4b26b2 = g_4b2604[g_4b2734];
-    fn_450c24(g_4b26b2, 0);
-    fn_450d00(g_4b26b2, 0);
-    g_4b26b6 = 0;
-    g_4b26b4 = 0;
+    copyToSlotView(g_4b26b2, 0);
+    recordSlotFeatures(g_4b26b2, 0);
+    rightRow = 0;
+    leftRow = 0;
     fillMemory(&g_4b2776[1], 0, 12);
 }
 
@@ -3925,7 +3925,7 @@ void fn_4508db()
    3: the puzzle's rows; 4 and 5: empty ones), recording them in that
    kind's list. */
 /* @zoombi32 0x00452857 */
-void fn_452857(short kind, short count)
+void addSmokeSnoids(short kind, short count)
 {
     View *view;
     short chosen;
@@ -3965,13 +3965,13 @@ void fn_452857(short kind, short count)
             made->unknownF4 = 4;
             break;
         case 2:
-            fn_452258(made, i);
+            giveSlotFeatures(made, i);
             made->unknownF8 = 0;
             made->unknownF5 = 0;
             made->unknownF4 = 4;
             break;
         case 3:
-            fn_452d5d(made, i + 1);
+            makeSmokeRows(made, i + 1);
             if (i + 1 < 7)
                 made->unknownF1 = 7;
             else if (i + 1 == 7)
@@ -4037,7 +4037,7 @@ void fn_452857(short kind, short count)
         made->unknownEe = 0;
         made->unknownF0 = 0;
         made->unknownF7 = 0;
-        j = fn_454165(made);
+        j = addSmokeSnoidView(made);
         if (j) {
             view = findView(j);
             if (view)
@@ -4058,12 +4058,12 @@ void fn_452857(short kind, short count)
                 g_4b2662++;
                 moveView(j, 0, g_4b258e);
                 if (g_4b2662 == 8 && g_4b2630 >= 3) {
-                    fn_450c24(g_4b26ba[7], 7);
-                    fn_450d00(g_4b26ba[7], 7);
+                    copyToSlotView(g_4b26ba[7], 7);
+                    recordSlotFeatures(g_4b26ba[7], 7);
                     g_4b26b0 = 1;
                 }
                 if (g_4b2662 == 9 && g_4b2630 >= 3)
-                    fn_450c24(g_4b26ba[8], 8);
+                    copyToSlotView(g_4b26ba[8], 8);
                 break;
             case 4:
                 g_4b26a6[g_4b2666] = j;
@@ -4086,30 +4086,30 @@ void fn_452857(short kind, short count)
 
 /* Adds the scene's Zoombini views for a level (1-4). */
 /* @zoombi32 0x004527be */
-void fn_4527be(short level)
+void addLevelSnoids(short level)
 {
-    fn_451276();
+    clearFeatureSlots();
     switch (level) {
     case 1:
-        fn_452857(1, 8);
-        fn_452857(4, 2);
-        fn_452857(5, 2);
+        addSmokeSnoids(1, 8);
+        addSmokeSnoids(4, 2);
+        addSmokeSnoids(5, 2);
         break;
     case 2:
-        fn_452857(2, 4);
-        fn_452857(1, 8);
-        fn_452857(4, 2);
-        fn_452857(5, 2);
+        addSmokeSnoids(2, 4);
+        addSmokeSnoids(1, 8);
+        addSmokeSnoids(4, 2);
+        addSmokeSnoids(5, 2);
         break;
     case 3:
-        fn_452857(3, 7);
-        fn_452857(4, 1);
-        fn_452857(5, 2);
+        addSmokeSnoids(3, 7);
+        addSmokeSnoids(4, 1);
+        addSmokeSnoids(5, 2);
         break;
     case 4:
-        fn_452857(3, 8);
-        fn_452857(4, 1);
-        fn_452857(5, 2);
+        addSmokeSnoids(3, 8);
+        addSmokeSnoids(4, 1);
+        addSmokeSnoids(5, 2);
         break;
     }
 }
@@ -4118,7 +4118,7 @@ void fn_4527be(short level)
    g_4b26ba[8]'s Zoombini back along g_4a4524 (18 also empties it and
    moves the features along); 19 sets out the Zoombinis again. */
 /* @zoombi32 0x00451e5d */
-void fn_451e5d(View *, short event)
+void stepBackNotify(View *, short event)
 {
     View *view;
 
@@ -4145,18 +4145,18 @@ void fn_451e5d(View *, short event)
             *(Point *)&snoid->body.x = g_4a4524[g_4b2744];
             snoid->unknownF1 = 5;
             snoid->unknownF4 = 4;
-            fn_450d00(g_4b26ba[8], 7);
+            recordSlotFeatures(g_4b26ba[8], 7);
         }
-        fn_450d5d();
-        fn_450e87();
-        fn_450df2();
-        fn_451020();
-        fn_451315();
+        recordLeftSlots();
+        advanceLeftFeatures();
+        recordRightSlots();
+        advanceRightFeatures();
+        setPairFeatures();
         if (g_4a483c)
             g_4a483c = 0;
         break;
     case 19:
-        fn_4508db();
+        setOutSmokeSnoids();
         g_4b2748 = 1;
         break;
     }
@@ -4167,29 +4167,29 @@ void fn_451e5d(View *, short event)
 /* Not exact: at level 4 the original keeps `snoid` in edx and `body` in
    eax; this has them the other way round. */
 /* @zoombi32 0x004507e0 */
-short fn_4507e0()
+short startRound()
 {
     View *view;
     Snoid *snoid;
     ViewBody *body;
 
-    fn_4511c1(0);
+    emptySlotView(0);
     if (g_4b2630 == 1 || g_4b2630 == 2)
-        fn_4511c1(1);
+        emptySlotView(1);
     else
-        fn_4511c1(7);
-    fn_4512ac();
-    fn_451276();
+        emptySlotView(7);
+    emptyPairViews();
+    clearFeatureSlots();
     switch (g_4b2630) {
     case 1:
-        fn_4520ec(g_4b273a);
+        dealRandomFeatures(g_4b273a);
         break;
     case 2:
-        fn_45222d();
-        fn_4520ec(g_4b273a);
+        dealFeatures();
+        dealRandomFeatures(g_4b273a);
         break;
     case 3:
-        fn_4508db();
+        setOutSmokeSnoids();
         break;
     case 4:
         view = findView(g_4b26ba[7]);
@@ -4210,7 +4210,7 @@ short fn_4507e0()
         view = findView(g_4b2594);
         if (view) {
             setViewScript(view, g_4b2732, 1);
-            view->notify = fn_451e5d;
+            view->notify = stepBackNotify;
             g_4a483c = 0;
         }
         g_4b2744 = 3;
@@ -4228,7 +4228,7 @@ short fn_4507e0()
  * opening scripts and sounds.
  */
 /* @zoombi32 0x0044e494 */
-void fn_44e494()
+void openScene17()
 {
     short *scripts = g_4b2714;
     short *others = g_4b2724;
@@ -4240,16 +4240,16 @@ void fn_44e494()
     View *other;
 
     g_4b0d52 = 0;
-    g_4b2790 = 0;
+    scene17Open = 0;
     g_4b2792 = 0;
     g_4b2788 = 0;
     g_4b26b0 = 0;
     g_4b26b2 = 0;
     g_4b266e = 1;
-    g_4b2754 = 2;
+    dealButtonState = 2;
     g_4b262e = 0;
-    g_4b26b4 = 0;
-    g_4b26b6 = 0;
+    leftRow = 0;
+    rightRow = 0;
     g_4b2664 = 0;
     g_4b2666 = 0;
     g_4b2668 = 0;
@@ -4269,7 +4269,7 @@ void fn_44e494()
     g_4b273a = 0;
     g_4b2750 = 0;
     g_4b966e = 0;
-    g_4b2798 = 0;
+    cheatMode = 0;
     g_4b2764 = 0;
     g_4b2758 = 0;
     g_4b275c = 0;
@@ -4336,9 +4336,9 @@ void fn_44e494()
     loadShape(&g_4a47c8, 6000, "Map/Go Buttons");
     g_4b2594 = addView(0x4188000, drawCels, runViewScript, g_4b2730, 10, 0, 0, 0);
     if (g_4b2630 == 1 || g_4b2630 == 2)
-        g_4b2588 = addView(0x5188000, drawCels, runViewScript, 11076, 10, 0, 0, 0);
-    g_4b25a8 = addView(0x5188000, drawCels, runViewScript, 11006, 10, 0, 0, 0);
-    g_4b25aa = addView(0x5188000, drawCels, runViewScript, 11007, 10, 0, 0, 0);
+        view11076 = addView(0x5188000, drawCels, runViewScript, 11076, 10, 0, 0, 0);
+    leftRowView = addView(0x5188000, drawCels, runViewScript, 11006, 10, 0, 0, 0);
+    rightRowView = addView(0x5188000, drawCels, runViewScript, 11007, 10, 0, 0, 0);
     g_4b258c = addView(0x5188000, drawCels, runViewScript, scripts[g_4b273e], 6, 0, 0, 0);
     g_4b25a4 = addView(0x4108000, drawCels, runViewScript, others[0], 6, 0, 0, 0);
     if (g_4b2630 == 3 || g_4b2630 == 4)
@@ -4347,7 +4347,7 @@ void fn_44e494()
         View *added = findView(g_4b25a4);
 
         if (added)
-            added->notify = fn_45174e;
+            added->notify = smokeViewNotify;
     }
     g_4b258e = addView(0xd180000, drawCels, runViewScript, scripts[g_4b273e + 1], 6, 0, 0, 0);
     g_4b2590 = addView(0x5180000, drawCels, runViewScript, 11018, 6, 0, 0, 0);
@@ -4355,12 +4355,12 @@ void fn_44e494()
     g_4b258a = addView(0x4000000, drawCels, runViewScript, 11009, 6, 0, 0, 0);
     g_4b25ac = addView(0x5180000, drawCels, runViewScript, 11036, 6, 0, 0, 0);
     g_4b25ae = addView(0x4100000, drawCels, runViewScript, 11008, 0, 0, 0, 0);
-    g_4b25b0 = addView(0x4180000, drawCels, runViewScript, 11002, 5, 0, 0, 0);
+    dealButtonView = addView(0x4180000, drawCels, runViewScript, 11002, 5, 0, 0, 0);
     g_4b2598 = addView(0x4100000, drawCels, runViewScript, 11077, 0, 0, 0, 0);
-    addView(0x1000, fn_44f163, fn_44f180, 0, 0, 0, 0, 0);
-    g_4b2634 = loadImageBank(10000, &g_4b2638);
-    g_4b2658 = loadShortTable(10000, &g_4b2650);
-    g_4b265c = loadShortTable(10001, &g_4b2654);
+    addView(0x1000, drawSmokeButtons, updateSmokeButtons, 0, 0, 0, 0, 0);
+    smokeImages = loadImageBank(10000, &g_4b2638);
+    smokeHotSpotsX = loadShortTable(10000, &g_4b2650);
+    smokeHotSpotsY = loadShortTable(10001, &g_4b2654);
     setViewPlaces(20, g_4a47ec, 1);
     makePartySnoids(0);
     g_4b2660 = 0;
@@ -4414,7 +4414,7 @@ void fn_44e494()
                     }
                 }
             }
-        fn_4527be(g_4b2630);
+        addLevelSnoids(g_4b2630);
     }
     if (g_4b2630 < 3)
         placedViews[0] = addView(0x108a000, drawCels, runViewScript, 11001, 7, &g_4a44b4, 0, 0);
@@ -4423,23 +4423,23 @@ void fn_44e494()
     updateViews();
     fn_4148da(10, 236);
     setGroupLists(&g_4a47a8, 1, -0x4000);
-    fn_44f066(1, 0, 0);
-    fn_44f066(2, 0, 0);
+    drawSmokeButton(1, 0, 0);
+    drawSmokeButton(2, 0, 0);
     g_4b87fe = g_4b274e;
     g_4b2644 = 0;
     view = findView(g_4b258c);
     setViewScript(view, 11015, 1);
     loadViewSounds(view->id, 1);
-    view->notify = fn_45174e;
+    view->notify = smokeViewNotify;
     other = findView(g_4b258e);
     setViewScript(other, 11016, 1);
-    other->notify = fn_45174e;
+    other->notify = smokeViewNotify;
     groupViews(view->id, other->id, 0, 0, 0, 0);
     showRect(&g_4aa7b8);
     fadeInViews();
     chooseSnoids(0, 0);
     resetViewClock();
-    g_4b2790 = 1;
+    scene17Open = 1;
     addSoundRange(996, 997, 0);
     addSoundRange(20000, 29999, 1);
     if (g_4b2630 != 3) {
@@ -4478,20 +4478,20 @@ void fn_44e494()
     g_4b966e = randomBetween(20066, 20067);
     if (g_4b2630 == 3 || g_4b2630 == 4) {
         g_4b2752 = 1;
-        fn_45062d(11003);
+        lightDealButton(11003);
     }
 }
 
 /*
  * The scene's clicks: 1 the map button (leave), 2 the go button, 3 a click
- * on the scene: on the spot button (g_4a4614) it deals a new round or ends
+ * on the scene: on the spot button (dealButtonRect) it deals a new round or ends
  * one; otherwise it drags the party's Zoombinis to and from the scene's
  * slots and snaps them into place, and (levels 1 and 2) the Zoombinis it
  * deals into the machine's slot, or (levels 3 and 4) the rows' Zoombinis
  * into the two lines of slots (g_4b2776).
  */
 /* @zoombi32 0x0044fa57 */
-void fn_44fa57(short action)
+void scene17Clicked(short action)
 {
     Point where;
     short spot;
@@ -4510,15 +4510,15 @@ void fn_44fa57(short action)
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         fn_46be2e(0);
-        fn_44f1f2();
+        closeScene17();
         return;
     }
     switch (action) {
     case 1:
         queueViewSound(999, 0);
-        fn_44f066(action, 1, 1);
+        drawSmokeButton(action, 1, 1);
         waitForEventFor(0, 2, 0, 1);
-        fn_44f066(action, 0, 1);
+        drawSmokeButton(action, 0, 1);
         g_4b755c = 1;
         g_4b0d52 = 1;
         askKeepParty();
@@ -4526,9 +4526,9 @@ void fn_44fa57(short action)
     case 2:
         if (g_4b2792) {
             queueViewSound(0, 0);
-            fn_44f066(action, 1, 1);
+            drawSmokeButton(action, 1, 1);
             waitForEventFor(0, 2, 0, 1);
-            fn_44f066(action, 0, 1);
+            drawSmokeButton(action, 0, 1);
             g_4b2750 = 1;
             g_4b755a = 1;
             g_4b755c = 0;
@@ -4539,20 +4539,20 @@ void fn_44fa57(short action)
         if (g_4b755a > 0 || g_4b266c >= g_4b262e)
             break;
         getCursorPosition(&where);
-        if (g_4b2754 == 1) {
-            if (ptInRect(&g_4a4614, where)) {
-                g_4b2754 = fn_4507e0();
-                fn_450658(11004, 1);
+        if (dealButtonState == 1) {
+            if (ptInRect(&dealButtonRect, where)) {
+                dealButtonState = startRound();
+                pressDealButton(11004, 1);
                 fn_465175();
             }
             break;
         }
-        if (!g_4b2754)
+        if (!dealButtonState)
             break;
-        if (ptInRect(&g_4a4614, where) && g_4b2752 == 1) {
+        if (ptInRect(&dealButtonRect, where) && g_4b2752 == 1) {
             g_4b2752 = 0;
-            g_4b2754 = 0;
-            fn_450658(11002, 1);
+            dealButtonState = 0;
+            pressDealButton(11002, 1);
             g_4b83e4[0] = 0;
             releaseHeldPlace();
             claimPlacedView(heldPlaceNumber(), 0);
@@ -4574,11 +4574,11 @@ void fn_44fa57(short action)
                     releaseHeldPlace();
                     claimPlacedView(heldPlaceNumber(), 0);
                     g_4b26b2 = 0;
-                    fn_4511c1(0);
-                    fn_451238(0);
+                    emptySlotView(0);
+                    clearFeatureSlot(0);
                     g_4b2752 = 0;
-                    fn_4506a9(11002);
-                    fn_450540(&spot);
+                    dimDealButton(11002);
+                    pickFreeSpot(&spot);
                     g_4b2794 = *(long *)&g_4a47ec[spot];
                 }
                 dragSnoid(view, where, 0, 0);
@@ -4596,11 +4596,11 @@ void fn_44fa57(short action)
                 }
                 if (heldPlaceNumber() && !g_4b26b2) {
                     g_4b26b2 = view->id;
-                    fn_450c24(g_4b26b2, 0);
-                    fn_450d00(g_4b26b2, 0);
+                    copyToSlotView(g_4b26b2, 0);
+                    recordSlotFeatures(g_4b26b2, 0);
                     if (g_4b26b0 > 0) {
                         g_4b2752 = 1;
-                        fn_45062d(11003);
+                        lightDealButton(11003);
                     }
                 }
             }
@@ -4614,9 +4614,9 @@ void fn_44fa57(short action)
             if (ptInRect(&g_4a4534, where)) {
                 if (g_4b26b0) {
                     g_4b2752 = 0;
-                    fn_4506a9(11002);
-                    fn_451238(7);
-                    fn_4511c1(1);
+                    dimDealButton(11002);
+                    clearFeatureSlot(7);
+                    emptySlotView(1);
                     view = findView(g_4b2672[g_4b26b0 - 1]);
                     if (g_4b26b0) {
                         view->changed = 1;
@@ -4624,10 +4624,10 @@ void fn_44fa57(short action)
                     }
                     action = g_4b26b0;
                     g_4b26b0 = 0;
-                    if (fn_453e8c(view, where) == 4) {
+                    if (dragSnoidToSpot(view, where) == 4) {
                         g_4b26b0 = action;
-                        fn_450c24(view->id, 1);
-                        fn_450d00(view->id, 7);
+                        copyToSlotView(view->id, 1);
+                        recordSlotFeatures(view->id, 7);
                     } else {
                         g_4b26b0 = action;
                         snoid = (Snoid *)&view->body;
@@ -4639,11 +4639,11 @@ void fn_44fa57(short action)
             } else {
                 for (k = 0; k < g_4b2660; k++)
                     if (g_4b2672[k] == view->id) {
-                        if (fn_453e8c(view, where) == 4) {
+                        if (dragSnoidToSpot(view, where) == 4) {
                             if (!g_4b26b0) {
                                 g_4b26b0 = k + 1;
-                                fn_450c24(view->id, 1);
-                                fn_450d00(view->id, 7);
+                                copyToSlotView(view->id, 1);
+                                recordSlotFeatures(view->id, 7);
                             } else {
                                 snoid = (Snoid *)&view->body;
                                 *(Point *)&snoid->body.x = g_4a44cc[k];
@@ -4659,15 +4659,15 @@ void fn_44fa57(short action)
             }
             if (g_4b26b0 && g_4b26b2) {
                 g_4b2752 = 1;
-                fn_45062d(11003);
+                lightDealButton(11003);
             }
-            fn_4507bb();
+            stopView11076();
             break;
         case 3:
         case 4:
             for (k = 1; k < g_4b2662 && k < 7; k++)
                 if (g_4b26ba[k] == view->id) {
-                    fn_450658(11002, 0);
+                    pressDealButton(11002, 0);
                     g_4b2752 = 0;
                     snoid = (Snoid *)&view->body;
                     snoid->unknownF1 = 7;
@@ -4685,60 +4685,60 @@ void fn_44fa57(short action)
                                         g_4b2776[action + 1] = g_4b2776[action + 2];
                                     else
                                         g_4b2776[action + 1] = 0;
-                                g_4b26b6 -= 2;
-                                if (g_4b26b6 < 0)
-                                    g_4b26b6 = 0;
+                                rightRow -= 2;
+                                if (rightRow < 0)
+                                    rightRow = 0;
                                 for (action = 3; action <= 5; action++) {
                                     other = findView(g_4b2776[action + 1]);
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
-                                        *(Point *)&moved->body.x = g_4a4560[g_4b26b6][placed];
+                                        *(Point *)&moved->body.x = g_4a4560[rightRow][placed];
                                         moved->unknownF4 = 4;
                                         placed++;
                                     }
                                 }
                                 if (placed)
-                                    g_4b26b6++;
-                                fn_450df2();
-                                fn_451020();
+                                    rightRow++;
+                                recordRightSlots();
+                                advanceRightFeatures();
                             } else {
                                 for (action = m; action <= 2; action++)
                                     if (action < 2)
                                         g_4b2776[action + 1] = g_4b2776[action + 2];
                                     else
                                         g_4b2776[action + 1] = 0;
-                                g_4b26b4 -= 2;
-                                if (g_4b26b4 < 0)
-                                    g_4b26b4 = 0;
+                                leftRow -= 2;
+                                if (leftRow < 0)
+                                    leftRow = 0;
                                 for (action = 0; action < 3; action++) {
                                     other = findView(g_4b2776[action + 1]);
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
-                                        *(Point *)&moved->body.x = g_4a453c[g_4b26b4][placed];
+                                        *(Point *)&moved->body.x = g_4a453c[leftRow][placed];
                                         moved->unknownF4 = 4;
                                         placed++;
                                     }
                                 }
                                 if (placed)
-                                    g_4b26b4++;
-                                fn_450d5d();
-                                fn_450e87();
+                                    leftRow++;
+                                recordLeftSlots();
+                                advanceLeftFeatures();
                             }
                             m = 6;
                         }
                     action = view->id;
-                    result = fn_453e8c(view, where);
+                    result = dragSnoidToSpot(view, where);
                     view = findView(action);
                     snoid = (Snoid *)&view->body;
                     if (result >= 0 && result <= 5) {
-                        if (g_4b26b4 < 3 && result < 3 || g_4b26b6 < 3 && result > 2) {
+                        if (leftRow < 3 && result < 3 || rightRow < 3 && result > 2) {
                             placed = 0;
                             if (result < 3) {
                                 snoid->unknownF1 = 0;
                                 if (g_4b2776[result + 1])
-                                    for (action = g_4b26b4; action >= result; action--)
+                                    for (action = leftRow; action >= result; action--)
                                         if (action > 0)
                                             g_4b2776[action + 1] = g_4b2776[action];
                                 g_4b2776[result + 1] = view->id;
@@ -4747,19 +4747,19 @@ void fn_44fa57(short action)
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
-                                        *(Point *)&moved->body.x = g_4a453c[g_4b26b4][placed];
+                                        *(Point *)&moved->body.x = g_4a453c[leftRow][placed];
                                         moved->unknownF4 = 4;
                                         placed++;
                                     }
                                 }
-                                g_4b26b4++;
+                                leftRow++;
                                 g_4b2776[result + 1] = view->id;
-                                fn_450d5d();
-                                fn_450e87();
+                                recordLeftSlots();
+                                advanceLeftFeatures();
                             } else {
                                 snoid->unknownF1 = 2;
                                 if (g_4b2776[result + 1])
-                                    for (action = g_4b26b6 + 3; action >= result; action--)
+                                    for (action = rightRow + 3; action >= result; action--)
                                         if (action > 3)
                                             g_4b2776[action + 1] = g_4b2776[action];
                                 g_4b2776[result + 1] = view->id;
@@ -4768,15 +4768,15 @@ void fn_44fa57(short action)
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
-                                        *(Point *)&moved->body.x = g_4a4560[g_4b26b6][placed];
+                                        *(Point *)&moved->body.x = g_4a4560[rightRow][placed];
                                         moved->unknownF4 = 4;
                                         placed++;
                                     }
                                 }
-                                g_4b26b6++;
+                                rightRow++;
                                 g_4b2776[result + 1] = view->id;
-                                fn_450df2();
-                                fn_451020();
+                                recordRightSlots();
+                                advanceRightFeatures();
                             }
                         }
                     } else {
@@ -4790,9 +4790,9 @@ void fn_44fa57(short action)
                     }
                     k = g_4b2662;
                 }
-            fn_45074d();
+            stopRowViews();
             g_4b2752 = 1;
-            fn_45062d(11003);
+            lightDealButton(11003);
             break;
         }
         break;

@@ -3766,15 +3766,15 @@ struct HexCell
     short snoid; /* +4: the view of the Zoombini on it */
     short links[6]; /* +6: the neighbours in each direction (-1: none) */
 };
-extern HexCell g_4b1aea[117];
-extern short g_4b2324[117]; /* each cell's link bits, one per direction */
-extern short g_4b2414;
-extern short g_4b2430[16]; /* the party, most alike first (fn_449c18) */
+extern HexCell hexCells[117];
+extern short cellLinkBits[117]; /* each cell's link bits, one per direction */
+extern short partySize;
+extern short waitingSnoids[16]; /* the party, most alike first (fn_449c18) */
 extern short g_4b2540;
 extern short g_4b2542;
-extern short g_4b26cc[8][4]; /* the features of the Zoombini in each slot */
+extern short featureSlots[8][4]; /* the features of the Zoombini in each slot */
 extern short g_4a48e8; /* the temporary file (ZBtemp) exists */
-/* A Zoombini placed on a cell (g_4b2544). */
+/* A Zoombini placed on a cell (placedSnoids). */
 struct PlacedSnoid
 {
     short cell;
@@ -3791,7 +3791,7 @@ long __cdecl qtim_37(long controller);
 long __cdecl qtim_5e();
 void __cdecl QTTerminate();
 extern short g_4b266c;
-extern short g_4b2516;
+extern short sharedFeature;
 long __cdecl cmgr_05(long controller, long *flags);
 long __cdecl cmgr_09(long controller);
 long __cdecl qtim_0f(long movie, RECT *box);
@@ -3802,7 +3802,7 @@ long __cdecl cmgr_00(long controller, HWND window, long);
 long __cdecl cmgr_01(long controller, long action, long parameters);
 long __cdecl cmgr_0d(long controller, long movie, HWND window, POINT where);
 long __cdecl cmgr_0e(long controller, RECT *bounds, long, long);
-extern short g_4b2512;
+extern short startState;
 extern ShortRect g_4a4584[3][3];
 extern ShortRect g_4a45cc[3][3];
 /* The party's features (1-5), one array each (the original addresses them
@@ -3812,7 +3812,7 @@ extern short partyEyes[16]; /* @data 0x4b2492 */
 extern short partyNoses[16]; /* @data 0x4b24b2 */
 extern short partyFeet[16]; /* @data 0x4b24d2 */
 extern short g_4b24f2[16]; /* @data 0x4b24f2 */
-extern short g_4b2754;
+extern short dealButtonState;
 extern short g_4b2736;
 extern short g_4b2746;
 extern short g_4b27ca[9][4]; /* the puzzle's rows: their features */

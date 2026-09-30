@@ -27,25 +27,25 @@ extern short g_4b2aec;
 extern short g_4b2aee;
 extern char *appCommandLine; /* @data 0x4b2af8 */
 extern long cursors[6]; /* @data 0x4b80ac */
-void fn_454c8e();
-extern short g_4a494c; /* @data 0x4a494c: shutting down (shutDownGame) */
-extern short g_4a494e; /* @data 0x4a494e: save before quitting */
+void quitSilently();
+extern short shuttingDown; /* @data 0x4a494c: shutting down (shutDownGame) */
+extern short saveBeforeQuitting; /* @data 0x4a494e: save before quitting */
 void shutDownGame();
-void fn_455023(short clear);
-extern unsigned long g_4a48e0; /* the least free memory seen */
-extern ShortRect g_4a498e; /* where the memory statistics go */
-void __cdecl fn_454ca4();
+void drawMemoryStats(short clear);
+extern unsigned long leastFreeMemory; /* the least free memory seen */
+extern ShortRect memoryStatsRect; /* where the memory statistics go */
+void __cdecl shutDownAtExit();
 void gameFrame();
 short noteOutOfMemory(unsigned long size, short error);
 extern short g_4b26a6[];
 extern short g_4b26ac[2];
 extern short g_4b26ba[9];
-void fn_45170a(short id, short script, short group, ViewNotify notify, char unknownF8);
-void fn_450d00(short id, short n);
-void fn_454f03();
-void fn_4511c1(short n);
-void fn_4512ac();
-extern short g_4b2790; /* the scene is open */
+void startSmokeSnoidScript(short id, short script, short group, ViewNotify notify, char unknownF8);
+void recordSlotFeatures(short id, short n);
+void deleteTempFile();
+void emptySlotView(short n);
+void emptyPairViews();
+extern short scene17Open; /* the scene is open */
 extern short g_4b2792;
 extern short g_4a483e;
 extern short g_4a4840;
@@ -55,27 +55,27 @@ extern long g_4b2638;
 extern long g_4b2650;
 extern long g_4b2654;
 extern long g_4b278c;
-extern ImageBank *g_4b2634;
-void fn_44f180(View *, short region);
-void fn_44f1f2();
+extern ImageBank *smokeImages;
+void updateSmokeButtons(View *, short region);
+void closeScene17();
 void scene17Frame();
-extern short g_4a4842; /* @data 0x4a4842: in scene17Frame */
+extern short inScene17Frame; /* @data 0x4a4842: in scene17Frame */
 extern ShortRect g_4a4750; /* @data 0x4a4750 */
 extern short g_4b2728; /* @data 0x4b2728 */
 extern short g_4b279a; /* @data 0x4b279a: the group the leaders move in */
-void fn_4541bf(View *view);
-short fn_454c10();
-extern PlacedSnoid g_4b2544[];
+void drawSmokeSnoid(View *view);
+short sceneToReturnTo();
+extern PlacedSnoid placedSnoids[];
 extern basePort *g_4b2ae4;
-void fn_44e0e2();
-void fn_44e161();
-long fn_4552fd(const char *path);
-void fn_455273(short shutdown);
+void standFilledCells();
+void standPlacedSnoids();
+long loadMovie(const char *path);
+void stopMovie(short shutdown);
 extern short g_4b2630;
 extern short g_4b2776[7];
-void fn_450c24(short id, short n);
-void fn_450d5d();
-void fn_450df2();
+void copyToSlotView(short id, short n);
+void recordLeftSlots();
+void recordRightSlots();
 extern short g_4b2734;
 extern short g_4b262e;
 extern short g_4b2604[21];
@@ -84,13 +84,13 @@ extern short g_4b25ac;
 extern short g_4b25ae;
 extern short g_4b26b2;
 extern Point g_4a44ac;
-short fn_452035();
-void fn_45162e(short);
-short fn_44cd71(short first, short second);
-void fn_44cc51(short cell);
-short fn_451f4e();
+short takeNextTwoFeatures();
+void startNextCrossing(short);
+short shareFeature(short first, short second);
+void startGrid(short cell);
+short takeRandomFeatures();
 extern ShortRect g_4a447a;
-void fn_44dcdc();
+void showZoneMessage();
 extern short g_4b2788;
 extern short g_4b2742;
 extern short g_4b25a4;
@@ -100,38 +100,38 @@ extern short g_4b258c;
 extern short g_4b258e;
 extern short g_4b2714[4];
 extern short g_4b273c;
-short fn_4513ac();
-void fn_4514f6();
+short applySlotFeatures();
+void startNextMove();
 extern short g_4b2672[8];
 extern Point g_4a44cc[8];
-void fn_4520ec(short count);
-void fn_450e87();
-void fn_451020();
+void dealRandomFeatures(short count);
+void advanceLeftFeatures();
+void advanceRightFeatures();
 extern ShortRect g_4a48b2;
-extern short g_4b2798; /* cheating */
-short fn_450a58(unsigned short key);
-short fn_44d3b8(short cell, volatile short direction);
+extern short cheatMode; /* cheating */
+short scene17Key(unsigned short key);
+short placeAlike(short cell, volatile short direction);
 extern short g_4b2740;
 extern short g_4b2590;
 extern short g_4b2592;
-void fn_44f163(View *);
-short fn_455229();
-void fn_451315();
-void fn_44d5f5();
-void fn_44e21a(short first, short second, short middle);
-short fn_45537f(const char *path);
-void fn_44ddc9();
-void fn_44d127();
+void drawSmokeButtons(View *);
+short idleMovie();
+void setPairFeatures();
+void fillFreeCells();
+void clearLine(short first, short second, short middle);
+short playMovie(const char *path);
+void updateCellLinks();
+void settleCells();
 extern short g_4b26b0;
 extern short g_4b2704;
 extern Point g_4a4528;
 extern ShortRect g_4a4534;
-short fn_453e8c(View *view, Point where);
-void fn_44d6a3();
-void fn_44d974(short neighbour, short index, short cell);
-extern short *g_4b2658; /* the scene's Zoombini images' hot spots: x */
-extern short *g_4b265c; /* and y */
-void fn_454374(Snoid *snoid);
+short dragSnoidToSpot(View *view, Point where);
+void placePartyOnGrid();
+void markSharedFeature(short neighbour, short index, short cell);
+extern short *smokeHotSpotsX; /* the scene's Zoombini images' hot spots: x */
+extern short *smokeHotSpotsY; /* and y */
+void layOutSmokeSnoid(Snoid *snoid);
 extern short g_4b27ac[5];
 extern short g_4b27b6[6];
 extern short g_4b27c2;
@@ -141,11 +141,11 @@ extern short g_4b27c8;
 extern short g_4b279c[4];
 extern short g_4b27a4[4];
 extern Point g_4a4514[4];
-void fn_452258(Snoid *snoid, short n);
+void giveSlotFeatures(Snoid *snoid, short n);
 extern short g_4b269a[4];
-void fn_45222d();
-void fn_454228(View *view, short region);
-short fn_454165(Snoid *snoid);
+void dealFeatures();
+void updateSmokeSnoid(View *view, short region);
+short addSmokeSnoidView(Snoid *snoid);
 extern short g_4b2644;
 extern short g_4b274a;
 extern short g_4b271c[2];
@@ -163,28 +163,28 @@ extern short g_4b2744;
 extern short g_4b2594;
 extern short g_4a483c;
 extern short g_4b273a;
-void fn_451e5d(View *, short event);
+void stepBackNotify(View *, short event);
 extern short g_4b28a2[4];
 extern short g_4b28aa[4];
 extern short g_4b28b2[4];
 extern short g_4b28ba[4];
-void fn_452d5d(Snoid *snoid, short n);
+void makeSmokeRows(Snoid *snoid, short n);
 extern short g_4b2768[8]; /* where each of views 1-6 stands (g_4a44f0) */
 extern short g_4b2662;
 extern Point g_4a44f0[8];
 extern Point g_4a4530;
-void fn_4508db();
+void setOutSmokeSnoids();
 extern Point g_4a4524[2];
 extern Point g_4a462c[2];
 extern short g_4b2660;
 extern short g_4b2664;
 extern short g_4b2666;
 extern short g_4b2668;
-void fn_452857(short kind, short count);
+void addSmokeSnoids(short kind, short count);
 extern short g_4b2748;
 extern short g_4b2732;
-void fn_4527be(short level);
-short fn_4507e0();
+void addLevelSnoids(short level);
+short startRound();
 extern short g_4b264c;
 extern short g_4b2670;
 extern short g_4b2738;
@@ -206,40 +206,40 @@ extern short g_4b273e;
 extern short g_4b2598;
 extern Point g_4a44b4;
 extern GroupList g_4a47a8;
-void fn_44e494();
-extern ShortRect g_4a4614;
+void openScene17();
+extern ShortRect dealButtonRect;
 extern ShortRect g_4a47d0;
 extern short g_4a47e0[5];
-void fn_44fa57(short action);
-void fn_44f066(short which, short lit, short show);
-short fn_44d102();
-short fn_44ce56(short cell);
-void fn_44d5ad(short cell);
-void fn_44dca0(short cell, short direction, short bit);
-void fn_44e092();
-void fn_44e314(short cell);
-void fn_451238(short n);
-void fn_451276();
+void scene17Clicked(short action);
+void drawSmokeButton(short which, short lit, short show);
+short anyLeftToPlace();
+short growGrid(short cell);
+void resetCell(short cell);
+void cutLink(short cell, short direction, short bit);
+void checkAllFilled();
+void unlinkCell(short cell);
+void clearFeatureSlot(short n);
+void clearFeatureSlots();
 extern Point g_4a4846;
 extern Point g_4a47ec[20];
-extern short g_4b25b0;
-extern short g_4b25a8;
-extern short g_4b25aa;
-extern short g_4b2588;
-extern short g_4b26b4;
-extern short g_4b26b6;
-void fn_45174e(View *view, short event);
-void fn_450540(short *result);
-void fn_45062d(short script);
-void fn_450658(short script, short running);
-void fn_4506a9(short script);
-void fn_4506f0();
-void fn_45074d();
-void fn_450796();
-void fn_4507bb();
+extern short dealButtonView;
+extern short leftRowView;
+extern short rightRowView;
+extern short view11076;
+extern short leftRow;
+extern short rightRow;
+void smokeViewNotify(View *view, short event);
+void pickFreeSpot(short *result);
+void lightDealButton(short script);
+void pressDealButton(short script, short running);
+void dimDealButton(short script);
+void startRowViews();
+void stopRowViews();
+void startView11076();
+void stopView11076();
 
 void layOutGrid();
-extern Point g_4a3fcc[117]; /* @data 0x4a3fcc: where each hex cell is */
+extern Point cellPlaces[117]; /* @data 0x4a3fcc: where each hex cell is */
 extern short g_4a4238[26]; /* @data 0x4a4238: level 3's open cells */
 extern short g_4a426c[43]; /* @data 0x4a426c: level 3's blocked cells */
 extern short g_4a42c2[20]; /* @data 0x4a42c2 */

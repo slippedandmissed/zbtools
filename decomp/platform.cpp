@@ -899,7 +899,7 @@ void fn_456a64()
 
 /* With a screen port: activating clears the game's area (and fills it via
    fillPortRect) when g_4b2ad4 and g_4b2ad8 are set; deactivating calls
-   fn_455273 then, and clears the area. */
+   stopMovie then, and clears the area. */
 /* @zoombi32 0x00456b2e */
 void fn_456b2e(short active)
 {
@@ -911,7 +911,7 @@ void fn_456b2e(short active)
             }
         } else if (g_4b2ad4 && g_4b2ad8) {
             g_4b7cf8 = 1;
-            fn_455273(1);
+            stopMovie(1);
         }
         if (!active) {
             setClipRect(gameRect);

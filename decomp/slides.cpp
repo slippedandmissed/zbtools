@@ -37,12 +37,12 @@ void openScene12()
     openGameFile(&g_4b1928, "Slides.MHK");
     fn_46be2e(g_4b1928);
     fillMemory(g_4b1936, 0, 20);
-    fillMemory(g_4b1aea, 0, sizeof g_4b1aea);
-    fillMemory(g_4b2324, 0, sizeof g_4b2324);
+    fillMemory(hexCells, 0, sizeof hexCells);
+    fillMemory(cellLinkBits, 0, sizeof cellLinkBits);
     fillMemory(g_4b194a, 0, sizeof g_4b194a);
     fillMemory(g_4b241c, 0, 20);
     for (i = 0; i < 117; i++)
-        g_4b1aea[i].state = 500;
+        hexCells[i].state = 500;
     g_4b241a = g_4b2518 = g_4b251a = g_4b2528 = g_4b2412 = 0;
     g_4b1934 = sceneLevel();
     if (g_4b1934 == 3)
@@ -62,14 +62,14 @@ void openScene12()
     makePartySnoids(0);
     enterSnoids(0);
     g_4b192c = listChosenSnoids();
-    g_4b253c = g_4b2414 = g_4b192c->count;
+    g_4b253c = partySize = g_4b192c->count;
     layOutGrid();
-    moveView(g_4b1936[1], 0, g_4b1aea[9].view);
-    moveView(g_4b1936[2], 0, g_4b1aea[27].view);
-    moveView(g_4b1936[3], 0, g_4b1aea[45].view);
-    moveView(g_4b1936[4], 0, g_4b1aea[63].view);
-    moveView(g_4b1936[5], 0, g_4b1aea[81].view);
-    moveView(g_4b1936[6], 0, g_4b1aea[99].view);
+    moveView(g_4b1936[1], 0, hexCells[9].view);
+    moveView(g_4b1936[2], 0, hexCells[27].view);
+    moveView(g_4b1936[3], 0, hexCells[45].view);
+    moveView(g_4b1936[4], 0, hexCells[63].view);
+    moveView(g_4b1936[5], 0, hexCells[81].view);
+    moveView(g_4b1936[6], 0, hexCells[99].view);
     for (i = 0; i < g_4b240e; i++) {
         placedViews[i] = addView(0x188a000, drawCels, runViewScript, 7013, 7, &g_4b1a4c[i], 0, 0);
         findView(placedViews[i])->placed = fn_448c81;
@@ -142,8 +142,8 @@ void fn_44943b()
     short i;
 
     for (i = 0; i < 117; i++)
-        if (g_4b1aea[i].state == 508)
-            ((Snoid *)&findView(g_4b1aea[i].snoid)->body)->unknownF7 = 1;
+        if (hexCells[i].state == 508)
+            ((Snoid *)&findView(hexCells[i].snoid)->body)->unknownF7 = 1;
 }
 
 /* Sets g_4b1932 if any of the cells g_4b1ab4 lists (1 to g_4b240e) is in
@@ -155,7 +155,7 @@ void fn_449475()
 
     g_4b1932 = 0;
     for (i = 1; i <= g_4b240e; i++)
-        if (g_4b1aea[g_4b1ab4[i]].state == 508) {
+        if (hexCells[g_4b1ab4[i]].state == 508) {
             g_4b1932 = 1;
             return;
         }
@@ -171,7 +171,7 @@ short fn_44b261()
 
     n = g_4b1a44 = 0;
     for (i = 0; i < 117; i++)
-        if (g_4b1aea[i].state == 502 || g_4b1aea[i].state == 508) {
+        if (hexCells[i].state == 502 || hexCells[i].state == 508) {
             n++;
             g_4b1a44 += i;
         }
@@ -251,7 +251,7 @@ void drawSlidesButton(short which, short lit, short show)
 }
 
 /* Counts, for each feature, how many of its values the chosen Zoombinis
-   (g_4b192c, g_4b2414 of them) show, into g_4b251c. */
+   (g_4b192c, partySize of them) show, into g_4b251c. */
 /* @zoombi32 0x004488e8 */
 void fn_4488e8()
 {
@@ -264,9 +264,9 @@ void fn_4488e8()
     g_4b251c[2] = 0;
     g_4b251c[3] = 0;
     g_4b192c = listChosenSnoids();
-    g_4b2414 = g_4b192c->count;
+    partySize = g_4b192c->count;
     fillMemory(counts, 0, sizeof counts);
-    for (i = 0; i < g_4b2414; i++)
+    for (i = 0; i < partySize; i++)
         for (j = 0; j < 4; j++)
             counts[j][g_4b192c->features[i][j]]++;
     for (i = 0; i < 4; i++)
@@ -293,8 +293,8 @@ void fn_448bf5()
     setColors(&colors[10], 10, 236);
 }
 
-/* Clears the party's features (partyHair to g_4b24f2, g_4b2452, g_4b2430) and
-   reads each Zoombini's (g_4b2414 of them, partyViews) into partyHair to partyFeet. */
+/* Clears the party's features (partyHair to g_4b24f2, g_4b2452, waitingSnoids) and
+   reads each Zoombini's (partySize of them, partyViews) into partyHair to partyFeet. */
 /* @zoombi32 0x00449b40 */
 void fn_449b40()
 {
@@ -307,9 +307,9 @@ void fn_449b40()
     fillMemory(partyFeet, 0, 32);
     fillMemory(g_4b24f2, 0, 32);
     fillMemory(g_4b2452, 0, 32);
-    fillMemory(g_4b2430, 0, 32);
+    fillMemory(waitingSnoids, 0, 32);
     g_4b2450 = 0;
-    for (i = 0; i < g_4b2414; i++) {
+    for (i = 0; i < partySize; i++) {
         snoid = (Snoid *)&findView(partyViews[i])->body;
         partyHair[i] = snoid->features[0];
         partyEyes[i] = snoid->features[1];
@@ -318,7 +318,7 @@ void fn_449b40()
     }
 }
 
-/* Orders the party (into g_4b2430) by how many others share a feature with
+/* Orders the party (into waitingSnoids) by how many others share a feature with
    each, most first. */
 /* @zoombi32 0x00449c18 */
 void fn_449c18()
@@ -330,26 +330,26 @@ void fn_449c18()
     short most;
 
     fillMemory(alike, 0, sizeof alike);
-    for (i = 0; i < g_4b2414; i++)
-        for (j = 0; j < g_4b2414; j++)
+    for (i = 0; i < partySize; i++)
+        for (j = 0; j < partySize; j++)
             if (partyHair[i] == partyHair[j] || partyEyes[i] == partyEyes[j]
                 || partyNoses[i] == partyNoses[j] || partyFeet[i] == partyFeet[j])
                 alike[i]++;
-    for (i = 0; i < g_4b2414; i++) {
+    for (i = 0; i < partySize; i++) {
         most = best = 0;
-        for (j = 0; j < g_4b2414; j++)
+        for (j = 0; j < partySize; j++)
             if (most < alike[j]) {
                 most = alike[j];
                 best = j;
             }
-        g_4b2430[i] = best;
+        waitingSnoids[i] = best;
         alike[best] = -1;
     }
 }
 
 /* A cell's placed callback: moves its cels into place and drops the
    images 4-24 for the directions its cell (g_4b1ab4, by the view's place)
-   has no link in (g_4b2324's bits). */
+   has no link in (cellLinkBits's bits). */
 /* @zoombi32 0x00448c81 */
 void fn_448c81(View *view)
 {
@@ -365,37 +365,37 @@ void fn_448c81(View *view)
         cel->y += 6;
         switch (cel->image) {
         case 4:
-            if (!(g_4b2324[cell] & 1)) {
+            if (!(cellLinkBits[cell] & 1)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 8:
-            if (!(g_4b2324[cell] & 2)) {
+            if (!(cellLinkBits[cell] & 2)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 12:
-            if (!(g_4b2324[cell] & 4)) {
+            if (!(cellLinkBits[cell] & 4)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 16:
-            if (!(g_4b2324[cell] & 8)) {
+            if (!(cellLinkBits[cell] & 8)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 20:
-            if (!(g_4b2324[cell] & 0x10)) {
+            if (!(cellLinkBits[cell] & 0x10)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 24:
-            if (!(g_4b2324[cell] & 0x20)) {
+            if (!(cellLinkBits[cell] & 0x20)) {
                 removeFirstCel(cel);
                 removed++;
             }
@@ -446,7 +446,7 @@ void fn_44b3ee(Point *where)
 }
 
 /* Another Zoombini of the party (not `who`, and not marked in g_4b24f2)
-   with the same value of a feature (g_4b2516, each in turn from a random
+   with the same value of a feature (sharedFeature, each in turn from a random
    one); -1 if none. */
 /* @zoombi32 0x00449a21 */
 short fn_449a21(short who)
@@ -454,15 +454,15 @@ short fn_449a21(short who)
     short tries;
     short i;
 
-    g_4b2516 = randomUpTo(3);
+    sharedFeature = randomUpTo(3);
     tries = 4;
     do {
-        if (++g_4b2516 > 3)
-            g_4b2516 = 0;
-        for (i = 0; i < g_4b2414; i++) {
+        if (++sharedFeature > 3)
+            sharedFeature = 0;
+        for (i = 0; i < partySize; i++) {
             if (i == who)
                 continue;
-            switch (g_4b2516) {
+            switch (sharedFeature) {
             case 0:
                 if (!g_4b24f2[i] && partyHair[who] == partyHair[i])
                     return i;
@@ -499,18 +499,18 @@ void fn_44aa79()
     setViewsLocked(0);
     fillMemory(placed, 0, sizeof placed);
     for (i = 1; i <= g_4b240e; i++) {
-        if (g_4b1aea[g_4b1ab4[i]].state == 507) {
-            view = findView(g_4b1aea[g_4b1ab4[i]].snoid);
+        if (hexCells[g_4b1ab4[i]].state == 507) {
+            view = findView(hexCells[g_4b1ab4[i]].snoid);
             if (view) {
                 view->flags |= 0x4008000;
-                moveView(g_4b1aea[g_4b1ab4[i]].snoid, 0, g_4b1aea[g_4b1ab4[i] + 1].view);
+                moveView(hexCells[g_4b1ab4[i]].snoid, 0, hexCells[g_4b1ab4[i] + 1].view);
             }
             for (j = 0; j < 16; j++)
-                if (partyViews[j] == g_4b1aea[g_4b1ab4[i]].snoid)
+                if (partyViews[j] == hexCells[g_4b1ab4[i]].snoid)
                     placed[j]++;
-        } else if (g_4b1aea[g_4b1ab4[i]].state == 508) {
+        } else if (hexCells[g_4b1ab4[i]].state == 508) {
             for (j = 0; j < 16; j++)
-                if (partyViews[j] == g_4b1aea[g_4b1ab4[i]].snoid)
+                if (partyViews[j] == hexCells[g_4b1ab4[i]].snoid)
                     placed[j]++;
         }
     }
@@ -519,15 +519,15 @@ void fn_44aa79()
             view = findView(partyViews[i]);
             if (view) {
                 view->flags |= 0x4008000;
-                moveView(partyViews[i], 0, g_4b1aea[0].view);
+                moveView(partyViews[i], 0, hexCells[0].view);
             }
         }
 }
 
 /* A cell's placed callback: keeps image 109 only on cells in state 502, 504
-   or 508 unless g_4b2512 is 505, and image 110 on cells in state 502, 505
-   or 508 while g_4b2512 is 505; images 4, 8 and 24 only where the cell has
-   that link (g_4b2324), moved on by g_4b2514. */
+   or 508 unless startState is 505, and image 110 on cells in state 502, 505
+   or 508 while startState is 505; images 4, 8 and 24 only where the cell has
+   that link (cellLinkBits), moved on by g_4b2514. */
 /* @zoombi32 0x00448d9d */
 void fn_448d9d(View *view)
 {
@@ -535,27 +535,27 @@ void fn_448d9d(View *view)
     short removed;
     short cell;
 
-    cell = view->id - g_4b1aea[0].view;
+    cell = view->id - hexCells[0].view;
     cel = view->body.cels;
     while (cel->image) {
         removed = 0;
         switch (cel->image) {
         case 109:
-            if (!((g_4b1aea[cell].state == 502 || g_4b1aea[cell].state == 504 || g_4b1aea[cell].state == 508)
-                  && g_4b2512 != 505)) {
+            if (!((hexCells[cell].state == 502 || hexCells[cell].state == 504 || hexCells[cell].state == 508)
+                  && startState != 505)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 110:
-            if (!((g_4b1aea[cell].state == 502 || g_4b1aea[cell].state == 505 || g_4b1aea[cell].state == 508)
-                  && g_4b2512 == 505)) {
+            if (!((hexCells[cell].state == 502 || hexCells[cell].state == 505 || hexCells[cell].state == 508)
+                  && startState == 505)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 4:
-            if (!(g_4b2324[cell] & 1)) {
+            if (!(cellLinkBits[cell] & 1)) {
                 removeFirstCel(cel);
                 removed++;
             } else {
@@ -563,7 +563,7 @@ void fn_448d9d(View *view)
             }
             break;
         case 8:
-            if (!(g_4b2324[cell] & 2)) {
+            if (!(cellLinkBits[cell] & 2)) {
                 removeFirstCel(cel);
                 removed++;
             } else {
@@ -571,7 +571,7 @@ void fn_448d9d(View *view)
             }
             break;
         case 24:
-            if (!(g_4b2324[cell] & 0x20)) {
+            if (!(cellLinkBits[cell] & 0x20)) {
                 removeFirstCel(cel);
                 removed++;
             } else {
@@ -730,8 +730,8 @@ void fn_44986f()
     who = n = 0;
     fillMemory(g_4b2452, 0, 32);
     fillMemory(g_4b24f2, 0, 32);
-    g_4b2450 = g_4b2414 / 3;
-    if (g_4b2414 % 3)
+    g_4b2450 = partySize / 3;
+    if (partySize % 3)
         g_4b2450++;
     for (group = 0; group < g_4b2450; group++) {
         g_4b24f2[who] = 1;
@@ -739,7 +739,7 @@ void fn_44986f()
         if (other == -1) {
             g_4b2452[n] = 501;
             n++;
-            for (i = 1; i < g_4b2414; i++)
+            for (i = 1; i < partySize; i++)
                 if (!g_4b24f2[i]) {
                     other = i;
                     g_4b24f2[other] = 1;
@@ -747,12 +747,12 @@ void fn_44986f()
                 }
         } else {
             g_4b24f2[other] = 1;
-            g_4b2452[n] = g_4b2516 + 510;
+            g_4b2452[n] = sharedFeature + 510;
             n++;
         }
         who = other;
         other = -1;
-        for (i = 1; i < g_4b2414; i++)
+        for (i = 1; i < partySize; i++)
             if (!g_4b24f2[i])
                 other = i;
         if (other == -1)
@@ -761,19 +761,19 @@ void fn_44986f()
         if (other == -1) {
             g_4b2452[n] = 501;
             n++;
-            for (i = 1; i < g_4b2414; i++)
+            for (i = 1; i < partySize; i++)
                 if (!g_4b24f2[i]) {
                     other = i;
                     who = i;
                 }
         } else {
             g_4b24f2[other] = 1;
-            g_4b2452[n] = g_4b2516 + 510;
+            g_4b2452[n] = sharedFeature + 510;
             n++;
         }
         g_4b24f2[other] = 1;
         other = -1;
-        for (i = 1; i < g_4b2414; i++)
+        for (i = 1; i < partySize; i++)
             if (!g_4b24f2[i]) {
                 other = i;
                 who = i;
@@ -802,16 +802,16 @@ short fn_449f96(short a, short b)
     short otherNose;
     short r;
 
-    if (g_4b1aea[a].state == 500 || g_4b1aea[b].state == 500)
+    if (hexCells[a].state == 500 || hexCells[b].state == 500)
         return 0;
-    if (!g_4b1aea[a].snoid || !g_4b1aea[b].snoid)
+    if (!hexCells[a].snoid || !hexCells[b].snoid)
         return 0;
-    snoid = (Snoid *)&findView(g_4b1aea[a].snoid)->body;
+    snoid = (Snoid *)&findView(hexCells[a].snoid)->body;
     hair = snoid->features[0];
     eyes = snoid->features[1];
     nose = snoid->features[2];
     feet = snoid->features[3];
-    snoid = (Snoid *)&findView(g_4b1aea[b].snoid)->body;
+    snoid = (Snoid *)&findView(hexCells[b].snoid)->body;
     otherHair = snoid->features[0];
     otherEyes = snoid->features[1];
     otherNose = snoid->features[2];
@@ -858,7 +858,7 @@ short fn_449f96(short a, short b)
 }
 
 /* A cell's placed callback: keeps images 4, 8 and 24 only where the cell
-   has that link (g_4b2324), 73-76 only on a cell whose Zoombini field holds
+   has that link (cellLinkBits), 73-76 only on a cell whose Zoombini field holds
    the matching shared feature (513, 510, 512, 511), 103 on cells in state
    506, and 109 and 110 as fn_448d9d does. */
 /* @zoombi32 0x004489ce */
@@ -868,69 +868,69 @@ void fn_4489ce(View *view)
     short removed;
     short cell;
 
-    cell = view->id - g_4b1aea[0].view;
+    cell = view->id - hexCells[0].view;
     cel = view->body.cels;
     while (cel->image) {
         removed = 0;
         switch (cel->image) {
         case 4:
-            if (!(g_4b2324[cell] & 1)) {
+            if (!(cellLinkBits[cell] & 1)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 8:
-            if (!(g_4b2324[cell] & 2)) {
+            if (!(cellLinkBits[cell] & 2)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 24:
-            if (!(g_4b2324[cell] & 0x20)) {
+            if (!(cellLinkBits[cell] & 0x20)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 74:
-            if (g_4b1aea[cell].snoid != 510) {
+            if (hexCells[cell].snoid != 510) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 76:
-            if (g_4b1aea[cell].snoid != 511) {
+            if (hexCells[cell].snoid != 511) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 75:
-            if (g_4b1aea[cell].snoid != 512) {
+            if (hexCells[cell].snoid != 512) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 73:
-            if (g_4b1aea[cell].snoid != 513) {
+            if (hexCells[cell].snoid != 513) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 109:
-            if (!((g_4b1aea[cell].state == 502 || g_4b1aea[cell].state == 504 || g_4b1aea[cell].state == 508)
-                  && g_4b2512 != 505)) {
+            if (!((hexCells[cell].state == 502 || hexCells[cell].state == 504 || hexCells[cell].state == 508)
+                  && startState != 505)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 110:
-            if (!((g_4b1aea[cell].state == 502 || g_4b1aea[cell].state == 505 || g_4b1aea[cell].state == 508)
-                  && g_4b2512 == 505)) {
+            if (!((hexCells[cell].state == 502 || hexCells[cell].state == 505 || hexCells[cell].state == 508)
+                  && startState == 505)) {
                 removeFirstCel(cel);
                 removed++;
             }
             break;
         case 103:
-            if (g_4b1aea[cell].state != 506) {
+            if (hexCells[cell].state != 506) {
                 removeFirstCel(cel);
                 removed++;
             }
@@ -941,12 +941,12 @@ void fn_4489ce(View *view)
     }
 }
 
-/* Puts the next Zoombini of the party (from the end of g_4b2430) two cells
+/* Puts the next Zoombini of the party (from the end of waitingSnoids) two cells
    from `cell` in direction `dir` (0-5 straight on, 6-9 turning), if it
    shares no feature with the Zoombini on `cell` among the features tried
    (from a random one): the cell between records the feature it was tried
    on (state 501, 510-513) and the far cell takes it (state 507). Returns
-   its place in g_4b2430, or -1. */
+   its place in waitingSnoids, or -1. */
 /* @zoombi32 0x00449cfc */
 short fn_449cfc(short cell, short dir)
 {
@@ -967,38 +967,38 @@ short fn_449cfc(short cell, short dir)
 
     feature = randomUpTo(3);
     if (dir <= 5) {
-        via = g_4b1aea[cell].links[dir];
-        to = g_4b1aea[via].links[dir];
+        via = hexCells[cell].links[dir];
+        to = hexCells[via].links[dir];
     } else {
         switch (dir) {
         case 6:
-            via = g_4b1aea[cell].links[0];
-            to = g_4b1aea[via].links[1];
+            via = hexCells[cell].links[0];
+            to = hexCells[via].links[1];
             break;
         case 7:
-            via = g_4b1aea[cell].links[2];
-            to = g_4b1aea[via].links[1];
+            via = hexCells[cell].links[2];
+            to = hexCells[via].links[1];
             break;
         case 8:
-            via = g_4b1aea[cell].links[5];
-            to = g_4b1aea[via].links[4];
+            via = hexCells[cell].links[5];
+            to = hexCells[via].links[4];
             break;
         case 9:
-            via = g_4b1aea[cell].links[3];
-            to = g_4b1aea[via].links[4];
+            via = hexCells[cell].links[3];
+            to = hexCells[via].links[4];
             break;
         }
     }
-    snoid = (Snoid *)&findView(g_4b1aea[cell].snoid)->body;
+    snoid = (Snoid *)&findView(hexCells[cell].snoid)->body;
     hair = snoid->features[0];
     eyes = snoid->features[1];
     nose = snoid->features[2];
     feet = snoid->features[3];
     different = 1;
-    for (dir = g_4b2414 - 1; dir >= 0; dir--) {
-        if (g_4b2430[dir] == -1)
+    for (dir = partySize - 1; dir >= 0; dir--) {
+        if (waitingSnoids[dir] == -1)
             continue;
-        snoid = (Snoid *)&findView(partyViews[g_4b2430[dir]])->body;
+        snoid = (Snoid *)&findView(partyViews[waitingSnoids[dir]])->body;
         otherHair = snoid->features[0];
         otherEyes = snoid->features[1];
         otherNose = snoid->features[2];
@@ -1020,11 +1020,11 @@ short fn_449cfc(short cell, short dir)
             }
         } while (different && tries);
         if (!different) {
-            g_4b1aea[to].state = 507;
-            g_4b1aea[to].snoid = partyViews[g_4b2430[dir]];
-            g_4b1aea[via].state = 501;
-            g_4b1aea[via].snoid = feature + 510;
-            g_4b2430[dir] = -1;
+            hexCells[to].state = 507;
+            hexCells[to].snoid = partyViews[waitingSnoids[dir]];
+            hexCells[via].state = 501;
+            hexCells[via].snoid = feature + 510;
+            waitingSnoids[dir] = -1;
             return dir;
         }
     }
@@ -1079,24 +1079,24 @@ void scene12Frame()
             g_4b251a = 0;
             if (g_4b1934 == 3) {
                 chooseSnoids(0, 0);
-                if (g_4b1aea[55].state == 508)
-                    ((Snoid *)&findView(g_4b1aea[55].snoid)->body)->unknownF7 = 1;
-                if (g_4b1aea[38].state == 508 && g_4b1aea[46].state == 502)
-                    ((Snoid *)&findView(g_4b1aea[38].snoid)->body)->unknownF7 = 1;
-                if (g_4b1aea[74].state == 508 && g_4b1aea[64].state == 502)
-                    ((Snoid *)&findView(g_4b1aea[74].snoid)->body)->unknownF7 = 1;
+                if (hexCells[55].state == 508)
+                    ((Snoid *)&findView(hexCells[55].snoid)->body)->unknownF7 = 1;
+                if (hexCells[38].state == 508 && hexCells[46].state == 502)
+                    ((Snoid *)&findView(hexCells[38].snoid)->body)->unknownF7 = 1;
+                if (hexCells[74].state == 508 && hexCells[64].state == 502)
+                    ((Snoid *)&findView(hexCells[74].snoid)->body)->unknownF7 = 1;
                 sendSnoids(800, 200, 45);
                 fn_44943b();
             } else if (g_4b1934 <= 1) {
                 sendSnoids(1280, 240, 45);
             } else {
                 chooseSnoids(0, 0);
-                if (g_4b1aea[19].state == 508)
-                    ((Snoid *)&findView(g_4b1aea[19].snoid)->body)->unknownF7 = 1;
-                if (g_4b1aea[55].state == 508)
-                    ((Snoid *)&findView(g_4b1aea[55].snoid)->body)->unknownF7 = 1;
-                if (g_4b1aea[91].state == 508)
-                    ((Snoid *)&findView(g_4b1aea[91].snoid)->body)->unknownF7 = 1;
+                if (hexCells[19].state == 508)
+                    ((Snoid *)&findView(hexCells[19].snoid)->body)->unknownF7 = 1;
+                if (hexCells[55].state == 508)
+                    ((Snoid *)&findView(hexCells[55].snoid)->body)->unknownF7 = 1;
+                if (hexCells[91].state == 508)
+                    ((Snoid *)&findView(hexCells[91].snoid)->body)->unknownF7 = 1;
                 sendSnoids(800, 200, 45);
                 fn_44943b();
             }
@@ -1109,7 +1109,7 @@ void scene12Frame()
                 tries = 0;
                 g_4b252c = clockTime();
                 do {
-                    view = idleSnoidView(partyViews[allocateSlot(&g_4b2538, g_4b2414, 0)]);
+                    view = idleSnoidView(partyViews[allocateSlot(&g_4b2538, partySize, 0)]);
                     if (view && view->body.running && view->flags == 1) {
                         int script = ((Snoid *)&view->body)->features[3] - 1;
 
@@ -1154,14 +1154,14 @@ void fn_4494b3()
         fillMemory(g_4b2452, 0, 32);
         fillMemory(paired, 0, 32);
         g_4b2450 = 0;
-        for (i = 0; i < g_4b2414; i++) {
+        for (i = 0; i < partySize; i++) {
             tries = 4;
             if (paired[i])
                 continue;
             do {
                 if (++feature > 3)
                     feature = 0;
-                for (j = i + 1; j < g_4b2414; j++) {
+                for (j = i + 1; j < partySize; j++) {
                     switch (feature) {
                     case 0:
                         if (!paired[j] && partyHair[i] == partyHair[j]) {
@@ -1208,13 +1208,13 @@ void fn_4494b3()
         }
         if (!lonely) {
             done++;
-        } else if (lonely == 1 && g_4b2414 % 2) {
+        } else if (lonely == 1 && partySize % 2) {
             done++;
         } else {
-            for (i = g_4b2414 - 1; i >= 0; i--) {
+            for (i = partySize - 1; i >= 0; i--) {
                 if (paired[i] != 99)
                     continue;
-                for (j = 0; j < g_4b2414; j++) {
+                for (j = 0; j < partySize; j++) {
                     if (paired[j] == 99)
                         break;
                     swap = partyHair[i];
@@ -1263,80 +1263,80 @@ void fn_44a674(short from, short via, short to)
 
     if (via == -1)
         return;
-    if (g_4b1aea[via].state != 501)
+    if (hexCells[via].state != 501)
         return;
-    code = g_4b1aea[via].snoid;
+    code = hexCells[via].snoid;
     if (code < 510) {
-        if (g_4b1aea[from].state != 507 && g_4b1aea[from].state != 508 && g_4b1aea[from].state != 502)
+        if (hexCells[from].state != 507 && hexCells[from].state != 508 && hexCells[from].state != 502)
             return;
-        g_4b1aea[via].state = 502;
-        view = findView(g_4b1aea[via].view);
+        hexCells[via].state = 502;
+        view = findView(hexCells[via].view);
         setViewScript(view, 7000, 1);
         view->placed = fn_4489ce;
         if (to == -1)
             return;
-        if (g_4b1aea[to].state == 507 || g_4b1aea[to].state == 508) {
-            g_4b1aea[to].state = 508;
-            view = findView(g_4b1aea[to].view);
+        if (hexCells[to].state == 507 || hexCells[to].state == 508) {
+            hexCells[to].state = 508;
+            view = findView(hexCells[to].view);
             setViewScript(view, 7000, 1);
             view->placed = fn_4489ce;
             return;
         }
-        if (g_4b1aea[to].state == 501) {
-            g_4b1aea[to].state = 502;
-            view = findView(g_4b1aea[to].view);
+        if (hexCells[to].state == 501) {
+            hexCells[to].state = 502;
+            view = findView(hexCells[to].view);
             setViewScript(view, 7000, 1);
             view->placed = fn_4489ce;
         }
         return;
     }
-    if (to != -1 && (g_4b1aea[from].state == 507 || g_4b1aea[from].state == 508)
-        && (g_4b1aea[to].state == 507 || g_4b1aea[to].state == 508)) {
-        snoid = (Snoid *)&findView(g_4b1aea[from].snoid)->body;
+    if (to != -1 && (hexCells[from].state == 507 || hexCells[from].state == 508)
+        && (hexCells[to].state == 507 || hexCells[to].state == 508)) {
+        snoid = (Snoid *)&findView(hexCells[from].snoid)->body;
         hair = snoid->features[0];
         eyes = snoid->features[1];
         nose = snoid->features[2];
         feet = snoid->features[3];
-        snoid = (Snoid *)&findView(g_4b1aea[to].snoid)->body;
+        snoid = (Snoid *)&findView(hexCells[to].snoid)->body;
         otherHair = snoid->features[0];
         otherEyes = snoid->features[1];
         otherNose = snoid->features[2];
         otherFeet = snoid->features[3];
-        if (code < 510 || g_4b1aea[via].state == 502) {
-            g_4b1aea[to].state = 508;
-            view = findView(g_4b1aea[to].view);
+        if (code < 510 || hexCells[via].state == 502) {
+            hexCells[to].state = 508;
+            view = findView(hexCells[to].view);
             setViewScript(view, 7000, 1);
             view->placed = fn_4489ce;
-            g_4b1aea[via].state = 502;
-            view = findView(g_4b1aea[via].view);
+            hexCells[via].state = 502;
+            view = findView(hexCells[via].view);
             setViewScript(view, 7000, 1);
             view->placed = fn_4489ce;
         } else if ((code == 510 && otherHair == hair) || (code == 511 && otherEyes == eyes)
                    || (code == 512 && nose == otherNose) || (code == 513 && otherFeet == feet)) {
-            g_4b1aea[to].state = 508;
-            view = findView(g_4b1aea[to].view);
+            hexCells[to].state = 508;
+            view = findView(hexCells[to].view);
             setViewScript(view, 7000, 1);
             view->placed = fn_4489ce;
-            g_4b1aea[via].state = 502;
-            view = findView(g_4b1aea[via].view);
+            hexCells[via].state = 502;
+            view = findView(hexCells[via].view);
             setViewScript(view, 7000, 1);
             view->placed = fn_4489ce;
         }
-    } else if (to != -1 && (g_4b1aea[to].state == 502 || g_4b1aea[to].state == 501)) {
-        g_4b1aea[to].state = 502;
-        view = findView(g_4b1aea[to].view);
+    } else if (to != -1 && (hexCells[to].state == 502 || hexCells[to].state == 501)) {
+        hexCells[to].state = 502;
+        view = findView(hexCells[to].view);
         setViewScript(view, 7000, 1);
         view->placed = fn_4489ce;
         if (code < 510 && code != 500) {
-            g_4b1aea[via].state = 502;
-            view = findView(g_4b1aea[via].view);
+            hexCells[via].state = 502;
+            view = findView(hexCells[via].view);
             setViewScript(view, 7000, 1);
             view->placed = fn_4489ce;
         }
     }
 }
 
-/* Seats the next two Zoombinis of the party (g_4b2430) on `cell` and the
+/* Seats the next two Zoombinis of the party (waitingSnoids) on `cell` and the
    cell five on (state 507), then from each places more two cells on
    (fn_449cfc), turning (directions 8 and 9, 6 and 7). */
 /* @zoombi32 0x0044abce */
@@ -1344,28 +1344,28 @@ void fn_44abce(short cell)
 {
     short i;
 
-    for (i = 0; i < g_4b2414; i++)
-        if (g_4b2430[i] != -1) {
-            g_4b1aea[cell].state = 507;
-            g_4b1aea[cell].snoid = partyViews[g_4b2430[i]];
-            g_4b2430[i] = -1;
+    for (i = 0; i < partySize; i++)
+        if (waitingSnoids[i] != -1) {
+            hexCells[cell].state = 507;
+            hexCells[cell].snoid = partyViews[waitingSnoids[i]];
+            waitingSnoids[i] = -1;
             break;
         }
-    for (i = 0; i < g_4b2414; i++)
-        if (g_4b2430[i] != -1) {
-            g_4b1aea[cell + 5].state = 507;
-            g_4b1aea[cell + 5].snoid = partyViews[g_4b2430[i]];
-            g_4b2430[i] = -1;
+    for (i = 0; i < partySize; i++)
+        if (waitingSnoids[i] != -1) {
+            hexCells[cell + 5].state = 507;
+            hexCells[cell + 5].snoid = partyViews[waitingSnoids[i]];
+            waitingSnoids[i] = -1;
             break;
         }
-    if (g_4b1aea[cell].state == 507 && fn_449cfc(cell, 8) != -1)
+    if (hexCells[cell].state == 507 && fn_449cfc(cell, 8) != -1)
         fn_449cfc(cell, 9);
-    if (g_4b1aea[cell + 5].state == 507 && fn_449cfc(cell + 5, 6) != -1)
+    if (hexCells[cell + 5].state == 507 && fn_449cfc(cell + 5, 6) != -1)
         fn_449cfc(cell + 5, 7);
 }
 
 /* Lights the path: from the listed cell g_4b1ab4[g_4b2410] (taken, 507),
-   finds the cell before the first in state g_4b2512, then walks back along
+   finds the cell before the first in state startState, then walks back along
    the links: Zoombinis' cells go to 508; a feature stone (510-513) lights
    when the Zoombinis on either side share its feature; a plain stone
    lights on level 1 after a Zoombini's cell. The walk ends at an empty or
@@ -1394,103 +1394,103 @@ void fn_448f02()
     short otherFeet;
 
     cell = g_4b1ab4[g_4b2410];
-    view = findView(g_4b1aea[cell].snoid);
-    g_4b1aea[cell].state = 507;
-    view = findView(g_4b1aea[cell].view);
+    view = findView(hexCells[cell].snoid);
+    hexCells[cell].state = 507;
+    view = findView(hexCells[cell].view);
     setViewScript(view, 7000, 1);
     view->placed = fn_4489ce;
     found = 0;
     do {
         start = cell;
-        if (g_4b1aea[cell].links[0] != -1)
-            cell = g_4b1aea[cell].links[0];
-        else if (g_4b1aea[cell].links[1] != -1)
-            cell = g_4b1aea[cell].links[1];
-        else if (g_4b1aea[cell].links[2] != -1)
-            cell = g_4b1aea[cell].links[2];
-        if (g_4b1aea[cell].state == g_4b2512) {
+        if (hexCells[cell].links[0] != -1)
+            cell = hexCells[cell].links[0];
+        else if (hexCells[cell].links[1] != -1)
+            cell = hexCells[cell].links[1];
+        else if (hexCells[cell].links[2] != -1)
+            cell = hexCells[cell].links[2];
+        if (hexCells[cell].state == startState) {
             found++;
             cell = start;
         }
     } while (!found);
     done = 0;
     do {
-        switch (g_4b1aea[cell].state) {
+        switch (hexCells[cell].state) {
         case 500:
         case 506:
             done++;
             break;
         case 507:
-            g_4b1aea[cell].state = 508;
-            view = findView(g_4b1aea[cell].view);
+            hexCells[cell].state = 508;
+            view = findView(hexCells[cell].view);
             setViewScript(view, 7000, 1);
             view->placed = fn_4489ce;
             break;
         case 501:
-            if (g_4b1aea[cell].snoid >= 510 && g_4b1aea[cell].snoid <= 513) {
-                if (g_4b1aea[cell].links[5] != -1)
-                    back = g_4b1aea[cell].links[5];
-                else if (g_4b1aea[cell].links[4] != -1)
-                    back = g_4b1aea[cell].links[4];
-                else if (g_4b1aea[cell].links[3] != -1)
-                    back = g_4b1aea[cell].links[3];
-                if (g_4b1aea[back].state != 507 && g_4b1aea[back].state != 508) {
+            if (hexCells[cell].snoid >= 510 && hexCells[cell].snoid <= 513) {
+                if (hexCells[cell].links[5] != -1)
+                    back = hexCells[cell].links[5];
+                else if (hexCells[cell].links[4] != -1)
+                    back = hexCells[cell].links[4];
+                else if (hexCells[cell].links[3] != -1)
+                    back = hexCells[cell].links[3];
+                if (hexCells[back].state != 507 && hexCells[back].state != 508) {
                     done++;
                     break;
                 }
-                if (g_4b1aea[cell].links[0] != -1)
-                    ahead = g_4b1aea[cell].links[0];
-                else if (g_4b1aea[cell].links[1] != -1)
-                    ahead = g_4b1aea[cell].links[1];
-                else if (g_4b1aea[cell].links[2] != -1)
-                    ahead = g_4b1aea[cell].links[2];
-                if (g_4b1aea[ahead].state != 507 && g_4b1aea[ahead].state != 508) {
+                if (hexCells[cell].links[0] != -1)
+                    ahead = hexCells[cell].links[0];
+                else if (hexCells[cell].links[1] != -1)
+                    ahead = hexCells[cell].links[1];
+                else if (hexCells[cell].links[2] != -1)
+                    ahead = hexCells[cell].links[2];
+                if (hexCells[ahead].state != 507 && hexCells[ahead].state != 508) {
                     done++;
                     break;
                 }
-                view = findView(g_4b1aea[ahead].snoid);
+                view = findView(hexCells[ahead].snoid);
                 snoid = (Snoid *)&view->body;
                 hair = snoid->features[0];
                 eyes = snoid->features[1];
                 nose = snoid->features[2];
                 feet = snoid->features[3];
-                view = findView(g_4b1aea[back].snoid);
+                view = findView(hexCells[back].snoid);
                 snoid = (Snoid *)&view->body;
                 otherHair = snoid->features[0];
                 otherEyes = snoid->features[1];
                 otherNose = snoid->features[2];
                 otherFeet = snoid->features[3];
-                if (g_4b1aea[cell].snoid == 510) {
+                if (hexCells[cell].snoid == 510) {
                     if (otherHair == hair) {
-                        g_4b1aea[cell].state = 502;
-                        view = findView(g_4b1aea[cell].view);
+                        hexCells[cell].state = 502;
+                        view = findView(hexCells[cell].view);
                         setViewScript(view, 7000, 1);
                         view->placed = fn_4489ce;
                     } else {
                         done++;
                     }
-                } else if (g_4b1aea[cell].snoid == 511) {
+                } else if (hexCells[cell].snoid == 511) {
                     if (otherEyes == eyes) {
-                        g_4b1aea[cell].state = 502;
-                        view = findView(g_4b1aea[cell].view);
+                        hexCells[cell].state = 502;
+                        view = findView(hexCells[cell].view);
                         setViewScript(view, 7000, 1);
                         view->placed = fn_4489ce;
                     } else {
                         done++;
                     }
-                } else if (g_4b1aea[cell].snoid == 512) {
+                } else if (hexCells[cell].snoid == 512) {
                     if (nose == otherNose) {
-                        g_4b1aea[cell].state = 502;
-                        view = findView(g_4b1aea[cell].view);
+                        hexCells[cell].state = 502;
+                        view = findView(hexCells[cell].view);
                         setViewScript(view, 7000, 1);
                         view->placed = fn_4489ce;
                     } else {
                         done++;
                     }
-                } else if (g_4b1aea[cell].snoid == 513) {
+                } else if (hexCells[cell].snoid == 513) {
                     if (otherFeet == feet) {
-                        g_4b1aea[cell].state = 502;
-                        view = findView(g_4b1aea[cell].view);
+                        hexCells[cell].state = 502;
+                        view = findView(hexCells[cell].view);
                         setViewScript(view, 7000, 1);
                         view->placed = fn_4489ce;
                     } else {
@@ -1498,26 +1498,26 @@ void fn_448f02()
                     }
                 }
                 if (!done) {
-                    g_4b1aea[cell].state = 502;
-                    view = findView(g_4b1aea[cell].view);
+                    hexCells[cell].state = 502;
+                    view = findView(hexCells[cell].view);
                     setViewScript(view, 7000, 1);
                     view->placed = fn_4489ce;
                 }
-            } else if (g_4b1934 == 1 && !g_4b1aea[cell].snoid && g_4b1aea[cell - 1].state == 508) {
-                g_4b1aea[cell].state = 502;
-                view = findView(g_4b1aea[cell].view);
+            } else if (g_4b1934 == 1 && !hexCells[cell].snoid && hexCells[cell - 1].state == 508) {
+                hexCells[cell].state = 502;
+                view = findView(hexCells[cell].view);
                 setViewScript(view, 7000, 1);
                 view->placed = fn_4489ce;
             }
             break;
         }
         if (!done) {
-            if (g_4b1aea[cell].links[5] != -1)
-                cell = g_4b1aea[cell].links[5];
-            else if (g_4b1aea[cell].links[4] != -1)
-                cell = g_4b1aea[cell].links[4];
-            else if (g_4b1aea[cell].links[3] != -1)
-                cell = g_4b1aea[cell].links[3];
+            if (hexCells[cell].links[5] != -1)
+                cell = hexCells[cell].links[5];
+            else if (hexCells[cell].links[4] != -1)
+                cell = hexCells[cell].links[4];
+            else if (hexCells[cell].links[3] != -1)
+                cell = hexCells[cell].links[3];
             else
                 done++;
         }
@@ -1525,7 +1525,7 @@ void fn_448f02()
 }
 
 /* Links the board's cells to their neighbours (links[0-5], -1 for none),
-   where each cell's bits in g_4b2324 allow: the board is 13 rows of 9,
+   where each cell's bits in cellLinkBits allow: the board is 13 rows of 9,
    odd rows set half a cell right, so a neighbour's number depends on the
    row and on the edges. Empty cells (state 0) get no links. */
 /* @zoombi32 0x0044833d */
@@ -1542,7 +1542,7 @@ void linkCells()
 
     for (cell = 0; cell < 117; cell++) {
         for (i = 0; i < 6; i++)
-            g_4b1aea[cell].links[i] = -1;
+            hexCells[cell].links[i] = -1;
         top = bottom = leftEven = rightOdd = leftOdd = rightEven = 0;
         if (cell <= 8)
             top++;
@@ -1559,117 +1559,117 @@ void linkCells()
             else
                 rightOdd++;
         }
-        if (!g_4b1aea[cell].state)
+        if (!hexCells[cell].state)
             continue;
         if (top) {
             if (cell == 0) {
-                if (g_4b2324[cell] & 0x10)
-                    g_4b1aea[cell].links[4] = 1;
-                if (g_4b2324[cell] & 8)
-                    g_4b1aea[cell].links[3] = 9;
+                if (cellLinkBits[cell] & 0x10)
+                    hexCells[cell].links[4] = 1;
+                if (cellLinkBits[cell] & 8)
+                    hexCells[cell].links[3] = 9;
             }
             if (cell == 8) {
-                if (g_4b2324[cell] & 2)
-                    g_4b1aea[cell].links[1] = 7;
-                if (g_4b2324[cell] & 4)
-                    g_4b1aea[cell].links[2] = 16;
-                if (g_4b2324[cell] & 8)
-                    g_4b1aea[cell].links[3] = 17;
+                if (cellLinkBits[cell] & 2)
+                    hexCells[cell].links[1] = 7;
+                if (cellLinkBits[cell] & 4)
+                    hexCells[cell].links[2] = 16;
+                if (cellLinkBits[cell] & 8)
+                    hexCells[cell].links[3] = 17;
             } else {
-                if (g_4b2324[cell] & 2)
-                    g_4b1aea[cell].links[1] = cell - 1;
-                if (g_4b2324[cell] & 4)
-                    g_4b1aea[cell].links[2] = cell + 8;
-                if (g_4b2324[cell] & 8)
-                    g_4b1aea[cell].links[3] = cell + 9;
-                if (g_4b2324[cell] & 0x10)
-                    g_4b1aea[cell].links[4] = cell + 1;
+                if (cellLinkBits[cell] & 2)
+                    hexCells[cell].links[1] = cell - 1;
+                if (cellLinkBits[cell] & 4)
+                    hexCells[cell].links[2] = cell + 8;
+                if (cellLinkBits[cell] & 8)
+                    hexCells[cell].links[3] = cell + 9;
+                if (cellLinkBits[cell] & 0x10)
+                    hexCells[cell].links[4] = cell + 1;
             }
         } else if (bottom) {
             if (cell == 108) {
-                if (g_4b2324[cell] & 0x10)
-                    g_4b1aea[cell].links[4] = 109;
-                if (g_4b2324[cell] & 0x20)
-                    g_4b1aea[cell].links[5] = 99;
+                if (cellLinkBits[cell] & 0x10)
+                    hexCells[cell].links[4] = 109;
+                if (cellLinkBits[cell] & 0x20)
+                    hexCells[cell].links[5] = 99;
             } else if (cell == 116) {
-                if (g_4b2324[cell] & 1)
-                    g_4b1aea[cell].links[0] = 106;
-                if (g_4b2324[cell] & 2)
-                    g_4b1aea[cell].links[1] = 115;
-                if (g_4b2324[cell] & 0x20)
-                    g_4b1aea[cell].links[5] = 107;
+                if (cellLinkBits[cell] & 1)
+                    hexCells[cell].links[0] = 106;
+                if (cellLinkBits[cell] & 2)
+                    hexCells[cell].links[1] = 115;
+                if (cellLinkBits[cell] & 0x20)
+                    hexCells[cell].links[5] = 107;
             } else {
-                if (g_4b2324[cell] & 1)
-                    g_4b1aea[cell].links[0] = cell - 10;
-                if (g_4b2324[cell] & 2)
-                    g_4b1aea[cell].links[1] = cell - 1;
-                if (g_4b2324[cell] & 0x10)
-                    g_4b1aea[cell].links[4] = cell + 1;
-                if (g_4b2324[cell] & 0x20)
-                    g_4b1aea[cell].links[5] = cell - 9;
+                if (cellLinkBits[cell] & 1)
+                    hexCells[cell].links[0] = cell - 10;
+                if (cellLinkBits[cell] & 2)
+                    hexCells[cell].links[1] = cell - 1;
+                if (cellLinkBits[cell] & 0x10)
+                    hexCells[cell].links[4] = cell + 1;
+                if (cellLinkBits[cell] & 0x20)
+                    hexCells[cell].links[5] = cell - 9;
             }
         } else if (rightOdd) {
-            if (g_4b2324[cell] & 1)
-                g_4b1aea[cell].links[0] = cell - 9;
-            if (g_4b2324[cell] & 2)
-                g_4b1aea[cell].links[1] = cell - 1;
-            if (g_4b2324[cell] & 4)
-                g_4b1aea[cell].links[2] = cell + 9;
+            if (cellLinkBits[cell] & 1)
+                hexCells[cell].links[0] = cell - 9;
+            if (cellLinkBits[cell] & 2)
+                hexCells[cell].links[1] = cell - 1;
+            if (cellLinkBits[cell] & 4)
+                hexCells[cell].links[2] = cell + 9;
         } else if (rightEven) {
-            if (g_4b2324[cell] & 1)
-                g_4b1aea[cell].links[0] = cell - 10;
-            if (g_4b2324[cell] & 2)
-                g_4b1aea[cell].links[1] = cell - 1;
-            if (g_4b2324[cell] & 4)
-                g_4b1aea[cell].links[2] = cell + 8;
-            if (g_4b2324[cell] & 8)
-                g_4b1aea[cell].links[3] = cell + 9;
-            if (g_4b2324[cell] & 0x20)
-                g_4b1aea[cell].links[5] = cell - 9;
+            if (cellLinkBits[cell] & 1)
+                hexCells[cell].links[0] = cell - 10;
+            if (cellLinkBits[cell] & 2)
+                hexCells[cell].links[1] = cell - 1;
+            if (cellLinkBits[cell] & 4)
+                hexCells[cell].links[2] = cell + 8;
+            if (cellLinkBits[cell] & 8)
+                hexCells[cell].links[3] = cell + 9;
+            if (cellLinkBits[cell] & 0x20)
+                hexCells[cell].links[5] = cell - 9;
         } else if (leftEven) {
-            if (g_4b2324[cell] & 8)
-                g_4b1aea[cell].links[3] = cell + 9;
-            if (g_4b2324[cell] & 0x10)
-                g_4b1aea[cell].links[4] = cell + 1;
-            if (g_4b2324[cell] & 0x20)
-                g_4b1aea[cell].links[5] = cell - 9;
+            if (cellLinkBits[cell] & 8)
+                hexCells[cell].links[3] = cell + 9;
+            if (cellLinkBits[cell] & 0x10)
+                hexCells[cell].links[4] = cell + 1;
+            if (cellLinkBits[cell] & 0x20)
+                hexCells[cell].links[5] = cell - 9;
         } else if (leftOdd) {
-            if (g_4b2324[cell] & 1)
-                g_4b1aea[cell].links[0] = cell - 9;
-            if (g_4b2324[cell] & 4)
-                g_4b1aea[cell].links[2] = cell + 9;
-            if (g_4b2324[cell] & 8)
-                g_4b1aea[cell].links[3] = cell + 10;
-            if (g_4b2324[cell] & 0x10)
-                g_4b1aea[cell].links[4] = cell + 1;
-            if (g_4b2324[cell] & 0x20)
-                g_4b1aea[cell].links[5] = cell - 8;
+            if (cellLinkBits[cell] & 1)
+                hexCells[cell].links[0] = cell - 9;
+            if (cellLinkBits[cell] & 4)
+                hexCells[cell].links[2] = cell + 9;
+            if (cellLinkBits[cell] & 8)
+                hexCells[cell].links[3] = cell + 10;
+            if (cellLinkBits[cell] & 0x10)
+                hexCells[cell].links[4] = cell + 1;
+            if (cellLinkBits[cell] & 0x20)
+                hexCells[cell].links[5] = cell - 8;
         } else if (cell % 18 <= 8) {
-            if (g_4b2324[cell] & 1)
-                g_4b1aea[cell].links[0] = cell - 10;
-            if (g_4b2324[cell] & 2)
-                g_4b1aea[cell].links[1] = cell - 1;
-            if (g_4b2324[cell] & 4)
-                g_4b1aea[cell].links[2] = cell + 8;
-            if (g_4b2324[cell] & 8)
-                g_4b1aea[cell].links[3] = cell + 9;
-            if (g_4b2324[cell] & 0x10)
-                g_4b1aea[cell].links[4] = cell + 1;
-            if (g_4b2324[cell] & 0x20)
-                g_4b1aea[cell].links[5] = cell - 9;
+            if (cellLinkBits[cell] & 1)
+                hexCells[cell].links[0] = cell - 10;
+            if (cellLinkBits[cell] & 2)
+                hexCells[cell].links[1] = cell - 1;
+            if (cellLinkBits[cell] & 4)
+                hexCells[cell].links[2] = cell + 8;
+            if (cellLinkBits[cell] & 8)
+                hexCells[cell].links[3] = cell + 9;
+            if (cellLinkBits[cell] & 0x10)
+                hexCells[cell].links[4] = cell + 1;
+            if (cellLinkBits[cell] & 0x20)
+                hexCells[cell].links[5] = cell - 9;
         } else {
-            if (g_4b2324[cell] & 1)
-                g_4b1aea[cell].links[0] = cell - 9;
-            if (g_4b2324[cell] & 2)
-                g_4b1aea[cell].links[1] = cell - 1;
-            if (g_4b2324[cell] & 4)
-                g_4b1aea[cell].links[2] = cell + 9;
-            if (g_4b2324[cell] & 8)
-                g_4b1aea[cell].links[3] = cell + 10;
-            if (g_4b2324[cell] & 0x10)
-                g_4b1aea[cell].links[4] = cell + 1;
-            if (g_4b2324[cell] & 0x20)
-                g_4b1aea[cell].links[5] = cell - 8;
+            if (cellLinkBits[cell] & 1)
+                hexCells[cell].links[0] = cell - 9;
+            if (cellLinkBits[cell] & 2)
+                hexCells[cell].links[1] = cell - 1;
+            if (cellLinkBits[cell] & 4)
+                hexCells[cell].links[2] = cell + 9;
+            if (cellLinkBits[cell] & 8)
+                hexCells[cell].links[3] = cell + 10;
+            if (cellLinkBits[cell] & 0x10)
+                hexCells[cell].links[4] = cell + 1;
+            if (cellLinkBits[cell] & 0x20)
+                hexCells[cell].links[5] = cell - 8;
         }
     }
 }
@@ -1683,17 +1683,17 @@ short fn_44b4ec(short a, short b)
     short third;
     short shared;
 
-    first = g_4b1aea[1].state;
-    third = g_4b1aea[3].state;
-    g_4b1aea[1].snoid = partyViews[a];
-    g_4b1aea[3].snoid = partyViews[b];
-    g_4b1aea[1].state = 506;
-    g_4b1aea[3].state = 506;
+    first = hexCells[1].state;
+    third = hexCells[3].state;
+    hexCells[1].snoid = partyViews[a];
+    hexCells[3].snoid = partyViews[b];
+    hexCells[1].state = 506;
+    hexCells[3].state = 506;
     shared = fn_449f96(1, 3);
-    g_4b1aea[1].snoid = 0;
-    g_4b1aea[3].snoid = 0;
-    g_4b1aea[1].state = first;
-    g_4b1aea[3].state = third;
+    hexCells[1].snoid = 0;
+    hexCells[3].snoid = 0;
+    hexCells[1].state = first;
+    hexCells[3].state = third;
     return shared;
 }
 
@@ -1707,41 +1707,41 @@ void fn_44a4d9(short cell)
     short via;
     short to;
 
-    via = g_4b1aea[cell].links[4];
-    to = g_4b1aea[via].links[4];
+    via = hexCells[cell].links[4];
+    to = hexCells[via].links[4];
     fn_44a674(cell, via, to);
-    via = g_4b1aea[cell].links[1];
-    to = g_4b1aea[via].links[1];
+    via = hexCells[cell].links[1];
+    to = hexCells[via].links[1];
     fn_44a674(cell, via, to);
-    via = g_4b1aea[cell].links[5];
-    to = g_4b1aea[via].links[5];
+    via = hexCells[cell].links[5];
+    to = hexCells[via].links[5];
     fn_44a674(cell, via, to);
-    if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+    if (hexCells[to].state == 508 || hexCells[to].state == 502) {
         middle = to;
-        via = g_4b1aea[middle].links[3];
-        to = g_4b1aea[via].links[3];
+        via = hexCells[middle].links[3];
+        to = hexCells[via].links[3];
         fn_44a674(middle, via, to);
-        via = g_4b1aea[middle].links[0];
-        to = g_4b1aea[via].links[0];
+        via = hexCells[middle].links[0];
+        to = hexCells[via].links[0];
         fn_44a674(middle, via, to);
     }
-    via = g_4b1aea[cell].links[3];
-    to = g_4b1aea[via].links[3];
+    via = hexCells[cell].links[3];
+    to = hexCells[via].links[3];
     fn_44a674(cell, via, to);
-    if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+    if (hexCells[to].state == 508 || hexCells[to].state == 502) {
         middle = to;
-        via = g_4b1aea[middle].links[5];
-        to = g_4b1aea[via].links[5];
+        via = hexCells[middle].links[5];
+        to = hexCells[via].links[5];
         fn_44a674(middle, via, to);
-        via = g_4b1aea[middle].links[2];
-        to = g_4b1aea[via].links[2];
+        via = hexCells[middle].links[2];
+        to = hexCells[via].links[2];
         fn_44a674(middle, via, to);
     }
-    via = g_4b1aea[cell].links[0];
-    to = g_4b1aea[via].links[0];
+    via = hexCells[cell].links[0];
+    to = hexCells[via].links[0];
     fn_44a674(cell, via, to);
-    via = g_4b1aea[cell].links[2];
-    to = g_4b1aea[via].links[2];
+    via = hexCells[cell].links[2];
+    to = hexCells[via].links[2];
     fn_44a674(cell, via, to);
 }
 
@@ -1755,98 +1755,98 @@ void fn_44accc(short cell)
     short via;
     short to;
 
-    via = g_4b1aea[cell].links[5];
-    to = g_4b1aea[via].links[4];
+    via = hexCells[cell].links[5];
+    to = hexCells[via].links[4];
     fn_44a674(cell, via, to);
-    if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+    if (hexCells[to].state == 508 || hexCells[to].state == 502) {
         middle = to;
-        via = g_4b1aea[middle].links[4];
-        to = g_4b1aea[via].links[4];
+        via = hexCells[middle].links[4];
+        to = hexCells[via].links[4];
         fn_44a674(middle, via, to);
-        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+        if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
-            via = g_4b1aea[middle].links[4];
-            to = g_4b1aea[via].links[3];
+            via = hexCells[middle].links[4];
+            to = hexCells[via].links[3];
             fn_44a674(middle, via, to);
         }
-        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+        if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
-            via = g_4b1aea[middle].links[2];
-            to = g_4b1aea[via].links[1];
+            via = hexCells[middle].links[2];
+            to = hexCells[via].links[1];
             fn_44a674(middle, via, to);
         }
-        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+        if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
-            via = g_4b1aea[middle].links[1];
-            to = g_4b1aea[via].links[1];
+            via = hexCells[middle].links[1];
+            to = hexCells[via].links[1];
             fn_44a674(middle, via, to);
         }
     }
-    via = g_4b1aea[cell].links[3];
-    to = g_4b1aea[via].links[4];
+    via = hexCells[cell].links[3];
+    to = hexCells[via].links[4];
     fn_44a674(cell, via, to);
-    if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+    if (hexCells[to].state == 508 || hexCells[to].state == 502) {
         middle = to;
-        via = g_4b1aea[middle].links[4];
-        to = g_4b1aea[via].links[4];
+        via = hexCells[middle].links[4];
+        to = hexCells[via].links[4];
         fn_44a674(middle, via, to);
-        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+        if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
-            via = g_4b1aea[middle].links[4];
-            to = g_4b1aea[via].links[5];
+            via = hexCells[middle].links[4];
+            to = hexCells[via].links[5];
             fn_44a674(middle, via, to);
         }
-        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+        if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
-            via = g_4b1aea[middle].links[0];
-            to = g_4b1aea[via].links[1];
+            via = hexCells[middle].links[0];
+            to = hexCells[via].links[1];
             fn_44a674(middle, via, to);
         }
-        if (g_4b1aea[to].state == 508 || g_4b1aea[to].state == 502) {
+        if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
-            via = g_4b1aea[middle].links[1];
-            to = g_4b1aea[via].links[1];
+            via = hexCells[middle].links[1];
+            to = hexCells[via].links[1];
             fn_44a674(middle, via, to);
         }
     }
 }
 
 /* Lights the three starting cells (19, 55, 91) where a Zoombini waits (507
-   to 508) and follows the moves from each (fn_44accc), then fn_44e092. */
+   to 508) and follows the moves from each (fn_44accc), then checkAllFilled. */
 /* @zoombi32 0x0044a359 */
 void fn_44a359()
 {
     View *view;
 
-    if (g_4b1aea[19].state == 507) {
-        g_4b1aea[19].state = 508;
-        view = findView(g_4b1aea[19].view);
+    if (hexCells[19].state == 507) {
+        hexCells[19].state = 508;
+        view = findView(hexCells[19].view);
         setViewScript(view, 7000, 1);
         view->placed = fn_4489ce;
         fn_44accc(19);
     }
-    if (g_4b1aea[55].state == 507) {
-        g_4b1aea[55].state = 508;
-        view = findView(g_4b1aea[55].view);
+    if (hexCells[55].state == 507) {
+        hexCells[55].state = 508;
+        view = findView(hexCells[55].view);
         setViewScript(view, 7000, 1);
         view->placed = fn_4489ce;
         fn_44accc(55);
     }
-    if (g_4b1aea[91].state == 507) {
-        g_4b1aea[91].state = 508;
-        view = findView(g_4b1aea[91].view);
+    if (hexCells[91].state == 507) {
+        hexCells[91].state = 508;
+        view = findView(hexCells[91].view);
         setViewScript(view, 7000, 1);
         view->placed = fn_4489ce;
         fn_44accc(91);
     }
-    fn_44e092();
+    checkAllFilled();
 }
 
 /* Lights the cell after `cell` if a Zoombini waits there, then every cell
    of g_4a41e6 with a Zoombini next to a lit stone, and follows the moves
    around each lit one (fn_44a4d9); on level 3, with cells 57, 59 and 61
    lit and four Zoombinis on the listed cells, the colours start cycling
-   (g_4b1a3c) and fn_44dcdc follows. */
+   (g_4b1a3c) and showZoneMessage follows. */
 /* @zoombi32 0x0044a180 */
 void fn_44a180(short cell)
 {
@@ -1857,36 +1857,36 @@ void fn_44a180(short cell)
     short after;
 
     after = cell + 1;
-    if (g_4b1aea[after].state != 507)
+    if (hexCells[after].state != 507)
         return;
-    g_4b1aea[after].state = 508;
-    view = findView(g_4b1aea[after].view);
+    hexCells[after].state = 508;
+    view = findView(hexCells[after].view);
     setViewScript(view, 7000, 1);
     view->placed = fn_4489ce;
     for (i = 0; i < g_4a4224; i++) {
-        if (g_4b1aea[g_4a41e6[i]].state == 507) {
+        if (hexCells[g_4a41e6[i]].state == 507) {
             for (j = 0; j <= 5; j++) {
-                next = g_4b1aea[g_4a41e6[i]].links[j];
-                if (next != -1 && g_4b1aea[next].state == 502) {
-                    g_4b1aea[g_4a41e6[i]].state = 508;
+                next = hexCells[g_4a41e6[i]].links[j];
+                if (next != -1 && hexCells[next].state == 502) {
+                    hexCells[g_4a41e6[i]].state = 508;
                     break;
                 }
             }
         }
-        if (g_4b1aea[g_4a41e6[i]].state == 502 || g_4b1aea[g_4a41e6[i]].state == 508)
+        if (hexCells[g_4a41e6[i]].state == 502 || hexCells[g_4a41e6[i]].state == 508)
             fn_44a4d9(g_4a41e6[i]);
     }
-    fn_44e092();
-    if (!g_4b1a3c && g_4b1934 == 3 && g_4b1aea[57].state == 508 && g_4b1aea[59].state == 508
-        && g_4b1aea[61].state == 508) {
+    checkAllFilled();
+    if (!g_4b1a3c && g_4b1934 == 3 && hexCells[57].state == 508 && hexCells[59].state == 508
+        && hexCells[61].state == 508) {
         g_4b1a3c = 0;
         for (i = 1; i <= g_4b240e; i++)
-            if (g_4b1aea[g_4b1ab4[i]].state == 507 || g_4b1aea[g_4b1ab4[i]].state == 508)
+            if (hexCells[g_4b1ab4[i]].state == 507 || hexCells[g_4b1ab4[i]].state == 508)
                 g_4b1a3c++;
         if (g_4b1a3c == 4) {
             g_4b1a3c = 1;
             g_4b2534 = clockTime();
-            fn_44dcdc();
+            showZoneMessage();
         } else {
             g_4b1a3c = 0;
         }
@@ -1902,14 +1902,14 @@ void fn_44a422()
     short i;
 
     for (i = 0; i < 117; i++) {
-        if (g_4b1aea[i].state == 508) {
-            g_4b1aea[i].state = 507;
-            view = findView(g_4b1aea[i].view);
+        if (hexCells[i].state == 508) {
+            hexCells[i].state = 507;
+            view = findView(hexCells[i].view);
             setViewScript(view, 7000, 1);
             view->placed = fn_4489ce;
-        } else if (g_4b1aea[i].state == 502) {
-            g_4b1aea[i].state = 501;
-            view = findView(g_4b1aea[i].view);
+        } else if (hexCells[i].state == 502) {
+            hexCells[i].state = 501;
+            view = findView(hexCells[i].view);
             setViewScript(view, 7000, 1);
             view->placed = fn_4489ce;
         }
@@ -1951,7 +1951,7 @@ short scene12Key(unsigned short key)
         if (g_4b2412 == 4) {
             g_4b2412 = 5;
             if (g_4b1934 == 3) {
-                fn_44e161();
+                standPlacedSnoids();
                 fn_44a422();
                 g_4b1932 = 1;
                 g_4b2540++;
@@ -1994,7 +1994,7 @@ void scene12Clicked(short which)
         return;
     }
     if (g_4b2526 != -1) {
-        for (i = 0; i < g_4b2414; i++) {
+        for (i = 0; i < partySize; i++) {
             cellView = findView(partyViews[i]);
             cellView->flags = g_4b2526;
         }
@@ -2013,45 +2013,45 @@ void scene12Clicked(short which)
         if (!g_4b1932 || g_4b2528)
             break;
         if (g_4b2540)
-            fn_44e0e2();
+            standFilledCells();
         drawSlidesButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawSlidesButton(which, 0, 1);
         g_4b2528++;
         first = 1;
         fn_44943b();
-        fn_44ddc9();
+        updateCellLinks();
         for (i = 0; i < 117; i++) {
-            if (g_4b1aea[i].state == 502 || g_4b1aea[i].state == 508 || g_4b1aea[i].state == g_4b2512) {
-                cellView = findView(g_4b1aea[i].view);
+            if (hexCells[i].state == 502 || hexCells[i].state == 508 || hexCells[i].state == startState) {
+                cellView = findView(hexCells[i].view);
                 setViewScript(cellView, 7002, 1);
                 cellView->placed = fn_448d9d;
                 if (first) {
-                    g_4b251a = groupViews(g_4b1aea[i].view, g_4b1aea[i].view, 0, 0, 0, 0);
+                    g_4b251a = groupViews(hexCells[i].view, hexCells[i].view, 0, 0, 0, 0);
                     first = 0;
                 }
             }
-            if (g_4b1aea[i].state == 508) {
-                cellView = findView(g_4b1aea[i].snoid);
+            if (hexCells[i].state == 508) {
+                cellView = findView(hexCells[i].snoid);
                 startSnoidScript((Snoid *)&cellView->body, 13000, 0, 0);
-                groupViews(g_4b1aea[i].snoid, g_4b1aea[i].view, 0, 0, 0, 0);
+                groupViews(hexCells[i].snoid, hexCells[i].view, 0, 0, 0, 0);
             }
         }
         g_4b1a40++;
         queueViewSound(7000, 0);
-        moveView(g_4b1936[1], 0, g_4b1aea[9].view);
-        moveView(g_4b1936[2], 0, g_4b1aea[27].view);
-        moveView(g_4b1936[3], 0, g_4b1aea[45].view);
-        moveView(g_4b1936[4], 0, g_4b1aea[63].view);
-        moveView(g_4b1936[5], 0, g_4b1aea[81].view);
-        moveView(g_4b1936[6], 0, g_4b1aea[99].view);
+        moveView(g_4b1936[1], 0, hexCells[9].view);
+        moveView(g_4b1936[2], 0, hexCells[27].view);
+        moveView(g_4b1936[3], 0, hexCells[45].view);
+        moveView(g_4b1936[4], 0, hexCells[63].view);
+        moveView(g_4b1936[5], 0, hexCells[81].view);
+        moveView(g_4b1936[6], 0, hexCells[99].view);
         fn_44aa79();
         break;
     case 3:
         if (g_4b1a40)
             break;
         if (g_4b2540) {
-            fn_44e0e2();
+            standFilledCells();
             break;
         }
         if (g_4b755a > 0 || g_4b1a3e || g_4b251a)
@@ -2074,28 +2074,28 @@ void scene12Clicked(short which)
             g_4b2410 = place;
             if (g_4b2410) {
                 for (i = 1; i <= g_4b240e; i++) {
-                    if (g_4b1aea[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
-                        g_4b1aea[g_4b1ab4[i]].snoid = 0;
-                        g_4b1aea[g_4b1ab4[i]].state = 506;
-                        cellView = findView(g_4b1aea[g_4b1ab4[i]].view);
+                    if (hexCells[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
+                        hexCells[g_4b1ab4[i]].snoid = 0;
+                        hexCells[g_4b1ab4[i]].state = 506;
+                        cellView = findView(hexCells[g_4b1ab4[i]].view);
                         setViewScript(cellView, 7000, 1);
                         cellView->placed = fn_4489ce;
-                        if (g_4b1aea[g_4b1ab4[i] - 1].state == 502) {
-                            g_4b1aea[g_4b1ab4[i] - 1].state = 501;
-                            cellView = findView(g_4b1aea[g_4b1ab4[i] - 1].view);
+                        if (hexCells[g_4b1ab4[i] - 1].state == 502) {
+                            hexCells[g_4b1ab4[i] - 1].state = 501;
+                            cellView = findView(hexCells[g_4b1ab4[i] - 1].view);
                             setViewScript(cellView, 7000, 1);
                             cellView->placed = fn_4489ce;
                         }
                         for (dropped = 1; dropped < 6; dropped++) {
-                            if (g_4b1aea[g_4b1ab4[i] + dropped].state == 500)
+                            if (hexCells[g_4b1ab4[i] + dropped].state == 500)
                                 break;
-                            if (g_4b1aea[g_4b1ab4[i] + dropped].state == 502
-                                || g_4b1aea[g_4b1ab4[i] + dropped].state == 508) {
-                                if (g_4b1aea[g_4b1ab4[i] + dropped].state == 508)
-                                    g_4b1aea[g_4b1ab4[i] + dropped].state = 507;
+                            if (hexCells[g_4b1ab4[i] + dropped].state == 502
+                                || hexCells[g_4b1ab4[i] + dropped].state == 508) {
+                                if (hexCells[g_4b1ab4[i] + dropped].state == 508)
+                                    hexCells[g_4b1ab4[i] + dropped].state = 507;
                                 else
-                                    g_4b1aea[g_4b1ab4[i] + dropped].state = 501;
-                                cellView = findView(g_4b1aea[g_4b1ab4[i] + dropped].view);
+                                    hexCells[g_4b1ab4[i] + dropped].state = 501;
+                                cellView = findView(hexCells[g_4b1ab4[i] + dropped].view);
                                 setViewScript(cellView, 7000, 1);
                                 cellView->placed = fn_4489ce;
                             }
@@ -2103,34 +2103,34 @@ void scene12Clicked(short which)
                         break;
                     }
                 }
-                g_4b1aea[g_4b1ab4[g_4b2410]].snoid = view->id;
+                hexCells[g_4b1ab4[g_4b2410]].snoid = view->id;
                 fn_448f02();
                 fn_44b2a4();
-                fn_44e092();
+                checkAllFilled();
             } else {
                 for (i = 1; i <= g_4b240e; i++) {
-                    if (g_4b1aea[g_4b1ab4[i]].snoid == view->id) {
-                        g_4b1aea[g_4b1ab4[i]].snoid = 0;
-                        g_4b1aea[g_4b1ab4[i]].state = 506;
-                        cellView = findView(g_4b1aea[g_4b1ab4[i]].view);
+                    if (hexCells[g_4b1ab4[i]].snoid == view->id) {
+                        hexCells[g_4b1ab4[i]].snoid = 0;
+                        hexCells[g_4b1ab4[i]].state = 506;
+                        cellView = findView(hexCells[g_4b1ab4[i]].view);
                         setViewScript(cellView, 7000, 1);
                         cellView->placed = fn_4489ce;
-                        if (g_4b1aea[g_4b1ab4[i] - 1].state == 502) {
-                            g_4b1aea[g_4b1ab4[i] - 1].state = 501;
-                            cellView = findView(g_4b1aea[g_4b1ab4[i] - 1].view);
+                        if (hexCells[g_4b1ab4[i] - 1].state == 502) {
+                            hexCells[g_4b1ab4[i] - 1].state = 501;
+                            cellView = findView(hexCells[g_4b1ab4[i] - 1].view);
                             setViewScript(cellView, 7000, 1);
                             cellView->placed = fn_4489ce;
                         }
                         for (dropped = 1; dropped < 6; dropped++) {
-                            if (g_4b1aea[g_4b1ab4[i] + dropped].state == 500)
+                            if (hexCells[g_4b1ab4[i] + dropped].state == 500)
                                 break;
-                            if (g_4b1aea[g_4b1ab4[i] + dropped].state == 502
-                                || g_4b1aea[g_4b1ab4[i] + dropped].state == 508) {
-                                if (g_4b1aea[g_4b1ab4[i] + dropped].state == 508)
-                                    g_4b1aea[g_4b1ab4[i] + dropped].state = 507;
+                            if (hexCells[g_4b1ab4[i] + dropped].state == 502
+                                || hexCells[g_4b1ab4[i] + dropped].state == 508) {
+                                if (hexCells[g_4b1ab4[i] + dropped].state == 508)
+                                    hexCells[g_4b1ab4[i] + dropped].state = 507;
                                 else
-                                    g_4b1aea[g_4b1ab4[i] + dropped].state = 501;
-                                cellView = findView(g_4b1aea[g_4b1ab4[i] + dropped].view);
+                                    hexCells[g_4b1ab4[i] + dropped].state = 501;
+                                cellView = findView(hexCells[g_4b1ab4[i] + dropped].view);
                                 setViewScript(cellView, 7000, 1);
                                 cellView->placed = fn_4489ce;
                             }
@@ -2155,23 +2155,23 @@ void scene12Clicked(short which)
             g_4b2410 = place;
             if (g_4b2410) {
                 for (i = 1; i <= g_4b240e; i++)
-                    if (g_4b1aea[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
-                        g_4b1aea[g_4b1ab4[i]].snoid = 0;
-                        g_4b1aea[g_4b1ab4[i]].state = 506;
-                        cellView = findView(g_4b1aea[g_4b1ab4[i]].view);
+                    if (hexCells[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
+                        hexCells[g_4b1ab4[i]].snoid = 0;
+                        hexCells[g_4b1ab4[i]].state = 506;
+                        cellView = findView(hexCells[g_4b1ab4[i]].view);
                         setViewScript(cellView, 7000, 1);
                         cellView->placed = fn_4489ce;
                     }
-                g_4b1aea[g_4b1ab4[g_4b2410]].snoid = view->id;
-                g_4b1aea[g_4b1ab4[g_4b2410]].state = 507;
+                hexCells[g_4b1ab4[g_4b2410]].snoid = view->id;
+                hexCells[g_4b1ab4[g_4b2410]].state = 507;
                 fn_44a422();
                 fn_44b2a4();
             } else {
                 for (i = 1; i < 117; i++)
-                    if ((g_4b1aea[i].state == 507 || g_4b1aea[i].state == 508) && g_4b1aea[i].snoid == view->id) {
-                        g_4b1aea[i].state = 506;
-                        g_4b1aea[i].snoid = -1;
-                        cellView = findView(g_4b1aea[i].view);
+                    if ((hexCells[i].state == 507 || hexCells[i].state == 508) && hexCells[i].snoid == view->id) {
+                        hexCells[i].state = 506;
+                        hexCells[i].snoid = -1;
+                        cellView = findView(hexCells[i].view);
                         setViewScript(cellView, 7000, 1);
                         cellView->placed = fn_4489ce;
                         fn_44a422();
@@ -2195,23 +2195,23 @@ void scene12Clicked(short which)
             g_4b2410 = place;
             if (g_4b2410) {
                 for (i = 1; i <= g_4b240e; i++)
-                    if (g_4b1aea[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
-                        g_4b1aea[g_4b1ab4[i]].snoid = 0;
-                        g_4b1aea[g_4b1ab4[i]].state = 506;
-                        cellView = findView(g_4b1aea[g_4b1ab4[i]].view);
+                    if (hexCells[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
+                        hexCells[g_4b1ab4[i]].snoid = 0;
+                        hexCells[g_4b1ab4[i]].state = 506;
+                        cellView = findView(hexCells[g_4b1ab4[i]].view);
                         setViewScript(cellView, 7000, 1);
                         cellView->placed = fn_4489ce;
                     }
-                g_4b1aea[g_4b1ab4[g_4b2410]].snoid = view->id;
-                g_4b1aea[g_4b1ab4[g_4b2410]].state = 507;
+                hexCells[g_4b1ab4[g_4b2410]].snoid = view->id;
+                hexCells[g_4b1ab4[g_4b2410]].state = 507;
                 fn_44a422();
                 fn_44b2a4();
             } else {
                 for (i = 1; i < 117; i++)
-                    if ((g_4b1aea[i].state == 507 || g_4b1aea[i].state == 508) && g_4b1aea[i].snoid == view->id) {
-                        g_4b1aea[i].state = 506;
-                        g_4b1aea[i].snoid = -1;
-                        cellView = findView(g_4b1aea[i].view);
+                    if ((hexCells[i].state == 507 || hexCells[i].state == 508) && hexCells[i].snoid == view->id) {
+                        hexCells[i].state = 506;
+                        hexCells[i].snoid = -1;
+                        cellView = findView(hexCells[i].view);
                         setViewScript(cellView, 7000, 1);
                         cellView->placed = fn_4489ce;
                         fn_44a422();

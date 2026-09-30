@@ -34,7 +34,7 @@ void openScene0()
 }
 
 /* Scene 0's clicks: moves g_4a7410 on from 1 to 2 (always, with
-   g_4b7cf8); 1 or -1 goes back to the scene fn_454c10 picks. */
+   g_4b7cf8); 1 or -1 goes back to the scene sceneToReturnTo picks. */
 /* @zoombi32 0x0045c391 */
 void scene0Clicked(short which)
 {
@@ -44,7 +44,7 @@ void scene0Clicked(short which)
         g_4a7410 = 2;
     if (abs(which) == 1) {
         g_4b7cf0 = g_4b7cf6 = 0;
-        g_4b0d52 = fn_454c10();
+        g_4b0d52 = sceneToReturnTo();
     }
 }
 
@@ -148,7 +148,7 @@ void closeScene0()
         g_4b7cf4 = 0;
         short saved = fn_46bee9(1);
 
-        fn_455273(1);
+        stopMovie(1);
         viewsShown = 1;
         setTakeStatic(1);
         realizePalette(getPortPalette(), 1);
@@ -450,11 +450,11 @@ void scene0Frame()
         return;
     g_4a7412 = 1;
     if (g_4b2ad4 && !g_4b7cf8) {
-        if (fn_455229() == 1)
+        if (idleMovie() == 1)
             g_4b7cf0 = 1;
     } else if (g_4b7cf8 || !g_4b2ad4 && g_4b7cf6) {
         g_4b7cf6 = 0;
-        g_4b0d52 = fn_454c10();
+        g_4b0d52 = sceneToReturnTo();
     }
     if (g_4b0d52) {
         g_4b0d50 = g_4b0d52;
@@ -472,7 +472,7 @@ void scene0Frame()
                 strcpy(logoPath, installDir);
                 strcat(logoPath, "Data\\");
                 strcat(logoPath, "Logo025.MOV");
-                if (fn_45537f(logoPath)) {
+                if (playMovie(logoPath)) {
                     scene0Clicked(1);
                 } else {
                     g_4b7cf6 = 1;
