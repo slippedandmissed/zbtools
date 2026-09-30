@@ -3891,12 +3891,12 @@ extern unsigned long speaker3BackLinesUsed; /* @data 0x4a763c: slots used (alloc
 extern unsigned long speaker3RepliesUsed; /* @data 0x4a764c: slots used (allocateSlot) */
 extern unsigned long speaker1BackLinesUsed; /* @data 0x4a7658 */
 extern unsigned long doors16LinesUsed; /* @data 0x4a7668 */
-extern unsigned long g_4a78c4; /* @data 0x4a78c4: slots used (allocateSlot) */
-extern unsigned long g_4a78c8; /* @data 0x4a78c8 */
-extern unsigned long g_4a78d0; /* @data 0x4a78d0 */
-extern unsigned long g_4a78d4; /* @data 0x4a78d4 */
-extern unsigned long g_4a78d8; /* @data 0x4a78d8: slots used (allocateSlot) */
-extern unsigned long g_4a78dc; /* @data 0x4a78dc */
+extern unsigned long tunnelRemarks0Used; /* @data 0x4a78c4: slots used (allocateSlot) */
+extern unsigned long tunnelRemarks1Used; /* @data 0x4a78c8 */
+extern unsigned long tunnelRemarks2Used; /* @data 0x4a78d0 */
+extern unsigned long tunnelRemarks3bUsed; /* @data 0x4a78d4 */
+extern unsigned long tunnelRemarks3cUsed; /* @data 0x4a78d8: slots used (allocateSlot) */
+extern unsigned long tunnelRemarks3aUsed; /* @data 0x4a78dc */
 extern short g_4afb30; /* @data 0x4afb30 */
 extern short g_4b807e; /* @data 0x4b807e */
 extern short ferryVisits; /* @data 0x4abafc */

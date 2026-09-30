@@ -830,7 +830,7 @@ void queueRemark(short kind)
     speaker = replier = line = lineThen = reply = replyThen = 0;
     switch (kind) {
     case 0:
-        switch (allocateSlot(&g_4a78c4, 10, 0)) {
+        switch (allocateSlot(&tunnelRemarks0Used, 10, 0)) {
                 case 0:
                     speaker = tunnelsSpeakers[1];
                     line = 0x1202;
@@ -886,7 +886,7 @@ void queueRemark(short kind)
         break;
     case 1:
         if (g_4b807e != 1) {
-            switch (allocateSlot(&g_4a78c8, 8, 0)) {
+            switch (allocateSlot(&tunnelRemarks1Used, 8, 0)) {
                     case 0:
                         speaker = tunnelsSpeakers[1];
                         line = 0x1203;
@@ -936,7 +936,7 @@ void queueRemark(short kind)
                         reply = 0x107f;
             }
         } else {
-            switch (allocateSlot(&g_4a78c8, 4, 0)) {
+            switch (allocateSlot(&tunnelRemarks1Used, 4, 0)) {
                     case 0:
                         speaker = tunnelsSpeakers[2];
                         line = 0x107d;
@@ -957,7 +957,7 @@ void queueRemark(short kind)
         }
         break;
     case 2:
-        switch (allocateSlot(&g_4a78d0, 3, 0)) {
+        switch (allocateSlot(&tunnelRemarks2Used, 3, 0)) {
                 case 0:
                     speaker = tunnelsSpeakers[3];
                     line = 0x1144;
@@ -973,7 +973,7 @@ void queueRemark(short kind)
         break;
     case 3:
         if (closingRemarkDone) {
-            switch (allocateSlot(&g_4a78dc, 7, 0)) {
+            switch (allocateSlot(&tunnelRemarks3aUsed, 7, 0)) {
                     case 0:
                         speaker = tunnelsSpeakers[0];
                         line = 0xfc3;
@@ -1003,7 +1003,7 @@ void queueRemark(short kind)
                         line = 0xfc1;
             }
         } else if (countSnoidViews() == countChosenSnoids()) {
-            switch (allocateSlot(&g_4a78d4, 8, 0)) {
+            switch (allocateSlot(&tunnelRemarks3bUsed, 8, 0)) {
                     case 0:
                         speaker = tunnelsSpeakers[0];
                         line = 0xfbf;
@@ -1037,7 +1037,7 @@ void queueRemark(short kind)
                         line = 0xfc1;
             }
         } else {
-            switch (allocateSlot(&g_4a78d8, 9, 0)) {
+            switch (allocateSlot(&tunnelRemarks3cUsed, 9, 0)) {
                     case 0:
                         speaker = tunnelsSpeakers[2];
                         line = 0x1081;
