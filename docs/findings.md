@@ -261,7 +261,7 @@ The code has a few bugs, reproduced as written: `removeFromDirectory` reuses its
 
 ### The game's archives
 
-The disc's Mohawk archives are the 20 `DATA/*.MHK` files and `MIDIMAP.DAT` (in the disc's root, installed next to the program; it holds two `SYSX` resources, MIDI system-exclusive messages sent when a MIDI device is opened and closed, named by ID in `[MidiMap.TargetDeviceInfo]`). `BROEMIDI.TMI` starts `MHWK` too, but it's a Mohawk MIDI file (`MHWK`/`MIDI`), not an archive. All 21 archives are laid out the same way, so each is determined by its resources' types, IDs, data, flags and order (`uv run assets verify` rebuilds them from just that, byte for byte):
+The disc's Mohawk archives are the 20 `DATA/*.MHK` files and `MIDIMAP.DAT` (in the disc's root, installed next to the program; it holds two `SYSX` resources, MIDI channel messages the MIDI map sends a device, by ID from `[MidiMap.TargetDeviceInfo]`: despite the name, not system-exclusive, but controller resets for all 16 channels). `BROEMIDI.TMI` starts `MHWK` too, but it's a Mohawk MIDI file (`MHWK`/`MIDI`), not an archive. All 21 archives are laid out the same way, so each is determined by its resources' types, IDs, data, flags and order (`uv run assets verify` rebuilds them from just that, byte for byte):
 
 - The header says version 0x100 and `compacted` 1 (the file may hold unused space). The unused space is 8 bytes, `00 04 00 00 00 00 00 00`, between the header and the first resource's data; compacting the file (`closeResourceFile` with `compact`) would drop them.
 - The data is stored in file-table order, with no gaps. The directory follows it, then the file table, which ends the file.
@@ -272,20 +272,38 @@ What they hold (resource counts across the 20 `.MHK` archives):
 
 | Type | Count | Bytes | Contents |
 | --- | --- | --- | --- |
-| `\0SND` | 1,333 | 43.8 MB | Sounds: Mohawk wave files (`MHWK`, `WAVE`, a `Data` chunk). All are 8-bit mono PCM at 11,025 Hz (encoding 0). |
-| `tBMP` | 175 | 20.5 MB | Images and image banks, decompressed by `decompressImage` (`0x48e0a0`). Flags word at offset 6: `0x0102` (LZ, 139), `0x0112` (LZ and RLE8, 31), `0x0012` (RLE8, 3), `0x0002` (raw, 2). |
-| `SCRB` | 1,782 | 345 KB | Feature scripts: the scripts that animate views (`view.cpp`). |
-| `SCRS` | 719 | 499 KB | Snoid scripts: the Zoombinis' animations (`snoids.cpp`). |
-| `REGS` | 79 | 29 KB | Tables of big-endian words: shapes' registration offsets. |
-| `SHPL` | 41 | 25 KB | Shape lists: first shape, count, and a palette (`e2memory.cpp`). |
-| `tMID` | 18 | 77 KB | MIDI (`MHWK`, `MIDI`, then a standard MIDI file's chunks). |
-| `NODE`, `PATH` | 9 each | 0.9 KB | The graph of the paths Zoombinis walk. |
-| `tPAL` | 6 | 6 KB | Palettes (`MAZE2.MHK` only). |
-| `CURS` | 5 | 340 B | Mac cursors: 16x16 image and mask, then the hot spot (`ZOOMBINI.MHK`). |
+| `\0SND` | 1,333 | 43.8 MB | Sounds (below) |
+| `tBMP` | 175 | 20.5 MB | Images and banks of images (below) |
+| `SCRB` | 1,782 | 345 KB | Feature scripts: the scripts that animate views (below) |
+| `SCRS` | 719 | 499 KB | Zoombini ("snoid") scripts: the same, with the way the Zoombini faces |
+| `REGS` | 79 | 29 KB | Tables of big-endian words, meaning what their users make of them (shapes' offsets, the maze's and Lilly's tables) |
+| `SHPL` | 41 | 25 KB | Shape lists: the first shape's ID (a `tBMP`) and the count, then a palette (`e2memory.cpp`) |
+| `tMID` | 18 | 77 KB | Music (below) |
+| `NODE`, `PATH` | 9 each | 0.9 KB | The graph of the paths Zoombinis walk: a count and points `{x, y}`; a count and 24-byte lists of nodes (0: none) |
+| `tPAL` | 6 | 6 KB | Palettes (`MAZE2.MHK` only): u16 first colour and count, then `PALETTEENTRY`s. Every colour of every real palette has flags 1 (`PC_RESERVED`); 13 one-colour placeholder palettes in `SHPL`s have 0. |
+| `CURS` | 5 | 340 B | Mac cursors: 16x16 image and mask, then the hot spot (`ZOOMBINI.MHK`) |
 
 ScummVM's `engines/mohawk/resource.h` names the Zoombinis types (`SCRB` "Feature Script", `SCRS` "Snoid Script", `NODE` "Walk Node", `PATH` "Walk Path", `SHPL` "Shape List"), and detects the game but doesn't implement it.
 
 The movies (`DATA/LOGO*.MOV`) are QuickTime files outside the archives: video in `QkBk` (the codec installed as `qb32.qtc`), sound in `twos` (PCM).
+
+#### Sounds and music
+
+A sound (`waveObj`, `decomp/wavesound.cpp`) is `MHWK`, a size, `WAVE`, then chunks padded to even lengths: an optional `Cue#` (a u16 count of named positions) and `Data` (u16 rate, u32 sample count, u8 bits, u8 channels, u16 encoding, u16 loop count, u32 loop start and end, then samples). All 1,333 are 8-bit mono PCM at 11,025 Hz. 23 loop, forever (`0xffff`), over a valid range, and exactly those have a `Cue#`, empty; no sound lists a cue point. Odd-length data has a zero pad byte, which the header's size includes.
+
+Music is `MHWK`, a size, `MIDI`, then a standard MIDI file's `MThd` and `MTrk` chunks padded to even lengths, with a `Prg#` chunk after `MThd`: a count, then `{u16 program, u16 mask of channels}` for each program the track changes to, sorted. It's derived from the track in every one of the 18. Unlike a sound's, the header's size leaves out the last chunk's pad byte. All are type 0 at 480 ticks a beat, with markers the engine looks for (`Setup end`, `Loop end`; `midisound.cpp`) and a track name naming the original file (`ZBIsle.mff`).
+
+#### Images
+
+An image (`ImageHeader`) has a big-endian header: width, height, bytes per row (the width rounded up to 4) and flags (all the game's are 8-bit, 2, plus 0x10 packed and 0x100 compressed), then its pixels. A bank of images (`loadImageBank`, `decomp/view.cpp`), holding a feature's frames, has the same header, as if it were one image: its width the number of images, its bytes per row that rounded up to 4, and its height the bank's size divided by that (truncated to 16 bits: `MAZE2.MHK`'s 2 MB `tBMP` 11000 says 3611). The header is followed by each image's offset (the first right after the offsets, each 4-byte aligned), then the images, each with its own header. `decompressImage` treats the bank's header as an image's, so a compressed bank is decompressed whole. Of the 175 `tBMP`s, 111 are banks (109 compressed), with 10,017 images (7,714 packed), and 64 are single images (61 compressed, 34 packed, among them the scenes' 640x480 backgrounds). Rows are stored top row first.
+
+- **Compression** (`lzDecompress`, `0x48e4df`) is LZSS: flag bytes low bit first (1: a literal), matches as big-endian words (low 10 bits a position in a 1 KB ring, the rest the length less 3), the ring zeroed with writing starting 66 bytes from its end. After the header come the decompressed size, the compressed size and the ring size (0x400). Broderbund's compressor was Haruhiko Okumura's `LZSS.C` (1989): a port of its encoder, binary search trees and all, reproduces all 170 compressed resources byte for byte. The trees' shape decides between equally long matches, so an encoder that merely finds longest matches doesn't. `LZSS.C` doesn't clear the lookahead past the end of a short input: in the one resource shorter than the 66-byte lookahead (`TOWN.MHK`'s `tBMP` 1200, 48 bytes), the original had non-zero bytes there, and any value but 0 and the input's `0x32` reproduces its last match.
+- **Packing** (`drawPackedPixels`): each row is a u16 size and packets, a header byte whose bit 7 means a run of the next byte, else literal bytes, the count being the low bits plus 1. Broderbund's packer runs colour 0 (transparent) always, other colours from 4 pixels on, splits runs at 128 (judging what's left afresh) and ends every row with a run, however short: rules that re-pack all 365,166 packed rows exactly.
+- **Junk.** After a packed image's rows the packer left 2 bytes (in a bank, then padding to a multiple of 4), and unpacked images have row padding. 80% of those tail bytes, and 79 padding rows, aren't zero but leftovers in memory (`db6d`, `6db6` patterns); `assets/` records them where they aren't zero.
+
+#### Scripts
+
+A script (`SCRB`, `SCRS`; stepped through by `features.cpp`, frames found by `scriptFrameOffset`, `0x464cbc` in `view.cpp`) is big-endian signed words: the number of frames, for a Zoombini script the way it faces (`setSnoidFacing`), then the frames. A frame is its cels (at most 24 in the game's), each an image of the view's bank (0 draws nothing; its x and y are then always 0) and its x and y, then an end word: `0xff00` plus an event number (0: none) that the view's owner is told of, or `0xfe00` plus an event followed by a sound to play. All 2,501 scripts parse exactly, their frame counts matching.
 
 ### Engine: timers and sounds
 

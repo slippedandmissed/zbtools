@@ -175,7 +175,19 @@ uv run assets pack      # assets/ back into archives, in build/assets/ (laid out
 uv run assets verify    # check that packing reproduces the disc's archives byte for byte
 ```
 
-The game's resources are kept as source, like the decompiled code: `assets/<archive>/` holds each Mohawk archive's resources, one file per resource in `<type>/<id>.<extension>`, and `archive.toml`, which says where the archive goes on the disc and lists its resources in the order their data is stored. Edit a resource and `pack` builds the archives with the change; `verify` names the resources that differ from the disc's. Resource types without a converter yet are kept as they are (`.bin`). `extract` needs `uv run extract-game` first, and won't overwrite archives already in `assets/` unless given `--force`.
+The game's resources are kept as source, like the decompiled code, in `assets/` (committed; there is only ever one copy of each resource, in a modern format). `assets/<archive>/` holds each Mohawk archive's resources, in `<type>/<id>.<extension>`, and `archive.toml`, which says where the archive goes on the disc and lists its resources in the order their data is stored:
+
+| Type | What | Stored as |
+| --- | --- | --- |
+| `SND` | sounds | WAV (8-bit PCM; a loop as a `smpl` chunk) |
+| `tBMP` | images, and banks of them (a sprite's frames) | indexed PNG (a bank's in `<id>/<n>.png`), with `<id>.toml` recording how each was packed |
+| `tMID` | music | standard MIDI file |
+| `SCRB`, `SCRS` | the scripts animating features and Zoombinis | TOML: frames of cels (`[image, x, y]`), events and sounds |
+| `SHPL`, `tPAL` | shape lists and palettes | TOML, colours as `#rrggbb` |
+| `CURS` | cursors | Windows cursor (`.cur`) |
+| `REGS`, `NODE`, `PATH`, `SYSX` | tables: offsets, the paths Zoombinis walk, MIDI messages | TOML |
+
+Edit a resource and `pack` builds the archives with the change; `verify` names the resources that differ from the disc's. An image's pixel values are what the game draws: its PNG's palette is only for viewing, and colours are changed in the palette resources. Packing re-creates Broderbund's own compression, so unedited resources pack to exactly the original bytes; it caches compressed images in `build/assets-cache/` (compressing them all takes about two minutes of CPU time). `extract` needs `uv run extract-game` first, and won't overwrite archives already in `assets/` unless given `--force`. A resource a format can't convert exactly would be kept as it is (`.bin`); none of the game's are.
 
 ### Cleaning up
 
@@ -199,10 +211,11 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `ghidra` | all of Ghidra: the download, native build and project | `uv run ghidra setup` (downloads ~540 MB) |
 | `report` | `build/report/` | `uv run report` |
 | `packed-assets` | the archives `assets pack` built (`build/assets/`) | `uv run assets pack` |
+| `assets-cache` | compressed images, reused while unchanged (`build/assets-cache/`) | automatically by `uv run assets pack` or `verify` |
 | `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
 | `all` | all of the above plus anything else in `build/` | |
 
-With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `packed-assets` and `python`: everything that's cheap to rebuild, keeping the VM installs and the Wine download. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
+With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `packed-assets`, `assets-cache` and `python`: everything that's cheap to rebuild, keeping the VM installs and the Wine download. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
 
 ## Development
 
@@ -251,7 +264,7 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Scripted QuickTime and game install in the VM (`uv run vm install-game`); game reaches its title screen
 - [ ] Game verified playable in the VM (sound, music, movies)
 - [x] Mohawk archive extractor and packer, reproducing the disc's archives exactly (`uv run assets`)
-- [ ] Convert the resources to modern formats (sounds, images, palettes, MIDI) and back
+- [x] Convert the resources to modern formats (sounds, images, scripts, palettes, MIDI) and back, exactly
 - [x] Borland C++ 4.5 and 4.52 toolchains running under Wine (`uv run toolchain`)
 - [x] Function matcher (`uv run match`) and the first matching functions
 - [x] Ghidra project with auto-analysis, function list and decompiler (`uv run ghidra`)

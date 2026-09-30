@@ -24,6 +24,8 @@ GAME32_DIR = BUILD_DIR / "zoombi32"
 # Mohawk archives `uv run assets pack` builds from them, laid out as on the disc.
 ASSETS_DIR = REPO_ROOT / "assets"
 PACKED_ASSETS_DIR = BUILD_DIR / "assets"
+# What converting resources back computes slowly (LZSS-compressed images).
+ASSETS_CACHE = BUILD_DIR / "assets-cache"
 
 # Decompiled C source, checked against the game by `uv run match`.
 DECOMP_DIR = REPO_ROOT / "decomp"
@@ -109,6 +111,7 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "ghidra": [GHIDRA_DIR],
     "report": [REPORT_DIR],
     "packed-assets": [PACKED_ASSETS_DIR],
+    "assets-cache": [ASSETS_CACHE],
     "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
     # The whole build/ directory, so stray files can't survive a full clean.
     "all": [BUILD_DIR, "python"],
@@ -120,5 +123,6 @@ CLEAN_DEFAULT: list[str] = [
     "toolchain",
     "report",
     "packed-assets",
+    "assets-cache",
     "python",
 ]

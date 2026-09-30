@@ -3,54 +3,63 @@ into assets/, converted to modern formats, and packed back into archives.
 
 Each archive is a directory, assets/<name>/, holding `archive.toml` (where the
 archive goes on the disc, and its resources in the order their data is stored)
-and each resource in <type>/<id>.<extension>. `extract` writes them from the
-disc, `pack` builds the archives from them into build/assets/ (laid out as on
-the disc), and `verify` checks that packing reproduces the disc's archives byte
-for byte.
+and each resource in <type>/<id>.<extension>: in a modern format where the
+type has one (zbtools.formats), else as it is (.bin); only ever one copy.
+`extract` writes them from the disc, `pack` builds the archives from them into
+build/assets/ (laid out as on the disc), and `verify` checks that packing
+reproduces the disc's archives byte for byte.
 """
 
 import re
 import shutil
 import tomllib
 from collections.abc import Iterator
-from dataclasses import dataclass
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 from pathlib import Path
-from typing import Annotated, Protocol
+from typing import Annotated
 
 import typer
 from pydantic import BaseModel, ConfigDict
 
 from zbtools import mohawk, paths
+from zbtools.formats import FORMATS, Raw, Unconvertible
+from zbtools.formats.base import RAW_SUFFIX
 
 MANIFEST = "archive.toml"
 
 
-class Format(Protocol):
-    """How one type of resource is stored in assets/: as one or more files
-    named after `stem` (<type>/<id>), converted from and back to its data."""
-
-    def save(self, data: bytes, stem: Path) -> None: ...
-
-    def load(self, stem: Path) -> bytes: ...
-
-
-@dataclass(frozen=True)
-class Raw:
-    """The resource's data as it is, in <stem>.bin."""
-
-    def save(self, data: bytes, stem: Path) -> None:
-        stem.with_suffix(".bin").write_bytes(data)
-
-    def load(self, stem: Path) -> bytes:
-        return stem.with_suffix(".bin").read_bytes()
+def save_resource(tag: bytes, data: bytes, stem: Path, archive: list[mohawk.Resource]) -> bool:
+    """Writes a resource into assets/, converted if its format gives back
+    exactly the same data from what it wrote, else raw; whether it was
+    converted."""
+    if tag in FORMATS:
+        try:
+            FORMATS[tag].save(data, stem, archive)
+            if FORMATS[tag].load(stem) == data:
+                return True
+        except Unconvertible:
+            pass
+        _remove(stem)
+    Raw().save(data, stem)
+    return False
 
 
-# Formats by resource type; types not listed are kept raw.
-FORMATS: dict[bytes, Format] = {}
+def _remove(stem: Path) -> None:
+    """Removes a resource's files: <stem>.* and a directory <stem>."""
+    for path in stem.parent.glob(f"{stem.name}.*"):
+        path.unlink()
+    shutil.rmtree(stem, ignore_errors=True)
 
 
-def format_of(tag: bytes) -> Format:
-    return FORMATS.get(tag, Raw())
+def load_resource(tag: bytes, stem: Path) -> bytes:
+    """A resource's data, from its file(s) in assets/: raw if there's a .bin."""
+    raw = stem.with_suffix(RAW_SUFFIX)
+    if tag not in FORMATS or raw.exists():
+        if tag in FORMATS and any(p != raw for p in stem.parent.glob(f"{stem.name}.*")):
+            raise typer.BadParameter(f"{stem}: stored both raw and converted; keep one")
+        return Raw().load(stem)
+    return FORMATS[tag].load(stem)
 
 
 def type_name(tag: bytes) -> str:
@@ -108,18 +117,20 @@ def disc_archives(disc_dir: Path) -> Iterator[Path]:
                     yield path
 
 
-def extract_archive(archive: Path, disc_dir: Path, outdir: Path) -> int:
-    """Writes an archive's resources and manifest into outdir; returns the count."""
+def extract_archive(archive: Path, disc_dir: Path, outdir: Path) -> tuple[int, int]:
+    """Writes an archive's resources and manifest into outdir; returns how many
+    resources it has, and how many of them were kept raw."""
     resources = mohawk.read(archive.read_bytes())
     entries = []
+    raw = 0
     for r in resources:
         name = type_name(r.type)
         (outdir / name).mkdir(parents=True, exist_ok=True)
-        format_of(r.type).save(r.data, outdir / name / str(r.id))
+        raw += not save_resource(r.type, r.data, outdir / name / str(r.id), resources)
         entries.append(Entry(type=name, id=r.id, purgeable=r.purgeable))
     manifest = Manifest(path=archive.relative_to(disc_dir).as_posix(), resources=entries)
     write_manifest(manifest, outdir / MANIFEST)
-    return len(resources)
+    return len(resources), raw
 
 
 def pack_archive(directory: Path) -> tuple[Manifest, list[mohawk.Resource]]:
@@ -128,7 +139,7 @@ def pack_archive(directory: Path) -> tuple[Manifest, list[mohawk.Resource]]:
     resources = []
     for e in manifest.resources:
         tag = type_tag(e.type)
-        data = format_of(tag).load(directory / e.type / str(e.id))
+        data = load_resource(tag, directory / e.type / str(e.id))
         resources.append(mohawk.Resource(tag, e.id, data, e.purgeable))
     return manifest, resources
 
@@ -138,6 +149,46 @@ def asset_archives(assets_dir: Path) -> list[Path]:
     if not found:
         raise typer.BadParameter(f"no archives in {assets_dir} (run `uv run assets extract`)")
     return found
+
+
+def _extract(archive: Path, disc_dir: Path, assets_dir: Path) -> str:
+    outdir = assets_dir / archive.stem
+    shutil.rmtree(outdir, ignore_errors=True)
+    count, raw = extract_archive(archive, disc_dir, outdir)
+    return f"{archive.relative_to(disc_dir)}: {count} resources ({raw} raw)"
+
+
+def _pack(directory: Path, out_dir: Path) -> str:
+    manifest, resources = pack_archive(directory)
+    out = out_dir / manifest.path
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_bytes(mohawk.write(resources))
+    return f"{manifest.path}: {len(resources)} resources"
+
+
+def _verify(directory: Path, disc_dir: Path) -> list[str]:
+    """What packing an archive gives, compared with the disc's: an empty list
+    if they're identical, else what differs."""
+    manifest, resources = pack_archive(directory)
+    original = (disc_dir / manifest.path).read_bytes()
+    if mohawk.write(resources) == original:
+        return []
+    report = [f"{manifest.path}: differs"]
+    try:
+        before = {(r.type, r.id): r for r in mohawk.read(original)}
+    except mohawk.FormatError as e:
+        return [*report, f"  (can't read the original: {e})"]
+    after = {(r.type, r.id): r for r in resources}
+    for key in sorted(before.keys() | after.keys()):
+        old, new = before.get(key), after.get(key)
+        what = "added" if old is None else "removed" if new is None else None
+        if what is None and old != new:
+            what = "changed"
+        if what:
+            report.append(f"  {type_name(key[0])} {key[1]}: {what}")
+    if list(before) != list(after):
+        report.append("  (the resources' order differs)")
+    return report
 
 
 app = typer.Typer(add_completion=False, help=__doc__)
@@ -162,11 +213,9 @@ def extract(
     if existing and not force:
         names = ", ".join(a.stem for a in existing)
         raise typer.BadParameter(f"already in {assets_dir}: {names} (--force replaces them)")
-    for archive in archives:
-        outdir = assets_dir / archive.stem
-        shutil.rmtree(outdir, ignore_errors=True)
-        count = extract_archive(archive, disc_dir, outdir)
-        print(f"{archive.relative_to(disc_dir)}: {count} resources")
+    with ProcessPoolExecutor() as pool:
+        for line in pool.map(partial(_extract, disc_dir=disc_dir, assets_dir=assets_dir), archives):
+            print(line)
 
 
 @app.command()
@@ -177,12 +226,9 @@ def pack(
     ] = paths.PACKED_ASSETS_DIR,
 ) -> None:
     """Pack assets/ into Mohawk archives."""
-    for directory in asset_archives(assets_dir):
-        manifest, resources = pack_archive(directory)
-        out = out_dir / manifest.path
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_bytes(mohawk.write(resources))
-        print(f"{manifest.path}: {len(resources)} resources")
+    with ProcessPoolExecutor() as pool:
+        for line in pool.map(partial(_pack, out_dir=out_dir), asset_archives(assets_dir)):
+            print(line)
 
 
 @app.command()
@@ -191,29 +237,16 @@ def verify(
     assets_dir: AssetsOption = paths.ASSETS_DIR,
 ) -> None:
     """Check that packing assets/ reproduces the disc's archives exactly."""
+    directories = asset_archives(assets_dir)
     failed = 0
-    for directory in asset_archives(assets_dir):
-        manifest, resources = pack_archive(directory)
-        original = disc_dir / manifest.path
-        if mohawk.write(resources) == original.read_bytes():
-            print(f"{manifest.path}: identical")
-            continue
-        failed += 1
-        print(f"{manifest.path}: differs")
-        try:
-            before = {(r.type, r.id): r for r in mohawk.read(original.read_bytes())}
-        except mohawk.FormatError as e:
-            print(f"  (can't read the original: {e})")
-            continue
-        after = {(r.type, r.id): r for r in resources}
-        for key in sorted(before.keys() | after.keys()):
-            old, new = before.get(key), after.get(key)
-            what = "added" if old is None else "removed" if new is None else None
-            if what is None and old != new:
-                what = "changed"
-            if what:
-                print(f"  {type_name(key[0])} {key[1]}: {what}")
-        if list(before) != list(after):
-            print("  (the resources' order differs)")
+    with ProcessPoolExecutor() as pool:
+        for directory, report in zip(
+            directories, pool.map(partial(_verify, disc_dir=disc_dir), directories), strict=True
+        ):
+            if report:
+                failed += 1
+                print("\n".join(report))
+            else:
+                print(f"{directory.name}: identical")
     if failed:
         raise typer.Exit(1)

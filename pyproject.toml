@@ -8,6 +8,7 @@ dependencies = [
     "capstone>=5.0.9",
     "fonttools>=4.66.0",
     "jinja2>=3.1.6",
+    "mido>=1.3.3",
     "pefile>=2024.8.26",
     "pillow>=12.3.0",
     "pycdlib>=1.21.0",
@@ -87,5 +88,5 @@ init_typed = true
 
 [[tool.mypy.overrides]]
 # These ship no type information; keep their objects inside typed wrappers.
-module = ["fontTools", "fontTools.*", "pefile", "capstone"]
+module = ["fontTools", "fontTools.*", "pefile", "capstone", "mido"]
 ignore_missing_imports = true
