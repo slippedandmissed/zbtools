@@ -1205,8 +1205,8 @@ void startNextCrossing(short)
 /* Lays out the hex grid for level g_4b1934 (0-3), with the start cells
    (state startState, 504 or at level 3 perhaps 505), the cells open (506)
    and blocked (501), the Zoombinis already placed (507) and the cells'
-   link bits (cellLinkBits); notes the open cells (g_4b240e of them, where to
-   show them in g_4b1a48), then adds every cell's view and the rows'
+   link bits (cellLinkBits); notes the open cells (listedCount of them, where to
+   show them in listedPoints), then adds every cell's view and the rows'
    views, and puts the party behind them. */
 /* @zoombi32 0x0044b550 */
 void layOutGrid()
@@ -1232,16 +1232,16 @@ void layOutGrid()
             g_4b2514 = 24;
     }
     k = 0;
-    fn_449b40();
+    readPartyFeatures();
     switch (g_4b1934) {
     case 0:
-        fn_4494b3();
-        base = g_4a4374[g_4b2450];
-        step = g_4a4390[g_4b2450];
-        for (row = 0; row < g_4b2450; row++) {
+        pairByFeatures();
+        base = g_4a4374[groupCount];
+        step = g_4a4390[groupCount];
+        for (row = 0; row < groupCount; row++) {
             extra = 0;
             cell = row * step + base;
-            if (g_4b2450 > 7 && cell % 2) {
+            if (groupCount > 7 && cell % 2) {
                 short c;
 
                 hexCells[cell].state = startState;
@@ -1257,20 +1257,20 @@ void layOutGrid()
             }
             hexCells[cell + extra].state = startState;
             hexCells[cell + extra + 1].state = 506;
-            g_4b240e++;
-            g_4b1a48[g_4b240e] = cellPlaces[cell + extra + 1];
-            g_4b1ab4[g_4b240e] = extra + cell + 1;
-            g_4b1a48[g_4b240e].x += 24;
-            g_4b1a48[g_4b240e].y -= 5;
-            if (g_4b2452[k] != 501) {
-                hexCells[cell + extra + 2].snoid = g_4b2452[k];
+            listedCount++;
+            listedPoints[listedCount] = cellPlaces[cell + extra + 1];
+            listedCells[listedCount] = extra + cell + 1;
+            listedPoints[listedCount].x += 24;
+            listedPoints[listedCount].y -= 5;
+            if (pairFeatures[k] != 501) {
+                hexCells[cell + extra + 2].snoid = pairFeatures[k];
                 hexCells[cell + extra + 2].state = 501;
                 hexCells[cell + extra + 3].state = 506;
-                g_4b240e++;
-                g_4b1a48[g_4b240e] = cellPlaces[cell + extra + 3];
-                g_4b1ab4[g_4b240e] = extra + cell + 3;
-                g_4b1a48[g_4b240e].x += 24;
-                g_4b1a48[g_4b240e].y -= 5;
+                listedCount++;
+                listedPoints[listedCount] = cellPlaces[cell + extra + 3];
+                listedCells[listedCount] = extra + cell + 3;
+                listedPoints[listedCount].x += 24;
+                listedPoints[listedCount].y -= 5;
                 cellLinkBits[cell + extra] |= 16;
                 cellLinkBits[cell + extra + 1] = 18;
                 cellLinkBits[cell + extra + 2] = 18;
@@ -1285,33 +1285,33 @@ void layOutGrid()
         linkCells();
         break;
     case 1:
-        fn_44986f();
-        base = g_4a4374[g_4b2450];
-        step = g_4a4390[g_4b2450];
+        groupInThrees();
+        base = g_4a4374[groupCount];
+        step = g_4a4390[groupCount];
         placed = 0;
-        for (row = 0; row < g_4b2450; row++) {
+        for (row = 0; row < groupCount; row++) {
             cell = row * step + base;
             hexCells[cell].state = startState;
             hexCells[cell + 1].state = 506;
-            g_4b240e++;
-            g_4b1a48[g_4b240e] = cellPlaces[cell + 1];
-            g_4b1ab4[g_4b240e] = cell + 1;
-            g_4b1a48[g_4b240e].x += 24;
-            g_4b1a48[g_4b240e].y -= 5;
+            listedCount++;
+            listedPoints[listedCount] = cellPlaces[cell + 1];
+            listedCells[listedCount] = cell + 1;
+            listedPoints[listedCount].x += 24;
+            listedPoints[listedCount].y -= 5;
             if (++placed >= partySize) {
                 cellLinkBits[cell] = 16;
                 cellLinkBits[cell + 1] = 2;
                 break;
             }
-            if (g_4b2452[k] && g_4b2452[k] != 501) {
-                hexCells[cell + 2].snoid = g_4b2452[k];
+            if (pairFeatures[k] && pairFeatures[k] != 501) {
+                hexCells[cell + 2].snoid = pairFeatures[k];
                 hexCells[cell + 2].state = 501;
                 hexCells[cell + 3].state = 506;
-                g_4b240e++;
-                g_4b1a48[g_4b240e] = cellPlaces[cell + 3];
-                g_4b1ab4[g_4b240e] = cell + 3;
-                g_4b1a48[g_4b240e].x += 24;
-                g_4b1a48[g_4b240e].y -= 5;
+                listedCount++;
+                listedPoints[listedCount] = cellPlaces[cell + 3];
+                listedCells[listedCount] = cell + 3;
+                listedPoints[listedCount].x += 24;
+                listedPoints[listedCount].y -= 5;
                 cellLinkBits[cell] |= 16;
                 cellLinkBits[cell + 1] = 18;
                 cellLinkBits[cell + 2] = 18;
@@ -1319,15 +1319,15 @@ void layOutGrid()
                 k++;
                 if (++placed >= partySize)
                     break;
-            } else if (g_4b2452[k]) {
+            } else if (pairFeatures[k]) {
                 hexCells[cell + 2].snoid = 0;
                 hexCells[cell + 2].state = 501;
                 hexCells[cell + 3].state = 506;
-                g_4b240e++;
-                g_4b1a48[g_4b240e] = cellPlaces[cell + 3];
-                g_4b1ab4[g_4b240e] = cell + 3;
-                g_4b1a48[g_4b240e].x += 24;
-                g_4b1a48[g_4b240e].y -= 5;
+                listedCount++;
+                listedPoints[listedCount] = cellPlaces[cell + 3];
+                listedCells[listedCount] = cell + 3;
+                listedPoints[listedCount].x += 24;
+                listedPoints[listedCount].y -= 5;
                 cellLinkBits[cell] |= 16;
                 cellLinkBits[cell + 1] = 18;
                 cellLinkBits[cell + 2] = 18;
@@ -1336,30 +1336,30 @@ void layOutGrid()
                 if (++placed >= partySize)
                     break;
             }
-            if (g_4b2452[k] && g_4b2452[k] != 501) {
-                hexCells[cell + 4].snoid = g_4b2452[k];
+            if (pairFeatures[k] && pairFeatures[k] != 501) {
+                hexCells[cell + 4].snoid = pairFeatures[k];
                 hexCells[cell + 4].state = 501;
                 hexCells[cell + 5].state = 506;
-                g_4b240e++;
-                g_4b1a48[g_4b240e] = cellPlaces[cell + 5];
-                g_4b1ab4[g_4b240e] = cell + 5;
-                g_4b1a48[g_4b240e].x += 24;
-                g_4b1a48[g_4b240e].y -= 5;
+                listedCount++;
+                listedPoints[listedCount] = cellPlaces[cell + 5];
+                listedCells[listedCount] = cell + 5;
+                listedPoints[listedCount].x += 24;
+                listedPoints[listedCount].y -= 5;
                 cellLinkBits[cell + 3] |= 16;
                 cellLinkBits[cell + 4] = 18;
                 cellLinkBits[cell + 5] = 2;
                 k++;
                 if (++placed >= partySize)
                     break;
-            } else if (g_4b2452[k]) {
+            } else if (pairFeatures[k]) {
                 hexCells[cell + 4].snoid = 0;
                 hexCells[cell + 4].state = 501;
                 hexCells[cell + 5].state = 506;
-                g_4b240e++;
-                g_4b1a48[g_4b240e] = cellPlaces[cell + 5];
-                g_4b1ab4[g_4b240e] = cell + 5;
-                g_4b1a48[g_4b240e].x += 24;
-                g_4b1a48[g_4b240e].y -= 5;
+                listedCount++;
+                listedPoints[listedCount] = cellPlaces[cell + 5];
+                listedCells[listedCount] = cell + 5;
+                listedPoints[listedCount].x += 24;
+                listedPoints[listedCount].y -= 5;
                 cellLinkBits[cell + 3] |= 16;
                 cellLinkBits[cell + 4] = 18;
                 cellLinkBits[cell + 5] = 2;
@@ -1394,36 +1394,36 @@ void layOutGrid()
             cellLinkBits[g_4a4400[cell] + 1] |= 2;
         }
         linkCells();
-        fn_449c18();
+        orderPartyByAlike();
         if (randomUpTo(100) < 50) {
-            fn_44abce(19);
-            fn_44abce(55);
-            fn_44abce(91);
+            seatPair(19);
+            seatPair(55);
+            seatPair(91);
         } else if (randomUpTo(100) < 50) {
-            fn_44abce(55);
-            fn_44abce(91);
-            fn_44abce(19);
+            seatPair(55);
+            seatPair(91);
+            seatPair(19);
         } else {
-            fn_44abce(91);
-            fn_44abce(19);
-            fn_44abce(55);
+            seatPair(91);
+            seatPair(19);
+            seatPair(55);
         }
-        cell = fn_449f96(11, 13);
+        cell = sharedStone(11, 13);
         if (cell)
             hexCells[12].snoid = cell;
-        cell = fn_449f96(29, 31);
+        cell = sharedStone(29, 31);
         if (cell)
             hexCells[30].snoid = cell;
-        cell = fn_449f96(47, 49);
+        cell = sharedStone(47, 49);
         if (cell)
             hexCells[48].snoid = cell;
-        cell = fn_449f96(65, 67);
+        cell = sharedStone(65, 67);
         if (cell)
             hexCells[66].snoid = cell;
-        cell = fn_449f96(83, 85);
+        cell = sharedStone(83, 85);
         if (cell)
             hexCells[84].snoid = cell;
-        cell = fn_449f96(101, 103);
+        cell = sharedStone(101, 103);
         if (cell)
             hexCells[102].snoid = cell;
         count = 0;
@@ -1484,14 +1484,14 @@ void layOutGrid()
                 hexCells[cell].state = 501;
                 hexCells[cell].snoid = -1;
             }
-        g_4b240e = 0;
+        listedCount = 0;
         for (cell = 0; cell < 18; cell++)
             if (hexCells[g_4a43d0[cell]].state == 507) {
-                g_4b240e++;
-                g_4b1a48[g_4b240e] = cellPlaces[g_4a43d0[cell]];
-                g_4b1ab4[g_4b240e] = g_4a43d0[cell];
-                g_4b1a48[g_4b240e].x += 24;
-                g_4b1a48[g_4b240e].y -= 5;
+                listedCount++;
+                listedPoints[listedCount] = cellPlaces[g_4a43d0[cell]];
+                listedCells[listedCount] = g_4a43d0[cell];
+                listedPoints[listedCount].x += 24;
+                listedPoints[listedCount].y -= 5;
             }
         break;
     case 3:
@@ -1521,7 +1521,7 @@ void layOutGrid()
         if (partySize > 5)
             startGrid(54);
         else {
-            fn_449c18();
+            orderPartyByAlike();
             for (cell = 0; cell < 117; cell++) {
                 cellLinkBits[cell] = 0;
                 hexCells[cell].state = 500;
@@ -1681,11 +1681,11 @@ void layOutGrid()
         for (cell = 0; cell < 26; cell++) {
             row = g_4a4238[cell];
             if (hexCells[row].state == 507) {
-                g_4b240e++;
-                g_4b1a48[g_4b240e] = cellPlaces[row];
-                g_4b1ab4[g_4b240e] = row;
-                g_4b1a48[g_4b240e].x += 24;
-                g_4b1a48[g_4b240e].y -= 5;
+                listedCount++;
+                listedPoints[listedCount] = cellPlaces[row];
+                listedCells[listedCount] = row;
+                listedPoints[listedCount].x += 24;
+                listedPoints[listedCount].y -= 5;
                 placedSnoids[count].cell = row;
                 placedSnoids[count].snoid = hexCells[row].snoid;
                 count++;
@@ -1701,7 +1701,7 @@ void layOutGrid()
         else if (hexCells[cell].state == startState) {
             hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &cellPlaces[cell], 0, 0);
             view = findView(hexCells[cell].view);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
             g_4b241a++;
             g_4b241c[g_4b241a - 1] = cell;
             if (startState == 505)
@@ -1711,7 +1711,7 @@ void layOutGrid()
         } else {
             hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &cellPlaces[cell], 0, 0);
             view = findView(hexCells[cell].view);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
         }
     }
     for (cell = 1; cell < 9; cell++)
@@ -1737,7 +1737,7 @@ void startGrid(short cell)
     short i = 0;
     short at;
 
-    fn_449c18();
+    orderPartyByAlike();
     at = ++cell;
     hexCells[at].state = 507;
     if (partySize == 1) {
@@ -1774,7 +1774,7 @@ void startGrid(short cell)
    taken cell two steps away in direction 5 or 3; then (for cells 55, 57
    and 59) in direction 4, and towards the cells two steps away in
    directions 5 and 3 when they are open (506), linking the Zoombini two
-   cells on (fn_449f96). Returns -1 when it can't, the cell two on when a
+   cells on (sharedStone). Returns -1 when it can't, the cell two on when a
    step fails, else 0. */
 /* Not exact: the original keeps `n` in edi (and far5 and far3 on the
    stack); here n stays in eax and far5 gets edi. */
@@ -1842,7 +1842,7 @@ short growGrid(short cell)
         }
     }
     if (hexCells[target].state == 507) {
-        n = fn_449f96(target, far5);
+        n = sharedStone(target, far5);
         if (n)
             hexCells[hexCells[far5].links[3]].snoid = n;
     }
@@ -1855,7 +1855,7 @@ short growGrid(short cell)
             return g_4b2524 = target;
         }
         if (hexCells[target].state == 507) {
-            n = fn_449f96(target, far3);
+            n = sharedStone(target, far3);
             if (n)
                 hexCells[hexCells[far3].links[5]].snoid = n;
         }
@@ -2682,7 +2682,7 @@ void updateCellLinks()
         if (hexCells[i].state == 501 || hexCells[i].state == 506 || hexCells[i].state == 507) {
             view = findView(hexCells[i].view);
             setViewScript(view, 7000, 1);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
         }
     updateViews();
 }
@@ -2877,7 +2877,7 @@ void placePartyOnGrid()
     short i;
     short index;
 
-    fn_449c18();
+    orderPartyByAlike();
     for (i = 0; i < 16; i++)
         hexCells[cells[i]].state = 501;
     for (i = 0; i < partySize; i++) {

@@ -608,7 +608,7 @@ struct InputItem
     Cursor cursor; /* where it is */
 };
 
-/* Callbacks, called through fn_412b4d with the current item; named by offset. */
+/* Callbacks, called through callItemHandler with the current item; named by offset. */
 struct InputHandlers
 {
     void (*handler0)(InputItem *item);
@@ -636,7 +636,7 @@ struct Group
     short *sounds; /* per item, the sounds for switching it off and on */
 };
 
-/* A list of groups (12 bytes); g_4a01ac is an array of them. */
+/* A list of groups (12 bytes); groupLists is an array of them. */
 struct GroupList
 {
     Group *groups;
@@ -645,7 +645,7 @@ struct GroupList
     void (*changed)(short value);
 };
 
-/* The state (0x30 bytes) fn_413a4e loads into the globals and fn_413afd
+/* The state (0x30 bytes) loadInputState loads into the globals and saveInputState
    saves from them; the part from +0x18 only if asked. */
 struct InputState
 {
@@ -655,7 +655,7 @@ struct InputState
     Point cursorA;
     Point cursorB;
     Point cursorC;
-    short search; /* what fn_41391d looks for (0-7) */
+    short search; /* what matchItem looks for (0-7) */
     Point *point;
     InputItem *unknown1E;
     short unknown22;
@@ -1067,7 +1067,7 @@ extern DeferLock *locks; /* @data 0x4a8dcc */
 extern short loadWholeCast; /* @data 0x4aa410 */
 extern short g_4aa428;
 extern short g_4aa42a;
-extern void (*g_4aa4c4)(Point *where);
+extern void (*mouseHook)(Point *where);
 /* Which error reportJoinedError reports */
 extern char allocationFailed; /* @data 0x4aa4c8: "Not enough near memory for" */
 extern char outOfMemory; /* @data 0x4aa4c9: "Not enough memory for" */
@@ -3760,7 +3760,7 @@ struct HexCell
 extern HexCell hexCells[117];
 extern short cellLinkBits[117]; /* each cell's link bits, one per direction */
 extern short partySize;
-extern short waitingSnoids[16]; /* the party, most alike first (fn_449c18) */
+extern short waitingSnoids[16]; /* the party, most alike first (orderPartyByAlike) */
 extern short g_4b2540;
 extern short g_4b2542;
 extern short featureSlots[8][4]; /* the features of the Zoombini in each slot */
@@ -3802,7 +3802,7 @@ extern short partyHair[16]; /* @data 0x4b2472 */
 extern short partyEyes[16]; /* @data 0x4b2492 */
 extern short partyNoses[16]; /* @data 0x4b24b2 */
 extern short partyFeet[16]; /* @data 0x4b24d2 */
-extern short g_4b24f2[16]; /* @data 0x4b24f2 */
+extern short partyTaken[16]; /* @data 0x4b24f2 */
 extern short dealButtonState;
 extern short g_4b2736;
 extern short g_4b2746;

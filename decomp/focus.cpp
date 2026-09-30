@@ -18,9 +18,9 @@
 /* @zoombi32 0x004124a4 */
 void setGroupLists(GroupList *lists, short count, short flags)
 {
-    g_4a01ac = lists;
-    g_4aa48c = count;
-    g_4aa48a = flags;
+    groupLists = lists;
+    groupListCount = count;
+    inputFlags = flags;
     numberAllItems();
 }
 
@@ -32,9 +32,9 @@ short handleMouse(Point *where, unsigned short button)
     InputState saved;
     short handled;
 
-    fn_413afd(&saved, 1);
-    g_4aa4c0 = 0;
-    g_4aa4c2 = button == 0;
+    saveInputState(&saved, 1);
+    inputMode = 0;
+    hovering = button == 0;
     if (focusItemAtPoint(where)) {
         enterFocusedItem();
         if (button)
@@ -44,7 +44,7 @@ short handleMouse(Point *where, unsigned short button)
         leaveEnteredItem();
         handled = 0;
     }
-    fn_413a4e(&saved, 1);
+    loadInputState(&saved, 1);
     return handled;
 }
 
@@ -56,33 +56,33 @@ InputItem *hoverItemAtPoint(Point *where)
     InputState saved;
     InputItem *item;
 
-    fn_413afd(&saved, 1);
-    g_4aa4c0 = 0;
+    saveInputState(&saved, 1);
+    inputMode = 0;
     if (focusItemAtPoint(where)) {
         enterFocusedItem();
-        item = g_4aa498;
+        item = currentItem;
     } else {
         leaveEnteredItem();
         item = 0;
     }
-    fn_413a4e(&saved, 1);
+    loadInputState(&saved, 1);
     return item;
 }
 
 /* trackPress for an item, keeping the state. */
 /* @zoombi32 0x00412587 */
-short fn_412587(InputItem *item, unsigned short button)
+short trackItemPress(InputItem *item, unsigned short button)
 {
     InputState saved;
     short result;
 
-    fn_413afd(&saved, 1);
-    g_4aa4c0 = 0;
+    saveInputState(&saved, 1);
+    inputMode = 0;
     if (focusItem(item))
         result = trackPress(button);
     else
         result = 0;
-    fn_413a4e(&saved, 1);
+    loadInputState(&saved, 1);
     return result;
 }
 
@@ -105,32 +105,32 @@ short trackPress(unsigned short button)
     short over, changed;
 
     changed = 0;
-    wasOn = (g_4aa498->flags & 4) == 4;
+    wasOn = (currentItem->flags & 4) == 4;
     target = !wasOn;
     over = 1;
     highlightFocus();
-    if (wasOn && !(g_4aa494->flags & 0x10)) {
-        if (fn_4133a4() && !fn_41336f())
-            fn_412bb3(1);
+    if (wasOn && !(currentGroup->flags & 0x10)) {
+        if (moveOverridden() && !handlersOverridden())
+            callItemHandlers(1);
         return 0;
     }
     do {
-        changed |= fn_412722(target, 0);
-        fn_413bad(&where);
+        changed |= setFocusedOn(target, 0);
+        getHookedMousePosition(&where);
         mainLoopEvents();
-        held = isButtonStillDown(button) && (g_4aa494->flags & 0xe000) != 0x2000;
-        if (held && (g_4aa494->flags & 0xe000) != 0x8000) {
+        held = isButtonStillDown(button) && (currentGroup->flags & 0xe000) != 0x2000;
+        if (held && (currentGroup->flags & 0xe000) != 0x8000) {
             over = hitTestFocus(&where);
-            if ((g_4aa494->flags & 0xe000) == 0x4000)
+            if ((currentGroup->flags & 0xe000) == 0x4000)
                 held &= over;
             else
                 target = over ^ wasOn;
         }
     } while (held);
-    if (g_4aa494->flags & 0xe000 || over) {
-        changed |= fn_412722(target, 1);
-        if (!(g_4aa494->flags & 4))
-            changed |= fn_412722(wasOn, 1);
+    if (currentGroup->flags & 0xe000 || over) {
+        changed |= setFocusedOn(target, 1);
+        if (!(currentGroup->flags & 4))
+            changed |= setFocusedOn(wasOn, 1);
     }
     return changed;
 }
@@ -142,14 +142,14 @@ short trackPress(unsigned short button)
  * kind); the list's `changed` callback hears of it. Whether it did.
  */
 /* @zoombi32 0x00412722 */
-short fn_412722(short on, short value)
+short setFocusedOn(short on, short value)
 {
     short wasOn, onState, notValue, early;
 
-    wasOn = (g_4aa498->flags & 4) == 4;
-    notValue = (g_4aa494->flags & 0x20) != 0x20;
-    onState = (g_4aa494->flags & 8) == 8;
-    early = (g_4aa494->flags & 0xe000) == 0x2000 || (g_4aa494->flags & 0xe000) == 0x8000;
+    wasOn = (currentItem->flags & 4) == 4;
+    notValue = (currentGroup->flags & 0x20) != 0x20;
+    onState = (currentGroup->flags & 8) == 8;
+    early = (currentGroup->flags & 0xe000) == 0x2000 || (currentGroup->flags & 0xe000) == 0x8000;
 
     if (on == onState && notValue == value && early)
         switchOffOthers();
@@ -158,8 +158,8 @@ short fn_412722(short on, short value)
     if (on == onState && notValue == value) {
         if (!early)
             switchOffOthers();
-        if (g_4aa490->changed)
-            g_4aa490->changed(g_4aa49c.c.x);
+        if (currentList->changed)
+            currentList->changed(searchCursor.c.x);
         return 1;
     }
     return 0;
@@ -170,20 +170,20 @@ short fn_412722(short on, short value)
 /* @zoombi32 0x0041280d */
 short hitTestFocus(Point *where)
 {
-    if (!g_4aa494->handlers->hitTest)
-        return fn_480b80(g_4aa498, where);
+    if (!currentGroup->handlers->hitTest)
+        return fn_480b80(currentItem, where);
     else
-        return g_4aa494->handlers->hitTest(where, g_4aa498);
+        return currentGroup->handlers->hitTest(where, currentItem);
 }
 
-/* Whether an item is available in the current mode (g_4aa4c0): in mode 0,
+/* Whether an item is available in the current mode (inputMode): in mode 0,
    unless flag 1 or 2 is set; in mode 1, unless flag 1 is. */
 /* @zoombi32 0x00412844 */
-short fn_412844(InputItem *item)
+short itemAvailable(InputItem *item)
 {
     if (!item)
         return 0;
-    switch (g_4aa4c0) {
+    switch (inputMode) {
     case 0:
         if (item->flags & 1 || item->flags & 2)
             return 0;
@@ -196,19 +196,19 @@ short fn_412844(InputItem *item)
     return 1;
 }
 
-/* The same test as fn_412844, for the flags in g_4aa48a. */
+/* The same test as itemAvailable, for the flags in inputFlags. */
 /* @zoombi32 0x00412884 */
-short fn_412884()
+short listsAvailable()
 {
-    if (!g_4a01ac)
+    if (!groupLists)
         return 0;
-    switch (g_4aa4c0) {
+    switch (inputMode) {
     case 0:
-        if (g_4aa48a & 1 || g_4aa48a & 2)
+        if (inputFlags & 1 || inputFlags & 2)
             return 0;
         break;
     case 1:
-        if (g_4aa48a & 1)
+        if (inputFlags & 1)
             return 0;
         break;
     }
@@ -218,26 +218,26 @@ short fn_412884()
 /* In mode 0 a list with flag 1 or 2, in mode 1 one with flag 1, is counted
    (its groups' sizes and its length) instead of taken. */
 /* @zoombi32 0x004128c6 */
-short fn_4128c6(GroupList *list)
+short listSearchable(GroupList *list)
 {
     short i;
 
     if (!list)
         return 0;
-    switch (g_4aa4c0) {
+    switch (inputMode) {
     case 0:
         if (list->flags & 1 || list->flags & 2) {
             for (i = 0; i < list->count; i++)
-                g_4aa49c.b.x += list->groups[i].count;
-            g_4aa49c.a.y += list->count;
+                searchCursor.b.x += list->groups[i].count;
+            searchCursor.a.y += list->count;
             return 0;
         }
         break;
     case 1:
         if (list->flags & 1) {
             for (i = 0; i < list->count; i++)
-                g_4aa49c.b.x += list->groups[i].count;
-            g_4aa49c.a.y += list->count;
+                searchCursor.b.x += list->groups[i].count;
+            searchCursor.a.y += list->count;
             return 0;
         }
         break;
@@ -245,26 +245,26 @@ short fn_4128c6(GroupList *list)
     return 1;
 }
 
-/* The same test as fn_4128c6, for one group. */
+/* The same test as listSearchable, for one group. */
 /* @zoombi32 0x0041295f */
-short fn_41295f(Group *group)
+short groupSearchable(Group *group)
 {
     if (!group)
         return 0;
-    if (g_4aa4c2 && !group->handlers->enter)
+    if (hovering && !group->handlers->enter)
         return 0;
-    switch (g_4aa4c0) {
+    switch (inputMode) {
     case 0:
         if (group->flags & 1 || group->flags & 2) {
-            g_4aa49c.b.x += group->count;
-            g_4aa49c.c.x += group->count;
+            searchCursor.b.x += group->count;
+            searchCursor.c.x += group->count;
             return 0;
         }
         break;
     case 1:
         if (group->flags & 1) {
-            g_4aa49c.b.x += group->count;
-            g_4aa49c.c.x += group->count;
+            searchCursor.b.x += group->count;
+            searchCursor.c.x += group->count;
             return 0;
         }
         break;
@@ -279,19 +279,19 @@ void highlightFocus()
 {
     InputState saved;
 
-    if (fn_4133a4()) {
-        if (g_4aa498 != highlightedItem) {
-            fn_413afd(&saved, 0);
-            g_4aa4c0 = 1;
+    if (moveOverridden()) {
+        if (currentItem != highlightedItem) {
+            saveInputState(&saved, 0);
+            inputMode = 1;
             if (focusItem(highlightedItem)) {
                 highlightedItem = 0;
-                if (!fn_41336f())
-                    fn_412bb3(g_4aa498->flags & 4);
+                if (!handlersOverridden())
+                    callItemHandlers(currentItem->flags & 4);
             }
-            fn_413a4e(&saved, 0);
+            loadInputState(&saved, 0);
         }
-        highlightedItem = g_4aa498;
-        if (g_4a01b0)
+        highlightedItem = currentItem;
+        if (keyboardMoved)
             moveMouseToFocus();
     }
 }
@@ -300,12 +300,12 @@ void highlightFocus()
 /* @zoombi32 0x00412a6e */
 void toggleFocusedItem()
 {
-    short off = (g_4aa498->flags & 4) != 4;
+    short off = (currentItem->flags & 4) != 4;
 
-    fn_412bb3(off);
-    g_4aa498->flags ^= 4;
-    if (g_4aa494->sounds)
-        playSound(g_4aa494->sounds[g_4aa49c.c.y * 2 - off - 1], RESOURCE_TYPE(0, 'S', 'N', 'D'), 0,
+    callItemHandlers(off);
+    currentItem->flags ^= 4;
+    if (currentGroup->sounds)
+        playSound(currentGroup->sounds[searchCursor.c.y * 2 - off - 1], RESOURCE_TYPE(0, 'S', 'N', 'D'), 0,
                   0, 1);
 }
 
@@ -316,140 +316,140 @@ void switchOffOthers()
 {
     InputState saved;
 
-    if (g_4aa490->flags & 4) {
-        fn_413afd(&saved, 0);
-        g_4aa4ac = 4;
-        g_4aa4be = 4;
-        g_4aa49c.b.y = 1;
-        g_4aa49c.c.y = 0;
-        while (fn_413693(g_4aa490, g_4aa49c.b.y - 1, g_4aa49c.c.y))
-            if (g_4aa498 != saved.item)
+    if (currentList->flags & 4) {
+        saveInputState(&saved, 0);
+        searchKind = 4;
+        searchFlags = 4;
+        searchCursor.b.y = 1;
+        searchCursor.c.y = 0;
+        while (searchListForward(currentList, searchCursor.b.y - 1, searchCursor.c.y))
+            if (currentItem != saved.item)
                 toggleFocusedItem();
-        fn_413a4e(&saved, 0);
+        loadInputState(&saved, 0);
     }
 }
 
-/* Calls callback with g_4aa498 if there is one; returns whether it did. */
+/* Calls callback with currentItem if there is one; returns whether it did. */
 /* @zoombi32 0x00412b4d */
-short fn_412b4d(void (*callback)(InputItem *item))
+short callItemHandler(void (*callback)(InputItem *item))
 {
     if (!callback)
         return 0;
-    callback(g_4aa498);
+    callback(currentItem);
     return 1;
 }
 
-/* Calls the handlerC handler, or else (fn_412cc0) its default. */
+/* Calls the handlerC handler, or else (defaultHandler4) its default. */
 /* @zoombi32 0x00412b6b */
-void fn_412b6b()
+void callHandlerC()
 {
-    if (fn_41336f() || !fn_412b4d(g_4aa494->handlers->handlerC))
-        fn_412cc0();
+    if (handlersOverridden() || !callItemHandler(currentGroup->handlers->handlerC))
+        defaultHandler4();
 }
 
-/* Calls the handler8 handler, or else (fn_412cd0) its default. */
+/* Calls the handler8 handler, or else (defaultHandler0) its default. */
 /* @zoombi32 0x00412b8f */
-void fn_412b8f()
+void callHandler8()
 {
-    if (fn_41336f() || !fn_412b4d(g_4aa494->handlers->handler8))
-        fn_412cd0();
+    if (handlersOverridden() || !callItemHandler(currentGroup->handlers->handler8))
+        defaultHandler0();
 }
 
-/* Calls the handler for the current item: the default (fn_412cdf) if
+/* Calls the handler for the current item: the default (defaultHandler10) if
    something is switched off (flag 2), else one of a pair, for highlightedItem or
    another item, and `alternative` or not. */
 /* @zoombi32 0x00412bb3 */
-void fn_412bb3(short alternative)
+void callItemHandlers(short alternative)
 {
-    if (g_4aa494->flags & 0x80 && g_4aa498 != enteredItem)
+    if (currentGroup->flags & 0x80 && currentItem != enteredItem)
         return;
-    if (g_4aa48a & 2 || g_4aa490->flags & 2 || g_4aa494->flags & 2 || g_4aa498->flags & 2) {
-        fn_412cdf();
+    if (inputFlags & 2 || currentList->flags & 2 || currentGroup->flags & 2 || currentItem->flags & 2) {
+        defaultHandler10();
         return;
     }
-    if (g_4aa498 == highlightedItem) {
+    if (currentItem == highlightedItem) {
         if (alternative)
-            fn_412b6b();
+            callHandlerC();
         else
-            fn_412b8f();
+            callHandler8();
     } else if (alternative)
-        fn_412cc0();
+        defaultHandler4();
     else
-        fn_412cd0();
+        defaultHandler0();
 }
 
-/* The same choice as fn_412bb3, for the other set of handlers, by the
+/* The same choice as callItemHandlers, for the other set of handlers, by the
    item's flag 4. */
 /* @zoombi32 0x00412c3d */
-void fn_412c3d()
+void callOtherHandlers()
 {
-    if (g_4aa494->flags & 0x80 && g_4aa498 != enteredItem)
+    if (currentGroup->flags & 0x80 && currentItem != enteredItem)
         return;
-    if (g_4aa48a & 2 || g_4aa490->flags & 2 || g_4aa494->flags & 2 || g_4aa498->flags & 2) {
-        fn_412d57();
+    if (inputFlags & 2 || currentList->flags & 2 || currentGroup->flags & 2 || currentItem->flags & 2) {
+        defaultHandler24();
         return;
     }
-    if (g_4aa498 == highlightedItem) {
-        if (g_4aa498->flags & 4)
-            fn_412cef();
+    if (currentItem == highlightedItem) {
+        if (currentItem->flags & 4)
+            callHandler20();
         else
-            fn_412d13();
-    } else if (g_4aa498->flags & 4)
-        fn_412d37();
+            callHandler1C();
+    } else if (currentItem->flags & 4)
+        defaultHandler18();
     else
-        fn_412d47();
+        defaultHandler14();
 }
 
 /* @zoombi32 0x00412cc0 */
-void fn_412cc0()
+void defaultHandler4()
 {
-    fn_412b4d(g_4aa494->handlers->handler4);
+    callItemHandler(currentGroup->handlers->handler4);
 }
 
 /* @zoombi32 0x00412cd0 */
-void fn_412cd0()
+void defaultHandler0()
 {
-    fn_412b4d(g_4aa494->handlers->handler0);
+    callItemHandler(currentGroup->handlers->handler0);
 }
 
 /* @zoombi32 0x00412cdf */
-void fn_412cdf()
+void defaultHandler10()
 {
-    fn_412b4d(g_4aa494->handlers->handler10);
+    callItemHandler(currentGroup->handlers->handler10);
 }
 
-/* Calls the handler20 handler, or else (fn_412d37) its default. */
+/* Calls the handler20 handler, or else (defaultHandler18) its default. */
 /* @zoombi32 0x00412cef */
-void fn_412cef()
+void callHandler20()
 {
-    if (fn_41336f() || !fn_412b4d(g_4aa494->handlers->handler20))
-        fn_412d37();
+    if (handlersOverridden() || !callItemHandler(currentGroup->handlers->handler20))
+        defaultHandler18();
 }
 
-/* Calls the handler1C handler, or else (fn_412d47) its default. */
+/* Calls the handler1C handler, or else (defaultHandler14) its default. */
 /* @zoombi32 0x00412d13 */
-void fn_412d13()
+void callHandler1C()
 {
-    if (fn_41336f() || !fn_412b4d(g_4aa494->handlers->handler1C))
-        fn_412d47();
+    if (handlersOverridden() || !callItemHandler(currentGroup->handlers->handler1C))
+        defaultHandler14();
 }
 
 /* @zoombi32 0x00412d37 */
-void fn_412d37()
+void defaultHandler18()
 {
-    fn_412b4d(g_4aa494->handlers->handler18);
+    callItemHandler(currentGroup->handlers->handler18);
 }
 
 /* @zoombi32 0x00412d47 */
-void fn_412d47()
+void defaultHandler14()
 {
-    fn_412b4d(g_4aa494->handlers->handler14);
+    callItemHandler(currentGroup->handlers->handler14);
 }
 
 /* @zoombi32 0x00412d57 */
-void fn_412d57()
+void defaultHandler24()
 {
-    fn_412b4d(g_4aa494->handlers->handler24);
+    callItemHandler(currentGroup->handlers->handler24);
 }
 
 /* Enters the focused item (calls its group's enter handler), leaving the
@@ -458,12 +458,12 @@ void fn_412d57()
 void enterFocusedItem()
 {
     if (enteredItem) {
-        if (enteredItem == g_4aa498)
+        if (enteredItem == currentItem)
             return;
         leaveEnteredItem();
     }
-    enteredItem = g_4aa498;
-    fn_412b4d(g_4aa494->handlers->enter);
+    enteredItem = currentItem;
+    callItemHandler(currentGroup->handlers->enter);
 }
 
 /* Leaves the item entered last (calls its group's leave handler). */
@@ -473,12 +473,12 @@ void leaveEnteredItem()
     InputState saved;
 
     if (enteredItem) {
-        fn_413afd(&saved, 0);
-        g_4aa4c0 = 1;
+        saveInputState(&saved, 0);
+        inputMode = 1;
         if (focusItem(enteredItem))
-            fn_412b4d(g_4aa494->handlers->leave);
+            callItemHandler(currentGroup->handlers->leave);
         enteredItem = 0;
-        fn_413a4e(&saved, 0);
+        loadInputState(&saved, 0);
     }
 }
 
@@ -488,11 +488,11 @@ void getItemPosition(InputItem *item, Cursor *where)
 {
     InputState saved;
 
-    fn_413afd(&saved, 1);
-    g_4aa4c0 = 2;
+    saveInputState(&saved, 1);
+    inputMode = 2;
     focusItem(item);
-    *where = g_4aa49c;
-    fn_413a4e(&saved, 1);
+    *where = searchCursor;
+    loadInputState(&saved, 1);
 }
 
 /* The item at a position (from 1), if any, keeping the state. */
@@ -504,13 +504,13 @@ InputItem *itemAt(short x, short y)
 
     if (x <= 0 || y <= 0)
         return 0;
-    fn_413afd(&saved, 1);
-    g_4aa4c0 = 2;
+    saveInputState(&saved, 1);
+    inputMode = 2;
     if (focusItemAt(x, y))
-        item = g_4aa498;
+        item = currentItem;
     else
         item = 0;
-    fn_413a4e(&saved, 1);
+    loadInputState(&saved, 1);
     return item;
 }
 
@@ -528,23 +528,23 @@ InputItem *handleKey(unsigned short *key)
     short highlighted, direction;
     InputItem *item;
 
-    if (!fn_4133a4())
+    if (!moveOverridden())
         return 0;
-    fn_413afd(&saved, 1);
-    g_4a01b0 = 1;
-    g_4aa4c0 = 0;
+    saveInputState(&saved, 1);
+    keyboardMoved = 1;
+    inputMode = 0;
     highlighted = focusItem(highlightedItem);
     if (*key == '\r') {
-        if (fn_41336f()) {
-            fn_413bad(&where);
+        if (handlersOverridden()) {
+            getHookedMousePosition(&where);
             if (focusItemAtPoint(&where)) {
                 pressFocusedItem();
-                fn_413a4e(&saved, 1);
+                loadInputState(&saved, 1);
                 return highlightedItem;
             }
         } else if (highlighted) {
             pressFocusedItem();
-            fn_413a4e(&saved, 1);
+            loadInputState(&saved, 1);
             return highlightedItem;
         }
     }
@@ -556,16 +556,16 @@ InputItem *handleKey(unsigned short *key)
         if (highlighted)
             stepFocus(direction);
         *key = 0;
-        fn_413a4e(&saved, 1);
+        loadInputState(&saved, 1);
         return 0;
     }
     if (focusItemByKey(*key)) {
         pressFocusedItem();
-        item = g_4aa498;
-        fn_413a4e(&saved, 1);
+        item = currentItem;
+        loadInputState(&saved, 1);
         return item;
     }
-    fn_413a4e(&saved, 1);
+    loadInputState(&saved, 1);
     return 0;
 }
 
@@ -573,11 +573,11 @@ InputItem *handleKey(unsigned short *key)
 /* @zoombi32 0x00412fb5 */
 void stepFocus(short direction)
 {
-    g_4aa4ac = 5;
+    searchKind = 5;
     if (moveFocus(direction)) {
         highlightFocus();
-        if (!fn_41336f())
-            fn_412bb3(g_4aa498->flags & 4);
+        if (!handlersOverridden())
+            callItemHandlers(currentItem->flags & 4);
     }
 }
 
@@ -590,37 +590,37 @@ void stepFocus(short direction)
 short moveFocus(short direction)
 {
     short tries = 2;
-    short list = g_4aa49c.a.x - 1;
-    short group = g_4aa49c.b.y - 1;
+    short list = searchCursor.a.x - 1;
+    short group = searchCursor.b.y - 1;
     short item;
 
     if (direction > 0)
-        item = g_4aa49c.c.y;
+        item = searchCursor.c.y;
     else
-        item = g_4aa49c.c.y - 2;
+        item = searchCursor.c.y - 2;
     do {
         if (direction > 0) {
-            if (g_4aa490->flags & 8) {
-                if (fn_413693(g_4aa490, group, item))
+            if (currentList->flags & 8) {
+                if (searchListForward(currentList, group, item))
                     return 1;
                 group = item = 0;
             } else {
-                if (fn_41348b(list, group, item))
+                if (searchForward(list, group, item))
                     return 1;
                 list = group = item = 0;
             }
         } else {
-            if (g_4aa490->flags & 8) {
-                if (fn_413755(g_4aa490, group, item))
+            if (currentList->flags & 8) {
+                if (searchListBackward(currentList, group, item))
                     return 1;
-                group = g_4aa490->count - 1;
-                item = g_4aa490->groups[group].count - 1;
+                group = currentList->count - 1;
+                item = currentList->groups[group].count - 1;
             } else {
-                if (fn_41357a(list, group, item))
+                if (searchBackward(list, group, item))
                     return 1;
-                list = g_4aa48c - 1;
-                group = g_4a01ac[list].count - 1;
-                item = g_4a01ac[list].groups[group].count - 1;
+                list = groupListCount - 1;
+                group = groupLists[list].count - 1;
+                item = groupLists[list].groups[group].count - 1;
             }
         }
         tries--;
@@ -637,18 +637,18 @@ void pressFocusedItem()
     short target;
     unsigned long start;
 
-    wasOn = (g_4aa498->flags & 4) == 4;
+    wasOn = (currentItem->flags & 4) == 4;
     target = !wasOn;
     highlightFocus();
-    if (wasOn && !(g_4aa494->flags & 0x10))
+    if (wasOn && !(currentGroup->flags & 0x10))
         return;
     start = fn_415772();
-    fn_412722(target, 0);
+    setFocusedOn(target, 0);
     while (fn_415772() <= start + 30)
         mainLoopEvents();
-    fn_412722(target, 1);
-    if (!(g_4aa494->flags & 4))
-        fn_412722(wasOn, 1);
+    setFocusedOn(target, 1);
+    if (!(currentGroup->flags & 4))
+        setFocusedOn(wasOn, 1);
 }
 
 /* Highlights the item at a position (from 1), keeping the state; the item. */
@@ -660,19 +660,19 @@ InputItem *highlightItemAt(short x, short y)
 
     if (x <= 0 || y <= 0)
         return 0;
-    if (!fn_4133a4())
+    if (!moveOverridden())
         return 0;
-    fn_413afd(&saved, 1);
-    g_4a01b0 = 1;
-    g_4aa4c0 = 0;
+    saveInputState(&saved, 1);
+    keyboardMoved = 1;
+    inputMode = 0;
     if (focusItemAt(x, y)) {
         highlightFocus();
-        if (!fn_41336f())
-            fn_412bb3(g_4aa498->flags & 4);
-        item = g_4aa498;
+        if (!handlersOverridden())
+            callItemHandlers(currentItem->flags & 4);
+        item = currentItem;
     } else
         item = 0;
-    fn_413a4e(&saved, 1);
+    loadInputState(&saved, 1);
     return item;
 }
 
@@ -683,11 +683,11 @@ void activateItemAt(short x, short y)
     InputState saved;
 
     if (x > 0 && y > 0) {
-        fn_413afd(&saved, 1);
-        g_4aa4c0 = 1;
+        saveInputState(&saved, 1);
+        inputMode = 1;
         if (focusItemAt(x, y))
-            fn_412bb3(g_4aa498->flags & 4);
-        fn_413a4e(&saved, 1);
+            callItemHandlers(currentItem->flags & 4);
+        loadInputState(&saved, 1);
     }
 }
 
@@ -697,18 +697,18 @@ void visitAllItems()
 {
     InputState saved;
 
-    fn_413afd(&saved, 1);
-    g_4aa4ac = 6;
-    g_4aa4c0 = 1;
-    fn_41348b(0, 0, 0);
-    fn_413a4e(&saved, 1);
+    saveInputState(&saved, 1);
+    searchKind = 6;
+    inputMode = 1;
+    searchForward(0, 0, 0);
+    loadInputState(&saved, 1);
 }
 
-/* Moves the mouse, if fn_41336f says it follows the focus. */
+/* Moves the mouse, if handlersOverridden says it follows the focus. */
 /* @zoombi32 0x004132d2 */
 void moveMouseTo(short x, short y)
 {
-    if (fn_41336f())
+    if (handlersOverridden())
         setCursorPosition(x, y);
 }
 
@@ -717,284 +717,284 @@ void moveMouseTo(short x, short y)
 /* @zoombi32 0x00413312 */
 void moveMouseToFocus()
 {
-    if (fn_41336f()) {
-        if (g_4aa494->flags & 0x40) {
-            InputItem *item = g_4aa498;
+    if (handlersOverridden()) {
+        if (currentGroup->flags & 0x40) {
+            InputItem *item = currentItem;
             setCursorPosition((item->bounds.right + item->bounds.left) / 2,
                               (item->bounds.bottom + item->bounds.top) / 2);
         } else
-            setCursorPosition(g_4aa498->hotspot.x, g_4aa498->hotspot.y);
+            setCursorPosition(currentItem->hotspot.x, currentItem->hotspot.y);
     }
 }
 
-/* Flag 0x80 of g_4aa48b applies with a mouse, 0x40 without one. */
+/* Flag 0x80 of inputFlagsHigh applies with a mouse, 0x40 without one. */
 /* @zoombi32 0x0041336f */
-short fn_41336f()
+short handlersOverridden()
 {
     short noMouse = !(unsigned short)isMousePresent();
-    return g_4aa48b & 0x80 && !noMouse || g_4aa48b & 0x40 && noMouse;
+    return inputFlagsHigh & 0x80 && !noMouse || inputFlagsHigh & 0x40 && noMouse;
 }
 
-/* Flag 0x20 of g_4aa48b applies with a mouse, 0x10 without one. */
+/* Flag 0x20 of inputFlagsHigh applies with a mouse, 0x10 without one. */
 /* @zoombi32 0x004133a4 */
-short fn_4133a4()
+short moveOverridden()
 {
     short noMouse = !(unsigned short)isMousePresent();
-    return g_4aa48b & 0x20 && !noMouse || g_4aa48b & 0x10 && noMouse;
+    return inputFlagsHigh & 0x20 && !noMouse || inputFlagsHigh & 0x10 && noMouse;
 }
 
 /* Moves the focus to the first item at a point (by its group's hit test). */
 /* @zoombi32 0x004133d9 */
 short focusItemAtPoint(Point *where)
 {
-    g_4aa4ac = 0;
-    g_4aa4b0 = where;
-    return fn_41348b(0, 0, 0);
+    searchKind = 0;
+    searchPoint = where;
+    return searchForward(0, 0, 0);
 }
 
 /* Moves the focus to the first item with a key (either case). */
 /* @zoombi32 0x004133fc */
 short focusItemByKey(short key)
 {
-    g_4aa4ac = 3;
-    g_4aa4bc = toUpperAscii(key);
-    return fn_41348b(0, 0, 0);
+    searchKind = 3;
+    searchKey = toUpperAscii(key);
+    return searchForward(0, 0, 0);
 }
 
 /* Moves the focus to the item at a position. */
 /* @zoombi32 0x00413427 */
 short focusItemAt(short x, short y)
 {
-    g_4aa4ac = 2;
-    g_4aa4b8 = x;
-    g_4aa4ba = y;
-    return fn_41348b(0, 0, 0);
+    searchKind = 2;
+    searchColumn = x;
+    searchRow = y;
+    return searchForward(0, 0, 0);
 }
 
 /* Moves the focus to an item. */
 /* @zoombi32 0x00413456 */
 short focusItem(InputItem *item)
 {
-    if (!fn_412844(item))
+    if (!itemAvailable(item))
         return 0;
-    g_4aa4ac = 1;
-    g_4aa4b4 = item;
-    return fn_41348b(0, 0, 0);
+    searchKind = 1;
+    searchItem = item;
+    return searchForward(0, 0, 0);
 }
 
-/* Searches all lists (g_4a01ac) from list `list`, group `group`, item `start`,
-   onwards (fn_413693); whether an item was found. */
+/* Searches all lists (groupLists) from list `list`, group `group`, item `start`,
+   onwards (searchListForward); whether an item was found. */
 /* @zoombi32 0x0041348b */
-short fn_41348b(short list, short group, short start)
+short searchForward(short list, short group, short start)
 {
     short found, i, j;
     GroupList *current;
 
-    memset(&g_4aa49c, 0, sizeof g_4aa49c);
-    if (!fn_412884())
+    memset(&searchCursor, 0, sizeof searchCursor);
+    if (!listsAvailable())
         return 0;
-    g_4aa49c.a.y = group;
-    g_4aa49c.b.x = start;
+    searchCursor.a.y = group;
+    searchCursor.b.x = start;
     for (i = 0; i < list; i++) {
-        g_4aa49c.a.y += g_4a01ac[i].count;
-        for (j = 0; j < g_4a01ac[i].count; j++)
-            g_4aa49c.b.x += g_4a01ac[i].groups[j].count;
+        searchCursor.a.y += groupLists[i].count;
+        for (j = 0; j < groupLists[i].count; j++)
+            searchCursor.b.x += groupLists[i].groups[j].count;
     }
-    g_4aa49c.a.x = list;
+    searchCursor.a.x = list;
     found = 0;
-    for (current = &g_4a01ac[list]; g_4aa49c.a.x < g_4aa48c && !found; current++) {
-        found = fn_413693(current, group, start);
+    for (current = &groupLists[list]; searchCursor.a.x < groupListCount && !found; current++) {
+        found = searchListForward(current, group, start);
         group = start = 0;
-        g_4aa49c.a.x++;
+        searchCursor.a.x++;
     }
     if (!found)
-        g_4aa49c.a.x = g_4aa49c.a.y = g_4aa49c.b.x = 0;
+        searchCursor.a.x = searchCursor.a.y = searchCursor.b.x = 0;
     return found;
 }
 
-/* The same as fn_41348b, backwards (each earlier list from its last item). */
+/* The same as searchForward, backwards (each earlier list from its last item). */
 /* @zoombi32 0x0041357a */
-short fn_41357a(short list, short group, short start)
+short searchBackward(short list, short group, short start)
 {
     short found, i, j;
     GroupList *current;
 
-    memset(&g_4aa49c, 0, sizeof g_4aa49c);
-    if (!fn_412884())
+    memset(&searchCursor, 0, sizeof searchCursor);
+    if (!listsAvailable())
         return 0;
-    g_4aa49c.a.y = group;
-    g_4aa49c.b.x = start;
+    searchCursor.a.y = group;
+    searchCursor.b.x = start;
     for (i = 0; i < list; i++) {
-        g_4aa49c.a.y += g_4a01ac[i].count;
-        for (j = 0; j < g_4a01ac[i].count; j++)
-            g_4aa49c.b.x += g_4a01ac[i].groups[j].count;
+        searchCursor.a.y += groupLists[i].count;
+        for (j = 0; j < groupLists[i].count; j++)
+            searchCursor.b.x += groupLists[i].groups[j].count;
     }
-    g_4aa49c.a.x = list;
+    searchCursor.a.x = list;
     found = 0;
-    for (current = &g_4a01ac[list]; g_4aa49c.a.x >= 0 && !found; current--) {
-        found = fn_413755(current, group, start);
-        group = g_4a01ac[g_4aa49c.a.x - 1].count - 1;
-        start = g_4a01ac[g_4aa49c.a.x - 1].groups[group].count - 1;
-        g_4aa49c.a.x--;
+    for (current = &groupLists[list]; searchCursor.a.x >= 0 && !found; current--) {
+        found = searchListBackward(current, group, start);
+        group = groupLists[searchCursor.a.x - 1].count - 1;
+        start = groupLists[searchCursor.a.x - 1].groups[group].count - 1;
+        searchCursor.a.x--;
     }
-    g_4aa49c.a.x++;
-    g_4aa49c.a.y++;
-    g_4aa49c.b.x++;
+    searchCursor.a.x++;
+    searchCursor.a.y++;
+    searchCursor.b.x++;
     if (!found)
-        g_4aa49c.a.x = g_4aa49c.a.y = g_4aa49c.b.x = 0;
+        searchCursor.a.x = searchCursor.a.y = searchCursor.b.x = 0;
     return found;
 }
 
 /* Searches a list's groups from group `first`, item `start`, onwards
-   (fn_41382a), moving the cursor along; whether an item was found. */
+   (searchGroupForward), moving the cursor along; whether an item was found. */
 /* @zoombi32 0x00413693 */
-short fn_413693(GroupList *list, short first, short start)
+short searchListForward(GroupList *list, short first, short start)
 {
     short found, i;
     Group *group;
 
-    g_4aa49c.b.y = g_4aa49c.c.x = g_4aa49c.c.y = 0;
-    if (!fn_4128c6(list))
+    searchCursor.b.y = searchCursor.c.x = searchCursor.c.y = 0;
+    if (!listSearchable(list))
         return 0;
-    g_4aa490 = list;
-    g_4aa49c.c.x = start;
+    currentList = list;
+    searchCursor.c.x = start;
     for (i = 0; i < first; i++) {
-        g_4aa49c.b.x += list->groups[i].count;
-        g_4aa49c.c.x += list->groups[i].count;
+        searchCursor.b.x += list->groups[i].count;
+        searchCursor.c.x += list->groups[i].count;
     }
-    g_4aa49c.b.y = first;
+    searchCursor.b.y = first;
     found = 0;
-    for (group = &list->groups[first]; g_4aa49c.b.y < list->count && !found; group++) {
-        found = fn_41382a(group, start);
+    for (group = &list->groups[first]; searchCursor.b.y < list->count && !found; group++) {
+        found = searchGroupForward(group, start);
         start = 0;
-        g_4aa49c.b.y++;
-        g_4aa49c.a.y++;
+        searchCursor.b.y++;
+        searchCursor.a.y++;
     }
     if (!found)
-        g_4aa49c.b.y = g_4aa49c.c.x = 0;
+        searchCursor.b.y = searchCursor.c.x = 0;
     return found;
 }
 
-/* The same as fn_413693, backwards (each earlier group from its last item). */
+/* The same as searchListForward, backwards (each earlier group from its last item). */
 /* @zoombi32 0x00413755 */
-short fn_413755(GroupList *list, short first, short start)
+short searchListBackward(GroupList *list, short first, short start)
 {
     short found, i;
     Group *group;
 
-    g_4aa49c.b.y = g_4aa49c.c.x = g_4aa49c.c.y = 0;
-    if (!fn_4128c6(list))
+    searchCursor.b.y = searchCursor.c.x = searchCursor.c.y = 0;
+    if (!listSearchable(list))
         return 0;
-    g_4aa490 = list;
-    g_4aa49c.c.x = start;
+    currentList = list;
+    searchCursor.c.x = start;
     for (i = 0; i < first; i++) {
-        g_4aa49c.b.x += list->groups[i].count;
-        g_4aa49c.c.x += list->groups[i].count;
+        searchCursor.b.x += list->groups[i].count;
+        searchCursor.c.x += list->groups[i].count;
     }
-    g_4aa49c.b.y = first;
+    searchCursor.b.y = first;
     found = 0;
-    for (group = &list->groups[first]; g_4aa49c.b.y >= 0 && !found; group--) {
-        found = fn_4138a2(group, start);
-        start = list->groups[g_4aa49c.b.y - 1].count - 1;
-        g_4aa49c.b.y--;
-        g_4aa49c.a.y--;
+    for (group = &list->groups[first]; searchCursor.b.y >= 0 && !found; group--) {
+        found = searchGroupBackward(group, start);
+        start = list->groups[searchCursor.b.y - 1].count - 1;
+        searchCursor.b.y--;
+        searchCursor.a.y--;
     }
-    g_4aa49c.b.y++;
-    g_4aa49c.c.x++;
+    searchCursor.b.y++;
+    searchCursor.c.x++;
     if (!found)
-        g_4aa49c.b.y = g_4aa49c.c.x = 0;
+        searchCursor.b.y = searchCursor.c.x = 0;
     return found;
 }
 
-/* Searches a group's items from `start` onwards with fn_41391d, moving the
+/* Searches a group's items from `start` onwards with matchItem, moving the
    cursor along; whether one was found (the cursor's index is then its). */
 /* @zoombi32 0x0041382a */
-short fn_41382a(Group *group, short start)
+short searchGroupForward(Group *group, short start)
 {
     short found;
     InputItem *item;
 
-    g_4aa49c.c.y = 0;
-    if (!fn_41295f(group))
+    searchCursor.c.y = 0;
+    if (!groupSearchable(group))
         return 0;
-    g_4aa494 = group;
-    g_4aa49c.c.y = start;
+    currentGroup = group;
+    searchCursor.c.y = start;
     found = 0;
-    for (item = &group->items[start]; g_4aa49c.c.y < group->count && !found; item++) {
-        found = fn_41391d(item);
-        g_4aa49c.c.y++;
-        g_4aa49c.c.x++;
-        g_4aa49c.b.x++;
+    for (item = &group->items[start]; searchCursor.c.y < group->count && !found; item++) {
+        found = matchItem(item);
+        searchCursor.c.y++;
+        searchCursor.c.x++;
+        searchCursor.b.x++;
     }
     if (!found)
-        g_4aa49c.c.y = 0;
+        searchCursor.c.y = 0;
     return found;
 }
 
-/* The same as fn_41382a, backwards from `start`. */
+/* The same as searchGroupForward, backwards from `start`. */
 /* @zoombi32 0x004138a2 */
-short fn_4138a2(Group *group, short start)
+short searchGroupBackward(Group *group, short start)
 {
     short found;
     InputItem *item;
 
-    g_4aa49c.c.y = 0;
-    if (!fn_41295f(group))
+    searchCursor.c.y = 0;
+    if (!groupSearchable(group))
         return 0;
-    g_4aa494 = group;
-    g_4aa49c.c.y = start;
+    currentGroup = group;
+    searchCursor.c.y = start;
     found = 0;
-    for (item = group->items + start; g_4aa49c.c.y >= 0 && !found; item--) {
-        found = fn_41391d(item);
-        g_4aa49c.c.y--;
-        g_4aa49c.c.x--;
-        g_4aa49c.b.x--;
+    for (item = group->items + start; searchCursor.c.y >= 0 && !found; item--) {
+        found = matchItem(item);
+        searchCursor.c.y--;
+        searchCursor.c.x--;
+        searchCursor.b.x--;
     }
-    g_4aa49c.c.y++;
+    searchCursor.c.y++;
     if (!found)
-        g_4aa49c.c.y = 0;
+        searchCursor.c.y = 0;
     return found;
 }
 
 /*
- * Whether an item is what's being looked for (g_4aa4ac): 0 the one at a
+ * Whether an item is what's being looked for (searchKind): 0 the one at a
  * point (by its group's hit test), 1 a particular item, 2 the one past the cursor, 3 the
  * one with a key, 4 one with some flags, 5 any; 6 and 7 visit them (calling
  * their handlers, or giving them their places). Makes it the current item.
  */
 /* @zoombi32 0x0041391d */
-short fn_41391d(InputItem *item)
+short matchItem(InputItem *item)
 {
     short found;
 
-    if (!fn_412844(item))
+    if (!itemAvailable(item))
         return 0;
-    g_4aa498 = item;
-    switch (g_4aa4ac) {
+    currentItem = item;
+    switch (searchKind) {
     case 0:
-        found = hitTestFocus(g_4aa4b0);
+        found = hitTestFocus(searchPoint);
         break;
     case 1:
-        found = item == g_4aa4b4;
+        found = item == searchItem;
         break;
     case 2:
-        found = g_4aa4b8 == g_4aa49c.a.x + 1 && g_4aa4ba == g_4aa49c.c.x + 1;
+        found = searchColumn == searchCursor.a.x + 1 && searchRow == searchCursor.c.x + 1;
         break;
     case 3:
-        found = toUpperAscii(item->key) == g_4aa4bc;
+        found = toUpperAscii(item->key) == searchKey;
         break;
     case 4:
-        found = (item->flags & g_4aa4be) != 0;
+        found = (item->flags & searchFlags) != 0;
         break;
     case 5:
         found = 1;
         break;
     case 6:
-        fn_412c3d();
+        callOtherHandlers();
         found = 0;
         break;
     case 7:
-        item->cursor = g_4aa49c;
+        item->cursor = searchCursor;
         item->cursor.a.x++;
         item->cursor.a.y++;
         item->cursor.b.x++;
@@ -1009,65 +1009,65 @@ short fn_41391d(InputItem *item)
 
 /* Loads the input state (the part from +0x18 only with `all`). */
 /* @zoombi32 0x00413a4e */
-void fn_413a4e(InputState *state, short all)
+void loadInputState(InputState *state, short all)
 {
-    g_4aa490 = state->list;
-    g_4aa494 = state->group;
-    g_4aa498 = state->item;
-    g_4aa49c.a = state->cursorA;
-    g_4aa49c.b = state->cursorB;
-    g_4aa49c.c = state->cursorC;
+    currentList = state->list;
+    currentGroup = state->group;
+    currentItem = state->item;
+    searchCursor.a = state->cursorA;
+    searchCursor.b = state->cursorB;
+    searchCursor.c = state->cursorC;
     if (all) {
-        g_4aa4ac = state->search;
-        g_4aa4b0 = state->point;
-        g_4aa4b4 = state->unknown1E;
-        g_4aa4b8 = state->unknown22;
-        g_4aa4ba = state->unknown24;
-        g_4aa4bc = state->unknown26;
-        g_4aa4be = state->unknown28;
-        g_4aa4c0 = state->mode;
-        g_4a01b0 = state->unknown2C;
-        g_4aa4c2 = state->unknown2E;
+        searchKind = state->search;
+        searchPoint = state->point;
+        searchItem = state->unknown1E;
+        searchColumn = state->unknown22;
+        searchRow = state->unknown24;
+        searchKey = state->unknown26;
+        searchFlags = state->unknown28;
+        inputMode = state->mode;
+        keyboardMoved = state->unknown2C;
+        hovering = state->unknown2E;
     }
 }
 
 /* Saves the input state (the part from +0x18 only with `all`). */
 /* @zoombi32 0x00413afd */
-void fn_413afd(InputState *state, short all)
+void saveInputState(InputState *state, short all)
 {
-    state->list = g_4aa490;
-    state->group = g_4aa494;
-    state->item = g_4aa498;
-    state->cursorA = g_4aa49c.a;
-    state->cursorB = g_4aa49c.b;
-    state->cursorC = g_4aa49c.c;
+    state->list = currentList;
+    state->group = currentGroup;
+    state->item = currentItem;
+    state->cursorA = searchCursor.a;
+    state->cursorB = searchCursor.b;
+    state->cursorC = searchCursor.c;
     if (all) {
-        state->search = g_4aa4ac;
-        state->point = g_4aa4b0;
-        state->unknown1E = g_4aa4b4;
-        state->unknown22 = g_4aa4b8;
-        state->unknown24 = g_4aa4ba;
-        state->unknown26 = g_4aa4bc;
-        state->unknown28 = g_4aa4be;
-        state->mode = g_4aa4c0;
-        state->unknown2C = g_4a01b0;
-        state->unknown2E = g_4aa4c2;
+        state->search = searchKind;
+        state->point = searchPoint;
+        state->unknown1E = searchItem;
+        state->unknown22 = searchColumn;
+        state->unknown24 = searchRow;
+        state->unknown26 = searchKey;
+        state->unknown28 = searchFlags;
+        state->mode = inputMode;
+        state->unknown2C = keyboardMoved;
+        state->unknown2E = hovering;
     }
 }
 
-/* Where the mouse is, also passed to the hook fn_413bcf set, if any. */
+/* Where the mouse is, also passed to the hook setMouseHook set, if any. */
 /* @zoombi32 0x00413bad */
-void fn_413bad(Point *where)
+void getHookedMousePosition(Point *where)
 {
     getMousePosition(where);
-    if (g_4aa4c4)
-        g_4aa4c4(where);
+    if (mouseHook)
+        mouseHook(where);
 }
 
 /* @zoombi32 0x00413bcf */
-void fn_413bcf(void (*hook)(Point *where))
+void setMouseHook(void (*hook)(Point *where))
 {
-    g_4aa4c4 = hook;
+    mouseHook = hook;
 }
 
 /* Gives every item its position (search 7, in mode 2), keeping the state. */
@@ -1076,9 +1076,9 @@ void numberAllItems()
 {
     InputState saved;
 
-    fn_413afd(&saved, 1);
-    g_4aa4ac = 7;
-    g_4aa4c0 = 2;
-    fn_41348b(0, 0, 0);
-    fn_413a4e(&saved, 1);
+    saveInputState(&saved, 1);
+    searchKind = 7;
+    inputMode = 2;
+    searchForward(0, 0, 0);
+    loadInputState(&saved, 1);
 }

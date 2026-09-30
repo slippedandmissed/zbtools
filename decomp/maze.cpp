@@ -248,7 +248,7 @@ void mazeButtonClicked(short button)
             for (helper = viewListEnd(1); helper; helper = helper->next)
                 if (helper->flags == 1) {
                     snoid = (Snoid *)&helper->body;
-                    fn_439560(snoid);
+                    setUpMazeParts(snoid);
                 }
         }
         getCursorPosition(&cursor);
@@ -329,12 +329,12 @@ void mazeButtonClicked(short button)
             case 1:
                 helper = findView(g_4afd8c[0]);
                 if (helper)
-                    fn_43a5f6(helper, g_4a2548);
+                    sortFlaggedViews(helper, g_4a2548);
                 break;
             case 3:
                 helper = findView(g_4afd8c[0]);
                 if (helper)
-                    fn_43a5f6(helper, g_4a254c);
+                    sortFlaggedViews(helper, g_4a254c);
                 break;
             }
         }
@@ -1041,7 +1041,7 @@ short clearRowsWithFeature(short id)
 /*
  * The maze's frame: leaves once asked to (and sound 996 is done); unless
  * paused, works through the Zoombinis waiting for each step: ones placed
- * to start (startMazeView), stopped (fn_439cb4), moving in front, reaching
+ * to start (startMazeView), stopped (stepMazeSnoidOn), moving in front, reaching
  * the gates, falling (15090 on), gates to close (g_4b0a0a/c), ones done
  * walking off to their row's exit (by the next of 20 spots in g_4a2406),
  * ones reaching a square (by its kind in g_4b061a: 0 stops, 1 a turn, 2
@@ -1099,7 +1099,7 @@ void mazeFrame()
         while (*stopped) {
             view = findView(g_4b0930[--*stopped]);
             if (view)
-                fn_439cb4(view);
+                stepMazeSnoidOn(view);
         }
         while (*moving) {
             view = findView(g_4b0908[--*moving]);
@@ -1126,13 +1126,13 @@ void mazeFrame()
             g_4b0a0a = 0;
             view = findView(g_4afd8c[0]);
             if (view)
-                fn_43a5f6(view, g_4a2548);
+                sortFlaggedViews(view, g_4a2548);
         }
         if (g_4b0a0c) {
             g_4b0a0c = 0;
             view = findView(g_4afd8c[0]);
             if (view)
-                fn_43a5f6(view, g_4a254c);
+                sortFlaggedViews(view, g_4a254c);
         }
         while (g_4b0a00) {
             view = findView(g_4b0958[--g_4b0a00]);
@@ -1189,25 +1189,25 @@ void mazeFrame()
                 }
                 switch (g_4b061a[parts[33]][parts[34]]) {
                 case 0:
-                    fn_439cb4(view);
+                    stepMazeSnoidOn(view);
                     break;
                 case 1:
-                    fn_439fc3(view, g_4b04c8[parts[33]][parts[34]]);
+                    putOnSquare(view, g_4b04c8[parts[33]][parts[34]]);
                     break;
                 case 2:
-                    fn_43a0e8(view, g_4b04c8[parts[33]][parts[34]]);
+                    stepAtTurning(view, g_4b04c8[parts[33]][parts[34]]);
                     break;
                 case 3:
                 case 4:
-                    fn_43a2c8(view, g_4b04c8[parts[33]][parts[34]]);
+                    stepMazeSnoid(view, g_4b04c8[parts[33]][parts[34]]);
                     break;
                 case 5:
-                    fn_43a510(view, g_4b04c8[parts[33]][parts[34]]);
+                    moveMazeSnoidOn(view, g_4b04c8[parts[33]][parts[34]]);
                     break;
                 case 6:
                     queueViewSound(5103, 0);
-                    fn_439e55(g_4b04c8[parts[33]][parts[34]]);
-                    fn_439cb4(view);
+                    stopMazeSnoid(g_4b04c8[parts[33]][parts[34]]);
+                    stepMazeSnoidOn(view);
                     break;
                 case 20:
                 case 21:
@@ -1216,7 +1216,7 @@ void mazeFrame()
                     putSnoidInMaze(view, g_4b061a[parts[33]][parts[34]]);
                     break;
                 default:
-                    fn_439cb4(view);
+                    stepMazeSnoidOn(view);
                     break;
                 }
             }

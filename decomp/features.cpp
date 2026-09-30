@@ -1819,7 +1819,7 @@ void placeDialogList(View *view)
                                 if (i) {
                                     g_4b9686 = 3;
                                     if (currentScene == 1)
-                                        fn_43151e();
+                                        showMapBox();
                                 }
                             }
                         }

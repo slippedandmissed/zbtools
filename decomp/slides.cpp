@@ -29,8 +29,8 @@ void openScene12()
 
     g_4b966e = 0;
     g_4b755a = g_4b755c = 0;
-    g_4b0d52 = g_4b240e = g_4b2410 = 0;
-    g_4b1930 = g_4b1932 = 0;
+    g_4b0d52 = listedCount = g_4b2410 = 0;
+    g_4b1930 = slidesGoReady = 0;
     g_4b2524 = g_4b1a34 = g_4b1a3e = g_4b1a40 = 0;
     g_4b2540 = g_4b2542 = g_4b1a3c = 0;
     g_4b2526 = -1;
@@ -54,7 +54,7 @@ void openScene12()
     loadFeatureGroup(8000, 1, 0);
     loadScripts(7000, 14);
     addScripts(8000, 3, 0);
-    addView(0x1000, drawSlidesButtons, fn_4470b2, 0, 0, 0, 0, 0);
+    addView(0x1000, drawSlidesButtons, updateSlidesButtons, 0, 0, 0, 0, 0);
     loadSnoidScripts(14000, 4, 0);
     addSnoidScripts(13000, 6, 0);
     setViewPlaces(16, slidesPlaces, 1);
@@ -70,11 +70,11 @@ void openScene12()
     moveView(g_4b1936[4], 0, hexCells[63].view);
     moveView(g_4b1936[5], 0, hexCells[81].view);
     moveView(g_4b1936[6], 0, hexCells[99].view);
-    for (i = 0; i < g_4b240e; i++) {
+    for (i = 0; i < listedCount; i++) {
         placedViews[i] = addView(0x188a000, drawCels, runViewScript, 7013, 7, &g_4b1a4c[i], 0, 0);
-        findView(placedViews[i])->placed = fn_448c81;
+        findView(placedViews[i])->placed = placeListedCell;
     }
-    moveView(g_4b1936[7], 1, placedViews[g_4b240e - 1]);
+    moveView(g_4b1936[7], 1, placedViews[listedCount - 1]);
     updateViews();
     staggerSnoids(45, 30);
     chooseSnoids(0, 0);
@@ -115,12 +115,12 @@ void closeScene12()
     }
 }
 
-/* The buttons' view update: redraws button 2 when g_4b1932 changes, and
+/* The buttons' view update: redraws button 2 when slidesGoReady changes, and
    button 1 the first time. */
 /* @zoombi32 0x004470b2 */
-void fn_4470b2(View *, short region)
+void updateSlidesButtons(View *, short region)
 {
-    if (g_4b1932) {
+    if (slidesGoReady) {
         if (!g_4a41e0) {
             g_4a41e0 = 1;
             unionRgnRect(region, &slidesButtons[1].rect);
@@ -137,7 +137,7 @@ void fn_4470b2(View *, short region)
 
 /* Marks the Zoombini on each cell in state 508 (unknownF7). */
 /* @zoombi32 0x0044943b */
-void fn_44943b()
+void markLitSnoids()
 {
     short i;
 
@@ -146,50 +146,50 @@ void fn_44943b()
             ((Snoid *)&findView(hexCells[i].snoid)->body)->unknownF7 = 1;
 }
 
-/* Sets g_4b1932 if any of the cells g_4b1ab4 lists (1 to g_4b240e) is in
+/* Sets slidesGoReady if any of the cells listedCells lists (1 to listedCount) is in
    state 508. */
 /* @zoombi32 0x00449475 */
-void fn_449475()
+void noteAnyLit()
 {
     short i;
 
-    g_4b1932 = 0;
-    for (i = 1; i <= g_4b240e; i++)
-        if (hexCells[g_4b1ab4[i]].state == 508) {
-            g_4b1932 = 1;
+    slidesGoReady = 0;
+    for (i = 1; i <= listedCount; i++)
+        if (hexCells[listedCells[i]].state == 508) {
+            slidesGoReady = 1;
             return;
         }
 }
 
 /* Counts the cells in state 502 or 508, and sums their numbers into
-   g_4b1a44. */
+   litSum. */
 /* @zoombi32 0x0044b261 */
-short fn_44b261()
+short countLitCells()
 {
     short n;
     short i;
 
-    n = g_4b1a44 = 0;
+    n = litSum = 0;
     for (i = 0; i < 117; i++)
         if (hexCells[i].state == 502 || hexCells[i].state == 508) {
             n++;
-            g_4b1a44 += i;
+            litSum += i;
         }
     return n;
 }
 
 /* Remarks on the count of cells in state 502 or 508 against the last
-   (g_4b1a42): up (more than four: 8505, else 8504, and sets g_4b1932), down
+   (lastLitCount): up (more than four: 8505, else 8504, and sets slidesGoReady), down
    (8501 or 8500), or the same count on other cells (8502). A long remark
    already playing is stopped first. */
 /* @zoombi32 0x0044b2a4 */
-void fn_44b2a4()
+void remarkOnLit()
 {
-    short n = fn_44b261();
+    short n = countLitCells();
 
-    if (n > g_4b1a42) {
-        g_4b1932 = 1;
-        if (n - g_4b1a42 > 4) {
+    if (n > lastLitCount) {
+        slidesGoReady = 1;
+        if (n - lastLitCount > 4) {
             if (g_4b87fe && lastViewSound == 8505) {
                 stopSounds(8505, RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 lastViewSound = 0;
@@ -202,8 +202,8 @@ void fn_44b2a4()
             }
             queueViewSound(8504, 0);
         }
-    } else if (n < g_4b1a42) {
-        if (g_4b1a42 - n > 4) {
+    } else if (n < lastLitCount) {
+        if (lastLitCount - n > 4) {
             if (g_4b87fe && lastViewSound == 8501) {
                 stopSounds(8501, RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 lastViewSound = 0;
@@ -216,12 +216,12 @@ void fn_44b2a4()
             }
             queueViewSound(8500, 0);
         }
-    } else if (g_4b1a44 != g_4b1a46) {
+    } else if (litSum != g_4b1a46) {
         queueViewSound(8502, 0);
     }
 }
 
-/* Draws button `which` (1 or 2; 2 is dim unless g_4b1932), lit or not,
+/* Draws button `which` (1 or 2; 2 is dim unless slidesGoReady), lit or not,
    showing it on screen if `show`. */
 /* @zoombi32 0x00446ffc */
 void drawSlidesButton(short which, short lit, short show)
@@ -234,7 +234,7 @@ void drawSlidesButton(short which, short lit, short show)
         break;
     case 2:
         image = 2;
-        if (!g_4b1932) {
+        if (!slidesGoReady) {
             lit = 0;
             image = 1;
         }
@@ -253,7 +253,7 @@ void drawSlidesButton(short which, short lit, short show)
 /* Counts, for each feature, how many of its values the chosen Zoombinis
    (g_4b192c, partySize of them) show, into g_4b251c. */
 /* @zoombi32 0x004488e8 */
-void fn_4488e8()
+void countPartyValues()
 {
     short counts[4][6];
     short i;
@@ -277,7 +277,7 @@ void fn_4488e8()
 
 /* Cycles palette colours 19-21 by one (the last to the first). */
 /* @zoombi32 0x00448bf5 */
-void fn_448bf5()
+void cycleColors()
 {
     PALETTEENTRY last;
     PALETTEENTRY colors[256];
@@ -293,10 +293,10 @@ void fn_448bf5()
     setColors(&colors[10], 10, 236);
 }
 
-/* Clears the party's features (partyHair to g_4b24f2, g_4b2452, waitingSnoids) and
+/* Clears the party's features (partyHair to partyTaken, pairFeatures, waitingSnoids) and
    reads each Zoombini's (partySize of them, partyViews) into partyHair to partyFeet. */
 /* @zoombi32 0x00449b40 */
-void fn_449b40()
+void readPartyFeatures()
 {
     Snoid *snoid;
     short i;
@@ -305,10 +305,10 @@ void fn_449b40()
     fillMemory(partyEyes, 0, 32);
     fillMemory(partyNoses, 0, 32);
     fillMemory(partyFeet, 0, 32);
-    fillMemory(g_4b24f2, 0, 32);
-    fillMemory(g_4b2452, 0, 32);
+    fillMemory(partyTaken, 0, 32);
+    fillMemory(pairFeatures, 0, 32);
     fillMemory(waitingSnoids, 0, 32);
-    g_4b2450 = 0;
+    groupCount = 0;
     for (i = 0; i < partySize; i++) {
         snoid = (Snoid *)&findView(partyViews[i])->body;
         partyHair[i] = snoid->features[0];
@@ -321,7 +321,7 @@ void fn_449b40()
 /* Orders the party (into waitingSnoids) by how many others share a feature with
    each, most first. */
 /* @zoombi32 0x00449c18 */
-void fn_449c18()
+void orderPartyByAlike()
 {
     short alike[16];
     short i;
@@ -348,16 +348,16 @@ void fn_449c18()
 }
 
 /* A cell's placed callback: moves its cels into place and drops the
-   images 4-24 for the directions its cell (g_4b1ab4, by the view's place)
+   images 4-24 for the directions its cell (listedCells, by the view's place)
    has no link in (cellLinkBits's bits). */
 /* @zoombi32 0x00448c81 */
-void fn_448c81(View *view)
+void placeListedCell(View *view)
 {
     ViewCel *cel;
     short cell;
     short removed;
 
-    cell = g_4b1ab4[(short)(view->id - placedViews[0]) + 1];
+    cell = listedCells[(short)(view->id - placedViews[0]) + 1];
     cel = view->body.cels;
     while (cel->image) {
         removed = 0;
@@ -410,7 +410,7 @@ void fn_448c81(View *view)
    each place that's free and not already picked, noted in sortedIds), from
    one end or the other at random, and gives its point in `where`. */
 /* @zoombi32 0x0044b3ee */
-void fn_44b3ee(Point *where)
+void pickSlidesPlace(Point *where)
 {
     Point spot = {0, 0};
     short i;
@@ -445,11 +445,11 @@ void fn_44b3ee(Point *where)
     *where = slidesPlaces[id];
 }
 
-/* Another Zoombini of the party (not `who`, and not marked in g_4b24f2)
+/* Another Zoombini of the party (not `who`, and not marked in partyTaken)
    with the same value of a feature (sharedFeature, each in turn from a random
    one); -1 if none. */
 /* @zoombi32 0x00449a21 */
-short fn_449a21(short who)
+short findAlike(short who)
 {
     short tries;
     short i;
@@ -464,19 +464,19 @@ short fn_449a21(short who)
                 continue;
             switch (sharedFeature) {
             case 0:
-                if (!g_4b24f2[i] && partyHair[who] == partyHair[i])
+                if (!partyTaken[i] && partyHair[who] == partyHair[i])
                     return i;
                 break;
             case 1:
-                if (!g_4b24f2[i] && partyEyes[who] == partyEyes[i])
+                if (!partyTaken[i] && partyEyes[who] == partyEyes[i])
                     return i;
                 break;
             case 2:
-                if (!g_4b24f2[i] && partyNoses[who] == partyNoses[i])
+                if (!partyTaken[i] && partyNoses[who] == partyNoses[i])
                     return i;
                 break;
             case 3:
-                if (!g_4b24f2[i] && partyFeet[who] == partyFeet[i])
+                if (!partyTaken[i] && partyFeet[who] == partyFeet[i])
                     return i;
                 break;
             }
@@ -485,11 +485,11 @@ short fn_449a21(short who)
     return -1;
 }
 
-/* Layers the Zoombinis' views: those on the listed cells (g_4b1ab4) in state
+/* Layers the Zoombinis' views: those on the listed cells (listedCells) in state
    507 go behind the next cell's view; the party's Zoombinis on none of them
    in state 507 or 508 go behind the first cell's. */
 /* @zoombi32 0x0044aa79 */
-void fn_44aa79()
+void layerSnoidViews()
 {
     short placed[16];
     View *view;
@@ -498,19 +498,19 @@ void fn_44aa79()
 
     setViewsLocked(0);
     fillMemory(placed, 0, sizeof placed);
-    for (i = 1; i <= g_4b240e; i++) {
-        if (hexCells[g_4b1ab4[i]].state == 507) {
-            view = findView(hexCells[g_4b1ab4[i]].snoid);
+    for (i = 1; i <= listedCount; i++) {
+        if (hexCells[listedCells[i]].state == 507) {
+            view = findView(hexCells[listedCells[i]].snoid);
             if (view) {
                 view->flags |= 0x4008000;
-                moveView(hexCells[g_4b1ab4[i]].snoid, 0, hexCells[g_4b1ab4[i] + 1].view);
+                moveView(hexCells[listedCells[i]].snoid, 0, hexCells[listedCells[i] + 1].view);
             }
             for (j = 0; j < 16; j++)
-                if (partyViews[j] == hexCells[g_4b1ab4[i]].snoid)
+                if (partyViews[j] == hexCells[listedCells[i]].snoid)
                     placed[j]++;
-        } else if (hexCells[g_4b1ab4[i]].state == 508) {
+        } else if (hexCells[listedCells[i]].state == 508) {
             for (j = 0; j < 16; j++)
-                if (partyViews[j] == hexCells[g_4b1ab4[i]].snoid)
+                if (partyViews[j] == hexCells[listedCells[i]].snoid)
                     placed[j]++;
         }
     }
@@ -529,7 +529,7 @@ void fn_44aa79()
    or 508 while startState is 505; images 4, 8 and 24 only where the cell has
    that link (cellLinkBits), moved on by g_4b2514. */
 /* @zoombi32 0x00448d9d */
-void fn_448d9d(View *view)
+void placeCellImages(View *view)
 {
     ViewCel *cel;
     short removed;
@@ -594,22 +594,22 @@ void drawSlidesButtons(View *)
 
 /* A view's update cycling colours 19-21 at its interval. */
 /* @zoombi32 0x004489a8 */
-void fn_4489a8(View *view, short)
+void cycleColorsUpdate(View *view, short)
 {
     if (view->nextUpdate <= updateTime) {
         view->nextUpdate = updateTime + view->interval;
-        fn_448bf5();
+        cycleColors();
     }
 }
 
 /* Marks the cell at (x, y) (within 45 by 22 of its point in cellPoints),
    unless one is already (g_4b1a3e): notes it in g_4b1a36 and shows the
-   marker view g_4b1a34 there (script 8000-8002 by row, notify fn_44af15),
+   marker view g_4b1a34 there (script 8000-8002 by row, notify walkToMarkNotify),
    layered with the row. */
 /* Not exact: register allocation in the loop's tests (the original keeps
    `y` in ecx and uses esi for scratch; here `y` shares esi with `kind`). */
 /* @zoombi32 0x0044b0fc */
-void fn_44b0fc(short x, short y)
+void markCellAt(short x, short y)
 {
     Point at;
     Point *points = cellPoints;
@@ -632,7 +632,7 @@ void fn_44b0fc(short x, short y)
                 if (g_4b1a34)
                     deleteView(g_4b1a34);
                 g_4b1a34 = addView(0x908000, drawCels, runViewScript, kind + 8000, 6, &at, 0, 0);
-                findView(g_4b1a34)->notify = fn_44af15;
+                findView(g_4b1a34)->notify = walkToMarkNotify;
                 if (i % 18)
                     moveView(g_4b1a34, 0, g_4b1936[7]);
                 else {
@@ -652,7 +652,7 @@ void fn_44b0fc(short x, short y)
    note a facing to take at the end (g_4b1a3a), 250-253 face it at once; the
    end (0) flips it and takes the noted facing. */
 /* @zoombi32 0x0044af15 */
-void fn_44af15(View *view, short event)
+void walkToMarkNotify(View *view, short event)
 {
     Point at;
     View *walker;
@@ -686,21 +686,21 @@ void fn_44af15(View *view, short event)
         walker = findView(g_4b1a38);
         startSnoidScript(viewSnoid(walker), 14000, &at, 0);
         walker->notifyEnd = 0;
-        walker->notify = fn_44af15;
+        walker->notify = walkToMarkNotify;
         g_4b1a3e = 1;
         break;
     case 91:
         walker = findView(g_4b1a38);
         startSnoidScript(viewSnoid(walker), 14001, &at, 0);
         walker->notifyEnd = 0;
-        walker->notify = fn_44af15;
+        walker->notify = walkToMarkNotify;
         g_4b1a3e = 1;
         break;
     case 92:
         walker = findView(g_4b1a38);
         startSnoidScript(viewSnoid(walker), 14002, &at, 0);
         walker->notifyEnd = 0;
-        walker->notify = fn_44af15;
+        walker->notify = walkToMarkNotify;
         g_4b1a3e = 1;
         break;
     case 93:
@@ -709,17 +709,17 @@ void fn_44af15(View *view, short event)
         at.y = randomUpTo(200) + 152;
         startSnoidScript(viewSnoid(walker), 14003, &at, 0);
         walker->notifyEnd = 0;
-        walker->notify = fn_44af15;
+        walker->notify = walkToMarkNotify;
         g_4b1a3e = 0;
         break;
     }
 }
 
-/* Groups the party in threes (g_4b2450 groups; g_4b24f2 marks those
+/* Groups the party in threes (groupCount groups; partyTaken marks those
    taken): each next Zoombini shares a feature with the last where one can
-   (noted in g_4b2452 as 510-513 by feature, else 501). */
+   (noted in pairFeatures as 510-513 by feature, else 501). */
 /* @zoombi32 0x0044986f */
-void fn_44986f()
+void groupInThrees()
 {
     short group;
     short n;
@@ -728,53 +728,53 @@ void fn_44986f()
     short i;
 
     who = n = 0;
-    fillMemory(g_4b2452, 0, 32);
-    fillMemory(g_4b24f2, 0, 32);
-    g_4b2450 = partySize / 3;
+    fillMemory(pairFeatures, 0, 32);
+    fillMemory(partyTaken, 0, 32);
+    groupCount = partySize / 3;
     if (partySize % 3)
-        g_4b2450++;
-    for (group = 0; group < g_4b2450; group++) {
-        g_4b24f2[who] = 1;
-        other = fn_449a21(who);
+        groupCount++;
+    for (group = 0; group < groupCount; group++) {
+        partyTaken[who] = 1;
+        other = findAlike(who);
         if (other == -1) {
-            g_4b2452[n] = 501;
+            pairFeatures[n] = 501;
             n++;
             for (i = 1; i < partySize; i++)
-                if (!g_4b24f2[i]) {
+                if (!partyTaken[i]) {
                     other = i;
-                    g_4b24f2[other] = 1;
+                    partyTaken[other] = 1;
                     break;
                 }
         } else {
-            g_4b24f2[other] = 1;
-            g_4b2452[n] = sharedFeature + 510;
+            partyTaken[other] = 1;
+            pairFeatures[n] = sharedFeature + 510;
             n++;
         }
         who = other;
         other = -1;
         for (i = 1; i < partySize; i++)
-            if (!g_4b24f2[i])
+            if (!partyTaken[i])
                 other = i;
         if (other == -1)
             return;
-        other = fn_449a21(who);
+        other = findAlike(who);
         if (other == -1) {
-            g_4b2452[n] = 501;
+            pairFeatures[n] = 501;
             n++;
             for (i = 1; i < partySize; i++)
-                if (!g_4b24f2[i]) {
+                if (!partyTaken[i]) {
                     other = i;
                     who = i;
                 }
         } else {
-            g_4b24f2[other] = 1;
-            g_4b2452[n] = sharedFeature + 510;
+            partyTaken[other] = 1;
+            pairFeatures[n] = sharedFeature + 510;
             n++;
         }
-        g_4b24f2[other] = 1;
+        partyTaken[other] = 1;
         other = -1;
         for (i = 1; i < partySize; i++)
-            if (!g_4b24f2[i]) {
+            if (!partyTaken[i]) {
                 other = i;
                 who = i;
             }
@@ -787,9 +787,9 @@ void fn_44986f()
    features from a random one on: 510-513 for the first shared (hair, eyes,
    nose, feet); 0 if none, or if a cell is empty. */
 /* Not exact: register allocation (the original keeps `a` in eax; here it
-   shares ebx with `feet`), as in fn_44b0fc. */
+   shares ebx with `feet`), as in markCellAt. */
 /* @zoombi32 0x00449f96 */
-short fn_449f96(short a, short b)
+short sharedStone(short a, short b)
 {
     Snoid *snoid;
     short feet;
@@ -860,9 +860,9 @@ short fn_449f96(short a, short b)
 /* A cell's placed callback: keeps images 4, 8 and 24 only where the cell
    has that link (cellLinkBits), 73-76 only on a cell whose Zoombini field holds
    the matching shared feature (513, 510, 512, 511), 103 on cells in state
-   506, and 109 and 110 as fn_448d9d does. */
+   506, and 109 and 110 as placeCellImages does. */
 /* @zoombi32 0x004489ce */
-void fn_4489ce(View *view)
+void placeCellViewImages(View *view)
 {
     ViewCel *cel;
     short removed;
@@ -948,7 +948,7 @@ void fn_4489ce(View *view)
    on (state 501, 510-513) and the far cell takes it (state 507). Returns
    its place in waitingSnoids, or -1. */
 /* @zoombi32 0x00449cfc */
-short fn_449cfc(short cell, short dir)
+short placeUnalike(short cell, short dir)
 {
     short via;
     short to;
@@ -1068,7 +1068,7 @@ void scene12Frame()
             }
         }
         if (g_4b1a3c && clockTime() - g_4b2534 > 6) {
-            fn_448bf5();
+            cycleColors();
             g_4b2534 = clockTime();
         }
         if (g_4b251a && !groupLeader[g_4b251a]) {
@@ -1086,7 +1086,7 @@ void scene12Frame()
                 if (hexCells[74].state == 508 && hexCells[64].state == 502)
                     ((Snoid *)&findView(hexCells[74].snoid)->body)->unknownF7 = 1;
                 sendSnoids(800, 200, 45);
-                fn_44943b();
+                markLitSnoids();
             } else if (g_4b1934 <= 1) {
                 sendSnoids(1280, 240, 45);
             } else {
@@ -1098,7 +1098,7 @@ void scene12Frame()
                 if (hexCells[91].state == 508)
                     ((Snoid *)&findView(hexCells[91].snoid)->body)->unknownF7 = 1;
                 sendSnoids(800, 200, 45);
-                fn_44943b();
+                markLitSnoids();
             }
             g_4b0d52 = 5;
         }
@@ -1130,13 +1130,13 @@ void scene12Frame()
     }
 }
 
-/* Pairs up the party by shared features (g_4b24f2 marks those paired, 99
-   those left alone; g_4b2452 notes each pair's feature, 510-513, or 501):
+/* Pairs up the party by shared features (partyTaken marks those paired, 99
+   those left alone; pairFeatures notes each pair's feature, 510-513, or 501):
    each tries the features in turn from a random one. Unless all are paired
    (or one, with an odd party), the lonely ones are swapped with the first
    and it tries again, up to ten rounds. */
 /* @zoombi32 0x004494b3 */
-void fn_4494b3()
+void pairByFeatures()
 {
     short feature;
     short lonely;
@@ -1146,14 +1146,14 @@ void fn_4494b3()
     short j;
     short tries;
     short swap;
-    short *paired = g_4b24f2;
+    short *paired = partyTaken;
 
     feature = randomUpTo(3);
     lonely = rounds = done = 0;
     do {
-        fillMemory(g_4b2452, 0, 32);
+        fillMemory(pairFeatures, 0, 32);
         fillMemory(paired, 0, 32);
-        g_4b2450 = 0;
+        groupCount = 0;
         for (i = 0; i < partySize; i++) {
             tries = 4;
             if (paired[i])
@@ -1165,32 +1165,32 @@ void fn_4494b3()
                     switch (feature) {
                     case 0:
                         if (!paired[j] && partyHair[i] == partyHair[j]) {
-                            g_4b2452[g_4b2450] = 510;
-                            g_4b2450++;
+                            pairFeatures[groupCount] = 510;
+                            groupCount++;
                             paired[i] = paired[j] = 1;
                             j = 20;
                         }
                         break;
                     case 1:
                         if (!paired[j] && partyEyes[i] == partyEyes[j]) {
-                            g_4b2452[g_4b2450] = 511;
-                            g_4b2450++;
+                            pairFeatures[groupCount] = 511;
+                            groupCount++;
                             paired[i] = paired[j] = 1;
                             j = 20;
                         }
                         break;
                     case 2:
                         if (!paired[j] && partyNoses[i] == partyNoses[j]) {
-                            g_4b2452[g_4b2450] = 512;
-                            g_4b2450++;
+                            pairFeatures[groupCount] = 512;
+                            groupCount++;
                             paired[i] = paired[j] = 1;
                             j = 20;
                         }
                         break;
                     case 3:
                         if (!paired[j] && partyFeet[i] == partyFeet[j]) {
-                            g_4b2452[g_4b2450] = 513;
-                            g_4b2450++;
+                            pairFeatures[groupCount] = 513;
+                            groupCount++;
                             paired[i] = paired[j] = 1;
                             j = 20;
                         }
@@ -1200,8 +1200,8 @@ void fn_4494b3()
                 tries--;
                 if (!tries && !paired[i]) {
                     paired[i] = 99;
-                    g_4b2452[g_4b2450] = 501;
-                    g_4b2450++;
+                    pairFeatures[groupCount] = 501;
+                    groupCount++;
                     lonely++;
                 }
             } while (tries && !paired[i]);
@@ -1244,10 +1244,10 @@ void fn_4494b3()
    stone (510-513) lights, with `to` (508), when the Zoombinis on `from` and
    `to` share that feature; otherwise `to` lights alone (502). */
 /* Not exact: register allocation (the original keeps `from` in eax, as in
-   fn_44b0fc; here it takes esi, which shifts the other variables' registers
+   markCellAt; here it takes esi, which shifts the other variables' registers
    and stack slots). */
 /* @zoombi32 0x0044a674 */
-void fn_44a674(short from, short via, short to)
+void tryMove(short from, short via, short to)
 {
     short feet;
     short hair;
@@ -1272,21 +1272,21 @@ void fn_44a674(short from, short via, short to)
         hexCells[via].state = 502;
         view = findView(hexCells[via].view);
         setViewScript(view, 7000, 1);
-        view->placed = fn_4489ce;
+        view->placed = placeCellViewImages;
         if (to == -1)
             return;
         if (hexCells[to].state == 507 || hexCells[to].state == 508) {
             hexCells[to].state = 508;
             view = findView(hexCells[to].view);
             setViewScript(view, 7000, 1);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
             return;
         }
         if (hexCells[to].state == 501) {
             hexCells[to].state = 502;
             view = findView(hexCells[to].view);
             setViewScript(view, 7000, 1);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
         }
         return;
     }
@@ -1306,41 +1306,41 @@ void fn_44a674(short from, short via, short to)
             hexCells[to].state = 508;
             view = findView(hexCells[to].view);
             setViewScript(view, 7000, 1);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
             hexCells[via].state = 502;
             view = findView(hexCells[via].view);
             setViewScript(view, 7000, 1);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
         } else if ((code == 510 && otherHair == hair) || (code == 511 && otherEyes == eyes)
                    || (code == 512 && nose == otherNose) || (code == 513 && otherFeet == feet)) {
             hexCells[to].state = 508;
             view = findView(hexCells[to].view);
             setViewScript(view, 7000, 1);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
             hexCells[via].state = 502;
             view = findView(hexCells[via].view);
             setViewScript(view, 7000, 1);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
         }
     } else if (to != -1 && (hexCells[to].state == 502 || hexCells[to].state == 501)) {
         hexCells[to].state = 502;
         view = findView(hexCells[to].view);
         setViewScript(view, 7000, 1);
-        view->placed = fn_4489ce;
+        view->placed = placeCellViewImages;
         if (code < 510 && code != 500) {
             hexCells[via].state = 502;
             view = findView(hexCells[via].view);
             setViewScript(view, 7000, 1);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
         }
     }
 }
 
 /* Seats the next two Zoombinis of the party (waitingSnoids) on `cell` and the
    cell five on (state 507), then from each places more two cells on
-   (fn_449cfc), turning (directions 8 and 9, 6 and 7). */
+   (placeUnalike), turning (directions 8 and 9, 6 and 7). */
 /* @zoombi32 0x0044abce */
-void fn_44abce(short cell)
+void seatPair(short cell)
 {
     short i;
 
@@ -1358,13 +1358,13 @@ void fn_44abce(short cell)
             waitingSnoids[i] = -1;
             break;
         }
-    if (hexCells[cell].state == 507 && fn_449cfc(cell, 8) != -1)
-        fn_449cfc(cell, 9);
-    if (hexCells[cell + 5].state == 507 && fn_449cfc(cell + 5, 6) != -1)
-        fn_449cfc(cell + 5, 7);
+    if (hexCells[cell].state == 507 && placeUnalike(cell, 8) != -1)
+        placeUnalike(cell, 9);
+    if (hexCells[cell + 5].state == 507 && placeUnalike(cell + 5, 6) != -1)
+        placeUnalike(cell + 5, 7);
 }
 
-/* Lights the path: from the listed cell g_4b1ab4[g_4b2410] (taken, 507),
+/* Lights the path: from the listed cell listedCells[g_4b2410] (taken, 507),
    finds the cell before the first in state startState, then walks back along
    the links: Zoombinis' cells go to 508; a feature stone (510-513) lights
    when the Zoombinis on either side share its feature; a plain stone
@@ -1374,7 +1374,7 @@ void fn_44abce(short cell)
    board's address in edi, the other way round, and keeps the first
    findView's result). */
 /* @zoombi32 0x00448f02 */
-void fn_448f02()
+void lightPath()
 {
     short done;
     short feet;
@@ -1393,12 +1393,12 @@ void fn_448f02()
     short otherEyes;
     short otherFeet;
 
-    cell = g_4b1ab4[g_4b2410];
+    cell = listedCells[g_4b2410];
     view = findView(hexCells[cell].snoid);
     hexCells[cell].state = 507;
     view = findView(hexCells[cell].view);
     setViewScript(view, 7000, 1);
-    view->placed = fn_4489ce;
+    view->placed = placeCellViewImages;
     found = 0;
     do {
         start = cell;
@@ -1424,7 +1424,7 @@ void fn_448f02()
             hexCells[cell].state = 508;
             view = findView(hexCells[cell].view);
             setViewScript(view, 7000, 1);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
             break;
         case 501:
             if (hexCells[cell].snoid >= 510 && hexCells[cell].snoid <= 513) {
@@ -1465,7 +1465,7 @@ void fn_448f02()
                         hexCells[cell].state = 502;
                         view = findView(hexCells[cell].view);
                         setViewScript(view, 7000, 1);
-                        view->placed = fn_4489ce;
+                        view->placed = placeCellViewImages;
                     } else {
                         done++;
                     }
@@ -1474,7 +1474,7 @@ void fn_448f02()
                         hexCells[cell].state = 502;
                         view = findView(hexCells[cell].view);
                         setViewScript(view, 7000, 1);
-                        view->placed = fn_4489ce;
+                        view->placed = placeCellViewImages;
                     } else {
                         done++;
                     }
@@ -1483,7 +1483,7 @@ void fn_448f02()
                         hexCells[cell].state = 502;
                         view = findView(hexCells[cell].view);
                         setViewScript(view, 7000, 1);
-                        view->placed = fn_4489ce;
+                        view->placed = placeCellViewImages;
                     } else {
                         done++;
                     }
@@ -1492,7 +1492,7 @@ void fn_448f02()
                         hexCells[cell].state = 502;
                         view = findView(hexCells[cell].view);
                         setViewScript(view, 7000, 1);
-                        view->placed = fn_4489ce;
+                        view->placed = placeCellViewImages;
                     } else {
                         done++;
                     }
@@ -1501,13 +1501,13 @@ void fn_448f02()
                     hexCells[cell].state = 502;
                     view = findView(hexCells[cell].view);
                     setViewScript(view, 7000, 1);
-                    view->placed = fn_4489ce;
+                    view->placed = placeCellViewImages;
                 }
             } else if (g_4b1934 == 1 && !hexCells[cell].snoid && hexCells[cell - 1].state == 508) {
                 hexCells[cell].state = 502;
                 view = findView(hexCells[cell].view);
                 setViewScript(view, 7000, 1);
-                view->placed = fn_4489ce;
+                view->placed = placeCellViewImages;
             }
             break;
         }
@@ -1674,10 +1674,10 @@ void linkCells()
     }
 }
 
-/* Whether party members `a` and `b` share a feature (fn_449f96), by seating
+/* Whether party members `a` and `b` share a feature (sharedStone), by seating
    them on cells 1 and 3 for the moment. */
 /* @zoombi32 0x0044b4ec */
-short fn_44b4ec(short a, short b)
+short membersShare(short a, short b)
 {
     short first;
     short third;
@@ -1689,7 +1689,7 @@ short fn_44b4ec(short a, short b)
     hexCells[3].snoid = partyViews[b];
     hexCells[1].state = 506;
     hexCells[3].state = 506;
-    shared = fn_449f96(1, 3);
+    shared = sharedStone(1, 3);
     hexCells[1].snoid = 0;
     hexCells[3].snoid = 0;
     hexCells[1].state = first;
@@ -1697,11 +1697,11 @@ short fn_44b4ec(short a, short b)
     return shared;
 }
 
-/* Tries the moves from `cell` over each neighbour (fn_44a674) in
+/* Tries the moves from `cell` over each neighbour (tryMove) in
    directions 4, 1 and 5, then from a lit cell reached in direction 5
    directions 3 and 0; then 3, and from there 5 and 2; then 0 and 2. */
 /* @zoombi32 0x0044a4d9 */
-void fn_44a4d9(short cell)
+void tryMovesAround(short cell)
 {
     short middle;
     short via;
@@ -1709,47 +1709,47 @@ void fn_44a4d9(short cell)
 
     via = hexCells[cell].links[4];
     to = hexCells[via].links[4];
-    fn_44a674(cell, via, to);
+    tryMove(cell, via, to);
     via = hexCells[cell].links[1];
     to = hexCells[via].links[1];
-    fn_44a674(cell, via, to);
+    tryMove(cell, via, to);
     via = hexCells[cell].links[5];
     to = hexCells[via].links[5];
-    fn_44a674(cell, via, to);
+    tryMove(cell, via, to);
     if (hexCells[to].state == 508 || hexCells[to].state == 502) {
         middle = to;
         via = hexCells[middle].links[3];
         to = hexCells[via].links[3];
-        fn_44a674(middle, via, to);
+        tryMove(middle, via, to);
         via = hexCells[middle].links[0];
         to = hexCells[via].links[0];
-        fn_44a674(middle, via, to);
+        tryMove(middle, via, to);
     }
     via = hexCells[cell].links[3];
     to = hexCells[via].links[3];
-    fn_44a674(cell, via, to);
+    tryMove(cell, via, to);
     if (hexCells[to].state == 508 || hexCells[to].state == 502) {
         middle = to;
         via = hexCells[middle].links[5];
         to = hexCells[via].links[5];
-        fn_44a674(middle, via, to);
+        tryMove(middle, via, to);
         via = hexCells[middle].links[2];
         to = hexCells[via].links[2];
-        fn_44a674(middle, via, to);
+        tryMove(middle, via, to);
     }
     via = hexCells[cell].links[0];
     to = hexCells[via].links[0];
-    fn_44a674(cell, via, to);
+    tryMove(cell, via, to);
     via = hexCells[cell].links[2];
     to = hexCells[via].links[2];
-    fn_44a674(cell, via, to);
+    tryMove(cell, via, to);
 }
 
-/* Follows the moves (fn_44a674) from `cell` along two winding routes (from
+/* Follows the moves (tryMove) from `cell` along two winding routes (from
    directions 5 and 3), each step taken only while the last landed on a lit
    cell (508 or 502). */
 /* @zoombi32 0x0044accc */
-void fn_44accc(short cell)
+void followRoutes(short cell)
 {
     short middle;
     short via;
@@ -1757,64 +1757,64 @@ void fn_44accc(short cell)
 
     via = hexCells[cell].links[5];
     to = hexCells[via].links[4];
-    fn_44a674(cell, via, to);
+    tryMove(cell, via, to);
     if (hexCells[to].state == 508 || hexCells[to].state == 502) {
         middle = to;
         via = hexCells[middle].links[4];
         to = hexCells[via].links[4];
-        fn_44a674(middle, via, to);
+        tryMove(middle, via, to);
         if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
             via = hexCells[middle].links[4];
             to = hexCells[via].links[3];
-            fn_44a674(middle, via, to);
+            tryMove(middle, via, to);
         }
         if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
             via = hexCells[middle].links[2];
             to = hexCells[via].links[1];
-            fn_44a674(middle, via, to);
+            tryMove(middle, via, to);
         }
         if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
             via = hexCells[middle].links[1];
             to = hexCells[via].links[1];
-            fn_44a674(middle, via, to);
+            tryMove(middle, via, to);
         }
     }
     via = hexCells[cell].links[3];
     to = hexCells[via].links[4];
-    fn_44a674(cell, via, to);
+    tryMove(cell, via, to);
     if (hexCells[to].state == 508 || hexCells[to].state == 502) {
         middle = to;
         via = hexCells[middle].links[4];
         to = hexCells[via].links[4];
-        fn_44a674(middle, via, to);
+        tryMove(middle, via, to);
         if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
             via = hexCells[middle].links[4];
             to = hexCells[via].links[5];
-            fn_44a674(middle, via, to);
+            tryMove(middle, via, to);
         }
         if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
             via = hexCells[middle].links[0];
             to = hexCells[via].links[1];
-            fn_44a674(middle, via, to);
+            tryMove(middle, via, to);
         }
         if (hexCells[to].state == 508 || hexCells[to].state == 502) {
             middle = to;
             via = hexCells[middle].links[1];
             to = hexCells[via].links[1];
-            fn_44a674(middle, via, to);
+            tryMove(middle, via, to);
         }
     }
 }
 
 /* Lights the three starting cells (19, 55, 91) where a Zoombini waits (507
-   to 508) and follows the moves from each (fn_44accc), then checkAllFilled. */
+   to 508) and follows the moves from each (followRoutes), then checkAllFilled. */
 /* @zoombi32 0x0044a359 */
-void fn_44a359()
+void lightFromStarts()
 {
     View *view;
 
@@ -1822,33 +1822,33 @@ void fn_44a359()
         hexCells[19].state = 508;
         view = findView(hexCells[19].view);
         setViewScript(view, 7000, 1);
-        view->placed = fn_4489ce;
-        fn_44accc(19);
+        view->placed = placeCellViewImages;
+        followRoutes(19);
     }
     if (hexCells[55].state == 507) {
         hexCells[55].state = 508;
         view = findView(hexCells[55].view);
         setViewScript(view, 7000, 1);
-        view->placed = fn_4489ce;
-        fn_44accc(55);
+        view->placed = placeCellViewImages;
+        followRoutes(55);
     }
     if (hexCells[91].state == 507) {
         hexCells[91].state = 508;
         view = findView(hexCells[91].view);
         setViewScript(view, 7000, 1);
-        view->placed = fn_4489ce;
-        fn_44accc(91);
+        view->placed = placeCellViewImages;
+        followRoutes(91);
     }
     checkAllFilled();
 }
 
 /* Lights the cell after `cell` if a Zoombini waits there, then every cell
    of g_4a41e6 with a Zoombini next to a lit stone, and follows the moves
-   around each lit one (fn_44a4d9); on level 3, with cells 57, 59 and 61
+   around each lit one (tryMovesAround); on level 3, with cells 57, 59 and 61
    lit and four Zoombinis on the listed cells, the colours start cycling
    (g_4b1a3c) and showZoneMessage follows. */
 /* @zoombi32 0x0044a180 */
-void fn_44a180(short cell)
+void lightFrom(short cell)
 {
     View *view;
     short i;
@@ -1862,7 +1862,7 @@ void fn_44a180(short cell)
     hexCells[after].state = 508;
     view = findView(hexCells[after].view);
     setViewScript(view, 7000, 1);
-    view->placed = fn_4489ce;
+    view->placed = placeCellViewImages;
     for (i = 0; i < g_4a4224; i++) {
         if (hexCells[g_4a41e6[i]].state == 507) {
             for (j = 0; j <= 5; j++) {
@@ -1874,14 +1874,14 @@ void fn_44a180(short cell)
             }
         }
         if (hexCells[g_4a41e6[i]].state == 502 || hexCells[g_4a41e6[i]].state == 508)
-            fn_44a4d9(g_4a41e6[i]);
+            tryMovesAround(g_4a41e6[i]);
     }
     checkAllFilled();
     if (!g_4b1a3c && g_4b1934 == 3 && hexCells[57].state == 508 && hexCells[59].state == 508
         && hexCells[61].state == 508) {
         g_4b1a3c = 0;
-        for (i = 1; i <= g_4b240e; i++)
-            if (hexCells[g_4b1ab4[i]].state == 507 || hexCells[g_4b1ab4[i]].state == 508)
+        for (i = 1; i <= listedCount; i++)
+            if (hexCells[listedCells[i]].state == 507 || hexCells[listedCells[i]].state == 508)
                 g_4b1a3c++;
         if (g_4b1a3c == 4) {
             g_4b1a3c = 1;
@@ -1894,9 +1894,9 @@ void fn_44a180(short cell)
 }
 
 /* Turns every lit cell back (508 to 507, 502 to 501) and lights the path
-   again from the start (cell 54 on level 3, fn_44a180; else fn_44a359). */
+   again from the start (cell 54 on level 3, lightFrom; else lightFromStarts). */
 /* @zoombi32 0x0044a422 */
-void fn_44a422()
+void relightPath()
 {
     View *view;
     short i;
@@ -1906,18 +1906,18 @@ void fn_44a422()
             hexCells[i].state = 507;
             view = findView(hexCells[i].view);
             setViewScript(view, 7000, 1);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
         } else if (hexCells[i].state == 502) {
             hexCells[i].state = 501;
             view = findView(hexCells[i].view);
             setViewScript(view, 7000, 1);
-            view->placed = fn_4489ce;
+            view->placed = placeCellViewImages;
         }
     }
     if (g_4b1934 == 3)
-        fn_44a180(54);
+        lightFrom(54);
     else
-        fn_44a359();
+        lightFromStarts();
 }
 
 /* Scene 12's keys (with debugging on, g_4b8803, or else only 0x16f): typing
@@ -1952,8 +1952,8 @@ short scene12Key(unsigned short key)
             g_4b2412 = 5;
             if (g_4b1934 == 3) {
                 standPlacedSnoids();
-                fn_44a422();
-                g_4b1932 = 1;
+                relightPath();
+                slidesGoReady = 1;
                 g_4b2540++;
             }
             return 1;
@@ -1966,9 +1966,9 @@ short scene12Key(unsigned short key)
 /* Scene 12's clicks: button 1 asks whether to keep the party; button 2
    (once there's something to check) shows the answer: the cells lit and
    the Zoombinis on them cheer, and the group starts across; otherwise a
-   Zoombini is dragged onto a listed cell (lighting the path, fn_448f02) or
+   Zoombini is dragged onto a listed cell (lighting the path, lightPath) or
    off it (unlighting what it lit), by the level's rules, and a Zoombini
-   dropped elsewhere walks to the marked spot (fn_44b0fc). */
+   dropped elsewhere walks to the marked spot (markCellAt). */
 /* @zoombi32 0x00447528 */
 void scene12Clicked(short which)
 {
@@ -2010,7 +2010,7 @@ void scene12Clicked(short which)
         askKeepParty();
         break;
     case 2:
-        if (!g_4b1932 || g_4b2528)
+        if (!slidesGoReady || g_4b2528)
             break;
         if (g_4b2540)
             standFilledCells();
@@ -2019,13 +2019,13 @@ void scene12Clicked(short which)
         drawSlidesButton(which, 0, 1);
         g_4b2528++;
         first = 1;
-        fn_44943b();
+        markLitSnoids();
         updateCellLinks();
         for (i = 0; i < 117; i++) {
             if (hexCells[i].state == 502 || hexCells[i].state == 508 || hexCells[i].state == startState) {
                 cellView = findView(hexCells[i].view);
                 setViewScript(cellView, 7002, 1);
-                cellView->placed = fn_448d9d;
+                cellView->placed = placeCellImages;
                 if (first) {
                     g_4b251a = groupViews(hexCells[i].view, hexCells[i].view, 0, 0, 0, 0);
                     first = 0;
@@ -2045,7 +2045,7 @@ void scene12Clicked(short which)
         moveView(g_4b1936[4], 0, hexCells[63].view);
         moveView(g_4b1936[5], 0, hexCells[81].view);
         moveView(g_4b1936[6], 0, hexCells[99].view);
-        fn_44aa79();
+        layerSnoidViews();
         break;
     case 3:
         if (g_4b1a40)
@@ -2060,8 +2060,8 @@ void scene12Clicked(short which)
         view = viewAt(where, 1, 1);
         if (view)
             view = idleSnoidView(view->id);
-        g_4b1a42 = fn_44b261();
-        g_4b1a46 = g_4b1a44;
+        lastLitCount = countLitCells();
+        g_4b1a46 = litSum;
         if (g_4b1934 <= 1) {
             if (!view)
                 break;
@@ -2070,69 +2070,69 @@ void scene12Clicked(short which)
             snoid = (Snoid *)&view->body;
             moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
             if (!place && dropped && moved)
-                fn_44b3ee((Point *)&snoid->targetX);
+                pickSlidesPlace((Point *)&snoid->targetX);
             g_4b2410 = place;
             if (g_4b2410) {
-                for (i = 1; i <= g_4b240e; i++) {
-                    if (hexCells[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
-                        hexCells[g_4b1ab4[i]].snoid = 0;
-                        hexCells[g_4b1ab4[i]].state = 506;
-                        cellView = findView(hexCells[g_4b1ab4[i]].view);
+                for (i = 1; i <= listedCount; i++) {
+                    if (hexCells[listedCells[i]].snoid == view->id && i != g_4b2410) {
+                        hexCells[listedCells[i]].snoid = 0;
+                        hexCells[listedCells[i]].state = 506;
+                        cellView = findView(hexCells[listedCells[i]].view);
                         setViewScript(cellView, 7000, 1);
-                        cellView->placed = fn_4489ce;
-                        if (hexCells[g_4b1ab4[i] - 1].state == 502) {
-                            hexCells[g_4b1ab4[i] - 1].state = 501;
-                            cellView = findView(hexCells[g_4b1ab4[i] - 1].view);
+                        cellView->placed = placeCellViewImages;
+                        if (hexCells[listedCells[i] - 1].state == 502) {
+                            hexCells[listedCells[i] - 1].state = 501;
+                            cellView = findView(hexCells[listedCells[i] - 1].view);
                             setViewScript(cellView, 7000, 1);
-                            cellView->placed = fn_4489ce;
+                            cellView->placed = placeCellViewImages;
                         }
                         for (dropped = 1; dropped < 6; dropped++) {
-                            if (hexCells[g_4b1ab4[i] + dropped].state == 500)
+                            if (hexCells[listedCells[i] + dropped].state == 500)
                                 break;
-                            if (hexCells[g_4b1ab4[i] + dropped].state == 502
-                                || hexCells[g_4b1ab4[i] + dropped].state == 508) {
-                                if (hexCells[g_4b1ab4[i] + dropped].state == 508)
-                                    hexCells[g_4b1ab4[i] + dropped].state = 507;
+                            if (hexCells[listedCells[i] + dropped].state == 502
+                                || hexCells[listedCells[i] + dropped].state == 508) {
+                                if (hexCells[listedCells[i] + dropped].state == 508)
+                                    hexCells[listedCells[i] + dropped].state = 507;
                                 else
-                                    hexCells[g_4b1ab4[i] + dropped].state = 501;
-                                cellView = findView(hexCells[g_4b1ab4[i] + dropped].view);
+                                    hexCells[listedCells[i] + dropped].state = 501;
+                                cellView = findView(hexCells[listedCells[i] + dropped].view);
                                 setViewScript(cellView, 7000, 1);
-                                cellView->placed = fn_4489ce;
+                                cellView->placed = placeCellViewImages;
                             }
                         }
                         break;
                     }
                 }
-                hexCells[g_4b1ab4[g_4b2410]].snoid = view->id;
-                fn_448f02();
-                fn_44b2a4();
+                hexCells[listedCells[g_4b2410]].snoid = view->id;
+                lightPath();
+                remarkOnLit();
                 checkAllFilled();
             } else {
-                for (i = 1; i <= g_4b240e; i++) {
-                    if (hexCells[g_4b1ab4[i]].snoid == view->id) {
-                        hexCells[g_4b1ab4[i]].snoid = 0;
-                        hexCells[g_4b1ab4[i]].state = 506;
-                        cellView = findView(hexCells[g_4b1ab4[i]].view);
+                for (i = 1; i <= listedCount; i++) {
+                    if (hexCells[listedCells[i]].snoid == view->id) {
+                        hexCells[listedCells[i]].snoid = 0;
+                        hexCells[listedCells[i]].state = 506;
+                        cellView = findView(hexCells[listedCells[i]].view);
                         setViewScript(cellView, 7000, 1);
-                        cellView->placed = fn_4489ce;
-                        if (hexCells[g_4b1ab4[i] - 1].state == 502) {
-                            hexCells[g_4b1ab4[i] - 1].state = 501;
-                            cellView = findView(hexCells[g_4b1ab4[i] - 1].view);
+                        cellView->placed = placeCellViewImages;
+                        if (hexCells[listedCells[i] - 1].state == 502) {
+                            hexCells[listedCells[i] - 1].state = 501;
+                            cellView = findView(hexCells[listedCells[i] - 1].view);
                             setViewScript(cellView, 7000, 1);
-                            cellView->placed = fn_4489ce;
+                            cellView->placed = placeCellViewImages;
                         }
                         for (dropped = 1; dropped < 6; dropped++) {
-                            if (hexCells[g_4b1ab4[i] + dropped].state == 500)
+                            if (hexCells[listedCells[i] + dropped].state == 500)
                                 break;
-                            if (hexCells[g_4b1ab4[i] + dropped].state == 502
-                                || hexCells[g_4b1ab4[i] + dropped].state == 508) {
-                                if (hexCells[g_4b1ab4[i] + dropped].state == 508)
-                                    hexCells[g_4b1ab4[i] + dropped].state = 507;
+                            if (hexCells[listedCells[i] + dropped].state == 502
+                                || hexCells[listedCells[i] + dropped].state == 508) {
+                                if (hexCells[listedCells[i] + dropped].state == 508)
+                                    hexCells[listedCells[i] + dropped].state = 507;
                                 else
-                                    hexCells[g_4b1ab4[i] + dropped].state = 501;
-                                cellView = findView(hexCells[g_4b1ab4[i] + dropped].view);
+                                    hexCells[listedCells[i] + dropped].state = 501;
+                                cellView = findView(hexCells[listedCells[i] + dropped].view);
                                 setViewScript(cellView, 7000, 1);
-                                cellView->placed = fn_4489ce;
+                                cellView->placed = placeCellViewImages;
                             }
                         }
                     }
@@ -2140,8 +2140,8 @@ void scene12Clicked(short which)
                 x = view->body.x;
                 y = view->body.y;
                 g_4b1a38 = view->id;
-                fn_44b0fc(x, y);
-                fn_44b2a4();
+                markCellAt(x, y);
+                remarkOnLit();
             }
         } else if (g_4b1934 == 2) {
             if (!view)
@@ -2151,21 +2151,21 @@ void scene12Clicked(short which)
             snoid = (Snoid *)&view->body;
             moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
             if (!place && dropped && moved)
-                fn_44b3ee((Point *)&snoid->targetX);
+                pickSlidesPlace((Point *)&snoid->targetX);
             g_4b2410 = place;
             if (g_4b2410) {
-                for (i = 1; i <= g_4b240e; i++)
-                    if (hexCells[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
-                        hexCells[g_4b1ab4[i]].snoid = 0;
-                        hexCells[g_4b1ab4[i]].state = 506;
-                        cellView = findView(hexCells[g_4b1ab4[i]].view);
+                for (i = 1; i <= listedCount; i++)
+                    if (hexCells[listedCells[i]].snoid == view->id && i != g_4b2410) {
+                        hexCells[listedCells[i]].snoid = 0;
+                        hexCells[listedCells[i]].state = 506;
+                        cellView = findView(hexCells[listedCells[i]].view);
                         setViewScript(cellView, 7000, 1);
-                        cellView->placed = fn_4489ce;
+                        cellView->placed = placeCellViewImages;
                     }
-                hexCells[g_4b1ab4[g_4b2410]].snoid = view->id;
-                hexCells[g_4b1ab4[g_4b2410]].state = 507;
-                fn_44a422();
-                fn_44b2a4();
+                hexCells[listedCells[g_4b2410]].snoid = view->id;
+                hexCells[listedCells[g_4b2410]].state = 507;
+                relightPath();
+                remarkOnLit();
             } else {
                 for (i = 1; i < 117; i++)
                     if ((hexCells[i].state == 507 || hexCells[i].state == 508) && hexCells[i].snoid == view->id) {
@@ -2173,15 +2173,15 @@ void scene12Clicked(short which)
                         hexCells[i].snoid = -1;
                         cellView = findView(hexCells[i].view);
                         setViewScript(cellView, 7000, 1);
-                        cellView->placed = fn_4489ce;
-                        fn_44a422();
+                        cellView->placed = placeCellViewImages;
+                        relightPath();
                         break;
                     }
                 x = view->body.x;
                 y = view->body.y;
                 g_4b1a38 = view->id;
-                fn_44b0fc(x, y);
-                fn_44b2a4();
+                markCellAt(x, y);
+                remarkOnLit();
             }
         } else {
             if (!view)
@@ -2191,21 +2191,21 @@ void scene12Clicked(short which)
             snoid = (Snoid *)&view->body;
             moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
             if (!place && dropped && moved)
-                fn_44b3ee((Point *)&snoid->targetX);
+                pickSlidesPlace((Point *)&snoid->targetX);
             g_4b2410 = place;
             if (g_4b2410) {
-                for (i = 1; i <= g_4b240e; i++)
-                    if (hexCells[g_4b1ab4[i]].snoid == view->id && i != g_4b2410) {
-                        hexCells[g_4b1ab4[i]].snoid = 0;
-                        hexCells[g_4b1ab4[i]].state = 506;
-                        cellView = findView(hexCells[g_4b1ab4[i]].view);
+                for (i = 1; i <= listedCount; i++)
+                    if (hexCells[listedCells[i]].snoid == view->id && i != g_4b2410) {
+                        hexCells[listedCells[i]].snoid = 0;
+                        hexCells[listedCells[i]].state = 506;
+                        cellView = findView(hexCells[listedCells[i]].view);
                         setViewScript(cellView, 7000, 1);
-                        cellView->placed = fn_4489ce;
+                        cellView->placed = placeCellViewImages;
                     }
-                hexCells[g_4b1ab4[g_4b2410]].snoid = view->id;
-                hexCells[g_4b1ab4[g_4b2410]].state = 507;
-                fn_44a422();
-                fn_44b2a4();
+                hexCells[listedCells[g_4b2410]].snoid = view->id;
+                hexCells[listedCells[g_4b2410]].state = 507;
+                relightPath();
+                remarkOnLit();
             } else {
                 for (i = 1; i < 117; i++)
                     if ((hexCells[i].state == 507 || hexCells[i].state == 508) && hexCells[i].snoid == view->id) {
@@ -2213,18 +2213,18 @@ void scene12Clicked(short which)
                         hexCells[i].snoid = -1;
                         cellView = findView(hexCells[i].view);
                         setViewScript(cellView, 7000, 1);
-                        cellView->placed = fn_4489ce;
-                        fn_44a422();
+                        cellView->placed = placeCellViewImages;
+                        relightPath();
                         break;
                     }
                 x = view->body.x;
                 y = view->body.y;
                 g_4b1a38 = view->id;
-                fn_44b0fc(x, y);
-                fn_44b2a4();
+                markCellAt(x, y);
+                remarkOnLit();
             }
         }
         break;
     }
-    fn_449475();
+    noteAnyLit();
 }
