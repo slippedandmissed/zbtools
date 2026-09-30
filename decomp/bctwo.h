@@ -45,7 +45,7 @@ extern short g_4ab67c; /* @data 0x4ab67c */
 extern short g_4ab67e; /* @data 0x4ab67e */
 extern Snoid g_4ab680; /* @data 0x4ab680: the Zoombini taken out of the book */
 extern short g_4a0abc; /* @data 0x4a0abc: the scroll button pressed (1-4) */
-extern SceneButton campButtons[7]; /* @data 0x4a0adc: fn_4196b1 draws them */
+extern SceneButton camp2Buttons[7]; /* @data 0x4a0adc: fn_4196b1 draws them */
 extern GroupList campGroups[2]; /* @data 0x4a0c40 */
 extern short g_4a0abe; /* @data 0x4a0abe: the book shows half a line more */
 extern ResourceList *g_4a0ac0; /* @data 0x4a0ac0: the book's images */

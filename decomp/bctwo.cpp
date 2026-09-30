@@ -252,7 +252,7 @@ void scene5Frame()
         if (!g_4ab664 && !g_4b9684) {
             getCursorPosition(&where);
             for (i = 3; !button && i < 7; i++)
-                if (ptInRect(&campButtons[i].rect, where))
+                if (ptInRect(&camp2Buttons[i].rect, where))
                     button = i - 2;
         }
         setDragCursor(button);
@@ -537,16 +537,16 @@ void fn_4196b1(short button, short lit, short group, short show)
             last = 7;
             break;
         }
-        rect = campButtons[first].rect;
-        unionRect(&rect, &campButtons[last - 1].rect);
+        rect = camp2Buttons[first].rect;
+        unionRect(&rect, &camp2Buttons[last - 1].rect);
     } else {
         first = button - 1;
         last = first + 1;
-        rect = campButtons[button - 1].rect;
+        rect = camp2Buttons[button - 1].rect;
     }
     for (; first < last; first++) {
-        x = campButtons[first].rect.left;
-        y = campButtons[first].rect.top;
+        x = camp2Buttons[first].rect.left;
+        y = camp2Buttons[first].rect.top;
         image = 0;
         switch (first) {
         case 0:
@@ -661,11 +661,11 @@ void fn_419867(View *, short region)
     if (g_4ab65c) {
         if (!g_4ab65e) {
             g_4ab65e = 1;
-            unionRgnRect(region, &campButtons[0].rect);
+            unionRgnRect(region, &camp2Buttons[0].rect);
         }
     } else if (g_4ab65e) {
         g_4ab65e = 0;
-        unionRgnRect(region, &campButtons[0].rect);
+        unionRgnRect(region, &camp2Buttons[0].rect);
     }
 }
 
