@@ -118,7 +118,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     g_4a4a0c = 1;
     g_4aa7cc = 0;
     fn_415604(gameFrame);
-    fn_4153b0(fn_454caa);
+    fn_4153b0(shutDownGame);
     fn_415a11(fn_44695c);
     fn_456a2f(fn_4625b8);
     g_4b2aec = addModifierKeys(0) != 0x800;
@@ -220,7 +220,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
 /* @zoombi32 0x00454ca4 */
 void __cdecl fn_454ca4()
 {
-    fn_454caa();
+    shutDownGame();
 }
 
 /* Picks a free spot (0-19) for something at g_4a4846: finds, for each of
@@ -521,6 +521,79 @@ void fn_454f03()
         g_4a48e8 = 0;
         deleteFile(temp);
     }
+}
+
+/* Shuts the game down (once): offers to save a game in progress, then
+   closes every scene and frees everything, layer by layer. */
+/* @zoombi32 0x00454caa */
+void shutDownGame()
+{
+    short i;
+
+    if (g_4a494c)
+        return;
+    if (!fn_456bf6() && !g_4b754a && viewsReady && g_4b2aea && g_4afb32 && !g_4b9684
+        && currentScene >= 1 && currentScene <= 18) {
+        g_4b80e0 = 2;
+        i = g_4b9684;
+        showDialog(4, dialogTexts[32], dialogTexts[33], dialogTexts[34]);
+        do {
+            mainLoopUpdate();
+            mainLoopEvents();
+        } while (g_4b9684);
+        if (i == g_4b9684) {
+            if (g_4b80e0 == 3)
+                g_4a494e = 1;
+            g_4b80e0 = 0;
+        }
+        if (g_4a494e) {
+            askSaveGame();
+            do {
+                mainLoopUpdate();
+                mainLoopEvents();
+            } while (g_4b9684);
+        }
+    }
+    g_4a48e6 = g_4a494c = 1;
+    fn_415604(0);
+    fn_46bee9(1);
+    fn_455273(1);
+    unloadSounds();
+    if (graphicsBufferSize())
+        fadeOutViews();
+    for (i = 0; i < 22; i++)
+        if (scenes[i]->close)
+            scenes[i]->close();
+    for (i = 0; i < 6; i++)
+        fn_46c602(&cursors[i]);
+    if (g_4b2aea) {
+        if (!g_4b754a)
+            readWriteSavedGames(0, 1);
+        fn_454f03();
+        if (viewsReady)
+            closeViews();
+        closeSnoids();
+    }
+    for (i = 0; i < 3; i++)
+        freeFont(&fonts[i]);
+    closeGraphics();
+    fn_415916();
+    if (soundBufferSize())
+        closeSounds();
+    if (iniBufferSize())
+        closeAllIni();
+    if (resourceBufferSize())
+        closeResources();
+    if (fileLayerVersion())
+        closeFiles();
+    if (memoryBufferSize())
+        closeMemory();
+    if (timerBufferSize())
+        closeTimers();
+    if (osVersion())
+        osShutdown();
+    if (instanceAtom)
+        GlobalDeleteAtom(instanceAtom);
 }
 
 /* @zoombi32 0x00454c8e */

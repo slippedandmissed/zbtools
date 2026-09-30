@@ -802,6 +802,7 @@
 0x00454c10 fn_454c10
 0x00454c8e fn_454c8e
 0x00454ca4 fn_454ca4
+0x00454caa shutDownGame
 0x00454f03 fn_454f03
 0x00454f61 gameFrame
 0x00455013 noteOutOfMemory

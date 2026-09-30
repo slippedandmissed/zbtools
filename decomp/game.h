@@ -28,7 +28,9 @@ extern short g_4b2aee;
 extern char *appCommandLine; /* @data 0x4b2af8 */
 extern long cursors[6]; /* @data 0x4b80ac */
 void fn_454c8e();
-void fn_454caa();
+extern short g_4a494c; /* @data 0x4a494c: shutting down (shutDownGame) */
+extern short g_4a494e; /* @data 0x4a494e: save before quitting */
+void shutDownGame();
 void fn_455023(short clear);
 extern unsigned long g_4a48e0; /* the least free memory seen */
 extern ShortRect g_4a498e; /* where the memory statistics go */
