@@ -43,7 +43,7 @@ void resetZoombiniMade()
  * sounds, adds the scene's views and the queue's places, brings back the
  * party waiting here, places each spot by the queue (the nearest one no
  * earlier place has taken), and sets up the Zoombini being made. Offers to
- * load a saved game first if asked (g_4a7410). Then a hint, unless coming
+ * load a saved game first if asked (introClickState). Then a hint, unless coming
  * from the camp, where a remark (20043/20044) may say how many Zoombinis
  * are left to make.
  */
@@ -119,7 +119,7 @@ void openIsle()
     snoidBeingMade.unknownF7 = 1;
     drawIsleButtons(0, 0, 0);
     drawFeatureButtons(0, 0, 0);
-    if (g_4a7410) {
+    if (introClickState) {
         if (savedGames)
             askLoadGame();
         updateViews();
@@ -130,7 +130,7 @@ void openIsle()
     queueViewSound(30001, 0);
     if (journeyFrom != 1) {
         campHint((short *)(gameState + 0x28));
-        if (*(short *)(gameState + 0x48) < 625 && g_4a7410 == 1)
+        if (*(short *)(gameState + 0x48) < 625 && introClickState == 1)
             g_4b15b6 = 20042;
     } else {
         short made = countSnoidViews();
@@ -150,7 +150,7 @@ void openIsle()
     }
     if (g_4b15b6)
         queueViewSound(g_4b15b6, 1);
-    g_4a7410 = 0;
+    introClickState = 0;
     g_4b7562 = 0;
 }
 

@@ -68,7 +68,7 @@ void openMap()
     showRect(&shownGameRect);
     fadeInViews();
     g_4afb14 = 1;
-    g_4a7410 = 0;
+    introClickState = 0;
     saved = currentMapFile;
     setCurrentMap(soundsMap);
     loadSoundByKey(998, RESOURCE_TYPE(0, 'S', 'N', 'D'));

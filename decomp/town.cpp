@@ -26,24 +26,24 @@
 /* @zoombi32 0x0045c12e */
 void openIntro()
 {
-    g_4b7cf4 = g_4b7cf8 = g_4b7cf6 = 0;
-    sceneDue = g_4b7cec = 0;
-    g_4b7cf0 = 1;
+    introOpen = introSkip = logoFailed = 0;
+    sceneDue = introStep = 0;
+    introStepDue = 1;
     setGroupLists(townGroups, 1, (short)0xc000);
-    g_4b7cf4 = 1;
+    introOpen = 1;
 }
 
-/* Scene 0's clicks: moves g_4a7410 on from 1 to 2 (always, with
-   g_4b7cf8); 1 or -1 goes back to the scene sceneToReturnTo picks. */
+/* Scene 0's clicks: moves introClickState on from 1 to 2 (always, with
+   introSkip); 1 or -1 goes back to the scene sceneToReturnTo picks. */
 /* @zoombi32 0x0045c391 */
 void introClicked(short which)
 {
-    if (g_4b7cf8)
-        g_4a7410 = 2;
-    if (which > 0 && g_4a7410 == 1)
-        g_4a7410 = 2;
+    if (introSkip)
+        introClickState = 2;
+    if (which > 0 && introClickState == 1)
+        introClickState = 2;
     if (abs(which) == 1) {
-        g_4b7cf0 = g_4b7cf6 = 0;
+        introStepDue = logoFailed = 0;
         sceneDue = sceneToReturnTo();
     }
 }
@@ -58,15 +58,15 @@ void readClock()
     char ignored;
 
     now = clockTime();
-    if (now > g_4b7efc + 1800) {
-        g_4b7efc = now;
+    if (now > lastClockRead + 1800) {
+        lastClockRead = now;
         getDateTime(&year, &ignored, &ignored, (char *)&clockHour, (char *)&clockMinute);
         clockMinute = clockMinute / 5;
         clockHour = clockHour % 12;
     }
 }
 
-/* Sets whether the views g_4b7ece and the first g_4b7f02 party views run
+/* Sets whether the views townsfolkViews and the first townPartySize party views run
    their scripts. */
 /* @zoombi32 0x0045ccca */
 void setTownRunning(short running)
@@ -75,11 +75,11 @@ void setTownRunning(short running)
     View *view;
 
     for (i = 0; i <= 19; i++) {
-        view = findView(g_4b7ece[i]);
+        view = findView(townsfolkViews[i]);
         if (view)
             view->body.running = running;
     }
-    for (i = 0; i < g_4b7f02; i++) {
+    for (i = 0; i < townPartySize; i++) {
         view = findView(partyViews[i]);
         if (view)
             view->body.running = running;
@@ -110,21 +110,21 @@ short townScript()
     return script;
 }
 
-/* A view's placed callback: drops its cels whose image is past g_4b7e10. */
+/* A view's placed callback: drops its cels whose image is past highestTownCel. */
 /* @zoombi32 0x0045daf7 */
 void placeTownCels(View *view)
 {
     ViewCel *cel;
 
     for (cel = view->body.cels; cel->image;)
-        if (cel->image > g_4b7e10)
+        if (cel->image > highestTownCel)
             removeFirstCel(cel);
         else
             cel++;
 }
 
-/* A notify: negates the view's entry in g_4b7ece (the first 19) and counts
-   it in g_4b7f10. */
+/* A notify: negates the view's entry in townsfolkViews (the first 19) and counts
+   it in townsfolkGone. */
 /* @zoombi32 0x0045e29e */
 void townsfolkNotify(View *view, short)
 {
@@ -132,9 +132,9 @@ void townsfolkNotify(View *view, short)
     short i;
 
     for (i = 0; i < 19; i++)
-        if (id == g_4b7ece[i]) {
-            g_4b7ece[i] = -g_4b7ece[i];
-            g_4b7f10++;
+        if (id == townsfolkViews[i]) {
+            townsfolkViews[i] = -townsfolkViews[i];
+            townsfolkGone++;
             break;
         }
 }
@@ -144,8 +144,8 @@ void townsfolkNotify(View *view, short)
 /* @zoombi32 0x0045c175 */
 void closeIntro()
 {
-    if (g_4b7cf4) {
-        g_4b7cf4 = 0;
+    if (introOpen) {
+        introOpen = 0;
         short saved = setFreeAtOnce(1);
 
         stopMovie(1);
@@ -211,7 +211,7 @@ void drawTownButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)(g_4a74c8->offsets[image] + (char *)g_4a74c8), townButtons[which - 1].rect.left,
+        drawImageData((unsigned short *)(townButtonImages->offsets[image] + (char *)townButtonImages), townButtons[which - 1].rect.left,
                       townButtons[which - 1].rect.top, 8);
         if (show)
             showRect(&townButtons[which - 1].rect);
@@ -222,8 +222,8 @@ void drawTownButton(short which, short lit, short show)
 /* @zoombi32 0x0045cfae */
 void closeTown()
 {
-    if (g_4b7e00) {
-        g_4b7e00 = 0;
+    if (townOpen) {
+        townOpen = 0;
         short saved = setFreeAtOnce(1);
 
         useAltSnoids(1);
@@ -235,9 +235,9 @@ void closeTown()
         }
         clearViews();
         unloadSounds();
-        freeResource(&g_4a74c4);
+        freeResource(&townButtonResource);
         setFreeAtOnce(saved);
-        closeGameFile(&g_4b7dfc);
+        closeGameFile(&townFile);
         fadeOutViews();
         showBusyCursor();
         g_4a74dc = -1;
@@ -245,21 +245,21 @@ void closeTown()
 }
 
 /* Finds the hotspot under the cursor (into *where): the first of the
-   g_4b7eb2 non-empty rectangles g_4b7e12 holding it sets g_4b7eb4, its
-   number (g_4b7e92, from 1) in g_4b7eb6 and a script by it in g_4b7eb8. */
+   recordHotspotCount non-empty rectangles recordHotspots holding it sets onRecordHotspot, its
+   number (recordHotspotNumbers, from 1) in hotspotRecord and a script by it in hotspotScript. */
 /* @zoombi32 0x0045d715 */
 void findTownHotspot(Point *where)
 {
     short i;
 
     getCursorPosition(where);
-    g_4b7eb4 = 0;
-    for (i = 0; !g_4b7eb4 && i < g_4b7eb2; i++)
-        if (!emptyRect(&g_4b7e12[i]) && ptInRect(&g_4b7e12[i], *where)) {
-            i = g_4b7e92[i];
-            g_4b7eb8 = g_4a7582[i] + 1003;
-            g_4b7eb6 = i + 1;
-            g_4b7eb4 = 1;
+    onRecordHotspot = 0;
+    for (i = 0; !onRecordHotspot && i < recordHotspotCount; i++)
+        if (!emptyRect(&recordHotspots[i]) && ptInRect(&recordHotspots[i], *where)) {
+            i = recordHotspotNumbers[i];
+            hotspotScript = monumentScripts[i] + 1003;
+            hotspotRecord = i + 1;
+            onRecordHotspot = 1;
         }
 }
 
@@ -280,33 +280,33 @@ short introKey(unsigned short key)
     }
 }
 
-/* Resets scene 6's state; the pace g_4b7f08 by g_4b2b00. */
+/* Resets scene 6's state; the pace townFidgetInterval by g_4b2b00. */
 /* @zoombi32 0x0045c3ec */
 void resetTown()
 {
     short i;
 
-    g_4b7eba = 0;
+    cheatPlaque = 0;
     for (i = 0; i < 4; i++)
-        g_4b7e08[i] = 0;
-    g_4b7f00 = g_4b7f02 = g_4b7f10 = 0;
-    g_4b7f04 = 0;
+        townViews[i] = 0;
+    townFidgetsLeft = townPartySize = townsfolkGone = 0;
+    lastTownFidgetTime = 0;
     townFidgetersUsed = 0;
     if (g_4b2b00)
-        g_4b7f08 = 600;
+        townFidgetInterval = 600;
     else
-        g_4b7f08 = 120;
-    g_4b7ec8 = g_4b7eca = g_4b7ecc = 0;
-    g_4b7eb6 = g_4b7eb8 = g_4b7ec4 = g_4b7ec6 = 0;
+        townFidgetInterval = 120;
+    townSoundPlaying = draggingInTown = townFull = 0;
+    hotspotRecord = hotspotScript = townSound = townSoundWasGreeting = 0;
     g_4a74dc = -1;
-    g_4b7ef8 = 0;
-    g_4b7ec0 = 0;
+    clockShown = 0;
+    townSoundEnded = 0;
     for (i = 0; i <= 19; i++)
-        g_4b7ece[i] = 0;
-    g_4b7efc = 0;
+        townsfolkViews[i] = 0;
+    lastClockRead = 0;
     readClock();
-    g_4b7ef6 = 0;
-    g_4b7f12 = 0;
+    clockWinds = 0;
+    townspeopleToAdd = 0;
 }
 
 /* A view draw: draws the button, unlit. */
@@ -343,8 +343,8 @@ void settleTravellers()
 }
 
 /* The clock's view (two cels, its hands): hidden while g_4a74dc is set
-   and unless g_4b7ef8 and on screen 1 or 2 (townScreen). Shows the time
-   (readClock), or with g_4b7ef6 winds the hands round that many times
+   and unless clockShown and on screen 1 or 2 (townScreen). Shows the time
+   (readClock), or with clockWinds winds the hands round that many times
    (faster, from where they are). */
 /* @zoombi32 0x0045cd27 */
 void drawClock(View *view)
@@ -356,15 +356,15 @@ void drawClock(View *view)
         view->changed = 0;
         return;
     }
-    if (g_4b7ef8 <= 0)
+    if (clockShown <= 0)
         return;
     if (townScreen() != 1 && townScreen() != 2)
         return;
-    if (g_4b7ef6) {
-        if (g_4b7ef6 < 0) {
-            g_4b7f14 = clockMinute;
-            g_4b7f15 = clockHour;
-            g_4b7ef6 = abs(g_4b7ef6);
+    if (clockWinds) {
+        if (clockWinds < 0) {
+            windStartMinute = clockMinute;
+            windStartHour = clockHour;
+            clockWinds = abs(clockWinds);
             view->interval = 2;
         } else {
             clockMinute++;
@@ -374,11 +374,11 @@ void drawClock(View *view)
                 if (clockHour > 11)
                     clockHour = 0;
             }
-            if (g_4b7f14 == clockMinute && g_4b7f15 == clockHour) {
-                g_4b7ef6--;
-                if (!g_4b7ef6) {
+            if (windStartMinute == clockMinute && windStartHour == clockHour) {
+                clockWinds--;
+                if (!clockWinds) {
                     view->interval = 6;
-                    g_4b7efc = 0;
+                    lastClockRead = 0;
                     readClock();
                 }
             }
@@ -402,8 +402,8 @@ inline unsigned short *bankImage(ImageBank *bank, short image)
 }
 
 /* A view's placed callback: its cels 7-22 are the groups' records (by
-   recordGroups): those set become hotspots (g_4b7e12, 56 by 28 about
-   g_4a74de's point for the group plus the cel's; 4 also sets g_4b7ef8),
+   recordGroups): those set become hotspots (recordHotspots, 56 by 28 about
+   recordHotspotPoints's point for the group plus the cel's; 4 also sets clockShown),
    the others are dropped. */
 /* @zoombi32 0x0045db25 */
 void placeRecordHotspots(View *view)
@@ -413,29 +413,29 @@ void placeRecordHotspots(View *view)
     short *cel = (short *)view->body.cels;
     short n;
 
-    g_4b7eb2 = g_4b7ef8 = 0;
+    recordHotspotCount = clockShown = 0;
     while (*cel)
         if (*cel >= 7 && *cel <= 22) {
             n = *cel - 7;
             if (recordGroups()[n]) {
-                g_4b7e92[g_4b7eb2] = n;
+                recordHotspotNumbers[recordHotspotCount] = n;
                 if (n == 4)
-                    g_4b7ef8 = 1;
+                    clockShown = 1;
                 bankImage(bank, *cel); /* unused, as in the original */
                 cel++;
-                rect.left = g_4a74de[n].x + *cel - 28;
+                rect.left = recordHotspotPoints[n].x + *cel - 28;
                 cel++;
                 rect.right = rect.left + 56;
-                rect.top = g_4a74de[n].y + *cel - 14;
+                rect.top = recordHotspotPoints[n].y + *cel - 14;
                 cel++;
                 rect.bottom = rect.top + 28;
-                g_4b7e12[g_4b7eb2] = rect;
+                recordHotspots[recordHotspotCount] = rect;
             } else {
-                g_4b7e12[g_4b7eb2] = noRect;
-                g_4b7e92[g_4b7eb2] = -1;
+                recordHotspots[recordHotspotCount] = noRect;
+                recordHotspotNumbers[recordHotspotCount] = -1;
                 removeFirstCel((ViewCel *)cel);
             }
-            g_4b7eb2++;
+            recordHotspotCount++;
         } else {
             cel += 3;
         }
@@ -446,14 +446,14 @@ void placeRecordHotspots(View *view)
 /* @zoombi32 0x0045c212 */
 void introFrame()
 {
-    if (g_4a7412 || !g_4b7cf4)
+    if (inIntroFrame || !introOpen)
         return;
-    g_4a7412 = 1;
-    if (movieShowing && !g_4b7cf8) {
+    inIntroFrame = 1;
+    if (movieShowing && !introSkip) {
         if (idleMovie() == 1)
-            g_4b7cf0 = 1;
-    } else if (g_4b7cf8 || !movieShowing && g_4b7cf6) {
-        g_4b7cf6 = 0;
+            introStepDue = 1;
+    } else if (introSkip || !movieShowing && logoFailed) {
+        logoFailed = 0;
         sceneDue = sceneToReturnTo();
     }
     if (sceneDue) {
@@ -461,13 +461,13 @@ void introFrame()
         sceneDue = 0;
         setCurrentMap(0);
         closeIntro();
-    } else if (g_4b7cf0) {
-        switch (g_4b7cec) {
+    } else if (introStepDue) {
+        switch (introStep) {
         case 0:
-            g_4b7cf0 = 0;
-            g_4b7cec++;
+            introStepDue = 0;
+            introStep++;
             if (!movieShowing) {
-                g_4a7410 = 1;
+                introClickState = 1;
                 logoPath[0] = 0;
                 strcpy(logoPath, installDir);
                 strcat(logoPath, "Data\\");
@@ -475,23 +475,23 @@ void introFrame()
                 if (playMovie(logoPath)) {
                     introClicked(1);
                 } else {
-                    g_4b7cf6 = 1;
+                    logoFailed = 1;
                     hideCursor();
                 }
             }
             break;
         case 1:
             g_4b2ad6 = 0;
-            g_4b7cec++;
+            introStep++;
             introClicked(-1);
             break;
         }
     }
-    g_4a7412 = 0;
+    inIntroFrame = 0;
 }
 
 /* A monument's plaque (a view draw; its interval holds the record shown,
-   from 1, or g_4b7eba the one picked): its cels, then five lines about the
+   from 1, or cheatPlaque the one picked): its cels, then five lines about the
    record: the building's dedication, the group's feat, "when traveling
    was", the level, and the date, in colours by the plaque (its kind,
    1004-1007). */
@@ -552,9 +552,9 @@ void drawPlaque(View *view)
     }
     i = (view->interval - 1) & 0xf;
     building = monumentBuildings[i];
-    if (g_4b7eba) {
-        i = g_4b7eba - 1;
-        building = monumentBuildings[g_4b7eb6 - 1];
+    if (cheatPlaque) {
+        i = cheatPlaque - 1;
+        building = monumentBuildings[hotspotRecord - 1];
     }
     rect.left = view->body.bounds.left;
     rect.right = view->body.bounds.right;
@@ -592,9 +592,9 @@ void drawPlaque(View *view)
     setFont(oldFont);
 }
 
-/* While g_4b7f12 allows, adds a townsperson (a Zoombini view of script
+/* While townspeopleToAdd allows, adds a townsperson (a Zoombini view of script
    8000-8043, half from each half) walking at a random place, the height
-   by the script, into a free one of g_4b7ece's last three. */
+   by the script, into a free one of townsfolkViews's last three. */
 /* @zoombi32 0x0045e06e */
 void addTownsperson()
 {
@@ -605,7 +605,7 @@ void addTownsperson()
     short i;
     View *view;
 
-    if (!g_4b7f12 || dialogFlags || g_4a74dc != -1)
+    if (!townspeopleToAdd || dialogFlags || g_4a74dc != -1)
         return;
     initSnoid(&snoid);
     snoid.features[0] = 1;
@@ -633,11 +633,11 @@ void addTownsperson()
     else if (script <= 8043)
         y = randomBetween(100, 200);
     for (i = 0; i < 3; i++)
-        if (!g_4b7ece[16 + i]) {
+        if (!townsfolkViews[16 + i]) {
             id = addView(1, drawCels, runViewScript, script, 6, &snoid, 0, 0);
             view = findView(id);
             if (view) {
-                g_4b7ece[16 + i] = id;
+                townsfolkViews[16 + i] = id;
                 viewSnoid(view)->features[0] = 0;
                 view->flags = 0x908002;
                 view->body.x = randomBetween(100, 540);
@@ -645,15 +645,15 @@ void addTownsperson()
                 *(long *)&view->body.unknownAa = *(long *)&view->body.x;
                 view->notify = townsfolkNotify;
                 view->notifyEnd = 1;
-                moveView(id, 0, g_4b7e0e);
+                moveView(id, 0, townsfolkAnchorView);
                 i = 3;
-                if (g_4b7f12 > 0)
-                    g_4b7f12--;
+                if (townspeopleToAdd > 0)
+                    townspeopleToAdd--;
             }
         }
 }
 
-/* Shows frame `frame` of the four views g_4b7e08 at once. */
+/* Shows frame `frame` of the four views townViews at once. */
 /* @zoombi32 0x0045da4e */
 void setTownFrames(short frame)
 {
@@ -662,7 +662,7 @@ void setTownFrames(short frame)
     short value;
 
     for (i = 0; i < 4; i++) {
-        view = findView(g_4b7e08[i]);
+        view = findView(townViews[i]);
         if (view) {
             runViewCels(view, removedRgn);
             value = frame;
@@ -680,11 +680,11 @@ void setTownFrames(short frame)
 }
 
 /* Scene 6's keys (with debugging on, debugMessagesOn): z and x (once the last
-   group has a record) step the plaque shown by cheat (g_4b7eba, 0-16) and
+   group has a record) step the plaque shown by cheat (cheatPlaque, 0-16) and
    space reports it; F toggles the townspeople; . records the next group
-   passed (g_4a7592 counting through the groups and levels) now; 0 clears
+   passed (nextCheatRecord counting through the groups and levels) now; 0 clears
    the records; 0x125 and 0x127 raise and lower the highest cel shown
-   (g_4b7e10, 25-81). Returns whether the key was used. */
+   (highestTownCel, 25-81). Returns whether the key was used. */
 /* @zoombi32 0x0045d7a9 */
 short townKey(unsigned short key)
 {
@@ -700,42 +700,42 @@ short townKey(unsigned short key)
     case 'z':
         if (recordGroups()[15]) {
             if (key == 'z')
-                g_4b7eba++;
+                cheatPlaque++;
             if (key == 'x')
-                g_4b7eba--;
+                cheatPlaque--;
             if (g_4a74dc > 0) {
                 view = findView(g_4a74dc);
                 if (view) {
-                    view->interval = g_4b7eb6;
+                    view->interval = hotspotRecord;
                     view->changed = 1;
                 }
             }
         }
     case ' ':
-        if (g_4b7eba > 16)
-            g_4b7eba = 16;
-        if (g_4b7eba < 0)
-            g_4b7eba = 0;
-        if (g_4b7eba)
-            debugMessage(g_4b7eba, "Cheat Text:", 0, 0, 0);
+        if (cheatPlaque > 16)
+            cheatPlaque = 16;
+        if (cheatPlaque < 0)
+            cheatPlaque = 0;
+        if (cheatPlaque)
+            debugMessage(cheatPlaque, "Cheat Text:", 0, 0, 0);
         else
             debugMessage(-1, "Cheat Text OFF", 0, 0, 0);
         break;
     case 'F':
-        if (!g_4b7f12)
-            g_4b7f12 = 100;
+        if (!townspeopleToAdd)
+            townspeopleToAdd = 100;
         else
-            g_4b7f12 = 0;
+            townspeopleToAdd = 0;
         break;
     case '.':
         for (used = 0; used < 16; used++)
             if (!recordGroups()[used]) {
                 getDateTime(&recordYears()[used], &recordMonths()[used], &recordDays()[used], &hour, &minute);
-                recordGroups()[used] = ((g_4a7592 / 4) & 3) + 1;
-                recordLevels()[used] = (g_4a7592 & 3) + 1;
+                recordGroups()[used] = ((nextCheatRecord / 4) & 3) + 1;
+                recordLevels()[used] = (nextCheatRecord & 3) + 1;
                 used = 16;
                 setTownFrames(townScreen());
-                g_4a7592++;
+                nextCheatRecord++;
             }
         used = 1;
         break;
@@ -743,25 +743,25 @@ short townKey(unsigned short key)
     case 0x127:
         switch (key) {
         case 0x125:
-            g_4b7e10 += 5;
+            highestTownCel += 5;
             break;
         case 0x127:
-            g_4b7e10 -= 5;
+            highestTownCel -= 5;
             break;
         }
-        if (g_4b7e10 > 80)
-            g_4b7e10 = 81;
-        if (g_4b7e10 < 24)
-            g_4b7e10 = 25;
+        if (highestTownCel > 80)
+            highestTownCel = 81;
+        if (highestTownCel < 24)
+            highestTownCel = 25;
         setTownFrames(townScreen());
         used = 1;
         break;
     case '0':
-        g_4a7592 = 0;
+        nextCheatRecord = 0;
         for (used = 0; used < 16; used++)
             recordGroups()[used] = 0;
         setTownFrames(townScreen());
-        g_4b7ef8 = 0;
+        clockShown = 0;
         used = 1;
         break;
     }
@@ -769,7 +769,7 @@ short townKey(unsigned short key)
 }
 
 /* Scene 6's clicks: any click closes an open plaque. 1 leaves; 2 (the
-   town) winds the clock when on its view (g_4b7ece[0]), drags a Zoombini
+   town) winds the clock when on its view (townsfolkViews[0]), drags a Zoombini
    (who stays where dropped on the ground, y 410-475), opens the plaque
    of the hotspot under the cursor, or at the sides scrolls to the next or
    previous of the six screens. */
@@ -784,7 +784,7 @@ void townClicked(short which)
         deleteView(g_4a74dc);
         g_4a74dc = -1;
         setTownRunning(1);
-        g_4b7eb4 = 0;
+        onRecordHotspot = 0;
         return;
     }
     switch (which) {
@@ -800,19 +800,19 @@ void townClicked(short which)
     case 2:
         getCursorPosition(&where);
         view = viewAt(where, 0x808002, 1);
-        if (view && view->id == g_4b7ece[0] && !g_4b7ef6)
-            g_4b7ef6 = -1;
+        if (view && view->id == townsfolkViews[0] && !clockWinds)
+            clockWinds = -1;
         view = viewAt(where, 2, 1);
         if (view && view->flags == 2) {
             setDragCursor(0);
-            g_4b7eca = 1;
+            draggingInTown = 1;
             dragSnoid(view, where, 0, 0);
             g_4b7552 = 0;
-            g_4b7eca = 0;
+            draggingInTown = 0;
             snoid = viewSnoid(view);
             if (snoid->body.y >= 410 && snoid->body.y <= 475)
                 *(long *)&snoid->targetX = *(long *)&snoid->body.x;
-        } else if (!g_4b7eb4) {
+        } else if (!onRecordHotspot) {
             if (where.y > 30 && where.y < 450 && where.x > 3 && where.x < 637) {
                 if (where.x > 560) {
                     queueViewSound(999, 0);
@@ -821,7 +821,7 @@ void townClicked(short which)
                         townScreen() = 0;
                     setTownFrames(townScreen());
                     scrollTown(1);
-                    g_4b7ef8 = 0;
+                    clockShown = 0;
                 } else if (where.x < 80) {
                     queueViewSound(999, 0);
                     townScreen()--;
@@ -829,7 +829,7 @@ void townClicked(short which)
                         townScreen() = 5;
                     setTownFrames(townScreen());
                     scrollTown(0);
-                    g_4b7ef8 = 0;
+                    clockShown = 0;
                 }
             }
         } else if (g_4a74dc == -1) {
@@ -838,7 +838,7 @@ void townClicked(short which)
             queueViewSound(999, 0);
             updateViews();
             updateViews();
-            g_4a74dc = addView(0x5000, drawPlaque, runViewCels, g_4b7eb8, g_4b7eb6, 0, 0, 0);
+            g_4a74dc = addView(0x5000, drawPlaque, runViewCels, hotspotScript, hotspotRecord, 0, 0, 0);
             setTownRunning(0);
             waitForEventFor(0, 2, 0, 1);
         }
@@ -847,8 +847,8 @@ void townClicked(short which)
 }
 
 /* Opens scene 6, Zoombiniville: adds the travellers to the population
-   (g_4b7ecc once it reaches 625) and the town's slots, sets up the four
-   town views (the highest cel shown, g_4b7e10, by the population), walkers
+   (townFull once it reaches 625) and the town's slots, sets up the four
+   town views (the highest cel shown, highestTownCel, by the population), walkers
    for every 37 over 20 (up to 16), the last 20 Zoombinis to settle, the
    button and the clock, scrolls to the screen last shown, and picks the
    first sound (a hint, a greeting, or 3003 when the town is full) and how
@@ -869,18 +869,18 @@ void openTown()
     View *view;
     short id;
 
-    g_4b7e00 = 0;
+    townOpen = 0;
     resetTown();
     soundRanges = 0;
     addSoundRange(3000, 3003, 1);
     addSoundRange(20000, 29999, 1);
     addSoundRange(996, 997, 0);
-    openGameFile(&g_4b7dfc, "Town.MHK");
-    setCurrentMap(g_4b7dfc);
+    openGameFile(&townFile, "Town.MHK");
+    setCurrentMap(townFile);
     useAltSnoids(0);
     population() += countPresentTravellers();
     if (population() >= 625)
-        g_4b7ecc = 1;
+        townFull = 1;
     townSlots = (Camp *)(gameState + 0x6c42);
     settleTravellers();
     party()->count = 0;
@@ -894,11 +894,11 @@ void openTown()
     highest = highest / 625 + 1;
     if (highest > 56)
         highest = 56;
-    g_4b7e10 = highest + 24;
+    highestTownCel = highest + 24;
     drawBackdrop(1200);
     loadFeatureGroup(1000, 0, 0);
     loadScripts(1000, 8);
-    g_4a74c8 = loadImageBank(1100, &g_4a74c4);
+    townButtonImages = loadImageBank(1100, &townButtonResource);
     loadDragCursors(2000);
     loadFeatureGroup(4000, 1, 0);
     addScripts(4000, 8, 0);
@@ -908,12 +908,12 @@ void openTown()
     addScripts(6000, 1, 0);
     loadFeatureGroup(8000, 3, 0);
     addScripts(8000, 44, 1);
-    g_4b7e08[0] = addView(0x402c000, drawCelsOpaque, runViewCels, 1000, 0, 0, 0, 0);
-    g_4b7e08[1] = addView(0xc02c000, drawCels, runViewCels, 1002, 0, 0, 0, 0);
-    g_4b7e08[2] = addView(0xc02c000, drawCels, runViewCels, 1003, 0, 0, 0, 0);
-    g_4b7e08[3] = addView(0xc02c000, drawCels, runViewCels, 1001, 0, 0, 0, 0);
+    townViews[0] = addView(0x402c000, drawCelsOpaque, runViewCels, 1000, 0, 0, 0, 0);
+    townViews[1] = addView(0xc02c000, drawCels, runViewCels, 1002, 0, 0, 0, 0);
+    townViews[2] = addView(0xc02c000, drawCels, runViewCels, 1003, 0, 0, 0, 0);
+    townViews[3] = addView(0xc02c000, drawCels, runViewCels, 1001, 0, 0, 0, 0);
     for (i = 1; i <= 3; i++) {
-        view = findView(g_4b7e08[i]);
+        view = findView(townViews[i]);
         if (view)
             switch (i) {
             case 1:
@@ -953,8 +953,8 @@ void openTown()
         if (extras)
             do {
                 slot = allocateSlot(&used, 16, 0);
-                g_4b7ed0[i] = addView(1, drawCels, runViewScript, walkers[slot], randomBetween(4, 6), &snoid, 0, 0);
-                view = findView(g_4b7ed0[i]);
+                walkerViews[i] = addView(1, drawCels, runViewScript, walkers[slot], randomBetween(4, 6), &snoid, 0, 0);
+                view = findView(walkerViews[i]);
                 if (view) {
                     viewSnoid(view)->features[0] = 0;
                     view->flags = 0x808002;
@@ -973,7 +973,7 @@ void openTown()
             scrollTown(1);
             i--;
         } while (i);
-    g_4b7f02 = 0;
+    townPartySize = 0;
     last--;
     if (last >= 0) {
         initSnoid(&snoid);
@@ -985,8 +985,8 @@ void openTown()
             id = addSnoidView(&snoid, 0);
             view = findView(id);
             if (view) {
-                partyViews[g_4b7f02] = id;
-                g_4b7f02++;
+                partyViews[townPartySize] = id;
+                townPartySize++;
                 view->flags &= ~1;
                 view->flags |= 2;
             }
@@ -994,8 +994,8 @@ void openTown()
     }
     addView(0x1000, drawTownButtons, updateTownButton, 0, 0, 0, 0, 0);
     setTownFrames(townScreen());
-    g_4b7ece[0] = addView(0x8001, drawCels, runViewCels, 6000, 6, &snoid, 0, 0);
-    view = findView(g_4b7ece[0]);
+    townsfolkViews[0] = addView(0x8001, drawCels, runViewCels, 6000, 6, &snoid, 0, 0);
+    view = findView(townsfolkViews[0]);
     if (view) {
         view->flags &= ~1;
         view->flags |= 2;
@@ -1007,7 +1007,7 @@ void openTown()
     drawTownButton(1, 0, 0);
     showRect(&shownGameRect);
     fadeInViews();
-    g_4b7e00 = 1;
+    townOpen = 1;
     i = 0;
     if (puzzleLeft) {
         puzzleLeft = 0;
@@ -1021,24 +1021,24 @@ void openTown()
     case 1:
         switch (*(short *)(gameState + 0x46)) {
         case 1:
-            g_4b7ec4 = 20086;
+            townSound = 20086;
             break;
         case 2:
-            g_4b7ec4 = 20087;
+            townSound = 20087;
             break;
         case 3:
-            g_4b7ec4 = 20088;
+            townSound = 20088;
             break;
         default:
             switch (randomBetween(1, 3)) {
             case 1:
-                g_4b7ec4 = 20086;
+                townSound = 20086;
                 break;
             case 2:
-                g_4b7ec4 = 20087;
+                townSound = 20087;
                 break;
             case 3:
-                g_4b7ec4 = 20088;
+                townSound = 20088;
                 break;
             }
             break;
@@ -1048,53 +1048,53 @@ void openTown()
     case 12:
         switch (randomBetween(1, 2)) {
         case 1:
-            g_4b7ec4 = 20087;
+            townSound = 20087;
             break;
         case 2:
-            g_4b7ec4 = 20088;
+            townSound = 20088;
             break;
         }
         break;
     case 5:
-        g_4b7ec4 = 20086;
+        townSound = 20086;
         break;
     default:
-        g_4b7ec4 = townScript();
-        g_4b7ec6 = 1;
+        townSound = townScript();
+        townSoundWasGreeting = 1;
         break;
     }
-    if (g_4b7ecc) {
-        g_4b7ec4 = 3003;
-        g_4b7ec6 = 1;
+    if (townFull) {
+        townSound = 3003;
+        townSoundWasGreeting = 1;
     }
-    if (g_4b7ec4) {
-        queueViewSound(g_4b7ec4, 0);
-        g_4b7ec8 = 1;
+    if (townSound) {
+        queueViewSound(townSound, 0);
+        townSoundPlaying = 1;
     }
     resetViewClock();
-    g_4b7ebc = 0;
+    townSoundPause = 0;
     g_4b7562 = 0;
-    if (g_4b7ecc) {
-        g_4b7f12 = 20;
+    if (townFull) {
+        townspeopleToAdd = 20;
     } else {
         if (population() > 100)
-            g_4b7f12++;
+            townspeopleToAdd++;
         if (population() > 200)
-            g_4b7f12 += 2;
+            townspeopleToAdd += 2;
         if (population() > 300)
-            g_4b7f12 += 3;
+            townspeopleToAdd += 3;
         if (population() > 400)
-            g_4b7f12 += 4;
+            townspeopleToAdd += 4;
         if (population() > 500)
-            g_4b7f12 += 5;
+            townspeopleToAdd += 5;
     }
 }
 
 /* Scene 6's frame: deletes the townspeople who have walked off, adds
    more, leaves when asked (sceneDue); every 150-300 ticks after a sound
    ends plays the next (the greetings 3000-3002 in turn, or at random one
-   of g_4a74cc, not 20093 once over 600 live here); now and then has one
-   of the settled Zoombinis on screen do something (g_4b7f00 times, more
+   of townSounds, not 20093 once over 600 live here); now and then has one
+   of the settled Zoombinis on screen do something (townFidgetsLeft times, more
    as the town grows); and sets the cursor by what it's over (a hotspot,
    the sides to scroll). */
 /* Not exact: register allocation (the original keeps `n`, the loop
@@ -1108,17 +1108,17 @@ void townFrame()
     short i;
     View *view;
 
-    if (g_4a7580 || !g_4b7e00)
+    if (inTownFrame || !townOpen)
         return;
-    g_4a7580 = 1;
+    inTownFrame = 1;
     updateViews();
-    if (g_4b7f10)
+    if (townsfolkGone)
         for (n = 0; n < 19; n++)
-            if (g_4b7ece[n] < 0) {
-                deleteView(-g_4b7ece[n]);
-                g_4b7ece[n] = 0;
-                if (g_4b7f10 > 0)
-                    g_4b7f10--;
+            if (townsfolkViews[n] < 0) {
+                deleteView(-townsfolkViews[n]);
+                townsfolkViews[n] = 0;
+                if (townsfolkGone > 0)
+                    townsfolkGone--;
             }
     addTownsperson();
     if (sceneDue) {
@@ -1126,76 +1126,76 @@ void townFrame()
         sceneDue = 0;
         setCurrentMap(0);
         closeTown();
-        g_4a7580 = 0;
+        inTownFrame = 0;
         return;
     }
-    if (!isSoundPlaying(g_4b7ec4, RESOURCE_TYPE(0, 'S', 'N', 'D')) && !dialogFlags) {
-        if (g_4b7ec8) {
-            g_4b7ec0 = clockTime();
-            g_4b7ebc = randomBetween(150, 300);
-            g_4b7ec8 = 0;
-            if (g_4b7ecc)
-                g_4b7f12 = 40;
+    if (!isSoundPlaying(townSound, RESOURCE_TYPE(0, 'S', 'N', 'D')) && !dialogFlags) {
+        if (townSoundPlaying) {
+            townSoundEnded = clockTime();
+            townSoundPause = randomBetween(150, 300);
+            townSoundPlaying = 0;
+            if (townFull)
+                townspeopleToAdd = 40;
         }
-        if (clockTime() - g_4b7ec0 > g_4b7ebc) {
-            g_4b7ec0 = clockTime();
-            if (!g_4b7ec6 || g_4b7ecc) {
-                if (g_4b7ec4 < 20000) {
-                    g_4b7ec4++;
-                    if (g_4b7ec4 >= 3003)
-                        g_4b7ec4 = 3000;
+        if (clockTime() - townSoundEnded > townSoundPause) {
+            townSoundEnded = clockTime();
+            if (!townSoundWasGreeting || townFull) {
+                if (townSound < 20000) {
+                    townSound++;
+                    if (townSound >= 3003)
+                        townSound = 3000;
                 } else {
-                    g_4b7ec4 = townScript();
+                    townSound = townScript();
                 }
-                g_4b7ec6 = 1;
-                i = g_4b7ec4;
+                townSoundWasGreeting = 1;
+                i = townSound;
             } else {
-                g_4b7ec6 = 0;
+                townSoundWasGreeting = 0;
                 for (n = 1; n;) {
                     n = 0;
-                    i = g_4a74cc[allocateSlot(&g_4a74d8, 5, 0)];
+                    i = townSounds[allocateSlot(&townSoundsUsed, 5, 0)];
                     if (i == 20093 && population() > 600)
                         n = 1;
-                    g_4b7ec4 = i;
+                    townSound = i;
                 }
             }
             queueViewSound(i, 0);
-            g_4b7ec8 = 1;
+            townSoundPlaying = 1;
         }
     }
-    if (g_4b7f02 && !dialogFlags && g_4a74dc == -1) {
-        if (g_4b7f00 > 0) {
-            if (clockTime() - g_4b7f04 > g_4b7f08) {
+    if (townPartySize && !dialogFlags && g_4a74dc == -1) {
+        if (townFidgetsLeft > 0) {
+            if (clockTime() - lastTownFidgetTime > townFidgetInterval) {
                 n = 0;
-                g_4b7f04 = clockTime();
+                lastTownFidgetTime = clockTime();
                 i = 0;
                 do {
                     i++;
-                    view = idleSnoidView(partyViews[allocateSlot(&townFidgetersUsed, g_4b7f02, 0)]);
+                    view = idleSnoidView(partyViews[allocateSlot(&townFidgetersUsed, townPartySize, 0)]);
                     if (view && (view->flags & 2) && view->body.x > 20 && view->body.x < 620) {
                         startSnoidScript(viewSnoid(view), viewSnoid(view)->features[3] + 4999, 0, 0);
-                        g_4b7f00--;
+                        townFidgetsLeft--;
                         n = 1;
                     }
                 } while (!n && i < 16);
             }
         } else if (population() == 625) {
-            g_4b7f00 = 8;
+            townFidgetsLeft = 8;
         } else if (population() > 312) {
-            g_4b7f00 = 6;
+            townFidgetsLeft = 6;
         } else if (population() > 156) {
-            g_4b7f00 = 4;
+            townFidgetsLeft = 4;
         } else if (population() > 156) {
-            g_4b7f00 = 2;
+            townFidgetsLeft = 2;
         } else if (population()) {
-            g_4b7f00 = 1;
+            townFidgetsLeft = 1;
         }
     }
-    if (!dialogFlags && !g_4b7eca && g_4a74dc == -1) {
+    if (!dialogFlags && !draggingInTown && g_4a74dc == -1) {
         findTownHotspot(&where);
         if (!ptInRect(&townButtons[0].rect, where) && where.y > 30 && where.y < 450 && where.x > 3
             && where.x < 637) {
-            if (g_4b7eb4)
+            if (onRecordHotspot)
                 setDragCursor(3);
             else if (where.x > 560)
                 setDragCursor(2);
@@ -1207,5 +1207,5 @@ void townFrame()
             setDragCursor(0);
         }
     }
-    g_4a7580 = 0;
+    inTownFrame = 0;
 }

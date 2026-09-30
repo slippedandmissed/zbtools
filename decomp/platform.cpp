@@ -910,7 +910,7 @@ void gameActivated(short active)
                 fillPortRect(gameRect, Color(0), 0);
             }
         } else if (movieShowing && currentMovie) {
-            g_4b7cf8 = 1;
+            introSkip = 1;
             stopMovie(1);
         }
         if (!active) {

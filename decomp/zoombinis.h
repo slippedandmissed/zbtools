@@ -1134,7 +1134,7 @@ extern unsigned long g_4b80d4;
 extern short quitRequested; /* ends the main loop when set */
 extern short regionErrorCode; /* @data 0x4b9b64 */
 extern OsState os; /* @data 0x4b9cf4 */
-extern short g_4b7cf8;
+extern short introSkip;
 extern ThreadState threads; /* @data 0x4b9d4c */
 
 /* Game functions not decompiled yet */
@@ -3856,7 +3856,7 @@ extern ImageBank *isleButtonImages;
 extern char g_4b157d[];
 extern short ambientSound; /* @data 0x4b0d48: the last one */
 extern short ambientSoundCount; /* @data 0x4b0d58 */
-extern char g_4a7410;
+extern char introClickState;
 extern short inMazeFrame; /* the maze's frame is running */
 extern Point mazeExitSpots[4][20]; /* each row's spots to walk off by */
 extern unsigned long g_4b0d30;
