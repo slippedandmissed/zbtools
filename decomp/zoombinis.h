@@ -2601,10 +2601,6 @@ audioObj *audioObject(long sound); /* 0 if it isn't one */
 unsigned short __cdecl makeWord(unsigned char low, unsigned char high);
 long newSound(short data); /* from a Mohawk MIDI or WAVE in a handle */
 long newStreamedSound(long resource, long);
-/* Called but not decompiled yet */
-short openWaveOut(long *out, unsigned short device, PCMWAVEFORMAT *format, long, long,
-                  long flags); /* 0x47c712 */
-short getWaveCaps(unsigned short device, void *caps, long size); /* 0x47c432 */
 short unsupportedMidiCall(short open); /* MMSYSERR_NOTSUPPORTED */
 unsigned short initMidi(); /* 0x47a07f */
 void closeMidi(); /* 0x47a0c0 */
@@ -3500,7 +3496,7 @@ void insetRect(ShortRect *rect, short dx, short dy);
 short sectRect(ShortRect *rect, ShortRect *with);
 ShortRect *unionRect(ShortRect *into, ShortRect *add);
 short ptInRect(ShortRect *rect, const Point &point);
-ShortRect *__cdecl setRect(ShortRect *rect, short left, short top, short right, short bottom);
+ShortRect *__cdecl setRect(ShortRect *rect, short left, short top, short right, short bottom); /* Rect's constructor, called from C (memoryport.cpp) */
 
 /* Regions (errors in regionError) */
 short newRgn();

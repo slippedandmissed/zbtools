@@ -63,7 +63,7 @@ short setSoundsActive(short active)
             format.wf.nAvgBytesPerSec = 11025;
             format.wf.nBlockAlign = 1;
             format.wBitsPerSample = 8;
-            openWaveOut(&sound.waveCache, sound.waveDevice, &format, 0, 0, 0x80000000);
+            wavebufOpen(&sound.waveCache, sound.waveDevice, &format, 0, 0, 0x80000000);
         }
         for (object = sound.objects; object; object = object->next)
             if ((error = object->activate(1)) != 0)
@@ -417,7 +417,7 @@ short initSound()
         format.wf.nAvgBytesPerSec = 11025;
         format.wf.nBlockAlign = 1;
         format.wBitsPerSample = 8;
-        openWaveOut(&sound.waveCache, sound.waveDevice, &format, 0, 0, 0x80000000);
+        wavebufOpen(&sound.waveCache, sound.waveDevice, &format, 0, 0, 0x80000000);
     }
     sound.ready = 1;
     sound.active = 1;
@@ -676,7 +676,7 @@ unsigned short setWaveDevice(unsigned short device)
             format.wf.nAvgBytesPerSec = 11025;
             format.wf.nBlockAlign = 1;
             format.wBitsPerSample = 8;
-            openWaveOut(&sound.waveCache, sound.waveDevice, &format, 0, 0, 0x80000000);
+            wavebufOpen(&sound.waveCache, sound.waveDevice, &format, 0, 0, 0x80000000);
         }
     }
     setSoundError(0);
@@ -692,20 +692,15 @@ unsigned short openWaveOutDevice(long *out, unsigned short device, PCMWAVEFORMAT
     char key[8];
     char value[8];
     unsigned short rate;
-    struct
-    {
-        char unknown0[0x34];
-        unsigned long rate;
-        char unknown38[4];
-    } caps;
+    WmxCaps caps;
     short error;
 
     if (sound.translateWaveRate || format->wf.wFormatTag != WAVE_FORMAT_PCM) {
-        error = openWaveOut(out, device, format, a, b, flags);
+        error = wavebufOpen(out, device, format, a, b, flags);
         if (error != 0x20 || format->wf.wFormatTag != WAVE_FORMAT_PCM)
             return error;
     }
-    if ((error = getWaveCaps(device, &caps, sizeof caps)) != 0)
+    if ((error = wavebufGetDevCaps(device, &caps, sizeof caps)) != 0)
         return error;
     if (format->wf.nSamplesPerSec % caps.rate) {
         sprintf(key, rateFormat, format->wf.nSamplesPerSec);
@@ -717,7 +712,7 @@ unsigned short openWaveOutDevice(long *out, unsigned short device, PCMWAVEFORMAT
         } else if (error)
             return error;
     }
-    return openWaveOut(out, device, format, a, b, flags);
+    return wavebufOpen(out, device, format, a, b, flags);
 }
 
 /* Turns a sound on or off: closes its device, or reopens it (and restarts

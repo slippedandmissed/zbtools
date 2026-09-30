@@ -13,7 +13,6 @@
 short tidyRgn(Region *region)
 {
     long i;
-    ShortRect empty;
     ShortRect *rect;
     long j;
 
@@ -41,6 +40,6 @@ short tidyRgn(Region *region)
             }
         }
     } else
-        region->bounds = *setRect(&empty, 0, 0, 0, 0);
+        region->bounds = Rect(0, 0, 0, 0);
     return region->count;
 }

@@ -5,6 +5,8 @@
 
 /* @flags -p -x- */
 
+#include <new.h>
+
 #include "zoombinis.h"
 
 static char display[] = "DISPLAY";
@@ -70,6 +72,15 @@ __cdecl Rect::Rect(short left, short top, short right, short bottom)
     this->top = top;
     this->right = right;
     this->bottom = bottom;
+}
+
+/* The engine's C code (the region modules) calls the constructor above as a
+   function on a plain ShortRect, `setRect`. That isn't a C++ name for the
+   constructor, so for a working build it's this wrapper (not in the
+   original, which calls the constructor itself). */
+ShortRect *__cdecl setRect(ShortRect *rect, short left, short top, short right, short bottom)
+{
+    return new (rect) Rect(left, top, right, bottom);
 }
 
 /* @zoombi32-implicit 0x0048c94f memoryPort::~memoryPort */
