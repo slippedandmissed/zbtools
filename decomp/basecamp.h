@@ -20,31 +20,31 @@ extern short campRows; /* @data 0x4ab50a */
 extern short campShown; /* @data 0x4ab50c: slots shown (campRows * 5) */
 extern short campCount; /* @data 0x4ab50e: Zoombinis in the camp */
 extern short campLast; /* @data 0x4ab510: the last slot used */
-extern short g_4ab512;
+extern short pressedCampButton; /* @data 0x4ab512 */
 extern Camp *camp; /* @data 0x4ab514 */
-extern short g_4ab518;
-extern short g_4ab51a;
-extern short g_4ab524;
-extern short g_4ab526;
-extern short g_4ab52a;
-extern short g_4ab52c;
-extern short g_4ab52e;
+extern short campView; /* @data 0x4ab518 */
+extern short campScrolling; /* @data 0x4ab51a */
+extern short campEnoughChosen; /* @data 0x4ab524 */
+extern short campEnoughDrawn; /* @data 0x4ab526 */
+extern short campClicksOff; /* @data 0x4ab52a */
+extern short campDragging; /* @data 0x4ab52c */
+extern short campPopulationFull; /* @data 0x4ab52e */
 extern SceneButton campButtons[7]; /* @data 0x4a0824 */
 extern ImageBank *campButtonImages; /* @data 0x4a0970 */
 extern long campButtonsResource; /* @data 0x4a0968: holding campButtonImages */
-extern long campFrameResource; /* @data 0x4a096c: holding g_4a0974 */
+extern long campFrameResource; /* @data 0x4a096c: holding campFrameImages */
 extern long campMap; /* @data 0x4ab520: BaseCamp.MHK */
 extern short campActive; /* @data 0x4ab528 */
 extern short campBusy; /* @data 0x4a0a9c: in campIdle */
-extern ImageBank *g_4a0974; /* the camp's frame */
+extern ImageBank *campFrameImages; /* @data 0x4a0974: the camp's frame */
 extern ShortRect campButtonsBounds; /* @data 0x4a0a9e */
 extern ShortRect campArrival; /* @data 0x4a0aa6: where Zoombinis back from the journey stand */
-extern short g_4a080c;
-extern short g_4a080e; /* the camp is scrolled half a row */
+extern short campScrollAsked; /* @data 0x4a080c */
+extern short campHalfRow; /* @data 0x4a080e: the camp is scrolled half a row */
 extern ShortRect campArea; /* @data 0x4a0920 */
 extern Snoid draggedSnoid; /* @data 0x4ab53a */
 extern GroupList campGroupLists[2]; /* @data 0x4a0998 */
-extern long g_4ab51c; /* the way the camp is asked to scroll (1-4) */
+extern long campScrollWay; /* @data 0x4ab51c: the way the camp is asked to scroll (1-4) */
 extern short campX[10]; /* @data 0x4a09b0: each row's x, in two layouts (4a080e) */
 extern short primes[5]; /* @data 0x4a0800 */
 /* basecamp */

@@ -22,11 +22,11 @@
 /* @zoombi32 0x00418698 */
 void resetCamp2()
 {
-    bookView = g_4ab652 = sceneDue = 0;
-    g_4ab662 = g_4ab668 = g_4ab664 = 0;
-    g_4ab64a = 0;
-    g_4ab666 = 1;
-    g_4ab67e = 0;
+    bookView = camp2HoverButton = sceneDue = 0;
+    camp2ClicksOff = view6000Running = camp2Dragging = 0;
+    chosenCamp2Button = 0;
+    view6002Next = 1;
+    populationFull = 0;
 }
 
 /* Opens scene 5, the camp: the book of the Zoombinis waiting there (kept
@@ -45,7 +45,7 @@ void openCamp2()
     short n; /* the loop, then the Zoombinis chosen, then the hint */
     short m; /* whether the party fitted, then the line to say */
 
-    g_4ab660 = 0;
+    camp2Open = 0;
     resetCamp2();
     saved = soundOn;
     soundOn = 0;
@@ -58,8 +58,8 @@ void openCamp2()
     bookCount = bookEntries->count;
     bookHighest = lastBookEntry();
     countBookEntry(-1);
-    openGameFile(&g_4ab658, "bctwo.mhk");
-    setCurrentMap(g_4ab658);
+    openGameFile(&camp2File, "bctwo.mhk");
+    setCurrentMap(camp2File);
     loadPaths(1000);
     loadDragCursors(10000);
     loadTerrain(100);
@@ -68,23 +68,23 @@ void openCamp2()
     loadFeatureGroup(7000, 1, 0);
     loadScripts(6000, 14);
     addScripts(7000, 16, 0);
-    loadShapeList(&g_4a0ac0, 8000, 0, 1);
-    loadShapeList(&g_4a0ac4, 9000, 0, 1);
+    loadShapeList(&bookImages, 8000, 0, 1);
+    loadShapeList(&camp2Images, 9000, 0, 1);
     bookView = addView(0xc000, drawBook, scrollBook, 0, 6, 0, 0, 0);
     addView(0x9000, drawCamp2Buttons2, 0, 0, 0, 0, 0, 0);
     addView(0x1000, drawCamp2Buttons1, updateCamp2Button0, 0, 0, 0, 0, 0);
     for (n = 0; n < 16; n++)
         placedViews[n] = addView(0x108a000, drawCels, runViewScript, n + 7000, 7, &places[n], 0, 0);
-    g_4ab66a[9] = addView(0x5188000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
-    g_4ab66a[0] = addView(0x188000, drawCels, runViewScript, 6005, 6, 0, 0, 0);
-    g_4ab66a[1] = addView(0x188000, drawCels, runViewScript, 6011, 6, 0, 0, 0);
-    g_4ab66a[2] = addView(0x1188000, drawCels, runViewScript, 6010, 6, 0, 0, 0);
-    g_4ab66a[3] = addView(0x4188000, drawCels, runViewScript, 6002, 6, 0, 0, 0);
-    g_4ab66a[4] = addView(0x4180000, drawCels, runViewScript, 6004, 6, 0, 0, 0);
-    g_4ab66a[5] = addView(0x1188000, drawCels, runViewScript, 6009, 6, 0, 0, 0);
-    g_4ab66a[6] = addView(0x5188000, drawCels, runViewScript, 6006, 6, 0, 0, 0);
-    g_4ab66a[7] = addView(0x5188000, drawCels, runViewScript, 6007, 6, 0, 0, 0);
-    g_4ab66a[8] = addView(0x5188000, drawCels, runViewScript, 6008, 6, 0, 0, 0);
+    campThingViews[9] = addView(0x5188000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
+    campThingViews[0] = addView(0x188000, drawCels, runViewScript, 6005, 6, 0, 0, 0);
+    campThingViews[1] = addView(0x188000, drawCels, runViewScript, 6011, 6, 0, 0, 0);
+    campThingViews[2] = addView(0x1188000, drawCels, runViewScript, 6010, 6, 0, 0, 0);
+    campThingViews[3] = addView(0x4188000, drawCels, runViewScript, 6002, 6, 0, 0, 0);
+    campThingViews[4] = addView(0x4180000, drawCels, runViewScript, 6004, 6, 0, 0, 0);
+    campThingViews[5] = addView(0x1188000, drawCels, runViewScript, 6009, 6, 0, 0, 0);
+    campThingViews[6] = addView(0x5188000, drawCels, runViewScript, 6006, 6, 0, 0, 0);
+    campThingViews[7] = addView(0x5188000, drawCels, runViewScript, 6007, 6, 0, 0, 0);
+    campThingViews[8] = addView(0x5188000, drawCels, runViewScript, 6008, 6, 0, 0, 0);
     copyPaletteRange(10, 236);
     setViewPlaces(16, places, 1);
     if (party()->count)
@@ -115,26 +115,26 @@ void openCamp2()
     updateViews();
     if (n)
         staggerSnoids(45, 30);
-    g_4ab67e = *(short *)(gameState + 0x48) >= 625
+    populationFull = *(short *)(gameState + 0x48) >= 625
                && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0x4c)
                           + waitingParties()[0].count
                       < 16;
-    if (g_4ab67e) {
+    if (populationFull) {
         short count = countChosenSnoids();
 
         enoughChosen = count
                    && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0x4c)
                               + waitingParties()[0].count
                           <= count;
-        g_4ab65e = enoughChosen;
+        camp2EnoughDrawn = enoughChosen;
     } else
-        g_4ab65e = enoughChosen = countChosenSnoids() >= 16;
+        camp2EnoughDrawn = enoughChosen = countChosenSnoids() >= 16;
     setGroupLists(campGroups, 2, (short)0xc000);
     highlightItemAt(1, 1);
     drawCamp2Button(0, 0, 0, 0);
     showRect(&shownGameRect);
     fadeInViews();
-    g_4ab660 = 1;
+    camp2Open = 1;
     m = 0;
     n = -1;
     if (puzzleLeft) {
@@ -190,8 +190,8 @@ void closeCamp2()
 {
     short saved;
 
-    if (g_4ab660) {
-        g_4ab660 = 0;
+    if (camp2Open) {
+        camp2Open = 0;
         saved = setFreeAtOnce(1);
         clearViews();
         if (!viewsLocked) {
@@ -212,10 +212,10 @@ void closeCamp2()
             countBookEntry(-1);
         }
         unloadSounds();
-        freeShapeList(&g_4a0ac4);
-        freeShapeList(&g_4a0ac0);
+        freeShapeList(&camp2Images);
+        freeShapeList(&bookImages);
         setFreeAtOnce(saved);
-        closeGameFile(&g_4ab658);
+        closeGameFile(&camp2File);
         fadeOutViews();
         showBusyCursor();
     }
@@ -223,7 +223,7 @@ void closeCamp2()
 
 /* Scene 5's frame: leaves for the scene due (once sound 996 is done);
    else shows the drag cursor for the button (4-7) under the cursor, and
-   keeps view g_4ab67c's script 6001 going while g_4ab668. */
+   keeps view view6000's script 6001 going while view6000Running. */
 /* @zoombi32 0x00418e62 */
 void camp2Frame()
 {
@@ -232,13 +232,13 @@ void camp2Frame()
     short i;
     View *view;
 
-    if (g_4a0ce8 || !g_4ab660)
+    if (inCamp2Frame || !camp2Open)
         return;
-    g_4a0ce8 = 1;
+    inCamp2Frame = 1;
     updateViews();
     if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-            g_4a0ce8 = 0;
+            inCamp2Frame = 0;
             return;
         }
         if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1) {
@@ -249,15 +249,15 @@ void camp2Frame()
         }
     } else {
         button = 0;
-        if (!g_4ab664 && !dialogFlags) {
+        if (!camp2Dragging && !dialogFlags) {
             getCursorPosition(&where);
             for (i = 3; !button && i < 7; i++)
                 if (ptInRect(&camp2Buttons[i].rect, where))
                     button = i - 2;
         }
         setDragCursor(button);
-        if (g_4ab668) {
-            view = findView(g_4ab67c);
+        if (view6000Running) {
+            view = findView(view6000);
             if (!view->body.running) {
                 setViewScript(view, 6001, 1);
                 view->flags = 0x88000;
@@ -265,7 +265,7 @@ void camp2Frame()
         }
     }
     playAmbientSound();
-    g_4a0ce8 = 0;
+    inCamp2Frame = 0;
 }
 
 /* Scene 5's clicks: once a scene is due, leaves for it; 1 leaves for
@@ -319,7 +319,7 @@ void camp2Clicked(short which)
     case 5:
     case 6:
     case 7:
-        g_4ab64a = which;
+        chosenCamp2Button = which;
         drawCamp2Button(which, 1, 0, 1);
         do {
             scrollPressed = which - 3;
@@ -327,7 +327,7 @@ void camp2Clicked(short which)
             mainLoopEvents();
         } while (isButtonStillDown(1));
         lightScrollButton(1, 0);
-        g_4ab64a = 0;
+        chosenCamp2Button = 0;
         drawCamp2Button(which, 0, 0, 1);
         break;
     }
@@ -338,7 +338,7 @@ void camp2Clicked(short which)
    dropped on an empty cell of the book it goes in it, and a Zoombini
    picked out of the book goes back if dropped nowhere useful (or with over
    32 about). enoughChosen then says whether enough are chosen to leave.
-   Clicking elsewhere starts the camp's thing there (g_4a0c58). */
+   Clicking elsewhere starts the camp's thing there (campThingRects). */
 /* @zoombi32 0x0041914d */
 void campDragged(short event)
 {
@@ -363,7 +363,7 @@ void campDragged(short event)
         closeCamp2();
         return;
     }
-    if (g_4ab662 && event != 2)
+    if (camp2ClicksOff && event != 2)
         return;
     getCursorPosition(&where);
     picked = 0;
@@ -377,15 +377,15 @@ void campDragged(short event)
             if (entry >= 0) {
                 if (bookCount > 0)
                     bookCount--;
-                initSnoid(&g_4ab680);
-                g_4ab680.zoombini = bookEntries->entries[entry].zoombini;
+                initSnoid(&bookSnoid);
+                bookSnoid.zoombini = bookEntries->entries[entry].zoombini;
                 for (i = 0; i < 10; i++)
-                    g_4ab680.name[i] = bookEntries->entries[entry].name[i];
-                g_4ab680.body.x = where.x;
-                g_4ab680.body.y = where.y;
+                    bookSnoid.name[i] = bookEntries->entries[entry].name[i];
+                bookSnoid.body.x = where.x;
+                bookSnoid.body.y = where.y;
                 bookEntries->entries[entry].zoombini = 0;
                 refreshBook();
-                added = addSnoidView(&g_4ab680, 0);
+                added = addSnoidView(&bookSnoid, 0);
                 if (added) {
                     view = findView(added);
                     scrollPressed = -1;
@@ -404,10 +404,10 @@ void campDragged(short event)
             view = viewAt(where, 1, 1);
         if (view) {
             i = 0;
-            g_4ab654 = 0;
-            g_4ab664 = 1;
+            unusedCamp2Long = 0;
+            camp2Dragging = 1;
             dropped = dragSnoid(view, where, 0, 0);
-            g_4ab664 = 0;
+            camp2Dragging = 0;
             place = heldPlaceNumber();
             snoid = viewSnoid(view);
             moved = !(snoid->targetX == snoid->body.x && snoid->targetY == snoid->body.y);
@@ -415,7 +415,7 @@ void campDragged(short event)
             if (snoid->unknownF7)
                 snoid->unknownF8 = 1;
             rect = view->body.bounds;
-            if (sectRect(&rect, &g_4a0be8)) {
+            if (sectRect(&rect, &bookArea)) {
                 rect = view->body.bounds;
                 slot = bookEntryAt(bookRow, rect, 0);
                 if (slot >= 0) {
@@ -436,9 +436,9 @@ void campDragged(short event)
                 if (!back && !place && moved)
                     back = 1;
                 if (back) {
-                    bookEntries->entries[entry].zoombini = g_4ab680.zoombini;
+                    bookEntries->entries[entry].zoombini = bookSnoid.zoombini;
                     for (i = 0; i < 10; i++)
-                        bookEntries->entries[entry].name[i] = g_4ab680.name[i];
+                        bookEntries->entries[entry].name[i] = bookSnoid.name[i];
                     removeView(added, 1);
                 }
                 scrollPressed = -1;
@@ -447,7 +447,7 @@ void campDragged(short event)
                 snoid->unknownF7 = 1;
                 snoid->unknownF8 = 1;
             }
-            if (g_4ab67e) {
+            if (populationFull) {
                 short chosen = countChosenSnoids();
 
                 enoughChosen = chosen
@@ -458,18 +458,18 @@ void campDragged(short event)
                 enoughChosen = countChosenSnoids() >= 16;
         } else
             for (i = 0; i < 10; i++)
-                if (ptInRect(&g_4a0c58[i], where)) {
-                    view = findView(g_4ab66a[i]);
+                if (ptInRect(&campThingRects[i], where)) {
+                    view = findView(campThingViews[i]);
                     if (view && !view->body.running) {
                         switch (i) {
                         case 3: {
                             short script;
 
-                            if (g_4ab666) {
-                                g_4ab666 = 0;
+                            if (view6002Next) {
+                                view6002Next = 0;
                                 script = 6002;
                             } else {
-                                g_4ab666 = 1;
+                                view6002Next = 1;
                                 script = 6003;
                             }
                             setViewScript(view, script, 1);
@@ -482,9 +482,9 @@ void campDragged(short event)
                                 setViewScript(view, view->kind + 1, 1);
                             break;
                         case 9:
-                            if (!g_4ab668) {
+                            if (!view6000Running) {
                                 setViewScript(view, 0, 1);
-                                g_4ab668 = 1;
+                                view6000Running = 1;
                             }
                             break;
                         default:
@@ -507,14 +507,14 @@ long camp2Key(long)
 
 /* Draws the camp's button `button` (1-7), lit or not, or with 0 a group
    of them (`group` 1: 1-3, 2: 4-7, else all); button 1 is out while
-   enoughChosen is clear, 4-7 lit for the one chosen (g_4ab64a). With `show`
+   enoughChosen is clear, 4-7 lit for the one chosen (chosenCamp2Button). With `show`
    shows them (redrawing the dragged view over 4-7). */
 /* @zoombi32 0x004196b1 */
 void drawCamp2Button(short button, short lit, short group, short show)
 {
     short y;
     ShortRect unused; /* unused, like `color`: they only take stack space */
-    ShortRect rect = g_4a0cea;
+    ShortRect rect = camp2ButtonsRect;
     Color color;
     short dragging = 0;
     short first;
@@ -566,14 +566,14 @@ void drawCamp2Button(short button, short lit, short group, short show)
             dragging = 1;
             image = (first - 3) * 2 + 7;
             lit = 0;
-            if (g_4ab64a - 1 == first)
+            if (chosenCamp2Button - 1 == first)
                 lit = 1;
             break;
         }
         if (image) {
             if (lit)
                 image++;
-            drawImage(g_4a0ac4, image, x, y, 8, 17);
+            drawImage(camp2Images, image, x, y, 8, 17);
         }
     }
     if (show) {
@@ -659,12 +659,12 @@ void drawCamp2Buttons2(View *)
 void updateCamp2Button0(View *, short region)
 {
     if (enoughChosen) {
-        if (!g_4ab65e) {
-            g_4ab65e = 1;
+        if (!camp2EnoughDrawn) {
+            camp2EnoughDrawn = 1;
             unionRgnRect(region, &camp2Buttons[0].rect);
         }
-    } else if (g_4ab65e) {
-        g_4ab65e = 0;
+    } else if (camp2EnoughDrawn) {
+        camp2EnoughDrawn = 0;
         unionRgnRect(region, &camp2Buttons[0].rect);
     }
 }
@@ -730,7 +730,7 @@ void drawBook(View *)
         dy = 0;
         dx = 0;
     }
-    drawImage(g_4a0ac0, image, 140, 23, 0, 17);
+    drawImage(bookImages, image, 140, 23, 0, 17);
     for (i = 0; i < count; i++, index++) {
         n = index % bookSlots;
         if (bookEntries->entries[n].zoombini) {
@@ -758,8 +758,8 @@ void drawBook(View *)
             line++;
         }
     }
-    drawImage(g_4a0ac0, image + 1, dx + 141, dy + 28, 8, 17);
-    drawImage(g_4a0ac0, 5, 101, 0, 8, 17);
+    drawImage(bookImages, image + 1, dx + 141, dy + 28, 8, 17);
+    drawImage(bookImages, 5, 101, 0, 8, 17);
 }
 
 /* The book's view update: when due, scrolls the book the way pressed
@@ -774,7 +774,7 @@ void scrollBook(View *view, short)
         view->nextUpdate = clockTime() + view->interval;
         if (view->reset) {
             view->reset = 0;
-            view->body.bounds = g_4a0be8;
+            view->body.bounds = bookArea;
         } else if (scrollPressed) {
             view->changed = 1;
             steps = 1;
@@ -939,9 +939,9 @@ void lightScrollButton(short quiet, short)
                 lit = 1;
             break;
         }
-        if (lit != g_4ab652) {
-            g_4ab652 = lit;
-            switch (g_4ab652) {
+        if (lit != camp2HoverButton) {
+            camp2HoverButton = lit;
+            switch (camp2HoverButton) {
             case 0:
                 sound = 2001;
                 break;
@@ -951,9 +951,9 @@ void lightScrollButton(short quiet, short)
             }
         }
         if (quiet) {
-            if (g_4ab652)
+            if (camp2HoverButton)
                 sound = 2001;
-            g_4ab652 = 0;
+            camp2HoverButton = 0;
         }
         if (sound) {
             if (sound == 2001)
@@ -972,7 +972,7 @@ short addPartyToBook()
 {
     short added;
     short count;
-    ShortRect empty = g_4a0d76;
+    ShortRect empty = camp2EmptyRect;
     short found;
     short last;
     short i;

@@ -7,52 +7,52 @@
 #define ISLE_H
 
 short isleAllowsFeature(short group, short feature);
-extern short g_4b15ae;
-extern ImageBank *g_4b159c;
-extern char g_4a3386[];
-extern char g_4a339c[];
-extern short g_4b15b0;
-extern short g_4b15b2;
+extern short enoughToLeave; /* @data 0x4b15ae */
+extern ImageBank *isleImages; /* @data 0x4b159c */
+extern char isleImageHotX[]; /* @data 0x4a3386 */
+extern char isleImageHotY[]; /* @data 0x4a339c */
+extern short settingView1; /* @data 0x4b15b0 */
+extern short settingView2; /* @data 0x4b15b2 */
 void checkEnoughChosen();
 void drawIsleImage(short which, short x, short y);
 void addIsleSettingViews();
-extern short g_4b15ac;
-extern short g_4b15b6;
-extern short g_4b15b8;
+extern short isleButton22Due; /* @data 0x4b15ac */
+extern short isleRemark; /* @data 0x4b15b6 */
+extern short isleSendingOff; /* @data 0x4b15b8 */
 void resetZoombiniMade();
 short zoombiniMadeAllowed();
 void showIsleSetting(short keep);
-extern short g_4b15a4; /* the scene is open */
-extern long g_4b1590;
-extern long g_4b158c;
-extern long g_4b1594;
-extern long g_4b1588;
+extern short isleOpen; /* @data 0x4b15a4: the scene is open */
+extern long isleImagesResource; /* @data 0x4b1590 */
+extern long featureButtonResource; /* @data 0x4b158c */
+extern long isleButtonResource; /* @data 0x4b1594 */
+extern long isleFile; /* @data 0x4b1588 */
 void closeIsle();
-extern ShortRect g_4a337e;
-extern ImageBank *g_4b1598;
+extern ShortRect featureButtonsRect; /* @data 0x4a337e */
+extern ImageBank *featureButtonImages; /* @data 0x4b1598 */
 void drawFeatureButtons(short which, short lit, ShortRect *bounds);
-extern short g_4a33b2;
-extern short g_4a33b4;
+extern short isleEnoughDrawn; /* @data 0x4a33b2 */
+extern short isleMakeAllowedDrawn; /* @data 0x4a33b4 */
 void updateIsleButtons(View *, short region);
-extern Point g_4a3324[16];
+extern Point isleQueuePlaces[16]; /* @data 0x4a3324 */
 void isleQueue(Point *where, short *slot);
 short isleKey(unsigned short key);
 short leaveIsleIfAsked();
 extern short isleBusy; /* @data 0x4a336c */
 void isleFrame();
 void drawZoombiniParts(Snoid *snoid);
-extern SceneButton g_4a31cc[8]; /* [7]: the whole screen */
-extern ShortRect g_4a3376;
+extern SceneButton isleSceneButtons[8]; /* @data 0x4a31cc: [7]: the whole screen */
+extern ShortRect isleButtonsRect; /* @data 0x4a3376 */
 void drawIsleButtons(short which, short lit, short show);
 void countZoombiniMade(short add);
 void pickZoombiniMade(short rename);
 void drawIsleButtonsView(View *);
 void featureButtonClicked(short button);
-extern short g_4b15b4;
+extern short view4100; /* @data 0x4b15b4 */
 void isleButtonClicked(short button);
-extern Point g_4a3364;
-extern Point g_4a3368;
-extern GroupList g_4a330c[2];
+extern Point isleEntry; /* @data 0x4a3364 */
+extern Point isleExit; /* @data 0x4a3368 */
+extern GroupList isleGroups[2]; /* @data 0x4a330c */
 void openIsle();
 
 #endif

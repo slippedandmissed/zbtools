@@ -25,16 +25,16 @@ void resetZoombiniMade()
     short i;
 
     g_4b755e = 60;
-    g_4b15a6 = g_4b15aa = g_4b15ac = 0;
+    isleCheatButtonLit = zoombiniMakeAllowed = isleButton22Due = 0;
     sceneDue = 0;
-    g_4b15b0 = g_4b15b2 = g_4b15b6 = 0;
+    settingView1 = settingView2 = isleRemark = 0;
     for (i = 0; i < 4; i++)
         snoidBeingMade.features[i] = 0;
     snoidBeingMade.name[0] = 0;
     makeName(snoidBeingMade.name, 10);
     for (i = 0; i < 16; i++)
         sortedIds[i] = 0;
-    g_4b15b8 = 0;
+    isleSendingOff = 0;
     snoidsArrived = snoidsOnTheirWay = 0;
 }
 
@@ -50,28 +50,28 @@ void resetZoombiniMade()
 /* @zoombi32 0x0043e6b6 */
 void openIsle()
 {
-    Point entry = g_4a3364;
+    Point entry = isleEntry;
     Point exit;
     short i;
     short skip;
     short spot;
     short j;
 
-    g_4b15a4 = 0;
+    isleOpen = 0;
     resetZoombiniMade();
     addSoundRange(20000, 29999, 1);
     addSoundRange(1000, 1007, 0);
     setSnoidMode(0);
-    g_4b15ae = 16;
-    g_4b15aa = zoombiniMadeAllowed();
+    enoughToLeave = 16;
+    zoombiniMakeAllowed = zoombiniMadeAllowed();
     setPenWidth(1);
-    openGameFile(&g_4b1588, "Picker.MHK");
-    setCurrentMap(g_4b1588);
+    openGameFile(&isleFile, "Picker.MHK");
+    setCurrentMap(isleFile);
     loadPaths(1000);
     drawBackdrop(4000);
-    g_4b1598 = loadImageBank(4400, &g_4b158c);
-    isleButtonImages = loadImageBank(4200, &g_4b1594);
-    g_4b159c = loadImageBank(4300, &g_4b1590);
+    featureButtonImages = loadImageBank(4400, &featureButtonResource);
+    isleButtonImages = loadImageBank(4200, &isleButtonResource);
+    isleImages = loadImageBank(4300, &isleImagesResource);
     loadFeatureGroup(4100, 0, 0);
     loadScripts(4100, 11);
     copyPaletteRange(10, 236);
@@ -83,24 +83,24 @@ void openIsle()
         addView(0x8000, drawCels, runViewScript, i, i - 4091, 0, 0, 0);
     if (!*(short *)(gameState + 0x20))
         addIsleSettingViews();
-    g_4b15b4 = addView(0x64000000, drawCels, runViewScript, 4100, 0, 0, 0, 0);
+    view4100 = addView(0x64000000, drawCels, runViewScript, 4100, 0, 0, 0, 0);
     addView(0x108a000, drawCels, runViewScript, 4110, 6, &entry, 0, 0);
     for (i = 4106; i <= 4109; i++)
         addView(0, drawCels, runViewScript, i, 0, 0, 0, 0);
     addView(0x4001000, drawIsleButtonsView, updateIsleButtons, 0, 0, 0, 0, 0);
-    setViewPlaces(16, g_4a3324, 1);
+    setViewPlaces(16, isleQueuePlaces, 1);
     *party() = *waitingParties();
     waitingParties()->count = 0;
     makePartySnoids(0);
-    exit = g_4a3368;
+    exit = isleExit;
     spotTaken(&exit, 0, 500);
     for (i = 0; i < 16; i++) {
         skip = 0;
-        spot = spotNear(&g_4a3324[i], 500, skip);
+        spot = spotNear(&isleQueuePlaces[i], 500, skip);
         for (j = 0; spot && j < i; j++)
             if (spot == sortedIds[j]) {
                 skip++;
-                spot = spotNear(&g_4a3324[i], 500, skip);
+                spot = spotNear(&isleQueuePlaces[i], 500, skip);
                 j = 0;
             }
         sortedIds[i] = spot;
@@ -111,11 +111,11 @@ void openIsle()
         *(short *)(gameState + 0x26) = 1;
     showIsleSetting(1);
     checkEnoughChosen();
-    setGroupLists(g_4a330c, 2, (short)0xc000);
+    setGroupLists(isleGroups, 2, (short)0xc000);
     highlightItemAt(1, 1);
     visitAllItems();
-    snoidBeingMade.body.x = g_4a31cc[2].rect.left + 39;
-    snoidBeingMade.body.y = g_4a31cc[2].rect.top + 31;
+    snoidBeingMade.body.x = isleSceneButtons[2].rect.left + 39;
+    snoidBeingMade.body.y = isleSceneButtons[2].rect.top + 31;
     snoidBeingMade.unknownF7 = 1;
     drawIsleButtons(0, 0, 0);
     drawFeatureButtons(0, 0, 0);
@@ -126,12 +126,12 @@ void openIsle()
     }
     showRect(&gameRect);
     fadeInViews();
-    g_4b15a4 = 1;
+    isleOpen = 1;
     queueViewSound(30001, 0);
     if (journeyFrom != 1) {
         campHint((short *)(gameState + 0x28));
         if (*(short *)(gameState + 0x48) < 625 && introClickState == 1)
-            g_4b15b6 = 20042;
+            isleRemark = 20042;
     } else {
         short made = countSnoidViews();
         short left = 625 - (*(short *)(gameState + 0x4a) + *(short *)(gameState + 0x4c) + *(short *)(gameState + 0x4e))
@@ -140,16 +140,16 @@ void openIsle()
         if (left > 0 && made < 625) {
             switch (randomBetween(1, 20)) {
             case 1:
-                g_4b15b6 = 20043;
+                isleRemark = 20043;
                 break;
             case 10:
-                g_4b15b6 = 20044;
+                isleRemark = 20044;
                 break;
             }
         }
     }
-    if (g_4b15b6)
-        queueViewSound(g_4b15b6, 1);
+    if (isleRemark)
+        queueViewSound(isleRemark, 1);
     introClickState = 0;
     g_4b7562 = 0;
 }
@@ -159,8 +159,8 @@ void openIsle()
 /* @zoombi32 0x0043eb13 */
 void closeIsle()
 {
-    if (g_4b15a4) {
-        g_4b15a4 = 0;
+    if (isleOpen) {
+        isleOpen = 0;
         short saved = setFreeAtOnce(1);
 
         clearViews();
@@ -175,22 +175,22 @@ void closeIsle()
             }
         }
         unloadSounds();
-        freeResource(&g_4b1590);
-        freeResource(&g_4b158c);
-        freeResource(&g_4b1594);
+        freeResource(&isleImagesResource);
+        freeResource(&featureButtonResource);
+        freeResource(&isleButtonResource);
         setFreeAtOnce(saved);
-        closeGameFile(&g_4b1588);
+        closeGameFile(&isleFile);
         fadeOutViews();
         showBusyCursor();
     }
 }
 
 /* Scene 3's frame: leaving once asked to (sceneDue) and sound 996 is
-   done; g_4b15b8 is cleared while snoidsOnTheirWay isn't set. */
+   done; isleSendingOff is cleared while snoidsOnTheirWay isn't set. */
 /* @zoombi32 0x0043ebf4 */
 void isleFrame()
 {
-    if (!isleBusy && g_4b15a4) {
+    if (!isleBusy && isleOpen) {
         isleBusy = 1;
         updateViews();
         if (sceneDue) {
@@ -201,13 +201,13 @@ void isleFrame()
             if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1)
                 leaveIsleIfAsked();
         }
-        if (!snoidsOnTheirWay && g_4b15b8)
-            g_4b15b8 = 0;
+        if (!snoidsOnTheirWay && isleSendingOff)
+            isleSendingOff = 0;
         isleBusy = 0;
     }
 }
 
-/* Scene 3's keys: 23 brings back the two views g_4b15b0 and g_4b15b2
+/* Scene 3's keys: 23 brings back the two views settingView1 and settingView2
    (adding them first if the game state's +0x20 is set). Returns whether it
    handled the key. */
 /* @zoombi32 0x0043ec8c */
@@ -229,7 +229,7 @@ short isleKey(unsigned short key)
 /* A feature button clicked (1-20, in four groups of five): picks that feature
    for the Zoombini being made (sound 1000), or drops it if already picked
    (1004), or refuses (1008, never: isleAllowsFeature allows every feature). Stops sound
-   g_4b15b6 first, and redraws the panel's third button if the Zoombini's
+   isleRemark first, and redraws the panel's third button if the Zoombini's
    completeness changes. */
 /* @zoombi32 0x0043ecbb */
 void featureButtonClicked(short button)
@@ -240,9 +240,9 @@ void featureButtonClicked(short button)
 
     if (leaveIsleIfAsked())
         return;
-    if (g_4b15b6 && isSoundPlaying(g_4b15b6, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-        stopSounds(g_4b15b6, RESOURCE_TYPE(0, 'S', 'N', 'D'));
-        g_4b15b6 = 0;
+    if (isleRemark && isSoundPlaying(isleRemark, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+        stopSounds(isleRemark, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+        isleRemark = 0;
     }
     rect = isleButtons[button].rect;
     group = 0;
@@ -272,11 +272,11 @@ void featureButtonClicked(short button)
     }
     short allowed = zoombiniMadeAllowed();
 
-    if (allowed != g_4b15aa) {
-        g_4b15aa = allowed;
+    if (allowed != zoombiniMakeAllowed) {
+        zoombiniMakeAllowed = allowed;
         drawIsleButtons(3, 1, 1);
     }
-    g_4b15ac = 1;
+    isleButton22Due = 1;
 }
 
 /* Leaves the scene if asked to (sceneDue names where to): returns whether
@@ -303,7 +303,7 @@ short leaveIsleIfAsked()
  * the map (999); 6 with the party complete sends up to one of places 11,
  * 12, 6 and 7 off (996) and asks to leave for scene 7, else may remark
  * (20043 or 20044) on Zoombinis left to make; 7 takes a Zoombini from the
- * queue back to be remade (1007). Stops sound g_4b15b6 first.
+ * queue back to be remade (1007). Stops sound isleRemark first.
  */
 /* @zoombi32 0x0043ee5d */
 void isleButtonClicked(short button)
@@ -320,21 +320,21 @@ void isleButtonClicked(short button)
 
     if (leaveIsleIfAsked())
         return;
-    if (g_4b15b6 && isSoundPlaying(g_4b15b6, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-        stopSounds(g_4b15b6, RESOURCE_TYPE(0, 'S', 'N', 'D'));
-        g_4b15b6 = 0;
+    if (isleRemark && isSoundPlaying(isleRemark, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+        stopSounds(isleRemark, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+        isleRemark = 0;
     }
-    rect = g_4a31cc[button].rect;
+    rect = isleSceneButtons[button].rect;
     getCursorPosition(&cursor);
     switch (button) {
     case 1:
-        if (!g_4b15a8 && g_4b15aa && *(short *)(gameState + 0x48) < 625) {
+        if (!enoughToLeaveChosen && zoombiniMakeAllowed && *(short *)(gameState + 0x48) < 625) {
             if (debugMessagesOn && addModifierKeys(0) == 0x800 && !countSnoidViews()) {
                 *(short *)(gameState + 0x48) = 624;
                 *(short *)(gameState + 0x4e) = 624;
             }
             rosterChanged = 1;
-            g_4b15b8 = 1;
+            isleSendingOff = 1;
             snoidsOnTheirWay++;
             queueViewSound(1005, 0);
             drawIsleButtons(button, 1, 1);
@@ -350,13 +350,13 @@ void isleButtonClicked(short button)
             makeName(g_4b157d, 10);
             drawIsleButtons(3, 1, 1);
         }
-        g_4b15aa = zoombiniMadeAllowed();
+        zoombiniMakeAllowed = zoombiniMadeAllowed();
         break;
     case 2:
         queueViewSound(snoidSound(&snoidBeingMade, randomBetween(0, 12)), 0);
         break;
     case 3:
-        if (g_4b15aa) {
+        if (zoombiniMakeAllowed) {
             queueViewSound(1000, 0);
             makeName(g_4b157d, 10);
             drawIsleButtons(button, 1, 1);
@@ -366,17 +366,17 @@ void isleButtonClicked(short button)
         if (*(short *)(gameState + 0x48) < 625) {
             queueViewSound(1006, 0);
             drawIsleButtons(button, 1, 1);
-            if (!g_4b15a8 && addModifierKeys(0) == 0x800) {
+            if (!enoughToLeaveChosen && addModifierKeys(0) == 0x800) {
                 pickZoombiniMade(1);
                 drawFeatureButtons(0, 0, &rect);
                 showRect(&rect);
                 isleQueue(&where, &slot);
                 when = clockTime();
-                while (!g_4b15a8) {
+                while (!enoughToLeaveChosen) {
                     rosterChanged = 1;
                     countZoombiniMade(1);
                     id = placeSnoid(&snoidBeingMade, when, 148, 215, where.x, where.y);
-                    g_4b15b8 = 1;
+                    isleSendingOff = 1;
                     snoidsOnTheirWay++;
                     sortedIds[slot] = id;
                     (*(short *)(gameState + 0x48))++;
@@ -395,12 +395,12 @@ void isleButtonClicked(short button)
             } else {
                 waitForEventFor(0, 2, 0, 1);
                 drawIsleButtons(button, 0, 1);
-                pickZoombiniMade(g_4b15aa);
+                pickZoombiniMade(zoombiniMakeAllowed);
                 drawFeatureButtons(0, 0, &rect);
                 showRect(&rect);
                 drawIsleButtons(3, 1, 1);
             }
-            g_4b15aa = zoombiniMadeAllowed();
+            zoombiniMakeAllowed = zoombiniMadeAllowed();
         } else {
             queueViewSound(1008, 0);
         }
@@ -414,7 +414,7 @@ void isleButtonClicked(short button)
         closeIsle();
         break;
     case 6:
-        if (g_4b15a8) {
+        if (enoughToLeaveChosen) {
             short order[4] = {11, 12, 6, 7};
 
             queueViewSound(996, 0);
@@ -447,19 +447,19 @@ void isleButtonClicked(short button)
             if (left > 0 && made < 625) {
                 switch (randomBetween(1, 2)) {
                 case 1:
-                    g_4b15b6 = 20043;
+                    isleRemark = 20043;
                     break;
                 case 2:
-                    g_4b15b6 = 20044;
+                    isleRemark = 20044;
                     break;
                 }
-                if (g_4b15b6)
-                    queueViewSound(g_4b15b6, 1);
+                if (isleRemark)
+                    queueViewSound(isleRemark, 1);
             }
         }
         break;
     case 7:
-        if (!g_4b15b8) {
+        if (!isleSendingOff) {
             short grab;
 
             view = viewAt(cursor, 1, 1);
@@ -472,7 +472,7 @@ void isleButtonClicked(short button)
                     grab = 0;
             }
             if (grab) {
-                other = findView(g_4b15b4);
+                other = findView(view4100);
                 if (other)
                     other->flags |= 0x8000;
                 dragSnoid(view, cursor, 0, 0);
@@ -500,8 +500,8 @@ void isleButtonClicked(short button)
                         showRect(&rect);
                         drawIsleButtons(3, 1, 1);
                         checkEnoughChosen();
-                        g_4b15aa = zoombiniMadeAllowed();
-                        g_4b15ac = 1;
+                        zoombiniMakeAllowed = zoombiniMadeAllowed();
+                        isleButton22Due = 1;
                         isleQueue(0, 0);
                         if (*(short *)(gameState + 0x48) == 624)
                             drawIsleButtons(button, 0, 1);
@@ -518,14 +518,14 @@ void isleButtonClicked(short button)
 /* Draws the panel's buttons (1-7, from the bank isleButtonImages; some lit, some
    greyed by the scene's state), or just button `which`, lit or not; the
    second shows the Zoombini being made, the third its name (g_4b157d, if
-   g_4b15aa). Shows the area drawn if `show`. */
+   zoombiniMakeAllowed). Shows the area drawn if `show`. */
 /* @zoombi32 0x0043f5ea */
 void drawIsleButtons(short which, short lit, short show)
 {
     short y;
     short count;
     ShortRect rect;
-    ShortRect bounds = g_4a3376;
+    ShortRect bounds = isleButtonsRect;
     Color saved;
     short i;
     short x;
@@ -534,21 +534,21 @@ void drawIsleButtons(short which, short lit, short show)
     if (!which) {
         i = 0;
         count = 7;
-        bounds = g_4a31cc[1].rect;
-        unionRect(&bounds, &g_4a31cc[7].rect);
+        bounds = isleSceneButtons[1].rect;
+        unionRect(&bounds, &isleSceneButtons[7].rect);
     } else {
         i = which - 1;
         count = i + 1;
-        bounds = g_4a31cc[which].rect;
+        bounds = isleSceneButtons[which].rect;
     }
     for (; i < count; i++) {
-        x = g_4a31cc[i + 1].rect.left;
-        y = g_4a31cc[i + 1].rect.top;
+        x = isleSceneButtons[i + 1].rect.left;
+        y = isleSceneButtons[i + 1].rect.top;
         image = 0;
         switch (i) {
         case 0:
             image = 2;
-            if (*(short *)(gameState + 0x48) >= 625 || g_4b15a8 || !g_4b15aa) {
+            if (*(short *)(gameState + 0x48) >= 625 || enoughToLeaveChosen || !zoombiniMakeAllowed) {
                 lit = 0;
                 image = 1;
             }
@@ -560,9 +560,9 @@ void drawIsleButtons(short which, short lit, short show)
             if (dialogFlags & 0x10)
                 return;
             drawImageData((unsigned short *)(isleButtonImages->offsets[13] + (char *)isleButtonImages), x, y, 8);
-            rect = g_4a31cc[i + 1].rect;
+            rect = isleSceneButtons[i + 1].rect;
             saved = setForeColor(Color(45));
-            if (g_4b15aa) {
+            if (zoombiniMakeAllowed) {
                 rect.top++;
                 rect.left += 4;
                 drawText(rect, 0x22, g_4b157d, 0xffff);
@@ -573,7 +573,7 @@ void drawIsleButtons(short which, short lit, short show)
             break;
         case 3:
             image = 4;
-            if (!g_4b15a8 && g_4b15a6)
+            if (!enoughToLeaveChosen && isleCheatButtonLit)
                 image = 6;
             break;
         case 4:
@@ -581,7 +581,7 @@ void drawIsleButtons(short which, short lit, short show)
             break;
         case 5:
             image = 9;
-            if (!g_4b15a8) {
+            if (!enoughToLeaveChosen) {
                 lit = 0;
                 image = 8;
             }
@@ -597,13 +597,13 @@ void drawIsleButtons(short which, short lit, short show)
         showRect(&bounds);
 }
 
-/* Draws the feature buttons (1-20, from the bank g_4b1598; each lit if it's
+/* Draws the feature buttons (1-20, from the bank featureButtonImages; each lit if it's
    the feature chosen in its group of five for the Zoombini being made), or
    just button `which`, lit or not; stores the area drawn in *bounds. */
 /* @zoombi32 0x0043f856 */
 void drawFeatureButtons(short which, short lit, ShortRect *bounds)
 {
-    ShortRect rect = g_4a337e;
+    ShortRect rect = featureButtonsRect;
     short i;
     short image;
 
@@ -614,7 +614,7 @@ void drawFeatureButtons(short which, short lit, ShortRect *bounds)
             image = i + i + 1;
             if (i % 5 + 1 == snoidBeingMade.features[i / 5])
                 image++;
-            drawImageData((unsigned short *)(g_4b1598->offsets[image] + (char *)g_4b1598), isleButtons[i + 1].rect.left,
+            drawImageData((unsigned short *)(featureButtonImages->offsets[image] + (char *)featureButtonImages), isleButtons[i + 1].rect.left,
                           isleButtons[i + 1].rect.top, 8);
         }
     } else {
@@ -623,24 +623,24 @@ void drawFeatureButtons(short which, short lit, ShortRect *bounds)
         image = i + i + 1;
         if (lit)
             image++;
-        drawImageData((unsigned short *)(g_4b1598->offsets[image] + (char *)g_4b1598), isleButtons[i + 1].rect.left,
+        drawImageData((unsigned short *)(featureButtonImages->offsets[image] + (char *)featureButtonImages), isleButtons[i + 1].rect.left,
                       isleButtons[i + 1].rect.top, 8);
     }
     if (bounds)
         *bounds = rect;
 }
 
-/* Draws image `which` of the bank g_4b159c at (x, y) by its hot spot
-   (g_4a3386, g_4a339c). */
+/* Draws image `which` of the bank isleImages at (x, y) by its hot spot
+   (isleImageHotX, isleImageHotY). */
 /* @zoombi32 0x0043f985 */
 void drawIsleImage(short which, short x, short y)
 {
     if (which)
-        drawImageData((unsigned short *)(g_4b159c->offsets[which] + (char *)g_4b159c), x - g_4a3386[which],
-                      y - g_4a339c[which], 8);
+        drawImageData((unsigned short *)(isleImages->offsets[which] + (char *)isleImages), x - isleImageHotX[which],
+                      y - isleImageHotY[which], 8);
 }
 
-/* Draws a Zoombini from its parts in the bank g_4b159c where it stands:
+/* Draws a Zoombini from its parts in the bank isleImages where it stands:
    feet, body, eyes, nose, then hair. */
 /* @zoombi32 0x0043f9d3 */
 void drawZoombiniParts(Snoid *snoid)
@@ -703,8 +703,8 @@ void pickZoombiniMade(short rename)
     short feet;
     short i;
 
-    g_4b15aa = 0;
-    while (!g_4b15aa && tries < 64) {
+    zoombiniMakeAllowed = 0;
+    while (!zoombiniMakeAllowed && tries < 64) {
         tries++;
         if (tries >= 64) {
             found = 0;
@@ -724,13 +724,13 @@ void pickZoombiniMade(short rename)
                 if (!snoidBeingMade.features[i] || rename)
                     snoidBeingMade.features[i] = randomBetween(1, 5);
         }
-        g_4b15aa = zoombiniMadeAllowed();
-        if (!g_4b15aa)
+        zoombiniMakeAllowed = zoombiniMadeAllowed();
+        if (!zoombiniMakeAllowed)
             rename = 1;
     }
     if (rename)
         makeName(g_4b157d, 10);
-    g_4b15ac = 1;
+    isleButton22Due = 1;
 }
 
 /* The view drawing the isle's buttons and the feature buttons. */
@@ -742,48 +742,48 @@ void drawIsleButtonsView(View *)
 }
 
 /* The scene's update: adds to the region to redraw the buttons whose state
-   changed (24 with the cheat modifier, 26 and 21 with g_4b15a8, 21 with
-   g_4b15aa, 22 when g_4b15ac asks). */
+   changed (24 with the cheat modifier, 26 and 21 with enoughToLeaveChosen, 21 with
+   zoombiniMakeAllowed, 22 when isleButton22Due asks). */
 /* @zoombi32 0x0043fc9a */
 void updateIsleButtons(View *, short region)
 {
     if (!dialogFlags && *(short *)(gameState + 0x48) < 625 && addModifierKeys(0) == 0x800) {
-        if (!g_4b15a6) {
-            g_4b15a6 = 1;
+        if (!isleCheatButtonLit) {
+            isleCheatButtonLit = 1;
             unionRgnRect(region, &isleButtons[24].rect);
         }
-    } else if (g_4b15a6) {
-        g_4b15a6 = 0;
+    } else if (isleCheatButtonLit) {
+        isleCheatButtonLit = 0;
         unionRgnRect(region, &isleButtons[24].rect);
     }
-    if (g_4b15a8) {
-        if (!g_4a33b2) {
-            g_4a33b2 = 1;
+    if (enoughToLeaveChosen) {
+        if (!isleEnoughDrawn) {
+            isleEnoughDrawn = 1;
             unionRgnRect(region, &isleButtons[26].rect);
             unionRgnRect(region, &isleButtons[21].rect);
         }
-    } else if (g_4a33b2) {
-        g_4a33b2 = 0;
+    } else if (isleEnoughDrawn) {
+        isleEnoughDrawn = 0;
         unionRgnRect(region, &isleButtons[26].rect);
         unionRgnRect(region, &isleButtons[21].rect);
     }
-    if (!g_4b15aa) {
-        if (g_4a33b4) {
-            g_4a33b4 = 0;
+    if (!zoombiniMakeAllowed) {
+        if (isleMakeAllowedDrawn) {
+            isleMakeAllowedDrawn = 0;
             unionRgnRect(region, &isleButtons[21].rect);
         }
-    } else if (!g_4a33b4) {
-        g_4a33b4 = 1;
+    } else if (!isleMakeAllowedDrawn) {
+        isleMakeAllowedDrawn = 1;
         unionRgnRect(region, &isleButtons[21].rect);
     }
-    if (g_4b15ac) {
-        g_4b15ac = 0;
+    if (isleButton22Due) {
+        isleButton22Due = 0;
         unionRgnRect(region, &isleButtons[22].rect);
     }
 }
 
 /* Counts the Zoombini being made (snoidBeingMade) in or out of the numbers of
-   each kind (at most two), noting in g_4b15aa whether it's complete (and,
+   each kind (at most two), noting in zoombiniMakeAllowed whether it's complete (and,
    when adding, not one too many). */
 /* @zoombi32 0x0043fdcc */
 void countZoombiniMade(short add)
@@ -796,14 +796,14 @@ void countZoombiniMade(short add)
     short feet;
 
     if (add) {
-        g_4b15aa = zoombiniMadeAllowed();
+        zoombiniMakeAllowed = zoombiniMadeAllowed();
     } else {
-        g_4b15aa = 1;
+        zoombiniMakeAllowed = 1;
         for (i = 0; i < 4; i++)
             if (!made->features[i])
-                g_4b15aa = 0;
+                zoombiniMakeAllowed = 0;
     }
-    if (g_4b15aa) {
+    if (zoombiniMakeAllowed) {
         hair = made->features[0] - 1;
         eyes = made->features[1] - 1;
         nose = made->features[2] - 1;
@@ -817,7 +817,7 @@ void countZoombiniMade(short add)
     }
 }
 
-/* Shows the two views g_4b15b0 and g_4b15b2 by the setting at game state
+/* Shows the two views settingView1 and settingView2 by the setting at game state
    +0x26 (0-3), stepping it on unless `keep`. */
 /* @zoombi32 0x0043ff1d */
 void showIsleSetting(short keep)
@@ -827,8 +827,8 @@ void showIsleSetting(short keep)
     short a;
     short b;
 
-    first = findView(g_4b15b0);
-    second = findView(g_4b15b2);
+    first = findView(settingView1);
+    second = findView(settingView2);
     if (first && second) {
         if (!keep)
             (*(short *)(gameState + 0x26))++;
@@ -860,7 +860,7 @@ void showIsleSetting(short keep)
 }
 
 /*
- * The queue of places (sortedIds, at g_4a3324): with `where`, gives the
+ * The queue of places (sortedIds, at isleQueuePlaces): with `where`, gives the
  * first free place and its number; otherwise moves the Zoombinis up into
  * each free place from up to five places behind (by where the place is
  * in its row of five), one at a time.
@@ -880,7 +880,7 @@ void isleQueue(Point *where, short *slot)
     if (where) {
         for (i = 0; i < 16; i++)
             if (!sortedIds[i]) {
-                *where = g_4a3324[i];
+                *where = isleQueuePlaces[i];
                 *slot = i;
                 return;
             }
@@ -932,14 +932,14 @@ void isleQueue(Point *where, short *slot)
                     if (snoid) {
                         snoid->unknownEa = -1;
                         if (i + step < 17) {
-                            *(Point *)&snoid->targetX = g_4a3324[i];
+                            *(Point *)&snoid->targetX = isleQueuePlaces[i];
                             setSnoidAction(snoid, 7, 0);
                         } else {
                             snoid->targetX = 326;
                             snoid->targetY = 390;
                             setSnoidAction(snoid, 7, 0);
                             updateSnoidView(snoidView(snoid), removedRgn);
-                            *(Point *)&snoid->targetX = g_4a3324[i];
+                            *(Point *)&snoid->targetX = isleQueuePlaces[i];
                         }
                         sortedIds[i] = sortedIds[i + step];
                         sortedIds[i + step] = 0;
@@ -957,15 +957,15 @@ void isleQueue(Point *where, short *slot)
     g_4b7564 = 0;
 }
 
-/* Adds the views g_4b15b0 (script 4104) and g_4b15b2 (4105) if they
+/* Adds the views settingView1 (script 4104) and settingView2 (4105) if they
    aren't there. */
 /* @zoombi32 0x00440218 */
 void addIsleSettingViews()
 {
-    if (!g_4b15b0)
-        g_4b15b0 = addView(0x800c000, drawCels, runViewScript, 4104, 7, 0, 0, 0);
-    if (!g_4b15b2)
-        g_4b15b2 = addView(0x8008000, drawCels, runViewScript, 4105, 9, 0, 0, 0);
+    if (!settingView1)
+        settingView1 = addView(0x800c000, drawCels, runViewScript, 4104, 7, 0, 0, 0);
+    if (!settingView2)
+        settingView2 = addView(0x8008000, drawCels, runViewScript, 4105, 9, 0, 0, 0);
 }
 
 /* @zoombi32 0x0044027b */
@@ -974,14 +974,14 @@ short isleAllowsFeature(short, short)
     return 1;
 }
 
-/* Sets g_4b15a8 if there are Zoombinis chosen and either at least
-   g_4b15ae of them or 625 counted in the game (the whole population). */
+/* Sets enoughToLeaveChosen if there are Zoombinis chosen and either at least
+   enoughToLeave of them or 625 counted in the game (the whole population). */
 /* @zoombi32 0x00440286 */
 void checkEnoughChosen()
 {
-    g_4b15a8 = 0;
+    enoughToLeaveChosen = 0;
     short count = countChosenSnoids();
 
     if (count)
-        g_4b15a8 = count >= g_4b15ae || *(short *)(gameState + 0x48) >= 625;
+        enoughToLeaveChosen = count >= enoughToLeave || *(short *)(gameState + 0x48) >= 625;
 }

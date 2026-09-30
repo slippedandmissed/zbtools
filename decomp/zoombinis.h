@@ -3846,11 +3846,11 @@ extern short *g_4afbd0;
 extern short *g_4afbd4;
 extern GroupList g_4a2194;
 
-extern short g_4b15a8;
+extern short enoughToLeaveChosen; /* @data 0x4b15a8 */
 extern SceneButton netButtons[4]; /* @data 0x4a288a */
 extern Snoid snoidBeingMade; /* @data 0x4b1484: the Zoombini being made */
-extern short g_4b15a6;
-extern short g_4b15aa;
+extern short isleCheatButtonLit; /* @data 0x4b15a6 */
+extern short zoombiniMakeAllowed; /* @data 0x4b15aa */
 extern SceneButton isleButtons[27]; /* @data 0x4a2efc: [0] isn't a button */
 extern ImageBank *isleButtonImages; /* @data 0x4b15a0 */
 extern char g_4b157d[];

@@ -574,10 +574,10 @@ void nudgeRect(ShortRect *rect, short direction)
 /* @zoombi32 0x00416754 */
 void resetCamp()
 {
-    g_4ab518 = g_4ab51a = sceneDue = 0;
-    g_4ab52a = g_4ab52c = 0;
-    g_4ab512 = 0;
-    g_4ab52e = 0;
+    campView = campScrolling = sceneDue = 0;
+    campClicksOff = campDragging = 0;
+    pressedCampButton = 0;
+    campPopulationFull = 0;
 }
 
 /* @zoombi32 0x00417906 */
@@ -634,10 +634,10 @@ void enterCamp()
     loadFeatureGroup(0x4b0, 1, 0);
     loadScripts(0x44c, 0x10);
     addScripts(0x4b0, 0x10, 0);
-    g_4a0974 = loadImageBank(2000, &campFrameResource);
+    campFrameImages = loadImageBank(2000, &campFrameResource);
     campButtonImages = loadImageBank(0x834, &campButtonsResource);
     copyPaletteRange(0xec, 10);
-    g_4ab518 = addView(0xc000, drawCamp, scrollCamp, 0, 6, 0, 0, 0);
+    campView = addView(0xc000, drawCamp, scrollCamp, 0, 6, 0, 0, 0);
     addView(0x9000, drawSceneButtons2, 0, 0, 0, 0, 0, 0);
     addView(0x1000, drawSceneButtons1, updateCampButtons, 0, 0, 0, 0, 0);
     for (short i = 0; i < 16; i++)
@@ -696,15 +696,15 @@ void enterCamp()
     updateViews();
     if (returned)
         staggerSnoids(0x2d, 0x1e);
-    g_4ab52e = *(short *)(gameState + 0x48) >= 625
+    campPopulationFull = *(short *)(gameState + 0x48) >= 625
                && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0xa1fc) < 16;
-    if (g_4ab52e) {
+    if (campPopulationFull) {
         short n = countChosenSnoids();
 
-        g_4ab524 = n && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0xa1fc) <= n;
-        g_4ab526 = g_4ab524;
+        campEnoughChosen = n && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0xa1fc) <= n;
+        campEnoughDrawn = campEnoughChosen;
     } else {
-        g_4ab526 = g_4ab524 = countChosenSnoids() >= 16;
+        campEnoughDrawn = campEnoughChosen = countChosenSnoids() >= 16;
     }
     setGroupLists(campGroupLists, 2, (short)0xc000);
     highlightItemAt(1, 1);
@@ -726,7 +726,7 @@ void enterCamp()
     limit = 4;
     if (*(unsigned short *)(gameState + 0x30) & 0x3000)
         limit = 6;
-    if (!g_4ab52e) {
+    if (!campPopulationFull) {
         switch (reason) {
         case 0:
             switch (randomBetween(1, limit)) {
@@ -844,7 +844,7 @@ void campIdle()
         } else {
             short over = 0;
 
-            if (!g_4ab52c && !dialogFlags) {
+            if (!campDragging && !dialogFlags) {
                 getCursorPosition(&where);
                 for (short i = 3; !over && i < 7; i++)
                     if (ptInRect(&campButtons[i].rect, where))
@@ -877,7 +877,7 @@ void campButtonClicked(short button)
         getCursorPosition(&where);
         switch (button) {
         case 1:
-            if (g_4ab524) {
+            if (campEnoughChosen) {
                 queueViewSound(996, 0);
                 drawSceneButtons(button, 1, 0, 1);
                 waitForEventFor(0, 2, 0, 1);
@@ -886,7 +886,7 @@ void campButtonClicked(short button)
                 sendSnoids(0x2a8, 0x13c, 0x2d);
                 sceneDue = 10;
             } else {
-                if (g_4ab52e) {
+                if (campPopulationFull) {
                     switch (randomBetween(1, 3)) {
                     case 1:
                         sound = 0x4e53;
@@ -905,7 +905,7 @@ void campButtonClicked(short button)
             }
             break;
         case 2:
-            if (g_4ab524) {
+            if (campEnoughChosen) {
                 queueViewSound(996, 0);
                 drawSceneButtons(button, 1, 0, 1);
                 waitForEventFor(0, 2, 0, 1);
@@ -914,7 +914,7 @@ void campButtonClicked(short button)
                 sendSnoids(0x2a8, 0x190, 0x2d);
                 sceneDue = 13;
             } else {
-                if (g_4ab52e) {
+                if (campPopulationFull) {
                     switch (randomBetween(1, 3)) {
                     case 1:
                         sound = 0x4e53;
@@ -944,15 +944,15 @@ void campButtonClicked(short button)
         case 5:
         case 6:
         case 7:
-            g_4ab512 = button;
+            pressedCampButton = button;
             drawSceneButtons(button, 1, 0, 1);
             do {
-                g_4a080c = button - 3;
+                campScrollAsked = button - 3;
                 updateCampScroll(0);
                 mainLoopEvents();
             } while (isButtonStillDown(buttonDown));
             updateCampScroll(1);
-            g_4ab512 = 0;
+            pressedCampButton = 0;
             drawSceneButtons(button, 0, 0, 1);
             break;
         }
@@ -985,7 +985,7 @@ void campMouse(short action)
         sceneDue = 0;
         setCurrentMap(0);
         leaveCamp();
-    } else if (!g_4ab52a || action == 2) {
+    } else if (!campClicksOff || action == 2) {
         getCursorPosition(&where);
         picked = 0;
         view = 0;
@@ -1008,7 +1008,7 @@ void campMouse(short action)
                     dragged = addSnoidView(&draggedSnoid, 0);
                     if (dragged) {
                         view = findView(dragged);
-                        g_4a080c = -1;
+                        campScrollAsked = -1;
                         picked = 1;
                         action = 2;
                     }
@@ -1026,10 +1026,10 @@ void campMouse(short action)
             if (view) {
                 short placed = 0;
 
-                g_4ab51c = 0;
-                g_4ab52c = 1;
+                campScrollWay = 0;
+                campDragging = 1;
                 result = dragSnoid(view, where, 0, 0);
-                g_4ab52c = 0;
+                campDragging = 0;
                 count = heldPlaceNumber();
                 snoid = viewSnoid(view);
                 moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
@@ -1047,7 +1047,7 @@ void campMouse(short action)
                             camp->slots[drop].name[i] = viewSnoid(view)->name[i];
                         deleteView(view->id);
                         refreshCampView();
-                        g_4a080c = -1;
+                        campScrollAsked = -1;
                         picked = 0;
                         placed = 1;
                     }
@@ -1063,18 +1063,18 @@ void campMouse(short action)
                             camp->slots[slot].name[i] = draggedSnoid.name[i];
                         removeView(dragged, 1);
                     }
-                    g_4a080c = -1;
+                    campScrollAsked = -1;
                 } else if (result && !count && moved && !placed) {
                     claimPlacedView(result, view->id);
                     snoid->unknownF7 = 1;
                     snoid->unknownF8 = 1;
                 }
-                if (g_4ab52e) {
+                if (campPopulationFull) {
                     short n = countChosenSnoids();
 
-                    g_4ab524 = n && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0xa1fc) <= n;
+                    campEnoughChosen = n && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0xa1fc) <= n;
                 } else {
-                    g_4ab524 = countChosenSnoids() >= 16;
+                    campEnoughChosen = countChosenSnoids() >= 16;
                 }
             } else if ((view = viewAt(where, 0x20000, 1)) != 0) {
                 short sound = 0;
@@ -1125,8 +1125,8 @@ void campMouse(short action)
 
 /*
  * Draws the camp's buttons: `button` (1-7), else group 1 (0-2), 2 (3-6)
- * or all, `pressed` or not (buttons 3-6 show pressed if g_4ab512 names
- * them; 0 and 1 are greyed out without g_4ab524). With `show`, shows them.
+ * or all, `pressed` or not (buttons 3-6 show pressed if pressedCampButton names
+ * them; 0 and 1 are greyed out without campEnoughChosen). With `show`, shows them.
  */
 /* @zoombi32 0x0041790f */
 void drawSceneButtons(short button, short pressed, short group, short show)
@@ -1169,14 +1169,14 @@ void drawSceneButtons(short button, short pressed, short group, short show)
         switch (first) {
         case 0:
             image = 1;
-            if (!g_4ab524) {
+            if (!campEnoughChosen) {
                 pressed = 0;
                 image = 15;
             }
             break;
         case 1:
             image = 3;
-            if (!g_4ab524) {
+            if (!campEnoughChosen) {
                 pressed = 0;
                 image = 16;
             }
@@ -1191,7 +1191,7 @@ void drawSceneButtons(short button, short pressed, short group, short show)
             toggles = 1;
             image = (first - 3) * 2 + 7;
             pressed = 0;
-            if (g_4ab512 - 1 == first)
+            if (pressedCampButton - 1 == first)
                 pressed = 1;
             break;
         }
@@ -1226,14 +1226,14 @@ void drawSceneButtons2(View *)
 /* @zoombi32 0x00417aec */
 void updateCampButtons(View *, short region)
 {
-    if (g_4ab524) {
-        if (!g_4ab526) {
-            g_4ab526 = 1;
+    if (campEnoughChosen) {
+        if (!campEnoughDrawn) {
+            campEnoughDrawn = 1;
             unionRgnRect(region, &campButtons[0].rect);
             unionRgnRect(region, &campButtons[1].rect);
         }
-    } else if (g_4ab526) {
-        g_4ab526 = 0;
+    } else if (campEnoughDrawn) {
+        campEnoughDrawn = 0;
         unionRgnRect(region, &campButtons[0].rect);
         unionRgnRect(region, &campButtons[1].rect);
     }
@@ -1300,8 +1300,8 @@ short findCampSlot(short start, ShortRect rect, short occupied)
 }
 
 /*
- * The camp view's update: scrolls the camp as asked (g_4a080c: 1 back a
- * page, 2 back a row, 3 on a row, 4 on a page), a half row (g_4a080e) per
+ * The camp view's update: scrolls the camp as asked (campScrollAsked: 1 back a
+ * page, 2 back a row, 3 on a row, 4 on a page), a half row (campHalfRow) per
  * step, every view->interval.
  */
 /* @zoombi32 0x00417cf1 */
@@ -1317,42 +1317,42 @@ void scrollCamp(View *view, short)
         view->body.bounds = campArea;
         return;
     }
-    if (!g_4a080c)
+    if (!campScrollAsked)
         return;
     view->changed = 1;
     steps = 1;
-    switch (g_4a080c) {
+    switch (campScrollAsked) {
     case 1:
         steps += 4;
-        if (!g_4a080e && campRow - steps < 0)
+        if (!campHalfRow && campRow - steps < 0)
             steps = 0;
     case 2:
         if (steps && !campRow)
             insertCampRow();
         for (; steps; steps--) {
-            if (!g_4a080e && campRow > 0) {
+            if (!campHalfRow && campRow > 0) {
                 campRow--;
                 if (campRow < 0) {
                     campRow = 0;
                     steps = 1;
                 }
-                g_4a080e = 1;
+                campHalfRow = 1;
             } else {
-                g_4a080e = 0;
+                campHalfRow = 0;
             }
         }
         break;
     case 4:
         steps += 4;
-        if (!g_4a080e && campRow + steps > campRows - 5)
+        if (!campHalfRow && campRow + steps > campRows - 5)
             steps = 0;
     case 3:
         for (; steps; steps--) {
-            if (!g_4a080e) {
+            if (!campHalfRow) {
                 if (campRow + 1 <= 120 && campRow < campRows - 5)
-                    g_4a080e = 1;
+                    campHalfRow = 1;
             } else {
-                g_4a080e = 0;
+                campHalfRow = 0;
                 campRow++;
                 if (campRow >= campRows - 5) {
                     campRow = campRows - 5;
@@ -1364,8 +1364,8 @@ void scrollCamp(View *view, short)
         }
         break;
     }
-    if (!g_4a080e)
-        g_4a080c = 0;
+    if (!campHalfRow)
+        campScrollAsked = 0;
 }
 
 /* The camp view's drawing: the Zoombinis in the five rows shown (six while
@@ -1388,7 +1388,7 @@ void drawCamp(View *)
     count = 25;
     slot = campRow * 5;
     column = row = 0;
-    if (g_4a080e) {
+    if (campHalfRow) {
         layout = 1;
         count += 5;
         bottom = 9;
@@ -1396,14 +1396,14 @@ void drawCamp(View *)
         layout = 3;
         bottom = 12;
     }
-    drawImageData((unsigned short *)(g_4a0974->offsets[layout] + (char *)g_4a0974), 0x35, 6, 0);
+    drawImageData((unsigned short *)(campFrameImages->offsets[layout] + (char *)campFrameImages), 0x35, 6, 0);
     for (i = 0; i < count; i++, slot++) {
         short index = slot % campShown;
 
         if (camp->slots[index].zoombini) {
             short x;
 
-            if (g_4a080e) {
+            if (campHalfRow) {
                 x = campX[row * 2];
                 y = campY[row * 2][column];
             } else {
@@ -1428,9 +1428,9 @@ void drawCamp(View *)
             row++;
         }
     }
-    drawImageData((unsigned short *)(g_4a0974->offsets[layout + 1] + (char *)g_4a0974), 0x35, bottom,
+    drawImageData((unsigned short *)(campFrameImages->offsets[layout + 1] + (char *)campFrameImages), 0x35, bottom,
                   8);
-    drawImageData((unsigned short *)(g_4a0974->offsets[5] + (char *)g_4a0974), 0x1f, 0, 8);
+    drawImageData((unsigned short *)(campFrameImages->offsets[5] + (char *)campFrameImages), 0x1f, 0, 8);
 }
 
 /*
@@ -1530,7 +1530,7 @@ void compactCamp()
 }
 
 /*
- * Whether the camp can scroll the way it's asked to (g_4a080c: 1-4), with
+ * Whether the camp can scroll the way it's asked to (campScrollAsked: 1-4), with
  * the sound that starts (2000) or stops (2001) when that changes; with
  * `stop`, stops it.
  */
@@ -1539,10 +1539,10 @@ void updateCampScroll(short stop)
 {
     short sound = 0;
 
-    if (g_4a080c >= 0) {
+    if (campScrollAsked >= 0) {
         short can = 0;
 
-        switch (g_4a080c) {
+        switch (campScrollAsked) {
         case 1:
             if (campRow > 4)
                 can = 1;
@@ -1560,9 +1560,9 @@ void updateCampScroll(short stop)
                 can = 1;
             break;
         }
-        if (can != g_4ab51a) {
-            g_4ab51a = can;
-            switch (g_4ab51a) {
+        if (can != campScrolling) {
+            campScrolling = can;
+            switch (campScrolling) {
             case 0:
                 sound = 2001;
                 break;
@@ -1572,9 +1572,9 @@ void updateCampScroll(short stop)
             }
         }
         if (stop) {
-            if (g_4ab51a)
+            if (campScrolling)
                 sound = 2001;
-            g_4ab51a = 0;
+            campScrolling = 0;
         }
         if (sound) {
             if (sound == 2001)
@@ -1587,7 +1587,7 @@ void updateCampScroll(short stop)
 /* @zoombi32 0x004184b7 */
 void refreshCampView()
 {
-    View *view = findView(g_4ab518);
+    View *view = findView(campView);
 
     if (view)
         view->nextUpdate = 0;
