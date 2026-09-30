@@ -54,7 +54,7 @@ extern short g_4ab82c; /* @data 0x4ab82c */
 extern short g_4ab82e; /* @data 0x4ab82e */
 extern unsigned long g_4ab830; /* @data 0x4ab830 */
 extern unsigned long g_4ab834; /* @data 0x4ab834 */
-extern unsigned long g_4ab838; /* @data 0x4ab838 */
+extern unsigned long bridgeFidgetersUsed; /* @data 0x4ab838 */
 
 void startBridgeTimer();
 unsigned long bridgeTimer();

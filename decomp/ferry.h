@@ -6,70 +6,70 @@
 #ifndef FERRY_H
 #define FERRY_H
 
-extern short g_4a1440[]; /* @data 0x4a1440: scripts by g_4abaee */
-extern short g_4a13e4[4]; /* @data 0x4a13e4: Captain Cajun's scripts (g_4a13ec picks) */
-extern unsigned long g_4a13ec; /* @data 0x4a13ec: slots used (allocateSlot) */
+extern short placeViewScripts[]; /* @data 0x4a1440: scripts by returnRoute */
+extern short cajunGreetings[4]; /* @data 0x4a13e4: Captain Cajun's scripts (cajunGreetingsUsed picks) */
+extern unsigned long cajunGreetingsUsed; /* @data 0x4a13ec: slots used (allocateSlot) */
 extern GroupList ferryGroups[1]; /* @data 0x4a14fc */
-extern short g_4a13f0[5]; /* @data 0x4a13f0: remarks (g_4a13fc picks) */
-extern unsigned long g_4a13fc; /* @data 0x4a13fc: slots used (allocateSlot) */
-extern short g_4a1574; /* @data 0x4a1574: ferryFrame is running */
-extern short g_4a1400[2]; /* @data 0x4a1400: remarks for a good placing (g_4a1404 picks) */
-extern unsigned long g_4a1404; /* @data 0x4a1404 */
-extern short g_4a1408[11]; /* @data 0x4a1408: remarks for a bad one (g_4a1420 picks) */
-extern unsigned long g_4a1420; /* @data 0x4a1420 */
-extern short g_4a1434[3]; /* @data 0x4a1434: remarks (g_4a143c picks) */
-extern unsigned long g_4a143c; /* @data 0x4a143c */
-extern short g_4a1424[5]; /* @data 0x4a1424: sounds (g_4a1430 picks) */
-extern unsigned long g_4a1430; /* @data 0x4a1430: slots used (allocateSlot) */
-extern short g_4a1454[10]; /* @data 0x4a1454: scripts by g_4abaee */
-extern short g_4a1468[10]; /* @data 0x4a1468: and the next */
-extern ImageBank *g_4a147c; /* @data 0x4a147c: the buttons' images */
+extern short cajunIdleRemarks[5]; /* @data 0x4a13f0: remarks (cajunIdleRemarksUsed picks) */
+extern unsigned long cajunIdleRemarksUsed; /* @data 0x4a13fc: slots used (allocateSlot) */
+extern short inFerryFrame; /* @data 0x4a1574: ferryFrame is running */
+extern short goodPlacingRemarks[2]; /* @data 0x4a1400: remarks for a good placing (goodPlacingRemarksUsed picks) */
+extern unsigned long goodPlacingRemarksUsed; /* @data 0x4a1404 */
+extern short badPlacingRemarks[11]; /* @data 0x4a1408: remarks for a bad one (badPlacingRemarksUsed picks) */
+extern unsigned long badPlacingRemarksUsed; /* @data 0x4a1420 */
+extern short movedRemarks[3]; /* @data 0x4a1434: remarks (movedRemarksUsed picks) */
+extern unsigned long movedRemarksUsed; /* @data 0x4a143c */
+extern short returnSounds[5]; /* @data 0x4a1424: sounds (returnSoundsUsed picks) */
+extern unsigned long returnSoundsUsed; /* @data 0x4a1430: slots used (allocateSlot) */
+extern short returnScripts[10]; /* @data 0x4a1454: scripts by returnRoute */
+extern short returnNextScripts[10]; /* @data 0x4a1468: and the next */
+extern ImageBank *ferryButtonImages; /* @data 0x4a147c: the buttons' images */
 extern SceneButton ferryButtons[2]; /* @data 0x4a1480 */
-extern long g_4a151c; /* @data 0x4a151c */
-extern short g_4a1570; /* @data 0x4a1570: button 2 is drawn lit */
-extern short g_4a1572; /* @data 0x4a1572: button 1 is drawn */
-extern unsigned long g_4aba84; /* @data 0x4aba84: when to make the next idle remark (view ticks) */
-extern short g_4aba88; /* @data 0x4aba88 */
-extern short g_4aba8a; /* @data 0x4aba8a: the level */
-extern Point g_4aba8c; /* @data 0x4aba8c */
-extern short g_4aba90; /* @data 0x4aba90 */
-extern Point g_4aba92; /* @data 0x4aba92 */
-extern Point *g_4aba98; /* @data 0x4aba98 */
-extern Point g_4aba9c; /* @data 0x4aba9c */
-extern short g_4abaa0; /* @data 0x4abaa0 */
-extern short g_4abaa2; /* @data 0x4abaa2 */
-extern short g_4abaa4; /* @data 0x4abaa4 */
-extern short g_4abaa6; /* @data 0x4abaa6 */
-extern long g_4abaa8; /* @data 0x4abaa8: Ferry.MHK */
-extern short g_4abaac; /* @data 0x4abaac: the scene is open */
-extern short g_4abaae; /* @data 0x4abaae: button 2 is live */
-extern short g_4abab0; /* @data 0x4abab0 */
-extern short g_4abab2; /* @data 0x4abab2 */
-extern short g_4abab4; /* @data 0x4abab4: Captain Cajun's view */
-extern short g_4abab6; /* @data 0x4abab6 */
-extern short g_4abab8; /* @data 0x4abab8 */
-extern short g_4ababa; /* @data 0x4ababa */
-extern short g_4ababc; /* @data 0x4ababc */
-extern short g_4ababe; /* @data 0x4ababe */
-extern short g_4abac0; /* @data 0x4abac0 */
-extern short g_4abac2; /* @data 0x4abac2 */
-extern short g_4abac4; /* @data 0x4abac4 */
-extern short g_4abac6[20]; /* @data 0x4abac6: the placed views */
-extern short g_4abaee; /* @data 0x4abaee */
-extern short g_4abaf0; /* @data 0x4abaf0 */
-extern short g_4abaf2; /* @data 0x4abaf2 */
-extern short g_4abaf4; /* @data 0x4abaf4 */
+extern long ferryButtonResource; /* @data 0x4a151c */
+extern short ferryButton2Lit; /* @data 0x4a1570: button 2 is drawn lit */
+extern short ferryButton1Drawn; /* @data 0x4a1572: button 1 is drawn */
+extern unsigned long nextIdleRemarkTime; /* @data 0x4aba84: when to make the next idle remark (view ticks) */
+extern short forcedFerryCount; /* @data 0x4aba88 */
+extern short ferryLevel; /* @data 0x4aba8a: the level */
+extern Point returnPlace; /* @data 0x4aba8c */
+extern short returnUnderway; /* @data 0x4aba90 */
+extern Point returnTarget; /* @data 0x4aba92 */
+extern Point *returnAnchor; /* @data 0x4aba98 */
+extern Point returnLanding; /* @data 0x4aba9c */
+extern short cajunRemarkDue; /* @data 0x4abaa0 */
+extern short returnDue; /* @data 0x4abaa2 */
+extern short ferryHelpersDue; /* @data 0x4abaa4 */
+extern short cajunLeavingGroup; /* @data 0x4abaa6 */
+extern long ferryFile; /* @data 0x4abaa8: Ferry.MHK */
+extern short ferryOpen; /* @data 0x4abaac: the scene is open */
+extern short ferryHasPassengers; /* @data 0x4abaae: button 2 is live */
+extern short cajunGreeted; /* @data 0x4abab0 */
+extern short view1601; /* @data 0x4abab2 */
+extern short cajunView; /* @data 0x4abab4: Captain Cajun's view */
+extern short view1602; /* @data 0x4abab6 */
+extern short view1603; /* @data 0x4abab8 */
+extern short view1704; /* @data 0x4ababa */
+extern short view1705; /* @data 0x4ababc */
+extern short view1706; /* @data 0x4ababe */
+extern short returnPlaceView; /* @data 0x4abac0 */
+extern short movingPlaceView; /* @data 0x4abac2 */
+extern short lastSceneryView; /* @data 0x4abac4 */
+extern short ferryPlaceViews[20]; /* @data 0x4abac6: the placed views */
+extern short returnRoute; /* @data 0x4abaee */
+extern short nextReturner; /* @data 0x4abaf0 */
+extern short returner; /* @data 0x4abaf2 */
+extern short ferryLeaving; /* @data 0x4abaf4 */
 extern char (*ferryLinks)[8]; /* @data 0x4abaf8: for each placed view, those it touches (from 1; linkFerryPlaces) */
-extern short g_4abb04; /* @data 0x4abb04 */
-extern short g_4abb06; /* @data 0x4abb06 */
-extern short g_4abb08; /* @data 0x4abb08 */
-extern short g_4abb0a; /* @data 0x4abb0a */
-extern short g_4abb0c; /* @data 0x4abb0c */
-extern short g_4abb0e; /* @data 0x4abb0e */
-extern short g_4abb10; /* @data 0x4abb10 */
-extern short g_4abb12; /* @data 0x4abb12 */
-extern short g_4abb14; /* @data 0x4abb14: the script F plays */
-extern short g_4abb16; /* @data 0x4abb16: Captain Cajun's script */
+extern short sharedFeatureBits; /* @data 0x4abb04 */
+extern short sharedFeatureView; /* @data 0x4abb06 */
+extern short goodPlacings; /* @data 0x4abb08 */
+extern short badPlacings; /* @data 0x4abb0a */
+extern short nextPraiseAt; /* @data 0x4abb0c */
+extern short ferrySnoidCount; /* @data 0x4abb0e */
+extern short praisedOnce; /* @data 0x4abb10 */
+extern short cajunRemarkGroup; /* @data 0x4abb12 */
+extern short debugCajunScript; /* @data 0x4abb14: the script F plays */
+extern short cajunScript; /* @data 0x4abb16: Captain Cajun's script */
 extern Point ferryPlaces[20]; /* @data 0x4a1520: where the Zoombinis wait */
 
 void resetFerry();

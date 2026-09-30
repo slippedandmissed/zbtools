@@ -17,7 +17,7 @@
 #include "sound.h"
 #include "view.h"
 
-/* Draws button `which` (1 or 2; 2 is dim unless g_4abaae), lit or not,
+/* Draws button `which` (1 or 2; 2 is dim unless ferryHasPassengers), lit or not,
    and shows it if asked. */
 /* @zoombi32 0x0041fdee */
 void drawFerryButton(short which, short lit, short show)
@@ -30,7 +30,7 @@ void drawFerryButton(short which, short lit, short show)
         break;
     case 2:
         image = 2;
-        if (!g_4abaae) {
+        if (!ferryHasPassengers) {
             lit = 0;
             image = 1;
         }
@@ -39,29 +39,29 @@ void drawFerryButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)(g_4a147c->offsets[image] + (char *)g_4a147c), ferryButtons[which - 1].rect.left,
+        drawImageData((unsigned short *)(ferryButtonImages->offsets[image] + (char *)ferryButtonImages), ferryButtons[which - 1].rect.left,
                       ferryButtons[which - 1].rect.top, 8);
         if (show)
             showRect(&ferryButtons[which - 1].rect);
     }
 }
 
-/* The buttons' view update: redraws button 2 as g_4abaae changes, and
+/* The buttons' view update: redraws button 2 as ferryHasPassengers changes, and
    button 1 once. */
 /* @zoombi32 0x0041fea4 */
 void updateFerryButtons(View *, short region)
 {
-    if (g_4abaae) {
-        if (!g_4a1570) {
-            g_4a1570 = 1;
+    if (ferryHasPassengers) {
+        if (!ferryButton2Lit) {
+            ferryButton2Lit = 1;
             unionRgnRect(region, &ferryButtons[1].rect);
         }
-    } else if (g_4a1570) {
-        g_4a1570 = 0;
+    } else if (ferryButton2Lit) {
+        ferryButton2Lit = 0;
         unionRgnRect(region, &ferryButtons[1].rect);
     }
-    if (!g_4a1572) {
-        g_4a1572 = 1;
+    if (!ferryButton1Drawn) {
+        ferryButton1Drawn = 1;
         unionRgnRect(region, &ferryButtons[0].rect);
     }
 }
@@ -70,58 +70,58 @@ void updateFerryButtons(View *, short region)
 /* @zoombi32 0x0041ff16 */
 void closeFerry()
 {
-    if (g_4abaac) {
-        g_4abaac = g_4abaa2 = g_4abaa4 = 0;
+    if (ferryOpen) {
+        ferryOpen = returnDue = ferryHelpersDue = 0;
         short saved = setFreeAtOnce(1);
 
         clearViews();
-        freeResource(&g_4a151c);
+        freeResource(&ferryButtonResource);
         unloadSounds();
         if (ferryLinks) {
             disposePtr(ferryLinks);
             ferryLinks = 0;
         }
         setFreeAtOnce(saved);
-        closeGameFile(&g_4abaa8);
+        closeGameFile(&ferryFile);
         fadeOutViews();
         showBusyCursor();
     }
 }
 
-/* Moves g_4abac0 to g_4abac2 and starts its view on g_4a1440's script
-   for g_4abaee. */
+/* Moves returnPlaceView to movingPlaceView and starts its view on placeViewScripts's script
+   for returnRoute. */
 /* @zoombi32 0x004209b8 */
 void moveFerryOn()
 {
     View *view;
 
-    g_4abac2 = g_4abac0;
-    g_4abac0 = 0;
-    view = findView(g_4abac2);
+    movingPlaceView = returnPlaceView;
+    returnPlaceView = 0;
+    view = findView(movingPlaceView);
     if (view) {
         view->flags &= ~0x800000;
-        setViewScript(view, g_4a1440[g_4abaee], 1);
+        setViewScript(view, placeViewScripts[returnRoute], 1);
         view->flags |= 0x800000;
     }
 }
 
-/* Starts g_4abaf2's Zoombini on `script` (anchored at g_4aba98) in
+/* Starts returner's Zoombini on `script` (anchored at returnAnchor) in
    `group`, with `notify` if given. */
 /* @zoombi32 0x00420a08 */
 void startCrosserScript(short group, short script, ViewNotify notify, char unknownF8)
 {
-    View *view = findView(g_4abaf2);
+    View *view = findView(returner);
 
     if (view) {
-        startSnoidScript(viewSnoid(view), script, g_4aba98, unknownF8);
+        startSnoidScript(viewSnoid(view), script, returnAnchor, unknownF8);
         view->body.group = group;
-        loadViewSounds(g_4abaf2, 0);
+        loadViewSounds(returner, 0);
         if (notify)
             view->notify = notify;
     }
 }
 
-/* A notify: 6 starts g_4ababe's script in this view's group; other events
+/* A notify: 6 starts view1706's script in this view's group; other events
    turn the Zoombini (turnSnoid). */
 /* @zoombi32 0x00420c82 */
 void ferryHelperNotify(View *view, short event)
@@ -133,7 +133,7 @@ void ferryHelperNotify(View *view, short event)
         turnSnoid(view, event);
         break;
     case 6:
-        other = findView(g_4ababe);
+        other = findView(view1706);
         if (other) {
             setViewScript(other, 0, 1);
             other->body.group = view->body.group;
@@ -163,17 +163,17 @@ void slideFerryViews(View *, short dx)
 /* @zoombi32 0x0041f8cc */
 void resetFerry()
 {
-    g_4aba88 = 0;
+    forcedFerryCount = 0;
     hintSound = 0;
-    g_4abb10 = g_4abaf4 = 0;
-    g_4abb08 = g_4abb0a = 0;
-    g_4abb0c = 1;
-    g_4aba90 = 0;
-    g_4abaee = g_4abaf0 = g_4abaf2 = g_4abaa6 = 0;
-    g_4aba98 = 0;
-    g_4abab0 = g_4abaa2 = g_4abaa4 = 0;
-    g_4abb06 = g_4abb04 = g_4abaa0 = sceneDue = 0;
-    g_4abab6 = g_4abab8 = g_4ababa = g_4ababc = g_4ababe = 0;
+    praisedOnce = ferryLeaving = 0;
+    goodPlacings = badPlacings = 0;
+    nextPraiseAt = 1;
+    returnUnderway = 0;
+    returnRoute = nextReturner = returner = cajunLeavingGroup = 0;
+    returnAnchor = 0;
+    cajunGreeted = returnDue = ferryHelpersDue = 0;
+    sharedFeatureView = sharedFeatureBits = cajunRemarkDue = sceneDue = 0;
+    view1602 = view1603 = view1704 = view1705 = view1706 = 0;
 }
 
 /* Finds a free waiting place (of ferryPlaces, noting which Zoombini is
@@ -226,30 +226,30 @@ void findFerryPlace(short *spot)
     *spot = found;
 }
 
-/* Starts the next Zoombini (g_4abaf0) on its way by `n` (g_4abaee; 0 or
-   over 9: 0): Captain Cajun's view (g_4abab4) plays 1604-1607, and for 7-9
-   the views g_4ababc and g_4ababe are made anew about g_4aba8c. */
+/* Starts the next Zoombini (nextReturner) on its way by `n` (returnRoute; 0 or
+   over 9: 0): Captain Cajun's view (cajunView) plays 1604-1607, and for 7-9
+   the views view1705 and view1706 are made anew about returnPlace. */
 /* @zoombi32 0x00420f85 */
 void startNextCrosser(short n)
 {
     View *view;
     Point at;
 
-    g_4abaee = n;
-    if (!g_4abaf0)
+    returnRoute = n;
+    if (!nextReturner)
         return;
-    g_4abaf2 = g_4abaf0;
-    g_4abaf0 = 0;
+    returner = nextReturner;
+    nextReturner = 0;
     if (n >= 10)
         n = 0;
-    view = findView(g_4abab4);
+    view = findView(cajunView);
     if (!view)
         return;
     switch (n) {
     case 0:
-        g_4abb16 = 1605;
-        g_4aba92.x = 122;
-        g_4aba92.y = 164;
+        cajunScript = 1605;
+        returnTarget.x = 122;
+        returnTarget.y = 164;
         break;
     case 1:
     case 2:
@@ -258,39 +258,39 @@ void startNextCrosser(short n)
     case 5:
     case 6:
         if (randomBetween(1, 100) <= 50)
-            g_4abb16 = 1604;
+            cajunScript = 1604;
         else
-            g_4abb16 = 1606;
-        g_4aba92 = g_4aba8c;
+            cajunScript = 1606;
+        returnTarget = returnPlace;
         break;
     case 7:
     case 8:
     case 9:
-        g_4abb16 = 1607;
-        deleteView(g_4ababc);
-        deleteView(g_4ababe);
-        g_4ababc = addView(0x1180000, drawCels, runViewScript, 1705, 6, 0, 0, -1);
-        g_4aba92.x = 236;
-        g_4aba92.y = 474;
-        g_4aba9c = g_4aba8c;
-        at.x = g_4aba9c.x - 14;
-        at.y = g_4aba9c.y - 14;
-        g_4ababe = addView(0x1980000, drawCels, runViewScript, 1706, 6, &at, 0, -1);
+        cajunScript = 1607;
+        deleteView(view1705);
+        deleteView(view1706);
+        view1705 = addView(0x1180000, drawCels, runViewScript, 1705, 6, 0, 0, -1);
+        returnTarget.x = 236;
+        returnTarget.y = 474;
+        returnLanding = returnPlace;
+        at.x = returnLanding.x - 14;
+        at.y = returnLanding.y - 14;
+        view1706 = addView(0x1980000, drawCels, runViewScript, 1706, 6, &at, 0, -1);
         break;
     }
-    setViewScript(view, g_4abb16, 1);
-    loadViewSounds(g_4abab4, 1);
-    g_4aba98 = 0;
+    setViewScript(view, cajunScript, 1);
+    loadViewSounds(cajunView, 1);
+    returnAnchor = 0;
     view->notify = crosserNotify;
-    groupViews(view->id, g_4abac0, g_4abaf2, 0, 0, 0);
+    groupViews(view->id, returnPlaceView, returner, 0, 0, 0);
     setViewsLocked(0);
 }
 
-/* A crossing Zoombini's notify (g_4abaf2, by g_4abaee): 1 walks it on
-   (g_4a1454), 2 and 3 on again (g_4a1468; 2 also lets the views go, or
-   puts it behind g_4ababc when that script is 1907), 4 sets it down facing
-   left at (93, 408), 5 walks it off to g_4aba9c; 6 picks a sound
-   (g_4a1424) if none is due. */
+/* A crossing Zoombini's notify (returner, by returnRoute): 1 walks it on
+   (returnScripts), 2 and 3 on again (returnNextScripts; 2 also lets the views go, or
+   puts it behind view1705 when that script is 1907), 4 sets it down facing
+   left at (93, 408), 5 walks it off to returnLanding; 6 picks a sound
+   (returnSounds) if none is due. */
 /* @zoombi32 0x00420a60 */
 void crosserNotify(View *view, short event)
 {
@@ -299,31 +299,31 @@ void crosserNotify(View *view, short event)
     switch (event) {
     case 1:
         moveFerryOn();
-        startCrosserScript(view->body.group, g_4a1454[g_4abaee], crosserNotify, 1);
+        startCrosserScript(view->body.group, returnScripts[returnRoute], crosserNotify, 1);
         break;
     case 2:
-        if (g_4a1468[g_4abaee] == 1907) {
-            moveView(g_4abaf2, 0, g_4ababc);
-            g_4abaa4 = 1;
+        if (returnNextScripts[returnRoute] == 1907) {
+            moveView(returner, 0, view1705);
+            ferryHelpersDue = 1;
         } else {
-            g_4aba98 = &g_4aba92;
-            startCrosserScript(view->body.group, g_4a1468[g_4abaee], 0, 0);
-            g_4aba98 = 0;
-            g_4aba90 = 0;
+            returnAnchor = &returnTarget;
+            startCrosserScript(view->body.group, returnNextScripts[returnRoute], 0, 0);
+            returnAnchor = 0;
+            returnUnderway = 0;
             requestViewSort();
         }
         break;
     case 3:
-        g_4aba98 = &g_4aba92;
-        startCrosserScript(view->body.group, g_4a1468[g_4abaee], 0, 1);
-        g_4aba98 = 0;
+        returnAnchor = &returnTarget;
+        startCrosserScript(view->body.group, returnNextScripts[returnRoute], 0, 1);
+        returnAnchor = 0;
         break;
     case 6:
-        if (!g_4abaa0)
-            g_4abaa0 = g_4a1424[allocateSlot(&g_4a1430, 5, 0)];
+        if (!cajunRemarkDue)
+            cajunRemarkDue = returnSounds[allocateSlot(&returnSoundsUsed, 5, 0)];
         break;
     case 4:
-        other = findView(g_4abaf2);
+        other = findView(returner);
         if (other) {
             viewSnoid(other)->unknownF2 = 1;
             other->body.x = 93;
@@ -335,22 +335,22 @@ void crosserNotify(View *view, short event)
         }
         break;
     case 5:
-        other = findView(g_4abaf2);
+        other = findView(returner);
         if (other) {
             viewSnoid(other)->unknownF2 = 0;
-            startSnoidScript(viewSnoid(other), viewSnoid(other)->features[3] * 2 + 999, &g_4aba9c, 0);
+            startSnoidScript(viewSnoid(other), viewSnoid(other)->features[3] * 2 + 999, &returnLanding, 0);
             other->body.group = view->body.group;
             other->notify = ferryHelperNotify;
         }
-        g_4abaf2 = 0;
-        g_4aba90 = 0;
+        returner = 0;
+        returnUnderway = 0;
         break;
     }
 }
 
-/* Works out which of the placed views (g_4abac6) touch: for each, the
+/* Works out which of the placed views (ferryPlaceViews) touch: for each, the
    others meeting its bounds grown or shrunk by half its height less 2 (and
-   from level 3, g_4aba8a, widened), up to 8, into ferryLinks (from 1); with
+   from level 3, ferryLevel, widened), up to 8, into ferryLinks (from 1); with
    `draw`, draws each link as a line between the centres. */
 /* @zoombi32 0x0042121c */
 void linkFerryPlaces(short draw)
@@ -370,7 +370,7 @@ void linkFerryPlaces(short draw)
         for (j = 0; j < 8; j++)
             ferryLinks[i][j] = 0;
     for (i = 0; i < placedViewCount; i++) {
-        view = findView(g_4abac6[i]);
+        view = findView(ferryPlaceViews[i]);
         if (view)
             rects[i] = view->body.bounds;
     }
@@ -394,7 +394,7 @@ void linkFerryPlaces(short draw)
                 probe.left = rect.left - d;
                 met = sectRect(&probe, &other);
             }
-            if (!met && g_4aba8a >= 3) {
+            if (!met && ferryLevel >= 3) {
                 probe.top = rect.top - d;
                 probe.bottom = d += rect.bottom;
                 probe.right = rect.right;
@@ -429,7 +429,7 @@ void drawFerryButtons(View *)
 
 /* Scene 10's keys (with debugging on, debugMessagesOn, or else only 0x16f; case
    ignored): 0x16f replayHint; A draws the links between the places; L
-   reports the level (from 1); F plays Captain Cajun's script g_4abb14
+   reports the level (from 1); F plays Captain Cajun's script debugCajunScript
    (1800-1832; else his current one). Returns whether the key was used. */
 /* @zoombi32 0x004208a3 */
 short ferryKey(unsigned short key)
@@ -452,19 +452,19 @@ short ferryKey(unsigned short key)
         used = 1;
         break;
     case 'L':
-        debugMessage(g_4aba8a + 1, 0, 0, 0, 0);
+        debugMessage(ferryLevel + 1, 0, 0, 0, 0);
         used = 1;
         break;
     case 'F':
-        if (g_4abab2) {
-            view = findView(g_4abab4);
+        if (view1601) {
+            view = findView(cajunView);
             if (view) {
-                if (g_4abb14 > 1832 || g_4abb14 < 1800)
-                    g_4abb14 = view->kind;
-                setViewScript(view, g_4abb14, 1);
-                loadViewSounds(g_4abab4, 1);
+                if (debugCajunScript > 1832 || debugCajunScript < 1800)
+                    debugCajunScript = view->kind;
+                setViewScript(view, debugCajunScript, 1);
+                loadViewSounds(cajunView, 1);
                 used = 1;
-                debugMessage(g_4abb14, "Play FrogMan SCRB id:", 0, 0, 0);
+                debugMessage(debugCajunScript, "Play FrogMan SCRB id:", 0, 0, 0);
             }
         }
         break;
@@ -476,7 +476,7 @@ short ferryKey(unsigned short key)
  * Lays out the places from 'SCRB' script `id`: its first two frames are
  * two lists of parts, taken in turn, a list at a time; each part is a view
  * (script part + 1499) at a point: 1-3 places to stand (placed views, from
- * g_4abac4 on), 4-10 scenery (unless gameState's +0x20).
+ * lastSceneryView on), 4-10 scenery (unless gameState's +0x20).
  */
 /* @zoombi32 0x00420cce */
 void layOutFerry(short id)
@@ -497,7 +497,7 @@ void layOutFerry(short id)
 
     resource = 0;
     count = 0;
-    after = g_4abac4;
+    after = lastSceneryView;
     data = loadSwappedResource(&resource, id, RESOURCE_TYPE('S', 'C', 'R', 'B'));
     frame = 0;
     first = data + scriptFrameOffset(data, &frame, 0);
@@ -584,10 +584,10 @@ void layOutFerry(short id)
         }
         if (word >= 1 && word <= 3) {
             after = addView(0x748c2000, drawCels, runViewScript, word + 1499, 6, &at, 1, after);
-            g_4abac6[count] = after;
+            ferryPlaceViews[count] = after;
             placedViewPoints[count].x = at.x + 22;
             placedViewPoints[count].y = at.y - 7;
-            placedViews[count] = g_4abac6[count];
+            placedViews[count] = ferryPlaceViews[count];
             placeClaims[count] = 0;
             count++;
         } else if (word >= 4 && word <= 10 && !*(short *)(gameState + 0x20)) {
@@ -598,22 +598,22 @@ void layOutFerry(short id)
     freeResource(&resource);
 }
 
-/* Lays out the places for the level (g_4aba8a, 0-4) and the number of
-   Zoombinis (16-20, or g_4aba88): scripts 1510-1529. */
+/* Lays out the places for the level (ferryLevel, 0-4) and the number of
+   Zoombinis (16-20, or forcedFerryCount): scripts 1510-1529. */
 /* @zoombi32 0x004211a3 */
 void layOutFerryLevel()
 {
     short n;
 
-    if (g_4aba8a < 0 || g_4aba8a > 4)
-        g_4aba8a = 0;
+    if (ferryLevel < 0 || ferryLevel > 4)
+        ferryLevel = 0;
     n = countChosenSnoids();
-    if (g_4aba88)
-        n = g_4aba88;
+    if (forcedFerryCount)
+        n = forcedFerryCount;
     if (n < 16 || n > 20)
         n = 16;
     n -= 16;
-    switch (g_4aba8a) {
+    switch (ferryLevel) {
     case 0:
         n += 1510;
         break;
@@ -631,7 +631,7 @@ void layOutFerryLevel()
 }
 
 /* Opens scene 10: Ferry.MHK, its sounds, images and scripts, Captain
-   Cajun (the first time 1803, then one of g_4a13e4), the views, the
+   Cajun (the first time 1803, then one of cajunGreetings), the views, the
    places for the level (layOutFerryLevel) and the party, and a hint or
    greeting. */
 /* @zoombi32 0x0041f97c */
@@ -639,10 +639,10 @@ void openFerry()
 {
     short i;
 
-    g_4abaac = g_4abaae = 0;
+    ferryOpen = ferryHasPassengers = 0;
     resetFerry();
-    g_4abafc++;
-    g_4aba8a = sceneLevel();
+    ferryVisits++;
+    ferryLevel = sceneLevel();
     ferryLinks = (char (*)[8])newPtr(160);
     soundRanges = 0;
     addSoundRange(1606, 1607, 1);
@@ -654,10 +654,10 @@ void openFerry()
     addSoundRange(1600, 1699, 0);
     addSoundRange(1900, 1999, 0);
     addSoundRange(1700, 1799, 0);
-    openGameFile(&g_4abaa8, "Ferry.MHK");
-    setCurrentMap(g_4abaa8);
+    openGameFile(&ferryFile, "Ferry.MHK");
+    setCurrentMap(ferryFile);
     drawBackdrop(1300);
-    g_4a147c = loadImageBank(1400, &g_4a151c);
+    ferryButtonImages = loadImageBank(1400, &ferryButtonResource);
     loadFeatureGroup(1500, 0, 0);
     loadFeatureGroup(1600, 1, 0);
     loadFeatureGroup(1700, 2, 0);
@@ -671,23 +671,23 @@ void openFerry()
     loadTerrain(100);
     loadSnoidScripts(1900, 8, 0);
     addSnoidScripts(1000, 10, 1);
-    g_4abab2 = addView(0xc000, drawCels, runViewScript, 1601, 6, 0, 0, 0);
-    if (g_4abafc == 1)
-        g_4abab4 = 1803;
+    view1601 = addView(0xc000, drawCels, runViewScript, 1601, 6, 0, 0, 0);
+    if (ferryVisits == 1)
+        cajunView = 1803;
     else
-        g_4abab4 = g_4a13e4[allocateSlot(&g_4a13ec, 4, 0)];
-    g_4abab4 = addView(0x188000, drawCels, runViewScript, g_4abab4, 6, 0, 0, 0);
-    g_4abaf2 = g_4abab4;
+        cajunView = cajunGreetings[allocateSlot(&cajunGreetingsUsed, 4, 0)];
+    cajunView = addView(0x188000, drawCels, runViewScript, cajunView, 6, 0, 0, 0);
+    returner = cajunView;
     if (!*(short *)(gameState + 0x20)) {
-        g_4abab6 = addView(0x8000, drawCels, runViewScript, 1602, 6, 0, 0, 0);
-        g_4abab8 = addView(0x8000, drawCels, runViewScript, 1603, 6, 0, 0, 0);
-        pairViews(g_4abab6, g_4abab8);
+        view1602 = addView(0x8000, drawCels, runViewScript, 1602, 6, 0, 0, 0);
+        view1603 = addView(0x8000, drawCels, runViewScript, 1603, 6, 0, 0, 0);
+        pairViews(view1602, view1603);
     }
-    g_4ababa = addView(0x1188000, drawCels, runViewScript, 1704, 6, 0, 0, 0);
+    view1704 = addView(0x1188000, drawCels, runViewScript, 1704, 6, 0, 0, 0);
     addView(0, drawCels, runViewScript, 1600, 6, 0, 0, 0);
     for (i = 0; i < 3; i++)
-        g_4abac4 = addView(0x4000000, drawCels, runViewScript, i + 1450, 0, 0, 0, 0);
-    g_4abac0 = g_4abac2 = 0;
+        lastSceneryView = addView(0x4000000, drawCels, runViewScript, i + 1450, 0, 0, 0, 0);
+    returnPlaceView = movingPlaceView = 0;
     addView(0x1000, drawFerryButtons, updateFerryButtons, 0, 0, 0, 0, 0);
     setViewPlaces(20, ferryPlaces, 1);
     setViewsLocked(0);
@@ -706,16 +706,16 @@ void openFerry()
     fadeInViews();
     queueViewSound(997, 0);
     chooseSnoids(0, 0);
-    g_4abb0e = countSnoidViews();
+    ferrySnoidCount = countSnoidViews();
     resetViewClock();
-    g_4aba84 = randomBetween(5400, 10800);
-    g_4abaac = 1;
+    nextIdleRemarkTime = randomBetween(5400, 10800);
+    ferryOpen = 1;
     switch (campHint((short *)(gameState + 0x32))) {
     case 2:
         hintSound = 20074;
         break;
     default:
-        if (g_4aba8a)
+        if (ferryLevel)
             hintSound = randomBetween(20073, 20074);
         else
             hintSound = 20073;
@@ -723,11 +723,11 @@ void openFerry()
     }
 }
 
-/* Scene 10's frame: once everyone has crossed (g_4abaf4), Captain Cajun
+/* Scene 10's frame: once everyone has crossed (ferryLeaving), Captain Cajun
    leaves (1608-1609) and so does the scene; leaves when asked; plays a
-   remark due (g_4abaa0) or picks one now and then (g_4a13f0); starts the
-   ferry's two views (g_4abaa4); sends the next Zoombini to a free place
-   (g_4abaa2, startNextCrosser, some routes needing places free on the right);
+   remark due (cajunRemarkDue) or picks one now and then (cajunIdleRemarks); starts the
+   ferry's two views (ferryHelpersDue); sends the next Zoombini to a free place
+   (returnDue, startNextCrosser, some routes needing places free on the right);
    and greets once the sound 997 ends. */
 /* @zoombi32 0x0041ff89 */
 void ferryFrame()
@@ -737,18 +737,18 @@ void ferryFrame()
     short i;
     View *view;
 
-    if (g_4a1574 || !g_4abaac)
+    if (inFerryFrame || !ferryOpen)
         return;
-    g_4a1574 = 1;
-    if (g_4abaf4 && !g_4abaa2 && !g_4aba90) {
-        g_4abaf4 = 0;
-        deleteView(g_4abab2);
-        g_4abab2 = 0;
-        deleteView(g_4abab6);
-        deleteView(g_4abab8);
-        startView(g_4abab4, randomBetween(1608, 1609), slideFerryViews, 0);
-        loadViewSounds(g_4abab4, 1);
-        g_4abaa6 = groupViews(g_4abab4, g_4abab4, 0, 0, 0, 0);
+    inFerryFrame = 1;
+    if (ferryLeaving && !returnDue && !returnUnderway) {
+        ferryLeaving = 0;
+        deleteView(view1601);
+        view1601 = 0;
+        deleteView(view1602);
+        deleteView(view1603);
+        startView(cajunView, randomBetween(1608, 1609), slideFerryViews, 0);
+        loadViewSounds(cajunView, 1);
+        cajunLeavingGroup = groupViews(cajunView, cajunView, 0, 0, 0, 0);
         sceneDue = 11;
     }
     updateViews();
@@ -756,12 +756,12 @@ void ferryFrame()
         if (!dialogQuestion || dialogQuestion == 3) {
             if (dialogQuestion == 3 && !practiceLevel)
                 chooseSnoids(0, 0);
-            if (viewsLocked || !groupLeader[g_4abaa6]) {
+            if (viewsLocked || !groupLeader[cajunLeavingGroup]) {
                 pendingScene = sceneDue;
                 sceneDue = 0;
                 setCurrentMap(0);
                 closeFerry();
-                g_4a1574 = 0;
+                inFerryFrame = 0;
                 return;
             }
         } else if (dialogQuestion == 2) {
@@ -769,27 +769,27 @@ void ferryFrame()
             sceneDue = 0;
         }
     }
-    if (g_4abaa0) {
-        i = g_4abaa0;
-        g_4abaa0 = 0;
-        if (g_4abab2) {
-            startView(g_4abab4, i, 0, 0);
-            loadViewSounds(g_4abab4, 1);
-            g_4abb12 = groupViews(g_4abab4, g_4abab4, 0, 0, 0, 0);
+    if (cajunRemarkDue) {
+        i = cajunRemarkDue;
+        cajunRemarkDue = 0;
+        if (view1601) {
+            startView(cajunView, i, 0, 0);
+            loadViewSounds(cajunView, 1);
+            cajunRemarkGroup = groupViews(cajunView, cajunView, 0, 0, 0, 0);
         }
-    } else if (g_4abaa4) {
-        g_4abaa4 = 0;
-        startView(g_4ababa, 0, crosserNotify, 0);
-        startView(g_4ababc, 0, crosserNotify, 0);
-        groupViews(g_4ababa, g_4ababc, 0, 0, 0, 0);
-    } else if (g_4abaa2) {
-        if (!groupLeader[g_4abb12]) {
-            g_4abaa2 = 0;
+    } else if (ferryHelpersDue) {
+        ferryHelpersDue = 0;
+        startView(view1704, 0, crosserNotify, 0);
+        startView(view1705, 0, crosserNotify, 0);
+        groupViews(view1704, view1705, 0, 0, 0, 0);
+    } else if (returnDue) {
+        if (!groupLeader[cajunRemarkGroup]) {
+            returnDue = 0;
             findFerryPlace(&spot);
             for (again = 1; again;) {
                 again = 0;
-                g_4abaee = allocateSlot(&g_4abb00, 10, 0);
-                switch (g_4abaee) {
+                returnRoute = allocateSlot(&returnRoutesUsed, 10, 0);
+                switch (returnRoute) {
                 case 0:
                     if (sortedIds[12] || sortedIds[14])
                         again = 1;
@@ -810,37 +810,37 @@ void ferryFrame()
                     break;
                 }
             }
-            g_4aba8c = ferryPlaces[spot];
-            startNextCrosser(g_4abaee);
+            returnPlace = ferryPlaces[spot];
+            startNextCrosser(returnRoute);
         }
-    } else if (viewClock() > g_4aba84) {
+    } else if (viewClock() > nextIdleRemarkTime) {
         resetViewClock();
-        g_4abaa0 = g_4a13f0[allocateSlot(&g_4a13fc, 5, 0)];
-        g_4aba84 = randomBetween(5400, 10800);
+        cajunRemarkDue = cajunIdleRemarks[allocateSlot(&cajunIdleRemarksUsed, 5, 0)];
+        nextIdleRemarkTime = randomBetween(5400, 10800);
     }
-    if (g_4abb06) {
-        view = idleSnoidView(g_4abb06);
+    if (sharedFeatureView) {
+        view = idleSnoidView(sharedFeatureView);
         if (view) {
-            viewSnoid(view)->unknownF5 = g_4abb04;
-            g_4abb04 = 0;
-            g_4abb06 = 0;
+            viewSnoid(view)->unknownF5 = sharedFeatureBits;
+            sharedFeatureBits = 0;
+            sharedFeatureView = 0;
         }
     }
-    if (!g_4abab0 && !snoidsOnTheirWay && !isSoundPlaying(997, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-        g_4abab0 = 1;
-        startView(g_4abab4, 0, 0, 0);
-        loadViewSounds(g_4abab4, 1);
+    if (!cajunGreeted && !snoidsOnTheirWay && !isSoundPlaying(997, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+        cajunGreeted = 1;
+        startView(cajunView, 0, 0, 0);
+        loadViewSounds(cajunView, 1);
     }
     playAmbientSound();
-    g_4a1574 = 0;
+    inFerryFrame = 0;
 }
 
 /* Scene 10's clicks: 1 leaves (asking whether to keep the party), 2 sets
-   the ferry off (once there's a Zoombini aboard, g_4abaae), 3 drags a
+   the ferry off (once there's a Zoombini aboard, ferryHasPassengers), 3 drags a
    Zoombini. Put at a place, it must share a feature with every Zoombini
    at a place linked to it (ferryLinks; the shared features go in
-   g_4abb04): if so it stays (with a remark now and then), else it's sent
-   back to cross (g_4abaa2) with a remark. Dropped elsewhere, it goes back
+   sharedFeatureBits): if so it stays (with a remark now and then), else it's sent
+   back to cross (returnDue) with a remark. Dropped elsewhere, it goes back
    where it was if that was in the waiting area, else to a free waiting
    place. */
 /* @zoombi32 0x004203b3 */
@@ -859,8 +859,8 @@ void ferryClicked(short which)
     short f;
     View *view;
 
-    if (sceneDue || g_4abaf4) {
-        if (g_4abaf4)
+    if (sceneDue || ferryLeaving) {
+        if (ferryLeaving)
             sceneDue = 11;
         pendingScene = sceneDue;
         sceneDue = 0;
@@ -878,53 +878,53 @@ void ferryClicked(short which)
         askKeepParty();
         break;
     case 2:
-        if (!g_4abaae)
+        if (!ferryHasPassengers)
             break;
         queueViewSound(999, 0);
-        if (g_4abaa2)
-            g_4aba90 = 1;
+        if (returnDue)
+            returnUnderway = 1;
         drawFerryButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawFerryButton(which, 0, 1);
-        g_4abaf4 = 1;
+        ferryLeaving = 1;
         break;
     case 3:
-        if (snoidsOnTheirWay > 0 || g_4aba90)
+        if (snoidsOnTheirWay > 0 || returnUnderway)
             break;
         getCursorPosition(&where);
         view = viewAt(where, 1, 1);
-        if (!view || g_4abaa6 || g_4abaf4)
+        if (!view || cajunLeavingGroup || ferryLeaving)
             break;
         placed = viewSnoid(view)->unknownF7;
         viewSnoid(view)->unknownF7 = 0;
-        g_4aba8c = *(Point *)&view->body.x;
+        returnPlace = *(Point *)&view->body.x;
         dragSnoid(view, where, 0, 0);
         unloadSounds();
         bounds = view->body.bounds;
-        g_4abaf0 = 0;
-        g_4abac0 = heldPlaceNumber();
-        if (g_4abac0) {
+        nextReturner = 0;
+        returnPlaceView = heldPlaceNumber();
+        if (returnPlaceView) {
             ok = 1;
-            g_4abb04 = 0;
+            sharedFeatureBits = 0;
             for (k = 0; ok && k < 8; k++)
-                if (ferryLinks[g_4abac0 - 1][k]) {
-                    other = findView(placeClaims[ferryLinks[g_4abac0 - 1][k] - 1]);
+                if (ferryLinks[returnPlaceView - 1][k]) {
+                    other = findView(placeClaims[ferryLinks[returnPlaceView - 1][k] - 1]);
                     if (other) {
                         ok = 0;
                         for (f = 0; f < 4; f++)
                             if (viewSnoid(other)->features[f] == viewSnoid(view)->features[f]) {
                                 switch (f) {
                                 case 0:
-                                    g_4abb04 |= 1;
+                                    sharedFeatureBits |= 1;
                                     break;
                                 case 1:
-                                    g_4abb04 |= 2;
+                                    sharedFeatureBits |= 2;
                                     break;
                                 case 2:
-                                    g_4abb04 |= 4;
+                                    sharedFeatureBits |= 4;
                                     break;
                                 case 3:
-                                    g_4abb04 |= 8;
+                                    sharedFeatureBits |= 8;
                                     break;
                                 }
                                 ok = 1;
@@ -932,37 +932,37 @@ void ferryClicked(short which)
                     }
                 }
             if (ok) {
-                g_4abb0a = 0;
+                badPlacings = 0;
                 if (!placed)
-                    g_4abb08++;
-                if (countChosenSnoids() + 1 == g_4abb0e || g_4abb08 == g_4abb0c) {
-                    g_4abb0c += randomBetween(3, 5);
-                    if (!g_4abb10) {
-                        g_4abb10 = 1;
-                        g_4abaa0 = 1816;
+                    goodPlacings++;
+                if (countChosenSnoids() + 1 == ferrySnoidCount || goodPlacings == nextPraiseAt) {
+                    nextPraiseAt += randomBetween(3, 5);
+                    if (!praisedOnce) {
+                        praisedOnce = 1;
+                        cajunRemarkDue = 1816;
                     } else {
-                        g_4abaa0 = g_4a1400[allocateSlot(&g_4a1404, 2, 0)];
+                        cajunRemarkDue = goodPlacingRemarks[allocateSlot(&goodPlacingRemarksUsed, 2, 0)];
                     }
                 }
                 viewSnoid(view)->unknownF7 = 1;
-                if (g_4abb04 && practiceLevel)
-                    g_4abb06 = view->id;
+                if (sharedFeatureBits && practiceLevel)
+                    sharedFeatureView = view->id;
             } else {
-                g_4abb0a++;
-                g_4abb08 = 0;
-                g_4abb0c = 1;
-                g_4aba90 = 1;
+                badPlacings++;
+                goodPlacings = 0;
+                nextPraiseAt = 1;
+                returnUnderway = 1;
                 releaseHeldPlace();
                 viewSnoid(view)->unknownF8 = 1;
-                g_4abaf0 = view->id;
-                g_4abac0 = g_4abac6[g_4abac0 - 1];
-                if (randomBetween(3, 5) == g_4abb0a) {
-                    g_4abaa0 = 1815;
-                    g_4abb0a = 5;
+                nextReturner = view->id;
+                returnPlaceView = ferryPlaceViews[returnPlaceView - 1];
+                if (randomBetween(3, 5) == badPlacings) {
+                    cajunRemarkDue = 1815;
+                    badPlacings = 5;
                 } else {
-                    g_4abaa0 = g_4a1408[allocateSlot(&g_4a1420, 11, 0)];
+                    cajunRemarkDue = badPlacingRemarks[allocateSlot(&badPlacingRemarksUsed, 11, 0)];
                 }
-                g_4abaa2 = 1;
+                returnDue = 1;
             }
         } else if (viewSnoid(view)->unknownF4 == 4) {
             target = *(Point *)&viewSnoid(view)->targetX;
@@ -970,15 +970,15 @@ void ferryClicked(short which)
             if (target.x != from.x || target.y != from.y) {
                 ShortRect area = {0, 130, 469, 240};
 
-                if (ptInRect(&area, g_4aba8c)) {
-                    *(Point *)&viewSnoid(view)->targetX = g_4aba8c;
+                if (ptInRect(&area, returnPlace)) {
+                    *(Point *)&viewSnoid(view)->targetX = returnPlace;
                 } else {
                     findFerryPlace(&spot);
                     *(Point *)&viewSnoid(view)->targetX = ferryPlaces[spot];
                     placed = 0;
                 }
-                if (!g_4abaa0 && nearPlacedView(from))
-                    g_4abaa0 = g_4a1434[allocateSlot(&g_4a143c, 3, 0)];
+                if (!cajunRemarkDue && nearPlacedView(from))
+                    cajunRemarkDue = movedRemarks[allocateSlot(&movedRemarksUsed, 3, 0)];
             } else {
                 placed = 0;
             }
@@ -986,5 +986,5 @@ void ferryClicked(short which)
         }
         break;
     }
-    g_4abaae = countChosenSnoids();
+    ferryHasPassengers = countChosenSnoids();
 }

@@ -66,7 +66,7 @@ extern short g_4b1934; /* @data 0x4b1934: the level */
 extern short g_4b253c; /* @data 0x4b253c: fidgets to do */
 extern short g_4b253e; /* @data 0x4b253e: fidgets done */
 extern unsigned long g_4b252c; /* @data 0x4b252c: when a Zoombini last fidgeted */
-extern unsigned long g_4b2538; /* @data 0x4b2538: slots used (allocateSlot) */
+extern unsigned long slidesFidgetersUsed; /* @data 0x4b2538: slots used (allocateSlot) */
 void stoneRiseFrame();
 
 void pairByFeatures();

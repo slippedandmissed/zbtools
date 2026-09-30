@@ -3883,14 +3883,14 @@ extern short caveValues[2][5]; /* @data 0x4ab87e: and their values */
 extern short caveValueCounts[6][6];
 extern short g_4a0ff0;
 extern short cavePlaceValues[2][21]; /* @data 0x4ab916: the values of the roster's features each place wants */
-extern unsigned long g_4a75e4; /* @data 0x4a75e4: slots used (allocateSlot) */
-extern unsigned long g_4a7600; /* @data 0x4a7600: slots used (allocateSlot) */
-extern unsigned long g_4a7614; /* @data 0x4a7614 */
-extern unsigned long g_4a7628; /* @data 0x4a7628: slots used (allocateSlot) */
-extern unsigned long g_4a763c; /* @data 0x4a763c: slots used (allocateSlot) */
-extern unsigned long g_4a764c; /* @data 0x4a764c: slots used (allocateSlot) */
-extern unsigned long g_4a7658; /* @data 0x4a7658 */
-extern unsigned long g_4a7668; /* @data 0x4a7668 */
+extern unsigned long speaker0BackLinesUsed; /* @data 0x4a75e4: slots used (allocateSlot) */
+extern unsigned long speaker0RepliesUsed; /* @data 0x4a7600: slots used (allocateSlot) */
+extern unsigned long speaker2BackLinesUsed; /* @data 0x4a7614 */
+extern unsigned long doors34LinesUsed; /* @data 0x4a7628: slots used (allocateSlot) */
+extern unsigned long speaker3BackLinesUsed; /* @data 0x4a763c: slots used (allocateSlot) */
+extern unsigned long speaker3RepliesUsed; /* @data 0x4a764c: slots used (allocateSlot) */
+extern unsigned long speaker1BackLinesUsed; /* @data 0x4a7658 */
+extern unsigned long doors16LinesUsed; /* @data 0x4a7668 */
 extern unsigned long g_4a78c4; /* @data 0x4a78c4: slots used (allocateSlot) */
 extern unsigned long g_4a78c8; /* @data 0x4a78c8 */
 extern unsigned long g_4a78d0; /* @data 0x4a78d0 */
@@ -3899,8 +3899,8 @@ extern unsigned long g_4a78d8; /* @data 0x4a78d8: slots used (allocateSlot) */
 extern unsigned long g_4a78dc; /* @data 0x4a78dc */
 extern short g_4afb30; /* @data 0x4afb30 */
 extern short g_4b807e; /* @data 0x4b807e */
-extern short g_4abafc; /* @data 0x4abafc */
-extern unsigned long g_4abb00; /* @data 0x4abb00: slots used (allocateSlot) for the ferry's routes (scene 10) */
+extern short ferryVisits; /* @data 0x4abafc */
+extern unsigned long returnRoutesUsed; /* @data 0x4abb00: slots used (allocateSlot) for the ferry's routes (scene 10) */
 extern short g_4afb86; /* @data 0x4afb86 */
 
 #endif

@@ -291,7 +291,7 @@ void resetTown()
         g_4b7e08[i] = 0;
     g_4b7f00 = g_4b7f02 = g_4b7f10 = 0;
     g_4b7f04 = 0;
-    g_4b7f0c = 0;
+    townFidgetersUsed = 0;
     if (g_4b2b00)
         g_4b7f08 = 600;
     else
@@ -1171,7 +1171,7 @@ void townFrame()
                 i = 0;
                 do {
                     i++;
-                    view = idleSnoidView(partyViews[allocateSlot(&g_4b7f0c, g_4b7f02, 0)]);
+                    view = idleSnoidView(partyViews[allocateSlot(&townFidgetersUsed, g_4b7f02, 0)]);
                     if (view && (view->flags & 2) && view->body.x > 20 && view->body.x < 620) {
                         startSnoidScript(viewSnoid(view), viewSnoid(view)->features[3] + 4999, 0, 0);
                         g_4b7f00--;

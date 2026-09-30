@@ -34,58 +34,58 @@ struct TunnelList
 
 /* One of the caves' two rules (13 bytes): how many features, the features
    and their values; the rest isn't known yet. */
-extern long g_4b7fb4; /* @data 0x4b7fb4: Tunnels.MHK */
-extern short g_4b7fb8; /* @data 0x4b7fb8: the scene is open */
-extern long g_4a7708; /* @data 0x4a7708 */
-extern short g_4b7fd2; /* @data 0x4b7fd2 */
-extern short g_4b7fee; /* @data 0x4b7fee */
-extern short g_4b7fd4; /* @data 0x4b7fd4 */
-extern short g_4b7fd6; /* @data 0x4b7fd6 */
-extern short g_4b7fd8; /* @data 0x4b7fd8 */
+extern long tunnelsFile; /* @data 0x4b7fb4: Tunnels.MHK */
+extern short tunnelsOpen; /* @data 0x4b7fb8: the scene is open */
+extern long tunnelsButtonResource; /* @data 0x4a7708 */
+extern short entryUnderway; /* @data 0x4b7fd2 */
+extern short closingStep; /* @data 0x4b7fee */
+extern short followingSpeaker; /* @data 0x4b7fd4 */
+extern short followingLine; /* @data 0x4b7fd6 */
+extern short followingDropsEntry; /* @data 0x4b7fd8 */
 void closeTunnels();
 void remarkEndNotify(View *, short event);
 void firstLineNotify(View *, short event);
 void addTunnelEntry(TunnelList *list, TunnelEntry entry);
-extern TunnelList g_4b7ff0; /* @data 0x4b7ff0 */
-extern short g_4b7fd0; /* @data 0x4b7fd0 */
-extern short g_4b7fbe; /* @data 0x4b7fbe */
-extern short g_4b8094; /* @data 0x4b8094 */
+extern TunnelList tunnelQueue; /* @data 0x4b7ff0 */
+extern short closingRemarkDone; /* @data 0x4b7fd0 */
+extern short tunnelsLevel; /* @data 0x4b7fbe */
+extern short tunnelsPartySize; /* @data 0x4b8094 */
 extern short tunnelsGoReady; /* @data 0x4b7fba: button 2 is live */
-extern short g_4b7fda; /* @data 0x4b7fda: button 2 is drawn lit */
-extern short g_4b7fdc; /* @data 0x4b7fdc: button 1 has been drawn */
+extern short tunnelsButton2Lit; /* @data 0x4b7fda: button 2 is drawn lit */
+extern short tunnelsButton1Drawn; /* @data 0x4b7fdc: button 1 has been drawn */
 extern SceneButton tunnelsButtons[2]; /* @data 0x4a766c: buttons 1 and 2 */
-extern ImageBank *g_4a770c; /* @data 0x4a770c: the buttons' images */
+extern ImageBank *tunnelsButtonImages; /* @data 0x4a770c: the buttons' images */
 void tunnelRemarkNotify(View *, short event);
 void updateTunnelsButtons(View *, short region);
 void drawTunnelsButton(short which, short lit, short show);
 void unghostDoorView();
-extern FeatureRules g_4b7f18; /* @data 0x4b7f18 */
-extern short g_4b808a; /* @data 0x4b808a */
-extern short g_4b8088; /* @data 0x4b8088 */
-extern short g_4b8096; /* @data 0x4b8096 */
-extern short g_4b8092; /* @data 0x4b8092 */
-extern short g_4b7fe4; /* @data 0x4b7fe4 */
-extern short g_4b7fce; /* @data 0x4b7fce */
-extern short g_4b808e; /* @data 0x4b808e */
-extern short g_4b8090; /* @data 0x4b8090 */
-extern short g_4b808c; /* @data 0x4b808c */
-extern short g_4b8086; /* @data 0x4b8086 */
-extern short g_4b8084; /* @data 0x4b8084 */
-extern short g_4b8082; /* @data 0x4b8082 */
-extern short g_4b8080; /* @data 0x4b8080 */
-extern short g_4b7fe6[4]; /* @data 0x4b7fe6 */
-extern short g_4b7f94[16]; /* @data 0x4b7f94 */
-extern short g_4b7f74[16]; /* @data 0x4b7f74 */
-extern short g_4b7f54[16]; /* @data 0x4b7f54 */
-extern short g_4b7f34[16]; /* @data 0x4b7f34 */
-extern short g_4b809a; /* @data 0x4b809a */
-extern short g_4b8098; /* @data 0x4b8098 */
-extern unsigned long g_4b80a4; /* @data 0x4b80a4: slots used (allocateSlot) */
-extern long g_4b809c; /* @data 0x4b809c */
-extern long g_4b80a0; /* @data 0x4b80a0 */
-extern short g_4b7fbc; /* @data 0x4b7fbc */
+extern FeatureRules tunnelRules; /* @data 0x4b7f18 */
+extern short speaker3BackCount; /* @data 0x4b808a */
+extern short speaker0BackCount; /* @data 0x4b8088 */
+extern short pendingTunnelSound; /* @data 0x4b8096 */
+extern short warningView; /* @data 0x4b8092 */
+extern short pendingFacing; /* @data 0x4b7fe4 */
+extern short sentThroughDoors; /* @data 0x4b7fce */
+extern short warningPlaying; /* @data 0x4b808e */
+extern short warningSound; /* @data 0x4b8090 */
+extern short doorAnchorView; /* @data 0x4b808c */
+extern short door3Count; /* @data 0x4b8086 */
+extern short door2Count; /* @data 0x4b8084 */
+extern short door4Count; /* @data 0x4b8082 */
+extern short door1Count; /* @data 0x4b8080 */
+extern short doorPassesInARow[4]; /* @data 0x4b7fe6 */
+extern short door3Views[16]; /* @data 0x4b7f94 */
+extern short door2Views[16]; /* @data 0x4b7f74 */
+extern short door4Views[16]; /* @data 0x4b7f54 */
+extern short door1Views[16]; /* @data 0x4b7f34 */
+extern short fidgetsDone; /* @data 0x4b809a */
+extern short fidgetsAllowed; /* @data 0x4b8098 */
+extern unsigned long fidgetersUsed; /* @data 0x4b80a4: slots used (allocateSlot) */
+extern long lastFidgetTime; /* @data 0x4b809c */
+extern long fidgetInterval; /* @data 0x4b80a0 */
+extern short closedDoorPair; /* @data 0x4b7fbc */
 void resetTunnels();
-extern short g_4b80a8; /* @data 0x4b80a8: the script last shown (debugging) */
+extern short debugTunnelScript; /* @data 0x4b80a8: the script last shown (debugging) */
 void queueRemark(short kind);
 short tunnelsKey(unsigned short key);
 void drawTunnelsButtons(View *);
@@ -101,30 +101,30 @@ void sayTunnelRemark();
 void dropRemarkNotify(View *, short event);
 void sendThroughDoors();
 void tunnelsSnoidNotify(View *view, short event);
-extern Point g_4a78a6[4]; /* @data 0x4a78a6: where tunnelsSnoidNotify anchors the first entry's script */
-extern Point g_4a7770[16]; /* @data 0x4a7770: the places past door 1 */
-extern Point g_4a77b0[16]; /* @data 0x4a77b0: door 4 */
-extern Point g_4a77f0[16]; /* @data 0x4a77f0: door 2 */
-extern Point g_4a7830[16]; /* @data 0x4a7830: door 3 */
+extern Point backScriptAnchors[4]; /* @data 0x4a78a6: where tunnelsSnoidNotify anchors the first entry's script */
+extern Point door1Places[16]; /* @data 0x4a7770: the places past door 1 */
+extern Point door4Places[16]; /* @data 0x4a77b0: door 4 */
+extern Point door2Places[16]; /* @data 0x4a77f0: door 2 */
+extern Point door3Places[16]; /* @data 0x4a7830: door 3 */
 void tunnelsFrame();
-extern short g_4a7888; /* @data 0x4a7888: tunnelsFrame is running */
+extern short inTunnelsFrame; /* @data 0x4a7888: tunnelsFrame is running */
 extern short turnBacksLeft; /* @data 0x4b7fc0: how many more times a Zoombini can be turned back */
-extern short g_4b7fc2; /* @data 0x4b7fc2 */
-extern unsigned long g_4b7fe0; /* @data 0x4b7fe0: when to make the next idle remark (view ticks) */
+extern short view7000; /* @data 0x4b7fc2 */
+extern unsigned long nextTunnelRemarkTime; /* @data 0x4b7fe0: when to make the next idle remark (view ticks) */
 extern short tunnelsSpeakers[4]; /* @data 0x4b7fc4: the four views that make the remarks (queueRemark) */
-extern short g_4b7fcc; /* @data 0x4b7fcc: the buttons' view */
+extern short tunnelsButtonsView; /* @data 0x4b7fcc: the buttons' view */
 extern GroupList tunnelsGroups[1]; /* @data 0x4a76e8 */
 void openTunnels();
 void tunnelsClicked(short which);
 extern short doorSpeakers[8]; /* @data 0x4a7710: which of tunnelsSpeakers remarks on a Zoombini at a door (by door and result) */
-extern short g_4a75d0[10]; /* @data 0x4a75d0: remarks (g_4a75e4 picks) */
-extern short g_4a75e8[11]; /* @data 0x4a75e8: (g_4a7600) */
-extern short g_4a7604[8]; /* @data 0x4a7604: (g_4a7614) */
-extern short g_4a7618[8]; /* @data 0x4a7618: (g_4a7628) */
-extern short g_4a762c[7]; /* @data 0x4a762c: (g_4a763c) */
-extern short g_4a7640[6]; /* @data 0x4a7640: (g_4a764c) */
-extern short g_4a7650[4]; /* @data 0x4a7650: (g_4a7658) */
-extern short g_4a765c[6]; /* @data 0x4a765c: (g_4a7668) */
+extern short speaker0BackLines[10]; /* @data 0x4a75d0: remarks (speaker0BackLinesUsed picks) */
+extern short speaker0Replies[11]; /* @data 0x4a75e8: (speaker0RepliesUsed) */
+extern short speaker2BackLines[8]; /* @data 0x4a7604: (speaker2BackLinesUsed) */
+extern short doors34Lines[8]; /* @data 0x4a7618: (doors34LinesUsed) */
+extern short speaker3BackLines[7]; /* @data 0x4a762c: (speaker3BackLinesUsed) */
+extern short speaker3Replies[6]; /* @data 0x4a7640: (speaker3RepliesUsed) */
+extern short speaker1BackLines[4]; /* @data 0x4a7650: (speaker1BackLinesUsed) */
+extern short doors16Lines[6]; /* @data 0x4a765c: (doors16LinesUsed) */
 void makeOneValueRules();
 void makeTwoFeatureRules();
 void makeTwoValueRules();

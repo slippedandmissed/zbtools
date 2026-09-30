@@ -381,7 +381,7 @@ void resetFleens()
     g_4abb80 = 0;
     g_4abb18 = g_4abb2e = 0;
     g_4abdb0 = 0;
-    g_4abdb8 = 0;
+    fleensFidgetersUsed = 0;
     if (g_4b2b00)
         g_4abdb4 = 120;
     else
@@ -1588,7 +1588,7 @@ void fleensFrame()
             g_4abdb0 = clockTime();
             g_4abb32 = 1;
             do {
-                view = idleSnoidView(partyViews[allocateSlot(&g_4abdb8, g_4abba0, 0)]);
+                view = idleSnoidView(partyViews[allocateSlot(&fleensFidgetersUsed, g_4abba0, 0)]);
                 if (view && view->body.running && view->flags == 1) {
                     script = fleensSnoidScript(view, 5);
                     if (script) {

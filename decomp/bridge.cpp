@@ -52,7 +52,7 @@ void resetBridge()
     snoidsOnTheirWay = snoidsArrived = g_4ab802 = 0;
     g_4ab7d8 = g_4ab824 = 0;
     g_4ab82a = g_4ab82c = 0;
-    g_4ab830 = g_4ab838 = 0;
+    g_4ab830 = bridgeFidgetersUsed = 0;
     if (g_4b2b00)
         g_4ab834 = 120;
     else
@@ -943,7 +943,7 @@ void bridgeFrame()
         tries = 0;
         do {
             tries++;
-            view = idleSnoidView(partyViews[allocateSlot(&g_4ab838, g_4ab82e, 0)]);
+            view = idleSnoidView(partyViews[allocateSlot(&bridgeFidgetersUsed, g_4ab82e, 0)]);
             if (view && viewSnoid(view)->unknownF7 && (view->flags & 1)) {
                 n = viewSnoid(view)->features[3];
                 n += 2019;

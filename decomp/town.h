@@ -46,7 +46,7 @@ extern short g_4b7ef8; /* @data 0x4b7ef8 */
 extern short g_4b7f00; /* @data 0x4b7f00 */
 extern unsigned long g_4b7f04; /* @data 0x4b7f04 */
 extern unsigned long g_4b7f08; /* @data 0x4b7f08 */
-extern unsigned long g_4b7f0c; /* @data 0x4b7f0c */
+extern unsigned long townFidgetersUsed; /* @data 0x4b7f0c */
 extern short g_4b7f12; /* @data 0x4b7f12: townspeople still to add */
 
 extern Point g_4a74de[16]; /* @data 0x4a74de: the groups' hotspots (placeRecordHotspots) */

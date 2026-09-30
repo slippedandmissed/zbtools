@@ -1109,7 +1109,7 @@ void stoneRiseFrame()
                 tries = 0;
                 g_4b252c = clockTime();
                 do {
-                    view = idleSnoidView(partyViews[allocateSlot(&g_4b2538, partySize, 0)]);
+                    view = idleSnoidView(partyViews[allocateSlot(&slidesFidgetersUsed, partySize, 0)]);
                     if (view && view->body.running && view->flags == 1) {
                         int script = ((Snoid *)&view->body)->features[3] - 1;
 
@@ -1123,7 +1123,7 @@ void stoneRiseFrame()
                 } while (!done);
             }
         } else if (g_4b253e >= g_4b253c) {
-            g_4b253e = g_4b2540 = g_4b252c = g_4b2538 = 0;
+            g_4b253e = g_4b2540 = g_4b252c = slidesFidgetersUsed = 0;
         }
         playAmbientSound();
         g_4a41e4 = 0;

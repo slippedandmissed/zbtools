@@ -865,12 +865,12 @@ void fillRosterHeader(short reset)
         rosterChanged = 1;
         g_4afb30 = 0;
         g_4b807e = 0;
-        g_4a75e4 = g_4a7600 = g_4a7614 = g_4a7628 = g_4a763c = 0;
-        g_4a764c = g_4a7658 = g_4a7668 = g_4a78c4 = g_4a78c8 = 0;
+        speaker0BackLinesUsed = speaker0RepliesUsed = speaker2BackLinesUsed = doors34LinesUsed = speaker3BackLinesUsed = 0;
+        speaker3RepliesUsed = speaker1BackLinesUsed = doors16LinesUsed = g_4a78c4 = g_4a78c8 = 0;
         g_4a78cc = g_4a78d0 = g_4a78d4 = g_4a78d8 = 0;
         g_4a78dc = 0;
-        g_4abafc = 0;
-        g_4abb00 = 0;
+        ferryVisits = 0;
+        returnRoutesUsed = 0;
     } else {
         *(unsigned short *)(gameState + 2) = swapShort(clickTime);
         gameState[4] = soundOn;

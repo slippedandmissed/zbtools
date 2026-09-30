@@ -50,7 +50,7 @@ extern char g_4abbc2[16]; /* @data 0x4abbc2 */
 extern short g_4abdac; /* @data 0x4abdac */
 extern unsigned long g_4abdb0; /* @data 0x4abdb0 */
 extern unsigned long g_4abdb4; /* @data 0x4abdb4 */
-extern unsigned long g_4abdb8; /* @data 0x4abdb8 */
+extern unsigned long fleensFidgetersUsed; /* @data 0x4abdb8 */
 
 void fleensMovingOnNotify(View *view, short event);
 extern short fleensViews[7]; /* @data 0x4abb20: the backdrop's views (scripts 1200-1206) */
