@@ -1,6 +1,7 @@
 """Write a progress report: statistics per region, every function with its
-status, and for each decompiled function its original machine code, its C++
-and its recompiled machine code side by side.
+status, for each decompiled function its original machine code, its C++ and
+its recompiled machine code side by side, and how much of the game's data
+the decompiled code defines and matches (`uv run match-data`).
 
 The report is a small static site in build/report/: an overview (index.html),
 a list of every function (functions.html), and a page per source file with its
@@ -19,7 +20,7 @@ from typing import Annotated
 import jinja2
 import typer
 
-from zbtools import ghidra, inventory, match, module_map, paths
+from zbtools import ghidra, inventory, match, match_data, module_map, paths
 from zbtools.demangle import qualified_name
 from zbtools.exe import Instruction
 from zbtools.inventory import Region, Status
@@ -248,6 +249,7 @@ def _groups(details: list[Detail]) -> list[SourceGroup]:
 def build() -> dict[str, str]:
     """The report's files, by path relative to its root."""
     exe = match.game_executable()
+    data = match_data.check(match.decomp_sources(), exe)
     functions = inventory.load(exe)
     by_address = {f.address: f for f in functions}
     names = Names.of(functions)
@@ -283,6 +285,7 @@ def build() -> dict[str, str]:
             common,
             root="",
             module_stats=_module_stats(functions),
+            data=data,
             details=details,
             groups=groups,
             unmarked=unmarked,

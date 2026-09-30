@@ -231,6 +231,17 @@ Removing a false function clears the code it decoded, which can include real swi
 
 Borland C++ puts a module's string literals together in its data, in the order the module's functions use them, and a function with several literals addresses them from the pool's start kept in a register (`lea eax, [edi + offset]`). The offsets are part of the code, not linker fixups, so a function's literals only match once everything before it in its module that uses literals is decompiled too, in the original order (`decomp/<module>.cpp` keeps functions in address order). Example: `dumpMessages` (`0x456638`) is exact except for its offsets, which in the original start after 0x41 bytes of earlier literals ("Invalid display mode.", ...). Functions with few literals push each one's address instead (a fixup), which is also how a function using named strings (like `WinMain`'s messages) looks.
 
+## How the compiler lays out a module's data
+
+Checked with `uv run match-data` against the objects BCC32 4.5 compiles from `decomp/`:
+
+- Code refers to its own module's data through the segment (`_DATA` or `_BSS`), not the global's symbol, with the offset into the segment in the instruction itself (the fixup's displacement is 0). So a matching function's reference gives where that piece of data is in the original: the original's instruction holds the absolute address.
+- Each object's `_DATA` has its initialised globals and statics in the order they're defined, then its string literals, and is padded with zeros to a multiple of 4 bytes. The original's modules follow each other without that padding where their literals end (`bctwo.mhk` at `0x4a0d7e`, followed directly by the next module's data), so the padding isn't compared.
+- Globals initialised to zero can be in the initialised data: `noPreloadKind` (`0x4a07f8`) is between `soundListKind` and `cheatHash`, while `decomp/basecamp.cpp` doesn't initialise it, so BCC32 puts it in `_BSS`. The original probably initialised it explicitly (`= 0`).
+- The uninitialised data (`_BSS`) starts at `0x4aa410`, not at the end of the DATA section's file data (`0x4aa600`): TLINK32 pads the file data to its alignment (0x200 bytes) with zeros, and the first module's `_BSS` (anim's `loadWholeCast`, then sound's, buttons', focus'...) starts in them, just after the last nonzero byte of initialised data (`0x4aa40e`). Nothing in decomp/ declares the initialised data just before it (`0x4a8dd0`-`0x4aa410`, after the game's and the engine's), presumably the runtime library's.
+- Each module's `_BSS` follows the same module order as its `_DATA` and code: of the 1,260 uninitialised globals only one module's code uses, only four are out of that order.
+- An initialised local array's hidden copy is data like any other, and shows the original's initialiser: `mainloop.cpp`'s `char line[256] = ""` is `"Level"` in the original (`0x4a79d4`).
+
 ## Byte-swapping helpers
 
 The game has inline helpers for big-endian (Mac) values, whose inlined code has a recognisable shape: the value is copied into a stack temporary, a register points at it, and its bytes are reassembled in reverse (`xor eax, eax / mov al, [ebx+1] / ...`). `WinMain`'s Windows version check (`swapShort((WORD)GetVersion()) > 0x30b`) and `getSound`'s reading of a resource's type tag (`swapLong`) both use them; they're in `decomp/zoombinis.h`. Writing the swap inline, or with a helper taking a pointer, doesn't give the same code: the temporary comes from the helper's parameter being passed by value.

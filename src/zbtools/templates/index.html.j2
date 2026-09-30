@@ -46,6 +46,67 @@
   </div>
   </details>
 
+  <h2>Data</h2>
+  <p class="muted">The compiled objects' data placed in the game's DATA section and compared with it (<span class="mono">uv run match-data</span>); percentages are by bytes of the section. The runtime library's data comes with it at link time and isn't counted.</p>
+  <div class="cards">
+    <div class="card">
+      <h3>Initialised data</h3>
+      <div class="muted">{{ (data.initialised_size / 1024) | round(1) }} KB &middot; {{ data.count(initialised=True, defined=True) }} of {{ data.count(initialised=True) }} declared globals defined</div>
+      <div class="bar">
+        <span class="s-matched" style="width: {{ data.percent(data.matching_bytes) }}%"></span>
+        <span class="s-nonmatching" style="width: {{ data.percent(data.differing_bytes) }}%"></span>
+      </div>
+      <div class="legend">
+        <span><span class="dot s-matched"></span>matching: {{ data.matching_bytes }} bytes ({{ data.percent(data.matching_bytes) | round(1) }}%)</span>
+        <span><span class="dot s-nonmatching"></span>differing: {{ data.differing_bytes }} bytes ({{ data.percent(data.differing_bytes) | round(1) }}%)</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Uninitialised data</h3>
+      <div class="muted">{{ (data.uninitialised_size / 1024) | round(1) }} KB &middot; {{ data.count(initialised=False, defined=True) }} of {{ data.count(initialised=False) }} declared globals defined</div>
+      <div class="bar">
+        <span class="s-matched" style="width: {{ data.percent(data.placed_uninitialised_bytes, initialised=False) }}%"></span>
+      </div>
+      <div class="legend">
+        <span><span class="dot s-matched"></span>placed: {{ data.placed_uninitialised_bytes }} bytes ({{ data.percent(data.placed_uninitialised_bytes, initialised=False) | round(1) }}%)</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>To check</h3>
+      <div class="legend">
+        <span>{{ data.unplaced_bytes }} bytes of compiled data nothing places yet</span>
+        <span>{{ data.misplaced }} pieces out of order, or in the other kind of data</span>
+        {% if data.errors %}<span>{{ data.errors | length }} files didn't compile</span>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% set segments = data.placements | rejectattr('matches') | list %}
+  <details class="section">
+  <summary>Data segments that don't match yet ({{ segments | length }} of {{ data.placements | length }})</summary>
+  <div class="scroll">
+    <table class="list">
+      <thead><tr><th>Source file</th><th>Segment</th><th>At</th><th class="num">Bytes</th><th class="num">Placed</th><th class="num">Differing</th><th>Differences</th></tr></thead>
+      <tbody>
+      {% for p in segments %}
+        <tr>
+          <td class="mono">{{ p.source.name }}</td>
+          <td class="mono">{{ p.segment }}</td>
+          <td class="mono">{% if p.address is not none %}{{ '0x%08x' % p.address }}{% endif %}</td>
+          <td class="num">{{ p.size }}</td>
+          <td class="num">{{ p.placed_bytes }}</td>
+          <td class="num">{% if p.mismatches %}{{ p.mismatches | length }}{% endif %}</td>
+          <td class="muted">
+            {% for owner in p.notes.values() | unique %}<div class="mono">differs: {{ owner }}</div>{% endfor %}
+            {% for line in p.misplaced %}<div class="mono">misplaced: {{ line }}</div>{% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  </details>
+
   <h2>Decompiled functions ({{ details | length }}, in {{ groups | length }} files)</h2>
   {% set flagged = details | selectattr('outcome.discrepancy') | list %}
   {% if flagged or unmarked %}

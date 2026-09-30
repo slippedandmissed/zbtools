@@ -67,7 +67,7 @@ short mainLoopUpdate()
 /* @zoombi32 0x00462749 */
 void debugMessage(short value, const char *after, short *number, const char *before, short wait)
 {
-    char line[256] = "";
+    char line[256] = "Level";
     Color saved;
     short i;
 

@@ -225,7 +225,7 @@ void allocShapeList(ResourceList **list, short id, short count, const char *what
 {
     if (*list) {
         if (id != (*list)->id) {
-            joinText(&arrayErrorText, what, "e2GetShapes error: e2ShapeArray already in use by ");
+            joinText(&arrayErrorText, what, "e2GetShapes error: e2ShapeArray already in use");
             reportJoinedError(arrayErrorText);
         }
     } else if (!allocateBlock((void **)list, (count - 1) * 4 + sizeof(ResourceList))) {
@@ -371,7 +371,7 @@ void loadResourceAs(long *resource, long type, unsigned short id, const char *wh
     loadFailed = 0;
     if (old && *resource && old != *resource) {
         freeResource(&old);
-        joinText(&resourceErrorText, resourceText, "e2GetRsrc error: resRef already in use by ");
+        joinText(&resourceErrorText, resourceText, "e2GetRsrc error: resRef already in use");
         reportJoinedError(resourceErrorText);
     }
     freeText((void **)&resourceText);
@@ -423,7 +423,7 @@ void readGameResource(void *buffer, unsigned long size, long type, unsigned shor
     checkStarvationKeepingFlags();
     readResourceBytes(resource, buffer, &read, 0);
     if (exact && size != read) {
-        joinText(&readErrorText, "End of data reached for ", resourceText);
+        joinText(&readErrorText, "End of data reached for", resourceText);
         reportJoinedError(readErrorText);
     }
     mainLoopEvents();

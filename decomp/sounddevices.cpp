@@ -23,7 +23,7 @@ static char rateTranslations[] = "Audio.WaveRateTranslations";
 static char soundMapper[] = "Software\\Microsoft\\Multimedia\\Sound Mapper";
 static char playback[] = "Playback";
 static char versionFormat[] = "%[;]%d%[.]%d%[+-]";
-static char rateFormat[] = "%lu";
+static char rateFormat[] = "%d"; /* nSamplesPerSec is a 32-bit DWORD */
 
 /* Turns sounds on or off (as the application is activated or not): each
    sound closes or reopens its device, and so do the cached default devices. */

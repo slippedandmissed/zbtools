@@ -569,6 +569,32 @@ def _silent(error: RuntimeError) -> bool:
     return not re.search(r"^(Error|Warning|Fatal)\b", str(error), re.MULTILINE)
 
 
+def compile_sources(
+    sources: list[Path],
+    release: str | None = None,
+    flags: str | None = None,
+    *,
+    use_cache: bool = True,
+) -> dict[Path, Compiled | str]:
+    """Compile each source (or reuse its cached object) with its release, or
+    `release` if given: its object, or why it couldn't be compiled."""
+    found: dict[Path, Compiled | str] = {}
+    installed = toolchain.installed_releases()
+    toolchain.ensure_prefix()  # once, before the compiles run in parallel
+    jobs: list[tuple[Path, tuple[str, Path, str]]] = []
+    for source in sources:
+        text = source.read_text()
+        file_release = release_for(text, release)
+        if file_release not in installed:
+            found[source] = f"Borland C++ {file_release} isn't installed (uv run toolchain setup)"
+            continue
+        jobs.append((source, (file_release, source.resolve(), _flags_for(text, flags))))
+    compiled_all = _compile_all([job for _, job in jobs], use_cache=use_cache)
+    for (source, _), compiled in zip(jobs, compiled_all, strict=True):
+        found[source] = str(compiled) if isinstance(compiled, RuntimeError) else compiled
+    return found
+
+
 def check(
     sources: list[Path],
     exe: Executable,
@@ -580,24 +606,13 @@ def check(
     """Compile each source (or reuse its cached object) with its release, or
     `release` if given, and compare every function marked in it."""
     checked = []
-    installed = toolchain.installed_releases()
-    toolchain.ensure_prefix()  # once, before the compiles run in parallel
-    pending: list[tuple[Path, list[Target], tuple[str, Path, str]]] = []
-    for source in sources:
-        text = source.read_text()
-        targets = find_targets(text)
-        if not targets:
-            continue
-        file_release = release_for(text, release)
-        if file_release not in installed:
-            error = f"Borland C++ {file_release} isn't installed (uv run toolchain setup)"
-            checked += [Checked(source, t, None, error) for t in targets]
-            continue
-        pending.append((source, targets, (file_release, source.resolve(), _flags_for(text, flags))))
-    compiled_all = _compile_all([job for _, _, job in pending], use_cache=use_cache)
-    for (source, targets, _), compiled in zip(pending, compiled_all, strict=True):
-        if isinstance(compiled, RuntimeError):
-            checked += [Checked(source, t, None, str(compiled)) for t in targets]
+    marked = {source: find_targets(source.read_text()) for source in sources}
+    marked = {source: targets for source, targets in marked.items() if targets}
+    compiled_all = compile_sources(list(marked), release, flags, use_cache=use_cache)
+    for source, targets in marked.items():
+        compiled = compiled_all[source]
+        if isinstance(compiled, str):
+            checked += [Checked(source, t, None, compiled) for t in targets]
             continue
         obj, cached = compiled.obj, compiled.cached
         siblings = {}

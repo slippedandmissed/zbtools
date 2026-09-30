@@ -592,7 +592,7 @@ void loadScripts(short first, short count)
         placeClaims[i] = 0;
     scriptGroups = 0;
     if (count > 300)
-        fatalError("Too many main feature SCRBs");
+        fatalError("Too many main-feature SCRBs");
     for (i = 0; i < 8; i++) {
         scriptGroupFirst[i] = 0;
         scriptGroupCount[i] = 0;
@@ -622,7 +622,7 @@ void addScripts(short first, short count, short limit)
             loaded += scriptGroupCount[i];
         if (loaded && loaded < 300) {
             if (count + loaded > 300)
-                fatalError("Too many next group feature SCRBs");
+                fatalError("Too many next-group-feature SCRBs");
             if (limit <= 0 || limit > count)
                 limit = count;
             for (i = loaded; i - loaded < limit && i < 300; i++)

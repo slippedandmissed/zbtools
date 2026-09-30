@@ -45,6 +45,17 @@ class Executable:
             )
             for section in pe.sections
         }
+        # The part of each section stored in the file; the rest (a data
+        # section's uninitialised globals) is zero-filled when loaded.
+        self.initialised = {
+            section.Name.rstrip(b"\0").decode(): (
+                self.base + int(section.VirtualAddress),
+                self.base
+                + int(section.VirtualAddress)
+                + min(int(section.SizeOfRawData), int(section.Misc_VirtualSize)),
+            )
+            for section in pe.sections
+        }
         code = next(s for s in pe.sections if int(s.Characteristics) & _IMAGE_SCN_MEM_EXECUTE)
         start = self.base + int(code.VirtualAddress)
         self.code_range = (start, start + int(code.Misc_VirtualSize))

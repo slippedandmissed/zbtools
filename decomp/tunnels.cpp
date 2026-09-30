@@ -325,7 +325,7 @@ short tunnelsKey(unsigned short key)
                 setViewScript(view, script, 1);
                 loadViewSounds(n, 1);
                 debugTunnelScript = script;
-                debugMessage(script, "SCRB n:", 0, 0, 0);
+                debugMessage(script, "SCRB id:", 0, 0, 0);
             }
         }
         break;
