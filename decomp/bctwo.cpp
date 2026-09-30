@@ -411,9 +411,9 @@ void campDragged(short event)
             place = heldPlaceNumber();
             snoid = viewSnoid(view);
             moved = !(snoid->targetX == snoid->body.x && snoid->targetY == snoid->body.y);
-            snoid->unknownF7 = place > 0;
-            if (snoid->unknownF7)
-                snoid->unknownF8 = 1;
+            snoid->chosen = place > 0;
+            if (snoid->chosen)
+                snoid->idleTicks = 1;
             rect = view->body.bounds;
             if (sectRect(&rect, &bookArea)) {
                 rect = view->body.bounds;
@@ -444,8 +444,8 @@ void campDragged(short event)
                 scrollPressed = -1;
             } else if (dropped && !place && moved && !i) {
                 claimPlacedView(dropped, view->id);
-                snoid->unknownF7 = 1;
-                snoid->unknownF8 = 1;
+                snoid->chosen = 1;
+                snoid->idleTicks = 1;
             }
             if (populationFull) {
                 short chosen = countChosenSnoids();
@@ -742,7 +742,7 @@ void drawBook(View *)
                 y = cellY[line * 2 + 1][column];
             }
             snoid.body.clipped = 0;
-            snoid.unknownC0 = -1;
+            snoid.drawnFacing = -1;
             snoid.body.frame = 0;
             snoid.body.frameOffset = 2;
             snoid.zoombini = bookEntries->entries[n].zoombini;

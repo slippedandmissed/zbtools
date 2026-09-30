@@ -121,7 +121,7 @@ void sendFlaggedToPlaces()
     for (i = 0; i < pizzaPartySize; i++) {
         where.x = pizzaPlaces[i].x;
         where.y = pizzaPlaces[i].y;
-        if ((view = findView(partyViews[i])) != 0 && ((Snoid *)&view->body)->unknownF7 == 1) {
+        if ((view = findView(partyViews[i])) != 0 && ((Snoid *)&view->body)->chosen == 1) {
             snoid = (Snoid *)&view->body;
             setSnoidAction(snoid, 0, &where);
         }
@@ -1436,7 +1436,7 @@ void pizzaZoombiniNotify(View *view, short event)
         pendingPizzaFacing = event - 239;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (pendingPizzaFacing) {
             setSnoidFacing(snoid, pendingPizzaFacing - 1);
             pendingPizzaFacing = 0;
@@ -1497,7 +1497,7 @@ void pizzaZoombiniNotify(View *view, short event)
             zoombiniDone = 0;
         } else if (departingZoombini) {
             placeClaims[0] = 0;
-            ((Snoid *)&departingZoombini->body)->unknownF7 = 0;
+            ((Snoid *)&departingZoombini->body)->chosen = 0;
             departingZoombini->body.running = 0;
             departingZoombini = 0;
             zoombiniDone = 1;

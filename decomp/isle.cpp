@@ -116,7 +116,7 @@ void openIsle()
     visitAllItems();
     snoidBeingMade.body.x = isleSceneButtons[2].rect.left + 39;
     snoidBeingMade.body.y = isleSceneButtons[2].rect.top + 31;
-    snoidBeingMade.unknownF7 = 1;
+    snoidBeingMade.chosen = 1;
     drawIsleButtons(0, 0, 0);
     drawFeatureButtons(0, 0, 0);
     if (introClickState) {
@@ -427,10 +427,10 @@ void isleButtonClicked(short button)
                 id = sortedIds[order[slot]];
                 if (id) {
                     snoid = findSnoid(id, 1);
-                    if (snoid && !snoid->unknownF4) {
+                    if (snoid && !snoid->action) {
                         view = findView(id);
                         view->nextUpdate = clockTime() + snoidsOnTheirWay * 60;
-                        snoid->unknownEa = -1;
+                        snoid->pathIndex = -1;
                         snoid->targetX = 544;
                         snoid->targetY = 264;
                         setSnoidAction(snoid, 7, 0);
@@ -465,7 +465,7 @@ void isleButtonClicked(short button)
             view = viewAt(cursor, 1, 1);
             grab = 0;
             if (view) {
-                grab = ((Snoid *)&view->body)->unknownF4;
+                grab = ((Snoid *)&view->body)->action;
                 if (!grab || grab == 6 || grab == 4)
                     grab = 1;
                 else
@@ -930,7 +930,7 @@ void isleQueue(Point *where, short *slot)
                 if (sortedIds[i + step]) {
                     snoid = findSnoid(sortedIds[i + step], 1);
                     if (snoid) {
-                        snoid->unknownEa = -1;
+                        snoid->pathIndex = -1;
                         if (i + step < 17) {
                             *(Point *)&snoid->targetX = isleQueuePlaces[i];
                             setSnoidAction(snoid, 7, 0);

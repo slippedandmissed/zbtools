@@ -60,7 +60,7 @@ extern short feetImages[6]; /* @data 0x4a4ba4: by feature value (1-5) */
 extern short noseImages[6]; /* @data 0x4a4bb0 */
 extern short eyesImages[6]; /* @data 0x4a4bbc */
 extern short hairImages[6]; /* @data 0x4a4bc8 */
-extern short altFeetImages[6]; /* @data 0x4a4bd4: the same, when unknownF4 is 9 */
+extern short altFeetImages[6]; /* @data 0x4a4bd4: the same, when action is 9 */
 extern short altNoseImages[6]; /* @data 0x4a4be0 */
 extern short altEyesImages[6]; /* @data 0x4a4bec */
 extern short altHairImages[6]; /* @data 0x4a4bf8 */
@@ -128,7 +128,7 @@ void claimPlacedView(short n, short id); /* 0x45802e */
 void markPlacedSnoids();
 void sendSnoids(short x, short y, unsigned long interval);
 void drawPaths();
-void startSnoidScript(Snoid *snoid, short id, Point *anchor, char unknownF8);
+void startSnoidScript(Snoid *snoid, short id, Point *anchor, char idleTicks);
 void findSpot(View *view, ShortRect *area, short walk, short radius);
 void pickFreePlace(Point *result, Point *places, short count, short radius);
 extern Point spotOrigin; /* @data 0x4a4d1c */

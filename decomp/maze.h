@@ -35,9 +35,9 @@ void closeMaze();
 short mazeKey(unsigned short key);
 extern short *mazeHotSpotsX; /* @data 0x4afbe8: hot spots: x */
 extern short *mazeHotSpotsY; /* @data 0x4afbec: and y */
-void startPairedSnoidScript(View *view, short group, ViewNotify, char unknownF8);
-void startPairedSnoidPoseScript(View *view, short group, ViewNotify, char unknownF8);
-void startPairedSnoid14003(View *view, short group, ViewNotify, char unknownF8);
+void startPairedSnoidScript(View *view, short group, ViewNotify, char idleTicks);
+void startPairedSnoidPoseScript(View *view, short group, ViewNotify, char idleTicks);
+void startPairedSnoid14003(View *view, short group, ViewNotify, char idleTicks);
 void placeOnHotSpot35(View *view);
 void placeOnHotSpot25(View *view);
 extern short gate1CloseDue; /* @data 0x4b0a0a */
@@ -99,7 +99,7 @@ extern short poseReachedCount; /* @data 0x4b0d26 */
 void putSnoidInMaze(View *view, short pose);
 extern short lineSecondViews[]; /* @data 0x4afd26 */
 extern short lineSecondScripts[]; /* @data 0x4a2324 */
-void moveSnoidToSquare(View *view, short group, ViewNotify, char unknownF8);
+void moveSnoidToSquare(View *view, short group, ViewNotify, char idleTicks);
 void mazeSnoidNotify(View *view, short event);
 extern short takenRowCount; /* @data 0x4b00d0: how many */
 short takeRarestValue(short exclude);

@@ -401,7 +401,7 @@ void setViewPlaces(short count, Point *places, short apply)
 
             if (view) {
                 *(Point *)&view->body.x = viewPlaces[i];
-                viewSnoid(view)->unknownF4 = 0;
+                viewSnoid(view)->action = 0;
             }
         }
     }
@@ -758,8 +758,8 @@ void setViewScript(View *view, short script, short running)
         view->reset = 0;
         view->unknown2e = 1;
         if (view->flags & 0x800000) {
-            view->body.unknownAa = data[1];
-            view->body.unknownAc = data[2];
+            view->body.waypointX = data[1];
+            view->body.waypointY = data[2];
         }
         if (removedRgn) {
             if (view->region) {
@@ -1209,7 +1209,7 @@ void viewSoundList(View *view, short *count, short *sounds)
     if (view) {
         if (view->flags & 1) {
             snoid = viewSnoid(view);
-            switch (snoid->unknownF4) {
+            switch (snoid->action) {
             default:
                 at = baseSnoidScripts[snoid->body.script];
                 break;
@@ -1706,7 +1706,7 @@ short addView(unsigned long flags, ViewDraw draw, ViewUpdate update, short kind,
                 view->next->prev = view;
                 if (flags & 0x800000) {
                     *(Point *)&view->body.x = *(Point *)data;
-                    *(Point *)&view->body.unknownAa = *(Point *)&view->body.x;
+                    *(Point *)&view->body.waypointX = *(Point *)&view->body.x;
                 }
                 view->draw = draw;
                 view->update = update;
@@ -1748,7 +1748,7 @@ void drawViewLabels(short only)
                     if ((view->flags & 0xf) == 1) {
                         fillPortRect(view->body.bounds, Color(14), 0);
                         frameRect(view->body.bounds);
-                        if (viewSnoid(view)->unknownF7)
+                        if (viewSnoid(view)->chosen)
                             text[0] = '+';
                         else
                             text[0] = '-';

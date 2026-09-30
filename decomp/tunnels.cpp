@@ -1467,7 +1467,7 @@ void sendThroughDoors()
                 snoid = (Snoid *)&view->body;
                 snoid->targetX = doorX[tunnelQueue.entries[0].kind - 1];
                 snoid->targetY = 460;
-                snoid->unknownF7 = 0;
+                snoid->chosen = 0;
                 view->flags &= ~0x4000000;
                 setSnoidAction(snoid, 7, 0);
             }
@@ -1513,7 +1513,7 @@ void tunnelsSnoidNotify(View *view, short event)
         pendingFacing = event - 239;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (pendingFacing) {
             setSnoidFacing(snoid, pendingFacing - 1);
             pendingFacing = 0;
@@ -1593,7 +1593,7 @@ void tunnelsSnoidNotify(View *view, short event)
                     door4Count++;
                     break;
                 }
-                viewSnoid(view)->unknownF7 = 1;
+                viewSnoid(view)->chosen = 1;
                 moveView(view->id, after, anchor);
                 setSnoidAction(viewSnoid(view), 10, 0);
                 count = countChosenSnoids();
@@ -1738,7 +1738,7 @@ void tunnelsFrame()
                         snoid = viewSnoid(view);
                         view->flags &= ~0x4000000;
                         if (view->body.cels[20].image < 4) /* +0xa8: not a cel here? */
-                            snoid->unknownF2 = 1;
+                            snoid->facingLeft = 1;
                         startSnoidScript(snoid, tunnelQueue.entries[0].script, 0, 0);
                         view->notify = tunnelsSnoidNotify;
                         view->notifyEnd = 1;
@@ -1805,7 +1805,7 @@ void tunnelsFrame()
         do {
             aside++;
             view = idleSnoidView(partyViews[allocateSlot(&fidgetersUsed, tunnelsPartySize, 0)]);
-            if (view && viewSnoid(view)->unknownF7 && (view->flags & 1)) {
+            if (view && viewSnoid(view)->chosen && (view->flags & 1)) {
                 id = viewSnoid(view)->features[3];
                 id += 8559;
                 startSnoidScript(viewSnoid(view), id, 0, 0);
@@ -2006,8 +2006,8 @@ void tunnelsClicked(short which)
         if (!view || endDragNow)
             break;
         snoid = viewSnoid(view);
-        which = snoid->unknownF7;
-        if (snoid->unknownF4 && snoid->unknownF4 != 6)
+        which = snoid->chosen;
+        if (snoid->action && snoid->action != 6)
             break;
         home = *(long *)&view->body.x;
         if (which)

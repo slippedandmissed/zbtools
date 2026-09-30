@@ -384,7 +384,7 @@ void bridgeSnoidNotify(View *view, short event)
         if (n == bridgePartySize)
             bridgeFidgetsAllowed += 2;
         hideArrivedPlaced = 1;
-        viewSnoid(view)->unknownF7 = 2;
+        viewSnoid(view)->chosen = 2;
         if (n == bridgePartySize && !crossersOut)
             queueViewSound(randomBetween(20055, 20063), 0);
         break;
@@ -870,7 +870,7 @@ void bridgeFrame()
             crossersOut++;
             crossingUnderway = crosserPasses;
             if (!crosserPasses) {
-                viewSnoid(view)->unknownF7 = 1;
+                viewSnoid(view)->chosen = 1;
                 view->interval = randomBetween(4, 5);
             }
             debugBridgeScript = -1;
@@ -944,7 +944,7 @@ void bridgeFrame()
         do {
             tries++;
             view = idleSnoidView(partyViews[allocateSlot(&bridgeFidgetersUsed, bridgePartySize, 0)]);
-            if (view && viewSnoid(view)->unknownF7 && (view->flags & 1)) {
+            if (view && viewSnoid(view)->chosen && (view->flags & 1)) {
                 n = viewSnoid(view)->features[3];
                 n += 2019;
                 startSnoidScript(viewSnoid(view), n, 0, 0);
@@ -1007,9 +1007,9 @@ void bridgeClicked(short which)
         if (!view)
             break;
         moved = 0;
-        if (viewSnoid(view)->unknownF4 == 8 || viewSnoid(view)->unknownF7)
+        if (viewSnoid(view)->action == 8 || viewSnoid(view)->chosen)
             break;
-        if (viewSnoid(view)->unknownF4 == 9) {
+        if (viewSnoid(view)->action == 9) {
             if (!sentBackWalking)
                 break;
             if (crossingUnderway)

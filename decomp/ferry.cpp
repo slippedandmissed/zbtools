@@ -108,12 +108,12 @@ void moveFerryOn()
 /* Starts returner's Zoombini on `script` (anchored at returnAnchor) in
    `group`, with `notify` if given. */
 /* @zoombi32 0x00420a08 */
-void startCrosserScript(short group, short script, ViewNotify notify, char unknownF8)
+void startCrosserScript(short group, short script, ViewNotify notify, char idleTicks)
 {
     View *view = findView(returner);
 
     if (view) {
-        startSnoidScript(viewSnoid(view), script, returnAnchor, unknownF8);
+        startSnoidScript(viewSnoid(view), script, returnAnchor, idleTicks);
         view->body.group = group;
         loadViewSounds(returner, 0);
         if (notify)
@@ -142,7 +142,7 @@ void ferryHelperNotify(View *view, short event)
     }
 }
 
-/* Moves the placed Zoombinis (flag 1 and unknownF7) and two kinds of
+/* Moves the placed Zoombinis (flag 1 and chosen) and two kinds of
    view (flags 0x748c2000, 0x74980000) `dx` along, cels and all. */
 /* @zoombi32 0x0042113f */
 void slideFerryViews(View *, short dx)
@@ -151,7 +151,7 @@ void slideFerryViews(View *, short dx)
     ViewCel *cel;
 
     for (view = viewListEnd(1)->next; view; view = view->next)
-        if (view->flags == 1 && viewSnoid(view)->unknownF7 || view->flags == 0x748c2000 || view->flags == 0x74980000) {
+        if (view->flags == 1 && viewSnoid(view)->chosen || view->flags == 0x748c2000 || view->flags == 0x74980000) {
             view->body.group = 0;
             view->body.x += dx;
             for (cel = view->body.cels; cel->image; cel++)
@@ -325,7 +325,7 @@ void crosserNotify(View *view, short event)
     case 4:
         other = findView(returner);
         if (other) {
-            viewSnoid(other)->unknownF2 = 1;
+            viewSnoid(other)->facingLeft = 1;
             other->body.x = 93;
             other->body.y = 408;
             startSnoidScript(viewSnoid(other), viewSnoid(other)->features[3] * 2 + 998, 0, 0);
@@ -337,7 +337,7 @@ void crosserNotify(View *view, short event)
     case 5:
         other = findView(returner);
         if (other) {
-            viewSnoid(other)->unknownF2 = 0;
+            viewSnoid(other)->facingLeft = 0;
             startSnoidScript(viewSnoid(other), viewSnoid(other)->features[3] * 2 + 999, &returnLanding, 0);
             other->body.group = view->body.group;
             other->notify = ferryHelperNotify;
@@ -821,7 +821,7 @@ void ferryFrame()
     if (sharedFeatureView) {
         view = idleSnoidView(sharedFeatureView);
         if (view) {
-            viewSnoid(view)->unknownF5 = sharedFeatureBits;
+            viewSnoid(view)->pose = sharedFeatureBits;
             sharedFeatureBits = 0;
             sharedFeatureView = 0;
         }
@@ -895,8 +895,8 @@ void ferryClicked(short which)
         view = viewAt(where, 1, 1);
         if (!view || cajunLeavingGroup || ferryLeaving)
             break;
-        placed = viewSnoid(view)->unknownF7;
-        viewSnoid(view)->unknownF7 = 0;
+        placed = viewSnoid(view)->chosen;
+        viewSnoid(view)->chosen = 0;
         returnPlace = *(Point *)&view->body.x;
         dragSnoid(view, where, 0, 0);
         unloadSounds();
@@ -944,7 +944,7 @@ void ferryClicked(short which)
                         cajunRemarkDue = goodPlacingRemarks[allocateSlot(&goodPlacingRemarksUsed, 2, 0)];
                     }
                 }
-                viewSnoid(view)->unknownF7 = 1;
+                viewSnoid(view)->chosen = 1;
                 if (sharedFeatureBits && practiceLevel)
                     sharedFeatureView = view->id;
             } else {
@@ -953,7 +953,7 @@ void ferryClicked(short which)
                 nextPraiseAt = 1;
                 returnUnderway = 1;
                 releaseHeldPlace();
-                viewSnoid(view)->unknownF8 = 1;
+                viewSnoid(view)->idleTicks = 1;
                 nextReturner = view->id;
                 returnPlaceView = ferryPlaceViews[returnPlaceView - 1];
                 if (randomBetween(3, 5) == badPlacings) {
@@ -964,7 +964,7 @@ void ferryClicked(short which)
                 }
                 returnDue = 1;
             }
-        } else if (viewSnoid(view)->unknownF4 == 4) {
+        } else if (viewSnoid(view)->action == 4) {
             target = *(Point *)&viewSnoid(view)->targetX;
             from = *(Point *)&view->body.x;
             if (target.x != from.x || target.y != from.y) {
@@ -982,7 +982,7 @@ void ferryClicked(short which)
             } else {
                 placed = 0;
             }
-            viewSnoid(view)->unknownF7 = placed;
+            viewSnoid(view)->chosen = placed;
         }
         break;
     }

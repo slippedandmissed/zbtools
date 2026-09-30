@@ -407,8 +407,8 @@ void lillyNotify60(View *view, short event)
     case 60:
         actor->body.x = body->cels[0].x;
         actor->body.y = body->cels[0].y;
-        actor->body.unknownAa = body->cels[0].x;
-        actor->body.unknownAc = body->cels[0].y;
+        actor->body.waypointX = body->cels[0].x;
+        actor->body.waypointY = body->cels[0].y;
         lillyBoard[actor->row][actor->column + 1].attributes[0] = 0;
         event60Views[event60Count] = view->id;
         event60Count++;
@@ -427,8 +427,8 @@ void lillyNotify49(View *view, short event)
     case 49:
         actor->body.x = body->cels[0].x;
         actor->body.y = body->cels[0].y;
-        actor->body.unknownAa = body->cels[0].x;
-        actor->body.unknownAc = body->cels[0].y;
+        actor->body.waypointX = body->cels[0].x;
+        actor->body.waypointY = body->cels[0].y;
         actor->unknownC2 = 0;
         view->flags = 0x980002;
         landedJumper = view->id;
@@ -621,7 +621,7 @@ void checkLillyArrivals()
                 View *rider = findView(parts[13]);
 
                 if (rider)
-                    viewSnoid(rider)->unknownF7 = 1;
+                    viewSnoid(rider)->chosen = 1;
             }
         }
     }
@@ -740,8 +740,8 @@ void lillyNotify54(View *view, short event)
     case 54:
         actor->body.x = body->cels[0].x;
         actor->body.y = body->cels[0].y;
-        actor->body.unknownAa = body->cels[0].x;
-        actor->body.unknownAc = body->cels[0].y;
+        actor->body.waypointX = body->cels[0].x;
+        actor->body.waypointY = body->cels[0].y;
         lillyBoard[actor->row][actor->column + 1].attributes[0] = 0;
         finishedLander = landerBusy;
         for (short i = 0; i < 13; i++)
@@ -802,8 +802,8 @@ void lillyNotify44(View *view, short event)
     case 44:
         actor->body.x = actorHotSpotsX[body->cels[0].image] + body->cels[0].x;
         actor->body.y = actorHotSpotsY[body->cels[0].image] + body->cels[0].y;
-        actor->body.unknownAa = actorHotSpotsX[body->cels[0].image] + body->cels[0].x;
-        actor->body.unknownAc = actorHotSpotsY[body->cels[0].image] + body->cels[0].y;
+        actor->body.waypointX = actorHotSpotsX[body->cels[0].image] + body->cels[0].x;
+        actor->body.waypointY = actorHotSpotsY[body->cels[0].image] + body->cels[0].y;
         lillyBoard[actor->row][actor->column + 1].attributes[0] = 0;
         event44Views[event44Count] = view->id;
         event44Count++;
@@ -893,8 +893,8 @@ void lillyNotify70(View *view, short event)
     case 70:
         actor->body.x = body->cels[0].x;
         actor->body.y = body->cels[0].y;
-        actor->body.unknownAa = body->cels[0].x;
-        actor->body.unknownAc = body->cels[0].y;
+        actor->body.waypointX = body->cels[0].x;
+        actor->body.waypointY = body->cels[0].y;
         hopperQueue[hopperQueueCount] = view->id;
         hopperQueueCount++;
         break;
@@ -1221,8 +1221,8 @@ short addLillyActor(short value)
     actor.startY = 0;
     actor.body.x = 100;
     actor.body.y = 25;
-    actor.body.unknownAa = 100;
-    actor.body.unknownAc = 25;
+    actor.body.waypointX = 100;
+    actor.body.waypointY = 25;
     for (short row = 0; row < 12; row++)
         for (short column = 0; column < 12; column++)
             actor.grid[row][column] = 0;
@@ -1251,8 +1251,8 @@ void lillyNotify30(View *view, short event)
     case 30: {
         actor->body.x = actorHotSpotsX[body->cels[0].image] + body->cels[0].x;
         actor->body.y = actorHotSpotsY[body->cels[0].image] + body->cels[0].y;
-        actor->body.unknownAa = actorHotSpotsX[body->cels[0].image] + body->cels[0].x;
-        actor->body.unknownAc = actorHotSpotsY[body->cels[0].image] + body->cels[0].y;
+        actor->body.waypointX = actorHotSpotsX[body->cels[0].image] + body->cels[0].x;
+        actor->body.waypointY = actorHotSpotsY[body->cels[0].image] + body->cels[0].y;
         firstArrivals++;
         if (firstArrivals == 1)
             lillyGoReady = 1;
@@ -1280,7 +1280,7 @@ void lillyNotify30(View *view, short event)
 
             if (rider) {
                 padsArrived++;
-                viewSnoid(rider)->unknownF7 = 1;
+                viewSnoid(rider)->chosen = 1;
             }
         }
         if (padsArrived == lillyPartySize)
@@ -1603,10 +1603,10 @@ void layOutLillyView(View *view, short region)
         view->reset = 0;
         at = loadSwappedResource(&resource, view->kind, RESOURCE_TYPE('S', 'C', 'R', 'B')) + 1;
         if (view->flags & 0x800000) {
-            view->body.unknownAa = at[1];
-            view->body.unknownAc = at[2];
-            offsetX = view->body.x - view->body.unknownAa;
-            offsetY = view->body.y - view->body.unknownAc;
+            view->body.waypointX = at[1];
+            view->body.waypointY = at[2];
+            offsetX = view->body.x - view->body.waypointX;
+            offsetY = view->body.y - view->body.waypointY;
         } else {
             offsetX = offsetY = 0;
         }
@@ -1839,8 +1839,8 @@ void addLillyActors()
         actor.targetY = 0;
         actor.body.x = 0;
         actor.body.y = 0;
-        actor.body.unknownAa = 0;
-        actor.body.unknownAc = 0;
+        actor.body.waypointX = 0;
+        actor.body.waypointY = 0;
         for (short row = 0; row < 12; row++)
             for (short column = 0; column < 12; column++)
                 actor.grid[row][column] = 0;
@@ -2092,8 +2092,8 @@ void hopNotify(View *view, short event)
     case 10:
         actor->body.x = actor->targetX;
         actor->body.y = actor->targetY;
-        actor->body.unknownAa = actor->targetX;
-        actor->body.unknownAc = actor->targetY;
+        actor->body.waypointX = actor->targetX;
+        actor->body.waypointY = actor->targetY;
         planQueue[planQueueCount] = view->id;
         planQueueCount++;
         view->nextUpdate = clockTime() + 30;
@@ -2449,8 +2449,8 @@ void placeHopper(View *view)
         y = actor->targetY;
         actor->body.x = x;
         actor->body.y = y;
-        actor->body.unknownAa = x;
-        actor->body.unknownAc = y;
+        actor->body.waypointX = x;
+        actor->body.waypointY = y;
         view->nextUpdate = clockTime() + 35;
         hopperQueue[hopperQueueCount] = view->id;
         hopperQueueCount++;
@@ -3131,7 +3131,7 @@ void hotelFrame()
         view = idleSnoidView(droppedSnoid);
         if (view) {
             droppedSnoid = 0;
-            if (viewSnoid(view)->unknownF7) {
+            if (viewSnoid(view)->chosen) {
                 roomsFilled++;
                 if (roomOccupancy[hotelRoom] > 0)
                     if (++roomOccupancy[hotelRoom] > 6)
@@ -3247,7 +3247,7 @@ void hotelSnoidNotify(View *view, short event)
         hotelFacing = event - 239;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (hotelFacing) {
             setSnoidFacing(snoid, hotelFacing - 1);
             hotelFacing = 0;
@@ -3650,8 +3650,8 @@ void lillyClick(short action)
             view = viewAt(where, 0x8001, 1);
         if (view) {
             snoid = viewSnoid(view);
-            chosen = snoid->unknownF7;
-            if (snoid->unknownF4 != 9 && snoid->unknownF4 != 8 && snoid->unknownF4 != 7) {
+            chosen = snoid->chosen;
+            if (snoid->action != 9 && snoid->action != 8 && snoid->action != 7) {
                 start = *(Point *)&view->body.x;
                 if (chosen) {
                     bounds = snoid->body.bounds;
@@ -3754,7 +3754,7 @@ void lillyClick(short action)
                     break;
                 }
                 if (!wrong) {
-                    viewSnoid(view)->unknownF7 = 1;
+                    viewSnoid(view)->chosen = 1;
                     if (countChosenSnoids() == hotelPartySize)
                         queueViewSound(randomUpTo(23) + 175, 0);
                 } else {
@@ -4084,8 +4084,8 @@ void dragLillyPiece(View *piece, Point where0)
         if (!actor->unknownC0) {
             cancel = 0;
             lillyDragState = 1;
-            actor->body.unknownAa = (actor->body.bounds.right - actor->body.bounds.left) / 2 + view->body.cels[0].x;
-            actor->body.unknownAc = (actor->body.bounds.bottom - actor->body.bounds.top) / 2 + view->body.cels[0].y;
+            actor->body.waypointX = (actor->body.bounds.right - actor->body.bounds.left) / 2 + view->body.cels[0].x;
+            actor->body.waypointY = (actor->body.bounds.bottom - actor->body.bounds.top) / 2 + view->body.cels[0].y;
         } else {
             cancel = 0;
             lillyDragState = 4;

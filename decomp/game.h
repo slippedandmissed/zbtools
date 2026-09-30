@@ -40,7 +40,7 @@ short noteOutOfMemory(unsigned long size, short error);
 extern short slotPairViews[]; /* @data 0x4b26a6 */
 extern short comparedViews[2]; /* @data 0x4b26ac */
 extern short rowViews[9]; /* @data 0x4b26ba */
-void startSmokeSnoidScript(short id, short script, short group, ViewNotify notify, char unknownF8);
+void startSmokeSnoidScript(short id, short script, short group, ViewNotify notify, char idleTicks);
 void recordSlotFeatures(short id, short n);
 void deleteTempFile();
 void emptySlotView(short n);

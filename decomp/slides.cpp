@@ -135,7 +135,7 @@ void updateSlidesButtons(View *, short region)
     }
 }
 
-/* Marks the Zoombini on each cell in state 508 (unknownF7). */
+/* Marks the Zoombini on each cell in state 508 (chosen). */
 /* @zoombi32 0x0044943b */
 void markLitSnoids()
 {
@@ -143,7 +143,7 @@ void markLitSnoids()
 
     for (i = 0; i < 117; i++)
         if (hexCells[i].state == 508)
-            ((Snoid *)&findView(hexCells[i].snoid)->body)->unknownF7 = 1;
+            ((Snoid *)&findView(hexCells[i].snoid)->body)->chosen = 1;
 }
 
 /* Sets slidesGoReady if any of the cells listedCells lists (1 to listedCount) is in
@@ -676,7 +676,7 @@ void walkToMarkNotify(View *view, short event)
         pendingMarkFacing = event - 239;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (pendingMarkFacing) {
             setSnoidFacing(snoid, pendingMarkFacing - 1);
             pendingMarkFacing = 0;
@@ -1080,11 +1080,11 @@ void stoneRiseFrame()
             if (stoneRiseLevel == 3) {
                 chooseSnoids(0, 0);
                 if (hexCells[55].state == 508)
-                    ((Snoid *)&findView(hexCells[55].snoid)->body)->unknownF7 = 1;
+                    ((Snoid *)&findView(hexCells[55].snoid)->body)->chosen = 1;
                 if (hexCells[38].state == 508 && hexCells[46].state == 502)
-                    ((Snoid *)&findView(hexCells[38].snoid)->body)->unknownF7 = 1;
+                    ((Snoid *)&findView(hexCells[38].snoid)->body)->chosen = 1;
                 if (hexCells[74].state == 508 && hexCells[64].state == 502)
-                    ((Snoid *)&findView(hexCells[74].snoid)->body)->unknownF7 = 1;
+                    ((Snoid *)&findView(hexCells[74].snoid)->body)->chosen = 1;
                 sendSnoids(800, 200, 45);
                 markLitSnoids();
             } else if (stoneRiseLevel <= 1) {
@@ -1092,11 +1092,11 @@ void stoneRiseFrame()
             } else {
                 chooseSnoids(0, 0);
                 if (hexCells[19].state == 508)
-                    ((Snoid *)&findView(hexCells[19].snoid)->body)->unknownF7 = 1;
+                    ((Snoid *)&findView(hexCells[19].snoid)->body)->chosen = 1;
                 if (hexCells[55].state == 508)
-                    ((Snoid *)&findView(hexCells[55].snoid)->body)->unknownF7 = 1;
+                    ((Snoid *)&findView(hexCells[55].snoid)->body)->chosen = 1;
                 if (hexCells[91].state == 508)
-                    ((Snoid *)&findView(hexCells[91].snoid)->body)->unknownF7 = 1;
+                    ((Snoid *)&findView(hexCells[91].snoid)->body)->chosen = 1;
                 sendSnoids(800, 200, 45);
                 markLitSnoids();
             }

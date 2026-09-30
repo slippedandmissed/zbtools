@@ -165,7 +165,7 @@ void closeIntro()
 }
 
 /* Moves every view with flag 2 a screen (320) left or right, wrapping
-   round the town's 1920 pixels; a Zoombini's anchor (unknownAa) keeps its
+   round the town's 1920 pixels; a Zoombini's anchor (waypointX) keeps its
    place relative to it. */
 /* @zoombi32 0x0045ce80 */
 void scrollTown(short left)
@@ -191,8 +191,8 @@ void scrollTown(short left)
             }
             snoid->body.x = x;
             if (snoid->features[0])
-                snoid->body.unknownAa += old - x;
-            snoid->unknownF5 = -1;
+                snoid->body.waypointX += old - x;
+            snoid->pose = -1;
             view->nextUpdate = 0;
         }
 }
@@ -642,7 +642,7 @@ void addTownsperson()
                 view->flags = 0x908002;
                 view->body.x = randomBetween(100, 540);
                 view->body.y = y;
-                *(long *)&view->body.unknownAa = *(long *)&view->body.x;
+                *(long *)&view->body.waypointX = *(long *)&view->body.x;
                 view->notify = townsfolkNotify;
                 view->notifyEnd = 1;
                 moveView(id, 0, townsfolkAnchorView);
@@ -959,7 +959,7 @@ void openTown()
                     viewSnoid(view)->features[0] = 0;
                     view->flags = 0x808002;
                     *(Point *)&view->body.x = places[slot];
-                    *(Point *)&view->body.unknownAa = places[slot];
+                    *(Point *)&view->body.waypointX = places[slot];
                 }
                 i++;
                 extras--;

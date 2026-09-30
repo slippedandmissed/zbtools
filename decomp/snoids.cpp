@@ -106,14 +106,14 @@ void freeSnoidTables()
         freeResource(&snoidTableResources[i]);
 }
 
-/* How many Zoombinis' views run with unknownF7 set. */
+/* How many Zoombinis' views run with chosen set. */
 /* @zoombi32 0x00456e4c */
 short countChosenSnoids()
 {
     short count = 0;
 
     for (View *view = viewListEnd(1); view; view = view->next)
-        if ((view->flags & 1) && view->body.running && viewSnoid(view)->unknownF7)
+        if ((view->flags & 1) && view->body.running && viewSnoid(view)->chosen)
             count++;
     return count;
 }
@@ -280,15 +280,15 @@ short placeSnoid(Snoid *snoid, unsigned long when, short x, short y, short targe
     Point saved = *(Point *)&snoid->body.x;
     short id;
 
-    snoid->unknownF1 = 1;
-    snoid->unknownF2 = 0;
+    snoid->angle = 1;
+    snoid->facingLeft = 0;
     snoid->body.x = x;
     snoid->body.y = y;
     snoid->targetX = targetX;
     snoid->targetY = targetY;
     snoid->body.cels[0].image = 0;
     snoid->body.celsEnd = 0;
-    snoid->unknownF8 = randomBetween(0, 0x40);
+    snoid->idleTicks = randomBetween(0, 0x40);
     id = addSnoidView(snoid, 1);
     {
         View *view = findView(id);
@@ -296,7 +296,7 @@ short placeSnoid(Snoid *snoid, unsigned long when, short x, short y, short targe
         if (view)
             view->nextUpdate = when;
     }
-    snoid->unknownF1 = 0;
+    snoid->angle = 0;
     *(Point *)&snoid->body.x = saved;
     return id;
 }
@@ -309,7 +309,7 @@ short addSnoidView(Snoid *snoid, short placed)
 
     if (snoid->features[3]) {
         for (short i = 0; i < 16; i++)
-            snoid->unknownC2[i] = 0;
+            snoid->layers[i] = 0;
         id = addView(1, drawSnoidView, updateSnoidView, 0, 6, snoid, 0, 0);
         {
             View *view = findView(id);
@@ -330,7 +330,7 @@ short addSnoidView(Snoid *snoid, short placed)
 }
 
 /* A Zoombini view's drawing: its cels (from the second bank with
-   unknownF4 9), clipped to its clip rectangle if it has one. */
+   action 9), clipped to its clip rectangle if it has one. */
 /* Functional: as drawCels. */
 /* @zoombi32-functional 0x00457527 */
 void drawSnoidView(View *view)
@@ -344,7 +344,7 @@ void drawSnoidView(View *view)
         short *cel = (short *)view->body.cels;
         ImageBank *bank = snoidImages;
 
-        if (viewSnoid(view)->unknownF4 == 9)
+        if (viewSnoid(view)->action == 9)
             bank = snoidImages2;
         while (*cel && *cel <= bank->count) {
             unsigned short *image = (unsigned short *)(bank->offsets[*cel++] + (char *)bank);
@@ -453,28 +453,28 @@ void makePartySnoids(short all)
 
             for (j = 0; j < 4; j++)
                 snoid.features[j] = travellers()[i].features[j];
-            snoid.unknownF7 = travellers()[i].onboard;
-            if (snoid.unknownF7) {
+            snoid.chosen = travellers()[i].onboard;
+            if (snoid.chosen) {
                 viewPlace((Point *)&snoid.body.x, placed + 1);
                 placed++;
-                snoid.unknownF1 = 1;
-                snoid.unknownF2 = 0;
+                snoid.angle = 1;
+                snoid.facingLeft = 0;
             } else {
                 *(Point *)&snoid.body.x = travellers()[i].place;
-                snoid.unknownF1 = 1;
-                snoid.unknownF2 = 0;
+                snoid.angle = 1;
+                snoid.facingLeft = 0;
             }
             for (j = 0; j < 10; j++)
                 snoid.name[j] = travellers()[i].name[j];
             snoid.home = *(Point *)&snoid.body.x;
-            *(Point *)&snoid.body.unknownAa = *(Point *)&snoid.body.x;
+            *(Point *)&snoid.body.waypointX = *(Point *)&snoid.body.x;
             *(Point *)&snoid.targetX = *(Point *)&snoid.body.x;
-            snoid.unknownEa = 0;
-            snoid.unknownEb = 0;
-            snoid.unknownEc = 0;
-            snoid.unknownEe = 0;
-            snoid.unknownF0 = 0;
-            snoid.unknownF8 = randomBetween(0, 0x40);
+            snoid.pathIndex = 0;
+            snoid.path = 0;
+            snoid.stepX = 0;
+            snoid.stepY = 0;
+            snoid.pathDirection = 0;
+            snoid.idleTicks = randomBetween(0, 0x40);
             partyViews[slot] = addSnoidView(&snoid, 0);
             slot++;
         }
@@ -484,7 +484,7 @@ void makePartySnoids(short all)
 
 /*
  * A Zoombini view's update, when due (in step with its group): by what it
- * is doing (unknownF4): 0 standing (blinking now and then), 1 and 2
+ * is doing (action): 0 standing (blinking now and then), 1 and 2
  * turning, 3 a shake, 4 jumping to its target, 7 setting off and 0x70
  * walking there (a step at a time; on arriving it claims the placed view
  * and place it stands on), 10 leaving; then runs its script a frame.
@@ -524,14 +524,14 @@ void updateSnoidView(View *view, short region)
     }
     view->nextUpdate = updateTime + view->interval;
     snoid = viewSnoid(view);
-    switch (snoid->unknownF4) {
+    switch (snoid->action) {
     case 7:
         choosePath(snoid, (Point *)&snoid->targetX);
         stepAlongPath(snoid);
-        snoid->unknownF4 = 0x70;
+        snoid->action = 0x70;
     case 0x70:
-        dx = snoid->body.unknownAa - snoid->body.x;
-        dy = snoid->body.y - snoid->body.unknownAc;
+        dx = snoid->body.waypointX - snoid->body.x;
+        dy = snoid->body.y - snoid->body.waypointY;
         moving = 1;
         if (!dx && !dy && !stepAlongPath(snoid)) {
             ShortRect rect;
@@ -540,13 +540,13 @@ void updateSnoidView(View *view, short region)
 
             moving = 0;
             unionRgnRect(currentViewRgn, &snoid->body.bounds);
-            snoid->unknownF8 = 0;
+            snoid->idleTicks = 0;
             setSnoidAction(snoid, snoidMode, 0);
             if (snoidsOnTheirWay > 0) {
                 snoidsOnTheirWay--;
                 snoidsArrived++;
             }
-            if (hideArrivedPlaced && snoid->unknownF7 == 2)
+            if (hideArrivedPlaced && snoid->chosen == 2)
                 view->flags |= 0x4000000;
             rect.left = snoid->body.x - placeSnapRadius;
             rect.right = snoid->body.x + placeSnapRadius;
@@ -569,18 +569,18 @@ void updateSnoidView(View *view, short region)
             if (arrivalHook)
                 arrivalHook(view->id);
         }
-        stepX = snoid->unknownEc;
-        stepY = snoid->unknownEe;
+        stepX = snoid->stepX;
+        stepY = snoid->stepY;
         changed = 1;
         if (!moving)
             break;
         if (dx) {
             if (dx < 0) {
                 snoid->body.x -= abs(dx) < abs(stepX) ? abs(dx) : abs(stepX);
-                snoid->unknownF2 = 1;
+                snoid->facingLeft = 1;
             } else {
                 snoid->body.x += abs(dx) < abs(stepX) ? abs(dx) : abs(stepX);
-                snoid->unknownF2 = 0;
+                snoid->facingLeft = 0;
             }
         }
         if (dy) {
@@ -598,48 +598,48 @@ void updateSnoidView(View *view, short region)
         break;
     case 1:
     case 2:
-        snoid->unknownF8 = 0;
-        if (snoid->unknownF4 == 1) {
-            if (!snoid->unknownF2) {
-                switch (snoid->unknownF1) {
+        snoid->idleTicks = 0;
+        if (snoid->action == 1) {
+            if (!snoid->facingLeft) {
+                switch (snoid->angle) {
                 case 2:
-                    snoid->unknownF1 = 1;
+                    snoid->angle = 1;
                     break;
                 case 1:
                 default:
-                    snoid->unknownF1 = 0;
-                    snoid->unknownF2 = 1;
+                    snoid->angle = 0;
+                    snoid->facingLeft = 1;
                     break;
                 }
             } else {
-                snoid->unknownF1 = 1;
-                snoid->unknownF4 = 0;
+                snoid->angle = 1;
+                snoid->action = 0;
             }
-        } else if (snoid->unknownF2) {
-            switch (snoid->unknownF1) {
+        } else if (snoid->facingLeft) {
+            switch (snoid->angle) {
             case 2:
-                snoid->unknownF1 = 1;
+                snoid->angle = 1;
                 break;
             case 1:
             default:
-                snoid->unknownF1 = 0;
-                snoid->unknownF2 = 0;
+                snoid->angle = 0;
+                snoid->facingLeft = 0;
                 break;
             }
         } else {
-            snoid->unknownF1 = 1;
-            snoid->unknownF4 = 0;
+            snoid->angle = 1;
+            snoid->action = 0;
         }
         changed = 1;
     case 0:
-        if (snoid->unknownF5) {
-            snoid->unknownF5 = 0;
+        if (snoid->pose) {
+            snoid->pose = 0;
             changed = 1;
         }
-        if (snoidIdleDelay && !dialogFlags && snoid->unknownF8++ > snoidIdleDelay) {
-            snoid->unknownF8 = 0;
+        if (snoidIdleDelay && !dialogFlags && snoid->idleTicks++ > snoidIdleDelay) {
+            snoid->idleTicks = 0;
             if (!altSnoids && randomBetween(0, 100) < 10) {
-                snoid->unknownF5 = randomBetween(0, 7);
+                snoid->pose = randomBetween(0, 7);
                 setSnoidAction(snoid, 6, 0);
                 changed = 1;
             }
@@ -648,12 +648,12 @@ void updateSnoidView(View *view, short region)
     case 4:
         changed = 1;
         if (snoid->targetX - snoid->body.x || snoid->body.y - snoid->targetY) {
-            snoid->unknownF1 = 1;
-            snoid->unknownF2 = 0;
+            snoid->angle = 1;
+            snoid->facingLeft = 0;
             *(Point *)&snoid->body.x = *(Point *)&snoid->targetX;
         } else {
             view->interval = 6;
-            snoid->unknownF8 = 0;
+            snoid->idleTicks = 0;
             setSnoidAction(snoid, snoidMode, 0);
         }
         break;
@@ -662,17 +662,17 @@ void updateSnoidView(View *view, short region)
         changed = 1;
         break;
     case 3:
-        if (snoid->unknownF5 < 6) {
+        if (snoid->pose < 6) {
             for (short j = 0; j <= 4; j++) {
                 short image = snoid->body.cels[j].image;
 
                 snoid->body.cels[j].image = snoid->body.cels[j + 10].image;
                 snoid->body.cels[j + 10].image = image;
             }
-            snoid->unknownF5++;
+            snoid->pose++;
         } else {
             setSnoidAction(snoid, 0, 0);
-            snoid->unknownF8 = 0;
+            snoid->idleTicks = 0;
         }
         view->changed = 1;
         return;
@@ -684,11 +684,11 @@ void updateSnoidView(View *view, short region)
     if (!changed)
         return;
     unionRgnRect(region, &view->body.bounds);
-    if (snoid->unknownF4 == 4) {
+    if (snoid->action == 4) {
         layOutSnoid(snoid, 0);
     } else if (snoid->body.lastFrame > 1) {
         if (snoid->body.frame >= snoid->body.lastFrame) {
-            switch (snoid->unknownF4) {
+            switch (snoid->action) {
             case 5:
                 view->notify = 0;
                 snoid->body.frame = 2;
@@ -705,7 +705,7 @@ void updateSnoidView(View *view, short region)
                 break;
             case 8:
             case 9:
-                if (snoid->unknownF8 == 1) {
+                if (snoid->idleTicks == 1) {
                     groupLeader[view->body.group] = 0;
                     view->body.group = 0;
                     snoid->body.running = 0;
@@ -868,7 +868,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
     dragged->nextUpdate = 0;
     dragged->interval = 3;
     snoid = viewSnoid(dragged);
-    snoid->unknownF8 = 0;
+    snoid->idleTicks = 0;
     start = *(Point *)&snoid->body.x;
     unionRgnRect(removedRgn, &snoid->body.bounds);
     if (!keepDragPose)
@@ -907,11 +907,11 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
         if (track)
             track(current);
         if (last.x > current.x) {
-            if (!snoid->unknownF2)
-                snoid->unknownF2 = 1;
+            if (!snoid->facingLeft)
+                snoid->facingLeft = 1;
         } else if (last.x < current.x) {
-            if (snoid->unknownF2)
-                snoid->unknownF2 = 0;
+            if (snoid->facingLeft)
+                snoid->facingLeft = 0;
         }
         if (!dragInPlace) {
             dragX = current.x - dx;
@@ -1005,11 +1005,11 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
         else if (!settleSnoid(dragged))
             *(Point *)&snoid->targetX = start;
     }
-    snoid->unknownF8 = 1;
+    snoid->idleTicks = 1;
     unionRgnRect(removedRgn, &snoid->body.bounds);
     if (!keepDragPose) {
         if (dragInPlace) {
-            snoid->unknownF2 = 0;
+            snoid->facingLeft = 0;
             setSnoidAction(snoid, 0, 0);
         } else {
             setSnoidAction(snoid, 4, 0);
@@ -1169,7 +1169,7 @@ void setSnoidsRunning(short running)
             view->body.running = running;
 }
 
-/* Marks the Zoombinis holding places (unknownF7). */
+/* Marks the Zoombinis holding places (chosen). */
 /* @zoombi32 0x0045a477 */
 void markPlacedSnoids()
 {
@@ -1178,18 +1178,18 @@ void markPlacedSnoids()
             View *view = findView(placeClaims[i]);
 
             if (view && (view->flags & 1))
-                viewSnoid(view)->unknownF7 = 1;
+                viewSnoid(view)->chosen = 1;
         }
 }
 
-/* Runs the Zoombini view `id`'s script, setting its unknownF7. */
+/* Runs the Zoombini view `id`'s script, setting its chosen. */
 /* @zoombi32 0x0045a4b2 */
 void runSnoid(short id, short chosen)
 {
     for (View *view = viewListEnd(1); view; view = view->next)
         if ((view->flags & 1) && id == view->id) {
             view->body.running = 1;
-            viewSnoid(view)->unknownF7 = chosen;
+            viewSnoid(view)->chosen = chosen;
         }
 }
 
@@ -1215,7 +1215,7 @@ View *idleSnoidView(short id)
 {
     View *view = findView(id);
 
-    if (!view || viewSnoid(view)->unknownF4)
+    if (!view || viewSnoid(view)->action)
         return 0;
     return view;
 }
@@ -1235,7 +1235,7 @@ Snoid *findSnoid(short id, short wake)
     return snoid;
 }
 
-/* Lists the chosen Zoombinis' features (those running with unknownF7 set). */
+/* Lists the chosen Zoombinis' features (those running with chosen set). */
 /* @zoombi32 0x00459c17 */
 ChosenSnoids *listChosenSnoids()
 {
@@ -1244,7 +1244,7 @@ ChosenSnoids *listChosenSnoids()
 
     chosenSnoids.count = countChosenSnoids();
     for (view = nextActorView(1), n = 0; view && n < chosenSnoids.count; view = nextActorView(0))
-        if (view->body.running && viewSnoid(view)->unknownF7) {
+        if (view->body.running && viewSnoid(view)->chosen) {
             for (short i = 0; i < 4; i++)
                 chosenSnoids.features[n][i] = viewSnoid(view)->features[i];
             n++;
@@ -1253,7 +1253,7 @@ ChosenSnoids *listChosenSnoids()
 }
 
 /*
- * Sets which Zoombinis are chosen (unknownF7): the first 20 running (all,
+ * Sets which Zoombinis are chosen (chosen): the first 20 running (all,
  * first, if `run`).
  */
 /* @zoombi32 0x0045a3e1 */
@@ -1267,14 +1267,14 @@ void chooseSnoids(short chosen, short run)
                 view->body.running = 1;
             if (count < 20) {
                 if (view->body.running) {
-                    viewSnoid(view)->unknownF7 = chosen;
+                    viewSnoid(view)->chosen = chosen;
                     if (chosen)
                         count++;
                 } else {
-                    viewSnoid(view)->unknownF7 = 0;
+                    viewSnoid(view)->chosen = 0;
                 }
             } else {
-                viewSnoid(view)->unknownF7 = 0;
+                viewSnoid(view)->chosen = 0;
             }
         }
 }
@@ -1301,13 +1301,13 @@ void turnSnoid(View *view, short event)
 {
     Snoid *snoid = viewSnoid(view);
 
-    switch (snoid->unknownF4) {
+    switch (snoid->action) {
     case 8:
     case 9:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         short *at = snoidScripts[snoid->body.script] + snoid->body.frameOffset;
         if (*at > 0)
-            snoid->body.unknownAa = at[1] - snoid->body.x;
+            snoid->body.waypointX = at[1] - snoid->body.x;
         break;
     }
 }
@@ -1320,15 +1320,15 @@ void initSnoid(Snoid *snoid)
     snoid->body.celsEnd = 0;
     snoid->body.script = 1;
     snoid->body.lastFrame = 1;
-    snoid->unknownC0 = -1;
-    snoid->unknownEc = snoid->unknownEe = 0;
-    snoid->unknownF0 = 0;
-    snoid->unknownF1 = 1;
-    snoid->unknownF2 = 0;
-    snoid->unknownF4 = 0;
-    snoid->unknownF5 = 1;
-    snoid->unknownF7 = 1;
-    snoid->unknownF8 = 0;
+    snoid->drawnFacing = -1;
+    snoid->stepX = snoid->stepY = 0;
+    snoid->pathDirection = 0;
+    snoid->angle = 1;
+    snoid->facingLeft = 0;
+    snoid->action = 0;
+    snoid->pose = 1;
+    snoid->chosen = 1;
+    snoid->idleTicks = 0;
     snoid->name[0] = 0;
 }
 
@@ -1437,7 +1437,7 @@ short spotTaken(Point *where, View *ignore, short radius)
     spotRadius = radius;
     for (View *view = viewListEnd(1); view; view = view->next)
         if ((view->flags & 1)
-            && (!viewSnoid(view)->unknownF4 || viewSnoid(view)->unknownF4 == 6 || viewSnoid(view)->unknownF4 == 3)
+            && (!viewSnoid(view)->action || viewSnoid(view)->action == 6 || viewSnoid(view)->action == 3)
             && (!ignore || (ignore && ignore->id != view->id))) {
             spots[spotCount] = *(Point *)&view->body.x;
             spotIds[spotCount] = view->id;
@@ -1578,7 +1578,7 @@ void sortSnoids(short running)
 
             if (running && view->body.running)
                 include = 1;
-            if (snoid->unknownF7 || include) {
+            if (snoid->chosen || include) {
                 short done;
                 short j;
 
@@ -1607,8 +1607,8 @@ void sortSnoids(short running)
 /*
  * Picks the path a Zoombini takes toward `target`: of the paths through the
  * node nearest `target`, the node nearest the Zoombini (its path in
- * unknownEb, the node's place in it, from 1, in unknownEa, and which way
- * to walk it in unknownF0). Without paths it heads straight there.
+ * path, the node's place in it, from 1, in pathIndex, and which way
+ * to walk it in pathDirection). Without paths it heads straight there.
  */
 /* @zoombi32 0x004595c2 */
 void choosePath(Snoid *snoid, Point *target)
@@ -1624,7 +1624,7 @@ void choosePath(Snoid *snoid, Point *target)
     long distance;
 
     if (!paths || !pathNodes || noPaths) {
-        *(Point *)&snoid->body.unknownAa = *(Point *)&snoid->targetX;
+        *(Point *)&snoid->body.waypointX = *(Point *)&snoid->targetX;
         return;
     }
     at = *(Point *)&snoid->body.x;
@@ -1654,11 +1654,11 @@ void choosePath(Snoid *snoid, Point *target)
                         distance = dx * dx + dy * dy;
                         if (distance <= best) {
                             best = distance;
-                            snoid->unknownEa = k + 1;
-                            snoid->unknownEb = path;
-                            snoid->unknownF0 = 1;
+                            snoid->pathIndex = k + 1;
+                            snoid->path = path;
+                            snoid->pathDirection = 1;
                             if (j && j <= k)
-                                snoid->unknownF0 = -1;
+                                snoid->pathDirection = -1;
                         }
                     }
                 j = 24;
@@ -1666,9 +1666,9 @@ void choosePath(Snoid *snoid, Point *target)
 }
 
 /*
- * Steps a walking Zoombini toward its next waypoint (unknownAa: along its
+ * Steps a walking Zoombini toward its next waypoint (waypointX: along its
  * path, or its target once that's nearer than the path's next node),
- * setting its step (unknownEc, unknownEe) and, if its heading changes, its
+ * setting its step (stepX, stepY) and, if its heading changes, its
  * walk script. Whether it has anywhere to go.
  */
 /* @zoombi32 0x004591f8 */
@@ -1688,13 +1688,13 @@ short stepAlongPath(Snoid *snoid)
     if (paths && pathNodes && !noPaths) {
         short arrived;
 
-        if (snoid->unknownEa >= 0) {
+        if (snoid->pathIndex >= 0) {
             arrived = 0;
             PathNodes *nodes = pathNodes;
             Paths *list = paths;
-            char node = list->nodes[snoid->unknownEb][snoid->unknownEa];
+            char node = list->nodes[snoid->path][snoid->pathIndex];
 
-            snoid->unknownEa += snoid->unknownF0;
+            snoid->pathIndex += snoid->pathDirection;
             if (node) {
                 long ex;
                 long ey;
@@ -1716,16 +1716,16 @@ short stepAlongPath(Snoid *snoid)
             arrived = 1;
         }
         if (arrived)
-            *(Point *)&snoid->body.unknownAa = *(Point *)&snoid->targetX;
+            *(Point *)&snoid->body.waypointX = *(Point *)&snoid->targetX;
         else
-            *(Point *)&snoid->body.unknownAa = next;
+            *(Point *)&snoid->body.waypointX = next;
     }
-    dx = snoid->body.unknownAa - snoid->body.x;
-    dy = snoid->body.y - snoid->body.unknownAc;
+    dx = snoid->body.waypointX - snoid->body.x;
+    dy = snoid->body.y - snoid->body.waypointY;
     if (dx || dy) {
         short slope;
 
-        oldHeading = snoid->unknownF5;
+        oldHeading = snoid->pose;
         if (dx)
             slope = (dy * 1024) / abs(dx);
         else if (dy < 0)
@@ -1733,16 +1733,16 @@ short stepAlongPath(Snoid *snoid)
         else
             slope = 1410;
         if (slope <= -1409)
-            snoid->unknownF5 = 0;
+            snoid->pose = 0;
         else if (slope <= -332)
-            snoid->unknownF5 = 1;
+            snoid->pose = 1;
         else if (slope < 332)
-            snoid->unknownF5 = 2;
+            snoid->pose = 2;
         else if (slope < 1409)
-            snoid->unknownF5 = 3;
+            snoid->pose = 3;
         else
-            snoid->unknownF5 = 4;
-        switch (snoid->unknownF5) {
+            snoid->pose = 4;
+        switch (snoid->pose) {
         case 0:
             stepX = 5;
             stepY = -15;
@@ -1765,29 +1765,29 @@ short stepAlongPath(Snoid *snoid)
             break;
         }
         if (abs(stepX) >= abs(stepY)) {
-            snoid->unknownEc = stepX;
+            snoid->stepX = stepX;
             steps = abs(dx) / abs(stepX);
             if (steps)
-                snoid->unknownEe = dy / steps;
+                snoid->stepY = dy / steps;
             else
-                snoid->unknownEe = dy;
-            if (!snoid->unknownEe && dy)
-                snoid->unknownEe = dy / abs(dy);
+                snoid->stepY = dy;
+            if (!snoid->stepY && dy)
+                snoid->stepY = dy / abs(dy);
         } else {
-            snoid->unknownEe = stepY;
+            snoid->stepY = stepY;
             steps = abs(dy) / abs(stepY);
             if (steps)
-                snoid->unknownEc = dx / steps;
+                snoid->stepX = dx / steps;
             else
-                snoid->unknownEc = dx;
-            if (!snoid->unknownEc && dx)
-                snoid->unknownEc = dx / abs(dx);
+                snoid->stepX = dx;
+            if (!snoid->stepX && dx)
+                snoid->stepX = dx / abs(dx);
         }
         moving = 1;
-        if (oldHeading != snoid->unknownF5) {
+        if (oldHeading != snoid->pose) {
             short *script;
 
-            snoid->body.script = snoid->features[3] * 5 + snoid->unknownF5;
+            snoid->body.script = snoid->features[3] * 5 + snoid->pose;
             script = baseSnoidScripts[snoid->body.script];
             snoid->body.frameOffset = scriptFrameOffset(script, &snoid->body.frame, 1);
             setSnoidFacing(snoid, script[1]);
@@ -1797,17 +1797,17 @@ short stepAlongPath(Snoid *snoid)
 }
 
 /*
- * Sets the images a Zoombini is drawn with (unknownC2: its features', and
+ * Sets the images a Zoombini is drawn with (layers: its features', and
  * 0 for its body) for which way it faces (0-2), in the order they overlap.
  */
 /* @zoombi32 0x0045b06a */
 void setSnoidFacing(Snoid *snoid, short facing)
 {
-    if (facing != snoid->unknownC0) {
-        snoid->unknownC0 = facing;
-        short *layers = snoid->unknownC2;
+    if (facing != snoid->drawnFacing) {
+        snoid->drawnFacing = facing;
+        short *layers = snoid->layers;
 
-        if (snoid->unknownF4 == 9) {
+        if (snoid->action == 9) {
             switch (facing) {
             case 0:
                 layers[1] = altFeetImages[snoid->features[3]];
@@ -1860,7 +1860,7 @@ void setSnoidFacing(Snoid *snoid, short facing)
 }
 
 /*
- * Starts a Zoombini doing `action` (0-10; its state, unknownF4), at `where`
+ * Starts a Zoombini doing `action` (0-10; its state, action), at `where`
  * if given: picks its script and starts it.
  */
 /* @zoombi32 0x0045a75b */
@@ -1878,10 +1878,10 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
     snoid->body.group = 0;
     switch (action) {
     case 3:
-        if (!snoid->unknownF4) {
-            if (snoid->unknownF1 != 1)
-                snoid->unknownF1 = 1;
-            short mask = snoid->unknownF5; /* features to show changed (8: feet ... 1: hair) */
+        if (!snoid->action) {
+            if (snoid->angle != 1)
+                snoid->angle = 1;
+            short mask = snoid->pose; /* features to show changed (8: feet ... 1: hair) */
             for (short i = 0; i <= 4; i++) {
                 short image = 0;
 
@@ -1909,13 +1909,13 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
                     snoid->body.cels[i + 10].image = snoid->body.cels[i].image;
                 } else {
                     image = image * 2 - 1;
-                    if (snoid->unknownF2)
+                    if (snoid->facingLeft)
                         image++;
                     snoid->body.cels[i + 10].image = image;
                 }
             }
-            snoid->unknownF5 = 0;
-            snoid->unknownF4 = 3;
+            snoid->pose = 0;
+            snoid->action = 3;
             return;
         }
         /* fall through */
@@ -1923,15 +1923,15 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
     case 1:
     case 2:
     case 10:
-        script = snoid->unknownF1;
+        script = snoid->angle;
         break;
     case 4:
-        snoid->unknownF0 = 0;
-        script = snoid->unknownF1;
+        snoid->pathDirection = 0;
+        script = snoid->angle;
         break;
     case 5:
         script = snoid->features[3] + 45;
-        switch (snoid->unknownF1) {
+        switch (snoid->angle) {
         case 0:
         default:
             frame = 0;
@@ -1945,23 +1945,23 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
         }
         if (altSnoids) {
             frame = 0;
-            script = snoid->unknownF1;
+            script = snoid->angle;
         }
         break;
     case 7:
     case 112:
-        script = snoid->features[3] * 5 + snoid->unknownF5;
+        script = snoid->features[3] * 5 + snoid->pose;
         break;
     case 6:
-        switch (snoid->unknownF1) {
+        switch (snoid->angle) {
         case 0:
         default:
-            snoid->unknownF1 = 1;
+            snoid->angle = 1;
         case 1:
-            script = snoid->unknownF5 + 30;
+            script = snoid->pose + 30;
             break;
         case 2:
-            script = snoid->unknownF5 + 38;
+            script = snoid->pose + 38;
             break;
         }
         if (snoidIdleDelay && soundOn) {
@@ -1980,15 +1980,15 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
     case 9:
     default:
         action = 0;
-        script = snoid->unknownF1;
+        script = snoid->angle;
         break;
     }
-    snoid->unknownC0 = -1;
-    snoid->unknownF4 = action;
+    snoid->drawnFacing = -1;
+    snoid->action = action;
     if (!action)
-        snoid->unknownF5 = 1;
+        snoid->pose = 1;
     else
-        snoid->unknownF5 = 0;
+        snoid->pose = 0;
     snoid->body.running = 1;
     if (where)
         *(Point *)&snoid->body.x = *where;
@@ -2025,7 +2025,7 @@ void staggerSnoids(unsigned long interval, unsigned long delay)
             View *view = findView(sortedIds[i]);
             Snoid *snoid = viewSnoid(view);
 
-            if ((snoid->unknownF4 == 7 || snoid->unknownF4 == 112) && snoid->unknownF7) {
+            if ((snoid->action == 7 || snoid->action == 112) && snoid->chosen) {
                 view->nextUpdate = when;
                 when += interval;
             }
@@ -2050,8 +2050,8 @@ void sendSnoids(short x, short y, unsigned long interval)
             View *view = findView(sortedIds[i]);
             Snoid *snoid = viewSnoid(view);
 
-            if (snoid->unknownF7 && !snoid->unknownF4) {
-                *(Point *)&snoid->body.unknownAa = *(Point *)&snoid->body.x;
+            if (snoid->chosen && !snoid->action) {
+                *(Point *)&snoid->body.waypointX = *(Point *)&snoid->body.x;
                 snoid->targetX = x;
                 snoid->targetY = y;
                 setSnoidAction(snoid, 10, 0);
@@ -2137,7 +2137,7 @@ void enterSnoids(short dy)
         if (view) {
             Snoid *snoid = viewSnoid(view);
 
-            if (snoid->unknownF7) {
+            if (snoid->chosen) {
                 if (staggerDue && i >= first) {
                     if (first + placed < viewPlaceCount) {
                         snoid->body.x = x;
@@ -2613,8 +2613,8 @@ short campHint(short *visits)
 
 /*
  * Lays out a Zoombini's cels for its script's current frame: each of the
- * frame's parts (up to 6, or 16 in state 9) is a feature layer (unknownC2)
- * added to the part's image, mirrored when facing left (unknownF2), placed
+ * frame's parts (up to 6, or 16 in state 9) is a feature layer (layers)
+ * added to the part's image, mirrored when facing left (facingLeft), placed
  * by the image's hot spot. A negative word ends the frame: its low byte
  * goes in *event (and then the script moves on), and one below -0x100 is
  * followed by a sound, returned.
@@ -2647,8 +2647,8 @@ short layOutSnoid(Snoid *snoid, short *event)
     snoid->body.bounds.right = 0;
     snoid->body.bounds.bottom = 0;
     cel = (short *)snoid->body.cels;
-    layers = snoid->unknownC2;
-    switch (snoid->unknownF4) {
+    layers = snoid->layers;
+    switch (snoid->action) {
     default:
         last = 5;
         script = baseSnoidScripts[snoid->body.script];
@@ -2664,9 +2664,9 @@ short layOutSnoid(Snoid *snoid, short *event)
         script = snoidScripts[snoid->body.script];
         at = script + snoid->body.frameOffset;
         layers++;
-        offsetY = -snoid->body.unknownAc;
+        offsetY = -snoid->body.waypointY;
         if (*at > 0) {
-            offsetX = -snoid->body.unknownAa;
+            offsetX = -snoid->body.waypointX;
             snoid->body.x = at[1] + offsetX;
             snoid->body.y = at[2] + offsetY;
         }
@@ -2679,9 +2679,9 @@ short layOutSnoid(Snoid *snoid, short *event)
         at = script + snoid->body.frameOffset;
         if (*at <= 18)
             layers++;
-        offsetY = -snoid->body.unknownAc;
+        offsetY = -snoid->body.waypointY;
         if (*at > 0) {
-            offsetX = -snoid->body.unknownAa;
+            offsetX = -snoid->body.waypointX;
             snoid->body.x = at[1] + offsetX;
             snoid->body.y = at[2] + offsetY;
         }
@@ -2690,7 +2690,7 @@ short layOutSnoid(Snoid *snoid, short *event)
         break;
     }
     i = 0;
-    if (!snoid->unknownF2) {
+    if (!snoid->facingLeft) {
         for (; i <= last; i++) {
             word = *at++;
             if (!word) {
@@ -2738,7 +2738,7 @@ short layOutSnoid(Snoid *snoid, short *event)
         }
     }
     cel = (short *)snoid->body.cels;
-    bank = snoid->unknownF4 == 9 ? snoidImages2 : snoidImages;
+    bank = snoid->action == 9 ? snoidImages2 : snoidImages;
     if (0) {
         for (short *check = cel; *check; check += 3)
             if (*check > bank->count) {
@@ -2770,7 +2770,7 @@ short layOutSnoid(Snoid *snoid, short *event)
  * placed so that its first positioned frame is at `anchor`, if given.
  */
 /* @zoombi32 0x0045a4f2 */
-void startSnoidScript(Snoid *snoid, short id, Point *anchor, char unknownF8)
+void startSnoidScript(Snoid *snoid, short id, Point *anchor, char idleTicks)
 {
     short frame;
     short group;
@@ -2790,18 +2790,18 @@ void startSnoidScript(Snoid *snoid, short id, Point *anchor, char unknownF8)
         return;
     }
     unionRgnRect(removedRgn, &snoid->body.bounds);
-    snoid->unknownC0 = -1;
+    snoid->drawnFacing = -1;
     switch (group) {
     case 0:
-        snoid->unknownF4 = 9;
+        snoid->action = 9;
         break;
     case 1:
-        snoid->unknownF4 = 8;
+        snoid->action = 8;
         break;
     }
     snoid->body.frame = 0;
     snoid->body.frameOffset = 2;
-    snoid->unknownF5 = 0;
+    snoid->pose = 0;
     snoid->body.script = index;
     snoid->body.running = 1;
     if (!snoidScripts[index])
@@ -2809,7 +2809,7 @@ void startSnoidScript(Snoid *snoid, short id, Point *anchor, char unknownF8)
     data = snoidScripts[index];
     snoid->body.lastFrame = data[0];
     facing = data[1];
-    snoid->unknownF8 = unknownF8;
+    snoid->idleTicks = idleTicks;
     originX = snoid->body.x;
     originY = snoid->body.y;
     if (anchor) {
@@ -2833,8 +2833,8 @@ void startSnoidScript(Snoid *snoid, short id, Point *anchor, char unknownF8)
         data += 2;
     }
     if (*data > 0) {
-        snoid->body.unknownAa = data[1] - originX;
-        snoid->body.unknownAc = data[2] - originY;
+        snoid->body.waypointX = data[1] - originX;
+        snoid->body.waypointY = data[2] - originY;
     }
     setSnoidFacing(snoid, facing);
     layOutSnoid(snoid, 0);
@@ -2885,10 +2885,10 @@ void recordParty(short ending, short all)
                 view->flags = 1;
                 if (!view->body.running) {
                     view->body.running = 1;
-                    viewSnoid(view)->unknownF7 = 0;
+                    viewSnoid(view)->chosen = 0;
                 }
-                if (viewSnoid(view)->unknownF7)
-                    viewSnoid(view)->unknownF7 = 1;
+                if (viewSnoid(view)->chosen)
+                    viewSnoid(view)->chosen = 1;
             }
     if (leavingGame && currentScene != 4 && currentScene != 5 && currentScene != 6)
         chooseSnoids(1, 1);
@@ -2905,7 +2905,7 @@ void recordParty(short ending, short all)
             if (actor) {
                 unsigned short isChosen = 0;
 
-                if (viewSnoid(actor)->unknownF7)
+                if (viewSnoid(actor)->chosen)
                     isChosen = 1;
                 if (all || isChosen == chosen) {
                     short j;

@@ -131,7 +131,7 @@ void reportRosterError(const char *message)
 }
 
 /* Starts the view walkerView's Snoid on script `script` (by walkerAnchor,
-   unknownF8 `f8`), in group `group`, with notify `notify` if given. */
+   idleTicks `f8`), in group `group`, with notify `notify` if given. */
 /* @zoombi32 0x0041d167 */
 void startWalkerScript(short group, short script, ViewNotify notify, char f8)
 {
@@ -313,8 +313,8 @@ void sendReadyOff(short x, short y, long interval)
             view->flags = 1;
             Snoid *snoid = (Snoid *)&view->body;
 
-            if (snoid->unknownF7) {
-                *(Point *)&snoid->body.unknownAa = *(Point *)&snoid->body.x;
+            if (snoid->chosen) {
+                *(Point *)&snoid->body.waypointX = *(Point *)&snoid->body.x;
                 snoid->targetX = x;
                 snoid->targetY = y;
                 setSnoidAction(snoid, 10, 0);
@@ -1012,7 +1012,7 @@ void walkNext(short which)
             case 2:
                 setViewsLocked(0);
                 walkerAnchor = 0;
-                viewSnoid(view)->unknownF2 = 0;
+                viewSnoid(view)->facingLeft = 0;
                 view->notify = walkerNotify;
                 startSnoidScript(viewSnoid(view), 12012, walkerAnchor, 1);
                 groupViews(view->id, view->id, 0, 0, 0, 0);
@@ -1398,12 +1398,12 @@ void cavesClicked(short which)
                 droppedCave = heldPlaceNumber();
                 if (droppedCave) {
                     snoid = viewSnoid(view);
-                    snoid->unknownF7 = 1;
+                    snoid->chosen = 1;
                     view->flags = 0x4008001;
                     if ((assignedCave = pickCave(view->id, droppedCave)) == droppedCave) {
                         spotSnoids[droppedCave] = view->id;
-                        snoid->unknownF1 = caveSnoidF1[droppedCave];
-                        snoid->unknownF2 = caveSnoidF2[droppedCave];
+                        snoid->angle = caveSnoidF1[droppedCave];
+                        snoid->facingLeft = caveSnoidF2[droppedCave];
                         cavesPlacedCount++;
                         walkerView = 0;
                         if (cavesPlacedCount == 1) {
@@ -1535,8 +1535,8 @@ void cavesFrame()
             view = findView(walkerView);
             if (view) {
                 snoid = viewSnoid(view);
-                snoid->unknownF1 = caveSnoidF1[assignedCave];
-                snoid->unknownF2 = caveSnoidF2[assignedCave];
+                snoid->angle = caveSnoidF1[assignedCave];
+                snoid->facingLeft = caveSnoidF2[assignedCave];
             }
         }
         if (walkDue) {

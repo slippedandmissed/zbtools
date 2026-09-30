@@ -1033,9 +1033,9 @@ void campMouse(short action)
                 count = heldPlaceNumber();
                 snoid = viewSnoid(view);
                 moved = snoid->targetX != snoid->body.x || snoid->targetY != snoid->body.y;
-                snoid->unknownF7 = count > 0;
-                if (snoid->unknownF7)
-                    snoid->unknownF8 = 1;
+                snoid->chosen = count > 0;
+                if (snoid->chosen)
+                    snoid->idleTicks = 1;
                 spot = view->body.bounds;
                 if (sectRect(&spot, &campArea)) {
                     spot = view->body.bounds;
@@ -1066,8 +1066,8 @@ void campMouse(short action)
                     campScrollAsked = -1;
                 } else if (result && !count && moved && !placed) {
                     claimPlacedView(result, view->id);
-                    snoid->unknownF7 = 1;
-                    snoid->unknownF8 = 1;
+                    snoid->chosen = 1;
+                    snoid->idleTicks = 1;
                 }
                 if (campPopulationFull) {
                     short n = countChosenSnoids();
@@ -1411,7 +1411,7 @@ void drawCamp(View *)
                 y = campY[row * 2 + 1][column];
             }
             snoid.body.clipped = 0;
-            snoid.unknownC0 = -1;
+            snoid.drawnFacing = -1;
             snoid.body.frame = 0;
             snoid.body.frameOffset = 2;
             snoid.zoombini = camp->slots[index].zoombini;

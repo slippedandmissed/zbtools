@@ -88,7 +88,7 @@ void drawFerryButton(short which, short lit, short show);
 void updateFerryButtons(View *, short region);
 void closeFerry();
 void moveFerryOn();
-void startCrosserScript(short group, short script, ViewNotify notify, char unknownF8);
+void startCrosserScript(short group, short script, ViewNotify notify, char idleTicks);
 void ferryHelperNotify(View *view, short event);
 void slideFerryViews(View *, short dx);
 

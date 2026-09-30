@@ -355,13 +355,13 @@ void xferSnoidNotify(View *view, short event)
             snoidsPastAnchor++;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (pendingJourneyFacing) {
             setSnoidFacing(snoid, pendingJourneyFacing - 1);
             pendingJourneyFacing = 0;
         }
-        snoid->unknownF0++;
-        if (!xferMap && snoid->unknownF0 == 2)
+        snoid->pathDirection++;
+        if (!xferMap && snoid->pathDirection == 2)
             moveView(view->id, 1, journeyAnchorView);
         break;
     case 10:
@@ -456,8 +456,8 @@ void journeyFrame()
                         view = findView(partyViews[nextWalker]);
                         if (view) {
                             snoid = viewSnoid(view);
-                            snoid->unknownF2 = 0;
-                            snoid->unknownF0 = 0;
+                            snoid->facingLeft = 0;
+                            snoid->pathDirection = 0;
                             startSnoidScript(snoid, snoid->features[3] + 5199, 0, 1);
                             view->notify = xferSnoidNotify;
                             view->notifyEnd = 1;
@@ -494,7 +494,7 @@ void journeyFrame()
                     view = findView(partyViews[nextWalker]);
                     if (view) {
                         snoid = viewSnoid(view);
-                        snoid->unknownF2 = 0;
+                        snoid->facingLeft = 0;
                         startSnoidScript(snoid, snoid->features[3] + 6199, 0, 1);
                         view->notify = xferSnoidNotify;
                         view->notifyEnd = 1;

@@ -330,8 +330,8 @@ void runViewScript(View *view, short region)
     at = script + view->body.frameOffset;
     bank = groupBanks[view->body.scriptGroup];
     if (view->flags & 0x800000) {
-        dx = view->body.x - view->body.unknownAa;
-        dy = view->body.y - view->body.unknownAc;
+        dx = view->body.x - view->body.waypointX;
+        dy = view->body.y - view->body.waypointY;
     } else {
         dx = dy = 0;
     }

@@ -483,12 +483,12 @@ void clearFeatureSlots()
 /* Starts a Zoombini view's script (see startSnoidScript), moving it into
    `group`, with `notify` if given. */
 /* @zoombi32 0x0045170a */
-void startSmokeSnoidScript(short id, short script, short group, ViewNotify notify, char unknownF8)
+void startSmokeSnoidScript(short id, short script, short group, ViewNotify notify, char idleTicks)
 {
     View *view = findView(id);
 
     if (view) {
-        startSnoidScript(viewSnoid(view), script, 0, unknownF8);
+        startSnoidScript(viewSnoid(view), script, 0, idleTicks);
         view->body.group = group;
         if (notify)
             view->notify = notify;
@@ -622,7 +622,7 @@ void emptySlotView(short n)
         snoid->features[1] = 0;
         snoid->features[2] = 0;
         snoid->features[3] = 0;
-        snoid->unknownF4 = 4;
+        snoid->action = 4;
     }
 }
 
@@ -780,7 +780,7 @@ void smokeFrame()
 
                 view->flags = 0x4000001;
                 snoid = viewSnoid(view);
-                snoid->unknownF7 = 1;
+                snoid->chosen = 1;
                 if (crossedChosen > 2)
                     startSnoidScript(viewSnoid(view), snoid->features[3] + 12044, 0, 0);
             }
@@ -1068,7 +1068,7 @@ void copyToSlotView(short id, short n)
         copy[1] = features[1];
         copy[2] = features[2];
         copy[3] = features[3];
-        snoid->unknownF4 = 4;
+        snoid->action = 4;
         if (n && smokeLevel < 3) {
             from->changed = 1;
             from->body.running = 0;
@@ -1190,7 +1190,7 @@ void startNextCrossing(short)
     if (other && view) {
         Snoid *snoid = viewSnoid(other);
 
-        snoid->unknownF2 = 1;
+        snoid->facingLeft = 1;
         *(Point *)&snoid->body.x = crossingStart;
         startSnoidScript(viewSnoid(other), crossedCount + 12020, 0, 0);
         other->notify = smokeViewNotify;
@@ -2033,7 +2033,7 @@ short applySlotFeatures()
         view->body.running = 1;
         Snoid *snoid = (Snoid *)&view->body;
 
-        snoid->unknownF4 = 4;
+        snoid->action = 4;
         first = snoid->features;
         for (i = 0; i < 4; i++) {
             if (featureSlots[i][0])
@@ -2051,7 +2051,7 @@ short applySlotFeatures()
         view->body.running = 1;
         Snoid *snoid = (Snoid *)&view->body;
 
-        snoid->unknownF4 = 4;
+        snoid->action = 4;
         second = snoid->features;
         for (i = 7; i > 3; i--) {
             if (featureSlots[i][0])
@@ -2141,12 +2141,12 @@ void dealRandomFeatures(short count)
                 view->body.running = 1;
                 view->changed = 1;
                 snoid = (Snoid *)&view->body;
-                snoid->unknownF4 = 4;
+                snoid->action = 4;
                 *(Point *)&snoid->body.x = randomPlaces[i];
                 features = snoid->features;
                 for (j = 0; j < 4; j++)
                     features[j] = randomBetween(1, 4);
-                snoid->unknownF1 = 1;
+                snoid->angle = 1;
                 if (i == chosen) {
                     if (targetFeatures[0])
                         features[0] = targetFeatures[0];
@@ -2170,7 +2170,7 @@ void dealRandomFeatures(short count)
     }
 }
 
-/* Moves on the one feature (unknownF5) of the Zoombinis in the views
+/* Moves on the one feature (pose) of the Zoombinis in the views
    slotViews[1-3] that change it: each takes the next value after its slot's (or
    an earlier slot's, if its is unset), wrapping 5 round to 1, and records
    it in the next slot. */
@@ -2185,32 +2185,32 @@ void advanceLeftFeatures()
         view = findView(slotViews[i + 1]);
         if (view) {
             snoid = (Snoid *)&view->body;
-            snoid->unknownF4 = 4;
-            if (snoid->unknownF5) {
+            snoid->action = 4;
+            if (snoid->pose) {
                 switch (i) {
                 case 0:
-                    snoid->features[snoid->unknownF5 - 1] = featureSlots[0][snoid->unknownF5 - 1] + 1;
+                    snoid->features[snoid->pose - 1] = featureSlots[0][snoid->pose - 1] + 1;
                     break;
                 case 1:
-                    if (featureSlots[1][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = featureSlots[1][snoid->unknownF5 - 1] + 1;
+                    if (featureSlots[1][snoid->pose - 1])
+                        snoid->features[snoid->pose - 1] = featureSlots[1][snoid->pose - 1] + 1;
                     else
-                        snoid->features[snoid->unknownF5 - 1] = featureSlots[0][snoid->unknownF5 - 1] + 1;
+                        snoid->features[snoid->pose - 1] = featureSlots[0][snoid->pose - 1] + 1;
                     break;
                 case 2:
-                    if (featureSlots[2][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = featureSlots[2][snoid->unknownF5 - 1] + 1;
-                    else if (featureSlots[1][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = featureSlots[1][snoid->unknownF5 - 1] + 1;
+                    if (featureSlots[2][snoid->pose - 1])
+                        snoid->features[snoid->pose - 1] = featureSlots[2][snoid->pose - 1] + 1;
+                    else if (featureSlots[1][snoid->pose - 1])
+                        snoid->features[snoid->pose - 1] = featureSlots[1][snoid->pose - 1] + 1;
                     else
-                        snoid->features[snoid->unknownF5 - 1] = featureSlots[0][snoid->unknownF5 - 1] + 1;
+                        snoid->features[snoid->pose - 1] = featureSlots[0][snoid->pose - 1] + 1;
                     break;
                 }
-                if (snoid->features[snoid->unknownF5 - 1] > 5)
-                    snoid->features[snoid->unknownF5 - 1] = 1;
-                featureSlots[i + 1][snoid->unknownF5 - 1] = snoid->features[snoid->unknownF5 - 1];
-                view->unknown1e = snoid->features[snoid->unknownF5 - 1];
-                snoid->unknownF8 = 0;
+                if (snoid->features[snoid->pose - 1] > 5)
+                    snoid->features[snoid->pose - 1] = 1;
+                featureSlots[i + 1][snoid->pose - 1] = snoid->features[snoid->pose - 1];
+                view->unknown1e = snoid->features[snoid->pose - 1];
+                snoid->idleTicks = 0;
             }
         }
     }
@@ -2229,32 +2229,32 @@ void advanceRightFeatures()
         view = findView(slotViews[i + 1]);
         if (view) {
             snoid = (Snoid *)&view->body;
-            snoid->unknownF4 = 4;
-            if (snoid->unknownF5) {
+            snoid->action = 4;
+            if (snoid->pose) {
                 switch (i) {
                 case 3:
-                    if (featureSlots[5][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = featureSlots[5][snoid->unknownF5 - 1] + 1;
-                    else if (featureSlots[6][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = featureSlots[6][snoid->unknownF5 - 1] + 1;
+                    if (featureSlots[5][snoid->pose - 1])
+                        snoid->features[snoid->pose - 1] = featureSlots[5][snoid->pose - 1] + 1;
+                    else if (featureSlots[6][snoid->pose - 1])
+                        snoid->features[snoid->pose - 1] = featureSlots[6][snoid->pose - 1] + 1;
                     else
-                        snoid->features[snoid->unknownF5 - 1] = featureSlots[7][snoid->unknownF5 - 1] + 1;
+                        snoid->features[snoid->pose - 1] = featureSlots[7][snoid->pose - 1] + 1;
                     break;
                 case 4:
-                    if (featureSlots[6][snoid->unknownF5 - 1])
-                        snoid->features[snoid->unknownF5 - 1] = featureSlots[6][snoid->unknownF5 - 1] + 1;
+                    if (featureSlots[6][snoid->pose - 1])
+                        snoid->features[snoid->pose - 1] = featureSlots[6][snoid->pose - 1] + 1;
                     else
-                        snoid->features[snoid->unknownF5 - 1] = featureSlots[7][snoid->unknownF5 - 1] + 1;
+                        snoid->features[snoid->pose - 1] = featureSlots[7][snoid->pose - 1] + 1;
                     break;
                 case 5:
-                    snoid->features[snoid->unknownF5 - 1] = featureSlots[7][snoid->unknownF5 - 1] + 1;
+                    snoid->features[snoid->pose - 1] = featureSlots[7][snoid->pose - 1] + 1;
                     break;
                 }
-                if (snoid->features[snoid->unknownF5 - 1] > 5)
-                    snoid->features[snoid->unknownF5 - 1] = 1;
-                featureSlots[i + 1][snoid->unknownF5 - 1] = snoid->features[snoid->unknownF5 - 1];
-                view->unknown1e = snoid->features[snoid->unknownF5 - 1];
-                snoid->unknownF8 = 0;
+                if (snoid->features[snoid->pose - 1] > 5)
+                    snoid->features[snoid->pose - 1] = 1;
+                featureSlots[i + 1][snoid->pose - 1] = snoid->features[snoid->pose - 1];
+                view->unknown1e = snoid->features[snoid->pose - 1];
+                snoid->idleTicks = 0;
             }
         }
     }
@@ -2854,11 +2854,11 @@ short dragSnoidToSpot(View *view, Point where)
             snoid->body.y = y;
             snoid->home.y = y;
         }
-        snoid->unknownF4 = 5;
+        snoid->action = 5;
         mainLoopEvents();
         resetViewClock();
     }
-    snoid->unknownF4 = 4;
+    snoid->action = 4;
     rect = dragged->body.bounds;
     unionRgnRect(removedRgn, &rect);
     dragged->id = id;
@@ -3014,8 +3014,8 @@ void markSharedFeature(short neighbour, short index, short cell)
 
 /*
  * Lays out a Zoombini's cels in this scene (unless it's in state 2, which
- * it's put in unless it's in 3 or 5): a part for its pose (unknownF1), then
- * its face (layer unknownC2[unknownF1], if all four features are set) and
+ * it's put in unless it's in 3 or 5): a part for its pose (angle), then
+ * its face (layer layers[angle], if all four features are set) and
  * its features on top, placed by the hot spots in smokeHotSpotsX/smokeHotSpotsY; then
  * its bounds from the images in smokeImages.
  */
@@ -3036,24 +3036,24 @@ void layOutSmokeSnoid(Snoid *snoid)
     snoid->body.bounds.right = 0;
     snoid->body.bounds.bottom = 0;
     cel = (short *)snoid->body.cels;
-    switch (snoid->unknownF4) {
+    switch (snoid->action) {
     case 2:
         return;
     case 3:
     case 5:
         break;
     default:
-        snoid->unknownF4 = 2;
+        snoid->action = 2;
         break;
     }
     if (!snoid->features[3] || !snoid->features[2] || !snoid->features[1] || !snoid->features[0])
         face = 0;
     else
-        face = snoid->unknownC2[snoid->unknownF1];
-    base = snoid->unknownC2[snoid->unknownF1];
+        face = snoid->layers[snoid->angle];
+    base = snoid->layers[snoid->angle];
     where = *(Point *)&snoid->body.x;
     dy = 0;
-    switch (snoid->unknownF1) {
+    switch (snoid->angle) {
     case 0:
         part = 0x41;
         break;
@@ -3169,7 +3169,7 @@ void giveSlotFeatures(Snoid *snoid, short n)
         switch (n) {
         case 0:
         case 1:
-            snoid->unknownF1 = 0;
+            snoid->angle = 0;
             if (leftChosenValues[order[valuePick]] != valueOrder[featurePick]) {
                 snoid->features[order[valuePick]] = valueOrder[featurePick];
                 featureSlots[n + 1][order[valuePick]] = valueOrder[featurePick];
@@ -3178,7 +3178,7 @@ void giveSlotFeatures(Snoid *snoid, short n)
             }
             break;
         case 2:
-            snoid->unknownF1 = 2;
+            snoid->angle = 2;
             k = randomBetween(0, 3);
             if (leftChosenValues[k]) {
                 if ((r = randomBetween(0, 100)) > 65 || start == left && i == 3) {
@@ -3195,7 +3195,7 @@ void giveSlotFeatures(Snoid *snoid, short n)
             }
             break;
         case 3:
-            snoid->unknownF1 = 2;
+            snoid->angle = 2;
             k = randomBetween(0, 3);
             if (leftChosenValues[k]) {
                 if ((r = randomBetween(0, 100)) > 65 || start == left && i == 3) {
@@ -3248,7 +3248,7 @@ void giveSlotFeatures(Snoid *snoid, short n)
             targetFeatures[3] = 0;
     }
     *(Point *)&snoid->body.x = dealtPlaces[n];
-    snoid->unknownF4 = 4;
+    snoid->action = 4;
 }
 
 /* Deals features to the four Zoombinis in the views dealtViews. */
@@ -3286,7 +3286,7 @@ short addSmokeSnoidView(Snoid *snoid)
 }
 
 /* The scene's Zoombini views' update: cycles the feature being changed
-   (unknownF5) through its values every 60 ticks while unknownF8 is set,
+   (pose) through its values every 60 ticks while idleTicks is set,
    else flashes it (every 30) between unknown1e and nothing; lays the
    Zoombini out again when it changes. */
 /* @zoombi32 0x00454228 */
@@ -3299,25 +3299,25 @@ void updateSmokeSnoid(View *view, short region)
     if (!dialogFlags && view->body.running && clockTime() >= view->nextUpdate) {
         view->nextUpdate = clockTime() + view->interval;
         snoid = (Snoid *)&view->body;
-        if (snoid->unknownF8 && clockTime() >= view->body.frameOffset) {
+        if (snoid->idleTicks && clockTime() >= view->body.frameOffset) {
             view->body.frameOffset = clockTime() + 60;
             features = snoid->features;
-            snoid->unknownF8++;
-            if (snoid->unknownF8 > 5)
-                snoid->unknownF8 = 1;
-            if (snoid->unknownF5 > 0)
-                features[snoid->unknownF5 - 1] = snoid->unknownF8;
-            snoid->unknownF4 = 4;
+            snoid->idleTicks++;
+            if (snoid->idleTicks > 5)
+                snoid->idleTicks = 1;
+            if (snoid->pose > 0)
+                features[snoid->pose - 1] = snoid->idleTicks;
+            snoid->action = 4;
         } else if (view->unknown1e && clockTime() >= view->body.frameOffset) {
             view->body.frameOffset = clockTime() + 30;
             features = snoid->features;
-            if (snoid->unknownF5 > 0 && !features[snoid->unknownF5 - 1])
-                features[snoid->unknownF5 - 1] = view->unknown1e;
-            else if (snoid->unknownF5 > 0)
-                features[snoid->unknownF5 - 1] = 0;
-            snoid->unknownF4 = 4;
+            if (snoid->pose > 0 && !features[snoid->pose - 1])
+                features[snoid->pose - 1] = view->unknown1e;
+            else if (snoid->pose > 0)
+                features[snoid->pose - 1] = 0;
+            snoid->action = 4;
         }
-        switch (snoid->unknownF4) {
+        switch (snoid->action) {
         case 2:
             break;
         default:
@@ -3351,7 +3351,7 @@ void smokeViewNotify(View *view, short event)
         if (view->flags == 1) {
             Snoid *snoid = (Snoid *)&view->body;
 
-            snoid->unknownF2 = !snoid->unknownF2;
+            snoid->facingLeft = !snoid->facingLeft;
         }
         break;
     case 251:
@@ -3389,13 +3389,13 @@ void smokeViewNotify(View *view, short event)
         if (other) {
             other->nextUpdate = 0;
             first = (Snoid *)&other->body;
-            first->unknownF4 = 4;
+            first->action = 4;
         }
         other = findView(comparedViews[1]);
         if (other) {
             other->nextUpdate = 0;
             second = (Snoid *)&other->body;
-            second->unknownF4 = 4;
+            second->action = 4;
         }
         if (slotsDiffer) {
             *(Point *)&first->body.x = movePlaces1[movePlace];
@@ -3540,7 +3540,7 @@ void smokeViewNotify(View *view, short event)
  * features at random, rows 3 and 4 (at smokeLevel 3 and 4) follow on from
  * them, row 7 (and 8, for the second set) from rows 3 and 4, and rows 5
  * and 6 differ by level. rowChanges marks the features a row changes; the
- * Zoombini's first such feature is the one it changes (unknownF5).
+ * Zoombini's first such feature is the one it changes (pose).
  */
 /* @zoombi32 0x00452d5d */
 void makeSmokeRows(Snoid *snoid, short n)
@@ -3856,11 +3856,11 @@ void makeSmokeRows(Snoid *snoid, short n)
             count = i + 1;
     }
     if (count) {
-        snoid->unknownF8 = 1;
-        snoid->unknownF5 = count;
+        snoid->idleTicks = 1;
+        snoid->pose = count;
     } else {
-        snoid->unknownF8 = 0;
-        snoid->unknownF5 = 0;
+        snoid->idleTicks = 0;
+        snoid->pose = 0;
     }
 }
 
@@ -3897,17 +3897,17 @@ void setOutSmokeSnoids()
             snoid = (Snoid *)&view->body;
             makeSmokeRows(snoid, i);
             if (i < 7) {
-                snoid->unknownF1 = 7;
+                snoid->angle = 7;
                 *(Point *)&snoid->body.x = rowPlaces[rowPlaceOrder[i]];
             } else if (i == 7) {
-                snoid->unknownF1 = 0;
+                snoid->angle = 0;
                 *(Point *)&snoid->body.x = spot4Point;
             }
             if (i == 8) {
-                snoid->unknownF1 = 2;
+                snoid->angle = 2;
                 *(Point *)&snoid->body.x = smokeRowStart;
             }
-            snoid->unknownF4 = 4;
+            snoid->action = 4;
         }
     }
     copyToSlotView(rowViews[7], 7);
@@ -3940,7 +3940,7 @@ void addSmokeSnoids(short kind, short count)
         case 1:
             for (j = 0; j < 4; j++)
                 made->features[j] = randomBetween(1, 5);
-            made->unknownF1 = 1;
+            made->angle = 1;
             *(Point *)&made->body.x = randomPlaces[i];
             if (i == chosen) {
                 if (targetFeatures[0])
@@ -3960,83 +3960,83 @@ void addSmokeSnoids(short kind, short count)
                 else
                     made->features[3] = randomBetween(1, 5);
             }
-            made->unknownF8 = 0;
-            made->unknownF5 = 0;
-            made->unknownF4 = 4;
+            made->idleTicks = 0;
+            made->pose = 0;
+            made->action = 4;
             break;
         case 2:
             giveSlotFeatures(made, i);
-            made->unknownF8 = 0;
-            made->unknownF5 = 0;
-            made->unknownF4 = 4;
+            made->idleTicks = 0;
+            made->pose = 0;
+            made->action = 4;
             break;
         case 3:
             makeSmokeRows(made, i + 1);
             if (i + 1 < 7)
-                made->unknownF1 = 7;
+                made->angle = 7;
             else if (i + 1 == 7)
-                made->unknownF1 = 5;
+                made->angle = 5;
             if (i + 1 == 8)
-                made->unknownF1 = 3;
+                made->angle = 3;
             *(Point *)&made->body.x = rowPlaces[i + 1];
-            made->unknownF4 = 4;
+            made->action = 4;
             break;
         case 4:
             for (j = 0; j < 4; j++)
                 made->features[j] = 0;
             if (i == 0) {
-                made->unknownF1 = 8;
+                made->angle = 8;
                 *(Point *)&made->body.x = madePlaces1[i];
             }
             if (i == 1) {
-                made->unknownF1 = 5;
+                made->angle = 5;
                 *(Point *)&made->body.x = madePlaces1[i];
             }
-            made->unknownF8 = 0;
-            made->unknownF5 = 0;
-            made->unknownF4 = 4;
+            made->idleTicks = 0;
+            made->pose = 0;
+            made->action = 4;
             break;
         case 5:
             for (j = 0; j < 4; j++)
                 made->features[j] = 0;
             *(Point *)&made->body.x = madePlaces2[i];
             if (!i)
-                made->unknownF1 = 5;
+                made->angle = 5;
             else
-                made->unknownF1 = 3;
-            made->unknownF8 = 0;
-            made->unknownF5 = 0;
-            made->unknownF4 = 4;
+                made->angle = 3;
+            made->idleTicks = 0;
+            made->pose = 0;
+            made->action = 4;
             break;
         default:
             made->features[1] = 1;
             made->body.x = 10;
             made->body.y = 10;
-            made->unknownF1 = 0;
-            made->unknownF8 = 0;
-            made->unknownF5 = 0;
+            made->angle = 0;
+            made->idleTicks = 0;
+            made->pose = 0;
             break;
         }
-        made->unknownC2[0] = 1;
-        made->unknownC2[1] = 22;
-        made->unknownC2[2] = 43;
-        made->unknownC2[3] = 43;
-        made->unknownC2[4] = 22;
-        made->unknownC2[5] = 1;
-        made->unknownC2[6] = 1;
-        made->unknownC2[7] = 22;
-        made->unknownC2[8] = 43;
-        made->unknownF2 = 0;
+        made->layers[0] = 1;
+        made->layers[1] = 22;
+        made->layers[2] = 43;
+        made->layers[3] = 43;
+        made->layers[4] = 22;
+        made->layers[5] = 1;
+        made->layers[6] = 1;
+        made->layers[7] = 22;
+        made->layers[8] = 43;
+        made->facingLeft = 0;
         made->name[0] = 0;
         made->home = *(Point *)&made->body.x;
-        *(Point *)&made->body.unknownAa = *(Point *)&made->body.x;
+        *(Point *)&made->body.waypointX = *(Point *)&made->body.x;
         *(Point *)&made->targetX = *(Point *)&made->body.x;
-        made->unknownEa = 0;
-        made->unknownEb = 0;
-        made->unknownEc = 0;
-        made->unknownEe = 0;
-        made->unknownF0 = 0;
-        made->unknownF7 = 0;
+        made->pathIndex = 0;
+        made->path = 0;
+        made->stepX = 0;
+        made->stepY = 0;
+        made->pathDirection = 0;
+        made->chosen = 0;
         j = addSmokeSnoidView(made);
         if (j) {
             view = findView(j);
@@ -4130,8 +4130,8 @@ void stepBackNotify(View *, short event)
 
             level4Stage--;
             *(Point *)&snoid->body.x = madePlaces1[level4Stage];
-            snoid->unknownF1 = 4;
-            snoid->unknownF4 = 4;
+            snoid->angle = 4;
+            snoid->action = 4;
         }
         break;
     case 18:
@@ -4143,8 +4143,8 @@ void stepBackNotify(View *, short event)
             body->cels[0].image = 0;
             level4Stage--;
             *(Point *)&snoid->body.x = madePlaces1[level4Stage];
-            snoid->unknownF1 = 5;
-            snoid->unknownF4 = 4;
+            snoid->angle = 5;
+            snoid->action = 4;
             recordSlotFeatures(rowViews[8], 7);
         }
         recordLeftSlots();
@@ -4198,7 +4198,7 @@ short startRound()
             body = &snoid->body;
 
             body->cels[0].image = 0;
-            snoid->unknownF4 = 2;
+            snoid->action = 2;
         }
         view = findView(rowViews[8]);
         if (view) {
@@ -4391,7 +4391,7 @@ void openSmoke()
                     count++;
                     if (count == crossingCount - 1 || count == crossingCount) {
                         snoid = (Snoid *)&view->body;
-                        snoid->unknownF1 = 0;
+                        snoid->angle = 0;
                         setSnoidAction((Snoid *)&view->body, 7, 0);
                         view->body.y = 79;
                         ((Snoid *)&view->body)->targetY = 79;
@@ -4632,7 +4632,7 @@ void smokeClicked(short action)
                         randomDragSlot = action;
                         snoid = (Snoid *)&view->body;
                         *(Point *)&snoid->body.x = randomPlaces[randomDragSlot - 1];
-                        snoid->unknownF4 = 4;
+                        snoid->action = 4;
                         randomDragSlot = 0;
                     }
                 }
@@ -4647,12 +4647,12 @@ void smokeClicked(short action)
                             } else {
                                 snoid = (Snoid *)&view->body;
                                 *(Point *)&snoid->body.x = randomPlaces[k];
-                                snoid->unknownF4 = 4;
+                                snoid->action = 4;
                             }
                         } else {
                             snoid = (Snoid *)&view->body;
                             *(Point *)&snoid->body.x = randomPlaces[k];
-                            snoid->unknownF4 = 4;
+                            snoid->action = 4;
                         }
                         k = randomViewCount;
                     }
@@ -4670,9 +4670,9 @@ void smokeClicked(short action)
                     pressDealButton(11002, 0);
                     dealLit = 0;
                     snoid = (Snoid *)&view->body;
-                    snoid->unknownF1 = 7;
-                    if (snoid->unknownF5) {
-                        snoid->unknownF8 = 1;
+                    snoid->angle = 7;
+                    if (snoid->pose) {
+                        snoid->idleTicks = 1;
                         view->unknown1e = 0;
                     }
                     for (m = 0; m < 6; m++)
@@ -4694,7 +4694,7 @@ void smokeClicked(short action)
                                         Snoid *moved = (Snoid *)&other->body;
 
                                         *(Point *)&moved->body.x = rightRowPlaces[rightRow][placed];
-                                        moved->unknownF4 = 4;
+                                        moved->action = 4;
                                         placed++;
                                     }
                                 }
@@ -4717,7 +4717,7 @@ void smokeClicked(short action)
                                         Snoid *moved = (Snoid *)&other->body;
 
                                         *(Point *)&moved->body.x = leftRowPlaces[leftRow][placed];
-                                        moved->unknownF4 = 4;
+                                        moved->action = 4;
                                         placed++;
                                     }
                                 }
@@ -4736,7 +4736,7 @@ void smokeClicked(short action)
                         if (leftRow < 3 && result < 3 || rightRow < 3 && result > 2) {
                             placed = 0;
                             if (result < 3) {
-                                snoid->unknownF1 = 0;
+                                snoid->angle = 0;
                                 if (slotViews[result + 1])
                                     for (action = leftRow; action >= result; action--)
                                         if (action > 0)
@@ -4748,7 +4748,7 @@ void smokeClicked(short action)
                                         Snoid *moved = (Snoid *)&other->body;
 
                                         *(Point *)&moved->body.x = leftRowPlaces[leftRow][placed];
-                                        moved->unknownF4 = 4;
+                                        moved->action = 4;
                                         placed++;
                                     }
                                 }
@@ -4757,7 +4757,7 @@ void smokeClicked(short action)
                                 recordLeftSlots();
                                 advanceLeftFeatures();
                             } else {
-                                snoid->unknownF1 = 2;
+                                snoid->angle = 2;
                                 if (slotViews[result + 1])
                                     for (action = rightRow + 3; action >= result; action--)
                                         if (action > 3)
@@ -4769,7 +4769,7 @@ void smokeClicked(short action)
                                         Snoid *moved = (Snoid *)&other->body;
 
                                         *(Point *)&moved->body.x = rightRowPlaces[rightRow][placed];
-                                        moved->unknownF4 = 4;
+                                        moved->action = 4;
                                         placed++;
                                     }
                                 }
@@ -4782,9 +4782,9 @@ void smokeClicked(short action)
                     } else {
                         snoid = (Snoid *)&view->body;
                         *(Point *)&snoid->body.x = rowPlaces[rowPlaceOrder[k]];
-                        snoid->unknownF4 = 4;
-                        if (snoid->unknownF5) {
-                            snoid->unknownF8 = 1;
+                        snoid->action = 4;
+                        if (snoid->pose) {
+                            snoid->idleTicks = 1;
                             view->unknown1e = 0;
                         }
                     }

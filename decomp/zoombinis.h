@@ -319,8 +319,8 @@ struct ViewBody
     ShortRect bounds; /* +0x9e: where it was drawn */
     short x; /* +0xa6: where it stands */
     short y;
-    short unknownAa;
-    short unknownAc;
+    short waypointX;
+    short waypointY;
     short group; /* +0xae: views moving together (1-16) */
     short running; /* +0xb0: its script runs */
     short clipped; /* +0xb2: drawn clipped to clip */
@@ -354,22 +354,22 @@ struct Snoid
         long zoombini; /* +0xbc: its features, together (0: none) */
         char features[4]; /* hair, eyes, nose, feet (1-5) */
     };
-    short unknownC0;
-    short unknownC2[16];
+    short drawnFacing;
+    short layers[16];
     Point home; /* +0xe2 */
     short targetX; /* +0xe6 */
     short targetY;
-    char unknownEa;
-    char unknownEb;
-    short unknownEc;
-    short unknownEe;
-    char unknownF0;
-    char unknownF1;
-    unsigned short unknownF2; /* +0xf2: facing left */
-    char unknownF4; /* +0xf4: what it is doing */
-    short unknownF5; /* +0xf5 */
-    char unknownF7;
-    char unknownF8; /* +0xf8: random (0-64) when made */
+    char pathIndex;
+    char path;
+    short stepX;
+    short stepY;
+    char pathDirection;
+    char angle;
+    unsigned short facingLeft; /* +0xf2: facing left */
+    char action; /* +0xf4: what it is doing */
+    short pose; /* +0xf5 */
+    char chosen;
+    char idleTicks; /* +0xf8: random (0-64) when made */
     char name[10]; /* +0xf9 */
 };
 
@@ -3025,7 +3025,7 @@ public:
     short isOpen;
     short unknownDE;
     WAVEFORMATEX format;
-    short unknownF2;
+    short facingLeft;
     WavebufNotify notify;
     long data;
     IDirectSoundBuffer *buffer;

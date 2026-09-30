@@ -238,7 +238,7 @@ void fleensWalkerNotifyC(View *view, short event)
         pendingFleensFacing = event - 239;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (pendingFleensFacing) {
             setSnoidFacing(snoid, pendingFleensFacing - 1);
             pendingFleensFacing = 0;
@@ -271,7 +271,7 @@ void fleensWalkerNotifyA(View *view, short event)
         pendingFleensFacing = event - 239;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (pendingFleensFacing) {
             setSnoidFacing(snoid, pendingFleensFacing - 1);
             pendingFleensFacing = 0;
@@ -304,7 +304,7 @@ void fleensWalkerStopNotify(View *view, short event)
         pendingFleensFacing = event - 239;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (pendingFleensFacing) {
             setSnoidFacing(snoid, pendingFleensFacing - 1);
             pendingFleensFacing = 0;
@@ -338,7 +338,7 @@ void fleensMovingOnNotify(View *view, short event)
         pendingFleensFacing = event - 239;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (pendingFleensFacing) {
             setSnoidFacing(snoid, pendingFleensFacing - 1);
             pendingFleensFacing = 0;
@@ -390,14 +390,14 @@ void resetFleens()
 }
 
 /* The script (4000 on) for a Zoombini (by its feet and its place,
-   unknownF0) doing `which` (1-14). */
+   pathDirection) doing `which` (1-14). */
 /* @zoombi32 0x0042339f */
 short fleenScript(View *view, short which)
 {
     short script = 0;
     Snoid *snoid = viewSnoid(view);
     short feet = snoid->features[3];
-    short spot = snoid->unknownF0;
+    short spot = snoid->pathDirection;
 
     switch (which) {
     case 1:
@@ -474,7 +474,7 @@ void fleensViewNotify(View *view, short event)
             moveView(activeFleen, 0, fleensViews[2]);
         }
         snoid = viewSnoid(view);
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         break;
     case 1:
         if (!fleensView0Started) {
@@ -504,7 +504,7 @@ void fleensViewNotify(View *view, short event)
 /*
  * The fleens' layOutSnoid: lays out a fleen's cels for its fleen script's
  * current frame. The script's second word is the order of its feature
- * layers, set up in unknownC2 when it changes (unknownC0); the rest is as
+ * layers, set up in layers when it changes (drawnFacing); the rest is as
  * layOutSnoid, with the fleens' hot spots and images.
  */
 /* @zoombi32 0x00422747 */
@@ -530,13 +530,13 @@ short layOutFleen(Snoid *snoid, short *event)
     snoid->body.bounds.right = 0;
     snoid->body.bounds.bottom = 0;
     cel = (short *)snoid->body.cels;
-    layers = snoid->unknownC2;
+    layers = snoid->layers;
     last = 5;
     script = fleenScripts[snoid->body.script];
     word = script[1];
     at = script + snoid->body.frameOffset;
-    if (word != snoid->unknownC0) {
-        snoid->unknownC0 = word;
+    if (word != snoid->drawnFacing) {
+        snoid->drawnFacing = word;
         switch (word) {
         case 0:
             layers[1] = feetLayers[snoid->features[3]];
@@ -568,15 +568,15 @@ short layOutFleen(Snoid *snoid, short *event)
             break;
         }
     }
-    layers = snoid->unknownC2 + 1;
-    offsetY = -snoid->body.unknownAc;
+    layers = snoid->layers + 1;
+    offsetY = -snoid->body.waypointY;
     if (*at > 0) {
-        offsetX = -snoid->body.unknownAa;
+        offsetX = -snoid->body.waypointX;
         snoid->body.x = at[1] + offsetX;
         snoid->body.y = at[2] + offsetY;
     }
     i = 0;
-    if (!snoid->unknownF2) {
+    if (!snoid->facingLeft) {
         for (; i <= last; i++) {
             word = *at++;
             if (!word) {
@@ -651,7 +651,7 @@ void drawFleensButtons(View *)
 
 /*
  * The fleens' startSnoidScript: starts a fleen's view on fleen script
- * `id` (4000 on: its own scripts, unknownF4 1; others as 0), placed so that
+ * `id` (4000 on: its own scripts, action 1; others as 0), placed so that
  * its first positioned frame is at `anchor`, if given.
  */
 /* @zoombi32 0x00422c82 */
@@ -666,7 +666,7 @@ void startFleenScript(View *view, short id, Point *anchor)
     short *data;
     short n;
 
-    snoid->unknownC0 = -1;
+    snoid->drawnFacing = -1;
     if (snoid->body.group) {
         if (groupLeader[snoid->body.group] == view->id)
             groupLeader[snoid->body.group] = 0;
@@ -674,10 +674,10 @@ void startFleenScript(View *view, short id, Point *anchor)
     }
     snoid->body.group = 0;
     if (id >= 4000) {
-        snoid->unknownF4 = 1;
+        snoid->action = 1;
         index = id - 4000;
     } else {
-        snoid->unknownF4 = 0;
+        snoid->action = 0;
         index = 0;
     }
     snoid->body.running = 1;
@@ -688,15 +688,15 @@ void startFleenScript(View *view, short id, Point *anchor)
     snoid->body.frame = 0;
     snoid->body.frameOffset = 2;
     snoid->body.lastFrame = data[0];
-    if (!snoid->unknownF4)
-        snoid->unknownF5 = 1;
+    if (!snoid->action)
+        snoid->pose = 1;
     else
-        snoid->unknownF5 = 0;
+        snoid->pose = 0;
     if (removedRgn)
         unionRgnRect(removedRgn, &snoid->body.bounds);
     originX = snoid->body.x;
     originY = snoid->body.y;
-    if (snoid->unknownF4 == 1) {
+    if (snoid->action == 1) {
         if (anchor) {
             n = -1;
             found = 0;
@@ -721,8 +721,8 @@ void startFleenScript(View *view, short id, Point *anchor)
         data += 2;
     }
     if (*data > 0) {
-        snoid->body.unknownAa = data[1] - originX;
-        snoid->body.unknownAc = data[2] - originY;
+        snoid->body.waypointX = data[1] - originX;
+        snoid->body.waypointY = data[2] - originY;
     }
     layOutFleen(snoid, 0);
     if (removedRgn)
@@ -785,20 +785,20 @@ void updateFleen(View *view, short region)
     }
     view->nextUpdate = updateTime + view->interval;
     snoid = viewSnoid(view);
-    switch (snoid->unknownF4) {
+    switch (snoid->action) {
     case 0:
     default:
-        if (snoid->unknownF5) {
-            snoid->unknownF5 = 0;
+        if (snoid->pose) {
+            snoid->pose = 0;
             changed = 1;
-        } else if (snoidIdleDelay && snoid->unknownF8++ > snoidIdleDelay + 16) {
+        } else if (snoidIdleDelay && snoid->idleTicks++ > snoidIdleDelay + 16) {
             short which = randomBetween(1, 100) <= 50 ? 2 : 3;
             short script = fleenScript(view, which);
 
             if (script) {
                 startFleenScript(view, script, 0);
                 changed = 1;
-                snoid->unknownF8 = 1;
+                snoid->idleTicks = 1;
             }
         }
         break;
@@ -841,8 +841,8 @@ short addFleen(Snoid *snoid)
 
     if (snoid->features[3]) {
         for (i = 0; i < 16; i++)
-            snoid->unknownC2[i] = 0;
-        snoid->unknownC0 = -1;
+            snoid->layers[i] = 0;
+        snoid->drawnFacing = -1;
         id = addView(1, drawFleen, updateFleen, 0, 6, snoid, 0, 0);
         view = findView(id);
         if (view) {
@@ -877,7 +877,7 @@ void fleensWalkerNotifyE(View *view, short event)
         pendingFleensFacing = event - 239;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (pendingFleensFacing) {
             setSnoidFacing(snoid, pendingFleensFacing - 1);
             pendingFleensFacing = 0;
@@ -983,17 +983,17 @@ void addFleens()
             else
                 snoid.features[j] = value;
         }
-        snoid.unknownF1 = 0;
-        snoid.unknownF2 = 0;
+        snoid.angle = 0;
+        snoid.facingLeft = 0;
         if (i + 1 == pickedFleens[0] || i + 1 == pickedFleens[1] || i + 1 == pickedFleens[2]) {
             if (*pickedPlaces > a) {
-                snoid.unknownF0 = a + *otherPlaces;
+                snoid.pathDirection = a + *otherPlaces;
                 snoid.body.x = pickedPlaces[a * 2 + 1];
                 snoid.body.y = pickedPlaces[a * 2 + 2];
                 a++;
             }
         } else if (*otherPlaces > b) {
-            snoid.unknownF0 = b;
+            snoid.pathDirection = b;
             snoid.body.x = otherPlaces[b * 2 + 1];
             snoid.body.y = otherPlaces[b * 2 + 2];
             b++;
@@ -1002,14 +1002,14 @@ void addFleens()
         for (j = 0; j < 10; j++)
             snoid.name[j] = (gameState + i * 19)[j + 0xa93d];
         snoid.home = *(Point *)&snoid.body.x;
-        *(Point *)&snoid.body.unknownAa = *(Point *)&snoid.body.x;
+        *(Point *)&snoid.body.waypointX = *(Point *)&snoid.body.x;
         *(Point *)&snoid.targetX = *(Point *)&snoid.body.x;
-        snoid.unknownEa = 0;
-        snoid.unknownEb = 0;
-        snoid.unknownEc = 0;
-        snoid.unknownEe = 0;
-        snoid.unknownF8 = randomBetween(0, 80);
-        snoid.unknownF7 = 1;
+        snoid.pathIndex = 0;
+        snoid.path = 0;
+        snoid.stepX = 0;
+        snoid.stepY = 0;
+        snoid.idleTicks = randomBetween(0, 80);
+        snoid.chosen = 1;
         fleenViews[i] = addFleen(&snoid);
         fleenClicked[i] = 0;
         if (flag) {
@@ -1031,7 +1031,7 @@ void addFleens()
 /* Scene 13's clicks: 1 leaves (asking whether to keep the party), 2 sends
    the Zoombinis on (once ready, fleensGoReady and fleensEntered), counted in
    snoidsOnTheirWay, 3 (while nothing's moving) drags a Zoombini: one placed
-   (unknownF7) freely, another only when its fleen (fleenViews) is idle, noting where it was put (putDownSnoid,
+   (chosen) freely, another only when its fleen (fleenViews) is idle, noting where it was put (putDownSnoid,
    putDownFleen) or sending it back to a free place; with practiceLevel, a click on a
    fleen makes its Zoombini jump. */
 /* @zoombi32 0x00422192 */
@@ -1081,10 +1081,10 @@ void fleensClicked(short which)
         getCursorPosition(&where);
         view = viewAt(where, 1, 1);
         if (view)
-            id = viewSnoid(view)->unknownF4;
+            id = viewSnoid(view)->action;
         if (view && (!id || id == 6)) {
             snoid = viewSnoid(view);
-            if (viewSnoid(view)->unknownF7) {
+            if (viewSnoid(view)->chosen) {
                 if (!leaderBusy) {
                     dragInPlace = 1;
                     dragSnoid(view, where, 0, 0);
@@ -1098,7 +1098,7 @@ void fleensClicked(short which)
                         i = fleensPartySize;
                     }
                 other = findView(fleen);
-                if (other && viewSnoid(other)->unknownF7) {
+                if (other && viewSnoid(other)->chosen) {
                     if (id == putDownSnoid)
                         putDownSnoid = putDownFleen = 0;
                     moved = dragSnoid(view, where, 0, 0);
@@ -1120,7 +1120,7 @@ void fleensClicked(short which)
                     if (moved == fleenViews[i]) {
                         other = idleSnoidView(partyViews[i]);
                         if (other) {
-                            viewSnoid(other)->unknownF5 = 15;
+                            viewSnoid(other)->pose = 15;
                             setSnoidAction(viewSnoid(other), 3, 0);
                         }
                         i = fleensPartySize;
@@ -1177,7 +1177,7 @@ void fleensLeaderNotify(View *view, short event)
         pendingFleensFacing = event - 239;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (pendingFleensFacing) {
             setSnoidFacing(snoid, pendingFleensFacing - 1);
             pendingFleensFacing = 0;
@@ -1192,7 +1192,7 @@ void fleensLeaderNotify(View *view, short event)
         snoidBehindDue = 1;
         actor = findView(activeFleen);
         if (actor) {
-            spot = viewSnoid(actor)->unknownF0;
+            spot = viewSnoid(actor)->pathDirection;
             if (spot >= 0 && spot <= 16) {
                 which = 5;
                 act = 1;
@@ -1210,7 +1210,7 @@ void fleensLeaderNotify(View *view, short event)
         actor = findView(activeFleen);
         if (!actor)
             break;
-        spot = viewSnoid(actor)->unknownF0;
+        spot = viewSnoid(actor)->pathDirection;
         if (spot < 17 || spot > 19)
             break;
         other = findView(view1000);
@@ -1322,7 +1322,7 @@ void fleensLeaderNotify(View *view, short event)
         for (i = 0; i < 16; i++)
             if (fleenClicked[i] < 2) {
                 other = findView(fleenViews[i]);
-                if (other && viewSnoid(other)->unknownF0 >= low && viewSnoid(other)->unknownF0 <= high) {
+                if (other && viewSnoid(other)->pathDirection >= low && viewSnoid(other)->pathDirection <= high) {
                     fleenClicked[i] = 2;
                     script = fleenScript(other, 14);
                     if (script) {
@@ -1364,13 +1364,13 @@ void fleensLeaderNotify(View *view, short event)
         if (!actor)
             actor = findView(activeFleen);
         if (actor) {
-            viewSnoid(actor)->unknownF7 = 0;
+            viewSnoid(actor)->chosen = 0;
             script = fleenScript(actor, which);
             if (script) {
                 startFleenScript(actor, script, anchor);
                 actor->notify = fleensViewNotify;
                 if (seat)
-                    viewSnoid(actor)->unknownF0 = 20;
+                    viewSnoid(actor)->pathDirection = 20;
             }
         }
     }
@@ -1558,7 +1558,7 @@ void fleensFrame()
         if (putDownFleen) {
             view = idleSnoidView(putDownSnoid);
             if (view && !dragInPlace) {
-                viewSnoid(view)->unknownF7 = 1;
+                viewSnoid(view)->chosen = 1;
                 activeFleen = putDownFleen;
                 putDownFleen = 0;
                 activeSnoid = view->id;
@@ -1629,7 +1629,7 @@ void fleensFrame()
         view = findView(walkerSnoid);
         if (view) {
             script = fleensSnoidScript(view, 4);
-            viewSnoid(view)->unknownF2 = 1;
+            viewSnoid(view)->facingLeft = 1;
             startSnoidScript(viewSnoid(view), script, 0, 0);
             view->notifyEnd = 1;
             view->notify = fleensWalkerStopNotify;

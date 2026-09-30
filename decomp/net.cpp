@@ -42,16 +42,16 @@ void layOutMazeCels(Snoid *snoid)
     snoid->body.bounds.right = 0;
     snoid->body.bounds.bottom = 0;
     parts = cel = (short *)snoid->body.cels;
-    switch (snoid->unknownF4) {
+    switch (snoid->action) {
     case 1:
         return;
     case 2:
         break;
     case 3:
-        snoid->unknownF4 = 1;
+        snoid->action = 1;
         break;
     default:
-        snoid->unknownF4 = 1;
+        snoid->action = 1;
         break;
     }
     where = *(Point *)&snoid->body.x;
@@ -104,7 +104,7 @@ void layOutMazeCels(Snoid *snoid)
         *cel++ = part;
         *cel++ = where.x - partHotX[part];
         *cel++ = where.y - partHotY[part];
-        if (snoid->unknownF4 == 2) {
+        if (snoid->action == 2) {
             if (parts[46] >= 0 && parts[46] < 4) {
                 part = parts[40] + parts[46] + 15;
                 *cel++ = part;
@@ -112,7 +112,7 @@ void layOutMazeCels(Snoid *snoid)
                 *cel++ = where.y - partHotY[part];
                 parts[46]++;
             } else {
-                snoid->unknownF4 = 1;
+                snoid->action = 1;
             }
         }
         break;
@@ -121,7 +121,7 @@ void layOutMazeCels(Snoid *snoid)
         *cel++ = part;
         *cel++ = where.x - partHotX[part];
         *cel++ = where.y - partHotY[part];
-        if (snoid->unknownF4 == 2) {
+        if (snoid->action == 2) {
             if (parts[46] >= 0 && parts[46] < 4) {
                 part = parts[40] + parts[46] + 15;
                 *cel++ = part;
@@ -129,7 +129,7 @@ void layOutMazeCels(Snoid *snoid)
                 *cel++ = where.y - partHotY[part];
                 parts[46]++;
             } else {
-                snoid->unknownF4 = 1;
+                snoid->action = 1;
             }
         }
         break;
@@ -859,7 +859,7 @@ void stepMazeSnoid(View *view, short other)
             if (its[38] > 3)
                 its[38] = 0;
         }
-        ((Snoid *)&paired->body)->unknownF4 = 3;
+        ((Snoid *)&paired->body)->action = 3;
     }
     parts[31] = parts[33];
     parts[32] = parts[34];
@@ -1041,7 +1041,7 @@ void stopMazeSnoid(short id)
     short n;
 
     if (view) {
-        ((Snoid *)&view->body)->unknownF4 = 2;
+        ((Snoid *)&view->body)->action = 2;
         short *parts = (short *)&view->body;
 
         parts[46] = 0;
@@ -1097,7 +1097,7 @@ void stopMazeSnoid(short id)
                         if (parts[38] > 3)
                             parts[38] = 0;
                     }
-                    ((Snoid *)&view->body)->unknownF4 = 3;
+                    ((Snoid *)&view->body)->action = 3;
                 }
                 if (parts[30] == 5 && parts[43]) {
                     partnerList[partnerCount] = parts[43];
@@ -1816,7 +1816,7 @@ void crossingNotify(View *view, short event)
         netFacing = event - 239;
         break;
     case 0:
-        snoid->unknownF2 = !snoid->unknownF2;
+        snoid->facingLeft = !snoid->facingLeft;
         if (netFacing) {
             setSnoidFacing(snoid, netFacing - 1);
             netFacing = 0;
@@ -1842,7 +1842,7 @@ void crossingNotify(View *view, short event)
         script = ((Snoid *)&view->body)->features[3] - 1;
         script = 2 - currentNetPlace + script * 3 + 13016;
         startSnoidScript((Snoid *)&view->body, script, 0, 0);
-        ((Snoid *)&view->body)->unknownF7 = 1;
+        ((Snoid *)&view->body)->chosen = 1;
         view->notifyEnd = 0;
         view->notify = crossingNotify;
         sentIndex = nextToSend;
@@ -1888,7 +1888,7 @@ void crossingNotify(View *view, short event)
             view = findView(movingSnoid);
             setSnoidAction((Snoid *)&view->body, 7, 0);
             *(Point *)&((Snoid *)&view->body)->targetX = anchor;
-            ((Snoid *)&view->body)->unknownF7 = 1;
+            ((Snoid *)&view->body)->chosen = 1;
             view->notifyEnd = 0;
             view->notify = crossingNotify;
             lastAcross = movingSnoid;
@@ -2444,7 +2444,7 @@ void netFrame()
                 if (partyViews[i] != netPlaces[0] && partyViews[i] != netPlaces[1] && partyViews[i] != netPlaces[2]) {
                     netFidgeter = idleSnoidView(partyViews[i]);
                     if (netFidgeter && netFidgeter->body.running && netFidgeter->flags == 1) {
-                        if (!((Snoid *)&netFidgeter->body)->unknownF7 || allAcross) {
+                        if (!((Snoid *)&netFidgeter->body)->chosen || allAcross) {
                             fidget = ((Snoid *)&netFidgeter->body)->features[3] - 1;
                             fidget += 13046;
                             startSnoidScript((Snoid *)&netFidgeter->body, fidget, 0, 0);

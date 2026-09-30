@@ -277,8 +277,8 @@ void mazeButtonClicked(short button)
             view->flags = 0x4008001;
             mazeSnoidViews[mazeSnoidCount] = view->id;
             mazeSnoidCount++;
-            snoid->unknownF1 = startPlaceF1[startPlace];
-            snoid->unknownF2 = startPlaceF2[startPlace];
+            snoid->angle = startPlaceF1[startPlace];
+            snoid->facingLeft = startPlaceF2[startPlace];
             snoid->body.x = startPlacePoints[startPlace].x;
             snoid->body.y = startPlacePoints[startPlace].y;
             parts[20] = startPlaceDirections[startPlace];
@@ -314,13 +314,13 @@ void mazeButtonClicked(short button)
             placedQueueCount++;
             startPlaceGroups[startPlace + 1] = startPlace + 1;
         } else {
-            if (((Snoid *)&view->body)->unknownF4 == 4) {
+            if (((Snoid *)&view->body)->action == 4) {
                 target = *(Point *)&((Snoid *)&view->body)->targetX;
                 at = *(Point *)&view->body.x;
                 if (target.x != at.x || target.y != at.y) {
                     unionRgnRect(removedRgn, &view->body.bounds);
                     *(Point *)&((Snoid *)&view->body)->targetX = where;
-                    *(Point *)&view->body.unknownAa = where;
+                    *(Point *)&view->body.waypointX = where;
                     *(Point *)&view->body.x = where;
                     layOutSnoid(snoid, 0);
                 }
@@ -362,7 +362,7 @@ short mazeKey(unsigned short key)
    is the Zoombini's view): the entry of its own table (words 37 on) at its
    index (word 36), moving it into `group`. */
 /* @zoombi32 0x0043583c */
-void startPairedSnoidScript(View *view, short group, ViewNotify, char unknownF8)
+void startPairedSnoidScript(View *view, short group, ViewNotify, char idleTicks)
 {
     short *parts = (short *)&view->body;
     View *other = findView(parts[50]);
@@ -371,7 +371,7 @@ void startPairedSnoidScript(View *view, short group, ViewNotify, char unknownF8)
         short *its = (short *)&other->body;
         short script = its[37 + its[36]];
 
-        startSnoidScript((Snoid *)&other->body, script, 0, unknownF8);
+        startSnoidScript((Snoid *)&other->body, script, 0, idleTicks);
         other->body.group = group;
     }
 }
@@ -379,7 +379,7 @@ void startPairedSnoidScript(View *view, short group, ViewNotify, char unknownF8)
 /* The same, nudging the Zoombini by its pose (word 20) first and starting
    script 14000 on by its index. */
 /* @zoombi32 0x00435882 */
-void startPairedSnoidPoseScript(View *view, short group, ViewNotify, char unknownF8)
+void startPairedSnoidPoseScript(View *view, short group, ViewNotify, char idleTicks)
 {
     short *parts = (short *)&view->body;
     View *other = findView(parts[50]);
@@ -408,19 +408,19 @@ void startPairedSnoidPoseScript(View *view, short group, ViewNotify, char unknow
         }
         short script = parts[36] + 14000;
 
-        startSnoidScript((Snoid *)&other->body, script, 0, unknownF8);
+        startSnoidScript((Snoid *)&other->body, script, 0, idleTicks);
         other->body.group = group;
     }
 }
 
 /* The same with script 14003, the paired view assumed to exist. */
 /* @zoombi32 0x00435925 */
-void startPairedSnoid14003(View *view, short group, ViewNotify, char unknownF8)
+void startPairedSnoid14003(View *view, short group, ViewNotify, char idleTicks)
 {
     short *parts = (short *)&view->body;
     View *other = findView(parts[50]);
 
-    startSnoidScript((Snoid *)&other->body, 14003, 0, unknownF8);
+    startSnoidScript((Snoid *)&other->body, 14003, 0, idleTicks);
     other->body.group = group;
 }
 
@@ -681,7 +681,7 @@ void updateMazeSnoid(View *view, short region)
     if (!dialogFlags && view->body.running && clockTime() >= view->nextUpdate) {
         view->nextUpdate = clockTime() + view->interval;
         snoid = (Snoid *)&view->body;
-        switch (snoid->unknownF4) {
+        switch (snoid->action) {
         case 1:
             break;
         default:
@@ -831,7 +831,7 @@ void turnOrStartPairNotify(View *view, short event)
         if (view->flags == 0x8000 | 0x4000001) {
             Snoid *snoid = (Snoid *)&view->body;
 
-            snoid->unknownF2 = !snoid->unknownF2;
+            snoid->facingLeft = !snoid->facingLeft;
         }
         break;
     case 61: {
@@ -1167,7 +1167,7 @@ void mazeFrame()
                 }
                 if (spot) {
                     snoid = (Snoid *)&view->body;
-                    snoid->unknownF1 = 0;
+                    snoid->angle = 0;
                     setSnoidAction((Snoid *)&view->body, 7, 0);
                     *(Point *)&((Snoid *)&view->body)->targetX = mazeExitSpots[parts[35]][(*spot)++];
                     if (*spot > 19)
@@ -1273,7 +1273,7 @@ void putSnoidInMaze(View *view, short pose)
     Point where;
 
     if ((parts[35] = pose - 20) == 3) {
-        snoid->unknownF7 = 1;
+        snoid->chosen = 1;
         if (++poseReachedCount == 1) {
             mazeGoReady = 1;
             unionRgnRect(removedRgn, &mazeButtons[2].rect);
@@ -1392,7 +1392,7 @@ void mazeViewNotify(View *view, short event)
    pose (paired back with the Zoombini), and starts the Zoombini's script
    for the pose (then told mazeSnoidNotify), in `group`. */
 /* @zoombi32 0x0043596d */
-void moveSnoidToSquare(View *view, short group, ViewNotify, char unknownF8)
+void moveSnoidToSquare(View *view, short group, ViewNotify, char idleTicks)
 {
     short script;
     short helperScript;
@@ -1450,7 +1450,7 @@ void moveSnoidToSquare(View *view, short group, ViewNotify, char unknownF8)
             parts[50] = other->id;
             runViewScript(helper, removedRgn);
         }
-        startSnoidScript((Snoid *)&other->body, script, 0, unknownF8);
+        startSnoidScript((Snoid *)&other->body, script, 0, idleTicks);
         other->notify = mazeSnoidNotify;
         other->body.group = group;
         switch (pose) {
@@ -1742,18 +1742,18 @@ void addMazeSnoidView(Snoid *snoid)
         switch (parts[30]) {
         case 1:
         case 5:
-            made->unknownF4 = 2;
+            made->action = 2;
             break;
         case 2:
             parts[41] = valueParts[mazeSequence[sequenceIndex]][0] + 1;
             parts[42] = valueParts[mazeSequence[sequenceIndex]][1];
             sequenceIndex++;
-            made->unknownF4 = 3;
+            made->action = 3;
             break;
         default:
             parts[41] = 0;
             parts[42] = 0;
-            made->unknownF4 = 3;
+            made->action = 3;
             break;
         }
         parts[43] = 0;
@@ -1966,20 +1966,20 @@ void addMazeSnoids(short count)
     for (i = 0; i < count; i++) {
         made->body.x = 0;
         made->body.y = 0;
-        made->unknownC2[0] = 0;
-        made->unknownC2[1] = 0;
-        made->unknownC2[2] = 0;
-        made->unknownF2 = 0;
+        made->layers[0] = 0;
+        made->layers[1] = 0;
+        made->layers[2] = 0;
+        made->facingLeft = 0;
         made->name[0] = 0;
         made->home = *(Point *)&made->body.x;
-        *(Point *)&made->body.unknownAa = *(Point *)&made->body.x;
+        *(Point *)&made->body.waypointX = *(Point *)&made->body.x;
         *(Point *)&made->targetX = *(Point *)&made->body.x;
-        made->unknownEa = 0;
-        made->unknownEb = 0;
-        made->unknownEc = 0;
-        made->unknownEe = 0;
-        made->unknownF0 = 0;
-        made->unknownF7 = 0;
+        made->pathIndex = 0;
+        made->path = 0;
+        made->stepX = 0;
+        made->stepY = 0;
+        made->pathDirection = 0;
+        made->chosen = 0;
         addMazeSnoidView(made);
     }
 }
