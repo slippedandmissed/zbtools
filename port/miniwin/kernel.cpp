@@ -55,6 +55,11 @@ void unsupported(const char *what)
 void setProgramPath(const char *windowsPath)
 {
     programPath = windowsPath;
+    /* Windows starts a program in its shortcut's directory, the program's:
+       the game saves its roster and games in the current directory. */
+    size_t slash = programPath.rfind('\\');
+    if (slash != std::string::npos && slash > 2)
+        SetCurrentDirectory(programPath.substr(0, slash).c_str());
 }
 
 HINSTANCE programInstance()
