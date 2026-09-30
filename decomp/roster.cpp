@@ -43,6 +43,37 @@ void fn_41d9eb(long, long)
 {
 }
 
+/* Loads the roster's two REGS resources (200-201: big-endian words,
+   swapped here, locked in g_4aba68 and g_4aba6c) and its hieroglyphs
+   (shape 10000). */
+/* @zoombi32 0x0041dbce */
+void fn_41dbce()
+{
+    short i;
+    unsigned short *data;
+    unsigned long size;
+
+    for (i = 0; i < 2; i++) {
+        g_4aba70[i] = 0;
+        fn_46c4fe(&g_4aba70[i], RESOURCE_TYPE('R', 'E', 'G', 'S'), i + 200, 0, 1);
+        g_4aba78[i] = fn_46beac(g_4aba70[i]);
+        switch (i) {
+        case 0:
+            g_4aba68 = (short *)lockHandle(g_4aba78[i]);
+            break;
+        case 1:
+            g_4aba6c = (short *)lockHandle(g_4aba78[i]);
+            break;
+        }
+        data = (unsigned short *)handleData(g_4aba78[i]);
+        for (size = handleSize(g_4aba78[i]); size; size -= 2) {
+            *data = swapShort(*data);
+            data++;
+        }
+    }
+    loadShape(&g_4a0fd4, 10000, "Hieroglyphs");
+}
+
 /* Frees the resource g_4a0fd4, if loaded. */
 /* @zoombi32 0x0041dccb */
 void fn_41dccb()

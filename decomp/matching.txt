@@ -349,6 +349,7 @@
 0x0041dadf fn_41dadf
 0x0041db60 fn_41db60
 0x0041dbab fn_41dbab
+0x0041dbce fn_41dbce
 0x0041dccb fn_41dccb
 0x0041dce6 fn_41dce6
 0x0041dd37 fn_41dd37
@@ -740,6 +741,7 @@
 0x0044d3b8 fn_44d3b8
 0x0044d5ad fn_44d5ad
 0x0044d5f5 fn_44d5f5
+0x0044d6a3 fn_44d6a3
 0x0044d974 fn_44d974
 0x0044dca0 fn_44dca0
 0x0044dcdc fn_44dcdc

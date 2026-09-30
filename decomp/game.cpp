@@ -1917,6 +1917,95 @@ short fn_453e8c(View *view, Point where)
     return spot;
 }
 
+/* Places the party on the 16 starting cells (g_4a445a: the first
+   g_4b2414 of them taken, state 507, by the Zoombinis in order; the rest
+   state 501), then marks the cells between each placed Zoombini and its
+   neighbours with a feature they share (fn_44d974). */
+/* @zoombi32 0x0044d6a3 */
+void fn_44d6a3()
+{
+    short cells[16] = {19, 25, 91, 97, 57, 59, 40, 76, 78, 38, 74, 42, 21, 95, 23, 93};
+    short i;
+    short index;
+
+    fn_449c18();
+    for (i = 0; i < 16; i++)
+        g_4b1aea[cells[i]].state = 501;
+    for (i = 0; i < g_4b2414; i++) {
+        g_4b1aea[cells[i]].state = 507;
+        g_4b1aea[cells[i]].snoid = i;
+    }
+    for (i = 0; i < g_4b2414; i++)
+        if (g_4b1aea[cells[i]].state == 507) {
+            index = g_4b1aea[cells[i]].snoid;
+            switch (cells[i]) {
+            case 19:
+                fn_44d974(38, index, 28);
+                fn_44d974(21, index, 20);
+                break;
+            case 21:
+                fn_44d974(38, index, 29);
+                fn_44d974(40, index, 30);
+                fn_44d974(23, index, 22);
+                break;
+            case 23:
+                fn_44d974(40, index, 31);
+                fn_44d974(42, index, 32);
+                fn_44d974(25, index, 24);
+                break;
+            case 25:
+                fn_44d974(42, index, 33);
+                break;
+            case 38:
+                fn_44d974(40, index, 39);
+                fn_44d974(57, index, 47);
+                break;
+            case 40:
+                fn_44d974(57, index, 48);
+                fn_44d974(59, index, 49);
+                fn_44d974(42, index, 41);
+                break;
+            case 42:
+                fn_44d974(59, index, 50);
+                break;
+            case 57:
+                fn_44d974(74, index, 65);
+                fn_44d974(76, index, 66);
+                fn_44d974(59, index, 58);
+                break;
+            case 59:
+                fn_44d974(76, index, 67);
+                fn_44d974(78, index, 68);
+                break;
+            case 74:
+                fn_44d974(91, index, 82);
+                fn_44d974(93, index, 83);
+                fn_44d974(76, index, 75);
+                break;
+            case 76:
+                fn_44d974(93, index, 84);
+                fn_44d974(95, index, 85);
+                fn_44d974(78, index, 77);
+                break;
+            case 78:
+                fn_44d974(95, index, 86);
+                fn_44d974(97, index, 87);
+                break;
+            case 91:
+                fn_44d974(93, index, 92);
+                break;
+            case 93:
+                fn_44d974(95, index, 94);
+                break;
+            case 95:
+                fn_44d974(97, index, 96);
+                break;
+            case 97:
+                break;
+            }
+        }
+}
+
 /* Marks `cell` with a feature (view 510-513) that the Zoombini `index`
    shares with the one on `neighbour` (if that one is placed, state 507),
    checking the features from a random one on. */

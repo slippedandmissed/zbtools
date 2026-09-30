@@ -119,6 +119,7 @@ extern short g_4b2704;
 extern Point g_4a4528;
 extern ShortRect g_4a4534;
 short fn_453e8c(View *view, Point where);
+void fn_44d6a3();
 void fn_44d974(short neighbour, short index, short cell);
 extern short *g_4b2658; /* the scene's Zoombini images' hot spots: x */
 extern short *g_4b265c; /* and y */

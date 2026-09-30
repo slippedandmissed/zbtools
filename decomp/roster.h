@@ -18,6 +18,7 @@ extern long g_4a0fd4;
 extern ShortRect g_4a11ac;
 extern Point g_4ab8e0;
 void fn_41dccb();
+void fn_41dbce();
 void fn_41dbab(View *view, short region);
 void fn_41e8f3(short id, short n);
 extern char *rosterError; /* @data 0x4aba80 */
@@ -61,7 +62,8 @@ void drawRosterButtonsView(View *);
 void closeRoster();
 void fn_41e273();
 extern short g_4ab872;
-extern short *g_4aba6c;
+extern short *g_4aba68; /* @data 0x4aba68: REGS 200 */
+extern short *g_4aba6c; /* @data 0x4aba6c: REGS 201 */
 void fn_41d9f2(short which, short image, long);
 extern short g_4ab870;
 extern short g_4aba64;
