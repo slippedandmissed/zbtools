@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "e2memory.h"
 #include "features.h"
+#include "focus.h"
 #include "graphics.h"
 #include "module_4623b8.h"
 #include "picker.h"
@@ -18,14 +19,74 @@
 #include "sound.h"
 #include "view.h"
 
-/* @zoombi32 0x0042fc89 */
-void fn_42fc89(Counters *object)
+/* Opens scene 19, the map: its sounds, backdrop and saved areas, the
+   map's views (their placed callbacks), and loads sounds 998-999 from
+   the sounds' map. */
+/* @zoombi32 0x0042fa4b */
+void openScene19()
 {
-    Triple *counters = &object->counters;
-    if (object->mode == 2) {
-        counters->a--;
-        counters->b++;
-        counters->c += 2;
+    basePort *port;
+    short i;
+    View *view;
+    long saved;
+
+    g_4afb14 = 0;
+    fn_42f920();
+    addSoundRange(20000, 29999, 1);
+    party()->count = 0;
+    openGameFile(&g_4afb10, "Map.MHK");
+    fn_46be2e(g_4afb10);
+    drawBackdrop(300);
+    port = getPort();
+    setPort(viewPort);
+    for (i = 0; i < 6; i++)
+        saveRect(&g_4afb18[i], &g_4a1f54[i], 1, 0);
+    setPort(port);
+    loadFeatureGroup(1000, 0, 0);
+    loadScripts(1000, 6);
+    fn_4148da(10, 236);
+    g_4afb3a = addView(0x8108000, drawCels, runViewScript, 1000, 6, 0, 0, 0);
+    g_4afb3c = addView(0x8108000, drawCels, runViewScript, 1001, 6, 0, 0, 0);
+    view = findView(g_4afb3a);
+    if (view)
+        view->placed = fn_430cb3;
+    view = findView(g_4afb3c);
+    if (view)
+        view->placed = fn_430dc0;
+    g_4afb3e = addView(0x100000, fn_430ff2, fn_43108f, 1004, 6, 0, 0, 0);
+    view = findView(g_4afb3e);
+    if (view)
+        view->body.running = 0;
+    g_4afb40 = addView(0x1000, drawCels, runViewScript, 1005, 3, 0, 0, 0);
+    setGroupLists(pickerGroups, 1, (short)0xc000);
+    fn_43145f(1);
+    view = findView(g_4afb40);
+    if (view) {
+        g_4afb42 = view->body.bounds;
+        view->placed = fn_42fc89;
+    }
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    g_4afb14 = 1;
+    g_4a7410 = 0;
+    saved = g_4a7f58;
+    fn_46be2e(g_4b7b4c);
+    loadSoundByKey(998, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    loadSoundByKey(999, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    g_4a7f58 = saved;
+}
+
+/* A view's placed callback: with interval 2, shows the image before its
+   first cel's, a pixel right and two down. */
+/* @zoombi32 0x0042fc89 */
+void fn_42fc89(View *view)
+{
+    ViewCel *cel = view->body.cels;
+
+    if (view->interval == 2) {
+        cel->image--;
+        cel->x++;
+        cel->y += 2;
     }
 }
 

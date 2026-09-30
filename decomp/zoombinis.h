@@ -707,21 +707,6 @@ struct Flagged
     long flags;
 };
 
-struct Triple
-{
-    short a;
-    short b;
-    short c;
-};
-
-/* Something with a mode at +0x28 and three counters at +0x30. */
-struct Counters
-{
-    char unknown0[0x28];
-    long mode;
-    char unknown2c[4];
-    Triple counters;
-};
 
 
 /* A loaded sound (wave or MIDI), in the list at g_4a00a0. */

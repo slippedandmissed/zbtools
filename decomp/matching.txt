@@ -506,6 +506,7 @@
 0x0042f3ed fn_42f3ed
 0x0042f49d fn_42f49d
 0x0042f920 fn_42f920
+0x0042fa4b openScene19
 0x0042fc89 fn_42fc89
 0x0042fca8 closeScene1
 0x0042feaf scene1Frame
