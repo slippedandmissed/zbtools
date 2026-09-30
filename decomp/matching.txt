@@ -967,6 +967,7 @@
 0x0046258a fn_46258a
 0x004625b8 fn_4625b8
 0x00462749 debugMessage
+0x0046293a fn_46293a
 0x0046310c initViews
 0x004632af closeViews
 0x00463359 clearViews

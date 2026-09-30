@@ -3,6 +3,7 @@
  */
 
 #include "zoombinis.h"
+#include "basecamp.h"
 #include "debug.h"
 #include "events.h"
 #include "features.h"
@@ -12,6 +13,8 @@
 #include "module_4623b8.h"
 #include "net.h"
 #include "platform.h"
+#include "snoids.h"
+#include "sound.h"
 #include "view.h"
 
 /*
@@ -106,6 +109,247 @@ void debugMessage(short value, const char *after, short *number, const char *bef
             while (!isInputWaiting(3))
                 ;
     }
+}
+
+/* A key pressed: noted for the cheats, then given to the dialog or the
+   scene; else the game's own keys (the options, the dialogs, and with
+   debugging on, g_4b8803, the debugging keys), showing a toggle's new
+   setting. */
+/* @zoombi32 0x0046293a */
+void fn_46293a(unsigned short key)
+{
+    short handled = 0;
+    short message = 0;
+
+    if (key < 256)
+        noteCheatKey(key);
+    if (g_4b9684) {
+        dialogKey(key);
+        handled = 1;
+    } else if (currentScene != -1 && scenes[currentScene]->key && scenes[currentScene]->key(key))
+        handled = 1;
+    else {
+        switch (key) {
+        case 32:
+            if ((short)isCheat(0xa675d204, 0xfd3939a0)) {
+                g_4b8803 = 1;
+                showNameTag("you got it", 90, 1);
+            } else if ((short)isCheat(0xd09804a9, 0xdd3934a0)) {
+                midiTest = !midiTest;
+                if (midiTest) {
+                    midiTestIndex = 0;
+                    showNameTag("midi test on", 90, 1);
+                } else
+                    showNameTag("midi test off", 90, 1);
+            } else if (midiTest) {
+                if (addModifierKeys(0) == 0x800)
+                    midiTestIndex++;
+                if (midiTestIndex >= 18 || midiTestIndex < 0)
+                    midiTestIndex = 0;
+                queueViewSound(midiTests[midiTestIndex], 0);
+                noteSoundTest(midiTests[midiTestIndex], 3);
+            }
+            break;
+        case 94:
+            if (g_4b8803)
+                g_4a48e4 = !g_4a48e4;
+            break;
+        case 64:
+            if (g_4b8803) {
+                g_4a4ba0[0x50] |= 1;
+                *(short *)(g_4a4ba0 + 0x52) |= 1;
+                g_4a4ba0[0x51] |= 1;
+            }
+            break;
+        case 47:
+        case 63:
+            showDialog(1, 0, 0, 0);
+            break;
+        case 14:
+            askNewGame();
+            break;
+        case 12:
+            askLoadGame();
+            break;
+        case 19:
+            askSaveGame();
+            break;
+        case 2:
+            g_4b87ff = !g_4b87ff;
+            if (g_4b87ff) {
+                queueViewSound(0, 0);
+                message = 1;
+            } else {
+                stopSounds(g_4a7d42, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                message = 2;
+            }
+            break;
+        case 4:
+            g_4b87fe = !g_4b87fe;
+            if (!g_4b87fe && lastViewSound) {
+                stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                lastViewSound = 0;
+            }
+            if (g_4b87fe)
+                message = 3;
+            else
+                message = 4;
+            break;
+        case 7:
+            *(unsigned short *)(g_4a4ba0 + 0x20) = !*(unsigned short *)(g_4a4ba0 + 0x20);
+            if (*(short *)(g_4a4ba0 + 0x20))
+                message = 5;
+            else
+                message = 6;
+            break;
+        case 8:
+            hideDragCursor = !hideDragCursor;
+            if (hideDragCursor)
+                message = 7;
+            else
+                message = 8;
+            break;
+        case 10:
+            clickToDragOption = !clickToDragOption;
+            if (clickToDragOption)
+                message = 9;
+            else
+                message = 10;
+            break;
+        case 17:
+            askQuit();
+            handled = 1;
+            break;
+        case 20:
+            g_4b0d4a = !g_4b0d4a;
+            if (g_4b0d4a)
+                message = 12;
+            else
+                message = 11;
+            break;
+        case 21:
+            dragClicks = !dragClicks;
+            if (dragClicks)
+                message = 13;
+            else
+                message = 14;
+            break;
+        case 22:
+            fn_4625b8();
+            handled = 1;
+            break;
+        case 61:
+            if (g_4b8803)
+                unionRgnRect(removedRgn, &gameRect);
+            break;
+        case 38:
+            if (g_4b8803)
+                fn_456a64();
+            break;
+        case 42:
+            if (g_4b8803)
+                g_4a4b98 = g_4a7af8 = 0;
+            break;
+        case 91:
+            if (g_4b8803) {
+                viewStep = 0;
+                viewsPaused = 0;
+                debugMessage(-1, "Step-Mode OFF", 0, 0, 0);
+            }
+            break;
+        case 93:
+            if (g_4b8803) {
+                if (viewsPaused) {
+                    if (viewStep) {
+                        viewStep++;
+                        if ((short)countViews() >= viewStep)
+                            drawViewLabels(viewStep);
+                        else {
+                            viewStep = 0;
+                            viewsStep = 1;
+                        }
+                    } else
+                        viewsStep = 1;
+                } else {
+                    viewStep = 0;
+                    viewsPaused = 1;
+                    debugMessage(-1, "Step-Mode ON", 0, 0, 0);
+                }
+            }
+            break;
+        case 5:
+        case 6:
+            if (g_4b8803) {
+                labelActorsOnly = key == 6;
+                if (viewsPaused)
+                    viewStep = 1;
+                else
+                    viewStep = 0;
+                labelIds = 0;
+                drawViewLabels(viewStep);
+            }
+            break;
+        case 24:
+        case 25:
+            if (g_4b8803) {
+                labelActorsOnly = key == 25;
+                if (viewsPaused)
+                    viewStep = 1;
+                else
+                    viewStep = 0;
+                labelIds = 1;
+                drawViewLabels(viewStep);
+            }
+            break;
+        case 9:
+            if (g_4b8803) {
+                if (countSnoidViews() > countChosenSnoids()) {
+                    chooseSnoids(1, 1);
+                    debugMessage(-1, "ALL in party", 0, 0, 0);
+                } else
+                    debugMessage(-1, "ALL in party", 0, 0, 0);
+            }
+            break;
+        case 78:
+            if (g_4b8803)
+                drawPaths();
+            break;
+        case 80:
+            if (g_4b8803) {
+                fpsTime = clockTime();
+                fpsMin = 999;
+                fpsMax = 0;
+                fpsFrames = 0;
+                showFps = !showFps;
+                if (!showFps)
+                    unionRgnRect(removedRgn, &fpsRect);
+            }
+            break;
+        case 83:
+            if (g_4b8803)
+                soundTests = !soundTests;
+            break;
+        case 18:
+            if (g_4b8803)
+                toggleShowPositions();
+            break;
+        case 26:
+            if (g_4b8803) {
+                if (!fillViews)
+                    fillViews = 1;
+                else {
+                    fillViews = 0;
+                    if (removedRgn)
+                        unionRgnRect(removedRgn, &gameRect);
+                }
+            }
+            break;
+        }
+        if (message)
+            showNameTag(toggleTexts[message], 90, 1);
+    }
+    if (handled)
+        resetViewClock();
 }
 
 /* Sets the cursor mode (0: the arrow; else cursor g_4b80c4[mode]):

@@ -1167,7 +1167,7 @@ unsigned long timerTime(); /* the engine's clock, in ms */
 extern short g_4a7e68;
 short playSound(short key, long type, short channel, short eventType, short discard); /* 0x41200c */
 
-extern short g_4a48e4; /* show the memory statistics */
+extern unsigned short g_4a48e4; /* show the memory statistics */
 /* QuickTime (see quicktime.py) */
 long __cdecl QTInitialize(long *version);
 long qtim_0b();
@@ -3631,7 +3631,7 @@ extern char g_4b8803; /* debugging messages are on (debugMessage) */
 extern short fillViews; /* @data 0x4a7b78: debugging: fill the game area first */
 extern short labelActorsOnly; /* @data 0x4a7b7a: drawViewLabels only labels Zoombinis */
 extern short labelIds; /* @data 0x4a7b7c: drawViewLabels shows ids */
-extern short showFps; /* @data 0x4a7b7e: debugging: show the frame rate */
+extern unsigned short showFps; /* @data 0x4a7b7e: debugging: show the frame rate */
 extern short viewsPaused; /* @data 0x4a7b82 */
 extern short viewsStep; /* @data 0x4a7b84: one update while paused */
 extern ShortRect fpsRect; /* @data 0x4a7bba */
@@ -3644,7 +3644,7 @@ extern unsigned long fpsMin; /* @data 0x4b9598 */
 extern unsigned long fpsMax; /* @data 0x4b959c */
 extern short g_4b966c;
 extern short g_4b9686;
-extern short soundTests; /* @data 0x4a7b80: report the sounds started */
+extern unsigned short soundTests; /* @data 0x4a7b80: report the sounds started */
 extern short *scripts[300]; /* @data 0x4b9008: the 'SCRB' scripts loaded */
 extern short g_4b966e;
 extern short g_4b97fc;
