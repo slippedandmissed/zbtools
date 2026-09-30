@@ -270,7 +270,10 @@ def _page_files(c: Path, data: Path, soundfont: Path) -> list[tuple[Path, str, i
     (pre.js copies them into IndexedDB), D:'s DATA directory as /d/DATA, and
     the SoundFont."""
     found = [(f, f"/c-default/{f.relative_to(c).as_posix()}") for f in sorted(c.rglob("*"))]
-    found += [(f, f"/d/DATA/{f.name}") for f in sorted(data.iterdir())]
+    # (`uv run assets pack` also packs the movies, which the port can't play yet)
+    found += [
+        (f, f"/d/DATA/{f.name}") for f in sorted(data.iterdir()) if f.suffix.lower() != ".mov"
+    ]
     found.append((soundfont, _WEB_SOUNDFONT))
     return [(f, target, f.stat().st_size) for f, target in found if f.is_file()]
 

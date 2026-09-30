@@ -115,9 +115,10 @@ Under Wine, release 4.5 is drive `T:`, 4.52 is `U:` (e.g. `T:\BC45\INCLUDE`) and
 uv run ghidra setup                  # import and analyse zoombi32.exe (a few minutes)
 uv run ghidra open                   # browse the project in Ghidra's GUI
 uv run ghidra decompile 0x46be2e     # print Ghidra's C for one function
+uv run ghidra codec                  # the movies' video codec, qb32.qtc, in a project of its own
 ```
 
-`setup` downloads a pinned Ghidra release into `build/ghidra/` (building its native decompiler first if the release has none for your machine), imports `zoombi32.exe` into a project in `build/ghidra/project/`, runs Ghidra's auto-analysis and writes every function it found to `build/ghidra/functions.json`. Close the project in the GUI before running `decompile`, which opens it headlessly.
+`setup` downloads a pinned Ghidra release into `build/ghidra/` (building its native decompiler first if the release has none for your machine), imports `zoombi32.exe` into a project in `build/ghidra/project/`, runs Ghidra's auto-analysis and writes every function it found to `build/ghidra/functions.json`. Close the project in the GUI before running `decompile`, which opens it headlessly. `codec` imports `qb32.qtc` into `build/ghidra/qb32/` and writes Ghidra's C for all of it to `build/ghidra/qb32.c`, which is how the `QkBk` format was read (`docs/findings.md`); it's the original's code, so it isn't committed.
 
 To name what the tools can recover: the Borland runtime-library functions (strcpy, memcpy, the C++ support code, ...), and the game's C++ classes, whose names, base classes, vtables, constructors and destructors survive in its RTTI:
 
@@ -197,9 +198,11 @@ Both need `uv run ghidra setup`, `uv run runtime-symbols` and `uv run classes` t
 ### Game resources
 
 ```sh
-uv run assets extract   # the disc's Mohawk archives into assets/
-uv run assets pack      # assets/ back into archives, in build/assets/ (laid out as on the disc)
-uv run assets verify    # check that packing reproduces the disc's archives byte for byte
+uv run assets extract   # the disc's Mohawk archives and movies into assets/
+uv run assets pack      # assets/ back into archives and movies, in build/assets/ (laid out as on the disc)
+uv run assets verify    # check that packing reproduces the disc's archives and movies byte for byte
+uv run assets frames LOGO025 1 701   # draw frames of a movie as PNGs (build/movie-frames/)
+uv run movie-check                   # check our drawing of every frame against the original codec's
 ```
 
 The game's resources are kept as source, like the decompiled code, in `assets/` (committed; there is only ever one copy of each resource, in a modern format). `assets/<archive>/` holds each Mohawk archive's resources, in `<type>/<id>.<extension>`, and `archive.toml`, which says where the archive goes on the disc and lists its resources in the order their data is stored:
@@ -215,10 +218,13 @@ The game's resources are kept as source, like the decompiled code, in `assets/` 
 | `ICON` (`assets/zoombi32/`) | the executable's icon (its two sizes) | indexed PNG, with `resources.toml` naming the icon group |
 | `Zoombini.who` (`assets/zoombi32/installed/`) | the saved-game list the installer leaves next to the program | TOML: version, next id, count and each game's name and file |
 | `REGS`, `NODE`, `PATH`, `SYSX` | tables: offsets, the paths Zoombinis walk, MIDI messages | TOML |
+| `DATA/*.MOV` (`assets/movies/<name>/`) | the four QuickTime movies | see below |
 
 Edit a resource and `pack` builds the archives with the change; `verify` names the resources that differ from the disc's. An image's pixel values are what the game draws: its PNG's palette is only for viewing, and colours are changed in the palette resources. Packing re-creates Broderbund's own compression, so unedited resources pack to exactly the original bytes; it caches compressed images in `build/assets-cache/` (compressing them all takes about two minutes of CPU time). `pack` needs only `assets/`, so it works from a fresh clone; `extract` and `verify` need the disc (`uv run extract-game` first), and `extract` won't overwrite archives already in `assets/` unless given `--force`. A resource a format can't convert exactly would be kept as it is (`.bin`); none of the game's are.
 
 The installed game's other files the port needs are in `assets/zoombi32/installed/`, so the port builds without the disc: `mohawk.w32` (the game's settings file) and `CORNER.TTF` (its font) as they are, and `Zoombini.who` as TOML (`formats/roster.py`; kept as it is if TOML wouldn't give back the same bytes). `extract` copies them and `verify` checks them against `build/zoombi32/`. The font, Cornerstone, is free for personal use and is included here on that basis, since this project is non-commercial; if you plan to use the project commercially, replace it.
+
+The movies are in `assets/movies/<name>/`. Their video, Broderbund's `QkBk` codec, turned out to describe scenes rather than store pictures: each frame places sprites (from a library of bitmaps the first frame mostly defines) on a background, in 256 colours, and the codec composites them. So a movie is `frames.toml` (each frame's sprites, `[slot, bitmap, x, y]`, and its other fields), `palettes.toml`, the bitmaps as indexed PNGs in `casts/` (colour 0 is transparent), `sound.wav`, and `movie.toml` with what the `.MOV` container holds that can't be derived (timestamps, the order of the chunks, ...); `formats/qkbk.py` and `formats/mov.py` document the layouts. Packing re-creates Broderbund's run-length encoder, so `pack` gives back the disc's `.MOV` files byte for byte, which `verify` checks. `uv run assets frames` draws frames, to see what an edit does, and `uv run movie-check` runs the original codec (`qb32.qtc`, under x86 emulation) on the movies built from `assets/` and compares every frame and palette with our drawing, so an edit that the real codec would draw differently is caught. Nothing plays the movies yet (see the [roadmap](#roadmap)).
 
 The executable's own resources, its icon, are in `assets/zoombi32/` too: `extract` writes them, `verify` checks them against `zoombi32.exe`'s, and `uv run build` compiles them into the rebuilt executable. The icon's PNGs can be edited like any other image; each must stay 16 colours (plus transparency), as Windows 95 icons are.
 
@@ -282,12 +288,13 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `match-cache` | objects `match` compiled, reused while their sources are unchanged (`build/match-cache/`) | automatically by `uv run match` |
 | `toolchain` | the extracted Borland toolchains, the Wine prefix and `match-cache` | `uv run toolchain setup` |
 | `wine` | the downloaded Wine build (macOS) and the Wine prefix | `uv run toolchain setup` (downloads ~180 MB) |
-| `ghidra-project` | the Ghidra project, **including any work done in Ghidra's GUI**, and its function list | `uv run ghidra setup` |
+| `ghidra-project` | the Ghidra projects (the game's and the codec's), **including any work done in Ghidra's GUI**, and the function list and codec C | `uv run ghidra setup`, `uv run ghidra codec` |
 | `ghidra` | all of Ghidra: the download, native build and project | `uv run ghidra setup` (downloads ~540 MB) |
 | `report` | `build/report/` | `uv run report` |
 | `rebuild` | the rebuilt executable and what went into it (`build/rebuild/`) | `uv run build` |
 | `packed-assets` | the archives `assets pack` built (`build/assets/`) | `uv run assets pack` |
 | `assets-cache` | compressed images, reused while unchanged (`build/assets-cache/`) | automatically by `uv run assets pack` or `verify` |
+| `movie-frames` | the frames `assets frames` drew (`build/movie-frames/`) | `uv run assets frames` |
 | `port` | the port's builds (`build/port/web/`, `native/`, `headless/`) and the site (`build/port/site/`) | `uv run port build`, `uv run port package` |
 | `port-data` | the port's drives, **including what the native and headless builds saved** (`build/port/data/`) | `uv run port package` |
 | `emsdk` | the Emscripten SDK (`build/emsdk/`) | `uv run port setup` (downloads ~1 GB) |
@@ -295,7 +302,7 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
 | `all` | all of the above plus anything else in `build/` | |
 
-With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `rebuild`, `packed-assets`, `assets-cache`, `port` and `python`: everything that's cheap to rebuild, keeping the VM installs, the Wine, Emscripten and SoundFont downloads and the port's saved games. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
+With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `rebuild`, `packed-assets`, `assets-cache`, `movie-frames`, `port` and `python`: everything that's cheap to rebuild, keeping the VM installs, the Wine, Emscripten and SoundFont downloads and the port's saved games. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
 
 ## Development
 
@@ -358,7 +365,7 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Define the game's globals with their initial values, and check them, and the code's references to them, against the original (`uv run define-data`, `uv run match-data`)
 - [x] Link the decompiled code and its resources (the icon) with TLINK32 into a `zoombi32.exe` that runs in the VM (`uv run build`, `uv run vm run --exe`)
 - [ ] Play the rebuilt game through in the VM, fixing what differs from the original
-- [ ] Reverse-engineer Broderbund's `QkBk` video codec, and convert the intro movie to a modern format and back, exactly (plan: [`docs/movies.md`](docs/movies.md))
+- [x] Reverse-engineer Broderbund's `QkBk` video codec, and convert the movies to a modern format and back, exactly (`uv run assets`; plan: [`docs/movies.md`](docs/movies.md))
 - [ ] Replace the QuickTime stand-in with working glue, so the rebuilt game plays its intro movie (packed from `assets/`) in the VM
 - [ ] Play the intro movie in the port, from its modern format
 - [ ] Port to a modern platform layer

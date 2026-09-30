@@ -12,6 +12,10 @@ reproduces the disc's archives byte for byte.
 The executable's own resources (its icon) go in assets/zoombi32/ the same
 way (exe_resources.py): `extract` writes them and `verify` checks them; `uv
 run build` compiles them into the rebuilt executable.
+
+The disc's QuickTime movies (`DATA/*.MOV`) go in assets/movies/<NAME>/
+(movies.py): scenes, images and sound that `pack` builds back into the disc's
+files and `verify` compares with them.
 """
 
 import re
@@ -26,7 +30,7 @@ from typing import Annotated
 import typer
 from pydantic import BaseModel, ConfigDict
 
-from zbtools import exe_resources, mohawk, paths
+from zbtools import exe_resources, mohawk, movies, paths
 from zbtools.exe import Executable
 from zbtools.formats import FORMATS, Raw, Unconvertible, roster
 from zbtools.formats.base import RAW_SUFFIX
@@ -274,6 +278,11 @@ def extract(
     exe_dir = assets_dir / exe_resources.ASSETS.name
     existing = [a.stem for a in archives if (assets_dir / a.stem).exists()]
     existing += [exe_dir.name] if exe_dir.exists() else []
+    existing += [
+        f"{movies.DIRECTORY}/{m.stem}"
+        for m in movies.disc_movies(disc_dir)
+        if (assets_dir / movies.DIRECTORY / m.stem).exists()
+    ]
     if existing and not force:
         names = ", ".join(existing)
         raise typer.BadParameter(f"already in {assets_dir}: {names} (--force replaces them)")
@@ -285,6 +294,8 @@ def extract(
     print(f"{exe.name}: {count} resources")
     extract_installed(exe.parent, exe_dir / "installed")
     print(f"{len(INSTALLED_FILES)} installed files")
+    for line in movies.extract_all(disc_dir, assets_dir):
+        print(line)
 
 
 @app.command()
@@ -294,8 +305,10 @@ def pack(
         Path, typer.Option(help="Where to write the archives, laid out as on the disc")
     ] = paths.PACKED_ASSETS_DIR,
 ) -> None:
-    """Pack assets/ into Mohawk archives."""
+    """Pack assets/ into Mohawk archives and QuickTime movies."""
     for line in pack_all(assets_dir, out_dir):
+        print(line)
+    for line in movies.pack_all(assets_dir, out_dir):
         print(line)
 
 
@@ -305,8 +318,8 @@ def verify(
     assets_dir: AssetsOption = paths.ASSETS_DIR,
     exe: ExeOption = paths.GAME32_DIR / "zoombi32.exe",
 ) -> None:
-    """Check that packing assets/ reproduces the disc's archives, and the
-    executable's resources, exactly."""
+    """Check that packing assets/ reproduces the disc's archives and movies, and
+    the executable's resources, exactly."""
     directories = asset_archives(assets_dir)
     failed = 0
     with ProcessPoolExecutor() as pool:
@@ -330,5 +343,30 @@ def verify(
         print("\n".join(["installed files: differ", *report]))
     else:
         print("installed files: identical")
+    for name, report in movies.verify_all(disc_dir, assets_dir):
+        if report:
+            failed += 1
+            print("\n".join(report))
+        else:
+            print(f"movies/{name}: identical")
     if failed:
         raise typer.Exit(1)
+
+
+@app.command()
+def frames(
+    movie: Annotated[str, typer.Argument(help="A movie in assets/movies/, e.g. LOGO025")],
+    numbers: Annotated[list[int], typer.Argument(help="Frame numbers, from 1")],
+    assets_dir: AssetsOption = paths.ASSETS_DIR,
+    out_dir: Annotated[Path, typer.Option(help="Where to write the PNGs")] = paths.MOVIE_FRAMES_DIR,
+) -> None:
+    """Draw frames of a movie as PNGs (a movie's frames are scenes: sprites on a
+    background; see formats/qkbk.py)."""
+    directory = assets_dir / movies.DIRECTORY / movie
+    if not (directory / movies.MANIFEST).is_file():
+        raise typer.BadParameter(f"no movie {movie} in {assets_dir / movies.DIRECTORY}")
+    try:
+        for path in movies.render_frames(directory, numbers, out_dir):
+            print(path)
+    except ValueError as e:
+        raise typer.BadParameter(str(e)) from e

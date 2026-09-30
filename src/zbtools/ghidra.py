@@ -5,7 +5,8 @@ build/ghidra/project, runs Ghidra's auto-analysis and exports every function it
 found to build/ghidra/functions.json. `open` opens the project in Ghidra,
 `decompile` prints Ghidra's C for one function, and `label` applies the names
 the other tools have recovered (runtime library, classes, and the functions
-decompiled in decomp/).
+decompiled in decomp/). `codec` does the same for the movies' video codec,
+qb32.qtc, in a project of its own.
 """
 
 import collections
@@ -49,6 +50,11 @@ _URL = (
 )
 _SHA256 = "ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db"
 PROGRAM_NAME = "zoombi32.exe"
+CODEC_PROGRAM_NAME = "qb32.qtc"
+# Where the codec's QuickTime component dispatches to: the entry point and the
+# handlers for its selectors (open, preflight, decompress, ...). They pass the
+# selector in a register, so Ghidra doesn't find them by itself.
+CODEC_ENTRY_POINTS = (0x10001B40, 0x10001DD0, 0x10002360, 0x10002370, 0x10008568)
 TYPES_CATEGORY = "/zoombinis"  # where the types from decomp/'s headers go
 
 
@@ -206,6 +212,46 @@ def decompile(
             if len(addresses) > 1:
                 print(f"/* ==== {address} */")
             print(result.getDecompiledFunction().getC())
+
+
+@app.command()
+def codec() -> None:
+    """Import the movies' video codec, qb32.qtc, into a Ghidra project of its own
+    (build/ghidra/qb32/, analysed on first use) and write Ghidra's C for every
+    function in it to build/ghidra/qb32.c: the source of docs/findings.md's
+    account of the QkBk format. It's the original's code: never commit it."""
+    dll = paths.GAME32_DIR / CODEC_PROGRAM_NAME
+    if not dll.exists():
+        sys.exit(f"error: {dll} not found; run `uv run extract-game` first")
+    _start()
+    from ghidra.app.decompiler import DecompInterface  # noqa: PLC0415
+
+    directory = paths.GHIDRA_CODEC_PROJECT_DIR
+    fresh = not (directory / f"{CODEC_PROGRAM_NAME}.gpr").exists()
+    directory.mkdir(parents=True, exist_ok=True)
+    with pyghidra.open_project(directory, CODEC_PROGRAM_NAME, create=True) as project:
+        if fresh:
+            loader = pyghidra.program_loader().project(project).source(str(dll))
+            with loader.name(CODEC_PROGRAM_NAME).load() as results:
+                results.save(pyghidra.task_monitor())
+        with pyghidra.program_context(project, f"/{CODEC_PROGRAM_NAME}") as program:
+            if fresh:
+                print("Running Ghidra's auto-analysis")
+                pyghidra.analyze(program)
+                space = program.getAddressFactory().getDefaultAddressSpace()
+                with pyghidra.transaction(program):
+                    for entry in CODEC_ENTRY_POINTS:
+                        _create_function(program, space.getAddress(entry))
+                program.save("Auto-analysis", pyghidra.task_monitor())
+            decompiler = DecompInterface()
+            decompiler.openProgram(program)
+            chunks = []
+            for function in program.getFunctionManager().getFunctions(True):
+                result = decompiler.decompileFunction(function, 60, pyghidra.task_monitor())
+                body = result.getDecompiledFunction().getC() if result.decompileCompleted() else ""
+                chunks.append(f"/* ==== {function.getEntryPoint()} {function.getName()} */\n{body}")
+    paths.GHIDRA_CODEC_C.write_text("\n".join(chunks))
+    print(f"Wrote {len(chunks)} functions to {paths.GHIDRA_CODEC_C}")
 
 
 def _write_functions(functions: list[FunctionInfo]) -> None:

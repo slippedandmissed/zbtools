@@ -66,6 +66,13 @@ class Executable:
             )
             for section in pe.sections
         }
+        # The imported functions by the address of their slot in the import table.
+        self.imports = {
+            int(imp.address): imp.name.decode()
+            for entry in getattr(pe, "DIRECTORY_ENTRY_IMPORT", [])
+            for imp in entry.imports
+            if imp.name is not None
+        }
         self.resources: list[PeResource] = []
         root = getattr(pe, "DIRECTORY_ENTRY_RESOURCE", None)
         for kind in root.entries if root is not None else []:

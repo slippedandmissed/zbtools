@@ -81,3 +81,8 @@ def chunk(tag: bytes, body: bytes, big_endian: bool, padded: bool = True) -> byt
     """A chunk, padded to an even length unless not `padded`."""
     size = len(body).to_bytes(4, "big" if big_endian else "little")
     return tag + size + body + bytes(len(body) & 1 if padded else 0)
+
+
+def hex_bytes(value: str | bytes) -> bytes:
+    """Bytes from a hex string, for models whose bytes fields are hex in TOML."""
+    return bytes.fromhex(value) if isinstance(value, str) else value

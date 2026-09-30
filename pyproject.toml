@@ -17,6 +17,7 @@ dependencies = [
     "python-dotenv>=1.2.3",
     "qemu-qmp>=0.0.6",
     "typer>=0.27.2",
+    "unicorn>=2.1.4",
 ]
 
 [project.scripts]
@@ -40,6 +41,7 @@ modules = "zbtools.modules:app"
 includes = "zbtools.includes:app"
 unpack-isz = "zbtools.unpack_isz:app"
 assets = "zbtools.assets:app"
+movie-check = "zbtools.qb32:app"
 port = "zbtools.port:app"
 
 [build-system]
@@ -93,6 +95,11 @@ plugins = ["pydantic.mypy"]
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
+
+[[tool.mypy.overrides]]
+# Unicorn's methods are mostly unannotated; zbtools.x86 wraps them.
+module = "zbtools.x86"
+disallow_untyped_calls = false
 
 [[tool.mypy.overrides]]
 # These ship no type information; keep their objects inside typed wrappers.

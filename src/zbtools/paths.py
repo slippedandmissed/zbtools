@@ -29,6 +29,7 @@ PACKED_ASSETS_DIR = BUILD_DIR / "assets"
 INSTALLED_ASSETS = ASSETS_DIR / "zoombi32" / "installed"
 # What converting resources back computes slowly (LZSS-compressed images).
 ASSETS_CACHE = BUILD_DIR / "assets-cache"
+MOVIE_FRAMES_DIR = BUILD_DIR / "movie-frames"
 
 # Decompiled C source, checked against the game by `uv run match`.
 DECOMP_DIR = REPO_ROOT / "decomp"
@@ -75,6 +76,9 @@ GHIDRA_PROJECT_DIR = GHIDRA_DIR / "project"
 GHIDRA_PROJECT_NAME = "zoombinis"
 # Every function Ghidra found, exported by `uv run ghidra setup`.
 GHIDRA_FUNCTIONS = GHIDRA_DIR / "functions.json"
+# The video codec qb32.qtc in a project of its own, and Ghidra's C for it.
+GHIDRA_CODEC_PROJECT_DIR = GHIDRA_DIR / "qb32"
+GHIDRA_CODEC_C = GHIDRA_DIR / "qb32.c"
 
 # Wine: the downloaded build (macOS only) and the prefix the compilers run in.
 WINE_DIR = BUILD_DIR / "wine"
@@ -133,12 +137,18 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "toolchain": [TOOLCHAIN_DIR, WINE_PREFIX, "match-cache"],
     "wine": [WINE_DIR],
     # Includes any work done in Ghidra's GUI: only removed when asked for.
-    "ghidra-project": [GHIDRA_PROJECT_DIR, GHIDRA_FUNCTIONS],
+    "ghidra-project": [
+        GHIDRA_PROJECT_DIR,
+        GHIDRA_FUNCTIONS,
+        GHIDRA_CODEC_PROJECT_DIR,
+        GHIDRA_CODEC_C,
+    ],
     "ghidra": [GHIDRA_DIR],
     "report": [REPORT_DIR],
     "rebuild": [REBUILD_DIR],
     "packed-assets": [PACKED_ASSETS_DIR],
     "assets-cache": [ASSETS_CACHE],
+    "movie-frames": [MOVIE_FRAMES_DIR],
     "port": [PORT_WEB_DIR, PORT_NATIVE_DIR, PORT_HEADLESS_DIR, PORT_SITE_DIR, PORT_SITE_STAGING],
     # The native build's saved games live here: only removed when asked for.
     "port-data": [PORT_DATA_DIR],
@@ -157,6 +167,7 @@ CLEAN_DEFAULT: list[str] = [
     "rebuild",
     "packed-assets",
     "assets-cache",
+    "movie-frames",
     "port",
     "python",
 ]
