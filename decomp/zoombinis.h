@@ -3866,8 +3866,8 @@ extern short pizzaPartySize;
 extern short willaState;
 extern short shylerState;
 extern short pizzaSolved;
-extern short g_4b1658;
-/* The pizzas shown (from 1, g_4b1712 of them). */
+extern short mealShown7;
+/* The pizzas shown (from 1, lastShownPizza of them). */
 struct ShownPizza
 {
     short view;

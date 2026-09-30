@@ -12,21 +12,21 @@ extern short pizzaGoReady;
 extern short g_4a3d98;
 extern short g_4a3d9a;
 extern short g_4b166c;
-extern short g_4b15e4; /* the scene is open */
-extern long g_4a3d3c;
-extern long g_4b15d0;
-extern short g_4b162e;
-extern Point g_4a3d54[];
+extern short pizzaOpen; /* the scene is open */
+extern long pizzaButtonResource;
+extern long pizzaFile;
+extern short mealView;
+extern Point pizzaPlaces[];
 extern short g_4b1820;
 void updatePizzaButtons(View *, short region);
 void closePizza();
 void showMealView();
 void placeMealToppings(View *view);
 void sendFlaggedToPlaces();
-extern ImageBank *g_4a3d94;
+extern ImageBank *pizzaButtonImages;
 extern short toppingCount; /* how many toppings */
-extern short g_4b1626;
-extern short g_4b1628;
+extern short toppingChance;
+extern short toppingsWanted;
 extern short pickedToppings[8];
 /* The toppings each troll wants. */
 extern short arnoWants[8]; /* @data 0x4b1686 */
@@ -54,13 +54,13 @@ void recordPizzaTried();
 void restartPizzaView();
 void pizzaDoneNotify(View *, short);
 /* Toppings shown on the pizza (one each): */
-extern short g_4b164a;
-extern short g_4b164c;
-extern short g_4b164e;
-extern short g_4b1650;
-extern short g_4b1652;
-extern short g_4b1654;
-extern short g_4b1656;
+extern short mealShown0;
+extern short mealShown1;
+extern short mealShown2;
+extern short mealShown3;
+extern short mealShown4;
+extern short mealShown5;
+extern short mealShown6;
 extern short g_4b1660;
 extern short g_4b1600;
 extern short g_4b1602;
@@ -71,7 +71,7 @@ void startLevelTroll();
 void stepTrollTurns();
 extern short g_4b15da;
 extern short g_4b15d8;
-extern Point g_4a3d44; /* where the Zoombini at the pizza stands */
+extern Point pizzaSpot; /* where the Zoombini at the pizza stands */
 extern short g_4b15fa;
 extern short g_4b15ee;
 extern short g_4b171e;
@@ -79,7 +79,7 @@ void drawPizzaButtonsView(View *);
 void bringNextZoombini();
 extern short pizzaView;
 extern short g_4b1616;
-extern short g_4b1712;
+extern short lastShownPizza;
 extern ShownPizza shownPizzas[];
 extern short mealToppings[8];
 extern short toppingViews[8]; /* @data 0x4b1636 */
@@ -122,21 +122,21 @@ extern short g_4b16ea;
 extern short g_4b16b6;
 extern short g_4b16be;
 extern short g_4b16c4;
-extern short g_4b1710;
+extern short judgedPizzaPlace;
 void trollVerdict(short troll, short verdict);
 extern short g_4a3dcc;
 extern short g_4a3d38;
-extern short g_4b1714;
-extern short g_4b1716;
-extern short g_4b1718;
-extern short g_4b1722[3]; /* the three piles' top views */
-extern short g_4b1728[3];
-extern short g_4b172e[3];
+extern short arnoPileTop;
+extern short willaPileTop;
+extern short shylerPileTop;
+extern short arnoPile[3]; /* the three piles' top views */
+extern short willaPile[3];
+extern short shylerPile[3];
 extern short g_4b160c;
 void showJudgedPizza();
 extern short g_4b15f0;
 void toppingButton(short button);
-extern unsigned long g_4b1824;
+extern unsigned long lastKeyTime;
 extern short g_4b15e8;
 extern short g_4a3d9e;
 extern short g_4a3da0;
@@ -156,7 +156,7 @@ short playAndWait(short sound, short keep);
 void sayIntroduction(short which);
 extern short g_4b1672;
 void pizzaButtonClicked(short button);
-extern short g_4a3d9c; /* the scene's frame is running */
+extern short inPizzaFrame; /* the scene's frame is running */
 extern short g_4b1674;
 extern short g_4b166e;
 extern unsigned long g_4b1814;
@@ -164,12 +164,12 @@ extern unsigned long g_4b1818;
 extern short g_4b181e;
 void pizzaFrame();
 /* The pizza scene's buttons at each level (copied into pizzaButtons). */
-extern SceneButton g_4a35b8[13];
-extern SceneButton g_4a378c[13];
-extern SceneButton g_4a3960[13];
-extern SceneButton g_4a3b34[13];
-extern GroupList g_4a3d18[1];
-extern ChosenSnoids *g_4b15dc;
+extern SceneButton pizzaButtonsLevel0[13];
+extern SceneButton pizzaButtonsLevel1[13];
+extern SceneButton pizzaButtonsLevel2[13];
+extern SceneButton pizzaButtonsLevel3[13];
+extern GroupList pizzaGroups[1];
+extern ChosenSnoids *pizzaChosen;
 extern short g_4b1632;
 extern short g_4b166a;
 extern short g_4b170a;

@@ -42,7 +42,7 @@ void updatePizzaButtons(View *, short region)
 }
 
 /* Draws button `which` (1: 5, 2: 2, or 1 if pizzaGoReady isn't set; the
-   next image if lit) from the bank g_4a3d94, showing it if `show`. */
+   next image if lit) from the bank pizzaButtonImages, showing it if `show`. */
 /* @zoombi32 0x00441071 */
 void drawPizzaButton(short which, short lit, short show)
 {
@@ -63,7 +63,7 @@ void drawPizzaButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)(g_4a3d94->offsets[image] + (char *)g_4a3d94), pizzaButtons[which - 1].rect.left,
+        drawImageData((unsigned short *)(pizzaButtonImages->offsets[image] + (char *)pizzaButtonImages), pizzaButtons[which - 1].rect.left,
                       pizzaButtons[which - 1].rect.top, 8);
         if (show)
             showRect(&pizzaButtons[which - 1].rect);
@@ -75,38 +75,38 @@ void drawPizzaButton(short which, short lit, short show)
 void closePizza()
 {
     g_4b755e = g_4b166c;
-    if (g_4b15e4) {
-        g_4b15e4 = 0;
+    if (pizzaOpen) {
+        pizzaOpen = 0;
         short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
-        freeResource(&g_4a3d3c);
+        freeResource(&pizzaButtonResource);
         setFreeAtOnce(saved);
-        closeGameFile(&g_4b15d0);
+        closeGameFile(&pizzaFile);
         fadeOutViews();
         showBusyCursor();
     }
 }
 
-/* Shows the view g_4b162e with script 7001 on (by pizzaLevel), adding it
+/* Shows the view mealView with script 7001 on (by pizzaLevel), adding it
    if need be, placed by placeMealToppings. */
 /* @zoombi32 0x004423d7 */
 void showMealView()
 {
-    View *view = findView(g_4b162e);
+    View *view = findView(mealView);
 
     if (view) {
         setViewScript(view, pizzaLevel + 7001, 1);
     } else {
-        g_4b162e = addView(0x108000, drawCels, runViewScript, pizzaLevel + 7001, 6, 0, 0, 0);
-        view = findView(g_4b162e);
+        mealView = addView(0x108000, drawCels, runViewScript, pizzaLevel + 7001, 6, 0, 0, 0);
+        view = findView(mealView);
     }
     view->placed = placeMealToppings;
 }
 
 /* Sends the party's Zoombinis flagged (their word F7 is 1) to their
-   places (g_4a3d54). */
+   places (pizzaPlaces). */
 /* Not exact: the original turns the view's register into the Snoid's in
    place (add esi, 0x30) where BCC computes it into eax. */
 /* @zoombi32 0x004468eb */
@@ -119,8 +119,8 @@ void sendFlaggedToPlaces()
 
     g_4b1820 = 0;
     for (i = 0; i < pizzaPartySize; i++) {
-        where.x = g_4a3d54[i].x;
-        where.y = g_4a3d54[i].y;
+        where.x = pizzaPlaces[i].x;
+        where.y = pizzaPlaces[i].y;
         if ((view = findView(partyViews[i])) != 0 && ((Snoid *)&view->body)->unknownF7 == 1) {
             snoid = (Snoid *)&view->body;
             setSnoidAction(snoid, 0, &where);
@@ -156,7 +156,7 @@ short randomWantedTopping(short troll)
 }
 
 /* Picks the toppings (pickedToppings) at random: each (of toppingCount, but not the
-   fifth at level 1) with chance g_4b1626 in 1000, until g_4b1628 have been
+   fifth at level 1) with chance toppingChance in 1000, until toppingsWanted have been
    picked; if none was, one of the first four. */
 /* @zoombi32 0x0044410b */
 void pickToppings()
@@ -171,10 +171,10 @@ void pickToppings()
     skip = -1;
     if (pizzaLevel == 1)
         skip = 4;
-    left = g_4b1628;
+    left = toppingsWanted;
     do {
         for (i = 0; i < toppingCount; i++)
-            if ((short)randomUpTo(1000) < g_4b1626 && !pickedToppings[i] && i != skip) {
+            if ((short)randomUpTo(1000) < toppingChance && !pickedToppings[i] && i != skip) {
                 pickedToppings[i]++;
                 left--;
                 none = 0;
@@ -269,7 +269,7 @@ void restartPizzaView()
 
 /* A view's notify: unless busy (g_4b15f2, g_4b160a, pizzaSolved), counts in
    g_4b165a once all the party is through (nextZoombini), else shows the view
-   g_4b162e (script 7067, or 7068 from level 1) placed by placeMealToppings. */
+   mealView (script 7067, or 7068 from level 1) placed by placeMealToppings. */
 /* @zoombi32 0x00445ae1 */
 void pizzaDoneNotify(View *, short)
 {
@@ -279,19 +279,19 @@ void pizzaDoneNotify(View *, short)
         if (nextZoombini >= pizzaPartySize) {
             g_4b165a++;
         } else {
-            view = findView(g_4b162e);
+            view = findView(mealView);
             if (!pizzaLevel)
                 setViewScript(view, 7067, 1);
             else
                 setViewScript(view, 7068, 1);
-            g_4b160a = groupViews(g_4b162e, g_4b162e, 0, 0, 0, 0);
+            g_4b160a = groupViews(mealView, mealView, 0, 0, 0, 0);
             view->placed = placeMealToppings;
         }
     }
 }
 
 /* A view's placing: drops the cels of toppings (images 57-61 and 67-69)
-   not on the pizza (g_4b164a-g_4b1658). `i` never
+   not on the pizza (mealShown0-mealShown7). `i` never
    moves. */
 /* @zoombi32 0x00442443 */
 void placeMealToppings(View *view)
@@ -304,49 +304,49 @@ void placeMealToppings(View *view)
         removed = 0;
         switch (cel[i]) {
         case 61:
-            if (!g_4b164a) {
+            if (!mealShown0) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 60:
-            if (!g_4b164c) {
+            if (!mealShown1) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 59:
-            if (!g_4b164e) {
+            if (!mealShown2) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 58:
-            if (!g_4b1650) {
+            if (!mealShown3) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 57:
-            if (!g_4b1652) {
+            if (!mealShown4) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 67:
-            if (!g_4b1654) {
+            if (!mealShown5) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 68:
-            if (!g_4b1656) {
+            if (!mealShown6) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 69:
-            if (!g_4b1658) {
+            if (!mealShown7) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -417,7 +417,7 @@ void drawPizzaButtonsView(View *)
     drawPizzaButton(2, 0, 0);
 }
 
-/* Brings the next of the party (nextZoombini) up to the pizza spot (g_4a3d44)
+/* Brings the next of the party (nextZoombini) up to the pizza spot (pizzaSpot)
    when the last one's done (g_4b15da), unless busy; counts in g_4b165a
    once they've all been. */
 /* Not exact: BCC keeps nextZoombini's address in esi (see docs/findings.md on
@@ -438,7 +438,7 @@ void bringNextZoombini()
             nextZoombini = 0;
         } else {
             view = findView(partyViews[nextZoombini]);
-            if (view->body.x == g_4a3d44.x) {
+            if (view->body.x == pizzaSpot.x) {
                 zoombiniAtPizza = view->id;
                 return;
             }
@@ -448,7 +448,7 @@ void bringNextZoombini()
             if (!view)
                 return;
             setSnoidAction((Snoid *)&view->body, 7, 0);
-            *(Point *)&((Snoid *)&view->body)->targetX = g_4a3d44;
+            *(Point *)&((Snoid *)&view->body)->targetX = pizzaSpot;
             view->interval = 2;
             zoombiniAtPizza = view->id;
             g_4b15fa = groupViews(zoombiniAtPizza, zoombiniAtPizza, 0, 0, 0, 0);
@@ -469,7 +469,7 @@ void orderPizzaViews()
     if (pizzaView) {
         moveView(pizzaView, 1, g_4b1616);
         if (arnoState == 3) {
-            if (g_4b1712 >= 0)
+            if (lastShownPizza >= 0)
                 moveView(arnoView, 0, shownPizzas[0].view);
             else
                 moveView(arnoView, 0, pizzaView);
@@ -496,13 +496,13 @@ void orderPizzaViews()
     }
 }
 
-/* Clears the toppings (mealToppings, and the ones shown, g_4b164a-g_4b1658) and sets
+/* Clears the toppings (mealToppings, and the ones shown, mealShown0-mealShown7) and sets
    the topping views (toppingViews) to the level's scripts (7005 on). */
 /* @zoombi32 0x00446198 */
 void clearToppings()
 {
     fillMemory(mealToppings, 0, 16);
-    g_4b1652 = g_4b1650 = g_4b164c = g_4b164e = g_4b164a = g_4b1654 = g_4b1656 = g_4b1658 = 0;
+    mealShown4 = mealShown3 = mealShown1 = mealShown2 = mealShown0 = mealShown5 = mealShown6 = mealShown7 = 0;
     switch (pizzaLevel) {
     case 0:
         setViewScript(findView(toppingViews[0]), 7005, 1);
@@ -1411,7 +1411,7 @@ void willaNotify(View *, short event)
  * and turns it the way g_4b170c says; 240-243 note a turn to make,
  * 250-253 turn it; 61 (unless g_4b171a) sends it off along the path to the
  * troll up (14000, 14002 or 14004 on, the next if it's the last, sound
- * 8040); when its script ends it walks on to the pizza spot (g_4a3d44), or
+ * 8040); when its script ends it walks on to the pizza spot (pizzaSpot), or
  * if it was the last to go, it's done and the next may come (g_4b15da).
  */
 /* @zoombi32 0x00444e0c */
@@ -1488,7 +1488,7 @@ void pizzaZoombiniNotify(View *view, short event)
     case -1:
         if (!g_4b15e0) {
             zoombini = findView(zoombiniAtPizza);
-            where = g_4a3d44;
+            where = pizzaSpot;
             if (zoombini) {
                 setSnoidAction((Snoid *)&zoombini->body, 7, 0);
                 *(Point *)&((Snoid *)&zoombini->body)->targetX = where;
@@ -1563,49 +1563,49 @@ void showFourPizzas(short a, short b, short c, short d)
     pizzaToppings[a] = 1;
     pizzaToppings[b] = 1;
     recordPizzaTried();
-    g_4b1712++;
-    shownPizzas[g_4b1712].set = triedPizzas[lastTriedPizza];
-    shownPizzas[g_4b1712].unknown4 = 4;
+    lastShownPizza++;
+    shownPizzas[lastShownPizza].set = triedPizzas[lastTriedPizza];
+    shownPizzas[lastShownPizza].unknown4 = 4;
     g_4b170e++;
-    shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
-    shownPizzas[g_4b1712].script = g_4b170e + 12025;
-    findView(shownPizzas[g_4b1712].view)->placed = placePizzaToppings;
+    shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
+    shownPizzas[lastShownPizza].script = g_4b170e + 12025;
+    findView(shownPizzas[lastShownPizza].view)->placed = placePizzaToppings;
     updateViews();
     fillMemory(pizzaToppings, 0, 16);
     pizzaToppings[b] = 1;
     pizzaToppings[c] = 1;
     recordPizzaTried();
-    g_4b1712++;
-    shownPizzas[g_4b1712].set = triedPizzas[lastTriedPizza];
-    shownPizzas[g_4b1712].unknown4 = 4;
+    lastShownPizza++;
+    shownPizzas[lastShownPizza].set = triedPizzas[lastTriedPizza];
+    shownPizzas[lastShownPizza].unknown4 = 4;
     g_4b170e++;
-    shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
-    shownPizzas[g_4b1712].script = g_4b170e + 12025;
-    findView(shownPizzas[g_4b1712].view)->placed = placePizzaToppings;
+    shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
+    shownPizzas[lastShownPizza].script = g_4b170e + 12025;
+    findView(shownPizzas[lastShownPizza].view)->placed = placePizzaToppings;
     updateViews();
     fillMemory(pizzaToppings, 0, 16);
     pizzaToppings[c] = 1;
     pizzaToppings[d] = 1;
     recordPizzaTried();
-    g_4b1712++;
-    shownPizzas[g_4b1712].set = triedPizzas[lastTriedPizza];
-    shownPizzas[g_4b1712].unknown4 = 4;
+    lastShownPizza++;
+    shownPizzas[lastShownPizza].set = triedPizzas[lastTriedPizza];
+    shownPizzas[lastShownPizza].unknown4 = 4;
     g_4b170e++;
-    shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
-    shownPizzas[g_4b1712].script = g_4b170e + 12025;
-    findView(shownPizzas[g_4b1712].view)->placed = placePizzaToppings;
+    shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
+    shownPizzas[lastShownPizza].script = g_4b170e + 12025;
+    findView(shownPizzas[lastShownPizza].view)->placed = placePizzaToppings;
     updateViews();
     fillMemory(pizzaToppings, 0, 16);
     pizzaToppings[a] = 1;
     pizzaToppings[d] = 1;
     recordPizzaTried();
-    g_4b1712++;
-    shownPizzas[g_4b1712].set = triedPizzas[lastTriedPizza];
-    shownPizzas[g_4b1712].unknown4 = 4;
+    lastShownPizza++;
+    shownPizzas[lastShownPizza].set = triedPizzas[lastTriedPizza];
+    shownPizzas[lastShownPizza].unknown4 = 4;
     g_4b170e++;
-    shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 0, 0, 0, 0);
-    shownPizzas[g_4b1712].script = g_4b170e + 12025;
-    findView(shownPizzas[g_4b1712].view)->placed = placePizzaToppings;
+    shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 0, 0, 0, 0);
+    shownPizzas[lastShownPizza].script = g_4b170e + 12025;
+    findView(shownPizzas[lastShownPizza].view)->placed = placePizzaToppings;
     updateViews();
     fillMemory(pizzaToppings, 0, 16);
 }
@@ -1696,13 +1696,13 @@ void trollVerdict(short troll, short verdict)
             orderPizzaViews();
             g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
             g_4b1670 = 1;
-            g_4b1710 = 5;
+            judgedPizzaPlace = 5;
         } else {
             view = findView(arnoView);
             setViewScript(view, randomUpTo(1) + 8015, 1);
             orderPizzaViews();
             g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
-            g_4b1710 = 4;
+            judgedPizzaPlace = 4;
         }
         break;
     case 1:
@@ -1713,13 +1713,13 @@ void trollVerdict(short troll, short verdict)
             orderPizzaViews();
             g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
             g_4b1670 = 2;
-            g_4b1710 = 6;
+            judgedPizzaPlace = 6;
         } else {
             view = findView(willaView);
             setViewScript(view, randomUpTo(1) + 9017, 1);
             orderPizzaViews();
             g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
-            g_4b1710 = 4;
+            judgedPizzaPlace = 4;
         }
         break;
     case 2:
@@ -1730,20 +1730,20 @@ void trollVerdict(short troll, short verdict)
             orderPizzaViews();
             g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
             g_4b1670 = 3;
-            g_4b1710 = 7;
+            judgedPizzaPlace = 7;
         } else {
             view = findView(shylerView);
             setViewScript(view, randomUpTo(2) + 10027, 1);
             orderPizzaViews();
             g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
-            g_4b1710 = 4;
+            judgedPizzaPlace = 4;
         }
         break;
     }
 }
 
 /*
- * Shows the pizza just judged (g_4b1710: 4 thrown, 5-7 on the pile of
+ * Shows the pizza just judged (judgedPizzaPlace: 4 thrown, 5-7 on the pile of
  * the troll that took it) and records it (shownPizzas): thrown ones cycle
  * through 16 scripts (12025 on, skipping 13; once they've all been used,
  * g_4a3dcc, the view already there is reused); piled ones take the next
@@ -1757,11 +1757,11 @@ void showJudgedPizza()
     View *view;
     short i;
 
-    g_4b1712++;
-    shownPizzas[g_4b1712].set = triedPizzas[lastTriedPizza];
-    shownPizzas[g_4b1712].unknown4 = g_4b1710;
+    lastShownPizza++;
+    shownPizzas[lastShownPizza].set = triedPizzas[lastTriedPizza];
+    shownPizzas[lastShownPizza].unknown4 = judgedPizzaPlace;
     behind = 0;
-    switch (g_4b1710) {
+    switch (judgedPizzaPlace) {
     case 4:
         if (++g_4b170e >= 16) {
             g_4b170e = 0;
@@ -1770,9 +1770,9 @@ void showJudgedPizza()
             g_4b170e = 14;
         }
         if (!g_4a3dcc) {
-            shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12025, 6, 0, 0, 0);
-            shownPizzas[g_4b1712].script = g_4b170e + 12025;
-            view = findView(shownPizzas[g_4b1712].view);
+            shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12025, 6, 0, 0, 0);
+            shownPizzas[lastShownPizza].script = g_4b170e + 12025;
+            view = findView(shownPizzas[lastShownPizza].view);
             view->placed = placePizzaToppings;
         } else {
             for (i = 0; i < 28; i++)
@@ -1785,59 +1785,59 @@ void showJudgedPizza()
         }
         break;
     case 5:
-        if (++g_4b1714 > 2)
-            g_4b1714 = 0;
-        if (g_4b1722[g_4b1714])
-            behind = g_4b1722[g_4b1714];
-        shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1714 + 12016, 6, 0, 0, 0);
-        shownPizzas[g_4b1712].script = g_4b1714 + 12016;
-        view = findView(shownPizzas[g_4b1712].view);
+        if (++arnoPileTop > 2)
+            arnoPileTop = 0;
+        if (arnoPile[arnoPileTop])
+            behind = arnoPile[arnoPileTop];
+        shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, arnoPileTop + 12016, 6, 0, 0, 0);
+        shownPizzas[lastShownPizza].script = arnoPileTop + 12016;
+        view = findView(shownPizzas[lastShownPizza].view);
         view->placed = placePizzaToppings;
         if (behind)
-            moveView(shownPizzas[g_4b1712].view, 1, behind);
-        g_4b1722[g_4b1714] = shownPizzas[g_4b1712].view;
-        shownPizzas[g_4b1712].unknown4 = 5;
+            moveView(shownPizzas[lastShownPizza].view, 1, behind);
+        arnoPile[arnoPileTop] = shownPizzas[lastShownPizza].view;
+        shownPizzas[lastShownPizza].unknown4 = 5;
         break;
     case 6:
-        if (++g_4b1716 > 2)
-            g_4b1716 = 0;
-        if (g_4b1728[g_4b1716])
-            behind = g_4b1728[g_4b1716];
-        shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1716 + 12019, 6, 0, 0, 0);
-        shownPizzas[g_4b1712].script = g_4b1716 + 12019;
-        view = findView(shownPizzas[g_4b1712].view);
+        if (++willaPileTop > 2)
+            willaPileTop = 0;
+        if (willaPile[willaPileTop])
+            behind = willaPile[willaPileTop];
+        shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, willaPileTop + 12019, 6, 0, 0, 0);
+        shownPizzas[lastShownPizza].script = willaPileTop + 12019;
+        view = findView(shownPizzas[lastShownPizza].view);
         view->placed = placePizzaToppings;
         if (behind)
-            moveView(shownPizzas[g_4b1712].view, 1, behind);
-        g_4b1728[g_4b1716] = shownPizzas[g_4b1712].view;
-        shownPizzas[g_4b1712].unknown4 = 6;
+            moveView(shownPizzas[lastShownPizza].view, 1, behind);
+        willaPile[willaPileTop] = shownPizzas[lastShownPizza].view;
+        shownPizzas[lastShownPizza].unknown4 = 6;
         break;
     case 7:
-        if (++g_4b1718 > 2)
-            g_4b1718 = 0;
-        if (g_4b172e[g_4b1718])
-            behind = g_4b172e[g_4b1718];
-        shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1718 + 12022, 6, 0, 0, 0);
-        shownPizzas[g_4b1712].script = g_4b1718 + 12022;
-        view = findView(shownPizzas[g_4b1712].view);
+        if (++shylerPileTop > 2)
+            shylerPileTop = 0;
+        if (shylerPile[shylerPileTop])
+            behind = shylerPile[shylerPileTop];
+        shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, shylerPileTop + 12022, 6, 0, 0, 0);
+        shownPizzas[lastShownPizza].script = shylerPileTop + 12022;
+        view = findView(shownPizzas[lastShownPizza].view);
         view->placed = placePizzaToppings;
         if (behind)
-            moveView(shownPizzas[g_4b1712].view, 1, behind);
-        g_4b172e[g_4b1718] = shownPizzas[g_4b1712].view;
-        shownPizzas[g_4b1712].unknown4 = 7;
+            moveView(shownPizzas[lastShownPizza].view, 1, behind);
+        shylerPile[shylerPileTop] = shownPizzas[lastShownPizza].view;
+        shownPizzas[lastShownPizza].unknown4 = 7;
         break;
     }
     view->notifyEnd = 1;
     view->notify = pizzaDoneNotify;
     orderPizzaViews();
-    if (shownPizzas[g_4b1712].unknown4 == 4) {
-        moveView(shownPizzas[g_4b1712].view, 1, g_4b1616);
-    } else if (shownPizzas[g_4b1712].unknown4 == 6 && g_4b1728[1]) {
-        moveView(g_4b1728[1], 0, willaView);
-        moveView(g_4b1728[0], 0, g_4b1728[1]);
+    if (shownPizzas[lastShownPizza].unknown4 == 4) {
+        moveView(shownPizzas[lastShownPizza].view, 1, g_4b1616);
+    } else if (shownPizzas[lastShownPizza].unknown4 == 6 && willaPile[1]) {
+        moveView(willaPile[1], 0, willaView);
+        moveView(willaPile[0], 0, willaPile[1]);
     }
     moveView(g_4a3d38, 0, -1);
-    g_4b160c = groupViews(shownPizzas[g_4b1712].view, shownPizzas[g_4b1712].view, 0, 0, 0, 0);
+    g_4b160c = groupViews(shownPizzas[lastShownPizza].view, shownPizzas[lastShownPizza].view, 0, 0, 0, 0);
 }
 
 /* A topping button (4-11: the eight toppings, those the level has; 3
@@ -1857,7 +1857,7 @@ void toppingButton(short button)
     switch (button) {
     case 3:
         redraw = 0;
-        view = findView(g_4b162e);
+        view = findView(mealView);
         if (!pizzaLevel)
             setViewScript(view, 7057, 1);
         else
@@ -1869,100 +1869,100 @@ void toppingButton(short button)
         clearToppings();
         break;
     case 4:
-        g_4b1652 ^= 1;
-        mealToppings[0] = g_4b1652;
+        mealShown4 ^= 1;
+        mealToppings[0] = mealShown4;
         view = findView(toppingViews[0]);
         if (!pizzaLevel)
-            setViewScript(view, g_4b1652 + 7005, 1);
+            setViewScript(view, mealShown4 + 7005, 1);
         else if (pizzaLevel == 1)
-            setViewScript(view, g_4b1652 + 7015, 1);
+            setViewScript(view, mealShown4 + 7015, 1);
         else if (pizzaLevel == 2)
-            setViewScript(view, g_4b1652 + 7027, 1);
+            setViewScript(view, mealShown4 + 7027, 1);
         else
-            setViewScript(view, g_4b1652 + 7041, 1);
+            setViewScript(view, mealShown4 + 7041, 1);
         break;
     case 5:
-        g_4b1650 ^= 1;
-        mealToppings[1] = g_4b1650;
+        mealShown3 ^= 1;
+        mealToppings[1] = mealShown3;
         view = findView(toppingViews[1]);
         if (!pizzaLevel)
-            setViewScript(view, g_4b1650 + 7007, 1);
+            setViewScript(view, mealShown3 + 7007, 1);
         else if (pizzaLevel == 1)
-            setViewScript(view, g_4b1650 + 7017, 1);
+            setViewScript(view, mealShown3 + 7017, 1);
         else if (pizzaLevel == 2)
-            setViewScript(view, g_4b1650 + 7029, 1);
+            setViewScript(view, mealShown3 + 7029, 1);
         else
-            setViewScript(view, g_4b1650 + 7043, 1);
+            setViewScript(view, mealShown3 + 7043, 1);
         break;
     case 6:
-        g_4b164e ^= 1;
-        mealToppings[2] = g_4b164e;
+        mealShown2 ^= 1;
+        mealToppings[2] = mealShown2;
         view = findView(toppingViews[2]);
         if (!pizzaLevel)
-            setViewScript(view, g_4b164e + 7009, 1);
+            setViewScript(view, mealShown2 + 7009, 1);
         else if (pizzaLevel == 1)
-            setViewScript(view, g_4b164e + 7019, 1);
+            setViewScript(view, mealShown2 + 7019, 1);
         else if (pizzaLevel == 2)
-            setViewScript(view, g_4b164e + 7031, 1);
+            setViewScript(view, mealShown2 + 7031, 1);
         else
-            setViewScript(view, g_4b164e + 7045, 1);
+            setViewScript(view, mealShown2 + 7045, 1);
         break;
     case 7:
-        g_4b164c ^= 1;
-        mealToppings[3] = g_4b164c;
+        mealShown1 ^= 1;
+        mealToppings[3] = mealShown1;
         view = findView(toppingViews[3]);
         if (!pizzaLevel)
-            setViewScript(view, g_4b164c + 7011, 1);
+            setViewScript(view, mealShown1 + 7011, 1);
         else if (pizzaLevel == 1)
-            setViewScript(view, g_4b164c + 7021, 1);
+            setViewScript(view, mealShown1 + 7021, 1);
         else if (pizzaLevel == 2)
-            setViewScript(view, g_4b164c + 7033, 1);
+            setViewScript(view, mealShown1 + 7033, 1);
         else
-            setViewScript(view, g_4b164c + 7047, 1);
+            setViewScript(view, mealShown1 + 7047, 1);
         break;
     case 8:
-        g_4b164a ^= 1;
-        mealToppings[4] = g_4b164a;
+        mealShown0 ^= 1;
+        mealToppings[4] = mealShown0;
         view = findView(toppingViews[4]);
         if (!pizzaLevel)
-            setViewScript(view, g_4b164a + 7013, 1);
+            setViewScript(view, mealShown0 + 7013, 1);
         else if (pizzaLevel == 2)
-            setViewScript(view, g_4b164a + 7035, 1);
+            setViewScript(view, mealShown0 + 7035, 1);
         else if (pizzaLevel == 3)
-            setViewScript(view, g_4b164a + 7049, 1);
+            setViewScript(view, mealShown0 + 7049, 1);
         break;
     case 9:
         if (pizzaLevel) {
-            g_4b1654 ^= 1;
-            mealToppings[5] = g_4b1654;
+            mealShown5 ^= 1;
+            mealToppings[5] = mealShown5;
             view = findView(toppingViews[5]);
             if (pizzaLevel == 1)
-                setViewScript(view, g_4b1654 + 7023, 1);
+                setViewScript(view, mealShown5 + 7023, 1);
             else if (pizzaLevel == 2)
-                setViewScript(view, g_4b1654 + 7037, 1);
+                setViewScript(view, mealShown5 + 7037, 1);
             else
-                setViewScript(view, g_4b1654 + 7051, 1);
+                setViewScript(view, mealShown5 + 7051, 1);
         }
         break;
     case 10:
         if (pizzaLevel) {
-            g_4b1656 ^= 1;
-            mealToppings[6] = g_4b1656;
+            mealShown6 ^= 1;
+            mealToppings[6] = mealShown6;
             view = findView(toppingViews[6]);
             if (pizzaLevel == 1)
-                setViewScript(view, g_4b1656 + 7025, 1);
+                setViewScript(view, mealShown6 + 7025, 1);
             else if (pizzaLevel == 2)
-                setViewScript(view, g_4b1656 + 7039, 1);
+                setViewScript(view, mealShown6 + 7039, 1);
             else
-                setViewScript(view, g_4b1656 + 7053, 1);
+                setViewScript(view, mealShown6 + 7053, 1);
         }
         break;
     case 11:
         if (pizzaLevel == 3) {
-            g_4b1658 ^= 1;
-            mealToppings[7] = g_4b1658;
+            mealShown7 ^= 1;
+            mealToppings[7] = mealShown7;
             view = findView(toppingViews[7]);
-            setViewScript(view, g_4b1658 + 7055, 1);
+            setViewScript(view, mealShown7 + 7055, 1);
         }
         break;
     }
@@ -1974,11 +1974,11 @@ void toppingButton(short button)
    A shows the trolls' wants; R, O, D in turn arm the rest (g_4b15e8), then
    P makes the trolls eat, N, W and S step Arno, Willa and Shyler through
    their scripts, and space sets the pizzas left (pizzasLeft) to g_4b1634.
-   Notes the time of the key (g_4b1824). */
+   Notes the time of the key (lastKeyTime). */
 /* @zoombi32 0x00442166 */
 short pizzaKey(unsigned short key)
 {
-    g_4b1824 = clockTime();
+    lastKeyTime = clockTime();
     if (!debugMessagesOn && key != 367)
         return 0;
     switch (key) {
@@ -2233,7 +2233,7 @@ void pizzaServedTo(short troll, short)
 {
     View *view;
 
-    g_4b1824 = clockTime();
+    lastKeyTime = clockTime();
     view = 0;
     switch (troll) {
     case 0:
@@ -2257,7 +2257,7 @@ void pizzaServedTo(short troll, short)
             g_4a3d40 = 0;
             if (!g_4b1670) {
                 g_4b1670 = 1;
-                g_4b1710 = 5;
+                judgedPizzaPlace = 5;
             }
             g_4b15fe = 1;
             g_4b16ea = 0;
@@ -2271,7 +2271,7 @@ void pizzaServedTo(short troll, short)
                 g_4b16b8 = 0;
             g_4b16ea = 0;
             g_4b15fe = 1;
-            g_4b1710 = 4;
+            judgedPizzaPlace = 4;
             break;
         case 4:
             view = findView(arnoView);
@@ -2282,7 +2282,7 @@ void pizzaServedTo(short troll, short)
                 g_4b16ba = 0;
             g_4b16ea = 0;
             g_4b15fe = 1;
-            g_4b1710 = 4;
+            judgedPizzaPlace = 4;
             break;
         case 3:
             view = findView(arnoView);
@@ -2291,7 +2291,7 @@ void pizzaServedTo(short troll, short)
             g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
             g_4b16ea = 0;
             g_4b15fe = 1;
-            g_4b1710 = 4;
+            judgedPizzaPlace = 4;
             break;
         }
         break;
@@ -2317,7 +2317,7 @@ void pizzaServedTo(short troll, short)
             g_4a3d40 = 1;
             if (!g_4b1670) {
                 g_4b1670 = 2;
-                g_4b1710 = 6;
+                judgedPizzaPlace = 6;
             }
             g_4b15fe = 2;
             g_4b16ea = 0;
@@ -2332,7 +2332,7 @@ void pizzaServedTo(short troll, short)
             g_4b16ea = 0;
             g_4b15fe = 2;
             if (!g_4b1670)
-                g_4b1710 = 4;
+                judgedPizzaPlace = 4;
             break;
         case 4:
             view = findView(willaView);
@@ -2344,7 +2344,7 @@ void pizzaServedTo(short troll, short)
             g_4b16ea = 0;
             g_4b15fe = 2;
             if (!g_4b1670)
-                g_4b1710 = 4;
+                judgedPizzaPlace = 4;
             break;
         case 3:
             view = findView(willaView);
@@ -2353,7 +2353,7 @@ void pizzaServedTo(short troll, short)
             g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
             g_4b16ea = 0;
             g_4b15fe = 2;
-            g_4b1710 = 4;
+            judgedPizzaPlace = 4;
             break;
         }
         break;
@@ -2379,7 +2379,7 @@ void pizzaServedTo(short troll, short)
             g_4a3d40 = 2;
             if (!g_4b1670) {
                 g_4b1670 = 3;
-                g_4b1710 = 7;
+                judgedPizzaPlace = 7;
             }
             g_4b16ea = 0;
             g_4b15fe = 3;
@@ -2394,7 +2394,7 @@ void pizzaServedTo(short troll, short)
             g_4b16ea = 0;
             g_4b15fe = 3;
             if (!g_4b1670)
-                g_4b1710 = 4;
+                judgedPizzaPlace = 4;
             break;
         case 4:
             view = findView(shylerView);
@@ -2406,7 +2406,7 @@ void pizzaServedTo(short troll, short)
             g_4b16ea = 0;
             g_4b15fe = 3;
             if (!g_4b1670)
-                g_4b1710 = 4;
+                judgedPizzaPlace = 4;
             break;
         case 3:
             view = findView(shylerView);
@@ -2415,7 +2415,7 @@ void pizzaServedTo(short troll, short)
             g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
             g_4b16ea = 0;
             g_4b15fe = 3;
-            g_4b1710 = 4;
+            judgedPizzaPlace = 4;
             break;
         }
         break;
@@ -2503,7 +2503,7 @@ void sayIntroduction(short which)
  * sends the Zoombinis on (996) and asks to leave for scene 4; 3 (and 12)
  * serves the pizza when nothing's going on; 4-11 toggle toppings (8 not
  * at level 1, 11 only at level 3); 13 (debugging, armed) drags a Zoombini
- * to the pizza spot. Notes the time (g_4b1824).
+ * to the pizza spot. Notes the time (lastKeyTime).
  */
 /* @zoombi32 0x00441e78 */
 void pizzaButtonClicked(short button)
@@ -2511,7 +2511,7 @@ void pizzaButtonClicked(short button)
     Point cursor;
     View *view;
 
-    g_4b1824 = clockTime();
+    lastKeyTime = clockTime();
     if (sceneDue) {
         pendingScene = sceneDue;
         sceneDue = 0;
@@ -2549,7 +2549,7 @@ void pizzaButtonClicked(short button)
         if (!g_4b171e && !g_4b1660 && !pizzaSolved && !g_4b165a && !g_4b1600 && !g_4b1602 && !g_4b1604 && !g_4b160c
             && placeClaims[0]) {
             g_4b171e++;
-            g_4b1824 = clockTime();
+            lastKeyTime = clockTime();
             if (nextZoombini == -1)
                 bringNextZoombini();
             memcpy(pizzaToppings, mealToppings, 16);
@@ -2618,13 +2618,13 @@ void pizzaFrame()
     short script;
     View *waiting;
 
-    if (g_4a3d9c || !g_4b15e4)
+    if (inPizzaFrame || !pizzaOpen)
         return;
-    g_4a3d9c = 1;
+    inPizzaFrame = 1;
     updateViews();
     if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-            g_4a3d9c = 0;
+            inPizzaFrame = 0;
             return;
         }
         if (!dialogQuestion || dialogQuestion == 3) {
@@ -2635,7 +2635,7 @@ void pizzaFrame()
                 sceneDue = 0;
                 setCurrentMap(0);
                 closePizza();
-                g_4a3d9c = 0;
+                inPizzaFrame = 0;
                 return;
             }
         } else if (dialogQuestion == 2) {
@@ -2643,8 +2643,8 @@ void pizzaFrame()
             sceneDue = 0;
         }
     }
-    if (clockTime() - g_4b1824 > 3600) {
-        g_4b1824 = clockTime();
+    if (clockTime() - lastKeyTime > 3600) {
+        lastKeyTime = clockTime();
         if (!dialogFlags)
             trollFidget();
     }
@@ -2691,8 +2691,8 @@ void pizzaFrame()
                 g_4b15fc = 1000;
             } else {
                 if (arnoState == 3) {
-                    if (g_4b1722[0])
-                        moveView(arnoView, 0, g_4b1722[0]);
+                    if (arnoPile[0])
+                        moveView(arnoView, 0, arnoPile[0]);
                     pizzaDoneNotify(view, 0);
                 }
                 if (g_4b1660) {
@@ -2738,12 +2738,12 @@ void pizzaFrame()
         if (!groupLeader[g_4b1602]) {
             g_4b1602 = g_4b1630 = 0;
             if (willaState == 3) {
-                if (g_4b1728[0])
-                    moveView(willaView, 0, g_4b1728[0]);
-                if (g_4b1728[1])
-                    moveView(g_4b1728[1], 1, g_4b1728[0]);
-                if (g_4b1728[2])
-                    moveView(g_4b1728[2], 1, g_4b1728[1]);
+                if (willaPile[0])
+                    moveView(willaView, 0, willaPile[0]);
+                if (willaPile[1])
+                    moveView(willaPile[1], 1, willaPile[0]);
+                if (willaPile[2])
+                    moveView(willaPile[2], 1, willaPile[1]);
                 pizzaDoneNotify(view, 0);
             }
             if (g_4b1660) {
@@ -2786,8 +2786,8 @@ void pizzaFrame()
         if (!groupLeader[g_4b1604]) {
             g_4b1604 = g_4b1630 = 0;
             if (shylerState == 3) {
-                if (g_4b172e[0])
-                    moveView(shylerView, 0, g_4b172e[0]);
+                if (shylerPile[0])
+                    moveView(shylerView, 0, shylerPile[0]);
                 pizzaDoneNotify(view, 0);
             }
             if (g_4b1660) {
@@ -2882,7 +2882,7 @@ void pizzaFrame()
             view = findView(zoombiniAtPizza);
             if (view) {
                 setSnoidAction((Snoid *)&view->body, 7, 0);
-                *(Point *)&((Snoid *)&view->body)->targetX = g_4a3d44;
+                *(Point *)&((Snoid *)&view->body)->targetX = pizzaSpot;
                 g_4b15fa = groupViews(zoombiniAtPizza, zoombiniAtPizza, 0, 0, 0, 0);
             }
         }
@@ -2926,11 +2926,11 @@ void pizzaFrame()
         g_4b181e = g_4b1820 = g_4b1814 = g_4b1818 = 0;
     }
     playAmbientSound();
-    g_4a3d9c = 0;
+    inPizzaFrame = 0;
 }
 
 /* Opens Pizza Pass: resets the scene's state, sets up the level's
-   buttons (from the tables g_4a35b8-g_4a3b34), loads Pizza.MHK's backdrop,
+   buttons (from the tables pizzaButtonsLevel0-pizzaButtonsLevel3), loads Pizza.MHK's backdrop,
    images, features and scripts, adds the pizza, the topping views and the
    trolls there at the level, the toppings and what each troll wants
    (shareToppings), brings the party in, and says an introduction. */
@@ -2942,49 +2942,49 @@ void openPizza()
 
     unloadSounds();
     sceneDue = g_4b15ee = 0;
-    g_4b15e4 = pizzaGoReady = 0;
-    g_4b1824 = clockTime();
+    pizzaOpen = pizzaGoReady = 0;
+    lastKeyTime = clockTime();
     hintSound = g_4b166e = 0;
-    g_4b15f2 = g_4b162e = g_4b1630 = g_4b1632 = 0;
+    g_4b15f2 = mealView = g_4b1630 = g_4b1632 = 0;
     g_4b15f4 = g_4b15f6 = g_4b15ea = g_4b16bc = 0;
     lastTriedPizza = nextZoombini = -1;
-    g_4b164a = g_4b164c = g_4b164e = g_4b1650 = g_4b1652 = 0;
-    g_4b166a = g_4b1654 = g_4b1656 = g_4b1658 = g_4b16ea = 0;
+    mealShown0 = mealShown1 = mealShown2 = mealShown3 = mealShown4 = 0;
+    g_4b166a = mealShown5 = mealShown6 = mealShown7 = g_4b16ea = 0;
     pizzaSolved = g_4b1600 = g_4b1602 = g_4b1604 = 0;
     g_4b16b6 = g_4b16b8 = g_4b16ba = g_4b1606 = 0;
     g_4b16be = g_4b16c0 = g_4b16c2 = g_4b171e = 0;
     g_4b16c4 = g_4b16c6 = g_4b16c8 = g_4b15e8 = 0;
-    trollTurn = g_4b1710 = g_4b1660 = g_4b160a = g_4b15ec = 0;
+    trollTurn = judgedPizzaPlace = g_4b1660 = g_4b160a = g_4b15ec = 0;
     g_4b165a = g_4b165c = g_4b1608 = g_4b160c = 0;
     g_4b15f8 = g_4b15fa = g_4b15fc = g_4b15fe = 0;
     g_4b1814 = 0;
     g_4b1818 = 0;
     g_4b1820 = g_4b1720 = 0;
     for (i = 0; i < 3; i++)
-        g_4b1722[i] = g_4b1728[i] = g_4b172e[i] = 0;
+        arnoPile[i] = willaPile[i] = shylerPile[i] = 0;
     g_4b15e0 = 0;
     g_4b15d8 = 1;
     g_4b165e = g_4b170a = 1;
-    g_4b1712 = g_4b1714 = g_4b1716 = g_4b1718 = g_4b170e = -1;
+    lastShownPizza = arnoPileTop = willaPileTop = shylerPileTop = g_4b170e = -1;
     fillMemory(shownPizzas, 0, 224);
     pizzaLevel = sceneLevel();
     fillMemory(pizzaToppings, 0, 16);
     fillMemory(mealToppings, 0, 16);
     fillMemory(triedPizzas, 0, 28);
     if (!pizzaLevel)
-        memcpy(pizzaButtons, g_4a35b8, sizeof g_4a35b8);
+        memcpy(pizzaButtons, pizzaButtonsLevel0, sizeof pizzaButtonsLevel0);
     else if (pizzaLevel == 1)
-        memcpy(pizzaButtons, g_4a378c, sizeof g_4a378c);
+        memcpy(pizzaButtons, pizzaButtonsLevel1, sizeof pizzaButtonsLevel1);
     else if (pizzaLevel == 2)
-        memcpy(pizzaButtons, g_4a3960, sizeof g_4a3960);
+        memcpy(pizzaButtons, pizzaButtonsLevel2, sizeof pizzaButtonsLevel2);
     else if (pizzaLevel == 3)
-        memcpy(pizzaButtons, g_4a3b34, sizeof g_4a3b34);
-    openGameFile(&g_4b15d0, "Pizza.MHK");
-    setCurrentMap(g_4b15d0);
+        memcpy(pizzaButtons, pizzaButtonsLevel3, sizeof pizzaButtonsLevel3);
+    openGameFile(&pizzaFile, "Pizza.MHK");
+    setCurrentMap(pizzaFile);
     loadPaths(1000);
     loadTerrain(100);
     drawBackdrop(5000);
-    g_4a3d94 = loadImageBank(6000, &g_4a3d3c);
+    pizzaButtonImages = loadImageBank(6000, &pizzaButtonResource);
     loadFeatureGroup(7000, 0, 0);
     loadFeatureGroup(8000, 1, 0);
     loadFeatureGroup(12000, 2, 0);
@@ -3009,7 +3009,7 @@ void openPizza()
     addSnoidScripts(13000, 40, 0);
     g_4b166c = g_4b755e;
     g_4b755e = 25;
-    placedViews[0] = addView(0x108a000, drawCels, runViewScript, 7063, 7, &g_4a3d44, 0, 0);
+    placedViews[0] = addView(0x108a000, drawCels, runViewScript, 7063, 7, &pizzaSpot, 0, 0);
     g_4b15f0 = addView(0x188000, drawCels, runViewScript, 7000, 6, 0, 0, 0);
     loadViewSounds(g_4b15f0, 0);
     g_4b15f2 = groupViews(g_4b15f0, g_4b15f0, 0, 0, 0, 0);
@@ -3024,8 +3024,8 @@ void openPizza()
         toppingViews[4] = addView(0x188000, drawCels, runViewScript, 7013, 6, 0, 0, 0);
         g_4b1622 = 1;
         toppingCount = 5;
-        g_4b1628 = 2;
-        g_4b1626 = 500;
+        toppingsWanted = 2;
+        toppingChance = 500;
         g_4b162a = 0;
         pizzasLeft = 6;
         arnoState = 1;
@@ -3039,8 +3039,8 @@ void openPizza()
         toppingViews[6] = addView(0x188000, drawCels, runViewScript, 7025, 6, 0, 0, 0);
         g_4b1622 = 2;
         toppingCount = 7;
-        g_4b1626 = 800;
-        g_4b1628 = 3;
+        toppingChance = 800;
+        toppingsWanted = 3;
         g_4b162a = 0;
         pizzasLeft = 7;
         arnoState = 1;
@@ -3056,8 +3056,8 @@ void openPizza()
         toppingViews[6] = addView(0x188000, drawCels, runViewScript, 7039, 6, 0, 0, 0);
         g_4b1622 = 2;
         toppingCount = 7;
-        g_4b1626 = 1000;
-        g_4b1628 = 3;
+        toppingChance = 1000;
+        toppingsWanted = 3;
         g_4b162a = 1;
         pizzasLeft = 7;
         arnoState = 1;
@@ -3075,8 +3075,8 @@ void openPizza()
         toppingViews[7] = addView(0x188000, drawCels, runViewScript, 7055, 6, 0, 0, 0);
         g_4b1622 = 3;
         toppingCount = 8;
-        g_4b1626 = 1000;
-        g_4b1628 = 4;
+        toppingChance = 1000;
+        toppingsWanted = 4;
         g_4b162a = 2;
         pizzasLeft = 7;
         arnoState = 1;
@@ -3091,18 +3091,18 @@ void openPizza()
     g_4b1634 = pizzasLeft;
     shareToppings();
     showMealView();
-    setViewPlaces(16, g_4a3d54, 1);
+    setViewPlaces(16, pizzaPlaces, 1);
     makePartySnoids(0);
     enterSnoids(200);
-    g_4b15dc = listChosenSnoids();
-    pizzaPartySize = g_4b15dc->count;
+    pizzaChosen = listChosenSnoids();
+    pizzaPartySize = pizzaChosen->count;
     g_4b181c = 3;
     if (g_4b181c > pizzaPartySize)
         g_4b181c = pizzaPartySize - 1;
     g_4b181e = 0;
     staggerSnoids(45, 30);
     chooseSnoids(0, 0);
-    setGroupLists(g_4a3d18, 1, (short)0xc000);
+    setGroupLists(pizzaGroups, 1, (short)0xc000);
     drawPizzaButton(1, 0, 0);
     drawPizzaButton(2, 0, 0);
     showRect(&shownGameRect);
@@ -3165,7 +3165,7 @@ void openPizza()
     soundOn = 0;
     updateViews();
     fadeInViews();
-    g_4b15e4 = 1;
+    pizzaOpen = 1;
     g_4b171e = 1;
     soundOn = saved;
     stepTrollTurns();
