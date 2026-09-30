@@ -1292,7 +1292,7 @@ public:
 class PixMap;
 
 /* A device-independent bitmap (a DIB section) that ports draw through
-   (module_489148). */
+   (dib). */
 class DIB
 {
 public:
@@ -1489,7 +1489,7 @@ public:
 #pragma pack(pop)
 
 /* An 8-bit DIB port, which draws into its bits directly where it can
-   (module_48990c). */
+   (dib8port). */
 class DIB8Port : public DIBPort
 {
 public:

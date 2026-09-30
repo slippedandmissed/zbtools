@@ -1,5 +1,5 @@
 /*
- * module_413dc0 (0x413dc0-0x4144d0): no strings; a 32-entry ring buffer (an event queue?): queuedEvents, nextEventIndex
+ * events (0x413dc0-0x4144d0): the event queue, a 32-entry ring buffer: queuedEvents, nextEventIndex
  */
 
 #include <string.h>
