@@ -338,16 +338,17 @@ struct ScriptedClick
 {
     DWORD at;
     int x, y;
+    int action; /* 0 click, 1 press, 2 move, 3 release */
 };
 
 static std::vector<ScriptedClick> scriptedClicks;
 static DWORD scriptStart;
 
-void scriptClick(DWORD at, int x, int y)
+void scriptClick(DWORD at, int x, int y, int action)
 {
     if (!scriptStart)
         scriptStart = now();
-    scriptedClicks.push_back({scriptStart + at, x, y});
+    scriptedClicks.push_back({scriptStart + at, x, y, action});
 }
 
 static void runScript()
@@ -365,8 +366,15 @@ static void runScript()
         HWND main = mainWindow();
         if (main)
             SendMessage(main, WM_SETCURSOR, (WPARAM)main, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
-        button(SDL_BUTTON_LEFT, true);
-        button(SDL_BUTTON_LEFT, false);
+        if (click.action == 2) {
+            if (main)
+                postToQueue(main, WM_MOUSEMOVE, mouseKeys(), mouseLParam());
+            continue;
+        }
+        if (click.action != 3)
+            button(SDL_BUTTON_LEFT, true);
+        if (click.action != 1)
+            button(SDL_BUTTON_LEFT, false);
     }
 }
 

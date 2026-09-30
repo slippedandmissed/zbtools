@@ -4,7 +4,7 @@
  *
  *   zoombinis --drive C=<directory> --cdrom D=<directory>[,<label>[,<serial>]]
  *             [--program <Windows path of the program>] [--screenshot <file.bmp>]
- *             [--run-for <milliseconds>] [--click <ms>:<x>,<y>]...
+ *             [--run-for <milliseconds>] [--click <ms>:<x>,<y>[:press|move|release]]...
  *             [--soundfont <file.sf2>] [--record <file.wav>]
  *             [-- <game command line>]
  *
@@ -13,7 +13,8 @@
  * --screenshot writes the screen to a BMP about once a second (for a headless
  * build, which has no window); --run-for quits after a while and --click
  * clicks at a point on the 640x480 screen, that many ms after starting (for
- * tests). --soundfont is the General MIDI SoundFont the music plays with
+ * tests; with :press, :move or :release it only presses the button, moves the
+ * pointer or releases the button, to script a drag). --soundfont is the General MIDI SoundFont the music plays with
  * (without one, it's silent); --record writes what's played to a WAV file
  * (for tests).
  */
@@ -65,6 +66,7 @@ int main(int argc, char **argv)
     {
         unsigned long at;
         int x, y;
+        int action; /* 0 click, 1 press, 2 move, 3 release */
     };
     std::vector<Click> clicks;
 
@@ -78,10 +80,17 @@ int main(int argc, char **argv)
             miniwin::setScreenshotPath(argv[++i]);
         else if (!strcmp(argv[i], "--click") && i + 1 < argc) {
             unsigned long at;
-            int x, y;
-            if (sscanf(argv[++i], "%lu:%d,%d", &at, &x, &y) != 3)
+            int x, y, action = 0;
+            char what[16] = "";
+            int got = sscanf(argv[++i], "%lu:%d,%d:%15s", &at, &x, &y, what);
+            if (got < 3)
                 usage();
-            clicks.push_back({at, x, y});
+            if (got == 4) {
+                action = !strcmp(what, "press") ? 1 : !strcmp(what, "move") ? 2 : !strcmp(what, "release") ? 3 : -1;
+                if (action < 0)
+                    usage();
+            }
+            clicks.push_back({at, x, y, action});
         } else if (!strcmp(argv[i], "--run-for") && i + 1 < argc)
             runFor = strtoul(argv[++i], 0, 10);
         else if (!strcmp(argv[i], "--soundfont") && i + 1 < argc)
@@ -105,7 +114,7 @@ int main(int argc, char **argv)
     if (runFor)
         miniwin::setRunFor(runFor);
     for (const Click &click : clicks)
-        miniwin::scriptClick(click.at, click.x, click.y);
+        miniwin::scriptClick(click.at, click.x, click.y, click.action);
     char *line = strdup(commandLine.c_str());
     int result = WinMain(miniwin::programInstance(), 0, line, SW_SHOWDEFAULT);
     miniwin::shutdown();

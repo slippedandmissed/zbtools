@@ -427,7 +427,10 @@ def run(
     seconds: Annotated[float | None, typer.Option(help="Quit after this many seconds")] = None,
     click: Annotated[
         list[str] | None,
-        typer.Option(help="Click at a point of the screen: MS:X,Y (ms after starting)"),
+        typer.Option(
+            help="Click at a point of the screen: MS:X,Y (ms after starting); "
+            "MS:X,Y:press, :move and :release make a drag"
+        ),
     ] = None,
     record: Annotated[
         Path | None, typer.Option(help="Write what's played to this WAV file")

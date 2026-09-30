@@ -166,11 +166,14 @@ FARPROC GetProcAddress(HMODULE module, LPCSTR name)
         {"DeleteFiber", (FARPROC)DeleteFiber},
     };
 
-    if (module == (HMODULE)&kernelModule && (uintptr_t)name > 0xffff)
+    /* Always a name: the game looks nothing up by ordinal, and a string in a
+       32-bit address space can sit below 0x10000 (where Windows tells an
+       ordinal from a name), as the WebAssembly build's do. */
+    if (module == (HMODULE)&kernelModule && name)
         for (const auto &entry : kernel)
             if (!strcmp(entry.name, name))
                 return entry.proc;
-    if ((uintptr_t)name > 0xffff)
+    if (name)
         trace("GetProcAddress(\"%s\"): not here", name);
     lastError = ERROR_INVALID_FUNCTION;
     return 0;
