@@ -20,6 +20,11 @@ BUILD_DIR = REPO_ROOT / "build"
 DISC_DIR = BUILD_DIR / "disc"
 GAME32_DIR = BUILD_DIR / "zoombi32"
 
+# The game's resources converted to modern formats (`uv run assets`), and the
+# Mohawk archives `uv run assets pack` builds from them, laid out as on the disc.
+ASSETS_DIR = REPO_ROOT / "assets"
+PACKED_ASSETS_DIR = BUILD_DIR / "assets"
+
 # Decompiled C source, checked against the game by `uv run match`.
 DECOMP_DIR = REPO_ROOT / "decomp"
 # Names `uv run runtime-symbols` found for the Borland runtime code in the game.
@@ -103,9 +108,17 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "ghidra-project": [GHIDRA_PROJECT_DIR, GHIDRA_FUNCTIONS],
     "ghidra": [GHIDRA_DIR],
     "report": [REPORT_DIR],
+    "packed-assets": [PACKED_ASSETS_DIR],
     "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
     # The whole build/ directory, so stray files can't survive a full clean.
     "all": [BUILD_DIR, "python"],
 }
 # What `uv run clean` removes with no arguments: everything cheap to rebuild.
-CLEAN_DEFAULT: list[str] = ["extracted", "vm-state", "toolchain", "report", "python"]
+CLEAN_DEFAULT: list[str] = [
+    "extracted",
+    "vm-state",
+    "toolchain",
+    "report",
+    "packed-assets",
+    "python",
+]

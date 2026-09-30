@@ -33,6 +33,7 @@ report = "zbtools.report:app"
 modules = "zbtools.modules:app"
 includes = "zbtools.includes:app"
 unpack-isz = "zbtools.unpack_isz:app"
+assets = "zbtools.assets:app"
 
 [build-system]
 requires = ["uv_build>=0.11,<0.12"]

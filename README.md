@@ -167,6 +167,16 @@ A function is *ready* when everything it calls directly is done (matched, identi
 
 Both need `uv run ghidra setup`, `uv run runtime-symbols` and `uv run classes` to have run.
 
+### Game resources
+
+```sh
+uv run assets extract   # the disc's Mohawk archives into assets/
+uv run assets pack      # assets/ back into archives, in build/assets/ (laid out as on the disc)
+uv run assets verify    # check that packing reproduces the disc's archives byte for byte
+```
+
+The game's resources are kept as source, like the decompiled code: `assets/<archive>/` holds each Mohawk archive's resources, one file per resource in `<type>/<id>.<extension>`, and `archive.toml`, which says where the archive goes on the disc and lists its resources in the order their data is stored. Edit a resource and `pack` builds the archives with the change; `verify` names the resources that differ from the disc's. Resource types without a converter yet are kept as they are (`.bin`). `extract` needs `uv run extract-game` first, and won't overwrite archives already in `assets/` unless given `--force`.
+
 ### Cleaning up
 
 ```sh
@@ -188,10 +198,11 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `ghidra-project` | the Ghidra project, **including any work done in Ghidra's GUI**, and its function list | `uv run ghidra setup` |
 | `ghidra` | all of Ghidra: the download, native build and project | `uv run ghidra setup` (downloads ~540 MB) |
 | `report` | `build/report/` | `uv run report` |
+| `packed-assets` | the archives `assets pack` built (`build/assets/`) | `uv run assets pack` |
 | `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
 | `all` | all of the above plus anything else in `build/` | |
 
-With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report` and `python`: everything that's cheap to rebuild, keeping the VM installs and the Wine download. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
+With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `packed-assets` and `python`: everything that's cheap to rebuild, keeping the VM installs and the Wine download. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
 
 ## Development
 
@@ -239,7 +250,8 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Scripted Windows 98 VM (`uv run vm install` / `run` / `reset`)
 - [x] Scripted QuickTime and game install in the VM (`uv run vm install-game`); game reaches its title screen
 - [ ] Game verified playable in the VM (sound, music, movies)
-- [ ] Mohawk archive lister / extractor
+- [x] Mohawk archive extractor and packer, reproducing the disc's archives exactly (`uv run assets`)
+- [ ] Convert the resources to modern formats (sounds, images, palettes, MIDI) and back
 - [x] Borland C++ 4.5 and 4.52 toolchains running under Wine (`uv run toolchain`)
 - [x] Function matcher (`uv run match`) and the first matching functions
 - [x] Ghidra project with auto-analysis, function list and decompiler (`uv run ghidra`)

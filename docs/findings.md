@@ -259,6 +259,34 @@ The engine reads Mohawk archives (ScummVM's name for the `MHWK` format) through 
 
 The code has a few bugs, reproduced as written: `removeFromDirectory` reuses its search variables in the loop that renumbers names, so the search resumes from wherever that loop stopped, and `newPreloadRequest` returns the request it has just freed when a resource has 255 preloads.
 
+### The game's archives
+
+The disc's Mohawk archives are the 20 `DATA/*.MHK` files and `MIDIMAP.DAT` (in the disc's root, installed next to the program; it holds two `SYSX` resources, MIDI system-exclusive messages sent when a MIDI device is opened and closed, named by ID in `[MidiMap.TargetDeviceInfo]`). `BROEMIDI.TMI` starts `MHWK` too, but it's a Mohawk MIDI file (`MHWK`/`MIDI`), not an archive. All 21 archives are laid out the same way, so each is determined by its resources' types, IDs, data, flags and order (`uv run assets verify` rebuilds them from just that, byte for byte):
+
+- The header says version 0x100 and `compacted` 1 (the file may hold unused space). The unused space is 8 bytes, `00 04 00 00 00 00 00 00`, between the header and the first resource's data; compacting the file (`closeResourceFile` with `compact`) would drop them.
+- The data is stored in file-table order, with no gaps. The directory follows it, then the file table, which ends the file.
+- The directory's type table is sorted by type (by its bytes, so `\0SND` comes first and the lower-case `t` types last). The types' resource tables follow in the order each type first occurs in the data, each followed by its (empty) name table. No resource has a name, so the names start where the directory ends.
+- The only file-table flag set on disk is `RESOURCE_PURGEABLE` (0x80), on all 18 `tMID` resources in `MIDIMPC.MHK`.
+
+What they hold (resource counts across the 20 `.MHK` archives):
+
+| Type | Count | Bytes | Contents |
+| --- | --- | --- | --- |
+| `\0SND` | 1,333 | 43.8 MB | Sounds: Mohawk wave files (`MHWK`, `WAVE`, a `Data` chunk). All are 8-bit mono PCM at 11,025 Hz (encoding 0). |
+| `tBMP` | 175 | 20.5 MB | Images and image banks, decompressed by `decompressImage` (`0x48e0a0`). Flags word at offset 6: `0x0102` (LZ, 139), `0x0112` (LZ and RLE8, 31), `0x0012` (RLE8, 3), `0x0002` (raw, 2). |
+| `SCRB` | 1,782 | 345 KB | Feature scripts: the scripts that animate views (`view.cpp`). |
+| `SCRS` | 719 | 499 KB | Snoid scripts: the Zoombinis' animations (`snoids.cpp`). |
+| `REGS` | 79 | 29 KB | Tables of big-endian words: shapes' registration offsets. |
+| `SHPL` | 41 | 25 KB | Shape lists: first shape, count, and a palette (`e2memory.cpp`). |
+| `tMID` | 18 | 77 KB | MIDI (`MHWK`, `MIDI`, then a standard MIDI file's chunks). |
+| `NODE`, `PATH` | 9 each | 0.9 KB | The graph of the paths Zoombinis walk. |
+| `tPAL` | 6 | 6 KB | Palettes (`MAZE2.MHK` only). |
+| `CURS` | 5 | 340 B | Mac cursors: 16x16 image and mask, then the hot spot (`ZOOMBINI.MHK`). |
+
+ScummVM's `engines/mohawk/resource.h` names the Zoombinis types (`SCRB` "Feature Script", `SCRS` "Snoid Script", `NODE` "Walk Node", `PATH` "Walk Path", `SHPL` "Shape List"), and detects the game but doesn't implement it.
+
+The movies (`DATA/LOGO*.MOV`) are QuickTime files outside the archives: video in `QkBk` (the codec installed as `qb32.qtc`), sound in `twos` (PCM).
+
 ### Engine: timers and sounds
 
 - **The OS layer's threads (`0x46e2a4`-`0x46f7a4`).** The Mohawk OS layer runs threads of its own, cooperatively, on the application thread, as on the Mac: each (RTTI class `thread`) has a stack carved from a buffer `WinMain` gives `osStartup`, and a saved register context. The scheduler (`schedule`, `0x46e90e`) runs at calls into the layer and every 20 ms (an OS-layer timer, running only while two or more threads are started): it picks, round the ring from the current thread, the first of the highest priority that isn't sleeping, suspended or waiting, ending waits that have timed out, and idles (running timers) when none can run. Priorities above 1 are urgent: while one is runnable, the timer fires at every chance. Mutexes (recursive, released when their holder ends, with a deadlock check) and events (set and reset through the layer's `DeferLock`, so they can be posted from real threads such as waveOut callbacks) are the other sync objects (`sync`, tagged `'sync'`), waited for with `waitSync`. The classes' methods are `__cdecl` and the module was compiled without exception handling (`-x-`): with it, BCC32 counts every object a constructor makes, which the original doesn't. A thread deleting itself switches to the next thread's stack before deleting its own (`deleteSync`).
