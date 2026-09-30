@@ -14,7 +14,7 @@ Decompilation of *Logical Journey of the Zoombinis* (Broderbund, 1996, Windows r
 ## Constraints
 
 - **Reproducibility:** every setup step a developer needs after cloning must be committed or performed by a script. The only manual inputs are bring-your-own files (the game in `data/`, Windows install media). Exploratory work is fine, but always finish by folding it into a script and documenting it in the README's Setup section.
-- **Legal:** `data/` is gitignored and holds the user's ISOs (game disc and Windows 98 SE, default names in `src/zbtools/paths.py`); `.env` holds their Windows product key (`WINDOWS_PRODUCT_KEY`). Never commit game files, extracted assets, Windows media, or large verbatim disassembly of the original binaries.
+- **Legal:** `data/` is gitignored and holds the user's ISOs (game disc and Windows 98 SE, default names in `src/zbtools/paths.py`); `.env` holds their Windows product key (`WINDOWS_PRODUCT_KEY`). Never commit the game's original files (the disc, its executables, the `.MHK` archives as shipped), Windows media, or large verbatim disassembly of the original binaries. The game's resources, extracted and converted to modern formats (PNG, WAV, MIDI, text), are the exception: like the decompiled code, they are the project's source, committed under `assets/` and packed back into Mohawk archives by the tools.
 - Treat `data/` as read-only. Write extracted or derived output to the gitignored `build/` directory.
 - Host platform: macOS on Apple Silicon. Rosetta 2 cannot run 16-bit Windows code, so Wine cannot run the game (the QuickTime installer needs 16-bit code); use the emulated VM instead. Wine *is* used for the 32-bit Borland command-line tools (`uv run toolchain`).
 

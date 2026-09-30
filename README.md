@@ -31,7 +31,7 @@ The tools tell you if anything is missing and how to install it.
 
 ### Bring-your-own files
 
-No game files or Windows media are committed to this repository; you need your own copies. Put them in the gitignored `data/` directory under these names (other paths can be passed to the tools as arguments):
+The game's original files and Windows media aren't committed to this repository; you need your own copies. Put them in the gitignored `data/` directory under these names (other paths can be passed to the tools as arguments):
 
 | File | What it is |
 | --- | --- |
@@ -255,4 +255,4 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 
 ## Legal
 
-This repository does not distribute the original game's binaries or assets. It exists for preservation and interoperability, and you must supply your own copy of the game.
+This repository does not distribute the original game's binaries or its disc. It holds source reconstructed from them: the decompiled code, and the game's resources converted to modern formats, from which the tools rebuild the original archives. It exists for preservation and interoperability, and you must supply your own copy of the game.
