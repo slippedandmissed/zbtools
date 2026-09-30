@@ -102,32 +102,32 @@ extern short g_4b142e;
 extern short g_4b1468;
 short findCodeEntry();
 /* Each scene's ambient sounds, and which have played (a bit each). */
-extern short scene7Sounds[9]; /* @data 0x4a2740 */
-extern unsigned long scene7SoundsUsed; /* @data 0x4a2754 */
-extern short scene8Sounds[9]; /* @data 0x4a2758 */
-extern unsigned long scene8SoundsUsed; /* @data 0x4a276c */
-extern short scene9Sounds[12]; /* @data 0x4a2770 */
-extern unsigned long scene9SoundsUsed; /* @data 0x4a2788 */
-extern short scene4Sounds[15]; /* @data 0x4a278c */
-extern unsigned long scene4SoundsUsed; /* @data 0x4a27ac */
-extern short scene10Sounds[19]; /* @data 0x4a27b0 */
-extern unsigned long scene10SoundsUsed; /* @data 0x4a27d8 */
-extern short scene11Sounds[20]; /* @data 0x4a27dc */
-extern unsigned long scene11SoundsUsed; /* @data 0x4a2804 */
-extern short scene12Sounds[13]; /* @data 0x4a2808 */
-extern unsigned long scene12SoundsUsed; /* @data 0x4a2824 */
-extern short scene5Sounds[10]; /* @data 0x4a2828 */
-extern unsigned long scene5SoundsUsed; /* @data 0x4a283c */
-extern short scene13Sounds[13]; /* @data 0x4a2840 */
-extern unsigned long scene13SoundsUsed; /* @data 0x4a285c */
-extern short scene15Sounds[17]; /* @data 0x4a2860 */
-extern unsigned long scene15SoundsUsed; /* @data 0x4a2884 */
-extern short scene16Sounds[10]; /* @data 0x4a2888 */
-extern unsigned long scene16SoundsUsed; /* @data 0x4a289c */
-extern short scene18Sounds[10]; /* @data 0x4a28a0 */
-extern unsigned long scene18SoundsUsed; /* @data 0x4a28b4 */
-extern short scene17Sounds[10]; /* @data 0x4a28b8 */
-extern unsigned long scene17SoundsUsed; /* @data 0x4a28cc */
+extern short bridgeSounds[9]; /* @data 0x4a2740 */
+extern unsigned long bridgeSoundsUsed; /* @data 0x4a2754 */
+extern short tunnelsSounds[9]; /* @data 0x4a2758 */
+extern unsigned long tunnelsSoundsUsed; /* @data 0x4a276c */
+extern short pizzaSounds[12]; /* @data 0x4a2770 */
+extern unsigned long pizzaSoundsUsed; /* @data 0x4a2788 */
+extern short campSounds[15]; /* @data 0x4a278c */
+extern unsigned long campSoundsUsed; /* @data 0x4a27ac */
+extern short ferrySounds[19]; /* @data 0x4a27b0 */
+extern unsigned long ferrySoundsUsed; /* @data 0x4a27d8 */
+extern short lillySounds[20]; /* @data 0x4a27dc */
+extern unsigned long lillySoundsUsed; /* @data 0x4a2804 */
+extern short stoneRiseSounds[13]; /* @data 0x4a2808 */
+extern unsigned long stoneRiseSoundsUsed; /* @data 0x4a2824 */
+extern short camp2Sounds[10]; /* @data 0x4a2828 */
+extern unsigned long camp2SoundsUsed; /* @data 0x4a283c */
+extern short fleensSounds[13]; /* @data 0x4a2840 */
+extern unsigned long fleensSoundsUsed; /* @data 0x4a285c */
+extern short netSounds[17]; /* @data 0x4a2860 */
+extern unsigned long netSoundsUsed; /* @data 0x4a2884 */
+extern short cavesSounds[10]; /* @data 0x4a2888 */
+extern unsigned long cavesSoundsUsed; /* @data 0x4a289c */
+extern short mazeSounds[10]; /* @data 0x4a28a0 */
+extern unsigned long mazeSoundsUsed; /* @data 0x4a28b4 */
+extern short smokeSounds[10]; /* @data 0x4a28b8 */
+extern unsigned long smokeSoundsUsed; /* @data 0x4a28cc */
 extern unsigned long ambientSoundTime; /* @data 0x4b0d44: when to try the next */
 void playAmbientSound();
 extern short g_4b1440;

@@ -73,15 +73,15 @@ extern short g_4abb1c; /* @data 0x4abb1c */
 
 extern GroupList fleensGroups[1]; /* @data 0x4a1630 */
 
-extern short g_4a16d0; /* @data 0x4a16d0: scene13Frame is running */
+extern short g_4a16d0; /* @data 0x4a16d0: fleensFrame is running */
 extern short g_4abb70; /* @data 0x4abb70: the fleen of the Zoombini put down (g_4abb6e) */
 
-void resetScene13();
-void scene13Frame();
-void openScene13();
+void resetFleens();
+void fleensFrame();
+void openFleens();
 void fleensLeaderNotify(View *view, short event);
 void fleensExtraNotify(View *view, short event);
-void scene13Clicked(short which);
+void fleensClicked(short which);
 void addFleens();
 void updateFleen(View *view, short region);
 short addFleen(Snoid *snoid);
@@ -93,13 +93,13 @@ short layOutFleen(Snoid *snoid, short *event);
 void fleensViewNotify(View *view, short event);
 short fleenScript(View *view, short which);
 void drawFleensButton(short which, short lit, short show);
-void closeScene13();
+void closeFleens();
 short fleensSnoidScript(View *view, short which);
 void fleensWalkerNotifyC(View *view, short event);
 void fleensWalkerNotifyA(View *view, short event);
 void fleensWalkerStopNotify(View *view, short event);
 void updateFleensButtons(View *view, short region);
-short scene13Key(unsigned short key);
+short fleensKey(unsigned short key);
 void drawFleen(View *view);
 void loadFleenScripts();
 void loadFleenScript(short id);

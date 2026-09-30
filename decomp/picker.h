@@ -53,8 +53,8 @@ extern basePort **g_4afb28; /* @data 0x4afb28 */
 extern short mapBoxView; /* @data 0x4afb34 */
 extern short g_4afb3a; /* @data 0x4afb3a */
 extern ShortRect g_4a1f74; /* @data 0x4a1f74 */
-void closeScene19();
-void closeScene20();
+void closeCatch();
+void closeTargets();
 void caughtNotify(View *, short event);
 extern short shipView; /* @data 0x4afb7c */
 extern short shipDirection; /* @data 0x4afb7e */
@@ -79,9 +79,9 @@ extern ShortRect g_4afb42; /* @data 0x4afb42 */
 extern short pickedHotspot; /* @data 0x4afb5c */
 extern short g_4afb5e; /* @data 0x4afb5e */
 void resetMap();
-void openScene1();
-void openScene19();
-void openScene20();
+void openMap();
+void openCatch();
+void openTargets();
 extern short targetScore; /* @data 0x4afb72 */
 extern short shipsLeft; /* @data 0x4afb76 */
 void pickHotspot(short n);
@@ -113,14 +113,14 @@ extern short g_4afb70; /* @data 0x4afb70 */
 extern short g_4afbba; /* @data 0x4afbba: targets started */
 short startTarget(short kind, short preset);
 extern char savedUserFile[]; /* @data 0x4a1f84: the user file while practising (in ZBtemp) */
-void closeScene1();
+void closeMap();
 extern short g_4afb7a; /* @data 0x4afb7a */
 void placeShip(View *view);
 
 void updateCursorView(View *view, short region);
 extern unsigned short g_4afbbc; /* @data 0x4afbbc: a big target is out */
 extern unsigned short g_4afbbe; /* @data 0x4afbbe: its view */
-short scene20Key(unsigned short key);
+short targetsKey(unsigned short key);
 extern char *placeNames[16]; /* @data 0x4a5278: the hotspots' names ("zoombini isle", ...) */
 /* The map's box: 0-3 the camps ("zoombini isle", "shelter rock", "shade
    tree", "zoombiniville"), 4 "practice mode", then from 5, 9, 13 and 17 how
@@ -129,23 +129,23 @@ extern char *mapTexts[21]; /* @data 0x4a52b8 */
 void drawMapBox(ShortRect *rect);
 void drawMapBoxView(View *view);
 void makeMapViews(short update);
-extern short g_4a2008; /* @data 0x4a2008: scene1Frame is running */
-extern short g_4a2066; /* @data 0x4a2066: scene19Frame is running */
+extern short g_4a2008; /* @data 0x4a2008: mapFrame is running */
+extern short g_4a2066; /* @data 0x4a2066: catchFrame is running */
 extern short g_4afb60[3]; /* @data 0x4afb60: the Zoombinis crossing */
 extern unsigned long g_4afb68; /* @data 0x4afb68: when to send more */
-void scene19Frame();
-void scene1Frame();
-extern short g_4a20b0; /* @data 0x4a20b0: scene20Frame is running */
+void catchFrame();
+void mapFrame();
+extern short g_4a20b0; /* @data 0x4a20b0: targetsFrame is running */
 extern short targetBursting; /* @data 0x4afb90: the target hit bursting (negated until it's done) */
-void scene20Frame();
+void targetsFrame();
 
 void leavePractice();
 extern basePort **g_4afb2c; /* @data 0x4afb2c */
 extern ShortRect g_4a1f7c; /* @data 0x4a1f7c */
-short scene1Key(unsigned short key);
+short mapKey(unsigned short key);
 extern ShortRect g_4a2068[3]; /* @data 0x4a2068: where a click catches nothing */
-void scene19Clicked(short);
+void catchClicked(short);
 extern ShortRect g_4a1fa8[4]; /* @data 0x4a1fa8: the levels' lines in the list */
-void scene1Clicked(short which);
+void mapClicked(short which);
 
 #endif

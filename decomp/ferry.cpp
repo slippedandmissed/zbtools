@@ -68,7 +68,7 @@ void updateFerryButtons(View *, short region)
 
 /* Closes scene 10. */
 /* @zoombi32 0x0041ff16 */
-void closeScene10()
+void closeFerry()
 {
     if (g_4abaac) {
         g_4abaac = g_4abaa2 = g_4abaa4 = 0;
@@ -161,7 +161,7 @@ void slideFerryViews(View *, short dx)
 
 /* Resets scene 10's state. */
 /* @zoombi32 0x0041f8cc */
-void resetScene10()
+void resetFerry()
 {
     g_4aba88 = 0;
     hintSound = 0;
@@ -432,7 +432,7 @@ void drawFerryButtons(View *)
    reports the level (from 1); F plays Captain Cajun's script g_4abb14
    (1800-1832; else his current one). Returns whether the key was used. */
 /* @zoombi32 0x004208a3 */
-short scene10Key(unsigned short key)
+short ferryKey(unsigned short key)
 {
     short used = 0;
     ShortRect unused = {0, 0, 225, 18};
@@ -635,12 +635,12 @@ void layOutFerryLevel()
    places for the level (layOutFerryLevel) and the party, and a hint or
    greeting. */
 /* @zoombi32 0x0041f97c */
-void openScene10()
+void openFerry()
 {
     short i;
 
     g_4abaac = g_4abaae = 0;
-    resetScene10();
+    resetFerry();
     g_4abafc++;
     g_4aba8a = sceneLevel();
     ferryLinks = (char (*)[8])newPtr(160);
@@ -730,7 +730,7 @@ void openScene10()
    (g_4abaa2, startNextCrosser, some routes needing places free on the right);
    and greets once the sound 997 ends. */
 /* @zoombi32 0x0041ff89 */
-void scene10Frame()
+void ferryFrame()
 {
     short spot;
     short again;
@@ -760,7 +760,7 @@ void scene10Frame()
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
                 setCurrentMap(0);
-                closeScene10();
+                closeFerry();
                 g_4a1574 = 0;
                 return;
             }
@@ -844,7 +844,7 @@ void scene10Frame()
    where it was if that was in the waiting area, else to a free waiting
    place. */
 /* @zoombi32 0x004203b3 */
-void scene10Clicked(short which)
+void ferryClicked(short which)
 {
     View *other;
     ShortRect bounds;
@@ -865,7 +865,7 @@ void scene10Clicked(short which)
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         setCurrentMap(0);
-        closeScene10();
+        closeFerry();
         return;
     }
     switch (which) {

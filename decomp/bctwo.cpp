@@ -20,7 +20,7 @@
 
 /* Resets scene 5's state. */
 /* @zoombi32 0x00418698 */
-void resetScene5()
+void resetCamp2()
 {
     bookView = g_4ab652 = g_4b0d52 = 0;
     g_4ab662 = g_4ab668 = g_4ab664 = 0;
@@ -34,7 +34,7 @@ void resetScene5()
    party (which joins the book when it doesn't carry on), and a line by
    the camp's hint. */
 /* @zoombi32 0x004186dc */
-void openScene5()
+void openCamp2()
 {
     short choices;
     short saved;
@@ -46,7 +46,7 @@ void openScene5()
     short m; /* whether the party fitted, then the line to say */
 
     g_4ab660 = 0;
-    resetScene5();
+    resetCamp2();
     saved = g_4b87fe;
     g_4b87fe = 0;
     g_4afb32 = 1;
@@ -186,7 +186,7 @@ void openScene5()
    for the map or scene 1, else those present, counted off the town's
    population), and the book is tidied. */
 /* @zoombi32 0x00418d40 */
-void closeScene5()
+void closeCamp2()
 {
     short saved;
 
@@ -225,7 +225,7 @@ void closeScene5()
    else shows the drag cursor for the button (4-7) under the cursor, and
    keeps view g_4ab67c's script 6001 going while g_4ab668. */
 /* @zoombi32 0x00418e62 */
-void scene5Frame()
+void camp2Frame()
 {
     Point where;
     short button;
@@ -245,7 +245,7 @@ void scene5Frame()
             g_4b0d50 = g_4b0d52;
             g_4b0d52 = 0;
             setCurrentMap(0);
-            closeScene5();
+            closeCamp2();
         }
     } else {
         button = 0;
@@ -272,7 +272,7 @@ void scene5Frame()
    the map (scene 16) when enoughChosen, else says a line; 3 leaves for scene
    1; 4-7 scroll the book while held. */
 /* @zoombi32 0x00418fa7 */
-void scene5Clicked(short which)
+void camp2Clicked(short which)
 {
     Point where;
 
@@ -280,7 +280,7 @@ void scene5Clicked(short which)
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         setCurrentMap(0);
-        closeScene5();
+        closeCamp2();
         return;
     }
     getCursorPosition(&where);
@@ -313,7 +313,7 @@ void scene5Clicked(short which)
         waitForEventFor(0, 2, 0, 1);
         drawCamp2Button(which, 0, 0, 1);
         g_4b0d50 = 1;
-        closeScene5();
+        closeCamp2();
         break;
     case 4:
     case 5:
@@ -360,7 +360,7 @@ void campDragged(short event)
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         setCurrentMap(0);
-        closeScene5();
+        closeCamp2();
         return;
     }
     if (g_4ab662 && event != 2)

@@ -20,7 +20,7 @@ extern short listedCount; /* @data 0x4b240e */
 extern short lastLitCount; /* @data 0x4b1a42 */
 extern short litSum; /* @data 0x4b1a44: the sum of the counted cells' numbers */
 extern short g_4b1a46; /* @data 0x4b1a46 */
-void closeScene12();
+void closeStoneRise();
 void updateSlidesButtons(View *, short region);
 void markLitSnoids();
 void noteAnyLit();
@@ -58,7 +58,7 @@ void groupInThrees();
 short sharedStone(short a, short b);
 
 short placeUnalike(short cell, short dir);
-extern short g_4a41e4; /* @data 0x4a41e4: scene12Frame is running */
+extern short g_4a41e4; /* @data 0x4a41e4: stoneRiseFrame is running */
 extern short g_4b1a3c; /* @data 0x4b1a3c: cycle colours */
 extern unsigned long g_4b2534; /* @data 0x4b2534: when they last cycled */
 extern short g_4b251a; /* @data 0x4b251a: the group whose arrival ends the puzzle */
@@ -67,7 +67,7 @@ extern short g_4b253c; /* @data 0x4b253c: fidgets to do */
 extern short g_4b253e; /* @data 0x4b253e: fidgets done */
 extern unsigned long g_4b252c; /* @data 0x4b252c: when a Zoombini last fidgeted */
 extern unsigned long g_4b2538; /* @data 0x4b2538: slots used (allocateSlot) */
-void scene12Frame();
+void stoneRiseFrame();
 
 void pairByFeatures();
 
@@ -89,7 +89,7 @@ void lightFromStarts();
 void lightFrom(short cell);
 extern short g_4b2412; /* @data 0x4b2412: letters of the cheat "solve" typed */
 void relightPath();
-short scene12Key(unsigned short key);
+short stoneRiseKey(unsigned short key);
 extern short g_4b1a40; /* @data 0x4b1a40 */
 extern short g_4b2524; /* @data 0x4b2524 */
 extern short g_4b2526; /* @data 0x4b2526 */
@@ -100,8 +100,8 @@ extern short g_4b194a[117]; /* @data 0x4b194a */
 extern short g_4b241c[10]; /* @data 0x4b241c */
 extern Point g_4b1a4c[27]; /* @data 0x4b1a4c: where the listed cells' views go */
 extern GroupList slidesGroups[1]; /* @data 0x4a3fa4 */
-void openScene12();
+void openStoneRise();
 
-void scene12Clicked(short which);
+void stoneRiseClicked(short which);
 
 #endif

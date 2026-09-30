@@ -42,7 +42,7 @@ extern short g_4b7fee; /* @data 0x4b7fee */
 extern short g_4b7fd4; /* @data 0x4b7fd4 */
 extern short g_4b7fd6; /* @data 0x4b7fd6 */
 extern short g_4b7fd8; /* @data 0x4b7fd8 */
-void closeScene8();
+void closeTunnels();
 void remarkEndNotify(View *, short event);
 void firstLineNotify(View *, short event);
 void addTunnelEntry(TunnelList *list, TunnelEntry entry);
@@ -84,10 +84,10 @@ extern unsigned long g_4b80a4; /* @data 0x4b80a4: slots used (allocateSlot) */
 extern long g_4b809c; /* @data 0x4b809c */
 extern long g_4b80a0; /* @data 0x4b80a0 */
 extern short g_4b7fbc; /* @data 0x4b7fbc */
-void resetScene8();
+void resetTunnels();
 extern short g_4b80a8; /* @data 0x4b80a8: the script last shown (debugging) */
 void queueRemark(short kind);
-short scene8Key(unsigned short key);
+short tunnelsKey(unsigned short key);
 void drawTunnelsButtons(View *);
 short removeTunnelEntry(TunnelList *list, short view);
 
@@ -106,16 +106,16 @@ extern Point g_4a7770[16]; /* @data 0x4a7770: the places past door 1 */
 extern Point g_4a77b0[16]; /* @data 0x4a77b0: door 4 */
 extern Point g_4a77f0[16]; /* @data 0x4a77f0: door 2 */
 extern Point g_4a7830[16]; /* @data 0x4a7830: door 3 */
-void scene8Frame();
-extern short g_4a7888; /* @data 0x4a7888: scene8Frame is running */
+void tunnelsFrame();
+extern short g_4a7888; /* @data 0x4a7888: tunnelsFrame is running */
 extern short turnBacksLeft; /* @data 0x4b7fc0: how many more times a Zoombini can be turned back */
 extern short g_4b7fc2; /* @data 0x4b7fc2 */
 extern unsigned long g_4b7fe0; /* @data 0x4b7fe0: when to make the next idle remark (view ticks) */
 extern short tunnelsSpeakers[4]; /* @data 0x4b7fc4: the four views that make the remarks (queueRemark) */
 extern short g_4b7fcc; /* @data 0x4b7fcc: the buttons' view */
 extern GroupList tunnelsGroups[1]; /* @data 0x4a76e8 */
-void openScene8();
-void scene8Clicked(short which);
+void openTunnels();
+void tunnelsClicked(short which);
 extern short doorSpeakers[8]; /* @data 0x4a7710: which of tunnelsSpeakers remarks on a Zoombini at a door (by door and result) */
 extern short g_4a75d0[10]; /* @data 0x4a75d0: remarks (g_4a75e4 picks) */
 extern short g_4a75e8[11]; /* @data 0x4a75e8: (g_4a7600) */

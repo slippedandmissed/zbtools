@@ -21,7 +21,7 @@
 
 /* Resets scene 2's state. */
 /* @zoombi32 0x004696f0 */
-void resetScene2()
+void resetJourney()
 {
     short i;
 
@@ -48,7 +48,7 @@ void resetScene2()
 }
 
 /* @zoombi32 0x0046b07b */
-long scene2Key(long)
+long journeyKey(long)
 {
     return 0;
 }
@@ -412,7 +412,7 @@ void drawPopulationSign(View *view)
    something moving: the next of the party (with xferSnoidNotify), one of the
    views g_4b98f8 or g_4b98f6, or g_4b990a's once g_4b9908 passes 4. */
 /* @zoombi32 0x0046ace4 */
-void scene2Frame()
+void journeyFrame()
 {
     View *view;
     Snoid *snoid;
@@ -429,7 +429,7 @@ void scene2Frame()
             g_4b0d50 = 1;
         }
         setCurrentMap(0);
-        closeScene2();
+        closeJourney();
         g_4a7ede = 0;
         return;
     }
@@ -510,7 +510,7 @@ void scene2Frame()
 /* Scene 2's clicks: once a scene is due (g_4b0d52), leaves for it (for
    scene 1 if g_4a7e68); 1 goes on to scene g_4b0d54. */
 /* @zoombi32 0x0046b00e */
-void scene2Clicked(short which)
+void journeyClicked(short which)
 {
     if (g_4b98d8) {
         if (g_4b0d52) {
@@ -521,7 +521,7 @@ void scene2Clicked(short which)
                 g_4b0d50 = 1;
             }
             setCurrentMap(0);
-            closeScene2();
+            closeJourney();
         } else
             switch (which) {
             case 1:
@@ -592,7 +592,7 @@ void xferEndNotify(View *, short event)
    town), a sound chosen by the camp's hint and the level, the party and,
    on the maps, the grid being filled in under the map's name. */
 /* @zoombi32 0x004697f1 */
-void openScene2()
+void openJourney()
 {
     short mapView;
     short visits;
@@ -613,7 +613,7 @@ void openScene2()
 
     g_4b98d8 = 0;
     g_4a7d3c++;
-    resetScene2();
+    resetJourney();
     addSoundRange(20000, 29999, 1);
     setViewsLocked(0);
     openGameFile(&g_4b98d4, "xfer.MHK");
@@ -1389,7 +1389,7 @@ void openScene2()
 
 /* Closes scene 2. */
 /* @zoombi32 0x0046ac6e */
-void closeScene2()
+void closeJourney()
 {
     if (g_4b98d8) {
         g_4b98d8 = 0;

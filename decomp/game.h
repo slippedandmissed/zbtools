@@ -45,7 +45,7 @@ void recordSlotFeatures(short id, short n);
 void deleteTempFile();
 void emptySlotView(short n);
 void emptyPairViews();
-extern short scene17Open; /* the scene is open */
+extern short smokeOpen; /* the scene is open */
 extern short g_4b2792;
 extern short g_4a483e;
 extern short g_4a4840;
@@ -57,9 +57,9 @@ extern long g_4b2654;
 extern long g_4b278c;
 extern ImageBank *smokeImages;
 void updateSmokeButtons(View *, short region);
-void closeScene17();
-void scene17Frame();
-extern short inScene17Frame; /* @data 0x4a4842: in scene17Frame */
+void closeSmoke();
+void smokeFrame();
+extern short inSmokeFrame; /* @data 0x4a4842: in smokeFrame */
 extern ShortRect g_4a4750; /* @data 0x4a4750 */
 extern short g_4b2728; /* @data 0x4b2728 */
 extern short g_4b279a; /* @data 0x4b279a: the group the leaders move in */
@@ -109,7 +109,7 @@ void advanceLeftFeatures();
 void advanceRightFeatures();
 extern ShortRect g_4a48b2;
 extern short cheatMode; /* cheating */
-short scene17Key(unsigned short key);
+short smokeKey(unsigned short key);
 short placeAlike(short cell, volatile short direction);
 extern short g_4b2740;
 extern short g_4b2590;
@@ -206,11 +206,11 @@ extern short g_4b273e;
 extern short g_4b2598;
 extern Point g_4a44b4;
 extern GroupList g_4a47a8;
-void openScene17();
+void openSmoke();
 extern ShortRect dealButtonRect;
 extern ShortRect g_4a47d0;
 extern short g_4a47e0[5];
-void scene17Clicked(short action);
+void smokeClicked(short action);
 void drawSmokeButton(short which, short lit, short show);
 short anyLeftToPlace();
 short growGrid(short cell);

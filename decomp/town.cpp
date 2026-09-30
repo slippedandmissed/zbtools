@@ -24,7 +24,7 @@
 
 /* Opens scene 0. */
 /* @zoombi32 0x0045c12e */
-void openScene0()
+void openIntro()
 {
     g_4b7cf4 = g_4b7cf8 = g_4b7cf6 = 0;
     g_4b0d52 = g_4b7cec = 0;
@@ -36,7 +36,7 @@ void openScene0()
 /* Scene 0's clicks: moves g_4a7410 on from 1 to 2 (always, with
    g_4b7cf8); 1 or -1 goes back to the scene sceneToReturnTo picks. */
 /* @zoombi32 0x0045c391 */
-void scene0Clicked(short which)
+void introClicked(short which)
 {
     if (g_4b7cf8)
         g_4a7410 = 2;
@@ -142,7 +142,7 @@ void townsfolkNotify(View *view, short)
 /* Closes scene 0, leaving its palette and clip for the next scene, and
    reloads the Zoombinis and dialogs. */
 /* @zoombi32 0x0045c175 */
-void closeScene0()
+void closeIntro()
 {
     if (g_4b7cf4) {
         g_4b7cf4 = 0;
@@ -220,7 +220,7 @@ void drawTownButton(short which, short lit, short show)
 
 /* Closes scene 6. */
 /* @zoombi32 0x0045cfae */
-void closeScene6()
+void closeTown()
 {
     if (g_4b7e00) {
         g_4b7e00 = 0;
@@ -265,16 +265,16 @@ void findTownHotspot(Point *where)
 
 /* Scene 0's keys: Ctrl-Q quits; any other key clicks. */
 /* @zoombi32 0x0045c0f4 */
-short scene0Key(unsigned short key)
+short introKey(unsigned short key)
 {
     switch (key) {
     case 0x1b:
     case ' ':
     default:
-        scene0Clicked(1);
+        introClicked(1);
         return 1;
     case 0x11:
-        closeScene0();
+        closeIntro();
         g_4b80e0 = -1;
         return 1;
     }
@@ -282,7 +282,7 @@ short scene0Key(unsigned short key)
 
 /* Resets scene 6's state; the pace g_4b7f08 by g_4b2b00. */
 /* @zoombi32 0x0045c3ec */
-void resetScene6()
+void resetTown()
 {
     short i;
 
@@ -444,7 +444,7 @@ void placeRecordHotspots(View *view)
 /* Scene 0's frame: plays the logo movie (Data\Logo025.MOV) once, then
    clicks; leaves when asked (g_4b0d52). */
 /* @zoombi32 0x0045c212 */
-void scene0Frame()
+void introFrame()
 {
     if (g_4a7412 || !g_4b7cf4)
         return;
@@ -460,7 +460,7 @@ void scene0Frame()
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         setCurrentMap(0);
-        closeScene0();
+        closeIntro();
     } else if (g_4b7cf0) {
         switch (g_4b7cec) {
         case 0:
@@ -473,7 +473,7 @@ void scene0Frame()
                 strcat(logoPath, "Data\\");
                 strcat(logoPath, "Logo025.MOV");
                 if (playMovie(logoPath)) {
-                    scene0Clicked(1);
+                    introClicked(1);
                 } else {
                     g_4b7cf6 = 1;
                     hideCursor();
@@ -483,7 +483,7 @@ void scene0Frame()
         case 1:
             g_4b2ad6 = 0;
             g_4b7cec++;
-            scene0Clicked(-1);
+            introClicked(-1);
             break;
         }
     }
@@ -686,7 +686,7 @@ void setTownFrames(short frame)
    the records; 0x125 and 0x127 raise and lower the highest cel shown
    (g_4b7e10, 25-81). Returns whether the key was used. */
 /* @zoombi32 0x0045d7a9 */
-short scene6Key(unsigned short key)
+short townKey(unsigned short key)
 {
     char hour;
     char minute;
@@ -774,7 +774,7 @@ short scene6Key(unsigned short key)
    of the hotspot under the cursor, or at the sides scrolls to the next or
    previous of the six screens. */
 /* @zoombi32 0x0045d468 */
-void scene6Clicked(short which)
+void townClicked(short which)
 {
     Point where;
     View *view;
@@ -795,7 +795,7 @@ void scene6Clicked(short which)
         drawTownButton(which, 0, 1);
         g_4b0d50 = 1;
         setCurrentMap(0);
-        closeScene6();
+        closeTown();
         break;
     case 2:
         getCursorPosition(&where);
@@ -857,7 +857,7 @@ void scene6Clicked(short which)
    the register `i` has later; here it is in ecx, whatever the declaration
    order or scope). */
 /* @zoombi32 0x0045c52e */
-void openScene6()
+void openTown()
 {
     unsigned long used;
     short extras;
@@ -870,7 +870,7 @@ void openScene6()
     short id;
 
     g_4b7e00 = 0;
-    resetScene6();
+    resetTown();
     soundRanges = 0;
     addSoundRange(3000, 3003, 1);
     addSoundRange(20000, 29999, 1);
@@ -1101,7 +1101,7 @@ void openScene6()
    index and flags, in esi and `i`, the sound and the tries, in ebx; here
    they're the other way round, whichever is declared first). */
 /* @zoombi32 0x0045d07e */
-void scene6Frame()
+void townFrame()
 {
     Point where;
     short n;
@@ -1125,7 +1125,7 @@ void scene6Frame()
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         setCurrentMap(0);
-        closeScene6();
+        closeTown();
         g_4a7580 = 0;
         return;
     }

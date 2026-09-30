@@ -23,7 +23,7 @@
    500, until layOutGrid lays it out for the level), the cells' views, the
    buttons and the party. */
 /* @zoombi32 0x00446bf8 */
-void openScene12()
+void openStoneRise()
 {
     short i;
 
@@ -99,7 +99,7 @@ void openScene12()
 
 /* Closes scene 12. */
 /* @zoombi32 0x00447124 */
-void closeScene12()
+void closeStoneRise()
 {
     if (g_4b1930) {
         g_4b1930 = 0;
@@ -1037,7 +1037,7 @@ short placeUnalike(short cell, short dir)
    off (by the level, g_4b1934) and ends; and has an idle Zoombini fidget
    now and then while g_4b2540. */
 /* @zoombi32 0x00447171 */
-void scene12Frame()
+void stoneRiseFrame()
 {
     View *view;
     short done;
@@ -1058,7 +1058,7 @@ void scene12Frame()
                     g_4b0d50 = g_4b0d52;
                     g_4b0d52 = 0;
                     setCurrentMap(0);
-                    closeScene12();
+                    closeStoneRise();
                     g_4a41e4 = 0;
                     return;
                 }
@@ -1923,7 +1923,7 @@ void relightPath()
 /* Scene 12's keys (with debugging on, g_4b8803, or else only 0x16f): typing
    "solve" (g_4b2412 counts the letters) solves level 3. */
 /* @zoombi32 0x00448231 */
-short scene12Key(unsigned short key)
+short stoneRiseKey(unsigned short key)
 {
     if (!g_4b8803 && key != 0x16f)
         return 0;
@@ -1970,7 +1970,7 @@ short scene12Key(unsigned short key)
    off it (unlighting what it lit), by the level's rules, and a Zoombini
    dropped elsewhere walks to the marked spot (markCellAt). */
 /* @zoombi32 0x00447528 */
-void scene12Clicked(short which)
+void stoneRiseClicked(short which)
 {
     View *view;
     ShortRect unused1; /* never used: the original's frame has room for two */
@@ -1990,7 +1990,7 @@ void scene12Clicked(short which)
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         setCurrentMap(0);
-        closeScene12();
+        closeStoneRise();
         return;
     }
     if (g_4b2526 != -1) {

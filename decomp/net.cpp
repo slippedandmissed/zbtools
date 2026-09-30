@@ -1521,43 +1521,43 @@ void playAmbientSound()
             sound = 0;
             switch (currentScene) {
             case 7:
-                sound = scene7Sounds[allocateSlot(&scene7SoundsUsed, 9, 0)];
+                sound = bridgeSounds[allocateSlot(&bridgeSoundsUsed, 9, 0)];
                 break;
             case 8:
-                sound = scene8Sounds[allocateSlot(&scene8SoundsUsed, 9, 0)];
+                sound = tunnelsSounds[allocateSlot(&tunnelsSoundsUsed, 9, 0)];
                 break;
             case 9:
-                sound = scene9Sounds[allocateSlot(&scene9SoundsUsed, 12, 0)];
+                sound = pizzaSounds[allocateSlot(&pizzaSoundsUsed, 12, 0)];
                 break;
             case 4:
-                sound = scene4Sounds[allocateSlot(&scene4SoundsUsed, 15, 0)];
+                sound = campSounds[allocateSlot(&campSoundsUsed, 15, 0)];
                 break;
             case 10:
-                sound = scene10Sounds[allocateSlot(&scene10SoundsUsed, 19, 0)];
+                sound = ferrySounds[allocateSlot(&ferrySoundsUsed, 19, 0)];
                 break;
             case 11:
-                sound = scene11Sounds[allocateSlot(&scene11SoundsUsed, 20, 0)];
+                sound = lillySounds[allocateSlot(&lillySoundsUsed, 20, 0)];
                 break;
             case 12:
-                sound = scene12Sounds[allocateSlot(&scene12SoundsUsed, 13, 0)];
+                sound = stoneRiseSounds[allocateSlot(&stoneRiseSoundsUsed, 13, 0)];
                 break;
             case 5:
-                sound = scene5Sounds[allocateSlot(&scene5SoundsUsed, 10, 0)];
+                sound = camp2Sounds[allocateSlot(&camp2SoundsUsed, 10, 0)];
                 break;
             case 13:
-                sound = scene13Sounds[allocateSlot(&scene13SoundsUsed, 13, 0)];
+                sound = fleensSounds[allocateSlot(&fleensSoundsUsed, 13, 0)];
                 break;
             case 15:
-                sound = scene15Sounds[allocateSlot(&scene15SoundsUsed, 17, 0)];
+                sound = netSounds[allocateSlot(&netSoundsUsed, 17, 0)];
                 break;
             case 16:
-                sound = scene16Sounds[allocateSlot(&scene16SoundsUsed, 10, 0)];
+                sound = cavesSounds[allocateSlot(&cavesSoundsUsed, 10, 0)];
                 break;
             case 18:
-                sound = scene18Sounds[allocateSlot(&scene18SoundsUsed, 10, 0)];
+                sound = mazeSounds[allocateSlot(&mazeSoundsUsed, 10, 0)];
                 break;
             case 17:
-                sound = scene17Sounds[allocateSlot(&scene17SoundsUsed, 10, 0)];
+                sound = smokeSounds[allocateSlot(&smokeSoundsUsed, 10, 0)];
                 break;
             }
             if (sound) {

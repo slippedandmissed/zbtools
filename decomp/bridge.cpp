@@ -36,7 +36,7 @@ unsigned long bridgeTimer()
 /* Resets scene 7's state (the rules too); the pace g_4ab834 by
    g_4b2b00. */
 /* @zoombi32 0x0041a41b */
-void resetScene7()
+void resetBridge()
 {
     short i;
 
@@ -111,7 +111,7 @@ void updateBridgeButtons(View *, short region)
 
 /* Closes scene 7. */
 /* @zoombi32 0x0041a9d7 */
-void closeScene7()
+void closeBridge()
 {
     if (g_4ab788) {
         g_4ab788 = 0;
@@ -203,7 +203,7 @@ void bridgeViewNotify(View *view, short event)
    replayHint; R reports the script and type g_4ab826/g_4ab828; A shows the
    rule. Returns whether the key was used. */
 /* @zoombi32 0x0041b203 */
-short scene7Key(unsigned short key)
+short bridgeKey(unsigned short key)
 {
     short used = 0;
     ShortRect area = {225, 0, 350, 70};
@@ -709,7 +709,7 @@ void drawBridgeButtons(View *)
    placed spots at the bridges' ends, the views, the party, and the rule
    for the level (makeBridgeRule). */
 /* @zoombi32 0x0041a506 */
-void openScene7()
+void openBridge()
 {
     Point places[16] = {{176, 304}, {169, 327}, {144, 283}, {147, 355}, {124, 318}, {119, 379},
                         {108, 284}, {99, 345}, {88, 414}, {69, 262}, {79, 303}, {78, 370},
@@ -718,7 +718,7 @@ void openScene7()
     short i;
 
     g_4ab788 = g_4ab78a = 0;
-    resetScene7();
+    resetBridge();
     g_4ab790 = sceneLevel();
     addSoundRange(20000, 29999, 1);
     addSoundRange(1200, 1201, 1);
@@ -787,7 +787,7 @@ void openScene7()
  * Zoombini fidget (2019 on), up to g_4ab82a times.
  */
 /* @zoombi32 0x0041aa24 */
-void scene7Frame()
+void bridgeFrame()
 {
     View *view;
     short n;
@@ -809,7 +809,7 @@ void scene7Frame()
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
                 setCurrentMap(0);
-                closeScene7();
+                closeBridge();
                 g_4a0f0c = 0;
                 return;
             }
@@ -962,7 +962,7 @@ void scene7Frame()
    bridge's end it joins the queue (up to two) with whether it passes;
    taken off the queue and dropped elsewhere it goes to a free place. */
 /* @zoombi32 0x0041af4c */
-void scene7Clicked(short which)
+void bridgeClicked(short which)
 {
     ShortRect bounds;
     Point where;
@@ -974,7 +974,7 @@ void scene7Clicked(short which)
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         setCurrentMap(0);
-        closeScene7();
+        closeBridge();
         return;
     }
     switch (which) {

@@ -12,7 +12,7 @@ extern unsigned long g_4a13ec; /* @data 0x4a13ec: slots used (allocateSlot) */
 extern GroupList ferryGroups[1]; /* @data 0x4a14fc */
 extern short g_4a13f0[5]; /* @data 0x4a13f0: remarks (g_4a13fc picks) */
 extern unsigned long g_4a13fc; /* @data 0x4a13fc: slots used (allocateSlot) */
-extern short g_4a1574; /* @data 0x4a1574: scene10Frame is running */
+extern short g_4a1574; /* @data 0x4a1574: ferryFrame is running */
 extern short g_4a1400[2]; /* @data 0x4a1400: remarks for a good placing (g_4a1404 picks) */
 extern unsigned long g_4a1404; /* @data 0x4a1404 */
 extern short g_4a1408[11]; /* @data 0x4a1408: remarks for a bad one (g_4a1420 picks) */
@@ -72,12 +72,12 @@ extern short g_4abb14; /* @data 0x4abb14: the script F plays */
 extern short g_4abb16; /* @data 0x4abb16: Captain Cajun's script */
 extern Point ferryPlaces[20]; /* @data 0x4a1520: where the Zoombinis wait */
 
-void resetScene10();
-void scene10Clicked(short which);
-void scene10Frame();
-void openScene10();
+void resetFerry();
+void ferryClicked(short which);
+void ferryFrame();
+void openFerry();
 void drawFerryButtons(View *);
-short scene10Key(unsigned short key);
+short ferryKey(unsigned short key);
 void layOutFerry(short id);
 void layOutFerryLevel();
 void linkFerryPlaces(short draw);
@@ -86,7 +86,7 @@ void startNextCrosser(short n);
 void crosserNotify(View *view, short event);
 void drawFerryButton(short which, short lit, short show);
 void updateFerryButtons(View *, short region);
-void closeScene10();
+void closeFerry();
 void moveFerryOn();
 void startCrosserScript(short group, short script, ViewNotify notify, char unknownF8);
 void ferryHelperNotify(View *view, short event);

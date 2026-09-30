@@ -43,7 +43,7 @@ void updateFleensButtons(View *, short region)
    0x16f replayHint; L reports g_4abb6a (from 1). Returns whether the key
    was used. */
 /* @zoombi32 0x00422491 */
-short scene13Key(unsigned short key)
+short fleensKey(unsigned short key)
 {
     short used = 0;
 
@@ -151,7 +151,7 @@ void drawFleensButton(short which, short lit, short show)
 
 /* Closes scene 13. */
 /* @zoombi32 0x00421c78 */
-void closeScene13()
+void closeFleens()
 {
     short i;
 
@@ -359,7 +359,7 @@ void fleensMovingOnNotify(View *view, short event)
 
 /* Resets scene 13's state; the pace g_4abdb4 by g_4b2b00. */
 /* @zoombi32 0x0042160c */
-void resetScene13()
+void resetFleens()
 {
     short i;
 
@@ -1035,7 +1035,7 @@ void addFleens()
    g_4abb70) or sending it back to a free place; with g_4b754a, a click on a
    fleen makes its Zoombini jump. */
 /* @zoombi32 0x00422192 */
-void scene13Clicked(short which)
+void fleensClicked(short which)
 {
     Point where;
     Snoid *snoid;
@@ -1050,7 +1050,7 @@ void scene13Clicked(short which)
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         setCurrentMap(0);
-        closeScene13();
+        closeFleens();
         return;
     }
     switch (which) {
@@ -1416,7 +1416,7 @@ void fleensExtraNotify(View *view, short event)
    fleens (addFleens), the party; the first Zoombini walks in (g_4abb30's
    notify), and a hint or greeting. */
 /* @zoombi32 0x00421738 */
-void openScene13()
+void openFleens()
 {
     Point places[16] = {{238, 368}, {185, 417}, {155, 448}, {197, 396}, {160, 357}, {164, 384},
                         {150, 416}, {116, 357}, {130, 386}, {109, 418}, {117, 448}, {74, 348},
@@ -1428,7 +1428,7 @@ void openScene13()
     short script;
 
     g_4abb78 = g_4abb7a = 0;
-    resetScene13();
+    resetFleens();
     g_4abb6a = sceneLevel();
     addSoundRange(20000, 29999, 1);
     addSoundRange(1000, 1002, 1);
@@ -1526,7 +1526,7 @@ void openScene13()
  * and loads the scripts 4051-4058 one a frame.
  */
 /* @zoombi32 0x00421d1e */
-void scene13Frame()
+void fleensFrame()
 {
     View *view;
     short script;
@@ -1545,7 +1545,7 @@ void scene13Frame()
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
                 setCurrentMap(0);
-                closeScene13();
+                closeFleens();
                 g_4a16d0 = 0;
                 return;
             }

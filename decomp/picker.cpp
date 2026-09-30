@@ -23,7 +23,7 @@
    map's views (their placed callbacks), and loads sounds 998-999 from
    the sounds' map. */
 /* @zoombi32 0x0042fa4b */
-void openScene1()
+void openMap()
 {
     basePort *port;
     short i;
@@ -96,7 +96,7 @@ long catchKey(long)
     return 0;
 }
 
-/* The notify of a target bursting (scene20Frame): when its script ends,
+/* The notify of a target bursting (targetsFrame): when its script ends,
    marks it done (targetBursting positive). */
 /* @zoombi32 0x004334f0 */
 void burstNotify(View *, short event)
@@ -108,7 +108,7 @@ void burstNotify(View *, short event)
 /* Opens scene 19, catching Zoombinis: 9 throws of 99, the views, and
    the opening line. */
 /* @zoombi32 0x0043169b */
-void openScene19()
+void openCatch()
 {
     Point at;
     short i;
@@ -163,7 +163,7 @@ void openScene19()
 
 /* Closes scenes 19 and 21 (Picker.MHK). */
 /* @zoombi32 0x0043190d */
-void closeScene19()
+void closeCatch()
 {
     if (g_4afb14) {
         showCursor();
@@ -183,7 +183,7 @@ void closeScene19()
 /* Opens scene 20, the targets: the state, the backdrop (filled first),
    the views and sounds, and the opening line. */
 /* @zoombi32 0x004323cc */
-void openScene20()
+void openTargets()
 {
     short i;
     View *view;
@@ -227,7 +227,7 @@ void openScene20()
 
 /* Closes scene 20 (Picker.MHK), keeping g_4afbb8 in g_4a4b98. */
 /* @zoombi32 0x004325c4 */
-void closeScene20()
+void closeTargets()
 {
     if (g_4afb14) {
         g_4a4b98 = g_4afbb8;
@@ -805,7 +805,7 @@ void targetsClicked(short which)
     case 1:
         g_4b0d50 = 1;
         setCurrentMap(0);
-        closeScene20();
+        closeTargets();
         break;
     }
 }
@@ -1194,7 +1194,7 @@ short startTarget(short kind, short preset)
    g_4afb5e) Zoombinis at random (with the 0x800 modifier, all alike by
    fives). */
 /* @zoombi32 0x0042fca8 */
-void closeScene1()
+void closeMap()
 {
     short saved;
     short i;
@@ -1398,7 +1398,7 @@ void updateCursorView(View *view, short region)
    is over, g_4afb7a) or brings back a burst ship, 5 fires (up to three
    shots), 4 and 6 turn the ship, 8 pushes it on (up to 12 each way). */
 /* @zoombi32 0x00432a79 */
-short scene20Key(unsigned short key)
+short targetsKey(unsigned short key)
 {
     short id;
     short i;
@@ -1612,7 +1612,7 @@ void makeMapViews(short update)
    20-120 ticks) sends new ones, more of them together as
    pickerData.game.count grows. */
 /* @zoombi32 0x0043195a */
-void scene19Frame()
+void catchFrame()
 {
     short id;
     short i;
@@ -1661,7 +1661,7 @@ void scene19Frame()
    cursor in the view g_4afb3e and picks it (pickHotspot), or hides the name;
    leaves when a choice was made (g_4b0d52). */
 /* @zoombi32 0x0042feaf */
-void scene1Frame()
+void mapFrame()
 {
     Point where;
     View *view;
@@ -1711,7 +1711,7 @@ void scene1Frame()
             g_4b0d50 = g_4b0d52;
             g_4b0d52 = 0;
             setCurrentMap(0);
-            closeScene1();
+            closeMap();
         }
         g_4a2008 = 0;
     }
@@ -1723,7 +1723,7 @@ void scene1Frame()
    flying off on either side; when the last goes, every other time a big
    one (kind 3 or 4) crosses. */
 /* @zoombi32 0x0043261d */
-void scene20Frame()
+void targetsFrame()
 {
     DriftingBody *body;
     short split;
@@ -1870,7 +1870,7 @@ void leavePractice()
    transition, and a-p then shows it (scene 7). Returns whether the level
    changed. */
 /* @zoombi32 0x0043041f */
-short scene1Key(unsigned short key)
+short mapKey(unsigned short key)
 {
     short used;
     short old;
@@ -1887,7 +1887,7 @@ short scene1Key(unsigned short key)
             g_4a7e68 = key - 0x60;
             g_4b0d50 = 7;
             setCurrentMap(0);
-            closeScene1();
+            closeMap();
             return 1;
         }
     }
@@ -1974,7 +1974,7 @@ short scene1Key(unsigned short key)
    in a row, bonus throws; the Zoombinis speed up as more are caught. Out of
    throws, "again" (pickerData.game.again) starts over. */
 /* @zoombi32 0x00431ab5 */
-void scene19Clicked(short)
+void catchClicked(short)
 {
     Point where;
     short thrown;
@@ -1988,7 +1988,7 @@ void scene19Clicked(short)
     if (ptInRect(&pickerData.game.leave, where)) {
         g_4b0d50 = 1;
         setCurrentMap(0);
-        closeScene19();
+        closeCatch();
         return;
     }
     view = viewAt(where, 1, 1);
@@ -2103,7 +2103,7 @@ void scene19Clicked(short)
    screen) presses the help button (g_4afb42) or picks a level from the
    list. */
 /* @zoombi32 0x0043010b */
-void scene1Clicked(short which)
+void mapClicked(short which)
 {
     short clicked;
     Point where;
@@ -2209,7 +2209,7 @@ void scene1Clicked(short which)
         } else if (g_4b754a) {
             for (i = 0; !clicked && i < 4; i++)
                 if (ptInRect(&g_4a1fa8[i], where)) {
-                    scene1Key(i + '1');
+                    mapKey(i + '1');
                     clicked = 1;
                 }
         }
@@ -2223,6 +2223,6 @@ void scene1Clicked(short which)
         waitForEventFor(0, 2, 0, 1);
         g_4b0d50 = scene;
         setCurrentMap(0);
-        closeScene1();
+        closeMap();
     }
 }

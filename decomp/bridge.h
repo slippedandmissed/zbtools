@@ -14,7 +14,7 @@ extern Point lowerPlaces[16]; /* @data 0x4a0e68: and the lower */
 extern ShortRect g_4a0ea8; /* @data 0x4a0ea8: where to wait by the upper bridge */
 extern ShortRect g_4a0eb0; /* @data 0x4a0eb0: and the lower */
 extern short g_4a0f08; /* @data 0x4a0f08: button 2 is drawn lit */
-extern short g_4a0f0c; /* @data 0x4a0f0c: scene7Frame is running */
+extern short g_4a0f0c; /* @data 0x4a0f0c: bridgeFrame is running */
 extern short g_4a0f0a; /* @data 0x4a0f0a: button 1 is drawn */
 extern long g_4ab784; /* @data 0x4ab784: bridge.mhk */
 extern short g_4ab788; /* @data 0x4ab788: the scene is open */
@@ -60,16 +60,16 @@ void startBridgeTimer();
 unsigned long bridgeTimer();
 extern ShortRect g_4a0eb8; /* @data 0x4a0eb8: where a Zoombini can be dragged */
 
-void resetScene7();
-void scene7Clicked(short which);
-void scene7Frame();
+void resetBridge();
+void bridgeClicked(short which);
+void bridgeFrame();
 void drawBridgeButtons(View *);
-void openScene7();
+void openBridge();
 void drawBridgeButton(short which, short lit, short show);
 void updateBridgeButtons(View *, short region);
-void closeScene7();
+void closeBridge();
 void bridgeViewNotify(View *view, short event);
-short scene7Key(unsigned short key);
+short bridgeKey(unsigned short key);
 void bridgeSnoidNotify(View *view, short event);
 void makeBridgeRule();
 short turnedBack(FeatureRules *rules, short edge, Snoid *snoid);

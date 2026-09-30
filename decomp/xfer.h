@@ -14,7 +14,7 @@ extern long g_4b98e0; /* @data 0x4b98e0 */
 extern char placeLevels[17]; /* @data 0x4b98e4: the places' levels (readPlaceLevels) */
 extern GroupList xferGroups[1]; /* @data 0x4a7e9e */
 extern ShortRect mapTitleRects[4]; /* @data 0x4a7ebe: where each map's name goes */
-extern short g_4a7ede; /* @data 0x4a7ede: in scene2Frame */
+extern short g_4a7ede; /* @data 0x4a7ede: in journeyFrame */
 extern short g_4a7ee0[4][5]; /* @data 0x4a7ee0: the places on each of xferMap's maps */
 extern Point g_4a7f08[16]; /* @data 0x4a7f08: where each map's grid starts */
 extern short g_4b98f6; /* @data 0x4b98f6 */
@@ -52,14 +52,14 @@ extern char g_4b99c1; /* @data 0x4b99c1 */
 extern char g_4b99c2; /* @data 0x4b99c2 */
 extern char g_4b99c3; /* @data 0x4b99c3 */
 
-void resetScene2();
-void openScene2();
-void closeScene2();
+void resetJourney();
+void openJourney();
+void closeJourney();
 void drawPopulationSign(View *view);
 void readPlaceLevels(char *levels);
 void placeMapImages(View *view);
-void scene2Frame();
-void scene2Clicked(short which);
+void journeyFrame();
+void journeyClicked(short which);
 unsigned long spreadGridMarks(long permille);
 void xferSnoidNotify(View *view, short event);
 void setUpGrid(char *grid, unsigned long stride, unsigned long rows, unsigned long columns,
@@ -69,7 +69,7 @@ void markGridCell(char *cell, long x, long y);
 void placeMapPlace(View *view);
 void drawGridView(View *view);
 void updateGridView(View *view, short region);
-long scene2Key(long);
+long journeyKey(long);
 void xferEndNotify(View *, short event);
 
 #endif

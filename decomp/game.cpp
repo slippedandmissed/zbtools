@@ -672,10 +672,10 @@ void updateSmokeButtons(View *, short region)
 
 /* Closes the scene. */
 /* @zoombi32 0x0044f1f2 */
-void closeScene17()
+void closeSmoke()
 {
-    if (scene17Open) {
-        scene17Open = 0;
+    if (smokeOpen) {
+        smokeOpen = 0;
         short saved = setFreeAtOnce(1);
 
         clearViews();
@@ -696,20 +696,20 @@ void closeScene17()
    next Zoombini across, g_4b266c of g_4b262e), and every 30 ticks
    while g_4b2762 has an idle Zoombini of the party fidget. */
 /* @zoombi32 0x0044f25d */
-void scene17Frame()
+void smokeFrame()
 {
     View *view;
     short i;
     short j;
     short done;
 
-    if (inScene17Frame || !scene17Open)
+    if (inSmokeFrame || !smokeOpen)
         return;
-    inScene17Frame = 1;
+    inSmokeFrame = 1;
     updateViews();
     if (g_4b0d52) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-            inScene17Frame = 0;
+            inSmokeFrame = 0;
             return;
         }
         if (!g_4b9688 || g_4b9688 == 3) {
@@ -719,8 +719,8 @@ void scene17Frame()
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
                 setCurrentMap(0);
-                closeScene17();
-                inScene17Frame = 0;
+                closeSmoke();
+                inSmokeFrame = 0;
                 return;
             }
         } else if (g_4b9688 == 2) {
@@ -730,7 +730,7 @@ void scene17Frame()
     }
     if (g_4b9684) {
         playAmbientSound();
-        inScene17Frame = 0;
+        inSmokeFrame = 0;
         return;
     }
     if (g_4b2644) {
@@ -902,7 +902,7 @@ void scene17Frame()
     } else if (g_4b2760 >= g_4b262e - 1)
         g_4b2760 = g_4b2762 = g_4b2758 = g_4b275c = 0;
     playAmbientSound();
-    inScene17Frame = 0;
+    inSmokeFrame = 0;
 }
 
 /* A view's drawing: its cels from the bank smokeImages, while it runs and
@@ -2266,7 +2266,7 @@ void advanceRightFeatures()
 /* Not exact: the original keeps `key` in esi and `show` in ebx (saving esi
    around the arrays' initial copies); this swaps them. */
 /* @zoombi32 0x00450a58 */
-short scene17Key(unsigned short key)
+short smokeKey(unsigned short key)
 {
     Color saved;
     char digits[52] = "01234";
@@ -4228,7 +4228,7 @@ short startRound()
  * opening scripts and sounds.
  */
 /* @zoombi32 0x0044e494 */
-void openScene17()
+void openSmoke()
 {
     short *scripts = g_4b2714;
     short *others = g_4b2724;
@@ -4240,7 +4240,7 @@ void openScene17()
     View *other;
 
     g_4b0d52 = 0;
-    scene17Open = 0;
+    smokeOpen = 0;
     g_4b2792 = 0;
     g_4b2788 = 0;
     g_4b26b0 = 0;
@@ -4439,7 +4439,7 @@ void openScene17()
     fadeInViews();
     chooseSnoids(0, 0);
     resetViewClock();
-    scene17Open = 1;
+    smokeOpen = 1;
     addSoundRange(996, 997, 0);
     addSoundRange(20000, 29999, 1);
     if (g_4b2630 != 3) {
@@ -4491,7 +4491,7 @@ void openScene17()
  * into the two lines of slots (g_4b2776).
  */
 /* @zoombi32 0x0044fa57 */
-void scene17Clicked(short action)
+void smokeClicked(short action)
 {
     Point where;
     short spot;
@@ -4510,7 +4510,7 @@ void scene17Clicked(short action)
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         setCurrentMap(0);
-        closeScene17();
+        closeSmoke();
         return;
     }
     switch (action) {

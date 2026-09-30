@@ -23,7 +23,7 @@
 /* Resets scene 8's state (the rules, the entries, the counts; the pace
    g_4b80a0 by g_4b2b00) and picks g_4b7fbc at random. */
 /* @zoombi32 0x0045e2d8 */
-void resetScene8()
+void resetTunnels()
 {
     short i;
 
@@ -56,7 +56,7 @@ void resetScene8()
 
 /* Closes scene 8. */
 /* @zoombi32 0x0045ea2b */
-void closeScene8()
+void closeTunnels()
 {
     if (g_4b7fb8) {
         g_4b7fb8 = 0;
@@ -219,7 +219,7 @@ void unghostDoorView()
    C, F, I and O step the views tunnelsSpeakers through their scripts, H
    adds 4 to g_4b8098. Returns whether the key was used. */
 /* @zoombi32 0x0045f63a */
-short scene8Key(unsigned short key)
+short tunnelsKey(unsigned short key)
 {
     short used = 0;
     ShortRect area = {0, 0, 350, 100};
@@ -1658,7 +1658,7 @@ void tunnelsSnoidNotify(View *view, short event)
    ticks), starts g_4b7fc2's script once (g_4b7fee), and every so often
    has an idle Zoombini fidget (8559 on), up to g_4b8098 times. */
 /* @zoombi32 0x0045ea81 */
-void scene8Frame()
+void tunnelsFrame()
 {
     short talking = 0;
     short aside = 0;
@@ -1691,7 +1691,7 @@ void scene8Frame()
                 g_4b0d50 = g_4b0d52;
                 g_4b0d52 = 0;
                 setCurrentMap(0);
-                closeScene8();
+                closeTunnels();
                 g_4a7888 = 0;
                 return;
             }
@@ -1822,13 +1822,13 @@ void scene8Frame()
    the backdrop, images and scripts, the views (the four placed at the
    doors, the characters, the buttons), the party, and a first remark. */
 /* @zoombi32 0x0045e441 */
-void openScene8()
+void openTunnels()
 {
     Point places[4] = {{98, 424}, {178, 415}, {453, 421}, {533, 430}};
     short i;
 
     g_4b7fb8 = tunnelsGoReady = 0;
-    resetScene8();
+    resetTunnels();
     g_4b807e++;
     g_4b7fbe = sceneLevel();
     switch (g_4b7fbe) {
@@ -1939,7 +1939,7 @@ void openScene8()
    `remark` in edi, the other way round, whatever the declaration order),
    and it adds 8000 to `remark` as 32 bits (`add edi, 0x1f40`). */
 /* @zoombi32 0x0045eff0 */
-void scene8Clicked(short which)
+void tunnelsClicked(short which)
 {
     short remark;
     View *view;
@@ -1962,7 +1962,7 @@ void scene8Clicked(short which)
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         setCurrentMap(0);
-        closeScene8();
+        closeTunnels();
         return;
     }
     switch (which) {
