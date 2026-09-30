@@ -12,13 +12,14 @@ void newSaveFileName(const char *, char *file, short *nextId);
 void fn_41f5d0();
 void fn_41f551();
 int fn_41d3e6(View *, short value);
-void fn_41d9e4(long);
-void fn_41d9eb(long, long);
+void fn_41d9e4(View *);
+void fn_41d9eb(View *, short);
 extern long g_4a0fd4;
 extern ShortRect g_4a11ac;
 extern Point g_4ab8e0;
 void fn_41dccb();
 void fn_41dbce();
+void openScene16();
 void fn_41dbab(View *view, short region);
 void fn_41e8f3(short id, short n);
 extern char *rosterError; /* @data 0x4aba80 */
@@ -120,6 +121,14 @@ extern short g_4a11b4[21]; /* @data 0x4a11b4 */
 extern short g_4a11de[21]; /* @data 0x4a11de */
 extern short g_4ab996[20]; /* @data 0x4ab996: g_4ab9be of them */
 extern short g_4ab9be; /* @data 0x4ab9be */
+extern short g_4a1008; /* @data 0x4a1008 */
+extern short g_4a100a; /* @data 0x4a100a */
+extern long g_4aba0c; /* @data 0x4aba0c */
+extern short g_4ab9f0; /* @data 0x4ab9f0 */
+extern short g_4ab9f2; /* @data 0x4ab9f2 */
+extern short g_4ab9f4; /* @data 0x4ab9f4 */
+extern short g_4a0fe6; /* @data 0x4a0fe6 */
+extern GroupList caveGroups[1]; /* @data 0x4a10a0 */
 extern short g_4aba08; /* @data 0x4aba08 */
 extern short g_4ab876; /* @data 0x4ab876 */
 extern Point *g_4ab8e8; /* @data 0x4ab8e8 */

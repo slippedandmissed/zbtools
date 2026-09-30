@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "e2memory.h"
 #include "features.h"
+#include "focus.h"
 #include "graphics.h"
 #include "jointext.h"
 #include "module_4623b8.h"
@@ -34,12 +35,12 @@ int fn_41d3e6(View *, short value)
 }
 
 /* @zoombi32 0x0041d9e4 */
-void fn_41d9e4(long)
+void fn_41d9e4(View *)
 {
 }
 
 /* @zoombi32 0x0041d9eb */
-void fn_41d9eb(long, long)
+void fn_41d9eb(View *, short)
 {
 }
 
@@ -334,6 +335,150 @@ void drawRosterButtonsView(View *)
 {
     drawRosterButton(1, 0, 0);
     drawRosterButton(2, 0, 0);
+}
+
+/* Opens scene 16, the caves (Caves.MHK): the state, the scripts and
+   sounds, the views for 20 places (the party's, and the cave's rows), the
+   roster's resources, and a line by the level. */
+/* @zoombi32 0x0041c09c */
+void openScene16()
+{
+    short i;
+    View *view;
+
+    fn_41dfe3(g_4ab878 = sceneLevel() + 1);
+    g_4a0fec = 0;
+    g_4b0d52 = 0;
+    g_4a0fe8 = 0;
+    g_4a1006 = 0;
+    g_4a1008 = 0;
+    g_4a100a = 0;
+    g_4b966e = 0;
+    g_4ab9fc = 0;
+    g_4aba00 = 0;
+    g_4aba04 = 0;
+    g_4aba06 = 0;
+    g_4aba08 = 0;
+    g_4aba0c = 0;
+    g_4ab9be = 0;
+    g_4ab994 = 0;
+    g_4ab8e8 = 0;
+    fillMemory(g_4ab9c4, 0, 44);
+    fillMemory(g_4ab996, 0, 40);
+    openGameFile(&g_4ab83c, "Caves.MHK");
+    fn_46be2e(g_4ab83c);
+    g_4a1020 = loadImageBank(11000, &g_4a0fd0);
+    loadTerrain(100);
+    loadPaths(1000);
+    drawBackdrop(5000);
+    loadFeatureGroup(6000, 0, 0);
+    loadFeatureGroup(9000, 1, 0);
+    loadFeatureGroup(7000, 2, 0);
+    g_4a0ffe = 1;
+    g_4a0ffc = g_4a0ffe * 200 + 8000;
+    g_4a0ffe = g_4a0ffe * 4 + 12000;
+    loadFeatureGroup(g_4a0ffc, 3, 0);
+    loadFeatureGroup(9025, 4, 0);
+    loadScripts(6000, 13);
+    addScripts(9000, 20, 0);
+    addScripts(7000, 20, 0);
+    addScripts(g_4a0ffc, 80, 0);
+    addScripts(9025, 4, 0);
+    loadSnoidScripts(12000, 14, 0);
+    addSnoidScripts(13000, 5, 0);
+    fn_4148da(10, 236);
+    g_4ab9f0 = addView(0x4088000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
+    g_4ab9f2 = addView(0x4088000, drawCels, runViewScript, 6001, 6, 0, 0, 0);
+    g_4ab9f4 = addView(0x4188000, drawCels, runViewScript, 6002, 8, 0, 0, 0);
+    setViewPlaces(20, g_4a115c, 1);
+    makePartySnoids(0);
+    g_4a1014 = listChosenSnoids()->count;
+    g_4aba04 = g_4a1014 - 1;
+    g_4a1016 = 20 - g_4a1014;
+    if (g_4a1016 > 4)
+        g_4a1016 = 4;
+    if (g_4a1016)
+        g_4ab96a[0] = addView(0x4108000, drawCels, runViewScript, g_4a1016 + 9024, 6, 0, 0, 0);
+    g_4a100c = 21 - g_4a1014;
+    {
+        short rows = g_4a100c;
+
+        if (rows > 5)
+            ; /* the original tests this and does nothing */
+    }
+    for (i = 0; i < 4; i++)
+        placedViews[i] = addView(0x508a000, drawCels, runViewScript, i + 7000, 7, &g_4a10a8[i + 1], 0, 0);
+    for (i = 5; i < 12; i++) {
+        g_4ab96a[i] = addView(0x4108000, drawCels, runViewScript, i + 8999, 6, 0, 0, 0);
+        g_4ab9c4[i] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+        placedViews[i - 1] = addView(0x508a000, drawCels, runViewScript, i + 6999, 7, &g_4a10a8[i], 0, 0);
+    }
+    g_4ab96a[15] = addView(0x4108000, drawCels, runViewScript, 9014, 6, 0, 0, 0);
+    g_4ab9c4[15] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+    g_4ab96a[14] = addView(0x4108000, drawCels, runViewScript, 9013, 6, 0, 0, 0);
+    g_4ab9c4[14] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+    g_4ab96a[13] = addView(0x4108000, drawCels, runViewScript, 9012, 6, 0, 0, 0);
+    g_4ab9c4[13] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+    g_4ab96a[12] = addView(0x4108000, drawCels, runViewScript, 9011, 6, 0, 0, 0);
+    g_4ab9c4[12] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+    placedViews[11] = addView(0x508a000, drawCels, runViewScript, 7011, 7, &g_4a10a8[12], 0, 0);
+    placedViews[12] = addView(0x508a000, drawCels, runViewScript, 7012, 7, &g_4a10a8[13], 0, 0);
+    placedViews[13] = addView(0x508a000, drawCels, runViewScript, 7013, 7, &g_4a10a8[14], 0, 0);
+    placedViews[14] = addView(0x508a000, drawCels, runViewScript, 7014, 7, &g_4a10a8[15], 0, 0);
+    moveView(placedViews[11], 1, g_4ab9c4[12]);
+    moveView(placedViews[12], 1, g_4ab9c4[13]);
+    moveView(placedViews[13], 1, g_4ab9c4[14]);
+    moveView(placedViews[14], 1, g_4ab9c4[15]);
+    for (i = 16; i < 21; i++) {
+        g_4ab96a[i] = addView(0x4108000, drawCels, runViewScript, i + 8999, 6, 0, 0, 0);
+        g_4ab9c4[i] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+        placedViews[i - 1] = addView(0x508a000, drawCels, runViewScript, i + 6999, 7, &g_4a10a8[i], 0, 0);
+    }
+    g_4ab9c4[21] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+    for (i = 0; i < g_4a1016; i++)
+        g_4b83e4[i] = g_4ab96a[0];
+    g_4ab9f8 = addView(0x4000000, drawCels, runViewScript, 6012, 0, 0, 0, 0);
+    g_4ab9f8 = addView(0x8180000, drawCels, runViewScript, g_4a1000 + 1, 9, 0, 0, 0);
+    fadeOutViews();
+    fn_4148da(10, 236);
+    fn_41dbce();
+    fn_41e0e3();
+    fn_41e326(g_4ab878);
+    g_4a101c = addView(0x8000, fn_41dadf, fn_41dbab, 0, 0, 0, 0, 0);
+    addView(0x1000, drawRosterButtonsView, fn_41d972, 0, 0, 0, 0, 0);
+    enterSnoids(0);
+    updateViews();
+    staggerSnoids(45, 30);
+    g_4a0fe6 = g_4a0fea = countChosenSnoids() >= 20;
+    setGroupLists(caveGroups, 1, (short)0xc000);
+    drawRosterButton(1, 0, 0);
+    drawRosterButton(2, 0, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    chooseSnoids(0, 0);
+    resetViewClock();
+    view = findView(g_4a101c);
+    if (view)
+        view->nextUpdate = clockTime() + 120;
+    g_4a0fec = 1;
+    addSoundRange(996, 997, 0);
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(6006, 6006, 0);
+    addSoundRange(6001, 6001, 0);
+    addSoundRange(6008, 6008, 0);
+    addSoundRange(6000, 6000, 0);
+    addSoundRange(6005, 6005, 0);
+    addSoundRange(6004, 6004, 0);
+    addSoundRange(6003, 6003, 0);
+    addSoundRange(6007, 6007, 0);
+    addSoundRange(6002, 6002, 0);
+    addSoundRange(8200, 12001, 0);
+    addSoundRange(425, 499, 0);
+    addSoundRange(600, 799, 0);
+    if (g_4ab878 < 4)
+        queueViewSound(sceneLevel() + 30025, 0);
+    campHint((short *)(g_4a4ba0 + 0x40));
+    g_4b966e = 20065;
 }
 
 /* Closes the roster screen. */
