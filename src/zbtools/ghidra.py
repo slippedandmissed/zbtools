@@ -655,6 +655,48 @@ def _recover_switches(program: "Program") -> list[int]:
     return sorted(set(fixed))
 
 
+def _merge_jump_labels(program: "Program", exe: Executable) -> list[int]:
+    """Hand-written loops load a label's address into a register to jump to it
+    later (`mov ebx, label` ... `jmp ebx`: copyPixels' inner loop, 0x4899ed,
+    and drawPackedPixels', 0x48cfc9 and 0x48d03f), and Ghidra makes the label a
+    function, as it's relocated. Where every relocated reference to an
+    automatically named function is a `mov r32, imm32` inside the function
+    before it (including labels merged into that one already), merge it into
+    that function. A callback's address is stored or pushed instead, never
+    loaded by `mov r32`. Returns the labels merged."""
+    from ghidra.program.model.address import AddressSet  # noqa: PLC0415
+    from ghidra.program.model.symbol import SourceType  # noqa: PLC0415
+
+    manager = program.getFunctionManager()
+    sites: dict[int, list[int]] = collections.defaultdict(list)
+    for site in exe.relocations:
+        sites[exe.pointer(site)].append(site)
+    merged = []
+    owner: Function | None = None
+    for function in list(manager.getFunctions(True)):
+        entry = int(function.getEntryPoint().getOffset())
+        references = sites.get(entry, [])
+        automatic = function.getSymbol().getSource() == SourceType.DEFAULT
+        if (
+            owner is not None
+            and automatic
+            and references
+            and all(
+                0xB8 <= exe.read(site - 1, 1)[0] <= 0xBF
+                and owner.getBody().contains(function.getEntryPoint().getNewAddress(site - 1))
+                for site in references
+            )
+        ):
+            body = AddressSet(owner.getBody())
+            body.add(function.getBody())
+            manager.removeFunction(function.getEntryPoint())
+            owner.setBody(body)
+            merged.append(entry)
+            continue
+        owner = function
+    return merged
+
+
 def _merge_fragments(program: "Program") -> list[int]:
     """Ghidra sometimes starts a function after another's first instructions:
     0x478572 is a 6-byte prologue that falls through into a "function" at
@@ -838,7 +880,7 @@ def label() -> None:
     classes`), the names of functions decompiled in decomp/, calling
     conventions, the types and globals declared in decomp/'s headers, the
     ends of functions Ghidra cut short at a breakpoint or a switch, and the
-    fragments it split off functions.
+    fragments and jump labels it split off functions.
     Names you've set by hand are kept."""
     found = runtime_symbols.load()
     classes = rtti.load().classes
@@ -867,6 +909,7 @@ def label() -> None:
             conventions = _set_calling_conventions(program)
             switches = _recover_switches(program)
             fragments = _merge_fragments(program)
+            labels = _merge_jump_labels(program, exe)
         program.save("Recovered symbols", pyghidra.task_monitor())
         _write_functions(list_functions(program))
     print(
@@ -898,3 +941,6 @@ def label() -> None:
     if fragments:
         where = ", ".join(f"{a:#x}" for a in fragments)
         print(f"Merged {len(fragments)} fragments into the functions before them: {where}.")
+    if labels:
+        where = ", ".join(f"{a:#x}" for a in labels)
+        print(f"Merged {len(labels)} jump labels into the functions that use them: {where}.")
