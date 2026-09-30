@@ -6,7 +6,9 @@ The target is the 1996 Windows release by Broderbund. The disc ships two builds 
 
 ## Status
 
-Early days. Nothing is decompiled yet; see the [roadmap](#roadmap) for what's next.
+Every function in `zoombi32.exe`'s game code and Mohawk engine (about 2,100 functions) has been decompiled to C++ in `decomp/`. 1,915 of them compile, with Borland C++ 4.5, to exactly the original bytes (`decomp/matching.txt`); 176 differ only slightly, mostly in which registers the compiler picks, and 37 are written as portable code in place of the original's inline assembly. The Borland runtime and QuickTime's SDK glue are library code and aren't decompiled.
+
+The code doesn't build into a working executable yet: the game's data, its resources and the link are next (see the [roadmap](#roadmap)).
 
 ## Setup
 
@@ -116,7 +118,8 @@ uv run ghidra label         # apply both to the Ghidra project, with QuickTime's
                             # names of functions decompiled in decomp/, the types and globals in
                             # decomp/'s headers, and set calling conventions (never overwrites
                             # names or types you've set by hand); also fixes functions
-                            # Ghidra cut short at a switch table or a breakpoint
+                            # Ghidra cut short at a switch table or a breakpoint, and merges
+                            # back fragments and jump labels it split off functions
 ```
 
 Work you do in Ghidra's GUI (names, comments, types) lives in the project, so no default `clean` removes it; `uv run ghidra setup --force` recreates the project from scratch.
@@ -242,7 +245,11 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Switch `decomp/` to C++; demangle Borland names
 - [x] Harvest class names (RTTI) and vtables; teach Ghidra the calling conventions
 - [x] Settle the compiler: Borland C++ 4.5 (4.52 is identical) with default options
-- [ ] Decompile the game, function by function
+- [x] Decompile the game and the engine, function by function (every function written)
+- [ ] Byte-match the remaining near-misses, where practical
+- [ ] Define the game's initialised data and resources, and check them against the original
+- [ ] Link the decompiled code with TLINK32 into a working `zoombi32.exe`, and test it in the VM
+- [ ] Port to a modern platform layer
 
 ## Legal
 
