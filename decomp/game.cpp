@@ -1727,7 +1727,7 @@ void layOutGrid()
 
 /* Starts the hex grid at the cell after `cell`: puts the first of the
    party on it (the next one alike to the one before it), then grows the
-   grid from there (growGrid) and from the 13 cells of g_4a4418 while
+   grid from there (growGrid) and from the 13 cells of `order` while
    anyLeftToPlace allows. `cell` is reused for the search and growGrid's
    result, as in the original. */
 /* @zoombi32 0x0044cc51 */
@@ -2866,7 +2866,7 @@ short dragSnoidToSpot(View *view, Point where)
     return spot;
 }
 
-/* Places the party on the 16 starting cells (g_4a445a: the first
+/* Places the party on the 16 starting cells (`cells`: the first
    partySize of them taken, state 507, by the Zoombinis in order; the rest
    state 501), then marks the cells between each placed Zoombini and its
    neighbours with a feature they share (markSharedFeature). */

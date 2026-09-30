@@ -162,7 +162,7 @@ void startView9002(short n)
 {
     short which = n % 5;
 
-    startView(g_4ac310[n], which + 9002, 0, 0);
+    startView(room9002Views[n], which + 9002, 0, 0);
 }
 
 /* @zoombi32 0x00427610 */
@@ -170,7 +170,7 @@ void startView9007(short n)
 {
     short which = n % 5;
 
-    startView(g_4ac40a[n], which + 9007, 0, 0);
+    startView(room9007Views[n], which + 9007, 0, 0);
 }
 
 /* Loads two 'REGS' tables (`id` and the next) into *first and *second. */
@@ -186,8 +186,8 @@ void loadTablePair(long *resources, short id, short **first, short **second)
 /* @zoombi32 0x004280fd */
 void deleteHotelTalker()
 {
-    deleteView(g_4ac0ba);
-    g_4ac0ba = 0;
+    deleteView(hotelTalkerView);
+    hotelTalkerView = 0;
     if (soundOn && lastViewSound) {
         stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
         lastViewSound = 0;
@@ -241,8 +241,8 @@ void hopperNotify(View *view, short event)
         }
         break;
     case 20:
-        g_4acd4c[g_4acd74] = view->id;
-        g_4acd74++;
+        planQueue[planQueueCount] = view->id;
+        planQueueCount++;
         break;
     case 25:
         break;
@@ -285,10 +285,10 @@ void startRoomAnimations()
 {
     short ids[15] = {0, 1, 2, 3, 4, 7, 10, 11, 12, 13, 14, 20, 22, 23, 24};
 
-    if (!g_4ac0e4) {
+    if (!roomsFilled) {
         for (short i = 0; i < 15; i++)
-            startView(g_4abfc0[ids[i]], ids[i] + 6013, 0, 0);
-        g_4ac0d6 = 3;
+            startView(roomDoorViews[ids[i]], ids[i] + 6013, 0, 0);
+        roomAnimStage = 3;
         queueViewSound(7047, 0);
     }
 }
@@ -296,23 +296,23 @@ void startRoomAnimations()
 /* @zoombi32 0x0042b7e7 */
 void setLillyLevel(short level)
 {
-    g_4ac91e = 0;
+    unusedLillyLevel = 0;
     switch (level) {
     case 1:
-        g_4ac920 = 0;
-        g_4af0f8 = 0;
+        lillyLevelParam = 0;
+        startCount = 0;
         break;
     case 2:
-        g_4ac920 = 4;
-        g_4af0f8 = 0;
+        lillyLevelParam = 4;
+        startCount = 0;
         break;
     case 3:
-        g_4ac920 = 5;
-        g_4af0f8 = 2;
+        lillyLevelParam = 5;
+        startCount = 2;
         break;
     case 4:
-        g_4ac920 = 6;
-        g_4af0f8 = 3;
+        lillyLevelParam = 6;
+        startCount = 3;
         break;
     }
 }
@@ -321,16 +321,16 @@ void setLillyLevel(short level)
 void updateHotelButtons(View *view, short region)
 {
     if (hotelGoReady) {
-        if (!g_4a1aac) {
-            g_4a1aac = 1;
+        if (!hotelButton2Lit) {
+            hotelButton2Lit = 1;
             unionRgnRect(region, &hotelButtons[2].rect);
         }
-    } else if (g_4a1aac) {
-        g_4a1aac = 0;
+    } else if (hotelButton2Lit) {
+        hotelButton2Lit = 0;
         unionRgnRect(region, &hotelButtons[2].rect);
     }
-    if (!g_4a1aae) {
-        g_4a1aae = 1;
+    if (!hotelButton1Drawn) {
+        hotelButton1Drawn = 1;
         unionRgnRect(region, &hotelButtons[1].rect);
     }
 }
@@ -339,16 +339,16 @@ void updateHotelButtons(View *view, short region)
 void updateLillyButtons(View *view, short region)
 {
     if (lillyGoReady) {
-        if (!g_4a1d6c) {
-            g_4a1d6c = 1;
+        if (!lillyButton2Lit) {
+            lillyButton2Lit = 1;
             unionRgnRect(region, &lillyButtons[2].rect);
         }
-    } else if (g_4a1d6c) {
-        g_4a1d6c = 0;
+    } else if (lillyButton2Lit) {
+        lillyButton2Lit = 0;
         unionRgnRect(region, &lillyButtons[2].rect);
     }
-    if (!g_4a1d6e) {
-        g_4a1d6e = 1;
+    if (!lillyButton1Drawn) {
+        lillyButton1Drawn = 1;
         unionRgnRect(region, &lillyButtons[1].rect);
     }
 }
@@ -366,12 +366,12 @@ void lillyActorNotify(View *view, short event)
             snoidsOnTheirWay = 0;
         break;
     case 2:
-        g_4ace72[g_4ace9a] = self->id;
-        g_4ace9a++;
+        event2Views[event2Count] = self->id;
+        event2Count++;
         break;
     case 3:
-        g_4ace9c[g_4acec4] = self->id;
-        g_4acec4++;
+        event3Views[event3Count] = self->id;
+        event3Count++;
         break;
     case 0:
     case 4:
@@ -410,9 +410,9 @@ void lillyNotify60(View *view, short event)
         actor->body.unknownAa = body->cels[0].x;
         actor->body.unknownAc = body->cels[0].y;
         lillyBoard[actor->row][actor->column + 1].attributes[0] = 0;
-        g_4acdf4[g_4ace1c] = view->id;
-        g_4ace1c++;
-        g_4acfee = 0;
+        event60Views[event60Count] = view->id;
+        event60Count++;
+        jumperBusy = 0;
         break;
     }
 }
@@ -431,7 +431,7 @@ void lillyNotify49(View *view, short event)
         actor->body.unknownAc = body->cels[0].y;
         actor->unknownC2 = 0;
         view->flags = 0x980002;
-        g_4acfe8 = view->id;
+        landedJumper = view->id;
         break;
     }
 }
@@ -607,7 +607,7 @@ void startRoomColumnViews()
 /* @zoombi32 0x0042e6b5 */
 void checkLillyArrivals()
 {
-    short count = g_4af0ea;
+    short count = padsArrived;
 
     for (short i = 0; i < actorCount; i++) {
         View *view = findView(actorViews[i]);
@@ -625,7 +625,7 @@ void checkLillyArrivals()
             }
         }
     }
-    if (count < g_4af0e8)
+    if (count < lillyPartySize)
         if (randomBetween(0, 4) > lillyLevel - 1 || (*(short *)(gameState + 0x34) & 0xfff) <= 3)
             queueViewSound(randomBetween(20045, 20048), 0);
 }
@@ -743,9 +743,9 @@ void lillyNotify54(View *view, short event)
         actor->body.unknownAa = body->cels[0].x;
         actor->body.unknownAc = body->cels[0].y;
         lillyBoard[actor->row][actor->column + 1].attributes[0] = 0;
-        g_4acff2 = g_4acff0;
+        finishedLander = landerBusy;
         for (short i = 0; i < 13; i++)
-            if (actorViews[i] == g_4acff2) {
+            if (actorViews[i] == finishedLander) {
                 for (; actorViews[i]; i++)
                     actorViews[i] = actorViews[i + 1];
                 i = 13;
@@ -805,8 +805,8 @@ void lillyNotify44(View *view, short event)
         actor->body.unknownAa = actorHotSpotsX[body->cels[0].image] + body->cels[0].x;
         actor->body.unknownAc = actorHotSpotsY[body->cels[0].image] + body->cels[0].y;
         lillyBoard[actor->row][actor->column + 1].attributes[0] = 0;
-        g_4ace1e[g_4ace46] = view->id;
-        g_4ace46++;
+        event44Views[event44Count] = view->id;
+        event44Count++;
         break;
     }
 }
@@ -817,20 +817,20 @@ void countFeatureValues()
 {
     short counts[4][6];
 
-    g_4ac106[0] = 0;
-    g_4ac106[1] = 0;
-    g_4ac106[2] = 0;
-    g_4ac106[3] = 0;
-    g_4ac508 = listChosenSnoids();
-    g_4ac0e8 = g_4ac508->count;
+    hotelValueCounts[0] = 0;
+    hotelValueCounts[1] = 0;
+    hotelValueCounts[2] = 0;
+    hotelValueCounts[3] = 0;
+    hotelChosen = listChosenSnoids();
+    hotelPartySize = hotelChosen->count;
     fillMemory(counts, 0, sizeof counts);
-    for (short i = 0; i < g_4ac0e8; i++)
+    for (short i = 0; i < hotelPartySize; i++)
         for (short j = 0; j < 4; j++)
-            counts[j][g_4ac508->features[i][j]]++;
+            counts[j][hotelChosen->features[i][j]]++;
     for (short feature = 0; feature < 4; feature++)
         for (short value = 1; value < 6; value++)
             if (counts[feature][value])
-                g_4ac106[feature]++;
+                hotelValueCounts[feature]++;
 }
 
 /* Draws `number` in a box at `rect`. */
@@ -895,18 +895,18 @@ void lillyNotify70(View *view, short event)
         actor->body.y = body->cels[0].y;
         actor->body.unknownAa = body->cels[0].x;
         actor->body.unknownAc = body->cels[0].y;
-        g_4ac9e6[g_4acb06] = view->id;
-        g_4acb06++;
+        hopperQueue[hopperQueueCount] = view->id;
+        hopperQueueCount++;
         break;
     case 80:
         lillyBoard[actor->row][actor->column].attributes[0] = 0;
-        g_4aed80[g_4af0e0] = view->id;
-        g_4af0e0++;
-        for (short i = 0; i < g_4af0e6; i++)
-            if (g_4aeea0[i] == view->id) {
-                for (; g_4aeea0[i]; i++)
-                    g_4aeea0[i] = g_4aeea0[i + 1];
-                g_4af0e6--;
+        event80Views[event80Count] = view->id;
+        event80Count++;
+        for (short i = 0; i < actorsOutCount; i++)
+            if (actorsOut[i] == view->id) {
+                for (; actorsOut[i]; i++)
+                    actorsOut[i] = actorsOut[i + 1];
+                actorsOutCount--;
             }
         break;
     }
@@ -918,7 +918,7 @@ void lillyNotify70(View *view, short event)
 /* @zoombi32 0x00428009 */
 void drawIdBox(short id)
 {
-    ShortRect rect = g_4a1ae6;
+    ShortRect rect = viewIdBoxRect;
     char text[12];
 
     sprintf(text, "id=%u", id);
@@ -972,7 +972,7 @@ void mirrorGrid(short (*grid)[12], short how)
 /* @zoombi32 0x00427edc */
 void clearWay(short x)
 {
-    for (short i = 0; i < g_4ac0e8; i++) {
+    for (short i = 0; i < hotelPartySize; i++) {
         View *view = findView(partyViews[i]);
 
         if (view && view->body.running) {
@@ -1059,20 +1059,20 @@ void placeViewOnSquare(short id, short row, short column)
 void drawSquareImage(short row, short column, char offset)
 {
     LillyCell *cell = &lillyBoard[row][column];
-    short image = g_4a1e20[lillyBoard[row][column].attributes[2]] + offset;
+    short image = squareImageBase[lillyBoard[row][column].attributes[2]] + offset;
     unsigned short *data;
     short x;
     short y;
 
     if (image > 0 && image < 36) {
-        data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+        data = (unsigned short *)((char *)lillyImages + lillyImages->offsets[image]);
         x = cell->rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[2] + 1];
         y = cell->rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[2] + 1];
         drawImageData(data, x, y, 8);
     }
     image = lillyBoard[row][column].attributes[4];
     if (image > 0 && image < 36) {
-        data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+        data = (unsigned short *)((char *)lillyImages + lillyImages->offsets[image]);
         x = cell->rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[4]];
         y = cell->rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[4]];
         drawImageData(data, x, y, 8);
@@ -1092,8 +1092,8 @@ short moveActorDown(View *view)
     char column;
 
     if (body[26]) {
-        g_4acec6[g_4acfe6] = view->id;
-        g_4acfe6++;
+        replanQueue[replanQueueCount] = view->id;
+        replanQueueCount++;
         body[25] = 0;
         body[26] = 0;
         return 0;
@@ -1108,12 +1108,12 @@ short moveActorDown(View *view)
     }
     if (!blocked) {
         if (!lillyBoard[row][column].attributes[0]) {
-            actor->unknownDe = g_4aece6[0].attribute;
+            actor->unknownDe = lillyStarts[0].attribute;
             actor->unknownDf = lillyBoard[row][column].attributes[actor->unknownDe];
-            actor->unknownE0 = g_4a1b1e[g_4a1b38[actor->unknownDe]] + actor->unknownDf;
+            actor->unknownE0 = squareSetC[attributeImageIndex[actor->unknownDe]] + actor->unknownDf;
             actor->grid[row][column] = 1;
             body[26] = 1;
-        } else if (g_4aebae[row][column] != 1 && !g_4aebae[row][column]) {
+        } else if (squareClaims[row][column] != 1 && !squareClaims[row][column]) {
             return 0;
         }
     }
@@ -1137,10 +1137,10 @@ void drawFeatureLabels()
     saved = setForeColor(Color(0xb));
     fillPortRect(Rect(whole), Color(0xe), 0);
     frameRect(Rect(whole));
-    drawText(Rect(left), 0x22, &names[g_4ac0de * 2], 0xffff);
-    drawText(Rect(whole), 0x22, &names[g_4ac0e0 * 2], 0xffff);
+    drawText(Rect(left), 0x22, &names[rowSortFeature * 2], 0xffff);
+    drawText(Rect(whole), 0x22, &names[columnSortFeature * 2], 0xffff);
     if (hotelLevel == 3)
-        drawText(Rect(right), 0x22, &names[g_4ac0e2 * 2], 0xffff);
+        drawText(Rect(right), 0x22, &names[layerSortFeature * 2], 0xffff);
     setForeColor(saved);
     showRect(&whole);
 }
@@ -1253,21 +1253,21 @@ void lillyNotify30(View *view, short event)
         actor->body.y = actorHotSpotsY[body->cels[0].image] + body->cels[0].y;
         actor->body.unknownAa = actorHotSpotsX[body->cels[0].image] + body->cels[0].x;
         actor->body.unknownAc = actorHotSpotsY[body->cels[0].image] + body->cels[0].y;
-        g_4ac91c++;
-        if (g_4ac91c == 1)
+        firstArrivals++;
+        if (firstArrivals == 1)
             lillyGoReady = 1;
         actor->unknownDb++;
         actor->unknownD6 = 0;
         if (actor->unknownDb == 2) {
-            g_4acdca[g_4acdf2] = view->id;
-            g_4acdf2++;
+            landerQueue[landerQueueCount] = view->id;
+            landerQueueCount++;
         } else {
-            g_4acda0[g_4acdc8] = view->id;
-            g_4acdc8++;
+            jumperQueue[jumperQueueCount] = view->id;
+            jumperQueueCount++;
         }
         lillyBoard[actor->row][actor->column].attributes[0] = 0;
         body->cels[2].image = 0;
-        moveView(actor->unknownE1, 0, g_4aed14);
+        moveView(actor->unknownE1, 0, lillyLayerView3);
         View *other = findView(actor->unknownE1);
 
         if (other) {
@@ -1279,11 +1279,11 @@ void lillyNotify30(View *view, short event)
             View *rider = findView(parts[13]);
 
             if (rider) {
-                g_4af0ea++;
+                padsArrived++;
                 viewSnoid(rider)->unknownF7 = 1;
             }
         }
-        if (g_4af0ea == g_4af0e8)
+        if (padsArrived == lillyPartySize)
             queueViewSound(randomBetween(20055, 20063), 0);
         break;
     }
@@ -1300,14 +1300,14 @@ void drawSquare(short row, short column)
     short y;
 
     if (image > 0 && image < 22) {
-        data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+        data = (unsigned short *)((char *)lillyImages + lillyImages->offsets[image]);
         x = lillyBoard[row][column].rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[2] + 1];
         y = lillyBoard[row][column].rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[2] + 1];
         drawImageData(data, x, y, 8);
     }
     image = lillyBoard[row][column].attributes[4];
     if (image > 0 && image < 22) {
-        data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+        data = (unsigned short *)((char *)lillyImages + lillyImages->offsets[image]);
         x = lillyBoard[row][column].rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[4]];
         y = lillyBoard[row][column].rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[4]];
         drawImageData(data, x, y, 8);
@@ -1327,14 +1327,14 @@ void drawBoard(View *)
         for (short column = 0; column < 12; column++) {
             image = lillyBoard[row][column].attributes[2] + 1;
             if (image > 0 && image < 22) {
-                data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+                data = (unsigned short *)((char *)lillyImages + lillyImages->offsets[image]);
                 x = lillyBoard[row][column].rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[2] + 1];
                 y = lillyBoard[row][column].rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[2] + 1];
                 drawImageData(data, x, y, 8);
             }
             image = lillyBoard[row][column].attributes[4];
             if (image > 0 && image < 22) {
-                data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+                data = (unsigned short *)((char *)lillyImages + lillyImages->offsets[image]);
                 x = lillyBoard[row][column].rect.left - squareHotSpotsX[lillyBoard[row][column].attributes[4]];
                 y = lillyBoard[row][column].rect.top - squareHotSpotsY[lillyBoard[row][column].attributes[4]];
                 drawImageData(data, x, y, 8);
@@ -1348,29 +1348,29 @@ void drawCursorSquare(View *view)
 {
     if (view->body.running) {
         LillyCell *cell = &lillyBoard[cursorRow][cursorColumn];
-        short image = g_4a1e16[lillyBoard[cursorRow][cursorColumn].attributes[2]] + g_4a1e28[g_4a1e30];
+        short image = cursorImageBase[lillyBoard[cursorRow][cursorColumn].attributes[2]] + cursorFrameOffsets[cursorSquareFrame];
         unsigned short *data;
         short x;
         short y;
 
         if (image > 0 && image < 36) {
-            data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+            data = (unsigned short *)((char *)lillyImages + lillyImages->offsets[image]);
             x = cell->rect.left - squareHotSpotsX[lillyBoard[cursorRow][cursorColumn].attributes[2] + 1];
             y = cell->rect.top - squareHotSpotsY[lillyBoard[cursorRow][cursorColumn].attributes[2] + 1];
             drawImageData(data, x, y, 8);
         }
         image = lillyBoard[cursorRow][cursorColumn].attributes[4];
         if (image > 0 && image < 36) {
-            data = (unsigned short *)((char *)g_4af5a0 + g_4af5a0->offsets[image]);
+            data = (unsigned short *)((char *)lillyImages + lillyImages->offsets[image]);
             x = cell->rect.left - squareHotSpotsX[lillyBoard[cursorRow][cursorColumn].attributes[4]];
             y = cell->rect.top - squareHotSpotsY[lillyBoard[cursorRow][cursorColumn].attributes[4]];
             drawImageData(data, x, y, 8);
         }
         if (clockTime() >= view->nextUpdate) {
             view->nextUpdate = clockTime() + view->interval;
-            g_4a1e30++;
-            if (g_4a1e30 > 3)
-                g_4a1e30 = 0;
+            cursorSquareFrame++;
+            if (cursorSquareFrame > 3)
+                cursorSquareFrame = 0;
         }
     }
 }
@@ -1390,7 +1390,7 @@ void searchStep(short attribute, short layer, short row, short column)
     char c;
     char r;
 
-    if (g_4ad7e0[layer].marks[row][column])
+    if (layerSearches[layer].marks[row][column])
         for (short direction = 0; direction < 4; direction++) {
             open = 1;
             c = column;
@@ -1429,13 +1429,13 @@ void searchStep(short attribute, short layer, short row, short column)
                 back = 1;
                 break;
             }
-            if (open && lillyBoard[r - 1][c].attributes[attribute] == layer && !g_4ad7e0[layer].marks[r][c]) {
-                g_4af668[g_4af8a8].x = c;
-                g_4af668[g_4af8a8].y = r;
-                g_4af8a8++;
-                g_4ad7e0[layer].ways[r][c] = back;
-                g_4ad7e0[layer].steps[r][c] = g_4ad7e0[layer].steps[row][column] + 1;
-                g_4ad7e0[layer].marks[r][c] = g_4ad7e0[layer].marks[row][column];
+            if (open && lillyBoard[r - 1][c].attributes[attribute] == layer && !layerSearches[layer].marks[r][c]) {
+                searchQueue[searchQueueEnd].x = c;
+                searchQueue[searchQueueEnd].y = r;
+                searchQueueEnd++;
+                layerSearches[layer].ways[r][c] = back;
+                layerSearches[layer].steps[r][c] = layerSearches[layer].steps[row][column] + 1;
+                layerSearches[layer].marks[r][c] = layerSearches[layer].marks[row][column];
             }
         }
 }
@@ -1499,10 +1499,10 @@ void placeJumper(View *view)
 
 /*
  * Deals out the twelve squares' contents: three sets (3, 4 and 5 entries,
- * copied from g_4a1e3c, g_4a1e56 and g_4a1b1e), each square taking one of
+ * copied from squareSetA, squareSetB and squareSetC), each square taking one of
  * its set's remaining entries at random.
  */
-/* Not exact: register allocation (the original caches g_4af5b0's address
+/* Not exact: register allocation (the original caches squareSets's address
    in edi and keeps the square in esi). */
 /* @zoombi32 0x0042ca39 */
 void dealSquares()
@@ -1514,19 +1514,19 @@ void dealSquares()
     short i;
 
     for (i = 0; i < 3; i++) {
-        g_4af5bc[i] = g_4a1e3c[i];
-        g_4af5c4[i] = g_4a1e56[i];
-        g_4af5cc[i] = g_4a1b1e[i];
+        squareSetA3[i] = squareSetA[i];
+        squareSetB3[i] = squareSetB[i];
+        squareSetC3[i] = squareSetC[i];
     }
     for (i = 3; i < 7; i++) {
-        g_4af5d4[i - 3] = g_4a1e3c[i];
-        g_4af5de[i - 3] = g_4a1e56[i];
-        g_4af5e8[i - 3] = g_4a1b1e[i];
+        squareSetA4[i - 3] = squareSetA[i];
+        squareSetB4[i - 3] = squareSetB[i];
+        squareSetC4[i - 3] = squareSetC[i];
     }
     for (i = 7; i < 12; i++) {
-        g_4af5f2[i - 7] = g_4a1e3c[i];
-        g_4af5fe[i - 7] = g_4a1e56[i];
-        g_4af60a[i - 7] = g_4a1b1e[i];
+        squareSetA5[i - 7] = squareSetA[i];
+        squareSetB5[i - 7] = squareSetB[i];
+        squareSetC5[i - 7] = squareSetC[i];
     }
     left1 = 2;
     left2 = 3;
@@ -1536,18 +1536,18 @@ void dealSquares()
         case 1:
         case 2:
         case 3:
-            g_4af5b0[0] = g_4af5bc;
-            g_4af5b0[1] = g_4af5c4;
-            g_4af5b0[2] = g_4af5cc;
+            squareSets[0] = squareSetA3;
+            squareSets[1] = squareSetB3;
+            squareSets[2] = squareSetC3;
             left = &left1;
             break;
         case 4:
         case 5:
         case 6:
         case 7:
-            g_4af5b0[0] = g_4af5d4;
-            g_4af5b0[1] = g_4af5de;
-            g_4af5b0[2] = g_4af5e8;
+            squareSets[0] = squareSetA4;
+            squareSets[1] = squareSetB4;
+            squareSets[2] = squareSetC4;
             left = &left2;
             break;
         case 8:
@@ -1555,21 +1555,21 @@ void dealSquares()
         case 10:
         case 11:
         case 12:
-            g_4af5b0[0] = g_4af5f2;
-            g_4af5b0[1] = g_4af5fe;
-            g_4af5b0[2] = g_4af60a;
+            squareSets[0] = squareSetA5;
+            squareSets[1] = squareSetB5;
+            squareSets[2] = squareSetC5;
             left = &left3;
             break;
         }
         short k = randomBetween(0, *left);
 
-        g_4af616[n].a = g_4af5b0[0][k];
-        g_4af616[n].b = g_4af5b0[1][k];
-        g_4af616[n].c = g_4af5b0[2][k];
+        squareDeals[n].a = squareSets[0][k];
+        squareDeals[n].b = squareSets[1][k];
+        squareDeals[n].c = squareSets[2][k];
         for (; k < *left + 1; k++) {
-            g_4af5b0[0][k] = g_4af5b0[0][k + 1];
-            g_4af5b0[1][k] = g_4af5b0[1][k + 1];
-            g_4af5b0[2][k] = g_4af5b0[2][k + 1];
+            squareSets[0][k] = squareSets[0][k + 1];
+            squareSets[1][k] = squareSets[1][k + 1];
+            squareSets[2][k] = squareSets[2][k + 1];
         }
         (*left)--;
     }
@@ -1625,8 +1625,8 @@ void layOutLillyView(View *view, short region)
                 *cel++ = word;
                 if (hotelLevel == 2) {
                     image = (unsigned short *)((char *)roomImages + roomImages->offsets[word]);
-                    *cel++ = rect.left = offsetX + *at++ - g_4ac1a0[word];
-                    *cel++ = rect.right = offsetY + *at++ - g_4ac1a4[word];
+                    *cel++ = rect.left = offsetX + *at++ - lillyViewHotX[word];
+                    *cel++ = rect.right = offsetY + *at++ - lillyViewHotY[word];
                 } else if (hotelLevel == 3) {
                     image = (unsigned short *)((char *)roomImages3d + roomImages3d->offsets[word]);
                     *cel++ = rect.left = offsetX + *at++;
@@ -1744,7 +1744,7 @@ void followGrid(LillyActor *actor, short limit)
     }
 }
 
-/* The same, jumping to its place in g_4a1ca4 (by unknownBe). */
+/* The same, jumping to its place in jumpPlaces (by unknownBe). */
 /* @zoombi32 0x0042ab6f */
 void placeJumperAt(View *view)
 {
@@ -1754,8 +1754,8 @@ void placeJumperAt(View *view)
 
     switch (actor->body.frame) {
     case 0:
-        actor->targetX = g_4a1ca4[actor->unknownBe].x;
-        actor->targetY = g_4a1ca4[actor->unknownBe].y;
+        actor->targetX = jumpPlaces[actor->unknownBe].x;
+        actor->targetY = jumpPlaces[actor->unknownBe].y;
         actor->stepX = (actor->targetX - actor->body.x) / 3;
         actor->stepY = (actor->targetY - actor->body.y) / 3;
         /* fall through */
@@ -1801,16 +1801,16 @@ void placeJumperAt(View *view)
 }
 
 /* Adds the lilly actors (actorCount of them), each dealt a random entry of
-   g_4a1dcc/g_4a1de4. */
+   actorDealKinds/actorDealValues. */
 /* @zoombi32 0x0042b857 */
 void addLillyActors()
 {
     LillyActor actor;
     short i;
 
-    g_4af5a6 = 11;
-    for (i = 0; i < g_4af5a6 + 1; i++)
-        g_4a1db2[i] = i;
+    actorDealLast = 11;
+    for (i = 0; i < actorDealLast + 1; i++)
+        actorDealOrder[i] = i;
     for (i = 0; i < actorCount; i++) {
         actor.unknownBc = 0;
         actor.unknownBe = i;
@@ -1844,16 +1844,16 @@ void addLillyActors()
         for (short row = 0; row < 12; row++)
             for (short column = 0; column < 12; column++)
                 actor.grid[row][column] = 0;
-        short k = randomBetween(0, g_4af5a6);
+        short k = randomBetween(0, actorDealLast);
 
-        actor.unknownDe = g_4a1dcc[g_4a1db2[k]];
-        actor.unknownDf = g_4a1de4[g_4a1db2[k]];
-        actor.unknownE0 = g_4a1db2[k];
-        g_4ac95a[i] = actor.unknownDe;
-        g_4ac972[i] = actor.unknownDf;
-        for (; k < g_4af5a6 + 1; k++)
-            g_4a1db2[k] = g_4a1db2[k + 1];
-        g_4af5a6--;
+        actor.unknownDe = actorDealKinds[actorDealOrder[k]];
+        actor.unknownDf = actorDealValues[actorDealOrder[k]];
+        actor.unknownE0 = actorDealOrder[k];
+        dealtKinds[i] = actor.unknownDe;
+        dealtValues[i] = actor.unknownDf;
+        for (; k < actorDealLast + 1; k++)
+            actorDealOrder[k] = actorDealOrder[k + 1];
+        actorDealLast--;
         actorViews[i] = addView(0x180002, drawCels, runViewScript, i + 10043, 7, &actor, randomBetween(3, 6), 0);
         View *view = findView(actorViews[i]);
 
@@ -1990,7 +1990,7 @@ short pickNextSquare(View *view)
         }
         if (open && !lillyBoard[r - 1][c].attributes[0]
             && lillyBoard[r - 1][c].attributes[actor->unknownDe] == actor->unknownDf
-            && g_4ad7e0[actor->unknownDf].steps[r][c] < g_4ad7e0[actor->unknownDf].steps[actor->row + 1][actor->column]) {
+            && layerSearches[actor->unknownDf].steps[r][c] < layerSearches[actor->unknownDf].steps[actor->row + 1][actor->column]) {
             best = direction;
             bestColumn = c;
             bestRow = r - 1;
@@ -2036,19 +2036,19 @@ void hopNotify(View *view, short event)
         actor->unknownC6 = actor->row;
         switch (actor->unknownD5) {
         case 0:
-            actor->targetX = g_4ac940[--actor->row + 1] + actor->column * 35;
+            actor->targetX = rowLeft[--actor->row + 1] + actor->column * 35;
             break;
         case 2:
-            actor->targetX = g_4ac940[++actor->row + 1] + actor->column * 35;
+            actor->targetX = rowLeft[++actor->row + 1] + actor->column * 35;
             break;
         case 1:
-            actor->targetX = g_4ac940[actor->row + 1] + ++actor->column * 35;
+            actor->targetX = rowLeft[actor->row + 1] + ++actor->column * 35;
             break;
         case 3:
-            actor->targetX = g_4ac940[actor->row + 1] + --actor->column * 35;
+            actor->targetX = rowLeft[actor->row + 1] + --actor->column * 35;
             break;
         }
-        actor->targetY = g_4ac944[actor->row + 1] + g_4a1d70[actor->column];
+        actor->targetY = rowTop[actor->row + 1] + columnDy[actor->column];
         *(Point *)&actor->startX = *(Point *)&actor->body.x;
         break;
     case 12:
@@ -2094,13 +2094,13 @@ void hopNotify(View *view, short event)
         actor->body.y = actor->targetY;
         actor->body.unknownAa = actor->targetX;
         actor->body.unknownAc = actor->targetY;
-        g_4acd4c[g_4acd74] = view->id;
-        g_4acd74++;
+        planQueue[planQueueCount] = view->id;
+        planQueueCount++;
         view->nextUpdate = clockTime() + 30;
         break;
     case 15:
-        g_4acd4c[g_4acd74] = view->id;
-        g_4acd74++;
+        planQueue[planQueueCount] = view->id;
+        planQueueCount++;
         break;
     }
 }
@@ -2221,25 +2221,25 @@ short pickLeastVisited(LillyActor *actor)
     switch (best) {
     case 0:
         actor->unknownD5 = 0;
-        actor->unknownD9 = g_4a1d8a[0][actor->unknownD5];
+        actor->unknownD9 = hopDirections[0][actor->unknownD5];
         actor->grid[actor->row - 1][actor->column] = current + 1;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
         return actor->unknownD9;
     case 1:
         actor->unknownD5 = 1;
-        actor->unknownD9 = g_4a1d8a[1][actor->unknownD5];
+        actor->unknownD9 = hopDirections[1][actor->unknownD5];
         actor->grid[actor->row][actor->column + 1] = current + 1;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
         return actor->unknownD9;
     case 2:
         actor->unknownD5 = 2;
-        actor->unknownD9 = g_4a1d8a[2][actor->unknownD5];
+        actor->unknownD9 = hopDirections[2][actor->unknownD5];
         actor->grid[actor->row + 1][actor->column] = current + 1;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
         return actor->unknownD9;
     case 3:
         actor->unknownD5 = 3;
-        actor->unknownD9 = g_4a1d8a[3][actor->unknownD5];
+        actor->unknownD9 = hopDirections[3][actor->unknownD5];
         actor->grid[actor->row][actor->column - 1] = current + 1;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
         return actor->unknownD9;
@@ -2410,19 +2410,19 @@ void placeHopper(View *view)
         actor->unknownC6 = actor->row;
         switch (actor->unknownD9) {
         case 10071:
-            actor->targetX = g_4ac940[--actor->row + 1] + actor->column * 35;
+            actor->targetX = rowLeft[--actor->row + 1] + actor->column * 35;
             break;
         case 10073:
-            actor->targetX = g_4ac940[++actor->row + 1] + actor->column * 35;
+            actor->targetX = rowLeft[++actor->row + 1] + actor->column * 35;
             break;
         case 10077:
-            actor->targetX = g_4ac940[actor->row + 1] + ++actor->column * 35;
+            actor->targetX = rowLeft[actor->row + 1] + ++actor->column * 35;
             break;
         case 10075:
-            actor->targetX = g_4ac940[actor->row + 1] + --actor->column * 35;
+            actor->targetX = rowLeft[actor->row + 1] + --actor->column * 35;
             break;
         }
-        actor->targetY = g_4ac944[actor->row + 1] + g_4a1d70[actor->column];
+        actor->targetY = rowTop[actor->row + 1] + columnDy[actor->column];
         *(Point *)&actor->startX = *(Point *)&actor->body.x;
         /* fall through */
     case 1:
@@ -2452,8 +2452,8 @@ void placeHopper(View *view)
         actor->body.unknownAa = x;
         actor->body.unknownAc = y;
         view->nextUpdate = clockTime() + 35;
-        g_4ac9e6[g_4acb06] = view->id;
-        g_4acb06++;
+        hopperQueue[hopperQueueCount] = view->id;
+        hopperQueueCount++;
         break;
     }
     image = *cel++;
@@ -2599,24 +2599,24 @@ void sendSnoidToRoom(short id)
             else if (hotelRoom <= 24)
                 standX = place.x - 5;
         }
-        if (!g_4abdc0[hotelRoom] || g_4abdc0[hotelRoom] % 3 == 1) {
+        if (!roomOccupancy[hotelRoom] || roomOccupancy[hotelRoom] % 3 == 1) {
             standX -= 8;
-            standY = g_4abdc0[hotelRoom] + standY - 1;
-        } else if (g_4abdc0[hotelRoom] % 3 == 2) {
+            standY = roomOccupancy[hotelRoom] + standY - 1;
+        } else if (roomOccupancy[hotelRoom] % 3 == 2) {
             standX--;
-            standY = g_4abdc0[hotelRoom] + standY - 1;
+            standY = roomOccupancy[hotelRoom] + standY - 1;
         } else {
             standX += 6;
-            standY = g_4abdc0[hotelRoom] + standY - 1;
+            standY = roomOccupancy[hotelRoom] + standY - 1;
         }
     } else {
         place.x += 5;
         place.y -= 15;
         standX = place.x;
         standY = place.y - 2;
-        if (g_4abdc0[hotelRoom] > 1) {
-            standX -= (g_4abdc0[hotelRoom] - 1) * 2;
-            standY -= g_4abdc0[hotelRoom] - 1;
+        if (roomOccupancy[hotelRoom] > 1) {
+            standX -= (roomOccupancy[hotelRoom] - 1) * 2;
+            standY -= roomOccupancy[hotelRoom] - 1;
         }
     }
     if (view) {
@@ -2647,8 +2647,8 @@ void sendSnoidToRoom(short id)
             break;
         case 3: {
             script = hotelRoom % 5 * 5 + 13045;
-            standArea.left = g_4ac190[hotelRoom / 5 + 1] + g_4a1a04[hotelRoom % 5];
-            standArea.top = g_4ac194[hotelRoom / 5 + 1] + g_4a1a0e[hotelRoom % 5];
+            standArea.left = roomColumnX[hotelRoom / 5 + 1] + roomColumnDx[hotelRoom % 5];
+            standArea.top = roomColumnY[hotelRoom / 5 + 1] + roomColumnDy[hotelRoom % 5];
             standArea.right = standArea.left + 22;
             standArea.bottom = standArea.top + 72;
             short row = hotelRoom % 25 / 5;
@@ -2682,8 +2682,8 @@ void sendSnoidToRoom(short id)
             startSnoidScript(viewSnoid(view), script, &place, 0);
         view->notify = hotelSnoidNotify;
         view->notifyEnd = 0;
-        g_4ac0ea = view->id;
-        g_4ac0f8 = groupViews(g_4ac0ea, g_4ac0ea, 0, 0, 0, 0);
+        arrivingSnoid = view->id;
+        arrivingGroup = groupViews(arrivingSnoid, arrivingSnoid, 0, 0, 0, 0);
     }
 }
 
@@ -2703,63 +2703,63 @@ void addLillyViews()
 
     if (!hotelLevel) {
         for (i = 4; i < roomCount; i += 5)
-            g_4abfc0[i] = addView(0x4188000, drawCels, runViewScript, i + 6013, 6, 0, 0, 0);
-        g_4ac0bc = addView(0x4008000, drawCels, runViewScript, 11504, 6, 0, 0, 0);
+            roomDoorViews[i] = addView(0x4188000, drawCels, runViewScript, i + 6013, 6, 0, 0, 0);
+        roomAnchorView = addView(0x4008000, drawCels, runViewScript, 11504, 6, 0, 0, 0);
         for (i = 4; i < roomCount; i += 5)
             roomColumnViews[i] = addView(0xc188000, drawCels, runViewScript, i + 6038, 3, 0, 0, 0);
     } else if (hotelLevel < 3) {
         for (i = 0; i < roomCount; i++)
-            g_4abfc0[i] = addView(0x4188000, drawCels, runViewScript, i + 6013, 6, 0, 0, 0);
+            roomDoorViews[i] = addView(0x4188000, drawCels, runViewScript, i + 6013, 6, 0, 0, 0);
         if (hotelLevel == 2) {
             count = 0;
             for (i = 0; i < roomCount; i++)
-                if (g_4abdc0[i] == -1) {
-                    place.x = g_4ac188[i + 1];
-                    place.y = g_4ac18c[i + 1];
+                if (roomOccupancy[i] == -1) {
+                    place.x = roomViewX[i + 1];
+                    place.y = roomViewY[i + 1];
                     deleteView(roomViews[i]);
-                    roomViews[i] = addView(0x808000, drawRoomView, layOutLillyView, g_4ac10e[count++] + 11004, 0, &place, 0, 0);
+                    roomViews[i] = addView(0x808000, drawRoomView, layOutLillyView, roomViewScripts[count++] + 11004, 0, &place, 0, 0);
                 }
         }
-        g_4ac0bc = addView(0x4008000, drawCels, runViewScript, 11503, 6, 0, 0, 0);
+        roomAnchorView = addView(0x4008000, drawCels, runViewScript, 11503, 6, 0, 0, 0);
         for (i = 0; i < roomCount; i++)
             roomColumnViews[i] = addView(0xc188000, drawCels, runViewScript, i + 6038, 3, 0, 0, 0);
     } else {
         for (i = 0; i < roomCount; i++) {
             short column = i % 5;
             short row = i / 5 + 1;
-            short offsetX = g_4a1a04[column];
+            short offsetX = roomColumnDx[column];
 
-            offsetY = g_4a1a0e[column];
-            place.x = offsetX + g_4ac190[row];
-            place.y = g_4ac194[row] + offsetY;
-            g_4ac310[i] = addView(0x4988000, drawCels, runViewScript, column + 9002, 6, &place, 0, 0);
+            offsetY = roomColumnDy[column];
+            place.x = offsetX + roomColumnX[row];
+            place.y = roomColumnY[row] + offsetY;
+            room9002Views[i] = addView(0x4988000, drawCels, runViewScript, column + 9002, 6, &place, 0, 0);
         }
-        g_4ac0bc = addView(0x4008000, drawCels, runViewScript, 11505, 6, 0, 0, 0);
+        roomAnchorView = addView(0x4008000, drawCels, runViewScript, 11505, 6, 0, 0, 0);
         for (i = 0; i < roomCount; i++) {
             short column = i % 5;
             short row = i / 5 + 1;
             short offsetX = offsetsX[column];
 
             offsetY = offsetsY[column];
-            place.x = offsetX + g_4ac198[row];
-            place.y = g_4ac19c[row] + offsetY;
-            g_4ac40a[i] = addView(0xc988000, drawCels, runViewScript, column + 9007, 3, &place, 0, 0);
+            place.x = offsetX + layerRowX[row];
+            place.y = layerRowY[row] + offsetY;
+            room9007Views[i] = addView(0xc988000, drawCels, runViewScript, column + 9007, 3, &place, 0, 0);
         }
         count = 0;
         for (i = 0; i < roomCount; i++)
-            if (g_4abdc0[i] == -1) {
+            if (roomOccupancy[i] == -1) {
                 short column = i % 5;
                 short row = i / 5 + 1;
                 short offsetX = offsetsX[column];
 
                 offsetY = offsetsY[column];
-                place.x = offsetX + g_4ac190[row];
-                place.y = g_4ac194[row] + offsetY;
+                place.x = offsetX + roomColumnX[row];
+                place.y = roomColumnY[row] + offsetY;
                 if (!column)
                     place.y += 5;
                 if (column == 2)
                     place.y += 2;
-                roomViews[i] = addView(0x808000, drawRoomView, layOutLillyView, g_4ac10e[count++] + 12000, 0, &place, 0, 0);
+                roomViews[i] = addView(0x808000, drawRoomView, layOutLillyView, roomViewScripts[count++] + 12000, 0, &place, 0, 0);
             }
     }
     if (!hotelLevel) {
@@ -2804,11 +2804,11 @@ void flashSquare(View *view)
         } else {
             if (clockTime() >= view->nextUpdate) {
                 view->nextUpdate = clockTime() + view->interval;
-                g_4a1e3a++;
-                if (g_4a1e3a > 1)
-                    g_4a1e3a = 0;
+                flashFrame++;
+                if (flashFrame > 1)
+                    flashFrame = 0;
             }
-            drawSquareImage(flashRow, flashColumn, g_4a1e3a);
+            drawSquareImage(flashRow, flashColumn, flashFrame);
         }
     }
 }
@@ -2829,52 +2829,52 @@ short hotelKey(unsigned short key)
         return 1;
     case 'H':
     case 'h':
-        if (!g_4ac0d6)
-            g_4ac0d6 = 1;
+        if (!roomAnimStage)
+            roomAnimStage = 1;
         return 1;
     case 'I':
     case 'i':
-        if (!g_4ac0d6)
-            g_4ac0d6 = 0;
+        if (!roomAnimStage)
+            roomAnimStage = 0;
         else
-            g_4ac0d6++;
+            roomAnimStage++;
         return 1;
     case 'R':
         hotelAnyFits = 1;
         return 1;
     case 'W':
     case 'w': {
-        if (++g_4ac0c4 > 9)
-            g_4ac0c4 = 0;
-        View *view = findView(g_4ac0ba);
+        if (++debugTalkerScript1 > 9)
+            debugTalkerScript1 = 0;
+        View *view = findView(hotelTalkerView);
 
         if (view) {
-            setViewScript(view, g_4ac0c4 + 7000, 1);
+            setViewScript(view, debugTalkerScript1 + 7000, 1);
         } else {
-            g_4ac0ba = addView(0x8108000, drawCels, runViewScript, g_4ac0c4 + 7000, 6, 0, 0, 0);
-            view = findView(g_4ac0ba);
+            hotelTalkerView = addView(0x8108000, drawCels, runViewScript, debugTalkerScript1 + 7000, 6, 0, 0, 0);
+            view = findView(hotelTalkerView);
         }
         return 1;
     }
     case 'E':
     case 'e': {
-        if (++g_4ac0c6 > 17)
-            g_4ac0c6 = 10;
-        View *view = findView(g_4ac0ba);
+        if (++debugTalkerScript2 > 17)
+            debugTalkerScript2 = 10;
+        View *view = findView(hotelTalkerView);
 
         if (view) {
-            setViewScript(view, g_4ac0c6 + 7000, 1);
+            setViewScript(view, debugTalkerScript2 + 7000, 1);
         } else {
-            g_4ac0ba = addView(0x8108000, drawCels, runViewScript, g_4ac0c6 + 7000, 6, 0, 0, 0);
-            view = findView(g_4ac0ba);
+            hotelTalkerView = addView(0x8108000, drawCels, runViewScript, debugTalkerScript2 + 7000, 6, 0, 0, 0);
+            view = findView(hotelTalkerView);
         }
         return 1;
     }
     case ' ':
-        g_4ac0fe = g_4ac102;
-        g_4ac100 = g_4ac104;
+        guideStep = savedGuideStep;
+        guideLastStep = savedGuideLastStep;
         if (hotelLevel != 3)
-            startView(guideView, g_4ac0fe + 6000, 0, 0);
+            startView(guideView, guideStep + 6000, 0, 0);
         fadePalette(savedPalette, 10, 236, 0, 0, 0);
         return 1;
     default:
@@ -2910,15 +2910,15 @@ void closeLilly()
         requestViewSort();
         setSnoidsRunning(1);
         clearViews();
-        freeResource(&g_4a1b48);
-        freeResource(&g_4a1b44);
-        freeLockedResources(g_4af108, g_4af278, 91);
-        freeResourcePair(g_4ac928);
-        freeResourcePair(g_4ac938);
-        freeResourcePair(g_4ac930);
-        freeLockedResource(&g_4ac98c, &g_4ac994);
-        freeLockedResource(&g_4ac998, &g_4ac9a0);
-        freeLockedResource(&g_4ac9a4, &g_4ac9ac);
+        freeResource(&unusedLillyResource);
+        freeResource(&lillyImagesResource);
+        freeLockedResources(lillyScriptResources, lillyScriptHandles, 91);
+        freeResourcePair(rowPlaceResources);
+        freeResourcePair(actorHotSpotResources);
+        freeResourcePair(squareHotSpotResources);
+        freeLockedResource(&grid1Resource, &grid1Handle);
+        freeLockedResource(&grid2Resource, &grid2Handle);
+        freeLockedResource(&grid3Resource, &grid3Handle);
         freeResource(&lillyButtonResource);
         unloadSounds();
         setFreeAtOnce(saved);
@@ -2940,18 +2940,18 @@ void closeHotel()
         unloadSounds();
         freeResource(&hotelButtonResource);
         freeResource(&roomImagesResource);
-        freeResource(&g_4ac14c);
-        freeResource(&g_4ac150);
-        freeResource(&g_4ac170);
-        freeResource(&g_4ac174);
-        freeResource(&g_4ac154);
-        freeResource(&g_4ac158);
-        freeResource(&g_4ac160);
-        freeResource(&g_4ac164);
-        freeResource(&g_4ac168);
-        freeResource(&g_4ac16c);
-        freeResource(&g_4ac154);
-        freeResource(&g_4ac158);
+        freeResource(&hotelPlaceXResource);
+        freeResource(&hotelPlaceYResource);
+        freeResource(&lillyViewHotXResource);
+        freeResource(&lillyViewHotYResource);
+        freeResource(&roomViewXResource);
+        freeResource(&roomViewYResource);
+        freeResource(&roomColumnXResource);
+        freeResource(&roomColumnYResource);
+        freeResource(&layerRowXResource);
+        freeResource(&layerRowYResource);
+        freeResource(&roomViewXResource);
+        freeResource(&roomViewYResource);
         useAltSnoids(1);
         setFreeAtOnce(saved);
         closeGameFile(&hotelFile);
@@ -3001,28 +3001,28 @@ void hotelFrame()
             sceneDue = 0;
         }
     }
-    if (g_4ac0f0) {
-        if (!groupLeader[g_4ac0f0]) {
-            g_4ac0f0 = 0;
+    if (guideRemarkGroup) {
+        if (!groupLeader[guideRemarkGroup]) {
+            guideRemarkGroup = 0;
             sound = randomUpTo(3) + 7503;
-            if (hotelLevel != 3 && g_4ac0e6) {
-                if (!startView(g_4ac0ba, sound, 0, 0)) {
-                    g_4ac0ba = addView(0x8108000, drawCels, runViewScript, sound, 6, 0, 0, 0);
-                    g_4ac0f6 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+            if (hotelLevel != 3 && hotelFails) {
+                if (!startView(hotelTalkerView, sound, 0, 0)) {
+                    hotelTalkerView = addView(0x8108000, drawCels, runViewScript, sound, 6, 0, 0, 0);
+                    talkerDoneGroup = groupViews(hotelTalkerView, hotelTalkerView, 0, 0, 0, 0);
                 }
-                loadViewSounds(g_4ac0ba, 1);
+                loadViewSounds(hotelTalkerView, 1);
             }
         }
-    } else if (g_4ac0f6) {
-        if (!groupLeader[g_4ac0f6]) {
-            g_4ac0f6 = 0;
+    } else if (talkerDoneGroup) {
+        if (!groupLeader[talkerDoneGroup]) {
+            talkerDoneGroup = 0;
             hotelGoReady = 1;
         }
-    } else if (g_4ac0f2) {
+    } else if (roundResetGroup) {
         hotelIdleSince = clockTime();
-        if (!groupLeader[g_4ac0f2] || g_4ac13c) {
-            g_4ac0f2 = 0;
-            if (g_4ac0ba && g_4ac0be != 4)
+        if (!groupLeader[roundResetGroup] || skipGuide) {
+            roundResetGroup = 0;
+            if (hotelTalkerView && talkerStage != 4)
                 deleteHotelTalker();
             backdrop = 1;
             if (hotelLevel >= 3)
@@ -3030,19 +3030,19 @@ void hotelFrame()
             chooseSnoids(1, 0);
             removeDeadViews();
             useAltSnoids(1);
-            deleteView(g_4ac0c8);
-            deleteView(g_4ac0ca);
-            g_4ac0ba = g_4ac0c8 = 0;
+            deleteView(hotelLabelView);
+            deleteView(view11800);
+            hotelTalkerView = hotelLabelView = 0;
             drawBackdrop(backdrop + 5000);
             saved = getPort();
             setPort(viewPort);
             if (hotelLevel == 0) {
-                fillPortRect(Rect(g_4a19e4), Color(0x25), 0);
-                fillPortRect(Rect(g_4a19ec), Color(0x25), 0);
+                fillPortRect(Rect(hotelBlankRect1), Color(0x25), 0);
+                fillPortRect(Rect(hotelBlankRect2), Color(0x25), 0);
             } else if (hotelLevel <= 2) {
-                fillPortRect(Rect(g_4a19f4), Color(0x25), 0);
+                fillPortRect(Rect(hotelBlankRect3), Color(0x25), 0);
             } else if (hotelLevel == 3) {
-                fillPortRect(Rect(g_4a19fc), Color(0x25), 0);
+                fillPortRect(Rect(hotelBlankRect4), Color(0x25), 0);
             }
             setPort(saved);
             setViewPlaces(16, lillyPlaces, 1);
@@ -3051,31 +3051,31 @@ void hotelFrame()
             addLillyViews();
             if (hotelLevel != 3) {
                 hotelIdleSince = clockTime();
-                if (g_4ac13c) {
-                    g_4ac0f2 = g_4ac0c0 = 0;
-                    g_4ac0f4 = g_4ac13a = g_4ac13c = 0;
-                    if (g_4ac0ba)
+                if (skipGuide) {
+                    roundResetGroup = talkerPending = 0;
+                    talkerGroup = talkerStarted = skipGuide = 0;
+                    if (hotelTalkerView)
                         deleteHotelTalker();
-                    guideView = addView(0x108000, drawCels, runViewScript, g_4ac100 + 6000, 6, 0, 0, 0);
+                    guideView = addView(0x108000, drawCels, runViewScript, guideLastStep + 6000, 6, 0, 0, 0);
                     queueViewSound(hotelLevel + 30020, 0);
-                } else if (!g_4ac0be || g_4ac0be == 4 && g_4ac0c0) {
-                    g_4ac0ba = addView(0x8188000, drawCels, runViewScript, hotelLevel + 7500, 6, 0, 0, 0);
-                    g_4ac0f4 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
-                } else if (g_4ac0be > 4 && !g_4ac0c0) {
-                    if (g_4ac0ba)
+                } else if (!talkerStage || talkerStage == 4 && talkerPending) {
+                    hotelTalkerView = addView(0x8188000, drawCels, runViewScript, hotelLevel + 7500, 6, 0, 0, 0);
+                    talkerGroup = groupViews(hotelTalkerView, hotelTalkerView, 0, 0, 0, 0);
+                } else if (talkerStage > 4 && !talkerPending) {
+                    if (hotelTalkerView)
                         deleteHotelTalker();
-                    g_4ac0ba = addView(0x8108000, drawCels, runViewScript, hotelLevel + 7500, 6, 0, 0, 0);
-                    loadViewSounds(g_4ac0ba, 1);
-                    g_4ac0f4 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+                    hotelTalkerView = addView(0x8108000, drawCels, runViewScript, hotelLevel + 7500, 6, 0, 0, 0);
+                    loadViewSounds(hotelTalkerView, 1);
+                    talkerGroup = groupViews(hotelTalkerView, hotelTalkerView, 0, 0, 0, 0);
                 } else {
-                    g_4ac0f4 = g_4ac13a = g_4ac13c = 0;
+                    talkerGroup = talkerStarted = skipGuide = 0;
                     guideView = addView(0x108000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
-                    g_4ac0fc = groupViews(guideView, guideView, 0, 0, 0, 0);
+                    guideStepGroup = groupViews(guideView, guideView, 0, 0, 0, 0);
                     queueViewSound(hotelLevel + 30020, 0);
                 }
             } else {
-                g_4ac0f4 = g_4ac13a = g_4ac13c = 0;
-                if (g_4ac0ba)
+                talkerGroup = talkerStarted = skipGuide = 0;
+                if (hotelTalkerView)
                     deleteHotelTalker();
                 queueViewSound(hotelLevel + 30020, 0);
             }
@@ -3086,101 +3086,101 @@ void hotelFrame()
             showRect(&shownGameRect);
             resetViewClock();
         }
-    } else if ((!g_4ac0be || g_4ac0be == 4) && g_4ac0c0 && !g_4ac13c) {
+    } else if ((!talkerStage || talkerStage == 4) && talkerPending && !skipGuide) {
         if (clockTime() - hotelIdleSince > 180) {
-            g_4ac0c0 = 0;
-            startView(g_4ac0ba, hotelLevel + 7500, 0, 0);
-            loadViewSounds(g_4ac0ba, 1);
-            g_4ac0f4 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
-        } else if (!g_4ac0be) {
-            g_4ac0c0 = 0;
-            startView(g_4ac0ba, hotelLevel + 7500, 0, 0);
-            loadViewSounds(g_4ac0ba, 1);
-            g_4ac0f4 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+            talkerPending = 0;
+            startView(hotelTalkerView, hotelLevel + 7500, 0, 0);
+            loadViewSounds(hotelTalkerView, 1);
+            talkerGroup = groupViews(hotelTalkerView, hotelTalkerView, 0, 0, 0, 0);
+        } else if (!talkerStage) {
+            talkerPending = 0;
+            startView(hotelTalkerView, hotelLevel + 7500, 0, 0);
+            loadViewSounds(hotelTalkerView, 1);
+            talkerGroup = groupViews(hotelTalkerView, hotelTalkerView, 0, 0, 0, 0);
         }
-    } else if (g_4ac0f4) {
-        if (!groupLeader[g_4ac0f4] || g_4ac13c) {
-            g_4ac0f4 = g_4ac13a = 0;
+    } else if (talkerGroup) {
+        if (!groupLeader[talkerGroup] || skipGuide) {
+            talkerGroup = talkerStarted = 0;
             queueViewSound(hotelLevel + 30020, 0);
-            if (g_4ac13c) {
-                g_4ac13c = 0;
-                if (g_4ac0ba)
+            if (skipGuide) {
+                skipGuide = 0;
+                if (hotelTalkerView)
                     deleteHotelTalker();
                 if (hotelLevel != 3)
-                    guideView = addView(0x108000, drawCels, runViewScript, g_4ac100 + 6000, 6, 0, 0, 0);
+                    guideView = addView(0x108000, drawCels, runViewScript, guideLastStep + 6000, 6, 0, 0, 0);
             } else if (hotelLevel != 3) {
                 guideView = addView(0x108000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
-                g_4ac0fc = groupViews(guideView, guideView, 0, 0, 0, 0);
+                guideStepGroup = groupViews(guideView, guideView, 0, 0, 0, 0);
             }
         }
-    } else if (g_4ac0fc) {
-        g_4ac0fc = 0;
+    } else if (guideStepGroup) {
+        guideStepGroup = 0;
         other = findView(guideView);
-        if (g_4ac0fe <= g_4ac100) {
+        if (guideStep <= guideLastStep) {
             if (!other)
-                guideView = addView(0x108000, drawCels, runViewScript, g_4ac0fe + 6000, 6, 0, 0, 0);
+                guideView = addView(0x108000, drawCels, runViewScript, guideStep + 6000, 6, 0, 0, 0);
             else
-                startView(guideView, g_4ac0fe + 6000, 0, 0);
-            g_4ac0fc = groupViews(guideView, guideView, 0, 0, 0, 0);
-            g_4ac0fe++;
+                startView(guideView, guideStep + 6000, 0, 0);
+            guideStepGroup = groupViews(guideView, guideView, 0, 0, 0, 0);
+            guideStep++;
         }
     } else if (roomGroup) {
         if (!groupLeader[roomGroup])
             roomGroup = 0;
-    } else if (g_4ac504) {
-        view = idleSnoidView(g_4ac504);
+    } else if (droppedSnoid) {
+        view = idleSnoidView(droppedSnoid);
         if (view) {
-            g_4ac504 = 0;
+            droppedSnoid = 0;
             if (viewSnoid(view)->unknownF7) {
-                g_4ac0e4++;
-                if (g_4abdc0[hotelRoom] > 0)
-                    if (++g_4abdc0[hotelRoom] > 6)
-                        g_4abdc0[hotelRoom] = 6;
+                roomsFilled++;
+                if (roomOccupancy[hotelRoom] > 0)
+                    if (++roomOccupancy[hotelRoom] > 6)
+                        roomOccupancy[hotelRoom] = 6;
                 sendSnoidToRoom(view->id);
                 hotelGoReady = 1;
-                if (!g_4abdc0[hotelRoom]) {
+                if (!roomOccupancy[hotelRoom]) {
                     if (hotelLevel < 3)
-                        startView(g_4abfc0[hotelRoom], hotelRoom + 6013, 0, 0);
+                        startView(roomDoorViews[hotelRoom], hotelRoom + 6013, 0, 0);
                     else
                         startView9002(hotelRoom);
-                    g_4abdc0[hotelRoom]++;
+                    roomOccupancy[hotelRoom]++;
                 }
                 hotelWalker = view->id;
             } else {
-                g_4ac0ce = 1;
+                snoidRejected = 1;
                 if (hotelLevel < 3) {
-                    if (g_4ac0fe < 11)
+                    if (guideStep < 11)
                         startView(roomColumnViews[hotelRoom], hotelRoom + 6038, 0, 0);
                     else
                         startRoomColumnViews();
                 } else {
                     startView9007(hotelRoom);
-                    if (g_4ac0fe >= 11 && !*(short *)(gameState + 0x20)) {
-                        other = findView(g_4ac40a[hotelRoom]);
+                    if (guideStep >= 11 && !*(short *)(gameState + 0x20)) {
+                        other = findView(room9007Views[hotelRoom]);
                         other->notify = roomViewNotify;
                     }
                 }
                 hotelWalker = view->id;
                 startSnoidInRoom(hotelWalker);
                 if (hotelLevel != 3) {
-                    if (!g_4ac0da) {
-                        startView(guideView, ++g_4ac0fe + 6000, 0, 0);
-                        g_4ac0f0 = groupViews(guideView, guideView, 0, 0, 0, 0);
+                    if (!firstPlacementFree) {
+                        startView(guideView, ++guideStep + 6000, 0, 0);
+                        guideRemarkGroup = groupViews(guideView, guideView, 0, 0, 0, 0);
                     }
                 } else {
-                    g_4ac0fe++;
+                    guideStep++;
                 }
                 darkenPalette();
-                if (g_4ac0fe == 9) {
+                if (guideStep == 9) {
                     sound = randomUpTo(2) + 7007;
-                    if (!startView(g_4ac0ba, sound, 0, 0)) {
-                        g_4ac0ba = addView(0x8108000, drawCels, runViewScript, sound, 6, 0, 0, 0);
-                        findView(g_4ac0ba);
+                    if (!startView(hotelTalkerView, sound, 0, 0)) {
+                        hotelTalkerView = addView(0x8108000, drawCels, runViewScript, sound, 6, 0, 0, 0);
+                        findView(hotelTalkerView);
                     }
-                    loadViewSounds(g_4ac0ba, 1);
+                    loadViewSounds(hotelTalkerView, 1);
                 }
-                if (g_4ac0fe >= 12) {
-                    g_4ac0e6++;
+                if (guideStep >= 12) {
+                    hotelFails++;
                     queueViewSound(6006, 0);
                     updateViews();
                     waitForEventFor(0, 60, 0, 1);
@@ -3191,29 +3191,29 @@ void hotelFrame()
                 }
             }
         }
-    } else if (g_4ac0f8) {
-        if (!groupLeader[g_4ac0f8]) {
-            g_4ac0f8 = 0;
-            other = findView(g_4ac0ea);
+    } else if (arrivingGroup) {
+        if (!groupLeader[arrivingGroup]) {
+            arrivingGroup = 0;
+            other = findView(arrivingSnoid);
             if (other) {
                 if (hotelLevel == 3)
                     setSnoidAction(viewSnoid(other), 0, 0);
                 else
                     setSnoidAction(viewSnoid(other), 7, 0);
                 *(Point *)&viewSnoid(other)->targetX = *(Point *)&standX;
-                g_4ac0dc = 0;
-                if (g_4ac0e4 >= g_4ac0e8) {
+                snoidArriving = 0;
+                if (roomsFilled >= hotelPartySize) {
                     if (hotelLevel < 3) {
                         startRoomColumnViews();
                         hotelRoom = 200;
-                        other = findView(g_4ac0ba);
+                        other = findView(hotelTalkerView);
                         sound = randomUpTo(2) + 7507;
                         if (other)
                             setViewScript(other, sound, 1);
                         else
-                            g_4ac0ba = addView(0x8108000, drawCels, runViewScript, sound, 6, 0, 0, 0);
-                        loadViewSounds(g_4ac0ba, 1);
-                        g_4ac0f6 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+                            hotelTalkerView = addView(0x8108000, drawCels, runViewScript, sound, 6, 0, 0, 0);
+                        loadViewSounds(hotelTalkerView, 1);
+                        talkerDoneGroup = groupViews(hotelTalkerView, hotelTalkerView, 0, 0, 0, 0);
                     } else {
                         hotelRoom = 200;
                     }
@@ -3221,7 +3221,7 @@ void hotelFrame()
             }
         }
     }
-    if (g_4ac0d6 == 2 && hotelLevel == 1)
+    if (roomAnimStage == 2 && hotelLevel == 1)
         startRoomAnimations();
     inHotelFrame = 0;
 }
@@ -3254,7 +3254,7 @@ void hotelSnoidNotify(View *view, short event)
         }
         break;
     case 15:
-        moveView(hotelWalker, 0, g_4ac0bc);
+        moveView(hotelWalker, 0, roomAnchorView);
         other = findView(hotelWalker);
         if (other)
             other->flags |= 0x4008000;
@@ -3285,7 +3285,7 @@ void hotelSnoidNotify(View *view, short event)
             other->nextUpdate = 0;
             other->notify = hotelSnoidNotify;
             clearWay(place.x);
-            g_4ac0ce = 0;
+            snoidRejected = 0;
         }
         break;
     }
@@ -3305,29 +3305,29 @@ void searchLayer(short attribute, short layer)
 
     for (row = 0; row < 13; row++)
         for (column = 0; column < 12; column++) {
-            g_4ad7e0[layer].marks[row][column] = 0;
-            g_4ad7e0[layer].ways[row][column] = 44;
-            g_4ad7e0[layer].steps[row][column] = 0;
+            layerSearches[layer].marks[row][column] = 0;
+            layerSearches[layer].ways[row][column] = 44;
+            layerSearches[layer].steps[row][column] = 0;
         }
-    g_4af8a8 = 0;
-    g_4af8aa = 0;
-    fillMemory(g_4af668, 0, 0x240);
+    searchQueueEnd = 0;
+    searchQueueStart = 0;
+    fillMemory(searchQueue, 0, 0x240);
     for (row = 12; row >= 1; row--) {
         for (column = 0; column < 12; column++)
-            if (lillyBoard[row - 1][column].attributes[attribute] == layer && !g_4ad7e0[layer].marks[row][column]) {
-                if (g_4af8a8 < 144) {
-                    g_4af668[g_4af8a8].x = column;
-                    g_4af668[g_4af8a8].y = row;
-                    g_4af8a8++;
+            if (lillyBoard[row - 1][column].attributes[attribute] == layer && !layerSearches[layer].marks[row][column]) {
+                if (searchQueueEnd < 144) {
+                    searchQueue[searchQueueEnd].x = column;
+                    searchQueue[searchQueueEnd].y = row;
+                    searchQueueEnd++;
                 }
-                g_4ad7e0[layer].ways[row][column] = 2;
-                g_4ad7e0[layer].steps[row][column]++;
-                g_4ad7e0[layer].marks[row][column] = row;
+                layerSearches[layer].ways[row][column] = 2;
+                layerSearches[layer].steps[row][column]++;
+                layerSearches[layer].marks[row][column] = row;
             }
-        for (short i = g_4af8aa; i < g_4af8a8 && g_4af8aa < 144 && i < 144; i++)
-            if (g_4ad7e0[layer].marks[g_4af668[i].y][g_4af668[i].x]) {
-                searchStep(attribute, layer, g_4af668[i].y, g_4af668[i].x);
-                g_4af8aa++;
+        for (short i = searchQueueStart; i < searchQueueEnd && searchQueueStart < 144 && i < 144; i++)
+            if (layerSearches[layer].marks[searchQueue[i].y][searchQueue[i].x]) {
+                searchStep(attribute, layer, searchQueue[i].y, searchQueue[i].x);
+                searchQueueStart++;
             }
     }
 }
@@ -3340,15 +3340,15 @@ struct LayerToSearch
 };
 
 /*
- * Swaps the attributes of squares (flashRow, flashColumn) and (g_4af34e,
- * g_4af34c), and replans every actor whose kind either square now has,
+ * Swaps the attributes of squares (flashRow, flashColumn) and (swapRow,
+ * swapColumn), and replans every actor whose kind either square now has,
  * searching their layers again.
  */
 /* @zoombi32 0x0042c6dc */
 void swapSquares()
 {
     LillyCell *a = &lillyBoard[flashRow][flashColumn];
-    LillyCell *b = &lillyBoard[g_4af34e][g_4af34c];
+    LillyCell *b = &lillyBoard[swapRow][swapColumn];
     short first = a->attributes[1];
     short second = a->attributes[2];
     short third = a->attributes[3];
@@ -3372,25 +3372,25 @@ void swapSquares()
             actor = (LillyActor *)&view->body;
             if (actor->unknownC2) {
                 actor->grid[flashRow][flashColumn] = 0;
-                actor->grid[g_4af34e][g_4af34c] = 0;
+                actor->grid[swapRow][swapColumn] = 0;
                 if (lillyBoard[flashRow][flashColumn].attributes[actor->unknownDe] == actor->unknownDf
-                    || lillyBoard[g_4af34e][g_4af34c].attributes[actor->unknownDe] == actor->unknownDf)
+                    || lillyBoard[swapRow][swapColumn].attributes[actor->unknownDe] == actor->unknownDf)
                     startPlan(actor);
             }
         }
     }
     mainLoopEvents();
     fillMemory(layers, 0, sizeof layers);
-    for (i = 0; i < g_4af0e6; i++) {
-        View *view = findView(g_4aeea0[i]);
+    for (i = 0; i < actorsOutCount; i++) {
+        View *view = findView(actorsOut[i]);
 
         if (view) {
             actor = (LillyActor *)&view->body;
             if (actor->unknownC2) {
                 actor->grid[flashRow][flashColumn] = 0;
-                actor->grid[g_4af34e][g_4af34c] = 0;
+                actor->grid[swapRow][swapColumn] = 0;
                 if (lillyBoard[flashRow][flashColumn].attributes[actor->unknownDe] == actor->unknownDf
-                    || lillyBoard[g_4af34e][g_4af34c].attributes[actor->unknownDe] == actor->unknownDf) {
+                    || lillyBoard[swapRow][swapColumn].attributes[actor->unknownDe] == actor->unknownDf) {
                     startPlan(actor);
                     layers[actor->unknownDf].attribute = actor->unknownDe;
                     layers[actor->unknownDf].layer = actor->unknownDf;
@@ -3398,11 +3398,11 @@ void swapSquares()
             }
         }
     }
-    for (i = 0; i < g_4af342; i++)
+    for (i = 0; i < layersToSearchCount; i++)
         if (layers[i].attribute)
             searchLayer(layers[i].attribute, layers[i].layer);
     mainLoopEvents();
-    g_4af360 = 0;
+    swapPending = 0;
 }
 
 /* Flashes the two squares being swapped, swapping them first. */
@@ -3412,23 +3412,23 @@ void flashSwap(View *view)
     if (view->body.running) {
         if (!flashCount) {
             swapSquares();
-            drawSquareImage(g_4af34e, g_4af34c, 1);
+            drawSquareImage(swapRow, swapColumn, 1);
             drawSquareImage(flashRow, flashColumn, 1);
         }
         if (flashCount >= lillyStage) {
             flashCount = 0;
-            g_4af358 = 4;
+            swapStep = 4;
             view->body.running = 0;
-            unionRgnRect(removedRgn, &lillyBoard[g_4af34e][g_4af34c].rect);
+            unionRgnRect(removedRgn, &lillyBoard[swapRow][swapColumn].rect);
         } else {
             if (clockTime() >= view->nextUpdate) {
                 view->nextUpdate = clockTime() + view->interval;
                 flashCount++;
-                g_4a1e3b++;
-                if (g_4a1e3b > 1)
-                    g_4a1e3b = 0;
+                swapFlashFrame++;
+                if (swapFlashFrame > 1)
+                    swapFlashFrame = 0;
             }
-            drawSquareImage(g_4af34e, g_4af34c, g_4a1e3b);
+            drawSquareImage(swapRow, swapColumn, swapFlashFrame);
         }
     }
 }
@@ -3442,9 +3442,9 @@ void lillyViewNotify3(View *view, short event)
     switch (event) {
     case 3:
         if (lillyLevel > 1)
-            for (i = 0; i < g_4af0e8; i++)
-                if (i == g_4af0e8 - 2 || i == g_4af0e8 - 1) {
-                    other = findView(g_4aed3a[i]);
+            for (i = 0; i < lillyPartySize; i++)
+                if (i == lillyPartySize - 2 || i == lillyPartySize - 1) {
+                    other = findView(snoidPadViews[i]);
                     if (other) {
                         other->body.running = 1;
                         setViewScript(other, i + 10089, 1);
@@ -3454,8 +3454,8 @@ void lillyViewNotify3(View *view, short event)
                 }
         break;
     case 4:
-        g_4af33a = view->id;
-        other = findView(g_4af354);
+        event4Pad = view->id;
+        other = findView(swapToolView);
         if (other) {
             other->flags = 0x980002;
             LillyActor *actor = (LillyActor *)&other->body;
@@ -3463,24 +3463,24 @@ void lillyViewNotify3(View *view, short event)
             actor->body.running = 1;
         }
         if (lillyLevel > 2)
-            for (i = 0; i < g_4af342; i++)
-                searchLayer(g_4aece6[0].attribute, i);
+            for (i = 0; i < layersToSearchCount; i++)
+                searchLayer(lillyStarts[0].attribute, i);
         break;
     case 5:
-        switch (g_4af358) {
+        switch (swapStep) {
         case 4:
-            flashColumn = g_4a1d40[g_4af104].x;
-            flashRow = g_4a1d54[g_4af104].x;
-            showViewOnSquare(g_4af33e, flashRow, flashColumn);
-            g_4af358 = 5;
-            g_4af104++;
+            flashColumn = presetSwapColumns[presetSwapIndex].x;
+            flashRow = presetSwapRows[presetSwapIndex].x;
+            showViewOnSquare(swapFirstMarker, flashRow, flashColumn);
+            swapStep = 5;
+            presetSwapIndex++;
             break;
         case 5:
-            g_4af34c = g_4a1d40[g_4af104].x;
-            g_4af34e = g_4a1d54[g_4af104].x;
-            showViewOnSquare(g_4af340, g_4af34e, g_4af34c);
-            g_4af358 = 6;
-            g_4af104++;
+            swapColumn = presetSwapColumns[presetSwapIndex].x;
+            swapRow = presetSwapRows[presetSwapIndex].x;
+            showViewOnSquare(swapSecondMarker, swapRow, swapColumn);
+            swapStep = 6;
+            presetSwapIndex++;
             break;
         }
         break;
@@ -3511,25 +3511,25 @@ void setUpLillyPuzzle()
     countFeatureValues();
     ok = 0;
     do {
-        g_4ac0de = randomUpTo(3);
-        g_4ac0e0 = randomUpTo(3);
-        g_4ac0e2 = randomUpTo(3);
+        rowSortFeature = randomUpTo(3);
+        columnSortFeature = randomUpTo(3);
+        layerSortFeature = randomUpTo(3);
         if (hotelLevel < 2) {
-            if (g_4ac106[g_4ac0de] == 5 && g_4ac106[g_4ac0e0] == 5 && g_4ac0de != g_4ac0e0)
+            if (hotelValueCounts[rowSortFeature] == 5 && hotelValueCounts[columnSortFeature] == 5 && rowSortFeature != columnSortFeature)
                 ok++;
-            else if ((g_4ac106[0] < 5) + (g_4ac106[1] < 5) + (g_4ac106[2] < 5) + (g_4ac106[3] < 5) >= 3) {
-                if (g_4ac0de != g_4ac0e0)
+            else if ((hotelValueCounts[0] < 5) + (hotelValueCounts[1] < 5) + (hotelValueCounts[2] < 5) + (hotelValueCounts[3] < 5) >= 3) {
+                if (rowSortFeature != columnSortFeature)
                     ok++;
-            } else if (g_4ac0de != g_4ac0e0 && g_4ac106[g_4ac0de] >= 4 && g_4ac106[g_4ac0e0] >= 4)
+            } else if (rowSortFeature != columnSortFeature && hotelValueCounts[rowSortFeature] >= 4 && hotelValueCounts[columnSortFeature] >= 4)
                 ok++;
         } else if (hotelLevel == 2) {
-            if ((g_4ac106[0] < 4) + (g_4ac106[1] < 4) + (g_4ac106[2] < 4) + (g_4ac106[3] < 4) >= 3) {
-                if (g_4ac0de != g_4ac0e0)
+            if ((hotelValueCounts[0] < 4) + (hotelValueCounts[1] < 4) + (hotelValueCounts[2] < 4) + (hotelValueCounts[3] < 4) >= 3) {
+                if (rowSortFeature != columnSortFeature)
                     ok++;
-            } else if (g_4ac0de != g_4ac0e0 && g_4ac106[g_4ac0de] >= 4 && g_4ac106[g_4ac0e0] >= 4)
+            } else if (rowSortFeature != columnSortFeature && hotelValueCounts[rowSortFeature] >= 4 && hotelValueCounts[columnSortFeature] >= 4)
                 ok++;
         } else if (hotelLevel == 3) {
-            if (g_4ac0de != g_4ac0e0 && g_4ac0e0 != g_4ac0e2 && g_4ac0de != g_4ac0e2)
+            if (rowSortFeature != columnSortFeature && columnSortFeature != layerSortFeature && rowSortFeature != layerSortFeature)
                 ok++;
         }
     } while (!ok);
@@ -3550,10 +3550,10 @@ void setUpLillyPuzzle()
             usedB[k]++;
             setRowAndColumn(++ok, k + 1, i * 6);
         }
-        for (i = 0; i < g_4ac0e8; i++) {
-            short first = g_4ac508->features[i][g_4ac0de];
+        for (i = 0; i < hotelPartySize; i++) {
+            short first = hotelChosen->features[i][rowSortFeature];
 
-            second = g_4ac508->features[i][g_4ac0e0];
+            second = hotelChosen->features[i][columnSortFeature];
             for (n = 0; n < 5; n++)
                 for (ok = 0; ok < 5; ok++)
                     if (first == roomRowValues[n * 5 + ok] && roomLayerValues[n * 5 + ok] == second)
@@ -3571,18 +3571,18 @@ void setUpLillyPuzzle()
         for (i = 0; i < k; i++) {
             do
                 ok = randomUpTo(n - 1);
-            while (g_4abdc0[empty[ok]] < 0);
-            g_4abdc0[empty[ok]] = -1;
-            g_4ac10e[i] = randomUpTo(3);
+            while (roomOccupancy[empty[ok]] < 0);
+            roomOccupancy[empty[ok]] = -1;
+            roomViewScripts[i] = randomUpTo(3);
         }
     }
     if (hotelLevel == 2) {
         ok = 0;
         for (i = 0; i < roomCount; i++)
-            if (g_4abdc0[i] == -1) {
-                place.x = g_4ac180[i + 1];
-                place.y = g_4ac184[i + 1];
-                roomViews[i] = addView(0x808000, drawRoomView, layOutLillyView, g_4ac10e[ok++] + 11000, 0, &place, 0, 0);
+            if (roomOccupancy[i] == -1) {
+                place.x = hotelPlaceX[i + 1];
+                place.y = hotelPlaceY[i + 1];
+                roomViews[i] = addView(0x808000, drawRoomView, layOutLillyView, roomViewScripts[ok++] + 11000, 0, &place, 0, 0);
             }
     }
     fillMemory(roomRowValues, 0, 50);
@@ -3613,10 +3613,10 @@ void lillyClick(short action)
         closeHotel();
         return;
     }
-    if (g_4ac13a) {
-        if (g_4ac0ba) {
+    if (talkerStarted) {
+        if (hotelTalkerView) {
             deleteHotelTalker();
-            g_4ac13c++;
+            skipGuide++;
         }
         return;
     }
@@ -3641,7 +3641,7 @@ void lillyClick(short action)
         }
         break;
     case 3:
-        if (g_4ac0f2 || g_4ac0f4 || g_4ac0e6 || g_4ac0dc || snoidsOnTheirWay > 0 || g_4ac0ce)
+        if (roundResetGroup || talkerGroup || hotelFails || snoidArriving || snoidsOnTheirWay > 0 || snoidRejected)
             break;
         chosen = 0;
         getCursorPosition(&where);
@@ -3671,51 +3671,51 @@ void lillyClick(short action)
                 placeClaims[i] = 0;
             dragSnoid(view, where, 0, 0);
             unloadSounds();
-            g_4ac0d4 = heldPlaceNumber();
-            if (g_4ac0d4 > 5 && !hotelLevel)
-                g_4ac0d4 = 0;
+            heldRoomPlace = heldPlaceNumber();
+            if (heldRoomPlace > 5 && !hotelLevel)
+                heldRoomPlace = 0;
             if (!hotelLevel)
-                hotelRoom = (g_4ac0d4 - 1) * 5 + 4;
+                hotelRoom = (heldRoomPlace - 1) * 5 + 4;
             else
-                hotelRoom = g_4ac0d4 - 1;
-            if (hotelRoom < 0 || g_4abdc0[hotelRoom] < 0)
-                g_4ac0d4 = 0;
-            if (g_4ac0d4) {
-                g_4ac0dc++;
+                hotelRoom = heldRoomPlace - 1;
+            if (hotelRoom < 0 || roomOccupancy[hotelRoom] < 0)
+                heldRoomPlace = 0;
+            if (heldRoomPlace) {
+                snoidArriving++;
                 switch (hotelLevel) {
                 case 0:
-                    if (g_4ac0da) {
-                        roomRowValues[hotelRoom] = viewSnoid(view)->features[g_4ac0de];
-                        wrong = g_4ac0da = 0;
-                        g_4ac0fe = g_4ac100;
+                    if (firstPlacementFree) {
+                        roomRowValues[hotelRoom] = viewSnoid(view)->features[rowSortFeature];
+                        wrong = firstPlacementFree = 0;
+                        guideStep = guideLastStep;
                     } else {
                         wrong = 0;
                         if (roomRowValues[hotelRoom]) {
-                            if (roomRowValues[hotelRoom] != viewSnoid(view)->features[g_4ac0de])
+                            if (roomRowValues[hotelRoom] != viewSnoid(view)->features[rowSortFeature])
                                 wrong = 1;
                             else
                                 wrong = 0;
                         } else {
                             for (i = 0; i < 5; i++)
-                                if (roomRowValues[i * 5 + 4] == viewSnoid(view)->features[g_4ac0de])
+                                if (roomRowValues[i * 5 + 4] == viewSnoid(view)->features[rowSortFeature])
                                     wrong = 1;
                             if (!wrong)
-                                roomRowValues[hotelRoom] = viewSnoid(view)->features[g_4ac0de];
+                                roomRowValues[hotelRoom] = viewSnoid(view)->features[rowSortFeature];
                         }
                     }
-                    g_4ac504 = view->id;
+                    droppedSnoid = view->id;
                     break;
                 case 1:
                 case 2:
-                    if (g_4ac0da) {
-                        first = viewSnoid(view)->features[g_4ac0de];
-                        second = viewSnoid(view)->features[g_4ac0e0];
+                    if (firstPlacementFree) {
+                        first = viewSnoid(view)->features[rowSortFeature];
+                        second = viewSnoid(view)->features[columnSortFeature];
                         setRowAndColumn(first, second, hotelRoom);
-                        wrong = g_4ac0da = 0;
-                        g_4ac0fe = g_4ac100;
+                        wrong = firstPlacementFree = 0;
+                        guideStep = guideLastStep;
                     } else {
-                        first = viewSnoid(view)->features[g_4ac0de];
-                        second = viewSnoid(view)->features[g_4ac0e0];
+                        first = viewSnoid(view)->features[rowSortFeature];
+                        second = viewSnoid(view)->features[columnSortFeature];
                         switch (fitsRoom(first, second, hotelRoom)) {
                         case 0:
                             wrong = 1;
@@ -3726,20 +3726,20 @@ void lillyClick(short action)
                             break;
                         }
                     }
-                    g_4ac504 = view->id;
+                    droppedSnoid = view->id;
                     break;
                 case 3:
-                    if (g_4ac0da) {
-                        first = viewSnoid(view)->features[g_4ac0de];
-                        second = viewSnoid(view)->features[g_4ac0e0];
-                        third = viewSnoid(view)->features[g_4ac0e2];
+                    if (firstPlacementFree) {
+                        first = viewSnoid(view)->features[rowSortFeature];
+                        second = viewSnoid(view)->features[columnSortFeature];
+                        third = viewSnoid(view)->features[layerSortFeature];
                         setRowLayerColumn(first, second, third, hotelRoom);
-                        wrong = g_4ac0da = 0;
-                        g_4ac0fe = g_4ac100;
+                        wrong = firstPlacementFree = 0;
+                        guideStep = guideLastStep;
                     } else {
-                        first = viewSnoid(view)->features[g_4ac0de];
-                        second = viewSnoid(view)->features[g_4ac0e0];
-                        third = viewSnoid(view)->features[g_4ac0e2];
+                        first = viewSnoid(view)->features[rowSortFeature];
+                        second = viewSnoid(view)->features[columnSortFeature];
+                        third = viewSnoid(view)->features[layerSortFeature];
                         switch (fitsRoom3d(first, second, third, hotelRoom)) {
                         case 0:
                             wrong = 1;
@@ -3750,16 +3750,16 @@ void lillyClick(short action)
                             break;
                         }
                     }
-                    g_4ac504 = view->id;
+                    droppedSnoid = view->id;
                     break;
                 }
                 if (!wrong) {
                     viewSnoid(view)->unknownF7 = 1;
-                    if (countChosenSnoids() == g_4ac0e8)
+                    if (countChosenSnoids() == hotelPartySize)
                         queueViewSound(randomUpTo(23) + 175, 0);
                 } else {
-                    g_4ac0ce = 1;
-                    g_4ac0dc = 0;
+                    snoidRejected = 1;
+                    snoidArriving = 0;
                 }
             }
         }
@@ -3781,34 +3781,34 @@ void openHotel()
     fillMemory(roomRowValues, 0, 50);
     fillMemory(roomLayerValues, 0, 50);
     fillMemory(roomColumnValues, 0, 10);
-    fillMemory(g_4abdc0, 0, 250);
-    fillMemory(g_4ac10e, 0, 40);
-    g_4ac504 = g_4ac0be = g_4ac0c0 = 0;
-    g_4ac0f2 = g_4ac0f4 = g_4ac0fc = g_4ac0f6 = 0;
-    g_4ac0de = g_4ac0e0 = g_4ac0e2 = g_4ac0f0 = 0;
-    g_4ac0ce = roomGroup = g_4ac0f8 = g_4ac0ea = 0;
-    g_4ac0e6 = g_4ac0e4 = g_4ac13c = 0;
-    g_4ac138 = g_4ac0dc = 0;
-    g_4ac13a = 1;
-    roomCount = g_4ac0c4 = g_4ac0c6 = 25;
-    g_4ac0da = 1;
+    fillMemory(roomOccupancy, 0, 250);
+    fillMemory(roomViewScripts, 0, 40);
+    droppedSnoid = talkerStage = talkerPending = 0;
+    roundResetGroup = talkerGroup = guideStepGroup = talkerDoneGroup = 0;
+    rowSortFeature = columnSortFeature = layerSortFeature = guideRemarkGroup = 0;
+    snoidRejected = roomGroup = arrivingGroup = arrivingSnoid = 0;
+    hotelFails = roomsFilled = skipGuide = 0;
+    unusedHotel1 = snoidArriving = 0;
+    talkerStarted = 1;
+    roomCount = debugTalkerScript1 = debugTalkerScript2 = 25;
+    firstPlacementFree = 1;
     claimOnArrival = 0;
-    hintSound = g_4ac0d6 = 0;
+    hintSound = roomAnimStage = 0;
     hotelLevel = sceneLevel();
-    g_4ac0fe = 1;
+    guideStep = 1;
     switch (hotelLevel) {
     case 0:
-        g_4ac100 = 5;
+        guideLastStep = 5;
         break;
     case 2:
-        g_4ac100 = 4;
+        guideLastStep = 4;
         break;
     default:
-        g_4ac100 = 2;
+        guideLastStep = 2;
         break;
     }
-    g_4ac102 = g_4ac0fe;
-    g_4ac104 = g_4ac100;
+    savedGuideStep = guideStep;
+    savedGuideLastStep = guideLastStep;
     if (hotelLevel == 3)
         roomCount = 125;
     sceneDue = hotelAnyFits = 0;
@@ -3852,21 +3852,21 @@ void openHotel()
     }
     if (hotelLevel == 2) {
         roomImages = loadImageBank(11000, &roomImagesResource);
-        g_4ac180 = loadShortTable(11000, &g_4ac14c);
-        g_4ac184 = loadShortTable(11001, &g_4ac150);
-        g_4ac1a0 = loadShortTable(11002, &g_4ac170);
-        g_4ac1a4 = loadShortTable(11003, &g_4ac174);
-        g_4ac188 = loadShortTable(11004, &g_4ac154);
-        g_4ac18c = loadShortTable(11005, &g_4ac158);
+        hotelPlaceX = loadShortTable(11000, &hotelPlaceXResource);
+        hotelPlaceY = loadShortTable(11001, &hotelPlaceYResource);
+        lillyViewHotX = loadShortTable(11002, &lillyViewHotXResource);
+        lillyViewHotY = loadShortTable(11003, &lillyViewHotYResource);
+        roomViewX = loadShortTable(11004, &roomViewXResource);
+        roomViewY = loadShortTable(11005, &roomViewYResource);
     }
     if (hotelLevel == 3) {
         roomImages3d = loadImageBank(12000, &roomImagesResource);
-        g_4ac190 = loadShortTable(9000, &g_4ac160);
-        g_4ac194 = loadShortTable(9001, &g_4ac164);
-        g_4ac198 = loadShortTable(9002, &g_4ac168);
-        g_4ac19c = loadShortTable(9003, &g_4ac16c);
-        g_4ac188 = loadShortTable(12004, &g_4ac154);
-        g_4ac18c = loadShortTable(12005, &g_4ac158);
+        roomColumnX = loadShortTable(9000, &roomColumnXResource);
+        roomColumnY = loadShortTable(9001, &roomColumnYResource);
+        layerRowX = loadShortTable(9002, &layerRowXResource);
+        layerRowY = loadShortTable(9003, &layerRowYResource);
+        roomViewX = loadShortTable(12004, &roomViewXResource);
+        roomViewY = loadShortTable(12005, &roomViewYResource);
     }
     hotelButtonImages = loadImageBank(8000, &hotelButtonResource);
     {
@@ -3874,29 +3874,29 @@ void openHotel()
 
         if (labels >= 2)
             labels--;
-        g_4ac0c8 = addView(0x108000, drawCels, runViewScript, labels + 11500, 6, 0, 0, 0);
+        hotelLabelView = addView(0x108000, drawCels, runViewScript, labels + 11500, 6, 0, 0, 0);
     }
-    g_4ac0be = 0;
+    talkerStage = 0;
     campHint((short *)(gameState + 0x3a));
     hintSound = 20081;
     switch (hotelLevel) {
     case 0:
         if ((*(short *)(gameState + 0x3a) & 0xfff) > 1)
-            g_4ac0be = randomUpTo(2) + 1;
+            talkerStage = randomUpTo(2) + 1;
         break;
     case 1:
-        g_4ac0be = 4;
+        talkerStage = 4;
         break;
     case 2:
-        g_4ac0be = 5;
+        talkerStage = 5;
         break;
     case 3:
-        g_4ac0be = 6;
+        talkerStage = 6;
         break;
     }
-    if (!g_4ac0be || g_4ac0be == 4)
-        g_4ac0c0 = 1;
-    setGroupLists(g_4a1764, 1, (short)0xc000);
+    if (!talkerStage || talkerStage == 4)
+        talkerPending = 1;
+    setGroupLists(hotelGroups, 1, (short)0xc000);
     addSoundRange(8900, 8901, 0);
     addSoundRange(996, 997, 0);
     addSoundRange(20000, 29999, 1);
@@ -3908,13 +3908,13 @@ void openHotel()
     addSoundRange(9004, 9006, 0);
     addSoundRange(9000, 9999, 0);
     addSoundRange(10000, 10999, 0);
-    g_4ac0ba = addView(0x8108000, drawCels, runViewScript, g_4ac0be + 7000, 6, 0, 0, 0);
-    loadViewSounds(g_4ac0ba, 1);
+    hotelTalkerView = addView(0x8108000, drawCels, runViewScript, talkerStage + 7000, 6, 0, 0, 0);
+    loadViewSounds(hotelTalkerView, 1);
     makePartySnoids(0);
     setUpLillyPuzzle();
-    g_4ac0ca = addView(0x100000, drawCels, runViewScript, 11800, 6, 0, 0, 0);
+    view11800 = addView(0x100000, drawCels, runViewScript, 11800, 6, 0, 0, 0);
     updateViews();
-    g_4ac0f2 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
+    roundResetGroup = groupViews(hotelTalkerView, hotelTalkerView, 0, 0, 0, 0);
     showRect(&shownGameRect);
     fadeInViews();
     getColors(&savedPalette[10], 10, 236);
@@ -3959,13 +3959,13 @@ void otherClick(short action)
             drawLillyButton(action, 0, 1);
             sceneDue = 12;
             snoidsOnTheirWay = 0;
-            g_4af360 = 0;
+            swapPending = 0;
         }
         break;
     case 3:
         getCursorPosition(&where);
         view = viewAt(where, 0x980002, 1);
-        if (view && !g_4af360) {
+        if (view && !swapPending) {
             actor = (LillyActor *)&view->body;
             if ((snoidsOnTheirWay <= 0 || (snoidsOnTheirWay > 0 && actor->unknownC0 == 2)) && !actor->unknownC2
                 && actor->unknownC0 != 1) {
@@ -3974,15 +3974,15 @@ void otherClick(short action)
                 cel = (short *)&view->body;
 
                 bank = groupBanks[view->body.scriptGroup];
-                g_4af332 = lillyClaimIndex();
-                if (!actor->unknownC0 && g_4af332 >= 0 && g_4af332 <= 11) {
+                claimedRow = lillyClaimIndex();
+                if (!actor->unknownC0 && claimedRow >= 0 && claimedRow <= 11) {
                     unionRgnRect(removedRgn, &actor->body.bounds);
                     actor->body.bounds.left = 0;
                     actor->body.bounds.right = 0;
                     actor->body.bounds.top = 0;
                     actor->body.bounds.bottom = 0;
-                    actor->body.x = lillyBoard[g_4af332][0].rect.left;
-                    actor->body.y = lillyBoard[g_4af332][0].rect.top;
+                    actor->body.x = lillyBoard[claimedRow][0].rect.left;
+                    actor->body.y = lillyBoard[claimedRow][0].rect.top;
                     while (*cel) {
                         cel[1] = actor->body.x - actorHotSpotsX[*cel];
                         cel[2] = actor->body.y - actorHotSpotsY[*cel];
@@ -3998,32 +3998,32 @@ void otherClick(short action)
                     view->nextUpdate = 0;
                     view->changed = 1;
                     releaseLillyClaim();
-                    lillyBoard[g_4af332][0].attributes[0] = 1;
+                    lillyBoard[claimedRow][0].attributes[0] = 1;
                     actor->unknownC2 = 1;
                     actor->column = 0;
-                    actor->row = g_4af332;
+                    actor->row = claimedRow;
                     startPlan(actor);
-                    moveView(view->id, 0, g_4aed22[actor->row]);
-                    other = findView(g_4aed3a[g_4af0ec]);
+                    moveView(view->id, 0, rowAnchorViews[actor->row]);
+                    other = findView(snoidPadViews[padsPlaced]);
                     if (other) {
                         cel = (short *)&other->body;
                         cel[14] = view->id;
-                        cel[15] = g_4af332;
+                        cel[15] = claimedRow;
                         other->flags = 0x180000;
                         setViewScript(other, cel[12] + 10109, 1);
                         other->placed = placeByHotSpot;
                         other->notify = lillyActorNotify;
-                        actor->unknownE1 = g_4aed3a[g_4af0ec];
-                        g_4af0ec++;
+                        actor->unknownE1 = snoidPadViews[padsPlaced];
+                        padsPlaced++;
                         actor->unknownE3 = *(char *)&cel[10];
                     }
-                    if (g_4af0ec == g_4af0e8) {
-                        if (g_4ac922 == 6)
+                    if (padsPlaced == lillyPartySize) {
+                        if (swapToolStage == 6)
                             checkLillyArrivals();
                         snoidsOnTheirWay = 1;
                     }
                 } else if (!actor->unknownC0) {
-                    *(Point *)&actor->body.x = g_4a1ca4[cel[20]];
+                    *(Point *)&actor->body.x = jumpPlaces[cel[20]];
                     setViewScript(view, cel[20] + 10043, 1);
                     view->nextUpdate = 0;
                     view->changed = 1;
@@ -4073,7 +4073,7 @@ void dragLillyPiece(View *piece, Point where0)
 
     lillyClaim = 0;
     id = piece->id;
-    if ((marker = findView(g_4af33c)) != 0 && (view = removeView(id, 0)) != 0) {
+    if ((marker = findView(cursorSquareView)) != 0 && (view = removeView(id, 0)) != 0) {
         view->id = -3;
         insertViewAtEnd(view);
         view->flags = 0x980002;
@@ -4083,13 +4083,13 @@ void dragLillyPiece(View *piece, Point where0)
         actor = (LillyActor *)&view->body;
         if (!actor->unknownC0) {
             cancel = 0;
-            g_4af664 = 1;
+            lillyDragState = 1;
             actor->body.unknownAa = (actor->body.bounds.right - actor->body.bounds.left) / 2 + view->body.cels[0].x;
             actor->body.unknownAc = (actor->body.bounds.bottom - actor->body.bounds.top) / 2 + view->body.cels[0].y;
         } else {
             cancel = 0;
-            g_4af664 = 4;
-            g_4af358 = 4;
+            lillyDragState = 4;
+            swapStep = 4;
             start.x = 38;
             start.y = 415;
         }
@@ -4100,9 +4100,9 @@ void dragLillyPiece(View *piece, Point where0)
             hideCursor();
         body = &view->body;
         bank = groupBanks[view->body.scriptGroup];
-        while (g_4af664) {
+        while (lillyDragState) {
             if (!actor->unknownC0)
-                g_4af664 = keepDragging();
+                lillyDragState = keepDragging();
             getCursorPosition(&where);
             short value = where.x;
 
@@ -4119,7 +4119,7 @@ void dragLillyPiece(View *piece, Point where0)
             if (!actor->unknownC0) {
                 found = 0;
                 for (column = 0; column < placedViewCount; column++)
-                    if (ptInRect(&g_4a1cd8[column], where) && !lillyBoard[column][0].attributes[0]) {
+                    if (ptInRect(&rowEntryRects[column], where) && !lillyBoard[column][0].attributes[0]) {
                         switch (actor->unknownDe) {
                         case 1:
                             if (lillyBoard[column][0].attributes[1] == actor->unknownDf)
@@ -4146,43 +4146,43 @@ void dragLillyPiece(View *piece, Point where0)
                 if (!down)
                     down = isButtonStillDown(buttonDown);
                 if (down) {
-                    if (g_4af664 != 4) {
+                    if (lillyDragState != 4) {
                         short d;
 
                         if (!ptInRect(&lillyArea, where)) {
                             cancel = 1;
-                        } else if (g_4af664 == 2) {
-                            if (ptInRect(&g_4a1e04, where)) {
+                        } else if (lillyDragState == 2) {
+                            if (ptInRect(&lillyArea1, where)) {
                                 d = MAGNITUDE(123 - where.x);
                                 if (d * 539 / 100 > where.y - 62)
                                     cancel = 1;
                                 else
-                                    g_4af664 = 3;
-                            } else if (ptInRect(&g_4a1e0c, where)) {
+                                    lillyDragState = 3;
+                            } else if (ptInRect(&lillyArea2, where)) {
                                 d = where.x - 509;
                                 if (d * 539 / 100 > MAGNITUDE(where.y - 430))
                                     cancel = 1;
                                 else
-                                    g_4af664 = 3;
+                                    lillyDragState = 3;
                             } else {
-                                g_4af664 = 3;
+                                lillyDragState = 3;
                             }
-                        } else if (ptInRect(&g_4a1e04, where)) {
+                        } else if (ptInRect(&lillyArea1, where)) {
                             d = MAGNITUDE(123 - where.x);
                             if (d * 539 / 100 > where.y - 62)
                                 cancel = 1;
-                        } else if (ptInRect(&g_4a1e0c, where)) {
+                        } else if (ptInRect(&lillyArea2, where)) {
                             d = where.x - 509;
                             if (d * 539 / 100 > MAGNITUDE(where.y - 430))
                                 cancel = 1;
                         }
                     }
-                } else if (g_4af664 == 1 || g_4af664 == 4) {
-                    g_4af664 = 2;
+                } else if (lillyDragState == 1 || lillyDragState == 4) {
+                    lillyDragState = 2;
                 }
-                if (g_4af664 == 3 && !cancel && g_4ac922 < 6) {
-                    g_4af664 = 1;
-                    if (g_4af358 == 4 || g_4af358 == 5) {
+                if (lillyDragState == 3 && !cancel && swapToolStage < 6) {
+                    lillyDragState = 1;
+                    if (swapStep == 4 || swapStep == 5) {
                         where.x += 27;
                         where.y += 22;
                         for (row = 0, hit = 0; row < 12; row++)
@@ -4201,43 +4201,43 @@ void dragLillyPiece(View *piece, Point where0)
                                 }
                             }
                         if (hit && !lillyBoard[hitRow][hitColumn].attributes[0]) {
-                            switch (g_4af358) {
+                            switch (swapStep) {
                             case 4:
                                 flashColumn = hitColumn;
                                 flashRow = hitRow;
-                                queueViewSound(g_4a1f16++ + 12000, 0);
-                                showViewOnSquare(g_4af33e, flashRow, flashColumn);
-                                g_4af358 = 5;
-                                g_4af360 = 1;
+                                queueViewSound(swapSound++ + 12000, 0);
+                                showViewOnSquare(swapFirstMarker, flashRow, flashColumn);
+                                swapStep = 5;
+                                swapPending = 1;
                                 break;
                             case 5:
-                                g_4af34c = hitColumn;
-                                g_4af34e = hitRow;
-                                queueViewSound(g_4a1f16++ + 12000, 0);
-                                showViewOnSquare(g_4af340, g_4af34e, g_4af34c);
-                                g_4af358 = 6;
-                                if (g_4af34c != flashColumn || g_4af34e != flashRow)
-                                    if (++g_4ac926 >= g_4ac924 && g_4ac922 < 6) {
-                                        g_4ac922++;
-                                        g_4ac926 = 0;
-                                        setViewScript(view, g_4ac922 + 10078, 1);
-                                        if (g_4ac922 == 6 && g_4af0ec == g_4af0e8)
+                                swapColumn = hitColumn;
+                                swapRow = hitRow;
+                                queueViewSound(swapSound++ + 12000, 0);
+                                showViewOnSquare(swapSecondMarker, swapRow, swapColumn);
+                                swapStep = 6;
+                                if (swapColumn != flashColumn || swapRow != flashRow)
+                                    if (++swapsThisStage >= swapsPerStage && swapToolStage < 6) {
+                                        swapToolStage++;
+                                        swapsThisStage = 0;
+                                        setViewScript(view, swapToolStage + 10078, 1);
+                                        if (swapToolStage == 6 && padsPlaced == lillyPartySize)
                                             checkLillyArrivals();
                                     }
                                 break;
                             }
-                            if (g_4a1f16 > 3)
-                                g_4a1f16 = 0;
+                            if (swapSound > 3)
+                                swapSound = 0;
                         }
                     }
                 }
                 if (cancel) {
                     actor->body.x = start.x;
                     actor->body.y = start.y;
-                    if (g_4af358 == 5)
-                        placeViewOnSquare(g_4af33e, flashRow, flashColumn);
-                    g_4af360 = 0;
-                    g_4af664 = 0;
+                    if (swapStep == 5)
+                        placeViewOnSquare(swapFirstMarker, flashRow, flashColumn);
+                    swapPending = 0;
+                    lillyDragState = 0;
                 }
             }
             if (!found) {
@@ -4290,7 +4290,7 @@ void dragLillyPiece(View *piece, Point where0)
 /*
  * Sets up the other puzzle's board: turns and mirrors the level's grids,
  * leaves out some pieces, deals the squares and fills them in, noting
- * starting squares on the first row (g_4aece6) at levels 3 and 4.
+ * starting squares on the first row (lillyStarts) at levels 3 and 4.
  */
 /* @zoombi32 0x0042cc75 */
 void setUpBoard()
@@ -4310,72 +4310,72 @@ void setUpBoard()
     short column;
     short value;
 
-    fillMemory(g_4a1ec6, 0, 24);
+    fillMemory(valueUses, 0, 24);
     for (row = 0; row < 13; row++) {
-        g_4a1ede[row] = row;
-        g_4a1efa[row] = row;
+        rowValueUsed[row] = row;
+        columnValueUsed[row] = row;
     }
-    g_4a1ede[13] = 0;
-    g_4a1efa[13] = 0;
+    rowValueUsed[13] = 0;
+    columnValueUsed[13] = 0;
     for (row = 0; row < 12; row++)
         for (column = 0; column < 13; column++)
             lillyBoard[row][column].attributes[0] = 0;
     if (lillyLevel == 1 || lillyLevel == 2) {
         limit = 0;
-        g_4af342 = 0;
+        layersToSearchCount = 0;
         if (lillyLevel == 1)
-            column = 12 - g_4a1e84[g_4af0e8];
+            column = 12 - levelLeftOut[lillyPartySize];
         else
             column = 12;
     } else {
         column = 12;
         if (lillyLevel == 3) {
             limit = 2;
-            if (g_4a1e84[g_4af0e8] < 8) {
+            if (levelLeftOut[lillyPartySize] < 8) {
                 switch (randomBetween(3, 5)) {
                 case 3:
-                    g_4af342 = 3;
-                    turnGrid(g_4ac9b0, 0);
+                    layersToSearchCount = 3;
+                    turnGrid(grid1, 0);
                     break;
                 case 4:
-                    g_4af342 = 4;
-                    turnGrid(g_4ac9b4, 0);
+                    layersToSearchCount = 4;
+                    turnGrid(grid2, 0);
                     break;
                 case 5:
-                    g_4af342 = 5;
-                    turnGrid(g_4ac9b8, 0);
+                    layersToSearchCount = 5;
+                    turnGrid(grid3, 0);
                     break;
                 }
             } else {
-                g_4af342 = 4;
-                turnGrid(g_4ac9b4, 0);
+                layersToSearchCount = 4;
+                turnGrid(grid2, 0);
             }
         } else if (lillyLevel == 4) {
             limit = 3;
-            if (g_4a1e84[g_4af0e8] < 8) {
+            if (levelLeftOut[lillyPartySize] < 8) {
                 if (randomBetween(4, 5) == 4) {
-                    g_4af342 = 4;
-                    turnGrid(g_4ac9b4, 0);
+                    layersToSearchCount = 4;
+                    turnGrid(grid2, 0);
                 } else {
-                    g_4af342 = 5;
-                    turnGrid(g_4ac9b8, 0);
+                    layersToSearchCount = 5;
+                    turnGrid(grid3, 0);
                 }
             } else {
-                g_4af342 = 4;
-                turnGrid(g_4ac9b4, 0);
+                layersToSearchCount = 4;
+                turnGrid(grid2, 0);
             }
         }
     }
     switch (randomBetween(0, 2)) {
     case 0:
-        turnGrid(g_4ac9b0, 1);
-        turnGrid(g_4ac9b4, 1);
-        turnGrid(g_4ac9b8, 1);
+        turnGrid(grid1, 1);
+        turnGrid(grid2, 1);
+        turnGrid(grid3, 1);
         break;
     case 1:
-        mirrorGrid(g_4ac9b0, randomBetween(0, 1));
-        mirrorGrid(g_4ac9b4, randomBetween(0, 1));
-        mirrorGrid(g_4ac9b8, randomBetween(0, 1));
+        mirrorGrid(grid1, randomBetween(0, 1));
+        mirrorGrid(grid2, randomBetween(0, 1));
+        mirrorGrid(grid3, randomBetween(0, 1));
         break;
     case 2:
         break;
@@ -4384,9 +4384,9 @@ void setUpBoard()
     for (k = 0; k < column; k++) {
         short j = randomBetween(1, row);
 
-        g_4a1ede[g_4a1efa[j]] = 0;
+        rowValueUsed[columnValueUsed[j]] = 0;
         for (; j < row + 1; j++)
-            g_4a1efa[j] = g_4a1efa[j + 1];
+            columnValueUsed[j] = columnValueUsed[j + 1];
         row--;
     }
     dealSquares();
@@ -4394,7 +4394,7 @@ void setUpBoard()
     total = 0;
     for (row = 0; row < 12; row++)
         for (column = 0; column < 12; column++) {
-            g_4aebae[row][column] = -1;
+            squareClaims[row][column] = -1;
             lillyBoard[row][column].attributes[0] = 0;
             lillyBoard[row][column].attributes[1] = 0;
             lillyBoard[row][column].attributes[2] = 0;
@@ -4404,9 +4404,9 @@ void setUpBoard()
             for (k = 0; k < 3; k++) {
                 switch (k) {
                 case 0:
-                    value = g_4ac9b0[row][column];
+                    value = grid1[row][column];
                     if (value) {
-                        if (g_4af342 == 3)
+                        if (layersToSearchCount == 3)
                             next = value;
                         else
                             next = value + 1;
@@ -4415,9 +4415,9 @@ void setUpBoard()
                     }
                     break;
                 case 1:
-                    value = g_4ac9b4[row][column];
+                    value = grid2[row][column];
                     if (value) {
-                        if (g_4af342 == 4)
+                        if (layersToSearchCount == 4)
                             next = value;
                         else
                             next = value + 1;
@@ -4426,9 +4426,9 @@ void setUpBoard()
                     }
                     break;
                 case 2:
-                    value = g_4ac9b8[row][column];
+                    value = grid3[row][column];
                     if (value) {
-                        if (g_4af342 == 5)
+                        if (layersToSearchCount == 5)
                             next = value;
                         else
                             next = value + 1;
@@ -4437,53 +4437,53 @@ void setUpBoard()
                     }
                     break;
                 }
-                if (value && g_4a1eae[row] && g_4a1eae[column] && !g_4a1ede[value] && g_4a1ec6[value] < 2)
-                    if (randomBetween(0, 100) > 75 || (row == 11 && !g_4a1ec6[value])) {
-                        g_4a1ec6[value]++;
+                if (value && rowColumnAllowed[row] && rowColumnAllowed[column] && !rowValueUsed[value] && valueUses[value] < 2)
+                    if (randomBetween(0, 100) > 75 || (row == 11 && !valueUses[value])) {
+                        valueUses[value]++;
                         value = next;
                         total++;
                     }
                 if (value > 0 && value < 13) {
-                    switch (g_4af616[value].a) {
+                    switch (squareDeals[value].a) {
                     case 1:
                         had1 = 1;
-                        lillyBoard[row][column].attributes[g_4af616[value].a] = g_4af616[value].b;
+                        lillyBoard[row][column].attributes[squareDeals[value].a] = squareDeals[value].b;
                         break;
                     case 2:
                         had2 = 1;
-                        lillyBoard[row][column].attributes[g_4af616[value].a] = g_4af616[value].b;
+                        lillyBoard[row][column].attributes[squareDeals[value].a] = squareDeals[value].b;
                         break;
                     case 3:
                         had3 = 1;
-                        lillyBoard[row][column].attributes[g_4af616[value].a] = g_4af616[value].b;
+                        lillyBoard[row][column].attributes[squareDeals[value].a] = squareDeals[value].b;
                         break;
                     }
                     if ((lillyLevel == 3 || lillyLevel == 4) && count < limit && !row)
-                        switch (g_4af342) {
+                        switch (layersToSearchCount) {
                         case 3:
                             if (value >= 1 && value <= 3) {
-                                g_4aece6[count].column = column;
-                                g_4aece6[count].attribute = g_4af616[value].a;
-                                g_4aece6[count].layer = g_4af616[value].b;
-                                g_4aece6[count].c = g_4af616[value].c;
+                                lillyStarts[count].column = column;
+                                lillyStarts[count].attribute = squareDeals[value].a;
+                                lillyStarts[count].layer = squareDeals[value].b;
+                                lillyStarts[count].c = squareDeals[value].c;
                                 count++;
                             }
                             break;
                         case 4:
                             if (value >= 4 && value <= 7) {
-                                g_4aece6[count].column = column;
-                                g_4aece6[count].attribute = g_4af616[value].a;
-                                g_4aece6[count].layer = g_4af616[value].b;
-                                g_4aece6[count].c = g_4af616[value].c;
+                                lillyStarts[count].column = column;
+                                lillyStarts[count].attribute = squareDeals[value].a;
+                                lillyStarts[count].layer = squareDeals[value].b;
+                                lillyStarts[count].c = squareDeals[value].c;
                                 count++;
                             }
                             break;
                         case 5:
                             if (value >= 8 && value <= 12) {
-                                g_4aece6[count].column = column;
-                                g_4aece6[count].attribute = g_4af616[value].a;
-                                g_4aece6[count].layer = g_4af616[value].b;
-                                g_4aece6[count].c = g_4af616[value].c;
+                                lillyStarts[count].column = column;
+                                lillyStarts[count].attribute = squareDeals[value].a;
+                                lillyStarts[count].layer = squareDeals[value].b;
+                                lillyStarts[count].c = squareDeals[value].c;
                                 count++;
                             }
                             break;
@@ -4497,27 +4497,27 @@ void setUpBoard()
             if (!had3)
                 lillyBoard[row][column].attributes[3] = randomBetween(0, 4);
             lillyBoard[row][column].attributes[4] =
-                g_4a1e70[lillyBoard[row][column].attributes[3]] + lillyBoard[row][column].attributes[1];
-            lillyBoard[row][column].rect.left = g_4ac940[row + 1] + column * 35;
-            lillyBoard[row][column].rect.top = g_4ac944[row + 1] + g_4a1d70[column];
+                overlayImageBase[lillyBoard[row][column].attributes[3]] + lillyBoard[row][column].attributes[1];
+            lillyBoard[row][column].rect.left = rowLeft[row + 1] + column * 35;
+            lillyBoard[row][column].rect.top = rowTop[row + 1] + columnDy[column];
             lillyBoard[row][column].rect.right = lillyBoard[row][column].rect.left + 36;
             lillyBoard[row][column].rect.bottom = lillyBoard[row][column].rect.top + 30;
         }
     if (lillyLevel > 1) {
-        flashColumn = g_4a1d40[0].x;
-        flashRow = g_4a1d54[0].x;
-        g_4af34c = g_4a1d40[1].x;
-        g_4af34e = g_4a1d54[1].x;
+        flashColumn = presetSwapColumns[0].x;
+        flashRow = presetSwapRows[0].x;
+        swapColumn = presetSwapColumns[1].x;
+        swapRow = presetSwapRows[1].x;
         swapSquares();
-        flashColumn = g_4a1d40[2].x;
-        flashRow = g_4a1d54[2].x;
-        g_4af34c = g_4a1d40[3].x;
-        g_4af34e = g_4a1d54[3].x;
+        flashColumn = presetSwapColumns[2].x;
+        flashRow = presetSwapRows[2].x;
+        swapColumn = presetSwapColumns[3].x;
+        swapRow = presetSwapRows[3].x;
         swapSquares();
     }
     total += 5;
-    g_4ac924 = total / 6;
-    g_4ac924 += g_4ac924 * 6 < total;
+    swapsPerStage = total / 6;
+    swapsPerStage += swapsPerStage * 6 < total;
 }
 
 /* Opens the other puzzle (Lilly.MHK) at the level reached. */
@@ -4531,78 +4531,78 @@ void openLilly()
     View *view;
     View *other;
 
-    g_4ac922 = 0;
-    g_4ac924 = 0;
-    g_4ac926 = 0;
-    g_4ac958 = 0;
+    swapToolStage = 0;
+    swapsPerStage = 0;
+    swapsThisStage = 0;
+    unusedLilly1 = 0;
     lillyGoReady = 0;
     sceneDue = 0;
-    g_4af36c = 0;
+    unusedLilly2 = 0;
     lillyOpen = 0;
-    g_4af332 = 0;
-    g_4ac91c = 0;
-    g_4af100 = 0;
+    claimedRow = 0;
+    firstArrivals = 0;
+    unusedLilly3 = 0;
     actorCount = 12;
-    g_4af33a = 0;
-    g_4af342 = 0;
-    g_4af0f0 = 0;
-    g_4af104 = 0;
-    g_4af0fc = clockTime() + 600;
-    g_4af0fa = 0;
-    g_4af0ec = 0;
-    g_4af0f2 = 0;
-    g_4af0f4 = 0;
-    g_4af35e = 0;
-    g_4af360 = 0;
+    event4Pad = 0;
+    layersToSearchCount = 0;
+    unusedLilly4 = 0;
+    presetSwapIndex = 0;
+    nextActorTime = clockTime() + 600;
+    unusedLilly5 = 0;
+    padsPlaced = 0;
+    unusedLilly6 = 0;
+    unusedLilly7 = 0;
+    unusedLilly8 = 0;
+    swapPending = 0;
     lillyStage = 0;
     flashCount = 0;
-    g_4af0f6 = 1;
+    unusedLilly9 = 1;
     hintSound = 0;
-    fillMemory(g_4aed3a, 0, 42);
+    fillMemory(snoidPadViews, 0, 42);
     fillMemory(actorViews, 0, 28);
-    fillMemory(g_4aefc0, 0, 288);
-    fillMemory(g_4aed0e, 0, 20);
-    fillMemory(g_4aed22, 0, 24);
-    fillMemory(g_4ac9bc, 0, 40);
-    fillMemory(g_4acd4c, 0, 40);
-    fillMemory(g_4acd76, 0, 40);
-    fillMemory(g_4acdf4, 0, 40);
-    fillMemory(g_4ace48, 0, 40);
-    fillMemory(g_4ace9c, 0, 40);
-    fillMemory(g_4ace72, 0, 40);
-    fillMemory(g_4acdca, 0, 40);
-    fillMemory(g_4ace1e, 0, 40);
-    fillMemory(g_4ac9e6, 0, 288);
-    fillMemory(g_4acb08, 0, 288);
-    fillMemory(g_4acc2a, 0, 288);
-    fillMemory(g_4aeea0, 0, 288);
-    fillMemory(g_4aed80, 0, 288);
-    fillMemory(g_4acec6, 0, 288);
-    g_4acfe6 = 0;
-    g_4af0e0 = 0;
-    g_4af0e2 = 0;
-    g_4af0e4 = 0;
-    g_4af0e6 = 0;
-    g_4af0ea = 0;
-    g_4acc28 = 0;
-    g_4acb06 = 0;
-    g_4acd4a = 0;
-    g_4acfea = 0;
-    g_4ace46 = 0;
-    g_4acff0 = 0;
-    g_4acdf2 = 0;
-    g_4acfec = 0;
-    g_4acfe8 = 0;
-    g_4acfee = 0;
-    g_4acff2 = 0;
-    g_4ace9a = 0;
-    g_4acec4 = 0;
-    g_4ac9e4 = 0;
-    g_4acd74 = 0;
-    g_4acd9e = 0;
-    g_4acdc8 = 0;
-    g_4ace1c = 0;
-    g_4ace70 = 0;
+    fillMemory(unusedLillyTable1, 0, 288);
+    fillMemory(lillyLayerViews, 0, 20);
+    fillMemory(rowAnchorViews, 0, 24);
+    fillMemory(unusedLillyTable2, 0, 40);
+    fillMemory(planQueue, 0, 40);
+    fillMemory(planWaiting, 0, 40);
+    fillMemory(event60Views, 0, 40);
+    fillMemory(unusedLillyTable3, 0, 40);
+    fillMemory(event3Views, 0, 40);
+    fillMemory(event2Views, 0, 40);
+    fillMemory(landerQueue, 0, 40);
+    fillMemory(event44Views, 0, 40);
+    fillMemory(hopperQueue, 0, 288);
+    fillMemory(unusedLillyTable4, 0, 288);
+    fillMemory(hopperWaiting, 0, 288);
+    fillMemory(actorsOut, 0, 288);
+    fillMemory(event80Views, 0, 288);
+    fillMemory(replanQueue, 0, 288);
+    replanQueueCount = 0;
+    event80Count = 0;
+    unusedLilly10 = 0;
+    nextStart = 0;
+    actorsOutCount = 0;
+    padsArrived = 0;
+    unusedLilly11 = 0;
+    hopperQueueCount = 0;
+    hopperWaitingCount = 0;
+    unusedLilly12 = 0;
+    event44Count = 0;
+    landerBusy = 0;
+    landerQueueCount = 0;
+    jumper2Busy = 0;
+    landedJumper = 0;
+    jumperBusy = 0;
+    finishedLander = 0;
+    event2Count = 0;
+    event3Count = 0;
+    unusedLilly13 = 0;
+    planQueueCount = 0;
+    planWaitingCount = 0;
+    jumperQueueCount = 0;
+    event60Count = 0;
+    unusedLilly14 = 0;
     openGameFile(&lillyFile, "Lilly.MHK");
     setCurrentMap(lillyFile);
     lillyButtonImages = loadImageBank(7000, &lillyButtonResource);
@@ -4615,29 +4615,29 @@ void openLilly()
     addScripts(10000, 167, 0);
     copyPaletteRange(10, 236);
     addView(0x1000, drawLillyButtons, updateLillyButtons, 0, 0, 0, 0, 0);
-    g_4af5a0 = loadImageBank(13000, &g_4a1b44);
-    loadTablePair(g_4ac928, 100, &g_4ac940, &g_4ac944);
-    loadTablePair(g_4ac938, 10000, &actorHotSpotsX, &actorHotSpotsY);
-    loadTablePair(g_4ac930, 200, &squareHotSpotsX, &squareHotSpotsY);
+    lillyImages = loadImageBank(13000, &lillyImagesResource);
+    loadTablePair(rowPlaceResources, 100, &rowLeft, &rowTop);
+    loadTablePair(actorHotSpotResources, 10000, &actorHotSpotsX, &actorHotSpotsY);
+    loadTablePair(squareHotSpotResources, 200, &squareHotSpotsX, &squareHotSpotsY);
     makePartySnoids(0);
-    g_4af0e8 = listChosenSnoids()->count;
+    lillyPartySize = listChosenSnoids()->count;
     setLillyLevel(lillyLevel = sceneLevel() + 1);
-    loadLockedTable(&g_4ac98c, &g_4ac994, 15000, (short **)&g_4ac9b0);
-    loadLockedTable(&g_4ac998, &g_4ac9a0, 15001, (short **)&g_4ac9b4);
-    loadLockedTable(&g_4ac9a4, &g_4ac9ac, 15002, (short **)&g_4ac9b8);
+    loadLockedTable(&grid1Resource, &grid1Handle, 15000, (short **)&grid1);
+    loadLockedTable(&grid2Resource, &grid2Handle, 15001, (short **)&grid2);
+    loadLockedTable(&grid3Resource, &grid3Handle, 15002, (short **)&grid3);
     setUpBoard();
-    g_4a1b40 = addView(0x4008000, drawBoard, updateLillyBackdrop, 0, 0, 0, 0, 0);
+    boardView = addView(0x4008000, drawBoard, updateLillyBackdrop, 0, 0, 0, 0, 0);
     for (i = 0; i < 12; i++) {
-        place.x = g_4ac940[i + 1] + 18;
-        place.y = g_4ac944[i + 1] + 15;
+        place.x = rowLeft[i + 1] + 18;
+        place.y = rowTop[i + 1] + 15;
         placedViewPoints[i] = place;
         placeClaims[i] = 0;
     }
     placedViewCount = 12;
     placesClaimable = 1;
-    g_4af33c = addView(0x4008000, drawCursorSquare, updateSquareHighlight, 0, 5, 0, 0, 0);
-    g_4af33e = addView(0x4008000, flashSquare, updateMarkerView, 0, 4, 0, 0, 0);
-    g_4af340 = addView(0x4008000, flashSwap, updateMarkerView, 0, 4, 0, 0, 0);
+    cursorSquareView = addView(0x4008000, drawCursorSquare, updateSquareHighlight, 0, 5, 0, 0, 0);
+    swapFirstMarker = addView(0x4008000, flashSquare, updateMarkerView, 0, 4, 0, 0, 0);
+    swapSecondMarker = addView(0x4008000, flashSwap, updateMarkerView, 0, 4, 0, 0, 0);
     short n = 0;
 
     for (view = viewListEnd(1); view; view = view->next)
@@ -4646,8 +4646,8 @@ void openLilly()
             view->body.x = 680;
             view->body.y = 220;
             snoid = viewSnoid(view);
-            g_4aed3a[n] = addView(0x4180000, drawCels, runViewScript, n + 10109, 4, &g_4a1bfc[n], 0, 0);
-            other = findView(g_4aed3a[n]);
+            snoidPadViews[n] = addView(0x4180000, drawCels, runViewScript, n + 10109, 4, &padPlaces[n], 0, 0);
+            other = findView(snoidPadViews[n]);
             if (other) {
                 other->placed = placeByHotSpot;
                 short *parts = (short *)&other->body;
@@ -4656,7 +4656,7 @@ void openLilly()
                 parts[13] = view->id;
                 parts[12] = n;
                 parts[15] = 0;
-                if (n == g_4af0e8 - 2 || n == g_4af0e8 - 1) {
+                if (n == lillyPartySize - 2 || n == lillyPartySize - 1) {
                     other->body.running = 0;
                     if (lillyLevel == 1) {
                         setViewScript(other, n + 10089, 1);
@@ -4664,7 +4664,7 @@ void openLilly()
                         other->placed = placeByHotSpot;
                         other->notify = lillyActorNotify;
                     }
-                    snoidsOnTheirWay = g_4af0e8 - n;
+                    snoidsOnTheirWay = lillyPartySize - n;
                     if (snoidsOnTheirWay < 0)
                         snoidsOnTheirWay = 0;
                 }
@@ -4673,14 +4673,14 @@ void openLilly()
         }
     addLillyActors();
     for (i = 14000; i <= 14004; i++)
-        g_4aed0e[i - 14000] = addView(0x4000000, drawCels, runViewScript, i, 0, 0, 0, 0);
+        lillyLayerViews[i - 14000] = addView(0x4000000, drawCels, runViewScript, i, 0, 0, 0, 0);
     if (lillyLevel > 1) {
-        g_4af338 = addView(0x180000, drawCels, runViewScript, 11000, 5, 0, 0, 0);
+        lillyView11000 = addView(0x180000, drawCels, runViewScript, 11000, 5, 0, 0, 0);
         actor.unknownC2 = 0;
         actor.unknownC0 = 2;
-        g_4af354 = addView(0x4180002, drawCels, runViewScript, g_4ac922 + 10078, 6, &actor, 0, 0);
-        g_4af358 = 4;
-        other = findView(g_4af354);
+        swapToolView = addView(0x4180002, drawCels, runViewScript, swapToolStage + 10078, 6, &actor, 0, 0);
+        swapStep = 4;
+        other = findView(swapToolView);
         if (other) {
             other->flags = 0;
             other->body.running = 0;
@@ -4688,14 +4688,14 @@ void openLilly()
             other->body.y = 415;
         }
     } else {
-        g_4af358 = 0;
+        swapStep = 0;
     }
     for (i = 0; i < 12; i++)
-        g_4aed22[i] = addView(0x4000000, lillyNoDraw, lillyNoUpdate, 14000, 0, 0, 0, 0);
+        rowAnchorViews[i] = addView(0x4000000, lillyNoDraw, lillyNoUpdate, 14000, 0, 0, 0, 0);
     fadeOutViews();
     copyPaletteRange(10, 236);
     updateViews();
-    setGroupLists(g_4a1bc8, 1, (short)0xc000);
+    setGroupLists(lillyGroups, 1, (short)0xc000);
     drawLillyButton(1, 0, 0);
     drawLillyButton(2, 0, 0);
     showRect(&shownGameRect);
@@ -4730,7 +4730,7 @@ void openLilly()
     }
     setLillyStage(3);
     if (lillyLevel > 1) {
-        other = findView(g_4af338);
+        other = findView(lillyView11000);
         if (other) {
             setViewScript(other, 11000, 1);
             other->notify = lillyViewNotify3;
@@ -4745,7 +4745,7 @@ void openLilly()
  * whose scripts have ended), sends in new actors along the starting row
  * from time to time (levels 3 and 4), and deletes the finished ones.
  */
-/* Not exact: the original caches the addresses of g_4acfec and g_4acdc8
+/* Not exact: the original caches the addresses of jumper2Busy and jumperQueueCount
    in esi and edi (this caches others), which changes the registers
    throughout. */
 /* @zoombi32 0x00428d84 */
@@ -4756,13 +4756,13 @@ void lillyFrame()
     LillyActor *actor;
     short script;
 
-    if (g_4a1d88 || !lillyOpen)
+    if (inLillyFrame || !lillyOpen)
         return;
-    g_4a1d88 = 1;
+    inLillyFrame = 1;
     updateViews();
     if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-            g_4a1d88 = 0;
+            inLillyFrame = 0;
             return;
         }
         if (!dialogQuestion || dialogQuestion == 3) {
@@ -4773,7 +4773,7 @@ void lillyFrame()
                 sceneDue = 0;
                 setCurrentMap(0);
                 closeLilly();
-                g_4a1d88 = 0;
+                inLillyFrame = 0;
                 return;
             }
         } else if (dialogQuestion == 2) {
@@ -4782,45 +4782,45 @@ void lillyFrame()
         }
     } else if (dialogFlags) {
         playAmbientSound();
-        g_4a1d88 = 0;
+        inLillyFrame = 0;
         return;
     } else {
-        while (g_4acdc8 > 0 && !g_4acfee) {
-            g_4acdc8--;
-            g_4acfee = g_4acda0[g_4acdc8];
-            view = findView(g_4acfee);
+        while (jumperQueueCount > 0 && !jumperBusy) {
+            jumperQueueCount--;
+            jumperBusy = jumperQueue[jumperQueueCount];
+            view = findView(jumperBusy);
             if (view) {
                 setViewScript(view, 10057, 1);
                 view->placed = placeJumper;
                 view->notify = lillyNotify44;
             }
         }
-        while (g_4ace1c > 0 && !g_4acfec) {
-            g_4ace1c--;
-            g_4acfec = g_4acdf4[g_4ace1c];
-            view = findView(g_4acfec);
+        while (event60Count > 0 && !jumper2Busy) {
+            event60Count--;
+            jumper2Busy = event60Views[event60Count];
+            view = findView(jumper2Busy);
             if (view) {
                 setViewScript(view, 10058, 1);
                 view->placed = placeJumperAt;
                 view->notify = lillyNotify49;
                 view->flags = 0x4980002;
-                moveView(view->id, 0, g_4aed10);
+                moveView(view->id, 0, lillyLayerView1);
             }
         }
-        if (g_4acfe8) {
-            view = findView(g_4acfe8);
-            g_4acfe8 = 0;
-            g_4acfec = 0;
+        if (landedJumper) {
+            view = findView(landedJumper);
+            landedJumper = 0;
+            jumper2Busy = 0;
             if (view) {
                 actor = (LillyActor *)&view->body;
                 short *parts = (short *)&view->body;
 
-                *(Point *)&actor->body.x = g_4a1ca4[parts[20]];
+                *(Point *)&actor->body.x = jumpPlaces[parts[20]];
                 setViewScript(view, parts[20] + 10043, 1);
             }
         }
-        while (g_4ace46 > 0 && !g_4acfee) {
-            view = findView(g_4ace1e[--g_4ace46]);
+        while (event44Count > 0 && !jumperBusy) {
+            view = findView(event44Views[--event44Count]);
             if (view) {
                 actor = (LillyActor *)&view->body;
                 if (actor->unknownDe == 3) {
@@ -4834,23 +4834,23 @@ void lillyFrame()
                 }
             }
         }
-        while (g_4acdf2 && !g_4acff0) {
-            g_4acdf2--;
-            g_4acff0 = g_4acdca[g_4acdf2];
-            view = findView(g_4acff0);
+        while (landerQueueCount && !landerBusy) {
+            landerQueueCount--;
+            landerBusy = landerQueue[landerQueueCount];
+            view = findView(landerBusy);
             if (view) {
                 setViewScript(view, 10059, 1);
                 view->placed = placeLander;
                 view->notify = lillyNotify54;
             }
         }
-        if (g_4acff2) {
-            deleteView(g_4acff2);
-            g_4acff2 = 0;
-            g_4acff0 = 0;
+        if (finishedLander) {
+            deleteView(finishedLander);
+            finishedLander = 0;
+            landerBusy = 0;
         }
-        while (g_4acec4) {
-            view = findView(g_4ace9c[--g_4acec4]);
+        while (event3Count) {
+            view = findView(event3Views[--event3Count]);
             if (view) {
                 short *parts = (short *)&view->body;
 
@@ -4860,8 +4860,8 @@ void lillyFrame()
                 view->flags |= 0x4000000;
             }
         }
-        while (g_4ace9a) {
-            view = findView(g_4ace72[--g_4ace9a]);
+        while (event2Count) {
+            view = findView(event2Views[--event2Count]);
             if (view) {
                 short *parts = (short *)&view->body;
 
@@ -4870,20 +4870,20 @@ void lillyFrame()
                 view->notify = hopperNotify;
             }
         }
-        if (!g_4af360) {
-            if (g_4af5a4 == 1) {
-                g_4af5a4 = 0;
-                while (g_4acd9e) {
-                    g_4acd9e--;
-                    g_4acd4c[g_4acd74] = g_4acd76[g_4acd9e];
-                    g_4acd74++;
+        if (!swapPending) {
+            if (planTick == 1) {
+                planTick = 0;
+                while (planWaitingCount) {
+                    planWaitingCount--;
+                    planQueue[planQueueCount] = planWaiting[planWaitingCount];
+                    planQueueCount++;
                 }
-                while (g_4acd74) {
-                    view = findView(g_4acd4c[--g_4acd74]);
+                while (planQueueCount) {
+                    view = findView(planQueue[--planQueueCount]);
                     if (view) {
                         if (clockTime() >= view->nextUpdate) {
                             actor = (LillyActor *)&view->body;
-                            moveView(view->id, 0, g_4aed22[actor->row]);
+                            moveView(view->id, 0, rowAnchorViews[actor->row]);
                             script = pickLeastVisited(actor);
                             if (script == 10031) {
                                 setViewScript(view, script += actor->row, 1);
@@ -4894,44 +4894,44 @@ void lillyFrame()
                                 view->placed = placeActorCels3;
                                 view->notify = hopNotify;
                             } else {
-                                g_4acd76[g_4acd9e] = g_4acd4c[g_4acd74];
-                                g_4acd9e++;
+                                planWaiting[planWaitingCount] = planQueue[planQueueCount];
+                                planWaitingCount++;
                             }
                         } else {
-                            g_4acd76[g_4acd9e] = g_4acd4c[g_4acd74];
-                            g_4acd9e++;
+                            planWaiting[planWaitingCount] = planQueue[planQueueCount];
+                            planWaitingCount++;
                         }
                     }
                 }
             } else {
-                g_4af5a4 = 1;
-                if (lillyLevel > 2 && !g_4af360) {
+                planTick = 1;
+                if (lillyLevel > 2 && !swapPending) {
                     if (snoidsOnTheirWay <= 0) {
-                        while (g_4acfe6) {
-                            view = findView(g_4acec6[--g_4acfe6]);
+                        while (replanQueueCount) {
+                            view = findView(replanQueue[--replanQueueCount]);
                             if (view) {
                                 actor = (LillyActor *)&view->body;
                                 startPlan(actor);
                             }
                         }
-                        if (clockTime() > g_4af0fc && g_4af0e6 < 20) {
-                            short column = g_4aece6[g_4af0e4].column;
+                        if (clockTime() > nextActorTime && actorsOutCount < 20) {
+                            short column = lillyStarts[nextStart].column;
 
                             row = 0;
                             if (!lillyBoard[row][column].attributes[0]) {
-                                g_4aeea0[g_4af0e6] = addLillyActor(g_4af0e4);
-                                view = findView(g_4aeea0[g_4af0e6]);
+                                actorsOut[actorsOutCount] = addLillyActor(nextStart);
+                                view = findView(actorsOut[actorsOutCount]);
                                 if (view) {
-                                    g_4af0e6++;
+                                    actorsOutCount++;
                                     actor = (LillyActor *)&view->body;
                                     short *parts = (short *)&view->body;
 
                                     actor->column = column;
                                     actor->row = row;
-                                    actor->unknownBe = g_4af0e4;
-                                    actor->unknownDe = g_4aece6[0].attribute;
+                                    actor->unknownBe = nextStart;
+                                    actor->unknownDe = lillyStarts[0].attribute;
                                     actor->unknownDf = lillyBoard[actor->row][actor->column].attributes[actor->unknownDe];
-                                    actor->unknownE0 = g_4a1b1e[g_4a1b38[actor->unknownDe]] + actor->unknownDf;
+                                    actor->unknownE0 = squareSetC[attributeImageIndex[actor->unknownDe]] + actor->unknownDf;
                                     parts[25] = 0;
                                     parts[26] = 0;
                                     startPlan(actor);
@@ -4939,20 +4939,20 @@ void lillyFrame()
                                     actor->unknownC2 = 1;
                                     actor->body.running = 1;
                                     actor->grid[actor->row][actor->column] = 1;
-                                    actor->body.x = g_4ac940[actor->row + 1] + actor->column * 35 + 2;
-                                    actor->body.y = g_4ac944[actor->row + 1] + g_4a1d70[actor->column] - 17;
-                                    g_4aebae[actor->row][actor->column] = 1;
+                                    actor->body.x = rowLeft[actor->row + 1] + actor->column * 35 + 2;
+                                    actor->body.y = rowTop[actor->row + 1] + columnDy[actor->column] - 17;
+                                    squareClaims[actor->row][actor->column] = 1;
                                     setViewScript(view, 10067, 1);
                                     view->placed = placeActorCelsHidden;
                                     view->notify = lillyNotify70;
-                                    moveView(view->id, 0, g_4aed22[actor->row]);
-                                    g_4af0fc = clockTime() + 480;
+                                    moveView(view->id, 0, rowAnchorViews[actor->row]);
+                                    nextActorTime = clockTime() + 480;
                                 }
-                            } else if (g_4aebae[row][column] == 1) {
-                                g_4aeea0[g_4af0e6] = addLillyActor(g_4af0e4);
-                                view = findView(g_4aeea0[g_4af0e6]);
+                            } else if (squareClaims[row][column] == 1) {
+                                actorsOut[actorsOutCount] = addLillyActor(nextStart);
+                                view = findView(actorsOut[actorsOutCount]);
                                 if (view) {
-                                    g_4af0e6++;
+                                    actorsOutCount++;
                                     actor = (LillyActor *)&view->body;
                                     short *parts = (short *)&view->body;
 
@@ -4963,26 +4963,26 @@ void lillyFrame()
                                     actor->unknownC2 = 1;
                                     actor->body.running = 1;
                                     actor->grid[actor->row][actor->column] = 1;
-                                    actor->body.x = g_4ac940[actor->row + 1] + actor->column * 35 + 2;
-                                    actor->body.y = g_4ac944[actor->row + 1] + g_4a1d70[actor->column] - 17;
+                                    actor->body.x = rowLeft[actor->row + 1] + actor->column * 35 + 2;
+                                    actor->body.y = rowTop[actor->row + 1] + columnDy[actor->column] - 17;
                                     setViewScript(view, 10067, 1);
                                     view->placed = placeActorCelsHidden;
                                     view->notify = lillyNotify70;
-                                    moveView(view->id, 0, g_4aed22[actor->row]);
-                                    g_4af0fc = clockTime() + 480;
+                                    moveView(view->id, 0, rowAnchorViews[actor->row]);
+                                    nextActorTime = clockTime() + 480;
                                 }
                             }
-                            if (++g_4af0e4 >= g_4af0f8)
-                                g_4af0e4 = 0;
+                            if (++nextStart >= startCount)
+                                nextStart = 0;
                         }
                     }
-                    while (g_4acd4a) {
-                        g_4acd4a--;
-                        g_4ac9e6[g_4acb06] = g_4acc2a[g_4acd4a];
-                        g_4acb06++;
+                    while (hopperWaitingCount) {
+                        hopperWaitingCount--;
+                        hopperQueue[hopperQueueCount] = hopperWaiting[hopperWaitingCount];
+                        hopperQueueCount++;
                     }
-                    while (g_4acb06) {
-                        view = findView(g_4ac9e6[--g_4acb06]);
+                    while (hopperQueueCount) {
+                        view = findView(hopperQueue[--hopperQueueCount]);
                         if (view) {
                             if (clockTime() >= view->nextUpdate) {
                                 actor = (LillyActor *)&view->body;
@@ -4993,7 +4993,7 @@ void lillyFrame()
                                 else
                                     script = moveActorDown(view);
                                 if (script == 10069) {
-                                    moveView(view->id, 0, g_4aed22[actor->row]);
+                                    moveView(view->id, 0, rowAnchorViews[actor->row]);
                                     setViewScript(view, script, 1);
                                     view->placed = placeActorCelsHidden;
                                     view->notify = lillyNotify70;
@@ -5001,41 +5001,41 @@ void lillyFrame()
                                 } else if (script) {
                                     switch (actor->unknownD5) {
                                     case 0:
-                                        moveView(view->id, 0, g_4aed22[actor->row]);
+                                        moveView(view->id, 0, rowAnchorViews[actor->row]);
                                         break;
                                     case 1:
-                                        moveView(view->id, 0, g_4aed22[actor->row]);
+                                        moveView(view->id, 0, rowAnchorViews[actor->row]);
                                         break;
                                     case 2:
-                                        moveView(view->id, 0, g_4aed22[actor->row + 1]);
+                                        moveView(view->id, 0, rowAnchorViews[actor->row + 1]);
                                         break;
                                     case 3:
-                                        moveView(view->id, 0, g_4aed22[actor->row]);
+                                        moveView(view->id, 0, rowAnchorViews[actor->row]);
                                         break;
                                     }
                                     setViewScript(view, script, 1);
                                     view->placed = placeHopper;
                                     view->notify = lillyNotify70;
                                 } else {
-                                    g_4acc2a[g_4acd4a] = g_4ac9e6[g_4acb06];
-                                    g_4acd4a++;
+                                    hopperWaiting[hopperWaitingCount] = hopperQueue[hopperQueueCount];
+                                    hopperWaitingCount++;
                                 }
                             } else {
-                                g_4acc2a[g_4acd4a] = g_4ac9e6[g_4acb06];
-                                g_4acd4a++;
+                                hopperWaiting[hopperWaitingCount] = hopperQueue[hopperQueueCount];
+                                hopperWaitingCount++;
                             }
                         }
                     }
                 }
             }
         }
-        while (g_4af0e0)
-            deleteView(g_4aed80[--g_4af0e0]);
-        if (g_4af33a) {
-            deleteView(g_4af33a);
-            g_4af33a = 0;
+        while (event80Count)
+            deleteView(event80Views[--event80Count]);
+        if (event4Pad) {
+            deleteView(event4Pad);
+            event4Pad = 0;
         }
     }
     playAmbientSound();
-    g_4a1d88 = 0;
+    inLillyFrame = 0;
 }

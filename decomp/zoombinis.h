@@ -3703,7 +3703,7 @@ struct LillyCell
     char attributes[5]; /* 0: taken; 2: its image; 4: an overlay's image */
 };
 extern LillyCell lillyBoard[13][13]; /* @data 0x4acff4 */
-extern short g_4a1d8a[4][4];
+extern short hopDirections[4][4]; /* @data 0x4a1d8a */
 /* What a square is dealt (by dealSquares). */
 struct LillyDeal
 {
@@ -3726,12 +3726,12 @@ struct LillyStart
     short layer;
     short c;
 };
-extern short g_4aebae[12][13];
-extern short g_4ace9c[20];
-extern short g_4acec4;
+extern short squareClaims[12][13]; /* @data 0x4aebae */
+extern short event3Views[20]; /* @data 0x4ace9c */
+extern short event3Count; /* @data 0x4acec4 */
 extern short *actorHotSpotsY; /* @data 0x4ac954 */
-extern short g_4acd4c[20];
-extern short g_4acd74;
+extern short planQueue[20]; /* @data 0x4acd4c */
+extern short planQueueCount; /* @data 0x4acd74 */
 long newTimer(void (*proc)(long timer, long data), long data, long interval); /* 0x46daca */
 
 /* A cell of the game module's hexagonal board (117 of them). */
