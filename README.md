@@ -14,7 +14,7 @@ The game's resources are in `assets/`, converted from its Mohawk archives to mod
 
 Every global the headers declare is defined, with the original's initial values (`uv run define-data`). 69% of the original's initialised data is placed and identical, byte for byte, in the compiled objects, and every reference to data in the decompiled functions points where the original's does (`uv run match-data`).
 
-The decompiled code builds into a `zoombi32.exe` (`uv run build`), linked by the original's linker in the original's order, that starts in the VM and runs as far as Zoombini Isle. It has the original's icon, from `assets/zoombi32/`. Apple's QuickTime glue isn't available, so a stand-in plays no movies. Playing it through is next (see the [roadmap](#roadmap)).
+The decompiled code builds into a `zoombi32.exe` (`uv run build`), linked by the original's linker in the original's order, that starts in the VM and runs as far as Zoombini Isle. It has the original's icon, from `assets/zoombi32/`. Apple's QuickTime glue isn't available, so `glue/quicktime.cpp` re-creates it: it loads the installed QuickTime and forwards the game's calls, and the intro movie plays in the VM (as far as the original does there: the VM's emulated hardware stalls it on the same frame). Playing the game through is next (see the [roadmap](#roadmap)).
 
 The original game is playable from its disc image in the scripted Windows 98 VM.
 
@@ -237,7 +237,7 @@ uv run vm run --exe build/rebuild/zoombi32.exe --trace build/vm/trace.log
 uv run trace build/vm/trace.log                       # the functions the traced run was in, last
 ```
 
-`build` compiles `decomp/` and `glue/` (reusing `match`'s objects), compiles the icon with BRCC32, and links everything with TLINK32 1.50, the original's linker, in the original's order: Borland's startup code, each source in the order of its code in the original, then the runtime library and the Windows imports. It writes `build/rebuild/zoombi32.exe` and a map of where everything went (`zoombi32.map`). `glue/` holds code standing in for what the game links but we don't have: QuickTime for Windows' SDK glue (`glue/quicktime.cpp`), which reports QuickTime present but opens no movie, so the game skips its movies.
+`build` compiles `decomp/` and `glue/` (reusing `match`'s objects), compiles the icon with BRCC32, and links everything with TLINK32 1.50, the original's linker, in the original's order: Borland's startup code, each source in the order of its code in the original, then the runtime library and the Windows imports. It writes `build/rebuild/zoombi32.exe` and a map of where everything went (`zoombi32.map`). `glue/` holds code standing in for what the game links but we don't have: QuickTime for Windows' SDK glue (`glue/quicktime.cpp`), which loads QuickTime for Windows (QTIM32.DLL and CMGR32.DLL) and forwards each call to the one dispatcher each exports, through stubs that put the call's selector in `bx` (raw bytes, since C++ can't do that). The port replaces it (`port/glue/`).
 
 `vm run --exe` carries an executable into the VM on a floppy, copies it into the game's directory as `REBUILT.EXE` (the original stays) and starts it. With `--trace`, QEMU logs every block of that executable's code it runs, from when it starts, until the log reaches 500 MB or two minutes have passed; `uv run trace` names the functions from the map, and after a crash the last of them is where it happened.
 
@@ -366,7 +366,7 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Link the decompiled code and its resources (the icon) with TLINK32 into a `zoombi32.exe` that runs in the VM (`uv run build`, `uv run vm run --exe`)
 - [ ] Play the rebuilt game through in the VM, fixing what differs from the original
 - [x] Reverse-engineer Broderbund's `QkBk` video codec, and convert the movies to a modern format and back, exactly (`uv run assets`; plan: [`docs/movies.md`](docs/movies.md))
-- [ ] Replace the QuickTime stand-in with working glue, so the rebuilt game plays its intro movie (packed from `assets/`) in the VM
+- [x] Replace the QuickTime stand-in with working glue, so the rebuilt game plays its intro movie in the VM (the packed movie is byte for byte the disc's, which the VM's game reads from its CD)
 - [ ] Play the intro movie in the port, from its modern format
 - [ ] Port to a modern platform layer
 
