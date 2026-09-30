@@ -960,8 +960,11 @@
 0x00461e1a fn_461e1a
 0x004622f5 fn_4622f5
 0x004623b8 mainLoopUpdate
+0x004624bd fn_4624bd
+0x004624f4 fn_4624f4
 0x004624fc fn_4624fc
 0x0046251c setCursorMode
+0x0046258a fn_46258a
 0x00462749 debugMessage
 0x0046310c initViews
 0x004632af closeViews

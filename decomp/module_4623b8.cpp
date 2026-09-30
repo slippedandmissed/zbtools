@@ -5,6 +5,7 @@
 #include "zoombinis.h"
 #include "debug.h"
 #include "events.h"
+#include "features.h"
 #include "focus.h"
 #include "graphics.h"
 #include "module_4623b8.h"
@@ -124,6 +125,37 @@ short setCursorMode(long mode)
         g_4b80d2 = mode;
     }
     return changed;
+}
+
+/* Sets the cursor for mode g_4b80d2: the arrow for 0, else that mode's
+   cursor (g_4b80c4). */
+/* @zoombi32 0x0046258a */
+void fn_46258a()
+{
+    if (!g_4b80d2) {
+        setCursorShape(0);
+        return;
+    }
+    setCursorShape((const MacCursor *)handleData(g_4b80c4[g_4b80d2]));
+}
+
+/* A mouse button pressed at `where`: goes to the dialog while one is up,
+   else to the input items. */
+/* @zoombi32 0x004624bd */
+void fn_4624bd(Point *where, short button)
+{
+    g_4b80d0 = button;
+    resetViewClock();
+    if (g_4b9684)
+        dialogClick(*where);
+    else
+        handleMouse(where, button);
+}
+
+/* @zoombi32 0x004624f4 */
+void fn_4624f4()
+{
+    setCursorMode(0);
 }
 
 /* @zoombi32 0x004624fc */
