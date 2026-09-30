@@ -224,14 +224,14 @@ void __cdecl shutDownAtExit()
     shutDownGame();
 }
 
-/* Picks a free spot (0-19) for something at g_4a4846: finds, for each of
-   the 20 places in g_4a47ec, the nearest spot no earlier place has taken,
+/* Picks a free spot (0-19) for something at freeSpotOrigin: finds, for each of
+   the 20 places in smokePlaces, the nearest spot no earlier place has taken,
    then picks the first place without one, from either end at random (-1:
    none). */
 /* @zoombi32 0x00450540 */
 void pickFreeSpot(short *result)
 {
-    Point where = g_4a4846;
+    Point where = freeSpotOrigin;
     short i;
     short skip;
     short spot;
@@ -240,11 +240,11 @@ void pickFreeSpot(short *result)
     spotTaken(&where, 0, 500);
     for (i = 0; i < 20; i++) {
         skip = 0;
-        spot = spotNear(&g_4a47ec[i], 500, skip);
+        spot = spotNear(&smokePlaces[i], 500, skip);
         for (j = 0; spot && j < i; j++)
             if (spot == sortedIds[j]) {
                 skip++;
-                spot = spotNear(&g_4a47ec[i], 500, skip);
+                spot = spotNear(&smokePlaces[i], 500, skip);
                 j = 0;
             }
         sortedIds[i] = spot;
@@ -656,16 +656,16 @@ void emptyPairViews()
 void updateSmokeButtons(View *, short region)
 {
     if (smokeGoReady) {
-        if (!g_4a483e) {
-            g_4a483e = 1;
+        if (!smokeButton2Lit) {
+            smokeButton2Lit = 1;
             unionRgnRect(region, &smokeButtons[2].rect);
         }
-    } else if (g_4a483e) {
-        g_4a483e = 0;
+    } else if (smokeButton2Lit) {
+        smokeButton2Lit = 0;
         unionRgnRect(region, &smokeButtons[2].rect);
     }
-    if (!g_4a4840) {
-        g_4a4840 = 1;
+    if (!smokeButton1Drawn) {
+        smokeButton1Drawn = 1;
         unionRgnRect(region, &smokeButtons[1].rect);
     }
 }
@@ -692,9 +692,9 @@ void closeSmoke()
 }
 
 /* Scene 17's frame: leaves for the scene due; else runs the queued
-   steps (g_4b2644, g_4b2746-g_4b2750: the views to start and move, the
+   steps (view11017Due, anchorDue-leadersDue: the views to start and move, the
    next Zoombini across, crossedCount of crossingCount), and every 30 ticks
-   while g_4b2762 has an idle Zoombini of the party fidget. */
+   while smokeFidgeting has an idle Zoombini of the party fidget. */
 /* @zoombi32 0x0044f25d */
 void smokeFrame()
 {
@@ -733,76 +733,76 @@ void smokeFrame()
         inSmokeFrame = 0;
         return;
     }
-    if (g_4b2644) {
-        g_4b2644 = 0;
-        view = findView(g_4b258c);
+    if (view11017Due) {
+        view11017Due = 0;
+        view = findView(pairView1);
         if (view) {
             view->flags = 0x4188000;
             setViewScript(view, 11017, 1);
         }
     }
-    if (g_4b2746) {
-        g_4b2746 = 0;
-        moveView(g_4b25ac, 0, g_4b2598);
-        if (g_4b26b2)
-            moveView(g_4b26b2, 1, g_4b25ac);
+    if (anchorDue) {
+        anchorDue = 0;
+        moveView(view11036, 0, view11077);
+        if (crossingSnoid)
+            moveView(crossingSnoid, 1, view11036);
     }
-    if (g_4b2748) {
-        g_4b2748 = 0;
-        view = findView(g_4b2594);
+    if (dealLightDue) {
+        dealLightDue = 0;
+        view = findView(dealerView);
         if (view) {
-            setViewScript(view, g_4b2730, 0);
-            g_4b2752 = 1;
+            setViewScript(view, dealerScript, 0);
+            dealLit = 1;
             dealButtonState = 2;
             lightDealButton(11003);
-            g_4a483c = 1;
+            dealerRunning = 1;
         }
     }
-    if (g_4b274a) {
-        g_4b274a = 0;
+    if (dealDimDue) {
+        dealDimDue = 0;
         if (smokeLevel == 1 || smokeLevel == 2) {
-            g_4b2752 = 0;
+            dealLit = 0;
             dimDealButton(11002);
         } else if (smokeLevel == 3) {
-            g_4b2752 = 1;
+            dealLit = 1;
             dealButtonState = 2;
             lightDealButton(11003);
         }
     }
-    if (g_4b2736) {
-        g_4b2736 = 0;
-        g_4b25b4[crossedCount] = addView(0x4180000, drawCels, runViewScript, 11071 - crossedCount, 6, 0, 0, 0);
-        if (!g_4b273c && g_4b26b2) {
-            g_4b25dc[crossedCount] = g_4b26b2;
-            view = findView(g_4b26b2);
+    if (crossedDue) {
+        crossedDue = 0;
+        crossedMarkers[crossedCount] = addView(0x4180000, drawCels, runViewScript, 11071 - crossedCount, 6, 0, 0, 0);
+        if (!pairMismatch && crossingSnoid) {
+            crossedSnoids[crossedCount] = crossingSnoid;
+            view = findView(crossingSnoid);
             if (view) {
                 Snoid *snoid;
 
                 view->flags = 0x4000001;
                 snoid = viewSnoid(view);
                 snoid->unknownF7 = 1;
-                if (g_4b2670 > 2)
+                if (crossedChosen > 2)
                     startSnoidScript(viewSnoid(view), snoid->features[3] + 12044, 0, 0);
             }
-            g_4b2670++;
-            if (g_4b2670 == 1) {
+            crossedChosen++;
+            if (crossedChosen == 1) {
                 smokeGoReady = 1;
-                unionRgnRect(removedRgn, &g_4a4750);
+                unionRgnRect(removedRgn, &smokeGoRect);
             }
         }
         if (!crossedCount) {
-            moveView(g_4b25b4[crossedCount], 0, g_4b2598);
-            moveView(g_4b26b2, 1, g_4b25b4[crossedCount]);
+            moveView(crossedMarkers[crossedCount], 0, view11077);
+            moveView(crossingSnoid, 1, crossedMarkers[crossedCount]);
         } else {
-            moveView(g_4b25b4[crossedCount], 0, g_4b25b4[crossedCount - 1]);
-            moveView(g_4b26b2, 1, g_4b25b4[crossedCount]);
+            moveView(crossedMarkers[crossedCount], 0, crossedMarkers[crossedCount - 1]);
+            moveView(crossingSnoid, 1, crossedMarkers[crossedCount]);
         }
         crossedCount++;
         if (crossedCount == crossingCount) {
             short chosen = countChosenSnoids();
 
             if (chosen == crossingCount) {
-                g_4b2762 = 1;
+                smokeFidgeting = 1;
                 queueViewSound(randomBetween(20055, 20063), 0);
             } else if (chosen < crossingCount) {
                 if (randomBetween(0, 4) > smokeLevel - 1
@@ -810,9 +810,9 @@ void smokeFrame()
                     queueViewSound(randomBetween(20045, 20048), 0);
             }
         }
-        g_4b26b2 = 0;
+        crossingSnoid = 0;
         if (smokeLevel == 1 || smokeLevel == 2) {
-            view = findView(g_4b25a4);
+            view = findView(moverView1);
             if (view) {
                 ViewCel *cels = view->body.cels;
 
@@ -822,23 +822,23 @@ void smokeFrame()
             }
         } else {
             nextCrossing++;
-            if (g_4b2742)
-                view = findView(g_4b25a6);
+            if (useSecondMover)
+                view = findView(moverView2);
             else
-                view = findView(g_4b25a4);
+                view = findView(moverView1);
             if (view) {
-                setViewScript(view, g_4b2728, 1);
+                setViewScript(view, moverScript, 1);
                 view->notify = smokeViewNotify;
             }
         }
         if (smokeLevel == 1 || smokeLevel == 2)
-            g_4b26b0 = 0;
-        if (smokeLevel < 4 || smokeLevel == 4 && g_4b2744 == 1) {
+            randomDragSlot = 0;
+        if (smokeLevel < 4 || smokeLevel == 4 && level4Stage == 1) {
             if (smokeLevel == 4 || smokeLevel == 3)
-                g_4b273a = takeNextTwoFeatures();
+                featuresTaken = takeNextTwoFeatures();
             else
-                g_4b273a = takeRandomFeatures();
-            if (g_4b273a && crossedCount <= crossingCount && smokeLevel < 4) {
+                featuresTaken = takeRandomFeatures();
+            if (featuresTaken && crossedCount <= crossingCount && smokeLevel < 4) {
                 dealButtonState = 1;
                 lightDealButton(11005);
             } else {
@@ -847,44 +847,44 @@ void smokeFrame()
             }
         }
     }
-    if (g_4b2750) {
-        g_4b2750 = 0;
+    if (leadersDue) {
+        leadersDue = 0;
         for (i = 0; i < 3; i++) {
-            view = findView(g_4b25b4[i]);
+            view = findView(crossedMarkers[i]);
             if (view) {
                 setViewScript(view, i + 11072, 1);
                 view->notify = smokeViewNotify;
                 if (!i) {
-                    groupViews(g_4b25b4[i], g_4b25b4[i], 0, 0, 0, 0);
-                    g_4b279a = view->body.group;
+                    groupViews(crossedMarkers[i], crossedMarkers[i], 0, 0, 0, 0);
+                    leaderGroup = view->body.group;
                 } else
-                    view->body.group = g_4b279a;
-                view = findView(g_4b25dc[i]);
+                    view->body.group = leaderGroup;
+                view = findView(crossedSnoids[i]);
                 if (view) {
                     startSnoidScript(viewSnoid(view), i + 12041, 0, 0);
-                    view->body.group = g_4b279a;
+                    view->body.group = leaderGroup;
                 }
             }
         }
     }
-    if (g_4b2762 && g_4b2760 < crossingCount - 1) {
-        if (clockTime() - g_4b2758 > 30) {
+    if (smokeFidgeting && smokeFidgets < crossingCount - 1) {
+        if (clockTime() - lastSmokeFidgetTime > 30) {
             done = 0;
-            g_4b2758 = clockTime();
+            lastSmokeFidgetTime = clockTime();
             for (j = 0; j < crossingCount && !done; j++) {
-                short n = allocateSlot(&g_4b275c, crossingCount - 1, 0);
+                short n = allocateSlot(&smokeFidgetersUsed, crossingCount - 1, 0);
 
-                if (partyViews[n] && partyViews[n] != g_4b25dc[0] && partyViews[n] != g_4b25dc[1]
-                    && partyViews[n] != g_4b25dc[2]) {
+                if (partyViews[n] && partyViews[n] != crossedSnoids[0] && partyViews[n] != crossedSnoids[1]
+                    && partyViews[n] != crossedSnoids[2]) {
                     view = idleSnoidView(partyViews[n]);
                     if (view && view->body.running) {
                         Snoid *snoid = viewSnoid(view);
 
                         startSnoidScript(viewSnoid(view), snoid->features[3] + 12044, 0, 0);
-                        if (!g_4b2760)
-                            g_4b2760 = 4;
+                        if (!smokeFidgets)
+                            smokeFidgets = 4;
                         else
-                            g_4b2760++;
+                            smokeFidgets++;
                         done = 1;
                     }
                 } else if (crossingCount < 5) {
@@ -894,13 +894,13 @@ void smokeFrame()
 
                         startSnoidScript(viewSnoid(view), snoid->features[3] + 12044, 0, 0);
                     }
-                    g_4b2760 = 4;
+                    smokeFidgets = 4;
                     done = 1;
                 }
             }
         }
-    } else if (g_4b2760 >= crossingCount - 1)
-        g_4b2760 = g_4b2762 = g_4b2758 = g_4b275c = 0;
+    } else if (smokeFidgets >= crossingCount - 1)
+        smokeFidgets = smokeFidgeting = lastSmokeFidgetTime = smokeFidgetersUsed = 0;
     playAmbientSound();
     inSmokeFrame = 0;
 }
@@ -1171,8 +1171,8 @@ short takeNextTwoFeatures()
     return count;
 }
 
-/* Starts view g_4b25ac's script (11036 on, by crossedCount) and, with it, the
-   Zoombini in view g_4b26b2 (script 12020 on, from g_4a44ac), grouping
+/* Starts view view11036's script (11036 on, by crossedCount) and, with it, the
+   Zoombini in view crossingSnoid (script 12020 on, from crossingStart), grouping
    them. */
 /* @zoombi32 0x0045162e */
 void startNextCrossing(short)
@@ -1180,18 +1180,18 @@ void startNextCrossing(short)
     View *view;
     View *other;
 
-    view = findView(g_4b25ac);
+    view = findView(view11036);
     if (view) {
         setViewScript(view, crossedCount + 11036, 1);
         view->notify = smokeViewNotify;
-        moveView(view->id, 0, g_4b25ae);
+        moveView(view->id, 0, view11008);
     }
-    other = findView(g_4b26b2);
+    other = findView(crossingSnoid);
     if (other && view) {
         Snoid *snoid = viewSnoid(other);
 
         snoid->unknownF2 = 1;
-        *(Point *)&snoid->body.x = g_4a44ac;
+        *(Point *)&snoid->body.x = crossingStart;
         startSnoidScript(viewSnoid(other), crossedCount + 12020, 0, 0);
         other->notify = smokeViewNotify;
         moveView(other->id, 1, view->id);
@@ -1236,8 +1236,8 @@ void layOutGrid()
     switch (stoneRiseLevel) {
     case 0:
         pairByFeatures();
-        base = g_4a4374[groupCount];
-        step = g_4a4390[groupCount];
+        base = rowFirstCells[groupCount];
+        step = rowSteps[groupCount];
         for (row = 0; row < groupCount; row++) {
             extra = 0;
             cell = row * step + base;
@@ -1286,8 +1286,8 @@ void layOutGrid()
         break;
     case 1:
         groupInThrees();
-        base = g_4a4374[groupCount];
-        step = g_4a4390[groupCount];
+        base = rowFirstCells[groupCount];
+        step = rowSteps[groupCount];
         placed = 0;
         for (row = 0; row < groupCount; row++) {
             cell = row * step + base;
@@ -1372,26 +1372,26 @@ void layOutGrid()
         break;
     case 2:
         for (cell = 0; cell < 3; cell++) {
-            hexCells[g_4a43f4[cell]].state = startState;
-            cellLinkBits[g_4a43f4[cell]] = 16;
-            cellLinkBits[g_4a43f4[cell] + 1] = 42;
-            cellLinkBits[g_4a43f4[cell] - 8] |= 4;
-            cellLinkBits[g_4a43f4[cell] + 10] |= 1;
+            hexCells[level2StartCells[cell]].state = startState;
+            cellLinkBits[level2StartCells[cell]] = 16;
+            cellLinkBits[level2StartCells[cell] + 1] = 42;
+            cellLinkBits[level2StartCells[cell] - 8] |= 4;
+            cellLinkBits[level2StartCells[cell] + 10] |= 1;
         }
         for (cell = 0; cell < 3; cell++) {
-            hexCells[g_4a43fa[cell]].state = 506;
-            cellLinkBits[g_4a43fa[cell]] = 5;
-            cellLinkBits[g_4a43fa[cell] - 10] |= 8;
-            cellLinkBits[g_4a43fa[cell] + 8] |= 32;
+            hexCells[level2Links5Cells[cell]].state = 506;
+            cellLinkBits[level2Links5Cells[cell]] = 5;
+            cellLinkBits[level2Links5Cells[cell] - 10] |= 8;
+            cellLinkBits[level2Links5Cells[cell] + 8] |= 32;
         }
         for (cell = 0; cell < 18; cell++) {
-            hexCells[g_4a43ac[cell]].state = 501;
-            hexCells[g_4a43d0[cell]].state = 506;
+            hexCells[level2BlockedCells[cell]].state = 501;
+            hexCells[level2OpenCells[cell]].state = 506;
         }
         for (cell = 0; cell < 12; cell++) {
-            cellLinkBits[g_4a4400[cell]] |= 18;
-            cellLinkBits[g_4a4400[cell] - 1] |= 16;
-            cellLinkBits[g_4a4400[cell] + 1] |= 2;
+            cellLinkBits[level2Links18Cells[cell]] |= 18;
+            cellLinkBits[level2Links18Cells[cell] - 1] |= 16;
+            cellLinkBits[level2Links18Cells[cell] + 1] |= 2;
         }
         linkCells();
         orderPartyByAlike();
@@ -1428,7 +1428,7 @@ void layOutGrid()
             hexCells[102].snoid = cell;
         count = 0;
         for (cell = 0; cell < 18; cell++)
-            if (hexCells[g_4a43d0[cell]].state == 507)
+            if (hexCells[level2OpenCells[cell]].state == 507)
                 count++;
         if (count <= partySize) {
             count = partySize - count;
@@ -1436,8 +1436,8 @@ void layOutGrid()
                 if (count) {
                     count--;
                     for (cell = 0; cell < 18; cell++)
-                        if (hexCells[g_4a43d0[cell]].state != 507) {
-                            hexCells[g_4a43d0[cell]].state = 507;
+                        if (hexCells[level2OpenCells[cell]].state != 507) {
+                            hexCells[level2OpenCells[cell]].state = 507;
                             break;
                         }
                 }
@@ -1447,30 +1447,30 @@ void layOutGrid()
             do {
                 found = 0;
                 for (cell = 0; cell < 6; cell++)
-                    if (hexCells[g_4a43d0[cell]].state == 507 && hexCells[g_4a43d0[cell] - 1].snoid == -1) {
-                        hexCells[g_4a43d0[cell]].state = 501;
-                        hexCells[g_4a43d0[cell]].snoid = -1;
+                    if (hexCells[level2OpenCells[cell]].state == 507 && hexCells[level2OpenCells[cell] - 1].snoid == -1) {
+                        hexCells[level2OpenCells[cell]].state = 501;
+                        hexCells[level2OpenCells[cell]].snoid = -1;
                         count--;
                         found++;
                         break;
                     }
                 if (!found)
                     for (cell = 6; cell < 12; cell++)
-                        if (hexCells[g_4a43d0[cell]].state == 507
-                            && hexCells[g_4a43d0[cell] + 1].snoid == -1) {
-                            hexCells[g_4a43d0[cell]].state = 501;
-                            hexCells[g_4a43d0[cell]].snoid = -1;
+                        if (hexCells[level2OpenCells[cell]].state == 507
+                            && hexCells[level2OpenCells[cell] + 1].snoid == -1) {
+                            hexCells[level2OpenCells[cell]].state = 501;
+                            hexCells[level2OpenCells[cell]].snoid = -1;
                             count--;
                             found++;
                             break;
                         }
                 if (!found)
                     for (cell = 12; cell < 15; cell++)
-                        if (hexCells[g_4a43d0[cell]].state == 507
-                            && hexCells[g_4a43d0[cell] - 10].snoid == -1
-                            && hexCells[g_4a43d0[cell] + 8].snoid == -1) {
-                            hexCells[g_4a43d0[cell]].state = 501;
-                            hexCells[g_4a43d0[cell]].snoid = -1;
+                        if (hexCells[level2OpenCells[cell]].state == 507
+                            && hexCells[level2OpenCells[cell] - 10].snoid == -1
+                            && hexCells[level2OpenCells[cell] + 8].snoid == -1) {
+                            hexCells[level2OpenCells[cell]].state = 501;
+                            hexCells[level2OpenCells[cell]].snoid = -1;
                             count--;
                             found++;
                             break;
@@ -1486,21 +1486,21 @@ void layOutGrid()
             }
         listedCount = 0;
         for (cell = 0; cell < 18; cell++)
-            if (hexCells[g_4a43d0[cell]].state == 507) {
+            if (hexCells[level2OpenCells[cell]].state == 507) {
                 listedCount++;
-                listedPoints[listedCount] = cellPoints[g_4a43d0[cell]];
-                listedCells[listedCount] = g_4a43d0[cell];
+                listedPoints[listedCount] = cellPoints[level2OpenCells[cell]];
+                listedCells[listedCount] = level2OpenCells[cell];
                 listedPoints[listedCount].x += 24;
                 listedPoints[listedCount].y -= 5;
             }
         break;
     case 3:
         for (cell = 0; cell < 43; cell++)
-            hexCells[g_4a426c[cell]].state = 501;
+            hexCells[level3BlockedCells[cell]].state = 501;
         for (cell = 0; cell < 20; cell++)
-            cellLinkBits[g_4a42c2[cell]] = 36;
+            cellLinkBits[level3Links36Cells[cell]] = 36;
         for (cell = 0; cell < 20; cell++)
-            cellLinkBits[g_4a42ea[cell]] = 9;
+            cellLinkBits[level3Links9Cells[cell]] = 9;
         cellLinkBits[54] = 16;
         hexCells[54].state = startState;
         cellLinkBits[55] = 58;
@@ -1516,7 +1516,7 @@ void layOutGrid()
         cellLinkBits[25] = 13;
         cellLinkBits[97] = 37;
         for (cell = 0; cell < 26; cell++)
-            hexCells[g_4a4238[cell]].state = 506;
+            hexCells[level3OpenCells[cell]].state = 506;
         linkCells();
         if (partySize > 5)
             startGrid(54);
@@ -1679,7 +1679,7 @@ void layOutGrid()
         }
         count = 0;
         for (cell = 0; cell < 26; cell++) {
-            row = g_4a4238[cell];
+            row = level3OpenCells[cell];
             if (hexCells[row].state == 507) {
                 listedCount++;
                 listedPoints[listedCount] = cellPoints[row];
@@ -2076,8 +2076,8 @@ short applySlotFeatures()
     return result;
 }
 
-/* Starts the scene's next move: view g_4b25a4 or g_4b25a6's script, and
-   the pair of views g_4b258c and g_4b258e (scripts from g_4b2714), grouped. */
+/* Starts the scene's next move: view moverView1 or moverView2's script, and
+   the pair of views pairView1 and pairView2 (scripts from pairScripts), grouped. */
 /* @zoombi32 0x004514f6 */
 void startNextMove()
 {
@@ -2085,32 +2085,32 @@ void startNextMove()
     View *first;
     View *second;
 
-    g_4b2788 = 0;
-    if (!g_4b2742)
-        view = findView(g_4b25a4);
+    movePlace = 0;
+    if (!useSecondMover)
+        view = findView(moverView1);
     else
-        view = findView(g_4b25a6);
+        view = findView(moverView2);
     if (view) {
         view->flags = 0x5188000;
         if (smokeLevel == 1 || smokeLevel == 2) {
-            setViewScript(view, g_4b2724[0], 0);
+            setViewScript(view, moverScripts[0], 0);
         } else {
-            g_4b2742 = !g_4b2742;
-            setViewScript(view, g_4b2724[1], 0);
+            useSecondMover = !useSecondMover;
+            setViewScript(view, moverScripts[1], 0);
         }
     }
-    first = findView(g_4b258c);
+    first = findView(pairView1);
     if (first) {
-        setViewScript(first, g_4b2714[g_4b273c], 1);
+        setViewScript(first, pairScripts[pairMismatch], 1);
         loadViewSounds(first->id, 1);
         first->notify = smokeViewNotify;
     }
-    second = findView(g_4b258e);
+    second = findView(pairView2);
     if (second) {
-        setViewScript(second, g_4b2714[g_4b273c + 1], 1);
+        setViewScript(second, pairScripts[pairMismatch + 1], 1);
         second->notify = smokeViewNotify;
     }
-    view = findView(g_4b26b2);
+    view = findView(crossingSnoid);
     if (view && second)
         moveView(view->id, 0, second->id);
     if (first && second)
@@ -2272,7 +2272,7 @@ short smokeKey(unsigned short key)
     char digits[52] = "01234";
     char level[52] = "Level x ";
     short show = 0;
-    ShortRect rect = g_4a48b2;
+    ShortRect rect = smokeButtonsRect;
     char text[52];
 
     if (!debugMessagesOn && key != 0x16f)
@@ -2475,8 +2475,8 @@ short idleMovie()
     return 1;
 }
 
-/* Sets the Zoombinis' features from the slots (applySlotFeatures; g_4b2740 if the
-   two differ) and starts the views g_4b2590 and g_4b2592 (11018, 11019),
+/* Sets the Zoombinis' features from the slots (applySlotFeatures; slotsDiffer if the
+   two differ) and starts the views view11018 and view11019 (11018, 11019),
    grouped. */
 /* @zoombi32 0x00451315 */
 void setPairFeatures()
@@ -2484,16 +2484,16 @@ void setPairFeatures()
     View *first;
     View *second;
 
-    g_4b273c = applySlotFeatures();
-    g_4b2740 = 0;
-    if (g_4b273c)
-        g_4b2740 = 1;
-    first = findView(g_4b2590);
+    pairMismatch = applySlotFeatures();
+    slotsDiffer = 0;
+    if (pairMismatch)
+        slotsDiffer = 1;
+    first = findView(view11018);
     if (first) {
         setViewScript(first, 11018, 1);
         first->notify = smokeViewNotify;
     }
-    second = findView(g_4b2592);
+    second = findView(view11019);
     if (second) {
         setViewScript(second, 11019, 1);
         second->notify = smokeViewNotify;
@@ -2779,7 +2779,7 @@ void settleCells()
 
 /*
  * Drags a Zoombini (from `where`), snapping it to the spot it's over: with
- * smokeLevel below 3, the one spot g_4a4534 (4) unless g_4b2704; otherwise
+ * smokeLevel below 3, the one spot spot4Rect (4) unless unusedSpot4Block; otherwise
  * one of the three spots in row leftRow of g_4a4584 (0-2) or row rightRow
  * of g_4a45cc (3-5). Returns the spot it was over when released (-1:
  * none).
@@ -2815,16 +2815,16 @@ short dragSnoidToSpot(View *view, Point where)
     dy = 0;
     if (smokeLevel == 3 || smokeLevel == 4)
         startRowViews();
-    else if (!g_4b26b0)
+    else if (!randomDragSlot)
         startView11076();
     while (keepDragging()) {
         getCursorPosition(&current);
         spot = -1;
         if (smokeLevel < 3) {
-            if (ptInRect(&g_4a4534, current) && !g_4b2704) {
+            if (ptInRect(&spot4Rect, current) && !unusedSpot4Block) {
                 spot = 4;
-                current.x = g_4a4528.x;
-                current.y = g_4a4528.y;
+                current.x = spot4Point.x;
+                current.y = spot4Point.y;
             }
         } else {
             if (leftRow < 3)
@@ -3129,16 +3129,16 @@ void layOutSmokeSnoid(Snoid *snoid)
 
 /*
  * Gives a Zoombini (for slot n, 0-3) one or two random features, drawing
- * features (g_4b27ac) and values (g_4b27b6) without repeats: for slots 0
- * and 1 values unlike the ones already chosen (g_4b279c), recorded in slot
+ * features (featureOrder) and values (valueOrder) without repeats: for slots 0
+ * and 1 values unlike the ones already chosen (leftChosenValues), recorded in slot
  * n + 1; for 2 and 3, mostly the chosen ones (else those set in targetFeatures),
- * recorded in slot n + 2 and g_4b27a4. Then updates targetFeatures, and places
+ * recorded in slot n + 2 and rightChosenValues. Then updates targetFeatures, and places
  * the Zoombini at dealtPlaces[n].
  */
 /* @zoombi32 0x00452258 */
 void giveSlotFeatures(Snoid *snoid, short n)
 {
-    short *order = g_4b27ac;
+    short *order = featureOrder;
     short left;
     short r;
     short start;
@@ -3151,100 +3151,100 @@ void giveSlotFeatures(Snoid *snoid, short n)
     for (i = 0; i < 5; i++)
         order[i] = i;
     for (i = 0; i < 6; i++)
-        g_4b27b6[i] = i + 1;
-    g_4b27c6 = 0;
-    g_4b27c8 = 3;
-    g_4b27c2 = 0;
-    g_4b27c4 = 4;
+        valueOrder[i] = i + 1;
+    valuePick = 0;
+    valuePickMax = 3;
+    featurePick = 0;
+    featurePickMax = 4;
     if (!n)
         for (j = 0; j < 4; j++) {
-            g_4b279c[j] = 0;
-            g_4b27a4[j] = 0;
+            leftChosenValues[j] = 0;
+            rightChosenValues[j] = 0;
         }
     left = randomBetween(1, 2);
     start = left;
     for (i = 0; i < 4 && left > 0; i++) {
-        g_4b27c2 = randomBetween(0, g_4b27c4);
-        g_4b27c6 = randomBetween(0, g_4b27c8);
+        featurePick = randomBetween(0, featurePickMax);
+        valuePick = randomBetween(0, valuePickMax);
         switch (n) {
         case 0:
         case 1:
             snoid->unknownF1 = 0;
-            if (g_4b279c[order[g_4b27c6]] != g_4b27b6[g_4b27c2]) {
-                snoid->features[order[g_4b27c6]] = g_4b27b6[g_4b27c2];
-                featureSlots[n + 1][order[g_4b27c6]] = g_4b27b6[g_4b27c2];
-                g_4b279c[order[g_4b27c6]] = g_4b27b6[g_4b27c2];
+            if (leftChosenValues[order[valuePick]] != valueOrder[featurePick]) {
+                snoid->features[order[valuePick]] = valueOrder[featurePick];
+                featureSlots[n + 1][order[valuePick]] = valueOrder[featurePick];
+                leftChosenValues[order[valuePick]] = valueOrder[featurePick];
                 left--;
             }
             break;
         case 2:
             snoid->unknownF1 = 2;
             k = randomBetween(0, 3);
-            if (g_4b279c[k]) {
+            if (leftChosenValues[k]) {
                 if ((r = randomBetween(0, 100)) > 65 || start == left && i == 3) {
-                    snoid->features[k] = g_4b279c[k];
-                    featureSlots[n + 2][k] = g_4b279c[k];
-                    g_4b27a4[k] = g_4b279c[k];
+                    snoid->features[k] = leftChosenValues[k];
+                    featureSlots[n + 2][k] = leftChosenValues[k];
+                    rightChosenValues[k] = leftChosenValues[k];
                     left--;
                 }
             } else {
                 snoid->features[k] = targetFeatures[k];
                 featureSlots[n + 2][k] = targetFeatures[k];
-                g_4b27a4[k] = targetFeatures[k];
+                rightChosenValues[k] = targetFeatures[k];
                 left--;
             }
             break;
         case 3:
             snoid->unknownF1 = 2;
             k = randomBetween(0, 3);
-            if (g_4b279c[k]) {
+            if (leftChosenValues[k]) {
                 if ((r = randomBetween(0, 100)) > 65 || start == left && i == 3) {
-                    snoid->features[k] = g_4b279c[k];
-                    featureSlots[n + 2][k] = g_4b279c[k];
-                    g_4b27a4[k] = g_4b279c[k];
+                    snoid->features[k] = leftChosenValues[k];
+                    featureSlots[n + 2][k] = leftChosenValues[k];
+                    rightChosenValues[k] = leftChosenValues[k];
                     left--;
                 }
             } else {
                 snoid->features[k] = targetFeatures[k];
                 featureSlots[n + 2][k] = targetFeatures[k];
-                g_4b27a4[k] = targetFeatures[k];
+                rightChosenValues[k] = targetFeatures[k];
                 left--;
             }
             break;
         }
-        for (j = g_4b27c6; j < g_4b27c8 + 1; j++)
+        for (j = valuePick; j < valuePickMax + 1; j++)
             order[j] = order[j + 1];
-        g_4b27c8--;
-        for (j = g_4b27c2; j < g_4b27c4 + 1; j++)
-            g_4b27b6[j] = g_4b27b6[j + 1];
-        g_4b27c4--;
+        valuePickMax--;
+        for (j = featurePick; j < featurePickMax + 1; j++)
+            valueOrder[j] = valueOrder[j + 1];
+        featurePickMax--;
     }
-    if (g_4b279c[0])
-        targetFeatures[0] = g_4b279c[0];
-    if (g_4b279c[1])
-        targetFeatures[1] = g_4b279c[1];
-    if (g_4b279c[2])
-        targetFeatures[2] = g_4b279c[2];
-    if (g_4b279c[3])
-        targetFeatures[3] = g_4b279c[3];
+    if (leftChosenValues[0])
+        targetFeatures[0] = leftChosenValues[0];
+    if (leftChosenValues[1])
+        targetFeatures[1] = leftChosenValues[1];
+    if (leftChosenValues[2])
+        targetFeatures[2] = leftChosenValues[2];
+    if (leftChosenValues[3])
+        targetFeatures[3] = leftChosenValues[3];
     if (n == 3) {
         for (j = 5; j > 3; j--) {
             if (featureSlots[j][0])
-                g_4b27a4[0] = featureSlots[j][0];
+                rightChosenValues[0] = featureSlots[j][0];
             if (featureSlots[j][1])
-                g_4b27a4[1] = featureSlots[j][1];
+                rightChosenValues[1] = featureSlots[j][1];
             if (featureSlots[j][2])
-                g_4b27a4[2] = featureSlots[j][2];
+                rightChosenValues[2] = featureSlots[j][2];
             if (featureSlots[j][3])
-                g_4b27a4[3] = featureSlots[j][3];
+                rightChosenValues[3] = featureSlots[j][3];
         }
-        if (targetFeatures[0] == g_4b27a4[0])
+        if (targetFeatures[0] == rightChosenValues[0])
             targetFeatures[0] = 0;
-        if (targetFeatures[1] == g_4b27a4[1])
+        if (targetFeatures[1] == rightChosenValues[1])
             targetFeatures[1] = 0;
-        if (targetFeatures[2] == g_4b27a4[2])
+        if (targetFeatures[2] == rightChosenValues[2])
             targetFeatures[2] = 0;
-        if (targetFeatures[3] == g_4b27a4[3])
+        if (targetFeatures[3] == rightChosenValues[3])
             targetFeatures[3] = 0;
     }
     *(Point *)&snoid->body.x = dealtPlaces[n];
@@ -3359,14 +3359,14 @@ void smokeViewNotify(View *view, short event)
             setSnoidFacing((Snoid *)&view->body, 1);
         break;
     case 1:
-        g_4b2644 = 1;
+        view11017Due = 1;
         break;
     case 2:
         setPairFeatures();
         break;
     case 3:
         if (smokeLevel > 0 && smokeLevel < 4)
-            g_4b274a = 1;
+            dealDimDue = 1;
         break;
     case 4:
         startNextMove();
@@ -3375,12 +3375,12 @@ void smokeViewNotify(View *view, short event)
     case 11:
     case 13:
     case 14:
-        if (g_4b26b2) {
-            other = findView(g_4b26b2);
+        if (crossingSnoid) {
+            other = findView(crossingSnoid);
             if (other) {
                 Snoid *snoid = (Snoid *)&other->body;
 
-                startSmokeSnoidScript(g_4b26b2, g_4b271c[g_4b2740] + snoid->features[3], view->body.group, smokeViewNotify, 1);
+                startSmokeSnoidScript(crossingSnoid, crossScripts[slotsDiffer] + snoid->features[3], view->body.group, smokeViewNotify, 1);
             }
         }
         break;
@@ -3397,24 +3397,24 @@ void smokeViewNotify(View *view, short event)
             second = (Snoid *)&other->body;
             second->unknownF4 = 4;
         }
-        if (g_4b2740) {
-            *(Point *)&first->body.x = g_4a46a4[g_4b2788];
-            *(Point *)&second->body.x = g_4a46e8[g_4b2788];
+        if (slotsDiffer) {
+            *(Point *)&first->body.x = movePlaces1[movePlace];
+            *(Point *)&second->body.x = movePlaces2[movePlace];
         } else {
-            *(Point *)&first->body.x = g_4a4634[g_4b2788];
-            *(Point *)&second->body.x = g_4a466c[g_4b2788];
+            *(Point *)&first->body.x = movePlaces3[movePlace];
+            *(Point *)&second->body.x = movePlaces4[movePlace];
         }
-        g_4b2788++;
+        movePlace++;
         break;
     case 17:
-        if (g_4b26b2) {
+        if (crossingSnoid) {
             for (i = 0; i < crossingCount; i++)
-                if (crossingViews[i] == g_4b26b2 && smokeLevel != 4) {
+                if (crossingViews[i] == crossingSnoid && smokeLevel != 4) {
                     crossingViews[i] = 0;
                     i = crossingCount;
                 }
-            if (g_4b273c)
-                g_4b26b2 = 0;
+            if (pairMismatch)
+                crossingSnoid = 0;
         }
         startNextCrossing(view->body.group);
         break;
@@ -3423,21 +3423,21 @@ void smokeViewNotify(View *view, short event)
             other = findView(crossingViews[nextCrossing]);
             if (other) {
                 other->body.running = 0;
-                g_4b26b2 = crossingViews[nextCrossing];
+                crossingSnoid = crossingViews[nextCrossing];
                 Snoid *snoid = (Snoid *)&other->body;
 
-                *(Point *)&snoid->body.x = g_4a44b0;
-                startSmokeSnoidScript(crossingViews[nextCrossing], g_4b272a, view->body.group, smokeViewNotify, 0);
+                *(Point *)&snoid->body.x = crossingStart2;
+                startSmokeSnoidScript(crossingViews[nextCrossing], crossScript1, view->body.group, smokeViewNotify, 0);
                 moveView(crossingViews[nextCrossing], 1, view->id);
             }
         }
         break;
     case 31:
-        other = findView(g_4b25a6);
+        other = findView(moverView2);
         if (other) {
-            moveView(g_4b25a6, 1, g_4b25a4);
+            moveView(moverView2, 1, moverView1);
             other->flags = 0x4108000;
-            setViewScript(other, g_4b2724[1], 1);
+            setViewScript(other, moverScripts[1], 1);
             other->notify = smokeViewNotify;
         }
         break;
@@ -3448,40 +3448,40 @@ void smokeViewNotify(View *view, short event)
                 other->body.running = 0;
                 Snoid *snoid = (Snoid *)&other->body;
 
-                *(Point *)&snoid->body.x = g_4a44b0;
-                startSmokeSnoidScript(crossingViews[nextCrossing + 1], g_4b272c, view->body.group, smokeViewNotify, 0);
+                *(Point *)&snoid->body.x = crossingStart2;
+                startSmokeSnoidScript(crossingViews[nextCrossing + 1], crossScript2, view->body.group, smokeViewNotify, 0);
                 moveView(crossingViews[nextCrossing + 1], 1, view->id);
             }
         }
         break;
     case 36:
-        if (g_4b266e) {
-            g_4b266e = 0;
-            copyToSlotView(g_4b26b2, 0);
-            recordSlotFeatures(g_4b26b2, 0);
+        if (crossOnceFlag) {
+            crossOnceFlag = 0;
+            copyToSlotView(crossingSnoid, 0);
+            recordSlotFeatures(crossingSnoid, 0);
         }
         break;
     case 37:
         if (crossingViews[nextCrossing] && nextCrossing < crossingCount) {
-            g_4b26b2 = crossingViews[nextCrossing];
-            startSmokeSnoidScript(crossingViews[nextCrossing], g_4b272e, view->body.group, smokeViewNotify, 0);
+            crossingSnoid = crossingViews[nextCrossing];
+            startSmokeSnoidScript(crossingViews[nextCrossing], crossScript3, view->body.group, smokeViewNotify, 0);
             moveView(crossingViews[nextCrossing], 1, view->id);
         }
-        if (g_4b2742) {
-            other = findView(g_4b25a4);
+        if (useSecondMover) {
+            other = findView(moverView1);
             if (other) {
                 other->flags = 0x4108000;
-                setViewScript(other, g_4b2724[1], 1);
+                setViewScript(other, moverScripts[1], 1);
                 other->notify = smokeViewNotify;
                 ViewBody *body = &other->body;
 
                 body->cels[0].image = 0;
             }
         } else {
-            other = findView(g_4b25a6);
+            other = findView(moverView2);
             if (other) {
                 other->flags = 0x4108000;
-                setViewScript(other, g_4b2724[1], 1);
+                setViewScript(other, moverScripts[1], 1);
                 other->notify = smokeViewNotify;
                 ViewBody *body = &other->body;
 
@@ -3491,10 +3491,10 @@ void smokeViewNotify(View *view, short event)
         break;
     case 38:
         if (smokeLevel == 4) {
-            if (g_4b2744 == 3) {
-                if (g_4b26b2) {
-                    copyToSlotView(g_4b26b2, 0);
-                    recordSlotFeatures(g_4b26b2, 0);
+            if (level4Stage == 3) {
+                if (crossingSnoid) {
+                    copyToSlotView(crossingSnoid, 0);
+                    recordSlotFeatures(crossingSnoid, 0);
                     recordLeftSlots();
                     advanceLeftFeatures();
                     emptyPairViews();
@@ -3506,25 +3506,25 @@ void smokeViewNotify(View *view, short event)
                         body->cels[0].image = 0;
                     }
                     if (crossingViews[nextCrossing]) {
-                        other = findView(g_4b2594);
+                        other = findView(dealerView);
                         if (other) {
-                            setViewScript(other, g_4b2730, 1);
+                            setViewScript(other, dealerScript, 1);
                             other->notify = stepBackNotify;
-                            g_4a483c = 0;
+                            dealerRunning = 0;
                         }
                     }
                 }
-            } else if (g_4b2744 == 1 && g_4b273a && crossedCount <= crossingCount) {
+            } else if (level4Stage == 1 && featuresTaken && crossedCount <= crossingCount) {
                 dealButtonState = 1;
                 lightDealButton(11005);
             }
         }
         break;
     case 50:
-        g_4b2736 = 1;
+        crossedDue = 1;
         break;
     case 51:
-        g_4b2746 = 1;
+        anchorDue = 1;
         break;
     case 60:
         snoidsOnTheirWay = 0;
@@ -3572,30 +3572,30 @@ void makeSmokeRows(Snoid *snoid, short n)
             g_4b285a[j][2] = 0;
             g_4b285a[j][3] = 0;
         }
-        g_4b28b2[0] = 0;
-        g_4b28b2[1] = 0;
-        g_4b28b2[2] = 0;
-        g_4b28b2[3] = 0;
-        g_4b28ba[0] = 0;
-        g_4b28ba[1] = 0;
-        g_4b28ba[2] = 0;
-        g_4b28ba[3] = 0;
+        leftFeatureMarks[0] = 0;
+        leftFeatureMarks[1] = 0;
+        leftFeatureMarks[2] = 0;
+        leftFeatureMarks[3] = 0;
+        rightFeatureMarks[0] = 0;
+        rightFeatureMarks[1] = 0;
+        rightFeatureMarks[2] = 0;
+        rightFeatureMarks[3] = 0;
         g_4b27ca[0][0] = targetFeatures[0];
         g_4b27ca[0][1] = targetFeatures[1];
         g_4b27ca[0][2] = targetFeatures[2];
         g_4b27ca[0][3] = targetFeatures[3];
-        g_4b28a2[0] = targetFeatures[0];
-        g_4b28a2[1] = targetFeatures[1];
-        g_4b28a2[2] = targetFeatures[2];
-        g_4b28a2[3] = targetFeatures[3];
+        leftTargetFeatures[0] = targetFeatures[0];
+        leftTargetFeatures[1] = targetFeatures[1];
+        leftTargetFeatures[2] = targetFeatures[2];
+        leftTargetFeatures[3] = targetFeatures[3];
         g_4b2812[0][0] = targetFeatures[4];
         g_4b2812[0][1] = targetFeatures[5];
         g_4b2812[0][2] = targetFeatures[6];
         g_4b2812[0][3] = targetFeatures[7];
-        g_4b28aa[0] = targetFeatures[4];
-        g_4b28aa[1] = targetFeatures[5];
-        g_4b28aa[2] = targetFeatures[6];
-        g_4b28aa[3] = targetFeatures[7];
+        rightTargetFeatures[0] = targetFeatures[4];
+        rightTargetFeatures[1] = targetFeatures[5];
+        rightTargetFeatures[2] = targetFeatures[6];
+        rightTargetFeatures[3] = targetFeatures[7];
         for (row = 1; row < 3; row++) {
             for (j = 0; j < 8; j++)
                 values[j] = j;
@@ -3608,16 +3608,16 @@ void makeSmokeRows(Snoid *snoid, short n)
                     pick = randomBetween(1, last);
                     if (i == chosen && randomBetween(0, 100) > 70 && !once) {
                         once = 1;
-                        if (!g_4b28a2[i])
+                        if (!leftTargetFeatures[i])
                             g_4b27ca[row][i] = targetFeatures[i] + 1;
                         else
-                            g_4b27ca[row][i] = g_4b28a2[i] + 1;
+                            g_4b27ca[row][i] = leftTargetFeatures[i] + 1;
                         if (g_4b27ca[row][i] > 5)
                             g_4b27ca[row][i] = 1;
-                        if (!g_4b28aa[i])
+                        if (!rightTargetFeatures[i])
                             g_4b27ca[row][i] = targetFeatures[i + 4] + 1; /* sic: not g_4b2812 */
                         else
-                            g_4b2812[row][i] = g_4b28aa[i] + 1;
+                            g_4b2812[row][i] = rightTargetFeatures[i] + 1;
                         if (g_4b2812[row][i] > 5)
                             g_4b2812[row][i] = 1;
                         g_4b285a[row][i] = g_4b27ca[row][i];
@@ -3627,8 +3627,8 @@ void makeSmokeRows(Snoid *snoid, short n)
                         g_4b285a[row][i] = 0;
                     }
                     if (g_4b27ca[row][i]) {
-                        g_4b28a2[i] = g_4b27ca[row][i];
-                        g_4b28aa[i] = g_4b2812[row][i];
+                        leftTargetFeatures[i] = g_4b27ca[row][i];
+                        rightTargetFeatures[i] = g_4b2812[row][i];
                         count++;
                         for (j = pick; j < last + 1; j++)
                             values[j] = values[j + 1];
@@ -3638,14 +3638,14 @@ void makeSmokeRows(Snoid *snoid, short n)
         }
         limit = 2;
         if (smokeLevel == 4 || smokeLevel == 3) {
-            g_4b28b2[0] = g_4b28a2[0];
-            g_4b28b2[1] = g_4b28a2[1];
-            g_4b28b2[2] = g_4b28a2[2];
-            g_4b28b2[3] = g_4b28a2[3];
-            g_4b28ba[0] = g_4b28aa[0];
-            g_4b28ba[1] = g_4b28aa[1];
-            g_4b28ba[2] = g_4b28aa[2];
-            g_4b28ba[3] = g_4b28aa[3];
+            leftFeatureMarks[0] = leftTargetFeatures[0];
+            leftFeatureMarks[1] = leftTargetFeatures[1];
+            leftFeatureMarks[2] = leftTargetFeatures[2];
+            leftFeatureMarks[3] = leftTargetFeatures[3];
+            rightFeatureMarks[0] = rightTargetFeatures[0];
+            rightFeatureMarks[1] = rightTargetFeatures[1];
+            rightFeatureMarks[2] = rightTargetFeatures[2];
+            rightFeatureMarks[3] = rightTargetFeatures[3];
             for (row = 3; row < 5; row++) {
                 for (j = 0; j < 8; j++)
                     values[j] = j;
@@ -3659,26 +3659,26 @@ void makeSmokeRows(Snoid *snoid, short n)
                         if ((randomBetween(0, 100) > 70 || i == 3 && count == 0) && !once) {
                             once = 1;
                             if (row == 3) {
-                                if (g_4b28b2[i]) {
-                                    g_4b27ca[row][i] = g_4b28b2[i];
-                                    g_4b2812[row][i] = g_4b28ba[i];
+                                if (leftFeatureMarks[i]) {
+                                    g_4b27ca[row][i] = leftFeatureMarks[i];
+                                    g_4b2812[row][i] = rightFeatureMarks[i];
                                 } else {
                                     g_4b27ca[row][i] = targetFeatures[i];
                                     g_4b2812[row][i] = targetFeatures[i + 4];
                                 }
                             } else if (g_4b285a[row - 1][i]) {
-                                g_4b27ca[row][i] = g_4b28b2[i] - 1;
+                                g_4b27ca[row][i] = leftFeatureMarks[i] - 1;
                                 if (g_4b27ca[row][i] < 1)
                                     g_4b27ca[row][i] = 5;
-                                g_4b2812[row][i] = g_4b28ba[i] - 1;
+                                g_4b2812[row][i] = rightFeatureMarks[i] - 1;
                                 if (g_4b2812[row][i] < 1)
                                     g_4b2812[row][i] = 5;
                             } else if (g_4b27ca[row - 1][i]) {
                                 g_4b27ca[row][i] = values[pick];
                                 g_4b2812[row][i] = values[pick];
-                            } else if (g_4b28b2[i]) {
-                                g_4b27ca[row][i] = g_4b28b2[i];
-                                g_4b2812[row][i] = g_4b28ba[i];
+                            } else if (leftFeatureMarks[i]) {
+                                g_4b27ca[row][i] = leftFeatureMarks[i];
+                                g_4b2812[row][i] = rightFeatureMarks[i];
                             } else {
                                 g_4b27ca[row][i] = targetFeatures[i];
                                 g_4b2812[row][i] = targetFeatures[i + 4];
@@ -3686,11 +3686,11 @@ void makeSmokeRows(Snoid *snoid, short n)
                             g_4b285a[row][i] = g_4b27ca[row][i];
                         } else if (row == 3) {
                             if (!g_4b285a[2][i] && g_4b27ca[2][i]) {
-                                g_4b27ca[row][i] = g_4b28b2[i];
-                                g_4b2812[row][i] = g_4b28ba[i];
+                                g_4b27ca[row][i] = leftFeatureMarks[i];
+                                g_4b2812[row][i] = rightFeatureMarks[i];
                             } else if (!g_4b285a[1][i] && g_4b27ca[1][i]) {
-                                g_4b27ca[row][i] = g_4b28b2[i];
-                                g_4b2812[row][i] = g_4b28ba[i];
+                                g_4b27ca[row][i] = leftFeatureMarks[i];
+                                g_4b2812[row][i] = rightFeatureMarks[i];
                             } else {
                                 g_4b27ca[row][i] = 0;
                                 g_4b2812[row][i] = 0;
@@ -3698,10 +3698,10 @@ void makeSmokeRows(Snoid *snoid, short n)
                             g_4b285a[row][i] = 0;
                         } else if (g_4b285a[row - 1][i]) {
                             if (!once) {
-                                g_4b27ca[row][i] = g_4b28b2[i] - 1;
+                                g_4b27ca[row][i] = leftFeatureMarks[i] - 1;
                                 if (g_4b27ca[row][i] < 1)
                                     g_4b27ca[row][i] = 5;
-                                g_4b2812[row][i] = g_4b28ba[i] - 1;
+                                g_4b2812[row][i] = rightFeatureMarks[i] - 1;
                                 if (g_4b2812[row][i] < 1)
                                     g_4b2812[row][i] = 5;
                                 once = 1;
@@ -3714,8 +3714,8 @@ void makeSmokeRows(Snoid *snoid, short n)
                             g_4b2812[row][i] = values[pick];
                             g_4b285a[row][i] = 0;
                         } else if (!g_4b285a[2][i] && g_4b27ca[2][i] || !g_4b285a[1][i] && g_4b27ca[1][i]) {
-                            g_4b27ca[row][i] = g_4b28b2[i];
-                            g_4b2812[row][i] = g_4b28ba[i];
+                            g_4b27ca[row][i] = leftFeatureMarks[i];
+                            g_4b2812[row][i] = rightFeatureMarks[i];
                             g_4b285a[row][i] = 0;
                         } else {
                             g_4b27ca[row][i] = 0;
@@ -3723,8 +3723,8 @@ void makeSmokeRows(Snoid *snoid, short n)
                             g_4b285a[row][i] = 0;
                         }
                         if (g_4b27ca[row][i]) {
-                            g_4b28b2[i] = g_4b27ca[row][i];
-                            g_4b28ba[i] = g_4b2812[row][i];
+                            leftFeatureMarks[i] = g_4b27ca[row][i];
+                            rightFeatureMarks[i] = g_4b2812[row][i];
                             count++;
                             for (j = pick; j < last + 1; j++)
                                 values[j] = values[j + 1];
@@ -3748,7 +3748,7 @@ void makeSmokeRows(Snoid *snoid, short n)
             } else if (g_4b27ca[3][i]) {
                 g_4b27ca[row][i] = randomBetween(1, 5);
             } else {
-                g_4b27ca[row][i] = g_4b28b2[i];
+                g_4b27ca[row][i] = leftFeatureMarks[i];
             }
         if (targetFeatures[4]) {
             row = 8;
@@ -3766,7 +3766,7 @@ void makeSmokeRows(Snoid *snoid, short n)
                 } else if (g_4b2812[3][i]) {
                     g_4b2812[row][i] = randomBetween(1, 5);
                 } else {
-                    g_4b2812[row][i] = g_4b28ba[i];
+                    g_4b2812[row][i] = rightFeatureMarks[i];
                 }
         }
         if (smokeLevel == 3) {
@@ -3891,7 +3891,7 @@ void setOutSmokeSnoids()
             last--;
         }
     }
-    for (i = 1; i < g_4b2662; i++) {
+    for (i = 1; i < rowViewCount; i++) {
         view = findView(rowViews[i]);
         if (view) {
             snoid = (Snoid *)&view->body;
@@ -3901,20 +3901,20 @@ void setOutSmokeSnoids()
                 *(Point *)&snoid->body.x = rowPlaces[rowPlaceOrder[i]];
             } else if (i == 7) {
                 snoid->unknownF1 = 0;
-                *(Point *)&snoid->body.x = g_4a4528;
+                *(Point *)&snoid->body.x = spot4Point;
             }
             if (i == 8) {
                 snoid->unknownF1 = 2;
-                *(Point *)&snoid->body.x = g_4a4530;
+                *(Point *)&snoid->body.x = smokeRowStart;
             }
             snoid->unknownF4 = 4;
         }
     }
     copyToSlotView(rowViews[7], 7);
     recordSlotFeatures(rowViews[7], 7);
-    g_4b26b2 = crossingViews[nextCrossing];
-    copyToSlotView(g_4b26b2, 0);
-    recordSlotFeatures(g_4b26b2, 0);
+    crossingSnoid = crossingViews[nextCrossing];
+    copyToSlotView(crossingSnoid, 0);
+    recordSlotFeatures(crossingSnoid, 0);
     rightRow = 0;
     leftRow = 0;
     fillMemory(&slotViews[1], 0, 12);
@@ -3986,11 +3986,11 @@ void addSmokeSnoids(short kind, short count)
                 made->features[j] = 0;
             if (i == 0) {
                 made->unknownF1 = 8;
-                *(Point *)&made->body.x = g_4a4524[i];
+                *(Point *)&made->body.x = madePlaces1[i];
             }
             if (i == 1) {
                 made->unknownF1 = 5;
-                *(Point *)&made->body.x = g_4a4524[i];
+                *(Point *)&made->body.x = madePlaces1[i];
             }
             made->unknownF8 = 0;
             made->unknownF5 = 0;
@@ -3999,7 +3999,7 @@ void addSmokeSnoids(short kind, short count)
         case 5:
             for (j = 0; j < 4; j++)
                 made->features[j] = 0;
-            *(Point *)&made->body.x = g_4a462c[i];
+            *(Point *)&made->body.x = madePlaces2[i];
             if (!i)
                 made->unknownF1 = 5;
             else
@@ -4044,36 +4044,36 @@ void addSmokeSnoids(short kind, short count)
                 view->flags = 0x4000002;
             switch (kind) {
             case 1:
-                randomViews[g_4b2660] = j;
-                g_4b2660++;
-                moveView(j, 0, g_4b258e);
+                randomViews[randomViewCount] = j;
+                randomViewCount++;
+                moveView(j, 0, pairView2);
                 break;
             case 2:
-                dealtViews[g_4b2664] = j;
-                g_4b2664++;
-                moveView(j, 1, g_4b2590);
+                dealtViews[dealtViewCount] = j;
+                dealtViewCount++;
+                moveView(j, 1, view11018);
                 break;
             case 3:
-                rowViews[g_4b2662] = j;
-                g_4b2662++;
-                moveView(j, 0, g_4b258e);
-                if (g_4b2662 == 8 && smokeLevel >= 3) {
+                rowViews[rowViewCount] = j;
+                rowViewCount++;
+                moveView(j, 0, pairView2);
+                if (rowViewCount == 8 && smokeLevel >= 3) {
                     copyToSlotView(rowViews[7], 7);
                     recordSlotFeatures(rowViews[7], 7);
-                    g_4b26b0 = 1;
+                    randomDragSlot = 1;
                 }
-                if (g_4b2662 == 9 && smokeLevel >= 3)
+                if (rowViewCount == 9 && smokeLevel >= 3)
                     copyToSlotView(rowViews[8], 8);
                 break;
             case 4:
-                slotPairViews[g_4b2666] = j;
-                g_4b2666++;
-                moveView(j, 1, g_4b258e);
+                slotPairViews[slotPairViewCount] = j;
+                slotPairViewCount++;
+                moveView(j, 1, pairView2);
                 break;
             case 5:
-                comparedViews[g_4b2668] = j;
-                g_4b2668++;
-                moveView(j, 1, g_4b258c);
+                comparedViews[comparedViewCount] = j;
+                comparedViewCount++;
+                moveView(j, 1, pairView1);
                 if (view) {
                     view->body.running = 0;
                     view->changed = 1;
@@ -4114,8 +4114,8 @@ void addLevelSnoids(short level)
     }
 }
 
-/* The notify of view g_4b2594's scripts (level 4): 17 and 18 step view
-   rowViews[8]'s Zoombini back along g_4a4524 (18 also empties it and
+/* The notify of view dealerView's scripts (level 4): 17 and 18 step view
+   rowViews[8]'s Zoombini back along madePlaces1 (18 also empties it and
    moves the features along); 19 sets out the Zoombinis again. */
 /* @zoombi32 0x00451e5d */
 void stepBackNotify(View *, short event)
@@ -4128,8 +4128,8 @@ void stepBackNotify(View *, short event)
         if (view) {
             Snoid *snoid = (Snoid *)&view->body;
 
-            g_4b2744--;
-            *(Point *)&snoid->body.x = g_4a4524[g_4b2744];
+            level4Stage--;
+            *(Point *)&snoid->body.x = madePlaces1[level4Stage];
             snoid->unknownF1 = 4;
             snoid->unknownF4 = 4;
         }
@@ -4141,8 +4141,8 @@ void stepBackNotify(View *, short event)
             ViewBody *body = &snoid->body;
 
             body->cels[0].image = 0;
-            g_4b2744--;
-            *(Point *)&snoid->body.x = g_4a4524[g_4b2744];
+            level4Stage--;
+            *(Point *)&snoid->body.x = madePlaces1[level4Stage];
             snoid->unknownF1 = 5;
             snoid->unknownF4 = 4;
             recordSlotFeatures(rowViews[8], 7);
@@ -4152,12 +4152,12 @@ void stepBackNotify(View *, short event)
         recordRightSlots();
         advanceRightFeatures();
         setPairFeatures();
-        if (g_4a483c)
-            g_4a483c = 0;
+        if (dealerRunning)
+            dealerRunning = 0;
         break;
     case 19:
         setOutSmokeSnoids();
-        g_4b2748 = 1;
+        dealLightDue = 1;
         break;
     }
 }
@@ -4182,11 +4182,11 @@ short startRound()
     clearFeatureSlots();
     switch (smokeLevel) {
     case 1:
-        dealRandomFeatures(g_4b273a);
+        dealRandomFeatures(featuresTaken);
         break;
     case 2:
         dealFeatures();
-        dealRandomFeatures(g_4b273a);
+        dealRandomFeatures(featuresTaken);
         break;
     case 3:
         setOutSmokeSnoids();
@@ -4207,13 +4207,13 @@ short startRound()
 
             body->cels[0].image = 0;
         }
-        view = findView(g_4b2594);
+        view = findView(dealerView);
         if (view) {
-            setViewScript(view, g_4b2732, 1);
+            setViewScript(view, dealerScript2, 1);
             view->notify = stepBackNotify;
-            g_4a483c = 0;
+            dealerRunning = 0;
         }
-        g_4b2744 = 3;
+        level4Stage = 3;
         break;
     }
     return 2;
@@ -4230,8 +4230,8 @@ short startRound()
 /* @zoombi32 0x0044e494 */
 void openSmoke()
 {
-    short *scripts = g_4b2714;
-    short *others = g_4b2724;
+    short *scripts = pairScripts;
+    short *others = moverScripts;
     short pick;
     short count;
     short i;
@@ -4242,88 +4242,88 @@ void openSmoke()
     sceneDue = 0;
     smokeOpen = 0;
     smokeGoReady = 0;
-    g_4b2788 = 0;
-    g_4b26b0 = 0;
-    g_4b26b2 = 0;
-    g_4b266e = 1;
+    movePlace = 0;
+    randomDragSlot = 0;
+    crossingSnoid = 0;
+    crossOnceFlag = 1;
     dealButtonState = 2;
     crossingCount = 0;
     leftRow = 0;
     rightRow = 0;
-    g_4b2664 = 0;
-    g_4b2666 = 0;
-    g_4b2668 = 0;
+    dealtViewCount = 0;
+    slotPairViewCount = 0;
+    comparedViewCount = 0;
     crossedCount = 0;
     nextCrossing = 0;
-    g_4b2742 = 0;
-    g_4b2744 = 3;
-    g_4b264c = 0;
-    g_4b2670 = 0;
-    g_4b273c = 0;
-    g_4b2736 = 0;
-    g_4b2738 = 0;
-    g_4b2746 = 0;
-    g_4b2748 = 0;
-    g_4b274a = 0;
-    g_4b274c = 0;
-    g_4b273a = 0;
-    g_4b2750 = 0;
+    useSecondMover = 0;
+    level4Stage = 3;
+    unusedSmoke1 = 0;
+    crossedChosen = 0;
+    pairMismatch = 0;
+    crossedDue = 0;
+    unusedSmoke2 = 0;
+    anchorDue = 0;
+    dealLightDue = 0;
+    dealDimDue = 0;
+    unusedSmoke3 = 0;
+    featuresTaken = 0;
+    leadersDue = 0;
     hintSound = 0;
     cheatMode = 0;
-    g_4b2764 = 0;
-    g_4b2758 = 0;
-    g_4b275c = 0;
-    g_4b2760 = 0;
-    g_4b2762 = 0;
-    g_4b274e = soundOn;
+    unusedSmoke4 = 0;
+    lastSmokeFidgetTime = 0;
+    smokeFidgetersUsed = 0;
+    smokeFidgets = 0;
+    smokeFidgeting = 0;
+    soundOnBeforeSmoke = soundOn;
     soundOn = 0;
-    g_4b2794 = g_4a47cc;
+    smokeDragOrigin = smokeDragOriginStart;
     for (i = 0; i < 8; i++)
         rowPlaceOrder[i] = i;
     fillMemory(&slotViews[1], 0, 12);
-    fillMemory(&g_4b258a, 0, 42);
-    fillMemory(g_4b25b4, 0, 40);
-    fillMemory(g_4b25dc, 0, 40);
+    fillMemory(&view11009, 0, 42);
+    fillMemory(crossedMarkers, 0, 40);
+    fillMemory(crossedSnoids, 0, 40);
     fillMemory(crossingViews, 0, 42);
     fillMemory(rowViews, 0, 18);
     smokeLevel = sceneLevel() + 1;
     if (smokeLevel > 4)
         smokeLevel = 4;
-    g_4b273e = 0;
-    g_4b2740 = 0;
+    pairScriptIndex = 0;
+    slotsDiffer = 0;
     if (smokeLevel == 1 || smokeLevel == 2) {
         scripts[0] = 11024;
         scripts[1] = 11025;
         scripts[2] = 11026;
         scripts[3] = 11027;
-        g_4b271c[0] = 11999;
-        g_4b271c[1] = 12004;
+        crossScripts[0] = 11999;
+        crossScripts[1] = 12004;
         others[0] = 11032;
         others[1] = 0;
         others[2] = 0;
-        g_4b272a = 0;
-        g_4b272c = 0;
-        g_4b272e = 0;
+        crossScript1 = 0;
+        crossScript2 = 0;
+        crossScript3 = 0;
     } else {
         scripts[0] = 11028;
         scripts[1] = 11029;
         scripts[2] = 11030;
         scripts[3] = 11031;
-        g_4b271c[0] = 12009;
-        g_4b271c[1] = 12014;
+        crossScripts[0] = 12009;
+        crossScripts[1] = 12014;
         others[0] = 11033;
         others[1] = 11034;
         others[2] = 11035;
-        g_4b272a = 12038;
-        g_4b272c = 12039;
-        g_4b272e = 12040;
+        crossScript1 = 12038;
+        crossScript2 = 12039;
+        crossScript3 = 12040;
     }
     if (smokeLevel != 4) {
-        g_4b2730 = 11013;
-        g_4b2732 = 0;
+        dealerScript = 11013;
+        dealerScript2 = 0;
     } else {
-        g_4b2730 = 11011;
-        g_4b2732 = 11012;
+        dealerScript = 11011;
+        dealerScript2 = 11012;
     }
     openGameFile(&smokeFile, "Smoke.MHK");
     setCurrentMap(smokeFile);
@@ -4334,40 +4334,40 @@ void openSmoke()
     loadSnoidScripts(11999, 1, 0);
     addSnoidScripts(12000, 50, 0);
     loadShape(&smokeButtonResource, 6000, "Map/Go Buttons");
-    g_4b2594 = addView(0x4188000, drawCels, runViewScript, g_4b2730, 10, 0, 0, 0);
+    dealerView = addView(0x4188000, drawCels, runViewScript, dealerScript, 10, 0, 0, 0);
     if (smokeLevel == 1 || smokeLevel == 2)
         view11076 = addView(0x5188000, drawCels, runViewScript, 11076, 10, 0, 0, 0);
     leftRowView = addView(0x5188000, drawCels, runViewScript, 11006, 10, 0, 0, 0);
     rightRowView = addView(0x5188000, drawCels, runViewScript, 11007, 10, 0, 0, 0);
-    g_4b258c = addView(0x5188000, drawCels, runViewScript, scripts[g_4b273e], 6, 0, 0, 0);
-    g_4b25a4 = addView(0x4108000, drawCels, runViewScript, others[0], 6, 0, 0, 0);
+    pairView1 = addView(0x5188000, drawCels, runViewScript, scripts[pairScriptIndex], 6, 0, 0, 0);
+    moverView1 = addView(0x4108000, drawCels, runViewScript, others[0], 6, 0, 0, 0);
     if (smokeLevel == 3 || smokeLevel == 4)
-        g_4b25a6 = addView(0x4108000, drawCels, runViewScript, others[1], 6, 0, 0, 0);
+        moverView2 = addView(0x4108000, drawCels, runViewScript, others[1], 6, 0, 0, 0);
     {
-        View *added = findView(g_4b25a4);
+        View *added = findView(moverView1);
 
         if (added)
             added->notify = smokeViewNotify;
     }
-    g_4b258e = addView(0xd180000, drawCels, runViewScript, scripts[g_4b273e + 1], 6, 0, 0, 0);
-    g_4b2590 = addView(0x5180000, drawCels, runViewScript, 11018, 6, 0, 0, 0);
-    g_4b2592 = addView(0xd180000, drawCels, runViewScript, 11019, 6, 0, 0, 0);
-    g_4b258a = addView(0x4000000, drawCels, runViewScript, 11009, 6, 0, 0, 0);
-    g_4b25ac = addView(0x5180000, drawCels, runViewScript, 11036, 6, 0, 0, 0);
-    g_4b25ae = addView(0x4100000, drawCels, runViewScript, 11008, 0, 0, 0, 0);
+    pairView2 = addView(0xd180000, drawCels, runViewScript, scripts[pairScriptIndex + 1], 6, 0, 0, 0);
+    view11018 = addView(0x5180000, drawCels, runViewScript, 11018, 6, 0, 0, 0);
+    view11019 = addView(0xd180000, drawCels, runViewScript, 11019, 6, 0, 0, 0);
+    view11009 = addView(0x4000000, drawCels, runViewScript, 11009, 6, 0, 0, 0);
+    view11036 = addView(0x5180000, drawCels, runViewScript, 11036, 6, 0, 0, 0);
+    view11008 = addView(0x4100000, drawCels, runViewScript, 11008, 0, 0, 0, 0);
     dealButtonView = addView(0x4180000, drawCels, runViewScript, 11002, 5, 0, 0, 0);
-    g_4b2598 = addView(0x4100000, drawCels, runViewScript, 11077, 0, 0, 0, 0);
+    view11077 = addView(0x4100000, drawCels, runViewScript, 11077, 0, 0, 0, 0);
     addView(0x1000, drawSmokeButtons, updateSmokeButtons, 0, 0, 0, 0, 0);
     smokeImages = loadImageBank(10000, &smokeImagesResource);
     smokeHotSpotsX = loadShortTable(10000, &smokeHotSpotsXResource);
     smokeHotSpotsY = loadShortTable(10001, &smokeHotSpotsYResource);
-    setViewPlaces(20, g_4a47ec, 1);
+    setViewPlaces(20, smokePlaces, 1);
     makePartySnoids(0);
-    g_4b2660 = 0;
-    g_4b2662 = 1;
-    g_4b2664 = 0;
-    g_4b2666 = 0;
-    g_4b2668 = 0;
+    randomViewCount = 0;
+    rowViewCount = 1;
+    dealtViewCount = 0;
+    slotPairViewCount = 0;
+    comparedViewCount = 0;
     crossingCount = listChosenSnoids()->count;
     count = 0;
     if (crossingCount > 0) {
@@ -4417,21 +4417,21 @@ void openSmoke()
         addLevelSnoids(smokeLevel);
     }
     if (smokeLevel < 3)
-        placedViews[0] = addView(0x108a000, drawCels, runViewScript, 11001, 7, &g_4a44b4, 0, 0);
+        placedViews[0] = addView(0x108a000, drawCels, runViewScript, 11001, 7, &smokeSpotPoint, 0, 0);
     fadeOutViews();
     copyPaletteRange(10, 236);
     updateViews();
     copyPaletteRange(10, 236);
-    setGroupLists(&g_4a47a8, 1, -0x4000);
+    setGroupLists(&smokeGroups, 1, -0x4000);
     drawSmokeButton(1, 0, 0);
     drawSmokeButton(2, 0, 0);
-    soundOn = g_4b274e;
-    g_4b2644 = 0;
-    view = findView(g_4b258c);
+    soundOn = soundOnBeforeSmoke;
+    view11017Due = 0;
+    view = findView(pairView1);
     setViewScript(view, 11015, 1);
     loadViewSounds(view->id, 1);
     view->notify = smokeViewNotify;
-    other = findView(g_4b258e);
+    other = findView(pairView2);
     setViewScript(other, 11016, 1);
     other->notify = smokeViewNotify;
     groupViews(view->id, other->id, 0, 0, 0, 0);
@@ -4477,7 +4477,7 @@ void openSmoke()
     campHint((short *)(gameState + 0x42));
     hintSound = randomBetween(20066, 20067);
     if (smokeLevel == 3 || smokeLevel == 4) {
-        g_4b2752 = 1;
+        dealLit = 1;
         lightDealButton(11003);
     }
 }
@@ -4529,7 +4529,7 @@ void smokeClicked(short action)
             drawSmokeButton(action, 1, 1);
             waitForEventFor(0, 2, 0, 1);
             drawSmokeButton(action, 0, 1);
-            g_4b2750 = 1;
+            leadersDue = 1;
             snoidsOnTheirWay = 1;
             snoidsArrived = 0;
             sceneDue = 18;
@@ -4549,8 +4549,8 @@ void smokeClicked(short action)
         }
         if (!dealButtonState)
             break;
-        if (ptInRect(&dealButtonRect, where) && g_4b2752 == 1) {
-            g_4b2752 = 0;
+        if (ptInRect(&dealButtonRect, where) && dealLit == 1) {
+            dealLit = 0;
             dealButtonState = 0;
             pressDealButton(11002, 1);
             placeClaims[0] = 0;
@@ -4563,43 +4563,43 @@ void smokeClicked(short action)
         if (view) {
             ok = 1;
             for (k = 0; k < crossingCount; k++)
-                if (g_4b25dc[k] == view->id || smokeLevel >= 3) {
+                if (crossedSnoids[k] == view->id || smokeLevel >= 3) {
                     ok = 0;
                     k = crossingCount;
                 }
             if (ok && view->body.running) {
-                g_4b2794 = *(long *)&view->body.x;
-                if (view->id == g_4b26b2) {
+                smokeDragOrigin = *(long *)&view->body.x;
+                if (view->id == crossingSnoid) {
                     placeClaims[0] = 0;
                     releaseHeldPlace();
                     claimPlacedView(heldPlaceNumber(), 0);
-                    g_4b26b2 = 0;
+                    crossingSnoid = 0;
                     emptySlotView(0);
                     clearFeatureSlot(0);
-                    g_4b2752 = 0;
+                    dealLit = 0;
                     dimDealButton(11002);
                     pickFreeSpot(&spot);
-                    g_4b2794 = *(long *)&g_4a47ec[spot];
+                    smokeDragOrigin = *(long *)&smokePlaces[spot];
                 }
                 dragSnoid(view, where, 0, 0);
-                if (!heldPlaceNumber() && !ptInRect(&g_4a47d0, *(Point *)&view->body.x)) {
-                    *(long *)&((Snoid *)&view->body)->targetX = g_4b2794;
-                } else if (ptInRect(&g_4a47d0, *(Point *)&view->body.x)) {
-                    best = g_4a47e0[0];
-                    distance = MAGNITUDE(((Snoid *)&view->body)->targetY - g_4a47e0[0]);
+                if (!heldPlaceNumber() && !ptInRect(&smokeWaitArea, *(Point *)&view->body.x)) {
+                    *(long *)&((Snoid *)&view->body)->targetX = smokeDragOrigin;
+                } else if (ptInRect(&smokeWaitArea, *(Point *)&view->body.x)) {
+                    best = smokeWaitRows[0];
+                    distance = MAGNITUDE(((Snoid *)&view->body)->targetY - smokeWaitRows[0]);
                     for (k = 1; k < 5; k++)
-                        if (MAGNITUDE(((Snoid *)&view->body)->targetY - g_4a47e0[k]) < distance) {
-                            best = g_4a47e0[k];
-                            distance = MAGNITUDE(((Snoid *)&view->body)->targetY - g_4a47e0[k]);
+                        if (MAGNITUDE(((Snoid *)&view->body)->targetY - smokeWaitRows[k]) < distance) {
+                            best = smokeWaitRows[k];
+                            distance = MAGNITUDE(((Snoid *)&view->body)->targetY - smokeWaitRows[k]);
                         }
                     ((Snoid *)&view->body)->targetY = best;
                 }
-                if (heldPlaceNumber() && !g_4b26b2) {
-                    g_4b26b2 = view->id;
-                    copyToSlotView(g_4b26b2, 0);
-                    recordSlotFeatures(g_4b26b2, 0);
-                    if (g_4b26b0 > 0) {
-                        g_4b2752 = 1;
+                if (heldPlaceNumber() && !crossingSnoid) {
+                    crossingSnoid = view->id;
+                    copyToSlotView(crossingSnoid, 0);
+                    recordSlotFeatures(crossingSnoid, 0);
+                    if (randomDragSlot > 0) {
+                        dealLit = 1;
                         lightDealButton(11003);
                     }
                 }
@@ -4611,37 +4611,37 @@ void smokeClicked(short action)
         switch (smokeLevel) {
         case 1:
         case 2:
-            if (ptInRect(&g_4a4534, where)) {
-                if (g_4b26b0) {
-                    g_4b2752 = 0;
+            if (ptInRect(&spot4Rect, where)) {
+                if (randomDragSlot) {
+                    dealLit = 0;
                     dimDealButton(11002);
                     clearFeatureSlot(7);
                     emptySlotView(1);
-                    view = findView(randomViews[g_4b26b0 - 1]);
-                    if (g_4b26b0) {
+                    view = findView(randomViews[randomDragSlot - 1]);
+                    if (randomDragSlot) {
                         view->changed = 1;
                         view->body.running = 1;
                     }
-                    action = g_4b26b0;
-                    g_4b26b0 = 0;
+                    action = randomDragSlot;
+                    randomDragSlot = 0;
                     if (dragSnoidToSpot(view, where) == 4) {
-                        g_4b26b0 = action;
+                        randomDragSlot = action;
                         copyToSlotView(view->id, 1);
                         recordSlotFeatures(view->id, 7);
                     } else {
-                        g_4b26b0 = action;
+                        randomDragSlot = action;
                         snoid = (Snoid *)&view->body;
-                        *(Point *)&snoid->body.x = randomPlaces[g_4b26b0 - 1];
+                        *(Point *)&snoid->body.x = randomPlaces[randomDragSlot - 1];
                         snoid->unknownF4 = 4;
-                        g_4b26b0 = 0;
+                        randomDragSlot = 0;
                     }
                 }
             } else {
-                for (k = 0; k < g_4b2660; k++)
+                for (k = 0; k < randomViewCount; k++)
                     if (randomViews[k] == view->id) {
                         if (dragSnoidToSpot(view, where) == 4) {
-                            if (!g_4b26b0) {
-                                g_4b26b0 = k + 1;
+                            if (!randomDragSlot) {
+                                randomDragSlot = k + 1;
                                 copyToSlotView(view->id, 1);
                                 recordSlotFeatures(view->id, 7);
                             } else {
@@ -4654,21 +4654,21 @@ void smokeClicked(short action)
                             *(Point *)&snoid->body.x = randomPlaces[k];
                             snoid->unknownF4 = 4;
                         }
-                        k = g_4b2660;
+                        k = randomViewCount;
                     }
             }
-            if (g_4b26b0 && g_4b26b2) {
-                g_4b2752 = 1;
+            if (randomDragSlot && crossingSnoid) {
+                dealLit = 1;
                 lightDealButton(11003);
             }
             stopView11076();
             break;
         case 3:
         case 4:
-            for (k = 1; k < g_4b2662 && k < 7; k++)
+            for (k = 1; k < rowViewCount && k < 7; k++)
                 if (rowViews[k] == view->id) {
                     pressDealButton(11002, 0);
-                    g_4b2752 = 0;
+                    dealLit = 0;
                     snoid = (Snoid *)&view->body;
                     snoid->unknownF1 = 7;
                     if (snoid->unknownF5) {
@@ -4788,10 +4788,10 @@ void smokeClicked(short action)
                             view->unknown1e = 0;
                         }
                     }
-                    k = g_4b2662;
+                    k = rowViewCount;
                 }
             stopRowViews();
-            g_4b2752 = 1;
+            dealLit = 1;
             lightDealButton(11003);
             break;
         }

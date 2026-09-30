@@ -3789,8 +3789,8 @@ extern short partyNoses[16]; /* @data 0x4b24b2 */
 extern short partyFeet[16]; /* @data 0x4b24d2 */
 extern short partyTaken[16]; /* @data 0x4b24f2 */
 extern short dealButtonState; /* @data 0x4b2754 */
-extern short g_4b2736;
-extern short g_4b2746;
+extern short crossedDue; /* @data 0x4b2736 */
+extern short anchorDue; /* @data 0x4b2746 */
 extern short g_4b27ca[9][4]; /* the puzzle's rows: their features */
 extern short g_4b2812[9][4]; /* and the second set */
 extern short g_4b285a[9][4]; /* the features each row changes */
