@@ -42,6 +42,12 @@ FetchContent_Declare(stb
     URL_HASH SHA256=9a955b1b49a4410088a2e0ee2a9c057c3c907d0c1d75454144cb980aca0ba515)
 FetchContent_MakeAvailable(stb)
 
+# TinySoundFont plays the game's MIDI (miniwin/midi.cpp).
+FetchContent_Declare(tsf
+    URL https://github.com/schellingb/TinySoundFont/archive/853a0a171759f1ddba0de1442133a75912bbeffa.tar.gz
+    URL_HASH SHA256=76c356df524f71f2a34f67fa0cb2cb946036fe7a65d2930a849569c5e742fa57)
+FetchContent_MakeAvailable(tsf)
+
 # SDL2: Emscripten's own port on the web; elsewhere the system's, or a pinned
 # release built from source.
 if(EMSCRIPTEN)
@@ -91,6 +97,7 @@ file(GLOB MINIWIN_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/miniwin
 add_library(miniwin STATIC ${MINIWIN_SOURCES})
 target_include_directories(miniwin PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}" "${stb_SOURCE_DIR}")
+target_include_directories(miniwin SYSTEM PRIVATE "${tsf_SOURCE_DIR}")
 target_compile_options(miniwin PRIVATE -fsigned-char -fno-exceptions -fno-rtti -Wall
     -Wno-unused-function)
 target_link_libraries(miniwin PRIVATE SDL2::SDL2)

@@ -1,6 +1,7 @@
 r"""The port: the decompiled game built for modern systems (port/).
 
-`setup` installs the pinned Emscripten SDK into build/emsdk/. `build` compiles
+`setup` installs the pinned Emscripten SDK into build/emsdk/ and the SoundFont
+the music plays with (GeneralUser GS) into build/soundfont/. `build` compiles
 the game for a target with CMake (port/CMakeLists.txt): `web` (WebAssembly,
 the default) into build/port/web/, or `native` into build/port/native/.
 `package` lays out the game's C: drive (the installed game) from your copy of
@@ -32,6 +33,19 @@ from zbtools import download, paths
 EMSDK_VERSION = "6.0.10"
 _EMSDK_URL = f"https://github.com/emscripten-core/emsdk/archive/refs/tags/{EMSDK_VERSION}.tar.gz"
 _EMSDK_SHA256 = "09cbafdf00e5a7b4275fc27229d69befafc5ca6070543124219977101310dade"
+
+# The General MIDI SoundFont the music plays with: GeneralUser GS v2.0.3 by
+# S. Christian Collins, free to use and redistribute in software (its
+# licence: https://github.com/mrbumpy409/GeneralUser-GS/blob/main/documentation/LICENSE.txt).
+_SOUNDFONT_COMMIT = "684543d5e5efaef08d02be50dcda8d552478fa60"
+_SOUNDFONT_URL = (
+    f"https://raw.githubusercontent.com/mrbumpy409/GeneralUser-GS/{_SOUNDFONT_COMMIT}"
+    "/GeneralUser-GS.sf2"
+)
+_SOUNDFONT_SHA256 = "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe"
+SOUNDFONT = paths.SOUNDFONT_DIR / "GeneralUser-GS.sf2"
+# Where the web build finds it.
+_WEB_SOUNDFONT = "/soundfont/GeneralUser-GS.sf2"
 
 TARGETS = ("web", "headless", "native")
 PROGRAM = r"C:\ZOOMBI32\ZOOMBI32.EXE"
@@ -84,6 +98,13 @@ def setup_emsdk(force: bool = False) -> None:
         subprocess.run(
             [sys.executable, str(emsdk), step, EMSDK_VERSION], check=True, cwd=paths.EMSDK_DIR
         )
+
+
+def setup_soundfont(force: bool = False) -> Path:
+    """Downloads the SoundFont, unless it's there; its path."""
+    if force or not SOUNDFONT.exists():
+        download.fetch(_SOUNDFONT_URL, _SOUNDFONT_SHA256, SOUNDFONT)
+    return SOUNDFONT
 
 
 def _emsdk_env() -> dict[str, str]:
@@ -163,15 +184,27 @@ def lay_out_drives(game: Path = paths.GAME32_DIR) -> Path:
     return c
 
 
-def drive_arguments(c: str, d: str) -> list[str]:
-    return ["--drive", f"C={c}", "--cdrom", f"D={d},{CD_LABEL},{CD_SERIAL}", "--program", PROGRAM]
+def game_arguments(c: str, d: str, soundfont: str) -> list[str]:
+    """The program's arguments: its drives, and the SoundFont."""
+    return [
+        "--drive",
+        f"C={c}",
+        "--cdrom",
+        f"D={d},{CD_LABEL},{CD_SERIAL}",
+        "--program",
+        PROGRAM,
+        "--soundfont",
+        soundfont,
+    ]
 
 
 def package_web() -> Path:
     """Packs the drives for the page: zoombinis-data.data (and its loader)
-    holds D: as /d and C:'s first contents as /c-default (pre.js copies them
-    into IndexedDB); zoombinis-config.js gives the game its drives."""
+    holds D: as /d, C:'s first contents as /c-default (pre.js copies them
+    into IndexedDB) and the SoundFont; zoombinis-config.js gives the game its
+    drives and the SoundFont."""
     c = lay_out_drives()
+    soundfont = setup_soundfont()
     out = build_dir("web")
     out.mkdir(parents=True, exist_ok=True)
     setup_emsdk()
@@ -184,6 +217,7 @@ def package_web() -> Path:
             "--preload",
             f"{(paths.DISC_DIR / 'DATA').resolve()}@/d/DATA",
             f"{c.resolve()}@/c-default",
+            f"{soundfont.resolve()}@{_WEB_SOUNDFONT}",
             f"--js-output={WEB_DATA}.js",
             "--use-preload-cache",
             "--no-node",
@@ -192,7 +226,8 @@ def package_web() -> Path:
         cwd=out,
         env=_emsdk_env(),
     )
-    arguments = ", ".join(f'"{a}"' for a in drive_arguments("/c", "/d")).replace("\\", "\\\\")
+    arguments = ", ".join(f'"{a}"' for a in game_arguments("/c", "/d", _WEB_SOUNDFONT))
+    arguments = arguments.replace("\\", "\\\\")
     (out / WEB_CONFIG).write_text(f"Module.zbArguments = [{arguments}];\n")
     return out
 
@@ -220,9 +255,12 @@ def _fail(error: Exception) -> None:
 
 @app.command()
 def setup(force: Annotated[bool, typer.Option(help="Reinstall")] = False) -> None:
-    """Install the pinned Emscripten SDK into build/emsdk/."""
+    """Install the pinned Emscripten SDK into build/emsdk/, and the SoundFont
+    into build/soundfont/."""
     setup_emsdk(force)
     print(f"Emscripten {EMSDK_VERSION} is in {paths.EMSDK_DIR.relative_to(paths.REPO_ROOT)}")
+    soundfont = setup_soundfont(force)
+    print(f"The SoundFont is {soundfont.relative_to(paths.REPO_ROOT)}")
 
 
 @app.command(name="build")
@@ -279,6 +317,9 @@ def run(
         list[str] | None,
         typer.Option(help="Click at a point of the screen: MS:X,Y (ms after starting)"),
     ] = None,
+    record: Annotated[
+        Path | None, typer.Option(help="Write what's played to this WAV file")
+    ] = None,
 ) -> None:
     """Run the native build (or the headless one) on the game's drives."""
     target = "headless" if headless else "native"
@@ -289,7 +330,12 @@ def run(
         c = lay_out_drives()
     except PortError as e:
         _fail(e)
-    arguments = drive_arguments(str(c.resolve()), str(paths.DISC_DIR.resolve()))
+    soundfont = setup_soundfont()
+    arguments = game_arguments(
+        str(c.resolve()), str(paths.DISC_DIR.resolve()), str(soundfont.resolve())
+    )
+    if record:
+        arguments += ["--record", str(record.resolve())]
     if screenshot:
         arguments += ["--screenshot", str(screenshot.resolve())]
     if seconds:

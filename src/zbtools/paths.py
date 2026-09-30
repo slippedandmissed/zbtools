@@ -54,6 +54,8 @@ PORT_HEADLESS_DIR = PORT_DIR / "headless"
 PORT_DATA_DIR = PORT_DIR / "data"
 # The Emscripten SDK the web build uses (`uv run port setup`).
 EMSDK_DIR = BUILD_DIR / "emsdk"
+# The General MIDI SoundFont the port plays the music with.
+SOUNDFONT_DIR = BUILD_DIR / "soundfont"
 
 # Borland C++ BIN, LIB and INCLUDE, one directory per release.
 TOOLCHAIN_DIR = BUILD_DIR / "toolchain"
@@ -134,6 +136,7 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     # The native build's saved games live here: only removed when asked for.
     "port-data": [PORT_DATA_DIR],
     "emsdk": [EMSDK_DIR],
+    "soundfont": [SOUNDFONT_DIR],
     "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
     # The whole build/ directory, so stray files can't survive a full clean.
     "all": [BUILD_DIR, "python"],

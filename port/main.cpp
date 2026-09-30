@@ -5,6 +5,7 @@
  *   zoombinis --drive C=<directory> --cdrom D=<directory>[,<label>[,<serial>]]
  *             [--program <Windows path of the program>] [--screenshot <file.bmp>]
  *             [--run-for <milliseconds>] [--click <ms>:<x>,<y>]...
+ *             [--soundfont <file.sf2>] [--record <file.wav>]
  *             [-- <game command line>]
  *
  * C: holds the installed game (and what it saves), D: the CD; `uv run port`
@@ -12,7 +13,9 @@
  * --screenshot writes the screen to a BMP about once a second (for a headless
  * build, which has no window); --run-for quits after a while and --click
  * clicks at a point on the 640x480 screen, that many ms after starting (for
- * tests).
+ * tests). --soundfont is the General MIDI SoundFont the music plays with
+ * (without one, it's silent); --record writes what's played to a WAV file
+ * (for tests).
  */
 
 #include <stdio.h>
@@ -57,6 +60,7 @@ int main(int argc, char **argv)
     std::string commandLine;
     bool drives = false;
     unsigned long runFor = 0;
+    const char *soundFont = 0;
     struct Click
     {
         unsigned long at;
@@ -80,6 +84,10 @@ int main(int argc, char **argv)
             clicks.push_back({at, x, y});
         } else if (!strcmp(argv[i], "--run-for") && i + 1 < argc)
             runFor = strtoul(argv[++i], 0, 10);
+        else if (!strcmp(argv[i], "--soundfont") && i + 1 < argc)
+            soundFont = argv[++i];
+        else if (!strcmp(argv[i], "--record") && i + 1 < argc)
+            miniwin::setRecordPath(argv[++i]);
         else if (!strcmp(argv[i], "--program") && i + 1 < argc)
             miniwin::setProgramPath(argv[++i]);
         else if (!strcmp(argv[i], "--")) {
@@ -92,6 +100,8 @@ int main(int argc, char **argv)
         usage();
     if (!miniwin::initialize("Logical Journey of the Zoombinis"))
         return 1;
+    if (soundFont)
+        miniwin::loadSoundFont(soundFont);
     if (runFor)
         miniwin::setRunFor(runFor);
     for (const Click &click : clicks)

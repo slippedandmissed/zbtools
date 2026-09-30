@@ -296,9 +296,13 @@ UINT realize(DC *dc);
 
 /* Sound (mmsystem.cpp) */
 bool openAudio();
+/* Writes everything played to a WAV file as well (for tests). */
+void setRecordPath(const char *path);
 void closeAudio();
 void serviceAudio();
 void serviceTimers();
+/* Music (midi.cpp): the SoundFont midiOut plays with (a host path). */
+bool loadSoundFont(const char *path);
 
 } /* namespace miniwin */
 

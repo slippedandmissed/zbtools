@@ -12,6 +12,7 @@
  */
 
 #include <SDL.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <algorithm>
@@ -36,6 +37,9 @@ static const int LATENCY_MS = 120;
 static SDL_AudioDeviceID audioDevice;
 static double pendingFrames;
 static DWORD lastMix;
+/* midiOut's volume: the left channel's in the low word, the right's in the
+   high word. */
+static DWORD midiVolume = 0xffffffff;
 
 struct WaveOut
 {
@@ -161,6 +165,47 @@ static void feed(WaveOut *wave, int frames, std::vector<WAVEHDR *> &done)
     }
 }
 
+/* --record: what's played, as a 16-bit stereo WAV file (its header
+   rewritten after each block, so it's complete whenever the program
+   stops). */
+static FILE *recording;
+static uint32_t recordedBytes;
+
+void setRecordPath(const char *path)
+{
+    recording = ::fopen(path, "wb");
+    if (!recording)
+        trace("can't record to %s", path);
+}
+
+static void put32(uint8_t *p, uint32_t value)
+{
+    for (int i = 0; i < 4; i++)
+        p[i] = (uint8_t)(value >> (8 * i));
+}
+
+static void record(const std::vector<float> &mix)
+{
+    if (!recording)
+        return;
+    std::vector<int16_t> samples(mix.size());
+    for (size_t i = 0; i < mix.size(); i++)
+        samples[i] = (int16_t)(mix[i] * 32767.0f);
+    ::fseek(recording, 44 + recordedBytes, SEEK_SET);
+    ::fwrite(samples.data(), sizeof(int16_t), samples.size(), recording);
+    recordedBytes += (uint32_t)(samples.size() * sizeof(int16_t));
+    uint8_t header[44] = {'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' ',
+                          16, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 16, 0,
+                          'd', 'a', 't', 'a', 0, 0, 0, 0};
+    put32(header + 4, 36 + recordedBytes);
+    put32(header + 24, OUTPUT_RATE);
+    put32(header + 28, OUTPUT_RATE * 4);
+    put32(header + 40, recordedBytes);
+    ::fseek(recording, 0, SEEK_SET);
+    ::fwrite(header, 1, sizeof header, recording);
+    ::fflush(recording);
+}
+
 void serviceAudio()
 {
     DWORD time = now();
@@ -194,16 +239,20 @@ void serviceAudio()
     if (synthAvailable()) {
         std::fill(part.begin(), part.end(), 0.0f);
         synthRender(part.data(), frames, OUTPUT_RATE);
-        for (size_t i = 0; i < mix.size(); i++)
-            mix[i] += part[i];
+        float left = (midiVolume & 0xffff) / 65535.0f, right = (midiVolume >> 16) / 65535.0f;
+        for (size_t i = 0; i < mix.size(); i += 2) {
+            mix[i] += part[i] * left;
+            mix[i + 1] += part[i + 1] * right;
+        }
     }
+    for (float &sample : mix)
+        sample = sample > 1.0f ? 1.0f : sample < -1.0f ? -1.0f : sample;
+    record(mix);
     if (audioDevice) {
         Uint32 queued = SDL_GetQueuedAudioSize(audioDevice);
         Uint32 limit = (Uint32)(OUTPUT_RATE * LATENCY_MS / 1000 * sizeof(float) * 2);
         if (queued > limit * 3)
             SDL_ClearQueuedAudio(audioDevice); /* the host isn't playing: drop it */
-        for (float &sample : mix)
-            sample = sample > 1.0f ? 1.0f : sample < -1.0f ? -1.0f : sample;
         SDL_QueueAudio(audioDevice, mix.data(), (Uint32)(mix.size() * sizeof(float)));
     }
     for (auto &f : finished)
@@ -445,7 +494,6 @@ MMRESULT waveOutSetPlaybackRate(HWAVEOUT, DWORD)
    settings treat as a General MIDI device). */
 
 static int midiOpenCount;
-static DWORD midiVolume = 0xffffffff;
 
 UINT midiOutGetNumDevs()
 {
