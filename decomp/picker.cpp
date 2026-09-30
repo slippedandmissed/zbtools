@@ -19,11 +19,11 @@
 #include "sound.h"
 #include "view.h"
 
-/* Opens scene 19, the map: its sounds, backdrop and saved areas, the
+/* Opens scene 1, the map: its sounds, backdrop and saved areas, the
    map's views (their placed callbacks), and loads sounds 998-999 from
    the sounds' map. */
 /* @zoombi32 0x0042fa4b */
-void openScene19()
+void openScene1()
 {
     basePort *port;
     short i;
@@ -103,6 +103,62 @@ void fn_4334f0(View *, short event)
 {
     if (event == -1 && g_4afb90 < 0)
         g_4afb90 = -g_4afb90;
+}
+
+/* Opens scene 19, catching Zoombinis: 9 throws of 99, the views, and
+   the opening line. */
+/* @zoombi32 0x0043169b */
+void openScene19()
+{
+    Point at;
+    short i;
+    View *view;
+
+    g_4b0d52 = 0;
+    pickerData.game.leave.left = pickerData.game.leave.top = 7;
+    pickerData.game.leave.right = pickerData.game.leave.bottom = 41;
+    pickerData.game.speed = 8;
+    for (i = 0; i < 3; i++)
+        g_4afb60[i] = 0;
+    pickerData.game.caught = 0;
+    g_4afb14 = 0;
+    pickerData.game.overView = g_4afb3a = g_4afb3c = g_4afb3e = 0;
+    pickerData.game.count = 0;
+    pickerData.game.throws = 9;
+    pickerData.game.remaining = 99 - pickerData.game.count - pickerData.game.throws;
+    pickerData.game.streak = 0;
+    g_4afb68 = 0;
+    openGameFile(&g_4afb10, "Picker.MHK");
+    fn_46be2e(g_4afb10);
+    drawBackdrop(1001);
+    loadFeatureGroup(1100, 0, 0);
+    loadFeatureGroup(1200, 1, 1);
+    loadScripts(1100, 6);
+    addScripts(1200, 5, 0);
+    loadSoundByKey(1200, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    loadSoundByKey(1201, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+    for (i = 1100; i <= 1104; i++)
+        addView(0, drawCels, runViewScript, i, 0, 0, 0, 0);
+    at.x = 14;
+    at.y = 13;
+    pickerData.game.againView = addView(0x801000, drawCels, fn_4321ac, 1105, 1, &at, 0, 0);
+    at.x = 0;
+    at.y = 480;
+    g_4afb3c = addView(0x1980000, drawCels, runViewScript, 1200, 1, &at, 0, 0);
+    g_4afb3e = addView(0x1981000, drawCels, runViewScript, 1201, 1, &at, 0, 0);
+    addView(0, drawCels, runViewScript, 1202, 0, 0, 0, 0);
+    g_4afb38 = addView(0x100000, drawCels, runViewScript, 1203, 1, 0, 0, 0);
+    view = findView(g_4afb38);
+    if (view)
+        view->placed = fn_4320e3;
+    fn_4148da(10, 236);
+    updateViews();
+    hideCursor();
+    setGroupLists(catchGroups, 1, (short)0xc000);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    g_4afb14 = 1;
+    queueViewSound(30025, 0);
 }
 
 /* Closes scenes 19 and 21 (Picker.MHK). */
