@@ -24,7 +24,7 @@
  * 34-37) and its direction (38), and a helper part (words 41, 42); or a
  * turn (1: word 38 cycling 0-3), a spin (5: word 38 cycling 0-5), or
  * falling (6, 7: then, in state 2, one of four more frames by word 46,
- * back to state 1 after). Then its bounds from the images in g_4afbc0.
+ * back to state 1 after). Then its bounds from the images in mazeImages.
  */
 /* @zoombi32 0x0043a7a6 */
 void layOutMazeCels(Snoid *snoid)
@@ -136,7 +136,7 @@ void layOutMazeCels(Snoid *snoid)
     }
     *cel = 0;
     cel = (short *)snoid->body.cels;
-    bank = g_4afbc0;
+    bank = mazeImages;
     while (*cel && *cel <= bank->count) {
         unsigned short *image = (unsigned short *)(bank->offsets[*cel] + (char *)bank);
 
@@ -153,8 +153,8 @@ void layOutMazeCels(Snoid *snoid)
  * Two maze Zoombinis meeting (`a` and `b`): by the directions they face
  * (word 20) picks each one's script (15035 on, from word 45) and its
  * helper view's (10004 on), which also gets an extra view (by the square's
- * g_4afc24) until its script ends (fn_435e8a); clears a's square in
- * g_4b00d2 and regroups each with its helper.
+ * g_4afc24) until its script ends (startPairNotify); clears a's square in
+ * squareOccupants and regroups each with its helper.
  */
 /* @zoombi32 0x00439666 */
 void mazeZoombinisMeet(View *a, View *b)
@@ -331,7 +331,7 @@ void mazeZoombinisMeet(View *a, View *b)
         helperA->flags = 0x988000;
         setViewScript(helperA, aHelperScript, 1);
         *(Point *)&helperA->body.x = *(Point *)&a->body.x;
-        helperA->placed = fn_436321;
+        helperA->placed = placeOnHotSpot35;
         offset = (g_4afc24 + partsA[33] * 12)[partsA[34]];
         where = *(Point *)&helperA->body.x;
         partsA[42] = addView(0x4988000, drawCels, runViewScript, aExtraScript + offset, 7, &where, 0, 0);
@@ -341,8 +341,8 @@ void mazeZoombinisMeet(View *a, View *b)
 
             its[50] = a->id;
             setViewScript(helperA, aExtraScript + offset, 1);
-            helperA->placed = fn_436321;
-            helperA->notify = fn_435e8a;
+            helperA->placed = placeOnHotSpot35;
+            helperA->notify = startPairNotify;
             runViewScript(helperA, removedRgn);
         }
     }
@@ -351,7 +351,7 @@ void mazeZoombinisMeet(View *a, View *b)
         helperB->flags = 0x988000;
         setViewScript(helperB, bHelperScript, 1);
         *(Point *)&helperB->body.x = *(Point *)&b->body.x;
-        helperB->placed = fn_436321;
+        helperB->placed = placeOnHotSpot35;
         offset = (g_4afc24 + partsB[33] * 12)[partsB[34]];
         where = *(Point *)&helperB->body.x;
         partsB[42] = addView(0x4988000, drawCels, runViewScript, bExtraScript + offset, 7, &where, 0, 0);
@@ -361,13 +361,13 @@ void mazeZoombinisMeet(View *a, View *b)
 
             its[50] = b->id;
             setViewScript(helperB, bExtraScript + offset, 1);
-            helperB->placed = fn_436321;
-            helperB->notify = fn_435e8a;
+            helperB->placed = placeOnHotSpot35;
+            helperB->notify = startPairNotify;
             runViewScript(helperB, removedRgn);
         }
     }
-    g_4b00d2[partsA[33]][partsA[34]][0] = 0;
-    g_4b00d2[partsA[33]][partsA[34]][1] = 0;
+    squareOccupants[partsA[33]][partsA[34]][0] = 0;
+    squareOccupants[partsA[33]][partsA[34]][1] = 0;
     if (aScript)
         startSnoidScript((Snoid *)&a->body, aScript + partsA[45], 0, 1);
     if (bScript)
@@ -903,7 +903,7 @@ void fn_43a2c8(View *view, short other)
             }
         }
     }
-    *(Point *)&view->body.x = (g_4afbf0 + parts[32])[parts[31] * 13];
+    *(Point *)&view->body.x = (squarePlaces + parts[32])[parts[31] * 13];
     view->body.x += 4;
     view->body.y += -38;
     helper = findView(parts[41]);
@@ -911,12 +911,12 @@ void fn_43a2c8(View *view, short other)
         setViewScript(helper, parts[20] + 10000, 1);
         helper->body.x = view->body.x;
         helper->body.y = view->body.y;
-        helper->placed = fn_436321;
+        helper->placed = placeOnHotSpot35;
     }
     short script = parts[21 + parts[20]];
 
     startSnoidScript((Snoid *)&view->body, script, 0, 0);
-    view->notify = fn_43638b;
+    view->notify = mazeSnoidNotify;
     if (helper)
         groupViews(view->id, helper->id, 0, 0, 0, 0);
 }
@@ -939,7 +939,7 @@ void fn_43a510(View *view, short other)
 
         its[43] = view->id;
     }
-    *(Point *)&view->body.x = (g_4afbf0 + parts[32])[parts[31] * 13];
+    *(Point *)&view->body.x = (squarePlaces + parts[32])[parts[31] * 13];
     view->body.x += 4;
     view->body.y += -38;
     helper = findView(parts[41]);
@@ -947,10 +947,10 @@ void fn_43a510(View *view, short other)
         setViewScript(helper, parts[20] + 10036, 1);
         helper->body.x = view->body.x;
         helper->body.y = view->body.y;
-        helper->placed = fn_436321;
+        helper->placed = placeOnHotSpot35;
     }
     startSnoidScript((Snoid *)&view->body, parts[25 + parts[20]], 0, 0);
-    view->notify = fn_43638b;
+    view->notify = mazeSnoidNotify;
     if (helper)
         groupViews(view->id, helper->id, 0, 0, 0, 0);
 }
@@ -995,8 +995,8 @@ void fn_43cfc3()
 }
 
 /* Puts a maze Zoombini on its square (words 33 and 34) with its helper
-   view (script 10030, told fn_435b9e) and a second view it adds (word 42:
-   10031), and starts its script 14006 (then told fn_435f3d), grouped. */
+   view (script 10030, told turnOrStartPairNotify) and a second view it adds (word 42:
+   10031), and starts its script 14006 (then told helperDoneNotify), grouped. */
 /* @zoombi32 0x00439fc3 */
 void fn_439fc3(View *view, short)
 {
@@ -1004,26 +1004,26 @@ void fn_439fc3(View *view, short)
     View *helper;
     Point where;
 
-    *(Point *)&view->body.x = (g_4afbf0 + parts[34])[parts[33] * 13];
+    *(Point *)&view->body.x = (squarePlaces + parts[34])[parts[33] * 13];
     view->body.x += 3;
     view->body.y += -38;
     helper = findView(parts[41]);
     if (helper) {
         setViewScript(helper, 10030, 1);
         *(Point *)&helper->body.x = *(Point *)&view->body.x;
-        helper->placed = fn_436321;
-        helper->notify = fn_435b9e;
+        helper->placed = placeOnHotSpot35;
+        helper->notify = turnOrStartPairNotify;
         where = *(Point *)&helper->body.x;
         parts[42] = addView(0x4988000, drawCels, runViewScript, 10031, 7, &where, 0, 0);
         helper = findView(parts[42]);
         if (helper) {
             setViewScript(helper, 10031, 1);
-            helper->placed = fn_436321;
+            helper->placed = placeOnHotSpot35;
         }
         view->body.x += 17;
         view->body.y += 5;
         startSnoidScript((Snoid *)&view->body, 14006, 0, 1);
-        view->notify = fn_435f3d;
+        view->notify = helperDoneNotify;
         moveView(parts[42], 0, view->id);
         groupViews(parts[41], view->id, parts[42], 0, 0, 0);
     }
@@ -1264,7 +1264,7 @@ void fn_439cb4(View *view)
             }
         }
     }
-    *(Point *)&view->body.x = (g_4afbf0 + parts[32])[parts[31] * 13];
+    *(Point *)&view->body.x = (squarePlaces + parts[32])[parts[31] * 13];
     view->body.x += 4;
     view->body.y += -38;
     helper = findView(parts[41]);
@@ -1272,10 +1272,10 @@ void fn_439cb4(View *view)
         setViewScript(helper, parts[20] + 10000, 1);
         helper->body.x = view->body.x;
         helper->body.y = view->body.y;
-        helper->placed = fn_436321;
+        helper->placed = placeOnHotSpot35;
     }
     startSnoidScript((Snoid *)&view->body, parts[21 + parts[20]], 0, 0);
-    view->notify = fn_43638b;
+    view->notify = mazeSnoidNotify;
     if (helper)
         groupViews(view->id, helper->id, 0, 0, 0, 0);
 }
@@ -1345,7 +1345,7 @@ void fn_43a0e8(View *view, short other)
             }
         }
     }
-    *(Point *)&view->body.x = (g_4afbf0 + parts[32])[parts[31] * 13];
+    *(Point *)&view->body.x = (squarePlaces + parts[32])[parts[31] * 13];
     view->body.x += 4;
     view->body.y += -38;
     helper = findView(parts[41]);
@@ -1353,12 +1353,12 @@ void fn_43a0e8(View *view, short other)
         setViewScript(helper, parts[20] + 10000, 1);
         helper->body.x = view->body.x;
         helper->body.y = view->body.y;
-        helper->placed = fn_436321;
+        helper->placed = placeOnHotSpot35;
     }
     short script = parts[21 + parts[20]];
 
     startSnoidScript((Snoid *)&view->body, script, 0, 0);
-    view->notify = fn_43638b;
+    view->notify = mazeSnoidNotify;
     if (helper)
         groupViews(view->id, helper->id, 0, 0, 0, 0);
 }

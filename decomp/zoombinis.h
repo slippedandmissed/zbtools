@@ -700,15 +700,6 @@ struct MemoryInfo
     unsigned long totalPageFile;
 };
 
-/* Something with flags at +0x20. */
-struct Flagged
-{
-    char unknown0[0x20];
-    long flags;
-};
-
-
-
 /* A loaded sound (wave or MIDI), in the list at g_4a00a0. */
 struct Entry
 {
@@ -3719,14 +3710,14 @@ extern long snoidImagesResource; /* @data 0x4b7b54 */
 extern short *baseSnoidScripts[51]; /* @data 0x4b78b4 */
 extern short *snoidScripts[110]; /* @data 0x4b7980 */
 /* A lilly button (36 bytes). Partly known. */
-extern SceneButton g_4a16c4[3];
+extern SceneButton hotelButtons[3];
 /* A square of the lilly board (13 bytes). Partly known. */
 struct LillyCell
 {
     ShortRect rect;
     char attributes[5]; /* 0: taken; 2: its image; 4: an overlay's image */
 };
-extern LillyCell g_4acff4[13][13];
+extern LillyCell lillyBoard[13][13];
 extern short g_4a1d8a[4][4];
 /* What a square is dealt (by dealSquares). */
 struct LillyDeal
@@ -3753,7 +3744,7 @@ struct LillyStart
 extern short g_4aebae[12][13];
 extern short g_4ace9c[20];
 extern short g_4acec4;
-extern short *g_4ac954;
+extern short *actorHotSpotsY;
 extern short g_4acd4c[20];
 extern short g_4acd74;
 long newTimer(void (*proc)(long timer, long data), long data, long interval); /* 0x46daca */
@@ -3825,20 +3816,20 @@ extern short g_4afc68; /* the scene is open */
 extern long g_4a21b4;
 extern SceneButton g_4a20f4[3]; /* [0] isn't a button: the data before is a string */
 extern long g_4afbdc;
-extern short g_4afe5a[][4];
+extern short featureRows[][4];
 extern short g_4b0d3a;
 extern short g_4b0d38;
 extern short g_4b0d3c;
-extern ImageBank *g_4afbc0;
+extern ImageBank *mazeImages;
 extern short *g_4b076c; /* the loaded table of Zoombini parts (10 words each) */
-extern short g_4b00d2[][13][3]; /* the maze's squares */
-extern Point *g_4afbf0; /* where each square is (13 to a row) */
+extern short squareOccupants[][13][3]; /* the maze's squares */
+extern Point *squarePlaces; /* where each square is (13 to a row) */
 extern short g_4b08b8[];
 extern short g_4b09fa;
 extern short g_4afc6c[];
 extern short g_4afd8c[];
-extern short g_4b0770[20][4]; /* the rows taken */
-extern short g_4b0810[20][4]; /* and a copy */
+extern short takenRows[20][4]; /* the rows taken */
+extern short takenRowsCopy[20][4]; /* and a copy */
 extern short g_4b04c8[][13];
 extern short g_4b061a[][13];
 extern short g_4b0a10[];
