@@ -23,44 +23,44 @@
 /* @zoombi32 0x0041a404 */
 void startBridgeTimer()
 {
-    g_4ab7d4 = clockTime();
+    bridgeTimerStart = clockTime();
 }
 
 /* The ticks since startBridgeTimer. */
 /* @zoombi32 0x0041a40f */
 unsigned long bridgeTimer()
 {
-    return clockTime() - g_4ab7d4;
+    return clockTime() - bridgeTimerStart;
 }
 
-/* Resets scene 7's state (the rules too); the pace g_4ab834 by
+/* Resets scene 7's state (the rules too); the pace bridgeFidgetInterval by
    g_4b2b00. */
 /* @zoombi32 0x0041a41b */
 void resetBridge()
 {
     short i;
 
-    g_4ab826 = g_4ab828 = -1;
-    g_4ab7f0 = 0;
+    debugBridgeScript = debugBridgeEvent = -1;
+    crossingGroup = 0;
     g_4b755e = 55;
-    g_4ab7ea = g_4ab7e6 = 0;
-    g_4ab7ee = sceneDue = g_4ab800 = 0;
-    g_4ab7f2 = hintSound = 0;
-    g_4ab78c = g_4ab78e = 0;
+    crossingUnderway = cliffSpoke = 0;
+    crossersOut = sceneDue = queuedCount = 0;
+    reactingView = hintSound = 0;
+    upperCount = lowerCount = 0;
     for (i = 0; i < 16; i++)
-        g_4ab792[i] = g_4ab7b2[i] = 0;
-    snoidsOnTheirWay = snoidsArrived = g_4ab802 = 0;
-    g_4ab7d8 = g_4ab824 = 0;
-    g_4ab82a = g_4ab82c = 0;
-    g_4ab830 = bridgeFidgetersUsed = 0;
+        upperViews[i] = lowerViews[i] = 0;
+    snoidsOnTheirWay = snoidsArrived = crossingEvent = 0;
+    bridgeDragStarted = sentBackWalking = 0;
+    bridgeFidgetsAllowed = bridgeFidgets = 0;
+    lastBridgeFidgetTime = bridgeFidgetersUsed = 0;
     if (g_4b2b00)
-        g_4ab834 = 120;
+        bridgeFidgetInterval = 120;
     else
-        g_4ab834 = 60;
+        bridgeFidgetInterval = 60;
     fillMemory(&bridgeRules, 0, 28);
 }
 
-/* Draws button `which` (1 or 2; 2 is dim unless g_4ab78a), lit or not,
+/* Draws button `which` (1 or 2; 2 is dim unless bridgeGoReady), lit or not,
    and shows it if asked. */
 /* @zoombi32 0x0041a8af */
 void drawBridgeButton(short which, short lit, short show)
@@ -73,7 +73,7 @@ void drawBridgeButton(short which, short lit, short show)
         break;
     case 2:
         image = 2;
-        if (!g_4ab78a) {
+        if (!bridgeGoReady) {
             lit = 0;
             image = 1;
         }
@@ -82,29 +82,29 @@ void drawBridgeButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)(g_4ab820->offsets[image] + (char *)g_4ab820), bridgeButtons[which - 1].rect.left,
+        drawImageData((unsigned short *)(bridgeButtonImages->offsets[image] + (char *)bridgeButtonImages), bridgeButtons[which - 1].rect.left,
                       bridgeButtons[which - 1].rect.top, 8);
         if (show)
             showRect(&bridgeButtons[which - 1].rect);
     }
 }
 
-/* The buttons' view update: redraws button 2 as g_4ab78a changes, and
+/* The buttons' view update: redraws button 2 as bridgeGoReady changes, and
    button 1 once. */
 /* @zoombi32 0x0041a965 */
 void updateBridgeButtons(View *, short region)
 {
-    if (g_4ab78a) {
-        if (!g_4a0f08) {
-            g_4a0f08 = 1;
+    if (bridgeGoReady) {
+        if (!bridgeButton2Lit) {
+            bridgeButton2Lit = 1;
             unionRgnRect(region, &bridgeButtons[1].rect);
         }
-    } else if (g_4a0f08) {
-        g_4a0f08 = 0;
+    } else if (bridgeButton2Lit) {
+        bridgeButton2Lit = 0;
         unionRgnRect(region, &bridgeButtons[1].rect);
     }
-    if (!g_4a0f0a) {
-        g_4a0f0a = 1;
+    if (!bridgeButton1Drawn) {
+        bridgeButton1Drawn = 1;
         unionRgnRect(region, &bridgeButtons[0].rect);
     }
 }
@@ -113,15 +113,15 @@ void updateBridgeButtons(View *, short region)
 /* @zoombi32 0x0041a9d7 */
 void closeBridge()
 {
-    if (g_4ab788) {
-        g_4ab788 = 0;
+    if (bridgeOpen) {
+        bridgeOpen = 0;
         short saved = setFreeAtOnce(1);
 
         clearViews();
         unloadSounds();
-        freeResource(&g_4a0e24);
+        freeResource(&bridgeButtonResource);
         setFreeAtOnce(saved);
-        closeGameFile(&g_4ab784);
+        closeGameFile(&bridgeFile);
         fadeOutViews();
         showBusyCursor();
     }
@@ -154,9 +154,9 @@ short turnedBack(FeatureRules *rules, short edge, Snoid *snoid)
     return !passes;
 }
 
-/* A notify: 0 sets g_4ab7e6, 1-6 note the event in g_4ab802, 100 and 101
-   start g_4ab7e4's script (1236 in this view's group, or 1103); at the end
-   (-1), with fewer chosen than g_4ab82e, now and then a remark
+/* A notify: 0 sets cliffSpoke, 1-6 note the event in crossingEvent, 100 and 101
+   start view1103's script (1236 in this view's group, or 1103); at the end
+   (-1), with fewer chosen than bridgePartySize, now and then a remark
    (20045-20048). */
 /* @zoombi32 0x0041b357 */
 void bridgeViewNotify(View *view, short event)
@@ -165,7 +165,7 @@ void bridgeViewNotify(View *view, short event)
 
     switch (event) {
     case 0:
-        g_4ab7e6 = 1;
+        cliffSpoke = 1;
         break;
     case 1:
     case 2:
@@ -173,13 +173,13 @@ void bridgeViewNotify(View *view, short event)
     case 4:
     case 5:
     case 6:
-        g_4ab802 = event;
+        crossingEvent = event;
         break;
     case 10:
         break;
     case 100:
     case 101:
-        other = findView(g_4ab7e4);
+        other = findView(view1103);
         if (other) {
             if (event == 100) {
                 setViewScript(other, 1236, 1);
@@ -190,8 +190,8 @@ void bridgeViewNotify(View *view, short event)
         }
         break;
     case -1:
-        if (countChosenSnoids() < g_4ab82e
-            && (randomBetween(0, 4) > g_4ab790 || (*(short *)(gameState + 0x2a) & 0xfff) <= 3)
+        if (countChosenSnoids() < bridgePartySize
+            && (randomBetween(0, 4) > bridgeLevel || (*(short *)(gameState + 0x2a) & 0xfff) <= 3)
             && countChosenSnoids())
             queueViewSound(randomBetween(20045, 20048), 0);
         break;
@@ -200,7 +200,7 @@ void bridgeViewNotify(View *view, short event)
 
 /* Scene 7's keys (with debugging on, debugMessagesOn, or else only 0x16f; case
    ignored; only while the scene is open and nobody's moving): 0x16f
-   replayHint; R reports the script and type g_4ab826/g_4ab828; A shows the
+   replayHint; R reports the script and type debugBridgeScript/debugBridgeEvent; A shows the
    rule. Returns whether the key was used. */
 /* @zoombi32 0x0041b203 */
 short bridgeKey(unsigned short key)
@@ -213,7 +213,7 @@ short bridgeKey(unsigned short key)
         return 0;
     if (key >= 'a' && key <= 'z')
         key -= 32;
-    if (!g_4ab788 || snoidsOnTheirWay > 0)
+    if (!bridgeOpen || snoidsOnTheirWay > 0)
         return 0;
     switch (key) {
     case 0x16f:
@@ -221,7 +221,7 @@ short bridgeKey(unsigned short key)
         used = 1;
         break;
     case 'R':
-        debugMessage(g_4ab826, "Snoid Script:", &g_4ab828, " Type:", 1);
+        debugMessage(debugBridgeScript, "Snoid Script:", &debugBridgeEvent, " Type:", 1);
         break;
     case 'A':
         unionRgnRect(removedRgn, &area);
@@ -246,11 +246,11 @@ short bridgeKey(unsigned short key)
 
 /*
  * A Zoombini's notify at the cliffs: 10 starts its crossing script by how
- * it's going (g_4ab802: 1000-1016, at the upper or lower bridge by
- * g_4ab7ec); 1-2 and 4-5 set g_4ab7f2; 3 (lower) and 6 (upper) mean it
- * got across: it walks to the next place on that side (g_4ab7b2/g_4ab792),
- * stacked among the others, counts toward g_4ab82a (more as the chosen run
- * out) and a cheer when all are over; 20 means it was sent back (g_4ab7da,
+ * it's going (crossingEvent: 1000-1016, at the upper or lower bridge by
+ * crossingBridge); 1-2 and 4-5 set reactingView; 3 (lower) and 6 (upper) mean it
+ * got across: it walks to the next place on that side (lowerViews/upperViews),
+ * stacked among the others, counts toward bridgeFidgetsAllowed (more as the chosen run
+ * out) and a cheer when all are over; 20 means it was sent back (sentBackCount,
  * up to 6); at the end (-1) it finds a spot back by its bridge.
  */
 /* @zoombi32 0x0041b453 */
@@ -265,9 +265,9 @@ void bridgeSnoidNotify(View *view, short event)
     switch (event) {
     case 10:
         other = findView(view->id);
-        if (!other || !g_4ab802)
+        if (!other || !crossingEvent)
             break;
-        switch (g_4ab802) {
+        switch (crossingEvent) {
         case 0:
         case 1:
         case 6:
@@ -287,7 +287,7 @@ void bridgeSnoidNotify(View *view, short event)
             script = 1004;
             break;
         }
-        switch (g_4ab7ec) {
+        switch (crossingBridge) {
         case 1:
             script += 2;
             anchor.x = 38;
@@ -301,106 +301,106 @@ void bridgeSnoidNotify(View *view, short event)
         script += randomBetween(0, 1);
         unionRgnRect(currentViewRgn, &other->body.bounds);
         startSnoidScript(viewSnoid(other), script, &anchor, 0);
-        g_4ab826 = script;
-        g_4ab828 = g_4ab802;
-        other->body.group = g_4ab7f0;
+        debugBridgeScript = script;
+        debugBridgeEvent = crossingEvent;
+        other->body.group = crossingGroup;
         loadViewSounds(view->id, 1);
-        g_4ab802 = 0;
+        crossingEvent = 0;
         break;
     case 2:
     case 5:
-        g_4ab7f2 = g_4ab7dc;
+        reactingView = view1201;
         break;
     case 1:
     case 4:
-        g_4ab7f2 = g_4ab7e0;
+        reactingView = view1200;
         break;
     case 3:
     case 6:
-        g_4ab7ee--;
+        crossersOut--;
         view->notifyEnd = 0;
         setSnoidAction(viewSnoid(view), 7, 0);
         view->flags |= 0x4008000;
         if (event == 6) {
-            g_4ab792[g_4ab78c] = view->id;
-            *(Point *)&viewSnoid(view)->targetX = upperPlaces[g_4ab78c];
-            switch (g_4ab78c) {
+            upperViews[upperCount] = view->id;
+            *(Point *)&viewSnoid(view)->targetX = upperPlaces[upperCount];
+            switch (upperCount) {
             case 0:
                 after = 0;
                 break;
             case 5:
             case 6:
-                after = g_4ab792[g_4ab78c - 1];
+                after = upperViews[upperCount - 1];
                 script = 1;
                 break;
             default:
-                after = g_4ab792[g_4ab78c - 1];
+                after = upperViews[upperCount - 1];
                 script = 0;
                 break;
             case 7:
-                after = g_4ab792[0];
+                after = upperViews[0];
                 script = 1;
                 break;
             case 10:
-                after = g_4ab792[7];
+                after = upperViews[7];
                 script = 1;
                 break;
             case 15:
-                after = g_4ab792[9];
+                after = upperViews[9];
                 script = 0;
                 break;
             }
-            g_4ab78c++;
+            upperCount++;
         } else {
-            g_4ab7b2[g_4ab78e] = view->id;
-            *(Point *)&viewSnoid(view)->targetX = lowerPlaces[g_4ab78e];
-            switch (g_4ab78e) {
+            lowerViews[lowerCount] = view->id;
+            *(Point *)&viewSnoid(view)->targetX = lowerPlaces[lowerCount];
+            switch (lowerCount) {
             case 0:
                 after = 0;
                 break;
             default:
-                after = g_4ab7b2[g_4ab78e - 1];
+                after = lowerViews[lowerCount - 1];
                 script = 0;
                 break;
             }
-            g_4ab78e++;
+            lowerCount++;
         }
         if (after)
             moveView(view->id, script, after);
         n = countChosenSnoids();
-        if (!g_4ab78a)
-            g_4ab78a = n;
+        if (!bridgeGoReady)
+            bridgeGoReady = n;
         switch (n) {
         case 10:
-            g_4ab82a++;
+            bridgeFidgetsAllowed++;
             break;
         case 12:
-            g_4ab82a++;
+            bridgeFidgetsAllowed++;
             break;
         case 14:
-            g_4ab82a += 2;
+            bridgeFidgetsAllowed += 2;
             break;
         }
-        if (n == g_4ab82e)
-            g_4ab82a += 2;
+        if (n == bridgePartySize)
+            bridgeFidgetsAllowed += 2;
         g_4b7566 = 1;
         viewSnoid(view)->unknownF7 = 2;
-        if (n == g_4ab82e && !g_4ab7ee)
+        if (n == bridgePartySize && !crossersOut)
             queueViewSound(randomBetween(20055, 20063), 0);
         break;
     case 20:
-        g_4ab7ee--;
-        if (g_4ab7da < 6)
-            g_4ab7da++;
-        g_4ab824 = 1;
+        crossersOut--;
+        if (sentBackCount < 6)
+            sentBackCount++;
+        sentBackWalking = 1;
         break;
     case -1:
         view->notifyEnd = 0;
-        g_4ab824 = 0;
-        if (g_4ab7ea)
-            g_4ab7ea = 0;
+        sentBackWalking = 0;
+        if (crossingUnderway)
+            crossingUnderway = 0;
         {
-            ShortRect *area = g_4ab7ec == 1 ? &g_4a0ea8 : &g_4a0eb0;
+            ShortRect *area = crossingBridge == 1 ? &upperWaitArea : &lowerWaitArea;
 
             findSpot(view, area, 1, 36);
         }
@@ -409,7 +409,7 @@ void bridgeSnoidNotify(View *view, short event)
 }
 
 /*
- * Makes the cliffs' rule for the level (g_4ab790): builds the masks of
+ * Makes the cliffs' rule for the level (bridgeLevel): builds the masks of
  * feature values it may use (0: one value; 1: either of two values of one
  * feature; 2: a value of each of two features; 3: 500 combinations), counts
  * the chosen Zoombinis matching each, and picks at random among those
@@ -458,7 +458,7 @@ void makeBridgeRule()
         masks[i] = 0;
         counts[i] = 0;
     }
-    switch (g_4ab790) {
+    switch (bridgeLevel) {
     case 0:
         n = 20;
         value = 1;
@@ -582,7 +582,7 @@ void makeBridgeRule()
         }
         break;
     }
-    if (g_4ab790 != 1)
+    if (bridgeLevel != 1)
         for (j = 0; j < chosen->count; j++) {
             value = swapLong(*(unsigned long *)chosen->features[j]);
             for (i = 0; i < n; i++)
@@ -617,13 +617,13 @@ void makeBridgeRule()
         }
     lastRuleCount = 0;
     lastRuleMask = 0;
-    if (!g_4ab790 && matches == 1) {
+    if (!bridgeLevel && matches == 1) {
         lastRuleCount = best;
         lastRuleMask = picked;
     }
     bridgeRules.count = 1;
     bridgeRules.rules[0].side = randomBetween(0, 1);
-    switch (g_4ab790) {
+    switch (bridgeLevel) {
     case 0:
         bridgeRules.rules[0].count = 1;
         if (picked & 0xff) {
@@ -674,19 +674,19 @@ void makeBridgeRule()
             i++;
             bridgeRules.rules[0].count++;
         }
-        if ((picked & 0xff00) && i < g_4ab790) {
+        if ((picked & 0xff00) && i < bridgeLevel) {
             bridgeRules.rules[0].features[i] = 3;
             bridgeRules.rules[0].values[i] = (picked >> 8) & 0xf;
             i++;
             bridgeRules.rules[0].count++;
         }
-        if ((picked & 0xff0000) && i < g_4ab790) {
+        if ((picked & 0xff0000) && i < bridgeLevel) {
             bridgeRules.rules[0].features[i] = 2;
             bridgeRules.rules[0].values[i] = (picked >> 16) & 0xf;
             i++;
             bridgeRules.rules[0].count++;
         }
-        if ((picked & 0xff000000) && i < g_4ab790) {
+        if ((picked & 0xff000000) && i < bridgeLevel) {
             bridgeRules.rules[0].features[i] = 1;
             bridgeRules.rules[0].values[i] = (picked >> 24) & 0xf;
             bridgeRules.rules[0].count++;
@@ -717,9 +717,9 @@ void openBridge()
     Point ends[2] = {{116, 104}, {128, 203}};
     short i;
 
-    g_4ab788 = g_4ab78a = 0;
+    bridgeOpen = bridgeGoReady = 0;
     resetBridge();
-    g_4ab790 = sceneLevel();
+    bridgeLevel = sceneLevel();
     addSoundRange(20000, 29999, 1);
     addSoundRange(1200, 1201, 1);
     addSoundRange(1000, 1099, 1);
@@ -727,8 +727,8 @@ void openBridge()
     addSoundRange(1202, 1213, 1);
     addSoundRange(1214, 1215, 1);
     addSoundRange(175, 199, 0);
-    openGameFile(&g_4ab784, "bridge.mhk");
-    setCurrentMap(g_4ab784);
+    openGameFile(&bridgeFile, "bridge.mhk");
+    setCurrentMap(bridgeFile);
     loadTerrain(1600);
     drawBackdrop(1000);
     loadFeatureGroup(1100, 0, 0);
@@ -739,19 +739,19 @@ void openBridge()
     addScripts(1300, 2, 0);
     loadSnoidScripts(1000, 20, 20);
     addSnoidScripts(2000, 25, 5);
-    g_4ab820 = loadImageBank(1400, &g_4a0e24);
+    bridgeButtonImages = loadImageBank(1400, &bridgeButtonResource);
     copyPaletteRange(10, 236);
     for (i = 0; i < 2; i++)
         placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 1300, 7, &ends[i], 0, 0);
-    g_4ab7e2 = addView(0x91c8000, drawCels, runViewScript, 1105, 6, 0, 0, 0);
-    g_4ab7da = 0;
-    i = g_4ab7da + 1202;
-    g_4ab7de = addView(0x8108000, drawCels, runViewScript, i, 6, 0, 0, 0);
-    g_4ab7dc = addView(0x8108000, drawCels, runViewScript, 1201, 6, 0, 0, 0);
-    g_4ab7e0 = addView(0x8108000, drawCels, runViewScript, 1200, 6, 0, 0, 0);
+    view1105 = addView(0x91c8000, drawCels, runViewScript, 1105, 6, 0, 0, 0);
+    sentBackCount = 0;
+    i = sentBackCount + 1202;
+    view1202 = addView(0x8108000, drawCels, runViewScript, i, 6, 0, 0, 0);
+    view1201 = addView(0x8108000, drawCels, runViewScript, 1201, 6, 0, 0, 0);
+    view1200 = addView(0x8108000, drawCels, runViewScript, 1200, 6, 0, 0, 0);
     for (i = 1100; i <= 1105; i++)
         if (i == 1103)
-            g_4ab7e4 = addView(0x100000, drawCels, runViewScript, i, 0, 0, 0, 0);
+            view1103 = addView(0x100000, drawCels, runViewScript, i, 0, 0, 0, 0);
         else
             addView(0, drawCels, runViewScript, i, 0, 0, 0, 0);
     addView(0x8000, drawCels, runViewScript, 1106, 0, 0, 0, 0);
@@ -770,8 +770,8 @@ void openBridge()
     chooseSnoids(0, 0);
     resetViewClock();
     startBridgeTimer();
-    g_4ab788 = 1;
-    g_4ab82e = countSnoidViews();
+    bridgeOpen = 1;
+    bridgePartySize = countSnoidViews();
     queueViewSound(997, 0);
     switch (campHint((short *)(gameState + 0x2a))) {
     }
@@ -779,12 +779,12 @@ void openBridge()
 
 /*
  * Scene 7's frame: leaves when asked (once sound 996 ends and nobody's
- * moving); when the cliff has spoken (g_4ab7e6) starts its reply; sends
- * the next queued Zoombini (g_4ab800: which bridge, g_4ab7ec, and whether
- * it passes, g_4ab7e8) across, unless it's too soon; plays the bridge's
- * reaction (g_4ab7f2): the cliff sneezes the Zoombini back or lets it
- * across (g_4ab7da counting those sent back); and now and then has a
- * Zoombini fidget (2019 on), up to g_4ab82a times.
+ * moving); when the cliff has spoken (cliffSpoke) starts its reply; sends
+ * the next queued Zoombini (queuedCount: which bridge, crossingBridge, and whether
+ * it passes, crosserPasses) across, unless it's too soon; plays the bridge's
+ * reaction (reactingView): the cliff sneezes the Zoombini back or lets it
+ * across (sentBackCount counting those sent back); and now and then has a
+ * Zoombini fidget (2019 on), up to bridgeFidgetsAllowed times.
  */
 /* @zoombi32 0x0041aa24 */
 void bridgeFrame()
@@ -793,13 +793,13 @@ void bridgeFrame()
     short n;
     short tries;
 
-    if (g_4a0f0c || !g_4ab788)
+    if (inBridgeFrame || !bridgeOpen)
         return;
-    g_4a0f0c = 1;
+    inBridgeFrame = 1;
     updateViews();
     if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-            g_4a0f0c = 0;
+            inBridgeFrame = 0;
             return;
         }
         if (!dialogQuestion || dialogQuestion == 3) {
@@ -810,7 +810,7 @@ void bridgeFrame()
                 sceneDue = 0;
                 setCurrentMap(0);
                 closeBridge();
-                g_4a0f0c = 0;
+                inBridgeFrame = 0;
                 return;
             }
         } else if (dialogQuestion == 2) {
@@ -818,146 +818,146 @@ void bridgeFrame()
             sceneDue = 0;
         }
     }
-    if (g_4ab7e6) {
+    if (cliffSpoke) {
         g_4b7560 = 0;
-        g_4ab7e6 = 0;
+        cliffSpoke = 0;
         g_4b754c = 1;
-        view = findView(g_4ab7dc);
+        view = findView(view1201);
         if (view) {
             view->body.running = 0;
             view->body.cels[0].image = 0;
         }
-        view = findView(g_4ab7de);
+        view = findView(view1202);
         if (view)
             setViewScript(view, 1235, 1);
-        if (startView(g_4ab7e0, 1221, bridgeViewNotify, 1))
-            loadViewSounds(g_4ab7e0, 1);
+        if (startView(view1200, 1221, bridgeViewNotify, 1))
+            loadViewSounds(view1200, 1);
     }
-    if (g_4ab800 && !g_4ab7ea) {
+    if (queuedCount && !crossingUnderway) {
         n = queueViews[0];
-        if (g_4ab7da >= 6 || queuePasses[0] && g_4ab7ee > 4 || bridgeTimer() < 45)
+        if (sentBackCount >= 6 || queuePasses[0] && crossersOut > 4 || bridgeTimer() < 45)
             n = 0;
         view = idleSnoidView(n);
         if (view) {
             startBridgeTimer();
-            switch (g_4ab800) {
+            switch (queuedCount) {
             case 1:
             case 2:
-                g_4ab7ec = queueBridges[0];
-                g_4ab7e8 = queuePasses[0];
+                crossingBridge = queueBridges[0];
+                crosserPasses = queuePasses[0];
                 queueViews[0] = queueViews[1];
                 queueBridges[0] = queueBridges[1];
                 queuePasses[0] = queuePasses[1];
-                g_4ab800--;
+                queuedCount--;
                 break;
             }
-            switch (g_4ab7ec) {
+            switch (crossingBridge) {
             case 1:
-                if (g_4ab7e8)
+                if (crosserPasses)
                     n = 2010;
                 else
                     n = 2015;
                 claimPlacedView(1, 0);
                 break;
             default:
-                if (g_4ab7e8)
+                if (crosserPasses)
                     n = 2000;
                 else
                     n = 2005;
                 claimPlacedView(2, 0);
                 break;
             }
-            g_4ab7ee++;
-            g_4ab7ea = g_4ab7e8;
-            if (!g_4ab7e8) {
+            crossersOut++;
+            crossingUnderway = crosserPasses;
+            if (!crosserPasses) {
                 viewSnoid(view)->unknownF7 = 1;
                 view->interval = randomBetween(4, 5);
             }
-            g_4ab826 = -1;
-            g_4ab828 = -1;
+            debugBridgeScript = -1;
+            debugBridgeEvent = -1;
             /* the script for its feet (from 1) */
             startSnoidScript(viewSnoid(view), (n += viewSnoid(view)->features[3], n - 1), 0, 0);
             view->notify = bridgeSnoidNotify;
             view->notifyEnd = 1;
-            g_4ab7f0 = groupViews(view->id, view->id, 0, 0, 0, 0);
+            crossingGroup = groupViews(view->id, view->id, 0, 0, 0, 0);
         }
     }
-    if (g_4ab7f2) {
-        view = findView(g_4ab7f2);
-        if (view && g_4ab7e8) {
-            if (g_4ab7f2 == g_4ab7dc)
+    if (reactingView) {
+        view = findView(reactingView);
+        if (view && crosserPasses) {
+            if (reactingView == view1201)
                 n = 1222;
             else
                 n = 1214;
-            g_4ab7f2 = 0;
+            reactingView = 0;
             setViewScript(view, n, 1);
-            if (g_4ab7f0) {
-                view->body.group = g_4ab7f0;
-                groupLeader[g_4ab7f0] = 0;
+            if (crossingGroup) {
+                view->body.group = crossingGroup;
+                groupLeader[crossingGroup] = 0;
             }
-            if (g_4ab7e8) {
-                view = findView(g_4ab7e2);
+            if (crosserPasses) {
+                view = findView(view1105);
                 if (view) {
-                    switch (g_4ab7ec) {
+                    switch (crossingBridge) {
                     case 1:
-                        n = g_4ab7da + 1223;
+                        n = sentBackCount + 1223;
                         break;
                     default:
-                        n = g_4ab7da + 1208;
+                        n = sentBackCount + 1208;
                         break;
                     }
-                    startView(g_4ab7e2, n, bridgeViewNotify, 0);
-                    view->body.group = g_4ab7f0;
-                    loadViewSounds(g_4ab7e2, 1);
+                    startView(view1105, n, bridgeViewNotify, 0);
+                    view->body.group = crossingGroup;
+                    loadViewSounds(view1105, 1);
                 }
-                switch (g_4ab7ec) {
+                switch (crossingBridge) {
                 case 1:
-                    n = g_4ab7da + 1229;
+                    n = sentBackCount + 1229;
                     break;
                 default:
-                    n = g_4ab7da + 1215;
+                    n = sentBackCount + 1215;
                     break;
                 }
             } else {
-                switch (g_4ab7ec) {
+                switch (crossingBridge) {
                 case 1:
-                    n = g_4ab7da + 1243;
+                    n = sentBackCount + 1243;
                     break;
                 default:
-                    n = g_4ab7da + 1237;
+                    n = sentBackCount + 1237;
                     break;
                 }
             }
-            view = findView(g_4ab7de);
+            view = findView(view1202);
             if (view && n) {
                 setViewScript(view, n, 1);
-                view->body.group = g_4ab7f0;
+                view->body.group = crossingGroup;
             }
         }
-        g_4ab7f2 = 0;
+        reactingView = 0;
     }
     playAmbientSound();
-    if (g_4ab82c < g_4ab82a && clockTime() - g_4ab830 > g_4ab834) {
+    if (bridgeFidgets < bridgeFidgetsAllowed && clockTime() - lastBridgeFidgetTime > bridgeFidgetInterval) {
         n = 0;
-        g_4ab830 = clockTime();
+        lastBridgeFidgetTime = clockTime();
         tries = 0;
         do {
             tries++;
-            view = idleSnoidView(partyViews[allocateSlot(&bridgeFidgetersUsed, g_4ab82e, 0)]);
+            view = idleSnoidView(partyViews[allocateSlot(&bridgeFidgetersUsed, bridgePartySize, 0)]);
             if (view && viewSnoid(view)->unknownF7 && (view->flags & 1)) {
                 n = viewSnoid(view)->features[3];
                 n += 2019;
                 startSnoidScript(viewSnoid(view), n, 0, 0);
-                g_4ab82c++;
+                bridgeFidgets++;
                 n = 1;
             }
         } while (!n && tries < 16);
     }
-    g_4a0f0c = 0;
+    inBridgeFrame = 0;
 }
 
 /* Scene 7's clicks: 1 leaves (asking whether to keep the party), 2 sends
-   the Zoombinis across (once one has, g_4ab78a), 3 drags a Zoombini (not
+   the Zoombinis across (once one has, bridgeGoReady), 3 drags a Zoombini (not
    one across or crossing; one sent back only once it's done): dropped at a
    bridge's end it joins the queue (up to two) with whether it passes;
    taken off the queue and dropped elsewhere it goes to a free place. */
@@ -987,7 +987,7 @@ void bridgeClicked(short which)
         askKeepParty();
         break;
     case 2:
-        if (!g_4ab78a)
+        if (!bridgeGoReady)
             break;
         queueViewSound(996, 0);
         drawBridgeButton(which, 1, 1);
@@ -997,11 +997,11 @@ void bridgeClicked(short which)
         sceneDue = 8;
         break;
     case 3:
-        if (snoidsOnTheirWay > 0 && !g_4ab7d8)
+        if (snoidsOnTheirWay > 0 && !bridgeDragStarted)
             break;
-        if (g_4ab7da >= 6)
+        if (sentBackCount >= 6)
             break;
-        g_4ab7d8 = 1;
+        bridgeDragStarted = 1;
         getCursorPosition(&where);
         view = viewAt(where, 1, 1);
         if (!view)
@@ -1010,42 +1010,42 @@ void bridgeClicked(short which)
         if (viewSnoid(view)->unknownF4 == 8 || viewSnoid(view)->unknownF7)
             break;
         if (viewSnoid(view)->unknownF4 == 9) {
-            if (!g_4ab824)
+            if (!sentBackWalking)
                 break;
-            if (g_4ab7ea)
-                g_4ab7ea = 0;
-            g_4ab824 = 0;
+            if (crossingUnderway)
+                crossingUnderway = 0;
+            sentBackWalking = 0;
         }
-        dragSnoid(view, where, &g_4a0eb8, 0);
+        dragSnoid(view, where, &bridgeDragArea, 0);
         bounds = view->body.bounds;
-        switch (g_4ab800) {
+        switch (queuedCount) {
         case 1:
             if (queueViews[0] == view->id) {
-                g_4ab800 = 0;
+                queuedCount = 0;
                 moved = 1;
             }
             break;
         case 2:
             if (queueViews[1] == view->id)
-                g_4ab800 = 1;
+                queuedCount = 1;
             if (queueViews[0] == view->id) {
                 queueBridges[0] = queueBridges[1];
                 queueViews[0] = queueViews[1];
                 queuePasses[0] = queuePasses[1];
-                g_4ab800 = 1;
+                queuedCount = 1;
                 moved = 1;
             }
             break;
         }
         place = heldPlaceNumber();
         if (place) {
-            switch (g_4ab800) {
+            switch (queuedCount) {
             case 0:
             case 1:
-                queueBridges[g_4ab800] = place;
-                queueViews[g_4ab800] = view->id;
-                queuePasses[g_4ab800] = turnedBack(&bridgeRules, place, viewSnoid(view));
-                g_4ab800++;
+                queueBridges[queuedCount] = place;
+                queueViews[queuedCount] = view->id;
+                queuePasses[queuedCount] = turnedBack(&bridgeRules, place, viewSnoid(view));
+                queuedCount++;
                 break;
             case 2:
                 break;

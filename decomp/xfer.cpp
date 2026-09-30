@@ -26,25 +26,25 @@ void resetJourney()
     short i;
 
     sceneDue = xferSound = 0;
-    g_4b9904 = g_4b9906 = g_4b9908 = g_4b990a = 0;
-    g_4b9922 = g_4b9924 = g_4b9926 = g_4b9920 = g_4b9928 = 0;
-    g_4b9912 = 0;
-    g_4b992c = 0;
+    pendingJourneyFacing = journeyAnchorView = snoidsPastAnchor = view6108 = 0;
+    view6106 = view6107 = populationSignView = gridView = destinationImage = 0;
+    journeyFirstMoveDone = 0;
+    gridProgress = 0;
     for (i = 0; i < 3; i++)
-        g_4b990c[i] = 1;
+        views5102Due[i] = 1;
     for (i = 0; i < 4; i++)
-        g_4b98f8[i] = 0;
+        views5104[i] = 0;
     for (i = 0; i < 2; i++)
-        g_4b9900[i] = 0;
+        views5102[i] = 0;
     for (i = 0; i < 17; i++)
         placeLevels[i] = 0;
-    g_4b98f6 = g_4b991c = g_4b991c = 0;
+    view5108 = destinationPlace = destinationPlace = 0;
     g_4a4b98 = 0;
     xferMap = 0;
-    g_4b98da = population();
-    g_4b98dc = -1;
-    g_4b9918 = g_4b991a = 0;
-    g_4b98e0 = 0;
+    shownPopulation = population();
+    placeLevelShown = -1;
+    nextWalker = journeyPartySize = 0;
+    nextJourneyMoveTime = 0;
 }
 
 /* @zoombi32 0x0046b07b */
@@ -55,7 +55,7 @@ long journeyKey(long)
 
 /* Fills `levels` (17) with the highest level (1-4) each place has
    reached, by the game state's bits (or all practiceLevel); then notes the
-   place of scene journeyTo in g_4b991c, and its level in g_4b991e. */
+   place of scene journeyTo in destinationPlace, and its level in destinationLevel. */
 /* @zoombi32 0x0046b084 */
 void readPlaceLevels(char *levels)
 {
@@ -116,7 +116,7 @@ void readPlaceLevels(char *levels)
         }
         levels[i] = value;
     }
-    g_4b991c = i = 0;
+    destinationPlace = i = 0;
     saved = currentScene;
     currentScene = journeyTo;
     value = sceneLevel() + 1;
@@ -189,12 +189,12 @@ void readPlaceLevels(char *levels)
         break;
     }
     if (i) {
-        g_4b991c = i;
-        g_4b991e = bits;
+        destinationPlace = i;
+        destinationLevel = bits;
         levels[i] = bits - 1;
         if (levels[i] < 1) {
-            if (g_4b98dc < 0)
-                g_4b98dc = bits - 1;
+            if (placeLevelShown < 0)
+                placeLevelShown = bits - 1;
             levels[i] = -1;
         }
     }
@@ -202,8 +202,8 @@ void readPlaceLevels(char *levels)
 
 /* The map view's placed callback (map xferMap, 1-4): picks each cel's
    image by the places' levels (placeLevels): the first ones show the places
-   reached, the rest each place's level. Notes the image of place g_4b991c
-   in g_4b9928 (1-4). */
+   reached, the rest each place's level. Notes the image of place destinationPlace
+   in destinationImage (1-4). */
 /* @zoombi32 0x0046b326 */
 void placeMapImages(View *view)
 {
@@ -244,24 +244,24 @@ void placeMapImages(View *view)
     for (i = 1; i <= last; i++) {
         images[i] = 0;
         if (i >= count) {
-            place = g_4a7ee0[0][base + i - count + 1];
-            if (g_4b991c && place == g_4b991c) {
-                g_4b991c = 0;
+            place = mapPlaces[0][base + i - count + 1];
+            if (destinationPlace && place == destinationPlace) {
+                destinationPlace = 0;
                 found = i;
                 switch (xferMap) {
                 case 1:
                     switch (found) {
                     case 5:
-                        g_4b9928 = 1;
+                        destinationImage = 1;
                         break;
                     case 6:
-                        g_4b9928 = 2;
+                        destinationImage = 2;
                         break;
                     case 7:
-                        g_4b9928 = 3;
+                        destinationImage = 3;
                         break;
                     case 8:
-                        g_4b9928 = 4;
+                        destinationImage = 4;
                         break;
                     }
                     break;
@@ -270,16 +270,16 @@ void placeMapImages(View *view)
                 case 4:
                     switch (found) {
                     case 6:
-                        g_4b9928 = 1;
+                        destinationImage = 1;
                         break;
                     case 7:
-                        g_4b9928 = 2;
+                        destinationImage = 2;
                         break;
                     case 8:
-                        g_4b9928 = 3;
+                        destinationImage = 3;
                         break;
                     case 9:
-                        g_4b9928 = 4;
+                        destinationImage = 4;
                         break;
                     }
                     break;
@@ -289,18 +289,18 @@ void placeMapImages(View *view)
             if (place > 0)
                 images[i] = i + place * 4;
             else {
-                if (g_4b98dc < 0)
-                    g_4b98dc = 0;
+                if (placeLevelShown < 0)
+                    placeLevelShown = 0;
                 if (i == count)
-                    images[i] = g_4b98dc * 4 + i;
+                    images[i] = placeLevelShown * 4 + i;
                 else if (i > count && place == -1 && images[i - 1] > last)
-                    images[i] = g_4b98dc * 4 + i;
+                    images[i] = placeLevelShown * 4 + i;
             }
         } else if (!base) {
             if (placeLevels[i])
                 images[i] = i;
         } else {
-            place = g_4a7ee0[0][base + i - 1];
+            place = mapPlaces[0][base + i - 1];
             if (placeLevels[place])
                 images[i] = i;
             else if (place == 11) {
@@ -325,10 +325,10 @@ void placeMapImages(View *view)
 }
 
 /* A Zoombini's view's script events: 250-253 face it that way; 240-243
-   note a way to face (g_4b9904, then 1-4) when it next turns round (0);
-   26 faces it left and moves it after g_4b9906; 10-11 start the view of
-   g_4b9900 for g_4b990c; 50 counts one more in town and starts
-   g_4b9926's view. */
+   note a way to face (pendingJourneyFacing, then 1-4) when it next turns round (0);
+   26 faces it left and moves it after journeyAnchorView; 10-11 start the view of
+   views5102 for views5102Due; 50 counts one more in town and starts
+   populationSignView's view. */
 /* @zoombi32 0x0046b5ce */
 void xferSnoidNotify(View *view, short event)
 {
@@ -346,29 +346,29 @@ void xferSnoidNotify(View *view, short event)
     case 241:
     case 242:
     case 243:
-        g_4b9904 = event - 239;
+        pendingJourneyFacing = event - 239;
         break;
     case 26:
         setSnoidFacing(snoid, 0);
-        moveView(view->id, 0, g_4b9906);
-        if (g_4b9908 >= 0)
-            g_4b9908++;
+        moveView(view->id, 0, journeyAnchorView);
+        if (snoidsPastAnchor >= 0)
+            snoidsPastAnchor++;
         break;
     case 0:
         snoid->unknownF2 = !snoid->unknownF2;
-        if (g_4b9904) {
-            setSnoidFacing(snoid, g_4b9904 - 1);
-            g_4b9904 = 0;
+        if (pendingJourneyFacing) {
+            setSnoidFacing(snoid, pendingJourneyFacing - 1);
+            pendingJourneyFacing = 0;
         }
         snoid->unknownF0++;
         if (!xferMap && snoid->unknownF0 == 2)
-            moveView(view->id, 1, g_4b9906);
+            moveView(view->id, 1, journeyAnchorView);
         break;
     case 10:
     case 11:
-        if (g_4b990c[event - 10]) {
-            g_4b990c[event - 10] = 0;
-            started = findView(g_4b9900[event - 10]);
+        if (views5102Due[event - 10]) {
+            views5102Due[event - 10] = 0;
+            started = findView(views5102[event - 10]);
             if (started) {
                 started->flags = 0x188000;
                 setViewScript(started, 0, 1);
@@ -376,8 +376,8 @@ void xferSnoidNotify(View *view, short event)
         }
         break;
     case 50:
-        g_4b98da++;
-        startView(g_4b9926, 0, 0, 0);
+        shownPopulation++;
+        startView(populationSignView, 0, 0, 0);
         break;
     case -1:
         break;
@@ -399,7 +399,7 @@ void drawPopulationSign(View *view)
         rect = view->body.bounds;
         rect.left += 16;
         rect.top += 8;
-        sprintf(text, "%s%d", levelTexts[10], g_4b98da);
+        sprintf(text, "%s%d", levelTexts[10], shownPopulation);
         drawOutlinedText(0x70, 0xd1, rect, 1, text);
         copyPortBits(viewPort, workPort, view->body.bounds, view->body.bounds, 0);
         view->body.running = 0;
@@ -410,16 +410,16 @@ void drawPopulationSign(View *view)
 /* Scene 2's frame: leaves for the scene due; else goes on to scene
    journeyTo after 300 ticks (and sound xferSound), and now and then starts
    something moving: the next of the party (with xferSnoidNotify), one of the
-   views g_4b98f8 or g_4b98f6, or g_4b990a's once g_4b9908 passes 4. */
+   views views5104 or view5108, or view6108's once snoidsPastAnchor passes 4. */
 /* @zoombi32 0x0046ace4 */
 void journeyFrame()
 {
     View *view;
     Snoid *snoid;
 
-    if (g_4a7ede || !g_4b98d8)
+    if (inJourneyFrame || !journeyOpen)
         return;
-    g_4a7ede = 1;
+    inJourneyFrame = 1;
     updateViews();
     if (sceneDue) {
         pendingScene = sceneDue;
@@ -430,7 +430,7 @@ void journeyFrame()
         }
         setCurrentMap(0);
         closeJourney();
-        g_4a7ede = 0;
+        inJourneyFrame = 0;
         return;
     }
     if (!dialogFlags) {
@@ -439,21 +439,21 @@ void journeyFrame()
                 sceneDue = journeyTo;
         } else if (viewClock() > 300)
             sceneDue = journeyTo;
-        if (!sceneDue && clockTime() > g_4b98e0) {
-            if (g_4b9908 > 4) {
-                g_4b9908 = -1;
-                view = findView(g_4b990a);
+        if (!sceneDue && clockTime() > nextJourneyMoveTime) {
+            if (snoidsPastAnchor > 4) {
+                snoidsPastAnchor = -1;
+                view = findView(view6108);
                 if (view) {
                     setViewScript(view, 0, 1);
                     view->notify = xferEndNotify;
                 }
             }
             if (!xferMap) {
-                g_4b98e0 = randomBetween(3, 6) * 30 + clockTime();
-                if (randomBetween(1, 100) > 40 || !g_4b9912) {
-                    g_4b9912 = 1;
-                    if (g_4b9918 < g_4b991a) {
-                        view = findView(partyViews[g_4b9918]);
+                nextJourneyMoveTime = randomBetween(3, 6) * 30 + clockTime();
+                if (randomBetween(1, 100) > 40 || !journeyFirstMoveDone) {
+                    journeyFirstMoveDone = 1;
+                    if (nextWalker < journeyPartySize) {
+                        view = findView(partyViews[nextWalker]);
                         if (view) {
                             snoid = viewSnoid(view);
                             snoid->unknownF2 = 0;
@@ -462,7 +462,7 @@ void journeyFrame()
                             view->notify = xferSnoidNotify;
                             view->notifyEnd = 1;
                         }
-                        g_4b9918++;
+                        nextWalker++;
                     }
                 } else {
                     short n = randomBetween(0, 4);
@@ -472,14 +472,14 @@ void journeyFrame()
                     case 1:
                     case 2:
                     case 3:
-                        view = findView(g_4b98f8[n]);
+                        view = findView(views5104[n]);
                         if (view && !view->body.running)
                             setViewScript(view, 0, 1);
                         break;
                     case 4:
-                        if (g_4b9910) {
-                            g_4b9910 = 0;
-                            view = findView(g_4b98f6);
+                        if (view5108Due) {
+                            view5108Due = 0;
+                            view = findView(view5108);
                             if (view && !view->body.running) {
                                 view->flags = 0x188000;
                                 setViewScript(view, 0, 1);
@@ -489,9 +489,9 @@ void journeyFrame()
                     }
                 }
             } else if (xferMap == 5) {
-                g_4b98e0 = randomBetween(3, 6) * 40 + clockTime();
-                if (g_4b9918 < g_4b991a) {
-                    view = findView(partyViews[g_4b9918]);
+                nextJourneyMoveTime = randomBetween(3, 6) * 40 + clockTime();
+                if (nextWalker < journeyPartySize) {
+                    view = findView(partyViews[nextWalker]);
                     if (view) {
                         snoid = viewSnoid(view);
                         snoid->unknownF2 = 0;
@@ -499,12 +499,12 @@ void journeyFrame()
                         view->notify = xferSnoidNotify;
                         view->notifyEnd = 1;
                     }
-                    g_4b9918++;
+                    nextWalker++;
                 }
             }
         }
     }
-    g_4a7ede = 0;
+    inJourneyFrame = 0;
 }
 
 /* Scene 2's clicks: once a scene is due (sceneDue), leaves for it (for
@@ -512,7 +512,7 @@ void journeyFrame()
 /* @zoombi32 0x0046b00e */
 void journeyClicked(short which)
 {
-    if (g_4b98d8) {
+    if (journeyOpen) {
         if (sceneDue) {
             pendingScene = sceneDue;
             sceneDue = 0;
@@ -531,7 +531,7 @@ void journeyClicked(short which)
     }
 }
 
-/* Spreads the marks in g_4b9944 over the grid (markGridCell on each one's
+/* Spreads the marks in gridMarks over the grid (markGridCell on each one's
    neighbours) until `permille` thousandths of the cells counted by
    setUpGrid are taken, or a pass takes none; returns how many are left.
    Only the right and bottom edges are checked. */
@@ -546,37 +546,37 @@ unsigned long spreadGridMarks(long permille)
     unsigned long x;
     unsigned long y;
 
-    limit = g_4b9930 - g_4b9930 * permille / 1000;
-    while (g_4b9934 > limit) {
-        before = g_4b9934;
+    limit = gridCellsTotal - gridCellsTotal * permille / 1000;
+    while (gridCellsLeft > limit) {
+        before = gridCellsLeft;
         for (i = 0; i < 24; i++)
-            if (g_4b99a4[i]) {
-                g_4b99a4[i] = 0;
-                x = g_4b9944[i].x;
-                y = g_4b9944[i].y;
-                cell = y * g_4b9938 + x + g_4b99bc;
-                if (y + 1 < g_4b993c) {
-                    next = cell + g_4b9938;
+            if (gridMarkUsed[i]) {
+                gridMarkUsed[i] = 0;
+                x = gridMarks[i].x;
+                y = gridMarks[i].y;
+                cell = y * gridStride + x + gridCells;
+                if (y + 1 < gridRows) {
+                    next = cell + gridStride;
                     markGridCell(next, x, y + 1);
                     markGridCell(next - 1, x - 1, y + 1);
-                    if (x + 1 < g_4b9940)
+                    if (x + 1 < gridColumns)
                         markGridCell(next + 1, x + 1, y + 1);
                 }
                 if (y - 1 > 0) { /* unsigned: true for row 0 too */
-                    next = cell - g_4b9938;
+                    next = cell - gridStride;
                     markGridCell(next, x, y - 1);
                     markGridCell(next - 1, x - 1, y - 1);
-                    if (x + 1 < g_4b9940)
+                    if (x + 1 < gridColumns)
                         markGridCell(next + 1, x + 1, y - 1);
                 }
                 markGridCell(cell - 1, x - 1, y);
-                if (x + 1 < g_4b9940)
+                if (x + 1 < gridColumns)
                     markGridCell(cell + 1, ++x, y);
             }
-        if (before == g_4b9934)
-            g_4b9934 = 0;
+        if (before == gridCellsLeft)
+            gridCellsLeft = 0;
     }
-    return g_4b9934;
+    return gridCellsLeft;
 }
 
 /* @zoombi32 0x0046b747 */
@@ -611,13 +611,13 @@ void openJourney()
     View *view;
     Font *font;
 
-    g_4b98d8 = 0;
+    journeyOpen = 0;
     busyCount++;
     resetJourney();
     addSoundRange(20000, 29999, 1);
     setViewsLocked(0);
-    openGameFile(&g_4b98d4, "xfer.MHK");
-    setCurrentMap(g_4b98d4);
+    openGameFile(&journeyFile, "xfer.MHK");
+    setCurrentMap(journeyFile);
     switch (journeyRoute) {
     case 1:
         from = 3;
@@ -725,7 +725,7 @@ void openJourney()
         readPlaceLevels(placeLevels);
         if (placeLevels[fromPlace] < 0)
             placeLevels[fromPlace] = 1;
-        g_4b98dc = placeLevels[toPlace];
+        placeLevelShown = placeLevels[toPlace];
         placeLevels[toPlace] = -1;
     } else
         readPlaceLevels(placeLevels);
@@ -1300,17 +1300,17 @@ void openJourney()
         loadFeatureGroup(group, 0, 0);
         loadScripts(group, scripts);
         if (backdrop >= 1000 && backdrop <= 4000) {
-            g_4b9920 = backdrop + 200;
-            loadFeatureGroup(g_4b9920, 1, 0);
-            addScripts(g_4b9920, 1, 0);
+            gridView = backdrop + 200;
+            loadFeatureGroup(gridView, 1, 0);
+            addScripts(gridView, 1, 0);
         }
         copyPaletteRange(10, 236);
         if (!xferMap) {
             for (i = 5102; i <= 5103; i++)
-                g_4b9900[i - 5102] = addView(0x1188000, drawCels, runViewScript, i, 6, 0, 0, 0);
+                views5102[i - 5102] = addView(0x1188000, drawCels, runViewScript, i, 6, 0, 0, 0);
             for (i = 5104; i <= 5107; i++)
-                g_4b98f8[i - 5104] = addView(0x1188000, drawCels, runViewScript, i, 6, 0, 0, 0);
-            g_4b98f6 = addView(0x1188000, drawCels, runViewScript, 5108, 6, 0, 0, 0);
+                views5104[i - 5104] = addView(0x1188000, drawCels, runViewScript, i, 6, 0, 0, 0);
+            view5108 = addView(0x1188000, drawCels, runViewScript, 5108, 6, 0, 0, 0);
             useAltSnoids(0);
             for (i = 0; i < 16; i++) {
                 places[i].x = 200;
@@ -1318,7 +1318,7 @@ void openJourney()
             }
             setViewPlaces(16, places, 1);
             makePartySnoids(0);
-            g_4b9906 = addView(0, drawCels, runViewScript, 5100, 0, 0, 0, 0);
+            journeyAnchorView = addView(0, drawCels, runViewScript, 5100, 0, 0, 0, 0);
             addView(0, drawCels, runViewScript, 5101, 0, 0, 0, 0);
             loadSnoidScripts(5199, 1, 0);
             addSnoidScripts(5200, 5, 0);
@@ -1328,9 +1328,9 @@ void openJourney()
             if (view)
                 view->placed = placeMapImages;
         } else {
-            g_4b990a = addView(0x1188000, drawCels, runViewScript, 6108, 6, 0, 0, 0);
-            g_4b9926 = addView(0, drawPopulationSign, runViewScript, 6105, 0, 0, 0, 0);
-            g_4b9906 = addView(0, drawCels, runViewScript, 6104, 0, 0, 0, 0);
+            view6108 = addView(0x1188000, drawCels, runViewScript, 6108, 6, 0, 0, 0);
+            populationSignView = addView(0, drawPopulationSign, runViewScript, 6105, 0, 0, 0, 0);
+            journeyAnchorView = addView(0, drawCels, runViewScript, 6104, 0, 0, 0, 0);
             for (i = 0; i < 16; i++) {
                 places[i].x = -22;
                 places[i].y = randomBetween(0, 3) * 6 + 282;
@@ -1341,14 +1341,14 @@ void openJourney()
                 addView(0, drawCels, runViewScript, i, 0, 0, 0, 0);
             loadSnoidScripts(5199, 1, 0);
             addSnoidScripts(6200, 5, 0);
-            g_4b9922 = addView(0x1180000, drawCels, runViewScript, 6106, 6, 0, 0, 0);
-            g_4b9924 = addView(0x1180000, drawCels, runViewScript, 6107, 6, 0, 0, 0);
+            view6106 = addView(0x1180000, drawCels, runViewScript, 6106, 6, 0, 0, 0);
+            view6107 = addView(0x1180000, drawCels, runViewScript, 6107, 6, 0, 0, 0);
         }
     } else
         copyPaletteRange(10, 236);
     if (xferMap >= 1 && xferMap <= 4) {
-        g_4b9920 = addView(0x4000000, drawGridView, updateGridView, g_4b9920, 4, 0, 0, 0);
-        view = findView(g_4b9920);
+        gridView = addView(0x4000000, drawGridView, updateGridView, gridView, 4, 0, 0, 0);
+        view = findView(gridView);
         if (view)
             view->placed = placeMapPlace;
         for (i = 0; i < 16; i++) {
@@ -1360,7 +1360,7 @@ void openJourney()
         addView(0, drawCels, runViewScript, group + 1, 0, 0, 0, 0);
         addView(0, drawCels, runViewScript, group + 2, 0, 0, 0, 0);
     }
-    startView(g_4b9926, 0, 0, 0);
+    startView(populationSignView, 0, 0, 0);
     updateViews();
     if (xferMap >= 1 && xferMap <= 4) {
         Color saved;
@@ -1379,10 +1379,10 @@ void openJourney()
     showRect(&shownGameRect);
     fadeInViews();
     resetViewClock();
-    g_4b991a = countChosenSnoids();
-    g_4b98d8 = 1;
-    startView(g_4b9924, 0, 0, 0);
-    startView(g_4b9922, 0, 0, 0);
+    journeyPartySize = countChosenSnoids();
+    journeyOpen = 1;
+    startView(view6107, 0, 0, 0);
+    startView(view6106, 0, 0, 0);
     if (xferMap >= 1 && xferMap <= 4)
         sendSnoids(670, 445, 90);
 }
@@ -1391,8 +1391,8 @@ void openJourney()
 /* @zoombi32 0x0046ac6e */
 void closeJourney()
 {
-    if (g_4b98d8) {
-        g_4b98d8 = 0;
+    if (journeyOpen) {
+        journeyOpen = 0;
         short saved = setFreeAtOnce(1);
 
         journeyRoute = 0;
@@ -1401,7 +1401,7 @@ void closeJourney()
         clearViews();
         unloadSounds();
         setFreeAtOnce(saved);
-        closeGameFile(&g_4b98d4);
+        closeGameFile(&journeyFile);
         fadeOutViews();
         showBusyCursor();
         g_4a4b98 = 64;
@@ -1411,9 +1411,9 @@ void closeJourney()
 }
 
 /* Sets up the grid (`rows` of `columns` cells, `stride` apart): cells
-   `from1` become `to1` and `from2` `to2`, counted in g_4b9930 (and
-   g_4b9934); markGridCell then marks those taken as `taken1` and `taken2`.
-   The first of g_4b9944 is `start`, kept inside the grid. */
+   `from1` become `to1` and `from2` `to2`, counted in gridCellsTotal (and
+   gridCellsLeft); markGridCell then marks those taken as `taken1` and `taken2`.
+   The first of gridMarks is `start`, kept inside the grid. */
 /* @zoombi32 0x0046b872 */
 void setUpGrid(char *grid, unsigned long stride, unsigned long rows, unsigned long columns,
                unsigned char from1, unsigned char from2, char to1, char to2, char taken1,
@@ -1426,11 +1426,11 @@ void setUpGrid(char *grid, unsigned long stride, unsigned long rows, unsigned lo
     unsigned long x;
 
     for (i = 0; i < 24; i++) {
-        g_4b99a4[i] = 0;
-        g_4b9944[i].x = 0;
-        g_4b9944[i].y = 0;
+        gridMarkUsed[i] = 0;
+        gridMarks[i].x = 0;
+        gridMarks[i].y = 0;
     }
-    g_4b9930 = 0;
+    gridCellsTotal = 0;
     row = grid;
     for (y = 0; y < rows; y++) {
         cell = row;
@@ -1438,26 +1438,26 @@ void setUpGrid(char *grid, unsigned long stride, unsigned long rows, unsigned lo
             char c = *cell;
 
             if (c == from1) {
-                g_4b9930++;
+                gridCellsTotal++;
                 *cell = to1;
             }
             if (c == from2) {
-                g_4b9930++;
+                gridCellsTotal++;
                 *cell = to2;
             }
             cell++;
         }
         row += stride;
     }
-    g_4b99c0 = to1;
-    g_4b99c2 = to2;
-    g_4b99c1 = taken1;
-    g_4b99c3 = taken2;
-    g_4b99bc = grid;
-    g_4b9938 = stride;
-    g_4b993c = rows;
-    g_4b9940 = columns;
-    g_4b9934 = g_4b9930;
+    gridFree1 = to1;
+    gridFree2 = to2;
+    gridTaken1 = taken1;
+    gridTaken2 = taken2;
+    gridCells = grid;
+    gridStride = stride;
+    gridRows = rows;
+    gridColumns = columns;
+    gridCellsLeft = gridCellsTotal;
     if (1) {
         x = start.x;
         y = start.y;
@@ -1469,50 +1469,50 @@ void setUpGrid(char *grid, unsigned long stride, unsigned long rows, unsigned lo
         x = columns - 1;
     if (y > rows)
         y = rows - 1;
-    g_4b99a4[0] = 1;
-    g_4b9944[0].x = x;
-    g_4b9944[0].y = y;
+    gridMarkUsed[0] = 1;
+    gridMarks[0].x = x;
+    gridMarks[0].y = y;
 }
 
-/* Marks the cell at `cell` taken (g_4b99c0 becomes g_4b99c1, g_4b99c2
-   becomes g_4b99c3), noting the point in a free one of g_4b9944. */
+/* Marks the cell at `cell` taken (gridFree1 becomes gridTaken1, gridFree2
+   becomes gridTaken2), noting the point in a free one of gridMarks. */
 /* @zoombi32 0x0046bb0c */
 void markGridCell(char *cell, long x, long y)
 {
     short i;
 
-    if (*cell == g_4b99c0)
+    if (*cell == gridFree1)
         for (i = 0; i < 24; i++)
-            if (!g_4b99a4[i]) {
-                g_4b9944[i].x = x;
-                g_4b9944[i].y = y;
-                g_4b99a4[i] = 1;
-                if (g_4b9934 > 0)
-                    g_4b9934--;
-                *cell = g_4b99c1;
+            if (!gridMarkUsed[i]) {
+                gridMarks[i].x = x;
+                gridMarks[i].y = y;
+                gridMarkUsed[i] = 1;
+                if (gridCellsLeft > 0)
+                    gridCellsLeft--;
+                *cell = gridTaken1;
                 return;
             }
-    if (*cell == g_4b99c2)
+    if (*cell == gridFree2)
         for (i = 0; i < 24; i++)
-            if (!g_4b99a4[i]) {
-                g_4b9944[i].x = x;
-                g_4b9944[i].y = y;
-                g_4b99a4[i] = 1;
-                if (g_4b9934 > 0)
-                    g_4b9934--;
-                *cell = g_4b99c3;
+            if (!gridMarkUsed[i]) {
+                gridMarks[i].x = x;
+                gridMarks[i].y = y;
+                gridMarkUsed[i] = 1;
+                if (gridCellsLeft > 0)
+                    gridCellsLeft--;
+                *cell = gridTaken2;
                 return;
             }
 }
 
 /* A view's placed callback: keeps one of its first four cels by
-   g_4b9928 (1-4) as the first, alone. */
+   destinationImage (1-4) as the first, alone. */
 /* @zoombi32 0x0046bbce */
 void placeMapPlace(View *view)
 {
     ViewCel *cels = view->body.cels;
 
-    switch (g_4b9928) {
+    switch (destinationImage) {
     case 1:
     default:
         cels[1].image = 0;
@@ -1541,7 +1541,7 @@ void placeMapPlace(View *view)
 /* A view's draw callback: while it changes, fills in its first cel's
    image (a grid, the header's words big-endian) 7 thousandths more each
    time: first setting up the grid (setUpGrid) from where map xferMap's
-   place g_4b9928 starts, with marks by g_4b991e's level, then spreading
+   place destinationImage starts, with marks by destinationLevel's level, then spreading
    them (spreadGridMarks). */
 /* @zoombi32 0x0046bc51 */
 void drawGridView(View *view)
@@ -1559,14 +1559,14 @@ void drawGridView(View *view)
         drawCels(view);
         return;
     }
-    if (!g_4b992c) {
+    if (!gridProgress) {
         cel = view->body.cels;
         bank = groupBanks[view->body.scriptGroup];
         if (cel->image) {
-            start = (xferMap - 1) * 4 + g_4b9928 - 1;
+            start = (xferMap - 1) * 4 + destinationImage - 1;
             if (start < 0 || start > 15)
                 start = 0;
-            switch (g_4b991e) {
+            switch (destinationLevel) {
             default:
                 to1 = '.';
                 to2 = '/';
@@ -1594,13 +1594,13 @@ void drawGridView(View *view)
             }
             header = (unsigned short *)((char *)bank + bank->offsets[cel->image]);
             setUpGrid((char *)(header + 4), swapShort(header[2]), swapShort(header[1]),
-                      swapShort(header[0]), 1, 2, to1, to2, taken1, taken2, g_4a7f08[start]);
+                      swapShort(header[0]), 1, 2, to1, to2, taken1, taken2, gridStarts[start]);
         }
     } else
-        spreadGridMarks(g_4b992c);
-    g_4b992c += 7;
-    if (g_4b992c > 1000)
-        g_4b992c = 1000;
+        spreadGridMarks(gridProgress);
+    gridProgress += 7;
+    if (gridProgress > 1000)
+        gridProgress = 1000;
     drawCels(view);
 }
 
