@@ -61,7 +61,7 @@ void openIsle()
     resetZoombiniMade();
     addSoundRange(20000, 29999, 1);
     addSoundRange(1000, 1007, 0);
-    fn_45aaff(0);
+    setSnoidMode(0);
     g_4b15ae = 16;
     g_4b15aa = zoombiniMadeAllowed();
     setPenWidth(1);
@@ -74,7 +74,7 @@ void openIsle()
     g_4b159c = loadImageBank(4300, &g_4b1590);
     loadFeatureGroup(4100, 0, 0);
     loadScripts(4100, 11);
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     loadSoundByKey(1000, RESOURCE_TYPE(0, 'S', 'N', 'D'));
     loadSoundByKey(1004, RESOURCE_TYPE(0, 'S', 'N', 'D'));
     loadSoundByKey(1005, RESOURCE_TYPE(0, 'S', 'N', 'D'));
@@ -181,7 +181,7 @@ void closeIsle()
         setFreeAtOnce(saved);
         closeGameFile(&g_4b1588);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 

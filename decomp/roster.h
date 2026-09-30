@@ -6,8 +6,6 @@
 #ifndef ROSTER_H
 #define ROSTER_H
 
-void fn_41f195(const char *message);
-void fn_41f668();
 void newSaveFileName(const char *, char *file, short *nextId);
 void readRoster();
 void saveRoster();

@@ -31,29 +31,29 @@ short mainLoopUpdate()
     if (g_4a4a10) {
         if (g_4b0d50 != -1)
             enterNextScene();
-        if (g_4a4b98 && fn_464d88() > 3600) {
-            fn_464d7d();
+        if (g_4a4b98 && viewTimeSinceMark() > 3600) {
+            markViewTime();
             g_4a4b98 /= 2;
             if (!g_4a4b98)
                 g_4a4b98 = 1;
         }
         if (g_4b80d2 == 1) {
             if (g_4a79c0) {
-                g_4b80d8 = fn_41571f();
+                g_4b80d8 = clockTime();
                 g_4a79c0 = 0;
-            } else if (fn_41571f() > g_4b80d8 + 3)
-                fn_4624f4();
+            } else if (clockTime() > g_4b80d8 + 3)
+                showNormalCursor();
             return 1;
         }
     }
     if (handleNextEvent()) {
         discardEvents(2);
         g_4a79c0 = 1;
-        g_4b80dc = fn_41571f();
+        g_4b80dc = clockTime();
     } else {
         getCursorPosition(&cursor);
-        g_4a79c8 = fn_41571f() - lastClickTime;
-        lastClickTime = fn_41571f();
+        g_4a79c8 = clockTime() - lastClickTime;
+        lastClickTime = clockTime();
         handleMouse(&cursor, 0);
     }
     return 1;
@@ -116,7 +116,7 @@ void debugMessage(short value, const char *after, short *number, const char *bef
    debugging on, g_4b8803, the debugging keys), showing a toggle's new
    setting. */
 /* @zoombi32 0x0046293a */
-void fn_46293a(unsigned short key)
+void gameKey(unsigned short key)
 {
     short handled = 0;
     short message = 0;
@@ -235,7 +235,7 @@ void fn_46293a(unsigned short key)
                 message = 14;
             break;
         case 22:
-            fn_4625b8();
+            showAboutBox();
             handled = 1;
             break;
         case 61:
@@ -375,7 +375,7 @@ short setCursorMode(long mode)
 /* Sets the cursor for mode g_4b80d2: the arrow for 0, else that mode's
    cursor (g_4b80c4). */
 /* @zoombi32 0x0046258a */
-void fn_46258a()
+void setModeCursor()
 {
     if (!g_4b80d2) {
         setCursorShape(0);
@@ -387,7 +387,7 @@ void fn_46258a()
 /* Shows the about box (the title, version and copyright, in a framed
    white box in the middle of the game's area) until a key or click. */
 /* @zoombi32 0x004625b8 */
-void fn_4625b8()
+void showAboutBox()
 {
     ShortRect rect;
     ShortRect inner;
@@ -421,7 +421,7 @@ void fn_4625b8()
 /* A mouse button pressed at `where`: goes to the dialog while one is up,
    else to the input items. */
 /* @zoombi32 0x004624bd */
-void fn_4624bd(Point *where, short button)
+void mousePressed(Point *where, short button)
 {
     g_4b80d0 = button;
     resetViewClock();
@@ -432,13 +432,13 @@ void fn_4624bd(Point *where, short button)
 }
 
 /* @zoombi32 0x004624f4 */
-void fn_4624f4()
+void showNormalCursor()
 {
     setCursorMode(0);
 }
 
 /* @zoombi32 0x004624fc */
-void fn_4624fc()
+void showBusyCursor()
 {
     if (setCursorMode(1)) {
         g_4a79c0 = 1;

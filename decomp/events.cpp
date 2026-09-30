@@ -107,7 +107,7 @@ void postKeyEvent(short key)
     if (breakpointKeyEnabled && key == breakpointKey)
         breakpointRequested = 1;
     else if (dispatching)
-        fn_46293a(key);
+        gameKey(key);
     else {
         event.type = 1;
         event.code = key;
@@ -126,7 +126,7 @@ void postMouseEvent(Point *where, short button)
     dispatchingEvents = 0;
     if (dispatching) {
         if (!platformHandlesMouse(where, button))
-            fn_4624bd(where, button);
+            mousePressed(where, button);
     } else {
         event.type = 2;
         event.where = *where;
@@ -157,7 +157,7 @@ void discardEvents(short type)
 {
     if (type) {
         removeEvents(type);
-        fn_455ab0(type);
+        flushInput(type);
     }
 }
 
@@ -175,7 +175,7 @@ short handleNextEvent()
             postMouseEvent(&event.where, event.code);
         return event.type;
     }
-    return fn_45590b();
+    return handleNextMessage();
 }
 
 /* @zoombi32 0x00414140 */
@@ -243,7 +243,7 @@ void startFade(Fade **fade, PALETTEENTRY *to, unsigned short first, unsigned sho
             duration = 500;
         else if (clockInTicks)
             duration = duration * 50 / 3;
-        (*fade)->step = fn_46d754(0x1000000, (long)duration << 16);
+        (*fade)->step = fixedDiv(0x1000000, (long)duration << 16);
         (*fade)->first = first;
         (*fade)->count = count;
         (*fade)->byTime = byTime;

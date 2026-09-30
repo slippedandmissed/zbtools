@@ -108,7 +108,7 @@ void switchContext(Context *, Context *)
 /* Saves the current thread's stack pointer (unless it is `to`) and returns
    on `to`'s. */
 /* @zoombi32 0x0046f74f */
-void fn_46f74f(thread *)
+void switchStack(thread *)
 {
 }
 

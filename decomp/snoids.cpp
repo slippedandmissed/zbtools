@@ -29,7 +29,7 @@ void resetSnoids()
     g_4b7554 = 1;
     g_4b755e = 15;
     g_4b7560 = 1;
-    fn_45aaff(1);
+    setSnoidMode(1);
     g_4b7556 = 0;
 }
 
@@ -90,7 +90,7 @@ short *loadShortTable(short id, long *resource)
     *resource = 0;
     loadResourceAs(resource, RESOURCE_TYPE('R', 'E', 'G', 'S'), id, 0, 1);
     handle = usedResourceHandle(*resource);
-    at = (short *)fn_48ea00(handle);
+    at = (short *)lockHandleAlias(handle);
     data = at;
     for (unsigned long size = handleSize(handle); size; size -= 2) {
         *at = swapShort(*at);
@@ -359,7 +359,7 @@ void drawSnoidView(View *view)
 }
 
 /* @zoombi32 0x004572bf */
-short fn_4572bf()
+short countPresentTravellers()
 {
     int count = 0;
     for (short i = 0; i < *(short *)(g_4a4ba0 + 0xa92e); i++)
@@ -541,7 +541,7 @@ void updateSnoidView(View *view, short region)
             moving = 0;
             unionRgnRect(currentViewRgn, &snoid->body.bounds);
             snoid->unknownF8 = 0;
-            setSnoidAction(snoid, g_4b756a, 0);
+            setSnoidAction(snoid, snoidMode, 0);
             if (g_4b755a > 0) {
                 g_4b755a--;
                 g_4b755c++;
@@ -654,7 +654,7 @@ void updateSnoidView(View *view, short region)
         } else {
             view->interval = 6;
             snoid->unknownF8 = 0;
-            setSnoidAction(snoid, g_4b756a, 0);
+            setSnoidAction(snoid, snoidMode, 0);
         }
         break;
     case 8:
@@ -1140,7 +1140,7 @@ void loadPaths(short id)
     pathNodes = (PathNodes *)loadSwappedResource(&pathNodesResource, id, RESOURCE_TYPE('N', 'O', 'D', 'E'));
     loadResourceAs(&pathsResource, RESOURCE_TYPE('P', 'A', 'T', 'H'), id, 0, 1);
     handle = usedResourceHandle(pathsResource);
-    paths = (Paths *)fn_48ea00(handle);
+    paths = (Paths *)lockHandleAlias(handle);
     swapInPlace(paths->count);
 }
 
@@ -1194,17 +1194,17 @@ void runSnoid(short id, short chosen)
 }
 
 /* @zoombi32 0x0045aaff */
-void fn_45aaff(short mode)
+void setSnoidMode(short mode)
 {
     switch (mode) {
     case -1:
-        g_4b756a = 1;
+        snoidMode = 1;
         break;
     case 1:
-        g_4b756a = 2;
+        snoidMode = 2;
         break;
     default:
-        g_4b756a = 0;
+        snoidMode = 0;
         break;
     }
 }
@@ -2867,7 +2867,7 @@ void recordParty(short ending, short all)
 
     if (!all) {
         g_4b7554 = 1;
-        fn_45aaff(1);
+        setSnoidMode(1);
     }
     if (viewsLocked)
         return;
@@ -2922,7 +2922,7 @@ void recordParty(short ending, short all)
         chosen = !chosen;
     }
     all = savedAll;
-    lost = party()->count - fn_4572bf();
+    lost = party()->count - countPresentTravellers();
     group = sceneGroup(&last);
     g_4b7558 = 0;
     if (group && !all) {

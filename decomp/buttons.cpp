@@ -18,7 +18,7 @@ void drawButtonOn(InputItem *item)
 }
 
 /* @zoombi32 0x004121df */
-void fn_4121df(InputItem *item)
+void drawButtonLit(InputItem *item)
 {
     drawButton(item, 1, 8);
 }
@@ -36,7 +36,7 @@ void drawButtonOff(InputItem *item)
 }
 
 /* @zoombi32 0x0041221b */
-void fn_41221b(InputItem *item)
+void drawButtonUnlit(InputItem *item)
 {
     drawButton(item, 0, 8);
 }
@@ -48,13 +48,13 @@ void drawButtonInColor1(InputItem *item)
 }
 
 /* @zoombi32 0x00412244 */
-void fn_412244(InputItem *item)
+void drawButtonUp(InputItem *item)
 {
     drawButtonPressed(item, 0);
 }
 
 /* @zoombi32 0x00412255 */
-void fn_412255(InputItem *item)
+void drawButtonDown(InputItem *item)
 {
     drawButtonPressed(item, 8);
 }
@@ -140,7 +140,7 @@ void freeButtonGroup(ResourceList **images)
 
 /* freeButtonGroup with setFreeAtOnce's setting at 1. */
 /* @zoombi32 0x00412482 */
-void fn_412482(ResourceList **images)
+void freeButtonGroupNow(ResourceList **images)
 {
     short saved = setFreeAtOnce(1);
 

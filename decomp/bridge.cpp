@@ -45,7 +45,7 @@ void resetScene7()
     g_4b755e = 55;
     g_4ab7ea = g_4ab7e6 = 0;
     g_4ab7ee = g_4b0d52 = g_4ab800 = 0;
-    g_4ab7f2 = g_4b966e = 0;
+    g_4ab7f2 = hintSound = 0;
     g_4ab78c = g_4ab78e = 0;
     for (i = 0; i < 16; i++)
         g_4ab792[i] = g_4ab7b2[i] = 0;
@@ -123,7 +123,7 @@ void closeScene7()
         setFreeAtOnce(saved);
         closeGameFile(&g_4ab784);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -200,7 +200,7 @@ void bridgeViewNotify(View *view, short event)
 
 /* Scene 7's keys (with debugging on, g_4b8803, or else only 0x16f; case
    ignored; only while the scene is open and nobody's moving): 0x16f
-   fn_466b93; R reports the script and type g_4ab826/g_4ab828; A shows the
+   replayHint; R reports the script and type g_4ab826/g_4ab828; A shows the
    rule. Returns whether the key was used. */
 /* @zoombi32 0x0041b203 */
 short scene7Key(unsigned short key)
@@ -217,7 +217,7 @@ short scene7Key(unsigned short key)
         return 0;
     switch (key) {
     case 0x16f:
-        fn_466b93();
+        replayHint();
         used = 1;
         break;
     case 'R':
@@ -740,7 +740,7 @@ void openScene7()
     loadSnoidScripts(1000, 20, 20);
     addSnoidScripts(2000, 25, 5);
     g_4ab820 = loadImageBank(1400, &g_4a0e24);
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     for (i = 0; i < 2; i++)
         placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 1300, 7, &ends[i], 0, 0);
     g_4ab7e2 = addView(0x91c8000, drawCels, runViewScript, 1105, 6, 0, 0, 0);

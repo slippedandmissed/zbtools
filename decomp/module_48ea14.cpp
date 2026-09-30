@@ -68,7 +68,7 @@ Block allocBlock(unsigned long size, unsigned short moveable)
     chunk->magic = 0x4d42; /* 'BM' */
     chunk->size = size;
     chunk->moveable = moveable;
-    fn_48ef1c(block);
+    afterBlockChange(block);
     setMemError(0);
     return block;
 }
@@ -82,7 +82,7 @@ short freeBlock(Block block)
     Chunk *chunk;
     HandleEntry *entry;
 
-    fn_48ef15(block);
+    beforeBlockChange(block);
     chunk = *block;
     chunk->magic = 0;
     if (chunk->moveable && chunk->handle) {
@@ -104,13 +104,13 @@ Block resizeBlock(Block block, unsigned long size)
     Block resized;
     Chunk *chunk;
 
-    fn_48ef15(block);
+    beforeBlockChange(block);
     moveable = (*block)->moveable;
     do {
         resized = (Block)GlobalReAlloc(block, (moveable ? 0 : sizeof(Chunk *)) + size + sizeof(Chunk),
                                        GMEM_MOVEABLE);
         if (!resized && !recoverMemory(0x2777, size)) {
-            fn_48ef1c(block);
+            afterBlockChange(block);
             return 0;
         }
     } while (!resized);
@@ -121,7 +121,7 @@ Block resizeBlock(Block block, unsigned long size)
     } else
         *block = chunk = (Chunk *)(block + 1);
     chunk->size = size;
-    fn_48ef1c(block);
+    afterBlockChange(block);
     setMemError(0);
     return block;
 }
@@ -251,12 +251,12 @@ unsigned short entryIndex(HandleEntry *entry)
 
 /* Called before changing a block; does nothing. */
 /* @zoombi32 0x0048ef15 */
-void fn_48ef15(Block)
+void beforeBlockChange(Block)
 {
 }
 
 /* Called after changing a block; does nothing. */
 /* @zoombi32 0x0048ef1c */
-void fn_48ef1c(Block)
+void afterBlockChange(Block)
 {
 }

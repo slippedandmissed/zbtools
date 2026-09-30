@@ -281,7 +281,7 @@ audioObj *__cdecl newMidiSound(short data)
     unsigned short tracks;
     unsigned char *chunk;
 
-    file = (unsigned long *)fn_48ea00(data);
+    file = (unsigned long *)lockHandleAlias(data);
     size = byteSwapLong(file[1]) + 8;
     end = (unsigned char *)file + (size + 1 & ~1);
     if (byteSwapLong(file[0]) != 0x4d48574b || byteSwapLong(file[2]) != 0x4d494449) {
@@ -853,12 +853,12 @@ long __cdecl parseNumber(const char *text)
 }
 
 /* @zoombi32 0x0047a074 */
-short fn_47a074(short)
+short unsupportedMidiCall(short)
 {
     return MMSYSERR_NOTSUPPORTED;
 }
 
-/* Starts MIDI (the mapper, then fn_47c62c) for its first user. */
+/* Starts MIDI (the mapper, then initWaveMix) for its first user. */
 /* @zoombi32 0x0047a07f */
 unsigned short initMidi()
 {
@@ -867,7 +867,7 @@ unsigned short initMidi()
     if (!midiUsers) {
         if ((error = initMidiMap()) != 0)
             return error;
-        if ((error = fn_47c62c()) != 0) {
+        if ((error = initWaveMix()) != 0) {
             closeMidiMaps();
             return error;
         }
@@ -881,6 +881,6 @@ void closeMidi()
 {
     if (midiUsers > 0 && !--midiUsers) {
         closeMidiMaps();
-        fn_47c995();
+        closeWaveMix();
     }
 }

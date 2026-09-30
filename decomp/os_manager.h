@@ -37,7 +37,7 @@ short osUnlockMemory(void *address, unsigned long size);
 short isAppActive();
 short osVersion(); /* 0x46dff7: 0x500 once running */
 ActivateHook setActivateHook(ActivateHook hook);
-HINSTANCE fn_46e0ec(long);
+HINSTANCE osInstance(long);
 short setOsError(short error);
 long timerHandle(OsTimer *timer); /* 0x46e1f8 */
 OsTimer *timerOf(long timer); /* 0x46e202: 0 if it isn't one */

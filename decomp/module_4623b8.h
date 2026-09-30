@@ -17,14 +17,14 @@ extern short viewStep; /* @data 0x4b80e8: in step mode, the view labelled */
 extern unsigned long g_4a79c8;
 extern unsigned long g_4b80d8;
 extern unsigned long g_4b80dc;
-void fn_4624bd(Point *where, short button);
-void fn_4624f4();
+void mousePressed(Point *where, short button);
+void showNormalCursor();
 short setCursorMode(long mode);
-void fn_4624fc();
-void fn_4625b8();
-void fn_46258a();
+void showBusyCursor();
+void showAboutBox();
+void setModeCursor();
 void debugMessage(short value, const char *after, short *number, const char *before, short wait);
-void fn_46293a(unsigned short key);
+void gameKey(unsigned short key);
 short mainLoopUpdate();
 
 #endif

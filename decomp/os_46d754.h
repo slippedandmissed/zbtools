@@ -9,6 +9,5 @@
 /* Fixed-point (16.16) arithmetic */
 long fixedDiv(long a, long b); /* 0x46d754 */
 long fixedMul(long a, long b); /* 0x46d7aa */
-long fn_46d754(long numerator, long denominator); /* 16.16 fixed-point division */
 
 #endif

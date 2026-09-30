@@ -12,7 +12,7 @@ short freeContext(Context *context); /* 0x46f68f */
 void resumeContext(Context *context); /* 0x46f6c9 */
 void abandonContext(Context *context); /* 0x46f6f9 */
 void switchContext(Context *to, Context *save); /* 0x46f70e */
-void fn_46f74f(thread *to); /* 0x46f74f */
+void switchStack(thread *to); /* 0x46f74f */
 void recordReturn(Context *context, unsigned short depth); /* 0x46f771 */
 short setThreadError(short error); /* 0x46f78e */
 

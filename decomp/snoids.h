@@ -10,7 +10,6 @@ extern short spotCorner; /* @data 0x4a4ce6: where findSpot starts its grid (0-3)
 extern short heldPlace; /* @data 0x4b7b38 */
 extern short placeHeld; /* @data 0x4b7b3a */
 extern SnoidArrived arrivalHook; /* @data 0x4b7b68: told when a Zoombini arrives */
-void fn_456c67(long);
 void showNameTag(const char *text, unsigned long duration, short large); /* 0x4589ce */
 void recordParty(short ending, short all);
 void freePaths();
@@ -89,7 +88,7 @@ void releaseHeldPlace();
 void drawSnoidView(View *view);
 void updateSnoidView(View *view, short region); /* 0x4575e6 */
 void setSnoidAction(Snoid *snoid, short action, Point *where);
-void fn_45aaff(short);
+void setSnoidMode(short);
 void useAltSnoids(short restore);
 extern long altSnoidResources[3]; /* @data 0x4b7ca4 */
 extern ImageBank *savedSnoidImages; /* @data 0x4b7cb0 */
@@ -136,7 +135,7 @@ extern Point g_4a4d1c;
 void initSnoid(Snoid *snoid); /* 0x45bf41 */
 void setSnoidFacing(Snoid *snoid, short facing);
 short layOutSnoid(Snoid *snoid, short *event);
-short fn_4572bf();
+short countPresentTravellers();
 void setSpotCorner(short value);
 void setArrivalHook(SnoidArrived hook); /* 0x45bfc0 */
 

@@ -48,7 +48,7 @@ void gameFrame()
     else
         drawMemoryStats(0);
     if (g_4b80d2 >= 1) {
-        unsigned long now = fn_41571f();
+        unsigned long now = clockTime();
         if (now >= g_4b80d4) {
             g_4b80d4 = now + 12;
             if (g_4b2aee >= 12)
@@ -120,13 +120,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     g_4aa7cc = 0;
     setFrameHook(gameFrame);
     setFatalHook(shutDownGame);
-    setClickHook(fn_44695c);
-    setAboutHook(fn_4625b8);
+    setClickHook(refreshCursor);
+    setAboutHook(showAboutBox);
     g_4b2aec = addModifierKeys(0) != 0x800;
 
     if (osStartup(instance, osBuffer, sizeof osBuffer))
         fatalError(msgInitOs);
-    if (fn_493096())
+    if (initTimers())
         fatalError(msgInitTimer);
     if (initMemory(0, 0))
         fatalError(msgInitHeap);
@@ -141,7 +141,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     }
     if (initFiles(0))
         fatalError(msgInitFileManager);
-    if (fn_480642())
+    if (initIni())
         fatalError(msgInitConfiguration);
     if (initResources())
         fatalError(msgInitResourceManager);
@@ -153,17 +153,17 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         fatalError(msgNoMidiDevices);
 
     enterGameDirectory();
-    fn_446962(g_4b29d4, rosterFileName);
+    unusedPathHook(g_4b29d4, rosterFileName);
     readWriteSavedGames(0, 0);
     strcat(userFileName, ".txt");
-    fn_446962(moduleFileName, userFileName);
+    unusedPathHook(moduleFileName, userFileName);
     findGameData();
 
     mode.width = 640;
     mode.height = 480;
     mode.palettized = 1;
     mode.colors = 256;
-    fn_4144d0(&mode, 1);
+    initGraphics(&mode, 1);
     if (instanceAtom) {
         GlobalDeleteAtom(instanceAtom);
         instanceAtom = 0;
@@ -180,15 +180,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     g_4b754a = 0;
     g_4a4ba0 = (char *)newPtr(0xae05);
     if (!g_4a4ba0)
-        fn_41f195(msgOutOfMemory);
+        reportRosterError(msgOutOfMemory);
     fillRosterHeader(1);
-    fn_41f668();
+    applyPlayerSettings();
     g_4b0d52 = 0;
     g_4b0d56 = -1;
     g_4b0d54 = -1;
     currentScene = -1;
-    fn_46310c();
-    fn_456c67(1);
+    initViews();
+    loadSnoids(1);
 
     /* Cursors 1-5 ('CURS' resources). */
     for (i = 0; i < 6; i++) {
@@ -197,7 +197,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         if (i) {
             loadResourceAs(&cursors[i], RESOURCE_TYPE('C', 'U', 'R', 'S'), i, 0, 1);
             g_4b80c4[i] = usedResourceHandle(cursors[i]);
-            fn_48ea00(g_4b80c4[i]);
+            lockHandleAlias(g_4b80c4[i]);
         }
     }
     setCurrentMap(0);
@@ -687,7 +687,7 @@ void closeScene17()
         setFreeAtOnce(saved);
         closeGameFile(&g_4b278c);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -2262,7 +2262,7 @@ void advanceRightFeatures()
 
 /* The scene's keys (with g_4b8803, the cheat keys; else only 0x16f): L shows
    the level, 0x172 and 0x173 turn cheating (cheatMode) on and off, 0x16f
-   calls fn_466b93. Returns whether the key was used. */
+   calls replayHint. Returns whether the key was used. */
 /* Not exact: the original keeps `key` in esi and `show` in ebx (saving esi
    around the arrays' initial copies); this swaps them. */
 /* @zoombi32 0x00450a58 */
@@ -2299,7 +2299,7 @@ short scene17Key(unsigned short key)
         key = 1;
         break;
     case 0x16f:
-        fn_466b93();
+        replayHint();
         key = 1;
         break;
     default:
@@ -4268,7 +4268,7 @@ void openScene17()
     g_4b274c = 0;
     g_4b273a = 0;
     g_4b2750 = 0;
-    g_4b966e = 0;
+    hintSound = 0;
     cheatMode = 0;
     g_4b2764 = 0;
     g_4b2758 = 0;
@@ -4419,9 +4419,9 @@ void openScene17()
     if (g_4b2630 < 3)
         placedViews[0] = addView(0x108a000, drawCels, runViewScript, 11001, 7, &g_4a44b4, 0, 0);
     fadeOutViews();
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     updateViews();
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     setGroupLists(&g_4a47a8, 1, -0x4000);
     drawSmokeButton(1, 0, 0);
     drawSmokeButton(2, 0, 0);
@@ -4475,7 +4475,7 @@ void openScene17()
     }
     queueViewSound(sceneLevel() + 30030, 0);
     campHint((short *)(g_4a4ba0 + 0x42));
-    g_4b966e = randomBetween(20066, 20067);
+    hintSound = randomBetween(20066, 20067);
     if (g_4b2630 == 3 || g_4b2630 == 4) {
         g_4b2752 = 1;
         lightDealButton(11003);

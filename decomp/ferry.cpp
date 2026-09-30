@@ -84,7 +84,7 @@ void closeScene10()
         setFreeAtOnce(saved);
         closeGameFile(&g_4abaa8);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -164,7 +164,7 @@ void slideFerryViews(View *, short dx)
 void resetScene10()
 {
     g_4aba88 = 0;
-    g_4b966e = 0;
+    hintSound = 0;
     g_4abb10 = g_4abaf4 = 0;
     g_4abb08 = g_4abb0a = 0;
     g_4abb0c = 1;
@@ -428,7 +428,7 @@ void drawFerryButtons(View *)
 }
 
 /* Scene 10's keys (with debugging on, g_4b8803, or else only 0x16f; case
-   ignored): 0x16f fn_466b93; A draws the links between the places; L
+   ignored): 0x16f replayHint; A draws the links between the places; L
    reports the level (from 1); F plays Captain Cajun's script g_4abb14
    (1800-1832; else his current one). Returns whether the key was used. */
 /* @zoombi32 0x004208a3 */
@@ -444,7 +444,7 @@ short scene10Key(unsigned short key)
         key -= 32;
     switch (key) {
     case 0x16f:
-        fn_466b93();
+        replayHint();
         used = 1;
         break;
     case 'A':
@@ -691,7 +691,7 @@ void openScene10()
     addView(0x1000, drawFerryButtons, updateFerryButtons, 0, 0, 0, 0, 0);
     setViewPlaces(20, ferryPlaces, 1);
     setViewsLocked(0);
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     makePartySnoids(0);
     layOutFerryLevel();
     enterSnoids(0);
@@ -712,13 +712,13 @@ void openScene10()
     g_4abaac = 1;
     switch (campHint((short *)(g_4a4ba0 + 0x32))) {
     case 2:
-        g_4b966e = 20074;
+        hintSound = 20074;
         break;
     default:
         if (g_4aba8a)
-            g_4b966e = randomBetween(20073, 20074);
+            hintSound = randomBetween(20073, 20074);
         else
-            g_4b966e = 20073;
+            hintSound = 20073;
         break;
     }
 }

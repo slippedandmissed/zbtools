@@ -6,9 +6,6 @@
 #ifndef VIEW_H
 #define VIEW_H
 
-void fn_464d7d();
-unsigned long fn_464d88();
-void fn_46310c();
 /* view */
 void initViews(); /* 0x46310c */
 void closeViews();

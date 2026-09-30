@@ -109,7 +109,7 @@ short lillyKey(unsigned short event)
 {
     switch (event) {
     case 367:
-        fn_466b93();
+        replayHint();
         return 1;
     }
     return 0;
@@ -763,7 +763,7 @@ void loadLillyScripts(long *resources, short *handles, short count)
 
         loadResourceAs(&resources[i], RESOURCE_TYPE('S', 'C', 'R', 'B'), i + 10000L, 0, 1);
         handles[i] = usedResourceHandle(resources[i]);
-        fn_48ea00(handles[i]);
+        lockHandleAlias(handles[i]);
         at = (short *)handleData(handles[i]);
         for (unsigned long size = handleSize(handles[i]); size; size -= 2) {
             *at = swapShort(*at);
@@ -2821,7 +2821,7 @@ short hotelKey(unsigned short key)
         return 0;
     switch (key) {
     case 367:
-        fn_466b93();
+        replayHint();
         return 1;
     case 'A':
     case 'a':
@@ -2924,7 +2924,7 @@ void closeLilly()
         setFreeAtOnce(saved);
         closeGameFile(&g_4af364);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -2956,7 +2956,7 @@ void closeHotel()
         setFreeAtOnce(saved);
         closeGameFile(&g_4abebc);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -3434,7 +3434,7 @@ void flashSwap(View *view)
 }
 
 /* @zoombi32 0x0042b08e */
-void fn_42b08e(View *view, short event)
+void lillyViewNotify3(View *view, short event)
 {
     View *other;
     short i;
@@ -3636,7 +3636,7 @@ void lillyClick(short action)
             waitForEventFor(0, 2, 0, 1);
             drawHotelButton(action, 0, 1);
             queueViewSound(996, 0);
-            fn_4624fc();
+            showBusyCursor();
             g_4b0d52 = 15;
         }
         break;
@@ -3793,7 +3793,7 @@ void openHotel()
     g_4ac0ee = g_4ac0c4 = g_4ac0c6 = 25;
     g_4ac0da = 1;
     g_4b7554 = 0;
-    g_4b966e = g_4ac0d6 = 0;
+    hintSound = g_4ac0d6 = 0;
     hotelLevel = sceneLevel();
     g_4ac0fe = 1;
     switch (hotelLevel) {
@@ -3819,7 +3819,7 @@ void openHotel()
     loadTerrain(100);
     drawBackdrop(5000);
     setViewPlaces(20, places, 1);
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     if (hotelLevel == 3)
         loadFeatureGroup(9000, 0, 0);
     else
@@ -3878,7 +3878,7 @@ void openHotel()
     }
     g_4ac0be = 0;
     campHint((short *)(g_4a4ba0 + 0x3a));
-    g_4b966e = 20081;
+    hintSound = 20081;
     switch (hotelLevel) {
     case 0:
         if ((*(short *)(g_4a4ba0 + 0x3a) & 0xfff) > 1)
@@ -3969,7 +3969,7 @@ void otherClick(short action)
             actor = (LillyActor *)&view->body;
             if ((g_4b755a <= 0 || (g_4b755a > 0 && actor->unknownC0 == 2)) && !actor->unknownC2
                 && actor->unknownC0 != 1) {
-                fn_42d9c5(view, where);
+                dragLillyPiece(view, where);
                 actor = (LillyActor *)&view->body;
                 cel = (short *)&view->body;
 
@@ -4043,7 +4043,7 @@ void otherClick(short action)
 /* body and bank are set and never read; the original keeps both stores,
    which only `volatile` reproduces. */
 /* @zoombi32 0x0042d9c5 */
-void fn_42d9c5(View *piece, Point where0)
+void dragLillyPiece(View *piece, Point where0)
 {
     short id;
     short lastRow;
@@ -4557,7 +4557,7 @@ void openLilly()
     lillyStage = 0;
     g_4af352 = 0;
     g_4af0f6 = 1;
-    g_4b966e = 0;
+    hintSound = 0;
     fillMemory(g_4aed3a, 0, 42);
     fillMemory(g_4aed64, 0, 28);
     fillMemory(g_4aefc0, 0, 288);
@@ -4613,7 +4613,7 @@ void openLilly()
     loadScripts(11000, 1);
     addScripts(14000, 5, 0);
     addScripts(10000, 167, 0);
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     addView(0x1000, drawLillyButtons, updateLillyButtons, 0, 0, 0, 0, 0);
     g_4af5a0 = loadImageBank(13000, &g_4a1b44);
     loadTablePair(g_4ac928, 100, &g_4ac940, &g_4ac944);
@@ -4693,7 +4693,7 @@ void openLilly()
     for (i = 0; i < 12; i++)
         g_4aed22[i] = addView(0x4000000, lillyNoDraw, lillyNoUpdate, 14000, 0, 0, 0, 0);
     fadeOutViews();
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     updateViews();
     setGroupLists(g_4a1bc8, 1, (short)0xc000);
     drawLillyButton(1, 0, 0);
@@ -4719,13 +4719,13 @@ void openLilly()
     addSoundRange(10005, 10008, 0);
     switch (campHint((short *)(g_4a4ba0 + 0x34))) {
     case 2:
-        g_4b966e = randomBetween(20076, 20077);
+        hintSound = randomBetween(20076, 20077);
         break;
     default:
         if (g_4a1b1c > 1)
-            g_4b966e = randomBetween(20075, 20077);
+            hintSound = randomBetween(20075, 20077);
         else
-            g_4b966e = 20075;
+            hintSound = 20075;
         break;
     }
     setLillyStage(3);
@@ -4733,7 +4733,7 @@ void openLilly()
         other = findView(g_4af338);
         if (other) {
             setViewScript(other, 11000, 1);
-            other->notify = fn_42b08e;
+            other->notify = lillyViewNotify3;
         }
     }
     setViewsLocked(0);

@@ -570,7 +570,7 @@ void closeNet()
         setFreeAtOnce(saved);
         closeGameFile(&g_4b12a4);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -630,7 +630,7 @@ void openNet()
                         {135, 397}, {121, 407}, {115, 368}, {114, 342}, {99, 375},  {97, 394},
                         {95, 346},  {91, 411},  {79, 355},  {62, 404}};
 
-    g_4b755a = g_4b755c = g_4b966e = 0;
+    g_4b755a = g_4b755c = hintSound = 0;
     netLevel = sceneLevel();
     g_4b142e = 25;
     if (netLevel > 1)
@@ -676,7 +676,7 @@ void openNet()
     addSnoidScripts(13000, 51, 0);
     addView(0x1000, drawNetButtons, updateNetButtons, 0, 0, 0, 0, 0);
     setViewPlaces(16, places, 1);
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     makePartySnoids(0);
     enterSnoids(0);
     g_4b0d68 = listChosenSnoids();
@@ -711,7 +711,7 @@ void openNet()
     g_4b12a8 = 1;
     setViewsLocked(0);
     campHint((short *)(g_4a4ba0 + 0x3c));
-    g_4b966e = 20064;
+    hintSound = 20064;
 }
 
 /* Draws button 1 (image 5 or 6) or 2 (2 or 3, or 1 or 2 without
@@ -1423,7 +1423,7 @@ short netKey(unsigned short key)
         return 0;
     switch (key) {
     case 367:
-        fn_466b93();
+        replayHint();
         return 1;
     case 'L':
     case 'l':

@@ -751,7 +751,7 @@ void *__cdecl operator new(size_t size, void *where)
 /* @zoombi32 0x0047df34 */
 void CALLBACK streamCallback(long, unsigned short message, DWORD instance, DWORD header, DWORD)
 {
-    HINSTANCE saved = fn_46e0ec(0);
+    HINSTANCE saved = osInstance(0);
     StreamBuffer *buffer;
 
     if (message == WOM_DONE) {
@@ -760,7 +760,7 @@ void CALLBACK streamCallback(long, unsigned short message, DWORD instance, DWORD
         if (!wave->resetting && (buffer = (StreamBuffer *)done->dwUser) != 0)
             deferCall(&wave->lock, &buffer->call);
     }
-    fn_46e0ec((long)saved);
+    osInstance((long)saved);
 }
 
 /* A buffer has played: wakes the thread, reports its cue point, counts

@@ -363,7 +363,7 @@ short initResources()
     if (!resources.buffer)
         return setResourceError(memError());
     setPurgeable(resources.buffer, 1);
-    resources.handleState = fn_48f260();
+    resources.handleState = countHeapUp();
     if (!resources.handleState) {
         setResourceError(memError());
         disposeHandle(resources.buffer);

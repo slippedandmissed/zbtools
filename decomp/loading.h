@@ -22,7 +22,6 @@ extern short reportingError; /* @data 0x4ab478 */
 /* Reports an error, printf-style. */
 void __cdecl fatalError(const char *format, ...);
 /* Formats into `buffer` (of `size` bytes), printf-style. */
-void __cdecl fn_4150c7(long size, char *buffer, const char *format, ...);
 /* loading */
 unsigned short loadMidi(short key);
 void unloadMidi(short key);

@@ -636,7 +636,7 @@ void enterCamp()
     addScripts(0x4b0, 0x10, 0);
     g_4a0974 = loadImageBank(2000, &campFrameResource);
     campButtonImages = loadImageBank(0x834, &campButtonsResource);
-    fn_4148da(0xec, 10);
+    copyPaletteRange(0xec, 10);
     g_4ab518 = addView(0xc000, drawCamp, scrollCamp, 0, 6, 0, 0, 0);
     addView(0x9000, drawSceneButtons2, 0, 0, 0, 0, 0, 0);
     addView(0x1000, drawSceneButtons1, updateCampButtons, 0, 0, 0, 0, 0);
@@ -675,11 +675,11 @@ void enterCamp()
     savedParty()->unknown2 = 1;
     savedParty()->unknown4 = 1;
     if (returned) {
-        if (!party()->unknown2 && fn_4572bf()) {
+        if (!party()->unknown2 && countPresentTravellers()) {
             short last = campLast;
             short appended = returnToCamp();
 
-            campCount += fn_4572bf();
+            campCount += countPresentTravellers();
             campLast = campSlotsUsed();
             noteCampSlot(-1);
             if (appended) {
@@ -805,7 +805,7 @@ void leaveCamp()
                 *savedParty() = *party();
                 party()->unknown2 = 0;
                 party()->unknown4 = 1;
-                *(short *)(g_4a4ba0 + 0x4a) -= fn_4572bf();
+                *(short *)(g_4a4ba0 + 0x4a) -= countPresentTravellers();
             }
             compactCamp();
             noteCampSlot(-1);
@@ -816,7 +816,7 @@ void leaveCamp()
         setFreeAtOnce(saved);
         closeGameFile(&campMap);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -1594,7 +1594,7 @@ void refreshCampView()
 }
 
 /*
- * Puts the Zoombinis back from the journey (fn_4572bf of them) in the camp,
+ * Puts the Zoombinis back from the journey (countPresentTravellers of them) in the camp,
  * at campArrival: after the last used slot if they fit (returns 1), else in
  * the empty slots from the start (returns 0).
  */
@@ -1610,7 +1610,7 @@ short returnToCamp()
     short j;
 
     place = campArrival;
-    count = fn_4572bf();
+    count = countPresentTravellers();
     appended = found = 0;
     for (i = 624; !found && i >= 0; i--)
         if (camp->slots[i].zoombini) {

@@ -12,7 +12,7 @@ struct TunnelEntry
 {
     short view; /* a Zoombini at a door (0 for a remark) */
     short back; /* +2: it is turned back */
-    short step; /* +4: of a remark, the part being said (fn_460571) */
+    short step; /* +4: of a remark, the part being said (sayTunnelRemark) */
     long from; /* +6: where it stood (a Point) */
     short script; /* +0xa: a Zoombini's, as it goes to its door */
     short backScript; /* +0xc: its script for being turned back (8000 on) */

@@ -156,7 +156,7 @@ void setColors(PALETTEENTRY *from, short first, short count)
 
 /* Copies `count` entries of g_4aa7e8 to g_4aabe8, from `first`. */
 /* @zoombi32 0x004148da */
-void fn_4148da(short first, short count)
+void copyPaletteRange(short first, short count)
 {
     memcpy(&g_4aabe8[first], &g_4aa7e8[first], count * sizeof(PALETTEENTRY));
 }
@@ -188,7 +188,7 @@ void createPort(basePort **port, ShortRect *bounds, short keep, const char *name
     lockPortOrFail(*port);
     setPort(*port);
     setPortPalette(current);
-    fn_414a2e(*port, bounds);
+    setPortBounds(*port, bounds);
     if (!keep)
         unlockPort(*port);
     setPort(saved);
@@ -214,7 +214,7 @@ void destroyPort(basePort **port, short release)
 
 /* Gives a port its origin and clipping from `bounds`. */
 /* @zoombi32 0x00414a2e */
-void fn_414a2e(basePort *port, ShortRect *bounds)
+void setPortBounds(basePort *port, ShortRect *bounds)
 {
     basePort *saved = getPort();
 
@@ -293,7 +293,7 @@ void clipRect(short *region, ShortRect *rect, short keep)
 
 /* Restores a clip region kept by clipRect, freeing it if asked. */
 /* @zoombi32 0x00414c25 */
-void fn_414c25(short *region, short free)
+void restoreClip(short *region, short free)
 {
     if (*region && !emptyRgn(*region)) {
         setClip(*region);
@@ -397,7 +397,7 @@ void alignRect(ShortRect *rect, short x, short y, short how)
 }
 
 /* @zoombi32 0x00414e7d */
-void fn_414e7d()
+void resetDisplayModes()
 {
     initDisplayMode(&displayMode, 0xffff, 0xffff, -1, 0);
     initDisplayMode(&g_4aa7dc, 0xffff, 0xffff, -1, 0);
@@ -417,7 +417,7 @@ void redrawRect(ShortRect *rect)
 
 /* Redraws an item, if its flag 4 is set. */
 /* @zoombi32 0x00414f01 */
-void fn_414f01(InputItem *item)
+void redrawIfOn(InputItem *item)
 {
     if (item->flags & 4)
         redrawRect(&item->bounds);
@@ -425,7 +425,7 @@ void fn_414f01(InputItem *item)
 
 /* Redraws an item, unless its flag 4 is set. */
 /* @zoombi32 0x00414f17 */
-void fn_414f17(InputItem *item)
+void redrawIfOff(InputItem *item)
 {
     if (!(item->flags & 4))
         redrawRect(&item->bounds);

@@ -325,7 +325,7 @@ void drawAnim(Anim *anim)
             if (anim->background)
                 copyBits(anim->port, anim->background, &anim->rects[1][which]);
             else
-                fn_48b1e8(anim->rects[1][which]);
+                eraseRect(anim->rects[1][which]);
         }
         region = 0;
         getClipRegion(&region, 1);

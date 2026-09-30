@@ -14,7 +14,6 @@ extern char *g_4ab3f8;
 extern char *g_4ab3fc;
 extern char *g_4ab400;
 extern short g_4ab404; /* displayMode.unknown8 */
-void fn_4144d0(DisplayMode *mode, long);
 /* graphics */
 void initGraphics(DisplayMode *mode, short depth);
 void closeGraphics();
@@ -23,15 +22,15 @@ void drawImageInColor(ResourceList *images, short index, short x, short y, short
                       short anchor);
 void getColors(PALETTEENTRY *to, short first, short count);
 void setColors(PALETTEENTRY *from, short first, short count);
-void fn_4148da(short first, short count);
+void copyPaletteRange(short first, short count);
 void createPort(basePort **port, ShortRect *bounds, short keep, const char *name);
 void destroyPort(basePort **port, short release);
-void fn_414a2e(basePort *port, ShortRect *bounds);
+void setPortBounds(basePort *port, ShortRect *bounds);
 void saveRect(MapSave **save, ShortRect *rect, short locked, const char *name);
 void restoreRect(MapSave **save, short free);
 void freeSave(MapSave **save);
 void clipRect(short *region, ShortRect *rect, short keep);
-void fn_414c25(short *region, short free);
+void restoreClip(short *region, short free);
 void getClipRegion(short *region, short create);
 void createRegion(short *region);
 void freeRegion(short *region);
@@ -41,9 +40,9 @@ void lockPortOrFail(basePort *port);
 void lockSave(MapSave *save);
 void unlockSave(MapSave *save);
 void alignRect(ShortRect *rect, short x, short y, short how);
-void fn_414e7d();
+void resetDisplayModes();
 void redrawRect(ShortRect *rect);
-void fn_414f01(InputItem *item);
-void fn_414f17(InputItem *item);
+void redrawIfOn(InputItem *item);
+void redrawIfOff(InputItem *item);
 
 #endif

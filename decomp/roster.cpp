@@ -353,7 +353,7 @@ void openCaves()
     g_4a1006 = 0;
     g_4a1008 = 0;
     g_4a100a = 0;
-    g_4b966e = 0;
+    hintSound = 0;
     g_4ab9fc = 0;
     g_4aba00 = 0;
     g_4aba04 = 0;
@@ -386,7 +386,7 @@ void openCaves()
     addScripts(9025, 4, 0);
     loadSnoidScripts(12000, 14, 0);
     addSnoidScripts(13000, 5, 0);
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     g_4ab9f0 = addView(0x4088000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
     g_4ab9f2 = addView(0x4088000, drawCels, runViewScript, 6001, 6, 0, 0, 0);
     g_4ab9f4 = addView(0x4188000, drawCels, runViewScript, 6002, 8, 0, 0, 0);
@@ -440,7 +440,7 @@ void openCaves()
     frameView = addView(0x4000000, drawCels, runViewScript, 6012, 0, 0, 0, 0);
     frameView = addView(0x8180000, drawCels, runViewScript, firstFrame + 1, 9, 0, 0, 0);
     fadeOutViews();
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     loadCaveResources();
     setUpCaves();
     placeGlyphs(cavesLevel);
@@ -478,7 +478,7 @@ void openCaves()
     if (cavesLevel < 4)
         queueViewSound(sceneLevel() + 30025, 0);
     campHint((short *)(g_4a4ba0 + 0x40));
-    g_4b966e = 20065;
+    hintSound = 20065;
 }
 
 /* Closes the roster screen. */
@@ -497,7 +497,7 @@ void closeCaves()
         setFreeAtOnce(saved);
         closeGameFile(&g_4ab83c);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -1606,7 +1606,7 @@ void cavesFrame()
    0x16f): 1-4 set the level (cavesLevel) and show it, L shows it, space
    resets the frames (resetCavesScreen), 0x171 walks the Zoombinis to their spots,
    0x173-0x176 change the first feature, 0x16f (below level 4) calls
-   fn_466b93. Returns whether the key was used. */
+   replayHint. Returns whether the key was used. */
 /* @zoombi32 0x0041dd83 */
 short cavesKey(unsigned short key)
 {
@@ -1674,7 +1674,7 @@ short cavesKey(unsigned short key)
         break;
     case 0x16f:
         if (cavesLevel < 4)
-            fn_466b93();
+            replayHint();
         used = 1;
         break;
     default:

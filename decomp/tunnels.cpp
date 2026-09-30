@@ -31,7 +31,7 @@ void resetScene8()
     g_4b7fe4 = g_4b8092 = g_4b8096 = 0;
     g_4b755e = 40;
     g_4b0d52 = g_4b7ff0.count = 0;
-    g_4b7fd4 = g_4b966e = g_4b8094 = 0;
+    g_4b7fd4 = hintSound = g_4b8094 = 0;
     g_4b7fd2 = g_4b7fd0 = g_4b7fce = 0;
     g_4b7fda = g_4b7fdc = g_4b808e = 0;
     g_4b8080 = g_4b8082 = g_4b8084 = g_4b8086 = g_4b808c = g_4b8090 = 0;
@@ -69,7 +69,7 @@ void closeScene8()
         setFreeAtOnce(saved);
         closeGameFile(&g_4b7fb4);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -234,7 +234,7 @@ short scene8Key(unsigned short key)
         return 0;
     switch (key) {
     case 0x16f:
-        fn_466b93();
+        replayHint();
         used = 1;
         break;
     case 'H':
@@ -1891,7 +1891,7 @@ void openScene8()
     for (i = 9001; i <= 9006; i++)
         addView(0, drawCels, runViewScript, i, 6, 0, 0, 0);
     g_4b7fc2 = addView(0xd181000, drawCels, runViewScript, 7000, 6, 0, 0, 0);
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     g_4b7fcc = addView(0x1000, drawTunnelsButtons, updateTunnelsButtons, 0, 0, 0, 0, 0);
     moveView(g_4b7fc2, 0, g_4b7fcc);
     setViewPlaces(16, tunnelPlaces, 1);
@@ -1923,7 +1923,7 @@ void openScene8()
     g_4b7fb8 = 1;
     g_4b8094 = countSnoidViews();
     campHint((short *)(g_4a4ba0 + 0x2c));
-    g_4b966e = randomBetween(20069, 20070);
+    hintSound = randomBetween(20069, 20070);
     queueRemark(1);
     g_4b7fe0 = randomBetween(5400, 10800);
 }

@@ -46,11 +46,11 @@ short setSoundsActive(short active)
             wavebufClose(sound.waveCache);
             sound.waveCache = 0;
         }
-        sound.driverOpen = fn_47a074(0) == 0 ? 0 : 1;
+        sound.driverOpen = unsupportedMidiCall(0) == 0 ? 0 : 1;
         sound.active = 0;
     } else if (!sound.active && active) {
         if (!sound.driverOpen) {
-            if (fn_47a074(1))
+            if (unsupportedMidiCall(1))
                 return setSoundError(0x29cd);
             sound.driverOpen = 1;
         }

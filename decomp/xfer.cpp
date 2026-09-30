@@ -1304,7 +1304,7 @@ void openScene2()
             loadFeatureGroup(g_4b9920, 1, 0);
             addScripts(g_4b9920, 1, 0);
         }
-        fn_4148da(10, 236);
+        copyPaletteRange(10, 236);
         if (!xferMap) {
             for (i = 5102; i <= 5103; i++)
                 g_4b9900[i - 5102] = addView(0x1188000, drawCels, runViewScript, i, 6, 0, 0, 0);
@@ -1345,7 +1345,7 @@ void openScene2()
             g_4b9924 = addView(0x1180000, drawCels, runViewScript, 6107, 6, 0, 0, 0);
         }
     } else
-        fn_4148da(10, 236);
+        copyPaletteRange(10, 236);
     if (xferMap >= 1 && xferMap <= 4) {
         g_4b9920 = addView(0x4000000, drawGridView, updateGridView, g_4b9920, 4, 0, 0, 0);
         view = findView(g_4b9920);
@@ -1403,7 +1403,7 @@ void closeScene2()
         setFreeAtOnce(saved);
         closeGameFile(&g_4b98d4);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
         g_4a4b98 = 64;
         if (g_4a7d3c)
             g_4a7d3c--;

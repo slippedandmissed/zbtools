@@ -27,7 +27,7 @@ void openScene12()
 {
     short i;
 
-    g_4b966e = 0;
+    hintSound = 0;
     g_4b755a = g_4b755c = 0;
     g_4b0d52 = listedCount = g_4b2410 = 0;
     g_4b1930 = slidesGoReady = 0;
@@ -58,7 +58,7 @@ void openScene12()
     loadSnoidScripts(14000, 4, 0);
     addSnoidScripts(13000, 6, 0);
     setViewPlaces(16, slidesPlaces, 1);
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     makePartySnoids(0);
     enterSnoids(0);
     g_4b192c = listChosenSnoids();
@@ -94,7 +94,7 @@ void openScene12()
     queueViewSound(997, 0);
     g_4b1930 = 1;
     campHint((short *)(g_4a4ba0 + 0x36));
-    g_4b966e = 20078;
+    hintSound = 20078;
 }
 
 /* Closes scene 12. */
@@ -111,7 +111,7 @@ void closeScene12()
         setFreeAtOnce(saved);
         closeGameFile(&g_4b1928);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -1929,7 +1929,7 @@ short scene12Key(unsigned short key)
         return 0;
     switch (key) {
     case 0x16f:
-        fn_466b93();
+        replayHint();
         return 1;
     case 's':
         if (!g_4b2412)

@@ -6,8 +6,6 @@
 #ifndef FEATURES_H
 #define FEATURES_H
 
-void fn_469669();
-void fn_466c95();
 /* features */
 void loadFeatureGroup(short id, short group, short hotspots);
 void freeFeatureGroups();
@@ -19,7 +17,7 @@ void tickView(View *view, short);
 void runViewScript(View *view, short region);
 void runViewCels(View *view, short region);
 void strandParty();
-void fn_466b93();
+void replayHint();
 void loadDialogs();
 void freeDialogs();
 void askKeepParty();

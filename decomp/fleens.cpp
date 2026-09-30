@@ -40,7 +40,7 @@ void updateFleensButtons(View *, short region)
 }
 
 /* Scene 13's keys (with debugging on, g_4b8803, or else only 0x16f):
-   0x16f fn_466b93; L reports g_4abb6a (from 1). Returns whether the key
+   0x16f replayHint; L reports g_4abb6a (from 1). Returns whether the key
    was used. */
 /* @zoombi32 0x00422491 */
 short scene13Key(unsigned short key)
@@ -51,7 +51,7 @@ short scene13Key(unsigned short key)
         return 0;
     switch (key) {
     case 0x16f:
-        fn_466b93();
+        replayHint();
         used = 1;
         break;
     case 'L':
@@ -174,7 +174,7 @@ void closeScene13()
         setFreeAtOnce(saved);
         closeGameFile(&g_4abb74);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -363,7 +363,7 @@ void resetScene13()
 {
     short i;
 
-    g_4b966e = 0;
+    hintSound = 0;
     g_4abdac = g_4abb1a = 0;
     for (i = 0; i < 16; i++)
         g_4abba2[i] = g_4abbc2[i] = 0;
@@ -932,7 +932,7 @@ void addFleens()
     short i;
     short j;
 
-    g_4abdbc = fn_4572bf();
+    g_4abdbc = countPresentTravellers();
     if (!g_4abdbc)
         return;
     flag = 0;
@@ -1471,7 +1471,7 @@ void openScene13()
             flags = 0x4000000;
         fleensViews[i - 1200] = addView(flags, drawCels, runViewScript, i, 6, 0, 0, 0);
     }
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     makePartySnoids(0);
     enterSnoids(0);
     updateViews();
@@ -1503,13 +1503,13 @@ void openScene13()
     g_4abb78 = 1;
     switch (campHint((short *)(g_4a4ba0 + 0x38))) {
     case 2:
-        g_4b966e = 20080;
+        hintSound = 20080;
         break;
     default:
         if (g_4abb6a == 1 || g_4abb6a == 3)
-            g_4b966e = randomBetween(20079, 20080);
+            hintSound = randomBetween(20079, 20080);
         else
-            g_4b966e = 20079;
+            hintSound = 20079;
         break;
     }
     g_4abba0 = countSnoidViews();

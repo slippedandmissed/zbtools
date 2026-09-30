@@ -406,7 +406,7 @@ ActivateHook setActivateHook(ActivateHook hook)
 }
 
 /* @zoombi32 0x0046e0ec */
-HINSTANCE fn_46e0ec(long)
+HINSTANCE osInstance(long)
 {
     return os.instance;
 }

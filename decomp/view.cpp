@@ -78,7 +78,7 @@ void closeViews()
     viewsBusy = 1;
     clearViews();
     viewsReady = 0;
-    fn_466c95();
+    freeDialogs();
     views = 0;
     if (currentViewRgn) {
         disposeRgn(currentViewRgn);
@@ -282,7 +282,7 @@ void updateViews()
             g_4b9686 = 0;
             if (g_4b966c == 4) {
                 g_4b966c = 0;
-                fn_469669();
+                askQuit();
             }
             if (g_4b966c == 3) {
                 g_4b966c++;
@@ -687,7 +687,7 @@ void loadTerrain(short id)
 
     loadShape(&terrainResource, id, "Terrain");
     handle = usedResourceHandle(terrainResource);
-    terrain = (Terrain *)fn_48ea00(handle);
+    terrain = (Terrain *)lockHandleAlias(handle);
     terrain->width = swapShort(terrain->width);
     terrain->height = swapShort(terrain->height);
     terrain->rowBytes = swapShort(terrain->rowBytes);
@@ -1035,7 +1035,7 @@ ImageBank *loadImageBank(short id, long *resource)
         tries--;
     }
     if (!error) {
-        ImageBank *bank = (ImageBank *)fn_48ea00(usedResourceHandle(*resource));
+        ImageBank *bank = (ImageBank *)lockHandleAlias(usedResourceHandle(*resource));
 
         bank->count = swapShort(bank->count);
         for (short i = 1; i <= bank->count; i++)
@@ -1057,7 +1057,7 @@ short *loadSwappedResource(long *resource, short id, long type)
 
     loadResourceAs(resource, type, id, 0, 1);
     handle = usedResourceHandle(*resource);
-    at = (short *)fn_48ea00(handle);
+    at = (short *)lockHandleAlias(handle);
     data = at;
     for (unsigned long size = handleSize(handle); size; size -= 2) {
         *at = swapShort(*at);
@@ -1073,7 +1073,7 @@ void fadeInViews()
     fadePalette(g_4aabe8, 1, 0xfe, 0, 1, 0);
     viewsBusy = 0;
     viewsShown = 1;
-    fn_4624f4();
+    showNormalCursor();
 }
 
 /* @zoombi32 0x0046560b */

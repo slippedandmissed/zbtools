@@ -6,7 +6,7 @@
 #include "random.h"
 
 /* @zoombi32 0x00415514 */
-void fn_415514()
+void seedRandom()
 {
     time_t now;
     randomSeed = time(&now);
@@ -19,7 +19,7 @@ unsigned short randomUpTo(unsigned short limit)
     unsigned short value;
 
     if (seedPending) {
-        fn_415514();
+        seedRandom();
         seedPending = 0;
     }
     if (!limit)

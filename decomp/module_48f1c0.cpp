@@ -1,5 +1,5 @@
 /*
- * module_48f1c0 (Mohawk engine): setPurgeEnabled, resizePtr, isPointer, fn_48f260
+ * module_48f1c0 (Mohawk engine): setPurgeEnabled, resizePtr, isPointer, countHeapUp
  */
 
 /* @flags -p -x- */
@@ -52,7 +52,7 @@ short isPointer(void *pointer)
 
 /* Counts heap.unknown4 up, to at most 3. */
 /* @zoombi32 0x0048f260 */
-short fn_48f260()
+short countHeapUp()
 {
     if (heap.unknown4 >= 3) {
         setMemError(0x27ab);

@@ -335,10 +335,10 @@ void reportSoundError(short id, long type, SoundEntry *entry, const char *messag
     else if (type == RESOURCE_TYPE('t', 'M', 'I', 'D'))
         kind = textMidi;
     if ((code = soundError()) != 0) {
-        fn_4150c7(0xe, error, formatErrorNumber, code);
+        formatText(0xe, error, formatErrorNumber, code);
         errorText = error;
     }
-    fn_4150c7(0x14, name, formatSoundId, textSound, (unsigned short)id);
+    formatText(0x14, name, formatSoundId, textSound, (unsigned short)id);
     joinText(&g_4aa438, name, errorText);
     joinText(&g_4aa434, kind, g_4aa438);
     joinText(&g_4aa430, message, g_4aa434);

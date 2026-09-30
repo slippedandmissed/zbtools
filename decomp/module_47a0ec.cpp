@@ -86,7 +86,7 @@ audioObj *__cdecl newWaveSound(short data)
     unsigned char *chunk;
     unsigned short count;
 
-    file = (unsigned long *)fn_48ea00(data);
+    file = (unsigned long *)lockHandleAlias(data);
     end = (unsigned char *)file + (byteSwapLong(file[1]) + 9 & ~1);
     if (byteSwapLong(file[0]) != 0x4d48574b || byteSwapLong(file[2]) != 0x57415645) {
         unlockHandle(data);
@@ -471,7 +471,7 @@ short __cdecl waveObj::play(SoundNotify proc, long data)
 /* @zoombi32 0x0047ae14 */
 void CALLBACK waveCallback(long, unsigned short message, DWORD instance, DWORD header, DWORD)
 {
-    HINSTANCE saved = fn_46e0ec(0);
+    HINSTANCE saved = osInstance(0);
     WaveBlock *block;
 
     if (message == WOM_DONE || message == 0x8000) {
@@ -480,7 +480,7 @@ void CALLBACK waveCallback(long, unsigned short message, DWORD instance, DWORD h
         if (!wave->resetting && (block = (WaveBlock *)done->dwUser) != 0)
             deferCall(&wave->lock, &block->call);
     }
-    fn_46e0ec((long)saved);
+    osInstance((long)saved);
 }
 
 /* A block has played: reports its cue point, notes the end of the loop,

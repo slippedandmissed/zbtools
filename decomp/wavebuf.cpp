@@ -315,7 +315,7 @@ short __cdecl wavebufWO::open(PCMWAVEFORMAT *format, WavebufNotify notify, long 
     if (!wavebufCache && (wavebufCache = newHandle(size)) != 0)
         setPurgeable(wavebufCache, 1);
     if (wavebufCache && !handleLocks(wavebufCache) && !setHandleSize(wavebufCache, size))
-        buffer = (unsigned char *)fn_48ea00(wavebufCache);
+        buffer = (unsigned char *)lockHandleAlias(wavebufCache);
     else if ((buffer = (unsigned char *)newPtr(size)) == 0) {
         error = MMSYSERR_NOMEM;
         disposePtr(headers);

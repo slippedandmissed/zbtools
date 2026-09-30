@@ -17,8 +17,6 @@ extern short starvationPaused;
 extern unsigned long lastCheck; /* @data 0x4ab4a0 */
 extern unsigned long thisCheck; /* @data 0x4ab4a4 */
 void enterGameDirectory();
-unsigned long fn_41571f(); /* a tick count */
-unsigned long fn_415772(); /* a tick count */
 void checkStarvation();
 short waitForEventOrTimer(short timer, short type, short discard);
 short waitForEventOrTimerWrapped(short timer, short type, short discard);

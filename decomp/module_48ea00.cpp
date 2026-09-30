@@ -1,5 +1,5 @@
 /*
- * module_48ea00 (Mohawk engine): fn_48ea00
+ * module_48ea00 (Mohawk engine): lockHandleAlias
  */
 
 /* @flags -p -x- */
@@ -8,7 +8,7 @@
 
 /* lockHandle under another name. */
 /* @zoombi32 0x0048ea00 */
-void *fn_48ea00(short handle)
+void *lockHandleAlias(short handle)
 {
     return lockHandle(handle);
 }

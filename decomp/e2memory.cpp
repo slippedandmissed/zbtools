@@ -608,7 +608,7 @@ void unlockResource(long resource)
 /* @zoombi32 0x0046cae6 */
 short *resourceShorts(long resource)
 {
-    return (short *)fn_48ea00(usedResourceHandle(resource));
+    return (short *)lockHandleAlias(usedResourceHandle(resource));
 }
 
 /* @zoombi32 0x0046cafb */

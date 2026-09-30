@@ -479,7 +479,7 @@ struct ImageBank
    saved at 0xa462). */
 struct Party
 {
-    short count; /* travellers (fn_4572bf counts those present) */
+    short count; /* travellers (countPresentTravellers counts those present) */
     short unknown2;
     short unknown4;
     Traveller travellers[32];
@@ -741,7 +741,7 @@ struct Deferred;
 
 /* A lock (the OS layer's): while it's held, calls posted to it (deferCall)
    wait in a queue, and the last leaveLock runs them. Locks can be listed at
-   `locks` (all of them held at once by fn_46dc45). */
+   `locks` (all of them held at once by enterAllLocks). */
 struct DeferLock
 {
     DeferLock *prev;
@@ -1152,14 +1152,12 @@ long __cdecl cmgr_0b(long, HWND window, UINT message, WPARAM wParam, LPARAM lPar
 /* Engine functions whose calling conventions aren't known yet: these
    declarations produce the calls the game makes. */
 
-short fn_480b80(InputItem *item, Point *where); /* the default hit test */
 /* The engine's graphics follow Mac QuickDraw: a current port, and conversions
    between a port's coordinates and the screen's. */
 basePort *getPort(); /* 0x48b510 */
 basePort *setPort(basePort *port); /* 0x48d960: the previous one */
 short globalToLocal(Point *point); /* 0x48c4cc */
 short localToGlobal(Point *point); /* 0x48c688 */
-short fn_480642(); /* initialises the configuration file */
 short initFiles(long); /* 0x483732: initialises the file layer */
 void __cdecl initDisplayMode(DisplayMode *mode, unsigned short width, unsigned short height, unsigned long colors,
                              short palettized);
@@ -1201,15 +1199,10 @@ Color getForeColor();
 Color setForeColor(Color color); /* the previous one */
 unsigned short setPenWidth(short width); /* the previous one */
 
-void fn_48b2d8(DisplayMode *mode);
-void fn_48d480(DisplayMode *mode);
 short initResources();
-short fn_493096(); /* initialises the timer */
 
 /* Reads `key` from `section` of the INI file `file` into buffer; non-zero if
    it couldn't. */
-short fn_480790(const fileSpec &file, const char *section, const char *key, char *buffer,
-                long size);
 short closeResourceFile(long map, short compact, short force);
 
 /*
@@ -1775,7 +1768,7 @@ struct MemoryState
 {
     short error; /* of the last call */
     short ready;
-    unsigned short unknown4; /* fn_48f260 counts it up to 3 */
+    unsigned short unknown4; /* countHeapUp counts it up to 3 */
     short purgeEnabled;
     PurgeProc purgeProc; /* +8 */
     GrowProc growProc; /* +0xc */
@@ -1794,7 +1787,7 @@ unsigned short handleLocks(short handle);
 unsigned short handleState(short handle);
 unsigned long ptrSize(void *pointer);
 void getMemoryInfo(MemoryInfo *info);
-void *fn_48ea00(short handle);
+void *lockHandleAlias(short handle);
 short recoverMemory(short error, unsigned long size);
 Block allocBlock(unsigned long size, unsigned short moveable);
 short freeBlock(Block block);
@@ -1808,8 +1801,8 @@ short memoryBufferSize();
 void closeMemory();
 short growZone(unsigned long size, short error);
 unsigned short entryIndex(HandleEntry *entry);
-void fn_48ef15(Block block);
-void fn_48ef1c(Block block);
+void beforeBlockChange(Block block);
+void afterBlockChange(Block block);
 void moveMemory(void *to, const void *from, unsigned long size);
 short lockPtr(void *pointer);
 short unlockPtr(void *pointer);
@@ -1817,7 +1810,7 @@ unsigned long purgeMemory(unsigned long needed, short purpose);
 short setPurgeEnabled(short enabled);
 void *resizePtr(void *pointer, unsigned long size);
 short isPointer(void *pointer);
-short fn_48f260();
+short countHeapUp();
 void fillMemory(void *to, unsigned char value, unsigned long size);
 GrowProc setGrowProc(GrowProc proc);
 unsigned short setHandleLocks(short handle, unsigned short locks);
@@ -2612,11 +2605,9 @@ long newStreamedSound(long resource, long);
 short openWaveOut(long *out, unsigned short device, PCMWAVEFORMAT *format, long, long,
                   long flags); /* 0x47c712 */
 short getWaveCaps(unsigned short device, void *caps, long size); /* 0x47c432 */
-short fn_47a074(short open); /* MMSYSERR_NOTSUPPORTED */
+short unsupportedMidiCall(short open); /* MMSYSERR_NOTSUPPORTED */
 unsigned short initMidi(); /* 0x47a07f */
 void closeMidi(); /* 0x47a0c0 */
-short fn_47c62c();
-void fn_47c995();
 long __cdecl parseNumber(const char *text); /* 0x47a066 */
 short setSoundError(short error); /* 0x47de96 */
 void __cdecl notifySound(audioObj *object, SoundNotice *notice); /* 0x47e0d3 */
@@ -3558,7 +3549,6 @@ short getIniLong(fileSpec *file, const char *section, const char *key, long *val
 
 /* Decompiled functions, by address */
 
-void fn_48b1e8(const Rect &rect); /* erases a rectangle */
 extern ShortRect debugRect; /* @data 0x4a79cc */
 extern short viewsReady; /* @data 0x4a7b86 */
 extern short removedRgn; /* @data 0x4a7b88: gRemovedFeatureBounds */
@@ -3622,7 +3612,7 @@ extern short g_4b966c;
 extern short g_4b9686;
 extern unsigned short soundTests; /* @data 0x4a7b80: report the sounds started */
 extern short *scripts[300]; /* @data 0x4b9008: the 'SCRB' scripts loaded */
-extern short g_4b966e;
+extern short hintSound;
 extern short g_4b97fc;
 extern short g_4b9804;
 extern short g_4b98cc;
@@ -3699,7 +3689,7 @@ extern char dragClicks; /* @data 0x4b8802: a quick click starts a click-to-drag 
 extern short clickTime; /* @data 0x4b87fc: ms */
 extern short partyViews[32]; /* @data 0x4b756c */
 extern short g_4b7bda;
-extern short g_4b756a;
+extern short snoidMode;
 extern short altSnoids; /* @data 0x4a4cea: the Zoombinis have their other look (useAltSnoids) */
 extern short g_4b7552;
 extern short g_4b7554;

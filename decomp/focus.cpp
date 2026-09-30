@@ -171,7 +171,7 @@ short setFocusedOn(short on, short value)
 short hitTestFocus(Point *where)
 {
     if (!currentGroup->handlers->hitTest)
-        return fn_480b80(currentItem, where);
+        return ptInRect(&currentItem->bounds, *where);
     else
         return currentGroup->handlers->hitTest(where, currentItem);
 }
@@ -642,9 +642,9 @@ void pressFocusedItem()
     highlightFocus();
     if (wasOn && !(currentGroup->flags & 0x10))
         return;
-    start = fn_415772();
+    start = clockTicks();
     setFocusedOn(target, 0);
-    while (fn_415772() <= start + 30)
+    while (clockTicks() <= start + 30)
         mainLoopEvents();
     setFocusedOn(target, 1);
     if (!(currentGroup->flags & 4))

@@ -186,7 +186,7 @@ void closeMaze()
         setFreeAtOnce(saved);
         closeGameFile(&g_4afc64);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -342,7 +342,7 @@ void mazeButtonClicked(short button)
     }
 }
 
-/* The scene's keys: 0x16f calls fn_466b93 (the only one; the check of
+/* The scene's keys: 0x16f calls replayHint (the only one; the check of
    g_4b8803 for other keys is left from the other scenes' cheat keys).
    Returns whether the key was used. */
 /* @zoombi32 0x0043570e */
@@ -352,7 +352,7 @@ short mazeKey(unsigned short key)
         return 0;
     switch (key) {
     case 0x16f:
-        fn_466b93();
+        replayHint();
         return 1;
     }
     return 0;
@@ -2557,7 +2557,7 @@ void openMaze()
     g_4afe54 = 0;
     g_4afe56 = 0;
     g_4afe58 = 0;
-    g_4b966e = 0;
+    hintSound = 0;
     fillMemory(g_4afc6c, 0, 30);
     fillMemory(g_4b08b8, 0, 40);
     fillMemory(g_4b08e0, 0, 40);
@@ -2635,7 +2635,7 @@ void openMaze()
     g_4afbd0 = loadShortTable(18000, &g_4afbc8);
     g_4afbd4 = loadShortTable(18001, &g_4afbcc);
     fadeOutViews();
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     g_4afc2a = addView(0x4188000, drawCels, runViewScript, 12001, 7, 0, 0, 0);
     setViewPlaces(20, places, 1);
     makePartySnoids(0);
@@ -2795,7 +2795,7 @@ void openMaze()
     loadShape(&g_4a21b4, 6000, "Map/Go Buttons");
     addView(0x1000, drawMazeButtons, updateMazeButtons, 0, 0, 0, 0, 0);
     fadeOutViews();
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     enterSnoids(0);
     updateViews();
     staggerSnoids(45, 30);
@@ -2822,6 +2822,6 @@ void openMaze()
     addSoundRange(10001, 10001, 0);
     queueViewSound(sceneLevel() + 30035, 0);
     campHint((short *)(g_4a4ba0 + 0x44));
-    g_4b966e = 20068;
+    hintSound = 20068;
     requestViewSort();
 }

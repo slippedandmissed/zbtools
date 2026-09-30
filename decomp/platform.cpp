@@ -63,7 +63,7 @@ void checkDisplayMode(DisplayMode *mode)
             }
         }
     }
-    fn_4150c7(0x100, message, svgaRequiredFormat, minimum, depth, width, height);
+    formatText(0x100, message, svgaRequiredFormat, minimum, depth, width, height);
     if (!canUseDisplayMode(mode, 1)) {
         mode->width = 512;
         mode->height = 384;
@@ -112,7 +112,7 @@ short createMainWindow(short, short)
     windowed = appShowCommand != SW_SHOWMAXIMIZED;
     ShowWindow(mainWindow, appShowCommand);
     UpdateWindow(mainWindow);
-    fn_456914();
+    placeGamePort();
     return screenPort != 0;
 }
 
@@ -443,7 +443,7 @@ void enterProgramDirectory()
     else
         *last = 0;
     chdir(directory);
-    fn_455f66();
+    handleMessagesIgnoringInput();
 }
 
 /* Changes back to the drive and directory saved in savedDisk and
@@ -805,8 +805,8 @@ void activateApp(long active)
         appActive = active;
         if (active) {
             if (!g_4b2d3a && systemState.windowsVersion >= 0x395 && !g_4b2b04) {
-                fn_48b2d8(&g_4aa7dc);
-                fn_48d480(&displayMode);
+                getDisplayMode(&g_4aa7dc);
+                setDisplayMode(&displayMode);
             }
             placeGamePort();
             osSetActive(1);
@@ -830,7 +830,7 @@ void activateApp(long active)
             setSoundsActive(0);
             osSetActive(0);
             if (!g_4b2d3a && systemState.windowsVersion >= 0x395 && !g_4b2b04)
-                fn_48d480(&g_4aa7dc);
+                setDisplayMode(&g_4aa7dc);
             if (!g_4b2d32 && systemState.windowsVersion >= 0x395 && g_4a4a0c && !g_4b2d3a) {
                 windowed = 1;
                 SendMessage(mainWindow, WM_SYSCOMMAND, SC_MINIMIZE, 0);

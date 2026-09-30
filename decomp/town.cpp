@@ -156,7 +156,7 @@ void closeScene0()
         discardEvents(3);
         setFreeAtOnce(saved);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
         loadSnoids(0);
         loadDialogs();
         g_4b2aea = 1;
@@ -239,7 +239,7 @@ void closeScene6()
         setFreeAtOnce(saved);
         closeGameFile(&g_4b7dfc);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
         g_4a74dc = -1;
     }
 }
@@ -316,7 +316,7 @@ void drawTownButtons(View *)
     drawTownButton(1, 0, 0);
 }
 
-/* Moves the Zoombinis who arrived (the travellers, fn_4572bf of them) into
+/* Moves the Zoombinis who arrived (the travellers, countPresentTravellers of them) into
    the town's free slots, up to 625. */
 /* @zoombi32 0x0045dfb1 */
 void settleTravellers()
@@ -326,7 +326,7 @@ void settleTravellers()
     short i;
     short j;
 
-    arrived = fn_4572bf();
+    arrived = countPresentTravellers();
     found = 0;
     for (i = 624; !found && i >= 0; i--)
         if (townSlots->slots[i].zoombini)
@@ -878,7 +878,7 @@ void openScene6()
     openGameFile(&g_4b7dfc, "Town.MHK");
     setCurrentMap(g_4b7dfc);
     useAltSnoids(0);
-    population() += fn_4572bf();
+    population() += countPresentTravellers();
     if (population() >= 625)
         g_4b7ecc = 1;
     townSlots = (Camp *)(g_4a4ba0 + 0x6c42);
@@ -1001,7 +1001,7 @@ void openScene6()
         view->flags |= 2;
         view->placed = drawClock;
     }
-    fn_4148da(1, 254);
+    copyPaletteRange(1, 254);
     updateViews();
     setGroupLists(townGroups6, 1, (short)0xc000);
     drawTownButton(1, 0, 0);

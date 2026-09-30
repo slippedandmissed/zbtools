@@ -44,7 +44,7 @@ void openScene1()
     setPort(port);
     loadFeatureGroup(1000, 0, 0);
     loadScripts(1000, 6);
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     g_4afb3a = addView(0x8108000, drawCels, runViewScript, 1000, 6, 0, 0, 0);
     g_4afb3c = addView(0x8108000, drawCels, runViewScript, 1001, 6, 0, 0, 0);
     view = findView(g_4afb3a);
@@ -151,7 +151,7 @@ void openScene19()
     view = findView(levelListView);
     if (view)
         view->placed = placeCatchScore;
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     updateViews();
     hideCursor();
     setGroupLists(catchGroups, 1, (short)0xc000);
@@ -176,7 +176,7 @@ void closeScene19()
         setFreeAtOnce(saved);
         closeGameFile(&g_4afb10);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -217,7 +217,7 @@ void openScene20()
     loadSoundByKey(3000, RESOURCE_TYPE(0, 'S', 'N', 'D'));
     loadSoundByKey(3001, RESOURCE_TYPE(0, 'S', 'N', 'D'));
     loadSoundByKey(3002, RESOURCE_TYPE(0, 'S', 'N', 'D'));
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     setGroupLists(targetGroups, 1, (short)0xc000);
     showRect(&g_4aa7b8);
     fadeInViews();
@@ -241,7 +241,7 @@ void closeScene20()
         setFreeAtOnce(saved);
         closeGameFile(&g_4afb10);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -1242,7 +1242,7 @@ void closeScene1()
         setFreeAtOnce(saved);
         closeGameFile(&g_4afb10);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 

@@ -85,7 +85,7 @@ void openScene5()
     g_4ab66a[6] = addView(0x5188000, drawCels, runViewScript, 6006, 6, 0, 0, 0);
     g_4ab66a[7] = addView(0x5188000, drawCels, runViewScript, 6007, 6, 0, 0, 0);
     g_4ab66a[8] = addView(0x5188000, drawCels, runViewScript, 6008, 6, 0, 0, 0);
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     setViewPlaces(16, places, 1);
     if (party()->count)
         makePartySnoids(0);
@@ -96,10 +96,10 @@ void openScene5()
     waitingParties()[2].unknown2 = 1;
     waitingParties()[2].unknown4 = 1;
     if (n) {
-        if (!party()->unknown2 && fn_4572bf()) {
+        if (!party()->unknown2 && countPresentTravellers()) {
             highest = bookHighest;
             m = addPartyToBook();
-            bookCount += fn_4572bf();
+            bookCount += countPresentTravellers();
             bookHighest = lastBookEntry();
             countBookEntry(-1);
             if (m) {
@@ -206,7 +206,7 @@ void closeScene5()
                 waitingParties()[2] = *party();
                 party()->unknown2 = 0;
                 party()->unknown4 = 1;
-                *(short *)(g_4a4ba0 + 0x4c) -= fn_4572bf();
+                *(short *)(g_4a4ba0 + 0x4c) -= countPresentTravellers();
             }
             dropEmptyBookRows();
             countBookEntry(-1);
@@ -217,7 +217,7 @@ void closeScene5()
         setFreeAtOnce(saved);
         closeGameFile(&g_4ab658);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -978,7 +978,7 @@ short addPartyToBook()
     short i;
     short j;
 
-    count = fn_4572bf();
+    count = countPresentTravellers();
     added = found = 0;
     for (i = 624; !found && i >= 0; i--)
         if (bookEntries->entries[i].zoombini) {

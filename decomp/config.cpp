@@ -14,14 +14,22 @@ char dataDirName[] = "Data\\";
 char installToDirKey[] = "INSTALLTODIR";
 
 /* @zoombi32 0x0044695c */
-void fn_44695c()
+void refreshCursor()
 {
-    fn_46258a();
+    setModeCursor();
 }
 
 /* @zoombi32 0x00446962 */
-void fn_446962(char *, const char *)
+void unusedPathHook(char *, const char *)
 {
+}
+
+/* getIniString with the file as a reference: the calls below pass the file
+   name, which makes a temporary fileSpec of it, as in the original. */
+inline short getIniString(const fileSpec &file, const char *section, const char *key, char *buffer,
+                          unsigned short size)
+{
+    return getIniString((fileSpec *)&file, section, key, buffer, size);
 }
 
 /*
@@ -36,7 +44,7 @@ void findGameData()
 {
     char path[256];
 
-    if (fn_480790(configFileName, "INSTALL", installFromDirKey, installDir, 0x100))
+    if (getIniString(configFileName, "INSTALL", installFromDirKey, installDir, 0x100))
         fatalError("unable to read file Zoombi32.CFG");
     path[0] = 0;
     strcpy(path, installDir);
@@ -47,7 +55,7 @@ void findGameData()
     if (!fileMissing(archive)) {
         g_4a3e5c = 1;
     } else {
-        if (fn_480790(configFileName, "INSTALL", installToDirKey, installDir, 0x100))
+        if (getIniString(configFileName, "INSTALL", installToDirKey, installDir, 0x100))
             fatalError("unable to read file Zoombi32.CFG");
         path[0] = 0;
         strcpy(path, installDir);

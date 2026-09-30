@@ -85,7 +85,7 @@ void closePizza()
         setFreeAtOnce(saved);
         closeGameFile(&g_4b15d0);
         fadeOutViews();
-        fn_4624fc();
+        showBusyCursor();
     }
 }
 
@@ -1983,7 +1983,7 @@ short pizzaKey(unsigned short key)
         return 0;
     switch (key) {
     case 367:
-        fn_466b93();
+        replayHint();
         return 1;
     case 'A':
     case 'a':
@@ -2944,7 +2944,7 @@ void openPizza()
     g_4b0d52 = g_4b15ee = 0;
     g_4b15e4 = pizzaGoReady = 0;
     g_4b1824 = clockTime();
-    g_4b966e = g_4b166e = 0;
+    hintSound = g_4b166e = 0;
     g_4b15f2 = g_4b162e = g_4b1630 = g_4b1632 = 0;
     g_4b15f4 = g_4b15f6 = g_4b15ea = g_4b16bc = 0;
     lastTriedPizza = nextZoombini = -1;
@@ -3084,7 +3084,7 @@ void openPizza()
         shylerState = 1;
         break;
     }
-    fn_4148da(10, 236);
+    copyPaletteRange(10, 236);
     saved = g_4b87fe;
     g_4b87fe = 0;
     g_4b1648 = 0;
@@ -3128,9 +3128,9 @@ void openPizza()
     addSoundRange(13000, 13099, 0);
     g_4b87fe = saved;
     if (!pizzaLevel)
-        g_4b966e = 20071;
+        hintSound = 20071;
     else
-        g_4b966e = 20072;
+        hintSound = 20072;
     switch (campHint((short *)(g_4a4ba0 + 0x2e))) {
     case 1:
         sayIntroduction(0);

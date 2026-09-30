@@ -594,15 +594,15 @@ void strandParty()
 }
 
 /* @zoombi32 0x00466b93 */
-void fn_466b93()
+void replayHint()
 {
-    if (g_4b966e) {
-        if (lastViewSound == g_4b966e) {
+    if (hintSound) {
+        if (lastViewSound == hintSound) {
             stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
             lastViewSound = 0;
             return;
         }
-        queueViewSound(g_4b966e, 0);
+        queueViewSound(hintSound, 0);
     }
 }
 
@@ -699,7 +699,7 @@ void startNewGame()
     g_4b80e2 = 0;
     scene = currentScene;
     fillRosterHeader(1);
-    fn_41f668();
+    applyPlayerSettings();
     currentScene = scene;
     *(short *)(g_4a4ba0 + 0xca) = g_4b0d56 = 3;
     g_4b0d54 = -1;
@@ -882,7 +882,7 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
                 script = 7;
             savedGameList = (SavedGameList *)newPtr(0x646);
             if (!savedGameList)
-                fn_41f195("Out of Memory.");
+                reportRosterError("Out of Memory.");
             readWriteSavedGames(savedGameList, 2);
             g_4b9806 = addView(0x4001000, drawDialogPart, updateDialogPart, script, 0, 0, 0, 0);
             g_4b9808 = addView(0x4000000, drawDialogPart, updateDialogPart, script + 1, 11, 0, 0, 0);
@@ -1411,7 +1411,7 @@ void dialogKey(unsigned short key)
                 if (g_4b98d2 > 1)
                     g_4b754a = 1;
             }
-            fn_46293a(key);
+            gameKey(key);
         }
         break;
     case 0x125:
