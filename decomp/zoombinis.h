@@ -3654,7 +3654,6 @@ enum DialogText
     textCreditLines = 42,
 };
 extern char gameName[]; /* @data 0x4a48ea */
-extern char userFile[]; /* @data 0x4a4900 */
 extern char clickToDragOption; /* @data 0x4b8800: the options' click-to-drag setting */
 extern unsigned short g_4b0d4a;
 extern short g_4a74dc;

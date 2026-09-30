@@ -1258,7 +1258,7 @@ void layOutGrid()
             hexCells[cell + extra].state = startState;
             hexCells[cell + extra + 1].state = 506;
             listedCount++;
-            listedPoints[listedCount] = cellPlaces[cell + extra + 1];
+            listedPoints[listedCount] = cellPoints[cell + extra + 1];
             listedCells[listedCount] = extra + cell + 1;
             listedPoints[listedCount].x += 24;
             listedPoints[listedCount].y -= 5;
@@ -1267,7 +1267,7 @@ void layOutGrid()
                 hexCells[cell + extra + 2].state = 501;
                 hexCells[cell + extra + 3].state = 506;
                 listedCount++;
-                listedPoints[listedCount] = cellPlaces[cell + extra + 3];
+                listedPoints[listedCount] = cellPoints[cell + extra + 3];
                 listedCells[listedCount] = extra + cell + 3;
                 listedPoints[listedCount].x += 24;
                 listedPoints[listedCount].y -= 5;
@@ -1294,7 +1294,7 @@ void layOutGrid()
             hexCells[cell].state = startState;
             hexCells[cell + 1].state = 506;
             listedCount++;
-            listedPoints[listedCount] = cellPlaces[cell + 1];
+            listedPoints[listedCount] = cellPoints[cell + 1];
             listedCells[listedCount] = cell + 1;
             listedPoints[listedCount].x += 24;
             listedPoints[listedCount].y -= 5;
@@ -1308,7 +1308,7 @@ void layOutGrid()
                 hexCells[cell + 2].state = 501;
                 hexCells[cell + 3].state = 506;
                 listedCount++;
-                listedPoints[listedCount] = cellPlaces[cell + 3];
+                listedPoints[listedCount] = cellPoints[cell + 3];
                 listedCells[listedCount] = cell + 3;
                 listedPoints[listedCount].x += 24;
                 listedPoints[listedCount].y -= 5;
@@ -1324,7 +1324,7 @@ void layOutGrid()
                 hexCells[cell + 2].state = 501;
                 hexCells[cell + 3].state = 506;
                 listedCount++;
-                listedPoints[listedCount] = cellPlaces[cell + 3];
+                listedPoints[listedCount] = cellPoints[cell + 3];
                 listedCells[listedCount] = cell + 3;
                 listedPoints[listedCount].x += 24;
                 listedPoints[listedCount].y -= 5;
@@ -1341,7 +1341,7 @@ void layOutGrid()
                 hexCells[cell + 4].state = 501;
                 hexCells[cell + 5].state = 506;
                 listedCount++;
-                listedPoints[listedCount] = cellPlaces[cell + 5];
+                listedPoints[listedCount] = cellPoints[cell + 5];
                 listedCells[listedCount] = cell + 5;
                 listedPoints[listedCount].x += 24;
                 listedPoints[listedCount].y -= 5;
@@ -1356,7 +1356,7 @@ void layOutGrid()
                 hexCells[cell + 4].state = 501;
                 hexCells[cell + 5].state = 506;
                 listedCount++;
-                listedPoints[listedCount] = cellPlaces[cell + 5];
+                listedPoints[listedCount] = cellPoints[cell + 5];
                 listedCells[listedCount] = cell + 5;
                 listedPoints[listedCount].x += 24;
                 listedPoints[listedCount].y -= 5;
@@ -1488,7 +1488,7 @@ void layOutGrid()
         for (cell = 0; cell < 18; cell++)
             if (hexCells[g_4a43d0[cell]].state == 507) {
                 listedCount++;
-                listedPoints[listedCount] = cellPlaces[g_4a43d0[cell]];
+                listedPoints[listedCount] = cellPoints[g_4a43d0[cell]];
                 listedCells[listedCount] = g_4a43d0[cell];
                 listedPoints[listedCount].x += 24;
                 listedPoints[listedCount].y -= 5;
@@ -1682,7 +1682,7 @@ void layOutGrid()
             row = g_4a4238[cell];
             if (hexCells[row].state == 507) {
                 listedCount++;
-                listedPoints[listedCount] = cellPlaces[row];
+                listedPoints[listedCount] = cellPoints[row];
                 listedCells[listedCount] = row;
                 listedPoints[listedCount].x += 24;
                 listedPoints[listedCount].y -= 5;
@@ -1697,9 +1697,9 @@ void layOutGrid()
         if (hexCells[cell].state == 507)
             hexCells[cell].state = 506;
         if (hexCells[cell].state == 500)
-            hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7001, 6, &cellPlaces[cell], 0, 0);
+            hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7001, 6, &cellPoints[cell], 0, 0);
         else if (hexCells[cell].state == startState) {
-            hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &cellPlaces[cell], 0, 0);
+            hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &cellPoints[cell], 0, 0);
             view = findView(hexCells[cell].view);
             view->placed = placeCellViewImages;
             g_4b241a++;
@@ -1709,7 +1709,7 @@ void layOutGrid()
             if (g_4b241a == 1)
                 g_4b2518 = groupViews(hexCells[cell].view, hexCells[cell].view, 0, 0, 0, 0);
         } else {
-            hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &cellPlaces[cell], 0, 0);
+            hexCells[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &cellPoints[cell], 0, 0);
             view = findView(hexCells[cell].view);
             view->placed = placeCellViewImages;
         }

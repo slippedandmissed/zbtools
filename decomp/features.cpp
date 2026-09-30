@@ -711,8 +711,8 @@ void startNewGame()
     viewsLocked = 1;
     g_4b7562 = 1;
     strcpy(gameName, "New Game");
-    strcpy(userFile, "ZBUser");
-    strcat(userFile, ".txt");
+    strcpy(userFileName, "ZBUser");
+    strcat(userFileName, ".txt");
 }
 
 /* The New Game button: asks first (warning if the game isn't saved). */
@@ -1737,8 +1737,8 @@ void placeDialogList(View *view)
                     if (g_4b9684 & 2) {
                         if (g_4b9666 > 0) {
                             strcpy(gameName, savedGameList->games[g_4b9666 - 1].name);
-                            strcpy(userFile, savedGameList->games[g_4b9666 - 1].file);
-                            strcat(userFile, ".txt");
+                            strcpy(userFileName, savedGameList->games[g_4b9666 - 1].file);
+                            strcat(userFileName, ".txt");
                             fillRosterHeader(1);
                             readRoster();
                             viewsLocked = 1;
@@ -1793,8 +1793,8 @@ void placeDialogList(View *view)
                                 g_4afb32 = i;
                                 switch (i) {
                                 case 1:
-                                    strcpy(userFile, savedGameList->games[found - 1].file);
-                                    strcat(userFile, ".txt");
+                                    strcpy(userFileName, savedGameList->games[found - 1].file);
+                                    strcat(userFileName, ".txt");
                                     strcpy(gameName, savedGameList->games[found - 1].name);
                                     viewsLocked = 0;
                                     strandParty();
@@ -1802,13 +1802,13 @@ void placeDialogList(View *view)
                                 case 2:
                                     newSaveFileName(saveName, file, &nextSaveId);
                                     strcpy(gameName, saveName);
-                                    strcpy(userFile, file);
+                                    strcpy(userFileName, file);
                                     strcpy(savedGameList->games[savedGames].name, gameName);
-                                    strcpy(savedGameList->games[savedGames].file, userFile);
+                                    strcpy(savedGameList->games[savedGames].file, userFileName);
                                     savedGames++;
                                     savedGameList->count = savedGames;
                                     savedGameList->nextId = nextSaveId;
-                                    strcat(userFile, ".txt");
+                                    strcat(userFileName, ".txt");
                                     viewsLocked = 0;
                                     g_4b2aea = 0;
                                     strandParty();

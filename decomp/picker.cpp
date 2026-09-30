@@ -1213,9 +1213,9 @@ void closeScene1()
         clearViews();
         if (g_4b754a) {
             if (!g_4afb30) {
-                strcpy(savedUserFile, userFile);
+                strcpy(savedUserFile, userFileName);
                 g_4a48e8 = 1;
-                strcpy(userFile, "ZBtemp");
+                strcpy(userFileName, "ZBtemp");
                 viewsLocked = 0;
                 g_4afb32 = 1;
                 saveRoster();
@@ -1860,7 +1860,7 @@ void leavePractice()
         readRoster();
         viewsLocked = 1;
         g_4b0d52 = 0;
-        strcpy(userFile, savedUserFile);
+        strcpy(userFileName, savedUserFile);
     }
 }
 

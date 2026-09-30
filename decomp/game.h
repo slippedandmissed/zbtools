@@ -239,7 +239,6 @@ void startView11076();
 void stopView11076();
 
 void layOutGrid();
-extern Point cellPlaces[117]; /* @data 0x4a3fcc: where each hex cell is */
 extern short g_4a4238[26]; /* @data 0x4a4238: level 3's open cells */
 extern short g_4a426c[43]; /* @data 0x4a426c: level 3's blocked cells */
 extern short g_4a42c2[20]; /* @data 0x4a42c2 */

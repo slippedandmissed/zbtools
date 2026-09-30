@@ -748,7 +748,7 @@ void readRoster()
     char name[32] = "ZBUser";
 
     strcat(name, ".txt");
-    if (strncmp(userFile, name, strlen(userFile))) {
+    if (strncmp(userFileName, name, strlen(userFileName))) {
         readWriteRoster(g_4a4ba0, 1);
         if (swapShort(*(unsigned short *)g_4a4ba0) != 107)
             reportRosterError("Invalid user file, delete and try again: ");
@@ -1228,7 +1228,7 @@ void saveRoster()
     char name[32] = "ZBUser";
 
     strcat(name, ".txt");
-    if (strncmp(userFile, name, strlen(userFile)) && g_4afb32) {
+    if (strncmp(userFileName, name, strlen(userFileName)) && g_4afb32) {
         if (g_4a4ba0) {
             fillRosterHeader(0);
             readWriteRoster(g_4a4ba0, 0);
@@ -1692,7 +1692,7 @@ short cavesKey(unsigned short key)
 }
 
 /* Reads (`read`) or writes the roster (`data`, 0xae05 bytes) from or to
-   the roster file next to the program (userFile). */
+   the roster file next to the program (userFileName). */
 /* @zoombi32 0x0041f1da */
 void readWriteRoster(void *data, short read)
 {
@@ -1705,7 +1705,7 @@ void readWriteRoster(void *data, short read)
     size = 0xae05;
     result = 3;
     strcpy(path, moduleFileName);
-    strcat(path, userFile);
+    strcat(path, userFileName);
     result = openRosterFile(path, result);
     if (result == 2)
         reportRosterError("Could not Open/Create Roster file.");
