@@ -3802,14 +3802,14 @@ extern long g_4a21b4;
 extern SceneButton g_4a20f4[3]; /* [0] isn't a button: the data before is a string */
 extern long g_4afbdc;
 extern short featureRows[][4]; /* @data 0x4afe5a */
-extern short g_4b0d3a;
-extern short g_4b0d38;
-extern short g_4b0d3c;
+extern short mazeFidgetsDone; /* @data 0x4b0d3a */
+extern short mazeFidgetsAllowed; /* @data 0x4b0d38 */
+extern short mazeFidgeting; /* @data 0x4b0d3c */
 extern ImageBank *mazeImages; /* @data 0x4afbc0 */
-extern short *g_4b076c; /* the loaded table of Zoombini parts (10 words each) */
+extern short *snoidPartsTable; /* @data 0x4b076c: the loaded table of Zoombini parts (10 words each) */
 extern short squareOccupants[][13][3]; /* @data 0x4b00d2: the maze's squares */
 extern Point *squarePlaces; /* @data 0x4afbf0: where each square is (13 to a row) */
-extern short g_4b08b8[];
+extern short poseDoneList[]; /* @data 0x4b08b8 */
 extern short g_4b09fa;
 extern short g_4afc6c[];
 extern short g_4afd8c[];
@@ -3817,7 +3817,7 @@ extern short takenRows[20][4]; /* @data 0x4b0770: the rows taken */
 extern short takenRowsCopy[20][4]; /* @data 0x4b0810: and a copy */
 extern short squareViews[][13]; /* @data 0x4b04c8 */
 extern short squareKinds[][13]; /* @data 0x4b061a */
-extern short g_4b0a10[];
+extern short lineViews[]; /* @data 0x4b0a10 */
 extern short g_4b0b6e[];
 extern short g_4b0ba0[];
 extern short g_4b0bd2[];
@@ -3833,17 +3833,17 @@ extern short g_4b0d08;
 extern short g_4b0d0a;
 extern short g_4b0d0c;
 extern short g_4a25e0[][2];
-extern short g_4b08e0[];
+extern short arrivedList[]; /* @data 0x4b08e0 */
 extern short g_4b09f8;
 extern short g_4a23be[18][2];
 extern short g_4b08b0;
 extern short g_4a7d40;
 extern short g_4a2116;
-extern short g_4b0930[20];
+extern short partnerList[20]; /* @data 0x4b0930 */
 extern short g_4b09fe;
 extern short *g_4afc24;
-extern short *g_4afbd0;
-extern short *g_4afbd4;
+extern short *partHotX; /* @data 0x4afbd0 */
+extern short *partHotY; /* @data 0x4afbd4 */
 extern GroupList g_4a2194;
 
 extern short enoughToLeaveChosen; /* @data 0x4b15a8 */

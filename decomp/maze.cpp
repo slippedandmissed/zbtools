@@ -101,7 +101,7 @@ void freeMazeTable(long *resource, short *handle)
 }
 
 /* Draws button 1 (image 5 or 6) or 2 (2 or 3, or 1 or 2 without
-   g_4afc6a), lit or not, and with `show` shows it. */
+   mazeGoReady), lit or not, and with `show` shows it. */
 /* @zoombi32 0x004346dc */
 void drawMazeButton(short which, short lit, short show)
 {
@@ -115,7 +115,7 @@ void drawMazeButton(short which, short lit, short show)
         break;
     case 2:
         image = 2;
-        if (!g_4afc6a) {
+        if (!mazeGoReady) {
             lit = 0;
             image = 1;
         }
@@ -144,22 +144,22 @@ void drawMazeButtons(View *)
     drawMazeButton(2, 0, 0);
 }
 
-/* A view's update: adds buttons 2 (when g_4afc6a changes) and 1 (the
+/* A view's update: adds buttons 2 (when mazeGoReady changes) and 1 (the
    first time) to the region to redraw. */
 /* @zoombi32 0x004347f6 */
 void updateMazeButtons(View *, short region)
 {
-    if (g_4afc6a) {
-        if (!g_4a25c4) {
-            g_4a25c4 = 1;
+    if (mazeGoReady) {
+        if (!mazeButton2Lit) {
+            mazeButton2Lit = 1;
             unionRgnRect(region, &g_4a20f4[2].rect);
         }
-    } else if (g_4a25c4) {
-        g_4a25c4 = 0;
+    } else if (mazeButton2Lit) {
+        mazeButton2Lit = 0;
         unionRgnRect(region, &g_4a20f4[2].rect);
     }
-    if (!g_4a25c6) {
-        g_4a25c6 = 1;
+    if (!mazeButton1Drawn) {
+        mazeButton1Drawn = 1;
         unionRgnRect(region, &g_4a20f4[1].rect);
     }
 }
@@ -174,17 +174,17 @@ void closeMaze()
 
         clearViews();
         unloadSounds();
-        freeMazeTable(&g_4afc18, &g_4afc20);
+        freeMazeTable(&hotSpotTableResource, &hotSpotTableHandle);
         freeResource(&g_4a21b4);
-        freeResource(&g_4afbd8);
+        freeResource(&unusedMazeResource);
         freeResource(&g_4afbdc);
-        freeResource(&g_4afbe0);
-        freeResource(&g_4afbe4);
-        freeResource(&g_4afbc4);
-        freeResource(&g_4afbc8);
-        freeResource(&g_4afbcc);
+        freeResource(&mazeHotSpotsXResource);
+        freeResource(&mazeHotSpotsYResource);
+        freeResource(&mazeImagesResource);
+        freeResource(&partHotXResource);
+        freeResource(&partHotYResource);
         setFreeAtOnce(saved);
-        closeGameFile(&g_4afc64);
+        closeGameFile(&mazeFile);
         fadeOutViews();
         showBusyCursor();
     }
@@ -192,7 +192,7 @@ void closeMaze()
 
 /*
  * The maze's buttons: leaves at once if asked to; 1 asks to leave for the
- * map (999, keeping the party); 2, once allowed (g_4afc6a), asks to leave
+ * map (999, keeping the party); 2, once allowed (mazeGoReady), asks to leave
  * for scene 6 (996). 3 is the maze itself, until a Zoombini is on its way:
  * the first time sets up the Zoombinis' parts; then drags the one under
  * the cursor (not one already in the maze, and at most 10) onto a free
@@ -232,7 +232,7 @@ void mazeButtonClicked(short button)
         askKeepParty();
         break;
     case 2:
-        if (g_4afc6a) {
+        if (mazeGoReady) {
             queueViewSound(996, 0);
             drawMazeButton(button, 1, 1);
             waitForEventFor(0, 2, 0, 1);
@@ -243,8 +243,8 @@ void mazeButtonClicked(short button)
     case 3:
         if (snoidsOnTheirWay > 0)
             break;
-        if (!g_4afc38 && featureRowCount > 0) {
-            g_4afc38 = 1;
+        if (!partsSetUp && featureRowCount > 0) {
+            partsSetUp = 1;
             for (helper = viewListEnd(1); helper; helper = helper->next)
                 if (helper->flags == 1) {
                     snoid = (Snoid *)&helper->body;
@@ -255,35 +255,35 @@ void mazeButtonClicked(short button)
         view = viewAt(cursor, 1, 1);
         if (!view)
             view = viewAt(cursor, 0x8001, 1);
-        if (!view || g_4afc60 >= 10)
+        if (!view || mazeSnoidCount >= 10)
             break;
-        g_4afc3c = 1;
+        dragFromStart = 1;
         for (i = 0; i < 10; i++)
-            if (g_4afc4a[i] == view->id)
-                g_4afc3c = 0;
-        if (g_4afc3c != 1 || g_4afc3e)
+            if (mazeSnoidViews[i] == view->id)
+                dragFromStart = 0;
+        if (dragFromStart != 1 || unusedDragFlag)
             break;
         snoid = (Snoid *)&view->body;
         parts = (short *)snoid;
         where = *(Point *)&view->body.x;
-        dragSnoid(view, cursor, &g_4a2554[parts[35]], 0);
-        if ((g_4afc40 = heldPlaceNumber()) > 0) {
+        dragSnoid(view, cursor, &startDragAreas[parts[35]], 0);
+        if ((startPlace = heldPlaceNumber()) > 0) {
             for (i = 0; i < 14; i++)
-                if (g_4afc6c[i] == g_4afc6c[g_4afc40] && g_4afc6c[g_4afc40])
-                    g_4afc3c = 0;
-            if (!g_4afc3c)
+                if (g_4afc6c[i] == g_4afc6c[startPlace] && g_4afc6c[startPlace])
+                    dragFromStart = 0;
+            if (!dragFromStart)
                 break;
-            g_4afc40--;
+            startPlace--;
             view->flags = 0x4008001;
-            g_4afc4a[g_4afc60] = view->id;
-            g_4afc60++;
-            snoid->unknownF1 = g_4a2260[g_4afc40];
-            snoid->unknownF2 = g_4a2228[g_4afc40];
-            snoid->body.x = g_4a21f0[g_4afc40].x;
-            snoid->body.y = g_4a21f0[g_4afc40].y;
-            parts[20] = g_4a227c[g_4afc40];
-            parts[31] = g_4a2362[g_4afc40].x;
-            parts[32] = g_4a2362[g_4afc40].y;
+            mazeSnoidViews[mazeSnoidCount] = view->id;
+            mazeSnoidCount++;
+            snoid->unknownF1 = startPlaceF1[startPlace];
+            snoid->unknownF2 = startPlaceF2[startPlace];
+            snoid->body.x = startPlacePoints[startPlace].x;
+            snoid->body.y = startPlacePoints[startPlace].y;
+            parts[20] = startPlaceDirections[startPlace];
+            parts[31] = startPlaceSquares[startPlace].x;
+            parts[32] = startPlaceSquares[startPlace].y;
             switch (parts[20]) {
             case 0:
                 parts[34] = parts[32] - 1;
@@ -303,16 +303,16 @@ void mazeButtonClicked(short button)
                 break;
             }
             parts[29] = 0;
-            parts[36] = g_4a2298[g_4afc40];
-            helper = findView(g_4afd2c[g_4afc40]);
+            parts[36] = startPlaceIndex[startPlace];
+            helper = findView(pieceViews[startPlace]);
             if (helper) {
                 parts = (short *)&helper->body;
                 parts[50] = view->id;
-                parts[44] = g_4afc40 + 1;
+                parts[44] = startPlace + 1;
             }
-            g_4b09a8[g_4b0a04] = g_4afc40;
-            g_4b0a04++;
-            g_4afc6c[g_4afc40 + 1] = g_4afc40 + 1;
+            placedQueue[placedQueueCount] = startPlace;
+            placedQueueCount++;
+            g_4afc6c[startPlace + 1] = startPlace + 1;
         } else {
             if (((Snoid *)&view->body)->unknownF4 == 4) {
                 target = *(Point *)&((Snoid *)&view->body)->targetX;
@@ -329,12 +329,12 @@ void mazeButtonClicked(short button)
             case 1:
                 helper = findView(g_4afd8c[0]);
                 if (helper)
-                    sortFlaggedViews(helper, g_4a2548);
+                    sortFlaggedViews(helper, sortFlags1);
                 break;
             case 3:
                 helper = findView(g_4afd8c[0]);
                 if (helper)
-                    sortFlaggedViews(helper, g_4a254c);
+                    sortFlaggedViews(helper, sortFlags2);
                 break;
             }
         }
@@ -446,7 +446,7 @@ void placeOnHotSpot25(View *view)
 }
 
 /* The arrival hook (setArrivalHook): a Zoombini arriving in pose 1 or 3
-   sets g_4b0a0a or g_4b0a0c. */
+   sets gate1CloseDue or gate3CloseDue. */
 /* @zoombi32 0x00435f03 */
 void mazeArrivalHook(short id)
 {
@@ -457,10 +457,10 @@ void mazeArrivalHook(short id)
 
         switch (parts[35]) {
         case 1:
-            g_4b0a0a = 1;
+            gate1CloseDue = 1;
             break;
         case 3:
-            g_4b0a0c = 1;
+            gate3CloseDue = 1;
             break;
         }
     }
@@ -617,26 +617,26 @@ short firstFeatureNotIn(short which)
     return 0;
 }
 
-/* A view's notify: when its script ends (-1) with g_4b0d3a up to
-   g_4b0d38, clears g_4b0d3c. */
+/* A view's notify: when its script ends (-1) with mazeFidgetsDone up to
+   mazeFidgetsAllowed, clears mazeFidgeting. */
 /* @zoombi32 0x00436045 */
 void mazeEndNotify(View *, short event)
 {
     switch (event) {
     case -1:
-        if (g_4b0d3a >= g_4b0d38)
-            g_4b0d3c = 0;
+        if (mazeFidgetsDone >= mazeFidgetsAllowed)
+            mazeFidgeting = 0;
         break;
     }
 }
 
-/* A view's notify: event 10 sets g_4afc2e (151-156 do nothing). */
+/* A view's notify: event 10 sets mazeEvent10Seen (151-156 do nothing). */
 /* @zoombi32 0x0043606d */
 void noteEvent10(View *, short event)
 {
     switch (event) {
     case 10:
-        g_4afc2e = 1;
+        mazeEvent10Seen = 1;
         break;
     case 151:
     case 152:
@@ -761,7 +761,7 @@ short firstFeatureIn(short which, short ignore)
 }
 
 /* A view's notify: 61 starts its paired Zoombini's script 14004 in its
-   group (then told helperDoneNotify); 63 lists the view in g_4b0908. */
+   group (then told helperDoneNotify); 63 lists the view in helperDoneList. */
 /* @zoombi32 0x00435e8a */
 void startPairNotify(View *view, short event)
 {
@@ -780,14 +780,14 @@ void startPairNotify(View *view, short event)
     case 62:
         break;
     case 63:
-        g_4b0908[g_4b09fc] = view->id;
-        g_4b09fc++;
+        helperDoneList[helperDoneCount] = view->id;
+        helperDoneCount++;
         break;
     }
 }
 
 /* Loads the hot-spot table for one of five sets (the first four by their
-   entries in g_4a210e, recorded in g_4a210c). */
+   entries in hotSpotTableKeys, recorded in hotSpotTableUsed). */
 /* @zoombi32 0x00436a00 */
 short *loadHotSpotTable(short which)
 {
@@ -795,34 +795,34 @@ short *loadHotSpotTable(short which)
 
     switch (which) {
     case 0:
-        id = g_4a210e[0] + 16600;
-        g_4a210c = g_4a210e[0];
+        id = hotSpotTableKeys[0] + 16600;
+        hotSpotTableUsed = hotSpotTableKeys[0];
         break;
     case 1:
-        id = g_4a210e[1] + 16602;
-        g_4a210c = g_4a210e[1];
+        id = hotSpotTableKeys[1] + 16602;
+        hotSpotTableUsed = hotSpotTableKeys[1];
         break;
     case 2:
-        id = g_4a210e[2] + 16604;
-        g_4a210c = g_4a210e[2];
+        id = hotSpotTableKeys[2] + 16604;
+        hotSpotTableUsed = hotSpotTableKeys[2];
         break;
     case 3:
-        id = g_4a210e[3] + 16606;
-        g_4a210c = g_4a210e[3];
+        id = hotSpotTableKeys[3] + 16606;
+        hotSpotTableUsed = hotSpotTableKeys[3];
         break;
     case 4:
         id = 16609;
-        g_4a210c = 0;
+        hotSpotTableUsed = 0;
         break;
     }
     g_4afbdc = 0;
-    g_4b076c = 0;
+    snoidPartsTable = 0;
     return loadShortTable(id, &g_4afbdc);
 }
 
 /* A view's notify: 0 turns it round (the flags test is always true: `==`
    binds before `|`, as in the original), 61 starts its paired Zoombini's
-   script 14004 (then told poseDoneNotify), 63 lists the view in g_4b0908. */
+   script 14004 (then told poseDoneNotify), 63 lists the view in helperDoneList. */
 /* @zoombi32 0x00435b9e */
 void turnOrStartPairNotify(View *view, short event)
 {
@@ -848,13 +848,13 @@ void turnOrStartPairNotify(View *view, short event)
     case 62:
         break;
     case 63:
-        g_4b0908[g_4b09fc] = view->id;
-        g_4b09fc++;
+        helperDoneList[helperDoneCount] = view->id;
+        helperDoneCount++;
         break;
     }
 }
 
-/* A view's notify: 71 lists its paired view in g_4b0908 and clears its
+/* A view's notify: 71 lists its paired view in helperDoneList and clears its
    square (squareOccupants, by its words 33 and 34) if the square is still its;
    120 starts its paired Zoombini's script 14007. */
 /* @zoombi32 0x00435da5 */
@@ -868,8 +868,8 @@ void leaveSquareNotify(View *view, short event)
         parts = (short *)&view->body;
         other = findView(parts[50]);
         if (other) {
-            g_4b0908[g_4b09fc] = other->id;
-            g_4b09fc++;
+            helperDoneList[helperDoneCount] = other->id;
+            helperDoneCount++;
         }
         if (squareOccupants[parts[33]][parts[34]][1] == view->id) {
             squareOccupants[parts[33]][parts[34]][0] = 0;
@@ -888,8 +888,8 @@ void leaveSquareNotify(View *view, short event)
     }
 }
 
-/* Starts view g_4afd2c[n]'s script (g_4a2308[n], then told mazeViewNotify),
-   with its second view's (g_4afd48[n], if g_4a22d0[n]), grouping them with
+/* Starts view pieceViews[n]'s script (pieceScripts[n], then told mazeViewNotify),
+   with its second view's (pieceSecondViews[n], if pieceHasSecond[n]), grouping them with
    its paired Zoombini's view. */
 /* @zoombi32 0x0043573e */
 void startMazeView(short n)
@@ -900,15 +900,15 @@ void startMazeView(short n)
     View *other;
 
     second = 0;
-    view = findView(g_4afd2c[n]);
+    view = findView(pieceViews[n]);
     if (view) {
-        setViewScript(view, g_4a2308[n], 1);
+        setViewScript(view, pieceScripts[n], 1);
         view->notify = mazeViewNotify;
         parts = (short *)&view->body;
-        if (g_4a22d0[n]) {
-            second = findView(g_4afd48[n]);
+        if (pieceHasSecond[n]) {
+            second = findView(pieceSecondViews[n]);
             if (second)
-                setViewScript(second, g_4a2308[n] + 1, 1);
+                setViewScript(second, pieceScripts[n] + 1, 1);
         }
         other = findView(parts[50]);
         if (other) {
@@ -924,9 +924,9 @@ void startMazeView(short n)
 }
 
 /* A view's notify: 92 deletes its two helper views (words 41 and 42),
-   takes it out of g_4afc4a and clears its square; when its script ends
-   (-1) it's listed in g_4b0958 (and g_4b0d3c cleared once g_4b0d3a
-   reaches g_4b0d38). */
+   takes it out of mazeSnoidViews and clears its square; when its script ends
+   (-1) it's listed in finishedList (and mazeFidgeting cleared once mazeFidgetsDone
+   reaches mazeFidgetsAllowed). */
 /* @zoombi32 0x00435f3d */
 void helperDoneNotify(View *view, short event)
 {
@@ -938,11 +938,11 @@ void helperDoneNotify(View *view, short event)
         deleteView(parts[41]);
         deleteView(parts[42]);
         for (i = 0; i < 11; i++)
-            if (g_4afc4a[i] == view->id) {
-                for (; g_4afc4a[i]; i++)
-                    g_4afc4a[i] = g_4afc4a[i + 1];
+            if (mazeSnoidViews[i] == view->id) {
+                for (; mazeSnoidViews[i]; i++)
+                    mazeSnoidViews[i] = mazeSnoidViews[i + 1];
                 i = 11;
-                g_4afc60--;
+                mazeSnoidCount--;
             }
         if (squareOccupants[parts[33]][parts[34]][1] == view->id) {
             squareOccupants[parts[33]][parts[34]][0] = 0;
@@ -950,17 +950,17 @@ void helperDoneNotify(View *view, short event)
         }
         break;
     case -1:
-        g_4b0958[g_4b0a00] = view->id;
-        g_4b0a00++;
-        if (g_4b0d3a >= g_4b0d38)
-            g_4b0d3c = 0;
+        finishedList[finishedCount] = view->id;
+        finishedCount++;
+        if (mazeFidgetsDone >= mazeFidgetsAllowed)
+            mazeFidgeting = 0;
         break;
     }
 }
 
-/* A view's notify: 91 lists a view in pose 3 in g_4b09d0, then (as 92)
-   deletes its helper views, takes it out of g_4afc4a, clears its square
-   and lists it in g_4b0958 unless in pose 3; -1 as helperDoneNotify's. */
+/* A view's notify: 91 lists a view in pose 3 in pose3List, then (as 92)
+   deletes its helper views, takes it out of mazeSnoidViews, clears its square
+   and lists it in finishedList unless in pose 3; -1 as helperDoneNotify's. */
 /* @zoombi32 0x00435c57 */
 void poseDoneNotify(View *view, short event)
 {
@@ -970,33 +970,33 @@ void poseDoneNotify(View *view, short event)
     switch (event) {
     case 91:
         if (parts[35] == 3) {
-            g_4b09d0[g_4b0a06] = view->id;
-            g_4b0a06++;
+            pose3List[pose3Count] = view->id;
+            pose3Count++;
         }
     case 92:
         deleteView(parts[41]);
         deleteView(parts[42]);
         for (i = 0; i < 11; i++)
-            if (g_4afc4a[i] == view->id) {
-                for (; g_4afc4a[i]; i++)
-                    g_4afc4a[i] = g_4afc4a[i + 1];
+            if (mazeSnoidViews[i] == view->id) {
+                for (; mazeSnoidViews[i]; i++)
+                    mazeSnoidViews[i] = mazeSnoidViews[i + 1];
                 i = 11;
-                g_4afc60--;
+                mazeSnoidCount--;
             }
         if (squareOccupants[parts[33]][parts[34]][1] == view->id) {
             squareOccupants[parts[33]][parts[34]][0] = 0;
             squareOccupants[parts[33]][parts[34]][1] = 0;
         }
         if (parts[35] != 3) {
-            g_4b0958[g_4b0a00] = view->id;
-            g_4b0a00++;
+            finishedList[finishedCount] = view->id;
+            finishedCount++;
         }
         break;
     case -1:
-        g_4b0958[g_4b0a00] = view->id;
-        g_4b0a00++;
-        if (g_4b0d3a >= g_4b0d38)
-            g_4b0d3c = 0;
+        finishedList[finishedCount] = view->id;
+        finishedCount++;
+        if (mazeFidgetsDone >= mazeFidgetsAllowed)
+            mazeFidgeting = 0;
         break;
     }
 }
@@ -1042,20 +1042,20 @@ short clearRowsWithFeature(short id)
  * The maze's frame: leaves once asked to (and sound 996 is done); unless
  * paused, works through the Zoombinis waiting for each step: ones placed
  * to start (startMazeView), stopped (stepMazeSnoidOn), moving in front, reaching
- * the gates, falling (15090 on), gates to close (g_4b0a0a/c), ones done
+ * the gates, falling (15090 on), gates to close (gate1CloseDue/c), ones done
  * walking off to their row's exit (by the next of 20 spots in mazeExitSpots),
  * ones reaching a square (by its kind in squareKinds: 0 stops, 1 a turn, 2
  * and 3-4 a turning square, 5 a straight one, 6 a blocked one (sound
  * 5103), 20-23 a pose), and pairs meeting; and starts waiting Zoombinis
- * fidgeting now and then while g_4b0d3c (its test of a view's flags is
+ * fidgeting now and then while mazeFidgeting (its test of a view's flags is
  * always true: `==` binds before `|`).
  */
 /* @zoombi32 0x0043490e */
 void mazeFrame()
 {
-    short *placed = &g_4b0a04;
+    short *placed = &placedQueueCount;
     short *stopped = &g_4b09fe;
-    short *moving = &g_4b09fc;
+    short *moving = &helperDoneCount;
     View *view;
     short *parts;
     short *spot;
@@ -1095,26 +1095,26 @@ void mazeFrame()
         return;
     } else {
         while (*placed)
-            startMazeView(g_4b09a8[--*placed]);
+            startMazeView(placedQueue[--*placed]);
         while (*stopped) {
-            view = findView(g_4b0930[--*stopped]);
+            view = findView(partnerList[--*stopped]);
             if (view)
                 stepMazeSnoidOn(view);
         }
         while (*moving) {
-            view = findView(g_4b0908[--*moving]);
+            view = findView(helperDoneList[--*moving]);
             if (view)
-                moveView(view->id, 0, g_4afc2a);
+                moveView(view->id, 0, mazeAnchorView2);
         }
         while (g_4b09fa) {
-            view = findView(g_4b08b8[--g_4b09fa]);
+            view = findView(poseDoneList[--g_4b09fa]);
             if (view) {
                 parts = (short *)&view->body;
                 moveView(view->id, 0, g_4afd8c[parts[32]]);
             }
         }
-        while (g_4b0a06) {
-            view = findView(g_4b09d0[--g_4b0a06]);
+        while (pose3Count) {
+            view = findView(pose3List[--pose3Count]);
             if (view) {
                 snoid = (Snoid *)&view->body;
                 startSnoidScript((Snoid *)&view->body, snoid->features[3] + 15090, 0, 0);
@@ -1122,44 +1122,44 @@ void mazeFrame()
                 view->notify = poseDoneNotify;
             }
         }
-        if (g_4b0a0a) {
-            g_4b0a0a = 0;
+        if (gate1CloseDue) {
+            gate1CloseDue = 0;
             view = findView(g_4afd8c[0]);
             if (view)
-                sortFlaggedViews(view, g_4a2548);
+                sortFlaggedViews(view, sortFlags1);
         }
-        if (g_4b0a0c) {
-            g_4b0a0c = 0;
+        if (gate3CloseDue) {
+            gate3CloseDue = 0;
             view = findView(g_4afd8c[0]);
             if (view)
-                sortFlaggedViews(view, g_4a254c);
+                sortFlaggedViews(view, sortFlags2);
         }
-        while (g_4b0a00) {
-            view = findView(g_4b0958[--g_4b0a00]);
+        while (finishedCount) {
+            view = findView(finishedList[--finishedCount]);
             if (view) {
                 spot = 0;
                 parts = (short *)&view->body;
                 switch (parts[35]) {
                 case 0:
-                    spot = &g_4afe52;
+                    spot = &exitSpotNext1;
                     view->flags = 1;
                     moveView(view->id, 1, g_4afd8c[10]);
                     break;
                 case 1:
-                    spot = &g_4afe54;
+                    spot = &exitSpotNext2;
                     view->flags = 0x8001;
                     moveView(view->id, 0, g_4afd8c[1]);
                     break;
                 case 2:
-                    spot = &g_4afe56;
+                    spot = &exitSpotNext3;
                     view->flags = 1;
                     moveView(view->id, 1, g_4afd8c[11]);
                     break;
                 case 3:
-                    spot = &g_4afe58;
+                    spot = &exitSpotNext4;
                     view->flags = 0x4008001;
                     if (countChosenSnoids() == featureRowCount) {
-                        g_4b0d3c = 1;
+                        mazeFidgeting = 1;
                         queueViewSound(randomBetween(20055, 20063), 0);
                     }
                     moveView(view->id, 0, g_4afd8c[parts[34]]);
@@ -1176,7 +1176,7 @@ void mazeFrame()
             }
         }
         while (g_4b09f8) {
-            view = findView(g_4b08e0[--g_4b09f8]);
+            view = findView(arrivedList[--g_4b09f8]);
             if (view) {
                 parts = (short *)&view->body;
                 if (parts[34] != parts[32]) {
@@ -1221,18 +1221,18 @@ void mazeFrame()
                 }
             }
         }
-        while (g_4b0a02 > 1) {
-            view = findView(g_4b0980[--g_4b0a02]);
+        while (meetingCount > 1) {
+            view = findView(meetingList[--meetingCount]);
             if (view) {
-                g_4b0980[g_4b0a02] = 0;
-                other = findView(g_4b0980[--g_4b0a02]);
+                meetingList[meetingCount] = 0;
+                other = findView(meetingList[--meetingCount]);
                 if (other) {
-                    g_4b0980[g_4b0a02] = 0;
+                    meetingList[meetingCount] = 0;
                     mazeZoombinisMeet(view, other);
                 }
             }
         }
-        if (g_4b0d3c && g_4b0d3a < g_4b0d38) {
+        if (mazeFidgeting && mazeFidgetsDone < mazeFidgetsAllowed) {
             if (clockTime() - g_4b0d30 > 30) {
                 done = 0;
                 g_4b0d30 = clockTime();
@@ -1245,14 +1245,14 @@ void mazeFrame()
                             startSnoidScript((Snoid *)&view->body, snoid->features[3] + 15090, 0, 0);
                             view->notifyEnd = 1;
                             view->notify = mazeEndNotify;
-                            g_4b0d3a++;
+                            mazeFidgetsDone++;
                             done = 1;
                         }
                     }
                 }
             }
-        } else if (g_4b0d3a >= g_4b0d38) {
-            g_4b0d3a = g_4b0d3c = g_4b0d30 = g_4b0d34 = 0;
+        } else if (mazeFidgetsDone >= mazeFidgetsAllowed) {
+            mazeFidgetsDone = mazeFidgeting = g_4b0d30 = g_4b0d34 = 0;
         }
     }
     playAmbientSound();
@@ -1274,8 +1274,8 @@ void putSnoidInMaze(View *view, short pose)
 
     if ((parts[35] = pose - 20) == 3) {
         snoid->unknownF7 = 1;
-        if (++g_4b0d26 == 1) {
-            g_4afc6a = 1;
+        if (++poseReachedCount == 1) {
+            mazeGoReady = 1;
             unionRgnRect(removedRgn, &g_4a20f4[2].rect);
         }
     }
@@ -1307,10 +1307,10 @@ void putSnoidInMaze(View *view, short pose)
         groupViews(parts[41], view->id, 0, 0, 0, 0);
 }
 
-/* The maze views' notify: 50 starts the view's second view (g_4afd26, by
+/* The maze views' notify: 50 starts the view's second view (lineSecondViews, by
    its word 45); 61, 62, 71, 72, 81 and 82 start its paired Zoombini's
    scripts; 65, 75 and 85 moveSnoidToSquare; 64, 74 and 84 list the Zoombini's view
-   in g_4b08b8 (74 also forgets it); 66, 76 and 86 free its place. */
+   in poseDoneList (74 also forgets it); 66, 76 and 86 free its place. */
 /* @zoombi32 0x00436092 */
 void mazeViewNotify(View *view, short event)
 {
@@ -1320,9 +1320,9 @@ void mazeViewNotify(View *view, short event)
     switch (event) {
     case 50:
         parts = (short *)&view->body;
-        other = findView(g_4afd26[parts[45]]);
+        other = findView(lineSecondViews[parts[45]]);
         if (other) {
-            setViewScript(other, g_4a2324[parts[45]], 1);
+            setViewScript(other, lineSecondScripts[parts[45]], 1);
             groupViews(other->id, other->id, 0, 0, 0, 0);
         }
         break;
@@ -1334,7 +1334,7 @@ void mazeViewNotify(View *view, short event)
         break;
     case 64:
         parts = (short *)&view->body;
-        g_4b08b8[g_4b09fa] = parts[50];
+        poseDoneList[g_4b09fa] = parts[50];
         g_4b09fa++;
         break;
     case 65:
@@ -1353,7 +1353,7 @@ void mazeViewNotify(View *view, short event)
         break;
     case 74:
         parts = (short *)&view->body;
-        g_4b08b8[g_4b09fa] = parts[50];
+        poseDoneList[g_4b09fa] = parts[50];
         g_4b09fa++;
         parts[50] = 0;
         break;
@@ -1373,7 +1373,7 @@ void mazeViewNotify(View *view, short event)
         break;
     case 84:
         parts = (short *)&view->body;
-        g_4b08b8[g_4b09fa] = parts[50];
+        poseDoneList[g_4b09fa] = parts[50];
         g_4b09fa++;
         break;
     case 85:
@@ -1495,7 +1495,7 @@ short takeRarestValue(short exclude)
                 for (column = 0; column < 4; column++) {
                     fresh = 1;
                     if (featureRows[row][column] > 0 && featureRows[row][column] + featureOffsets[column] == v) {
-                        for (k = 0; k < 20 && g_4b00d0 < 4; k++)
+                        for (k = 0; k < 20 && takenRowCount < 4; k++)
                             if (takenRows[k][column] > 0 && takenRows[k][column] == featureRows[row][column])
                                 fresh = 0;
                         if (fresh) {
@@ -1510,12 +1510,12 @@ short takeRarestValue(short exclude)
     }
     if (best) {
         fillMemory(valueCounts, 0, 42);
-        if (g_4b00d0 < 20) {
-            takenRows[g_4b00d0][0] = featureRows[bestRow][0];
-            takenRows[g_4b00d0][1] = featureRows[bestRow][1];
-            takenRows[g_4b00d0][2] = featureRows[bestRow][2];
-            takenRows[g_4b00d0][3] = featureRows[bestRow][3];
-            g_4b00d0++;
+        if (takenRowCount < 20) {
+            takenRows[takenRowCount][0] = featureRows[bestRow][0];
+            takenRows[takenRowCount][1] = featureRows[bestRow][1];
+            takenRows[takenRowCount][2] = featureRows[bestRow][2];
+            takenRows[takenRowCount][3] = featureRows[bestRow][3];
+            takenRowCount++;
         }
         for (row = 0; row < featureRowCount; row++) {
             for (column = 0; column < 4; column++)
@@ -1574,16 +1574,16 @@ short takeCommonestValue(short low, short high)
         for (row = 0; row < featureRowCount; row++) {
             for (column = 0; column < 4; column++)
                 if (featureRows[row][column] && featureRows[row][column] + featureOffsets[column] == best) {
-                    if (g_4b00d0 < 20) {
-                        takenRowsCopy[g_4b00d0][0] = featureRows[row][0];
-                        takenRowsCopy[g_4b00d0][1] = featureRows[row][1];
-                        takenRowsCopy[g_4b00d0][2] = featureRows[row][2];
-                        takenRowsCopy[g_4b00d0][3] = featureRows[row][3];
-                        takenRows[g_4b00d0][0] = featureRows[row][0];
-                        takenRows[g_4b00d0][1] = featureRows[row][1];
-                        takenRows[g_4b00d0][2] = featureRows[row][2];
-                        takenRows[g_4b00d0][3] = featureRows[row][3];
-                        g_4b00d0++;
+                    if (takenRowCount < 20) {
+                        takenRowsCopy[takenRowCount][0] = featureRows[row][0];
+                        takenRowsCopy[takenRowCount][1] = featureRows[row][1];
+                        takenRowsCopy[takenRowCount][2] = featureRows[row][2];
+                        takenRowsCopy[takenRowCount][3] = featureRows[row][3];
+                        takenRows[takenRowCount][0] = featureRows[row][0];
+                        takenRows[takenRowCount][1] = featureRows[row][1];
+                        takenRows[takenRowCount][2] = featureRows[row][2];
+                        takenRows[takenRowCount][3] = featureRows[row][3];
+                        takenRowCount++;
                     }
                     featureRows[row][0] = 0;
                     featureRows[row][1] = 0;
@@ -1644,12 +1644,12 @@ short takeCommonestValueCopy(short low, short high)
         for (row = 0; row < featureRowCount; row++) {
             for (column = 0; column < 4; column++)
                 if (featureRows[row][column] && featureRows[row][column] + featureOffsets[column] == best) {
-                    if (g_4b00d0 < 20) {
-                        copies[g_4b00d0][0] = featureRows[row][0];
-                        copies[g_4b00d0][1] = featureRows[row][1];
-                        copies[g_4b00d0][2] = featureRows[row][2];
-                        copies[g_4b00d0][3] = featureRows[row][3];
-                        g_4b00d0++;
+                    if (takenRowCount < 20) {
+                        copies[takenRowCount][0] = featureRows[row][0];
+                        copies[takenRowCount][1] = featureRows[row][1];
+                        copies[takenRowCount][2] = featureRows[row][2];
+                        copies[takenRowCount][3] = featureRows[row][3];
+                        takenRowCount++;
                     }
                     featureRows[row][0] = 0;
                     featureRows[row][1] = 0;
@@ -1666,7 +1666,7 @@ short takeCommonestValueCopy(short low, short high)
 }
 
 /* Adds a view for a Zoombini in the maze (drawn by drawMazeSnoid, updated by
-   updateMazeSnoid) from `snoid`: gives it the next ten words of g_4b076c (its
+   updateMazeSnoid) from `snoid`: gives it the next ten words of snoidPartsTable (its
    kind, square, line...), records it on its square (squareViews, squareKinds)
    and in its line's list, and lays it out. */
 /* @zoombi32 0x00436d39 */
@@ -1679,64 +1679,64 @@ void addMazeSnoidView(Snoid *snoid)
     short i;
 
     id = addView(1, drawMazeSnoid, updateMazeSnoid, 0, randomBetween(20, 25), snoid, 0, 0);
-    if (g_4afc44)
-        moveView(id, 1, g_4afc44);
-    else if (g_4afc2a)
-        moveView(id, 1, g_4afc2a);
+    if (mazeAnchorView1)
+        moveView(id, 1, mazeAnchorView1);
+    else if (mazeAnchorView2)
+        moveView(id, 1, mazeAnchorView2);
     if ((view = findView(id)) != 0) {
         made = (Snoid *)&view->body;
         parts = (short *)made;
         for (i = 0; i < 10; i++)
-            parts[30 + i] = (g_4b076c + i)[g_4b08b4 * 10];
-        g_4b08b4++;
+            parts[30 + i] = (snoidPartsTable + i)[nextSnoidParts * 10];
+        nextSnoidParts++;
         squareViews[parts[31]][parts[32]] = view->id;
         squareKinds[parts[31]][parts[32]] = parts[30];
         *(Point *)&made->body.x = (squarePlaces + parts[32])[parts[31] * 13];
         switch (parts[33]) {
         case 1:
-            g_4b0a10[g_4b0cfe] = id;
-            g_4b0cfe++;
-            parts[40] = g_4b0d10[1];
+            lineViews[lineViewCount] = id;
+            lineViewCount++;
+            parts[40] = lineValues[1];
             break;
         case 2:
             g_4b0b6e[g_4b0d00] = id;
             g_4b0d00++;
-            parts[40] = g_4b0d10[2];
+            parts[40] = lineValues[2];
             break;
         case 3:
             g_4b0ba0[g_4b0d02] = id;
             g_4b0d02++;
-            parts[40] = g_4b0d10[3];
+            parts[40] = lineValues[3];
             break;
         case 4:
             g_4b0bd2[g_4b0d04] = id;
             g_4b0d04++;
-            parts[40] = g_4b0d10[4];
+            parts[40] = lineValues[4];
             break;
         case 5:
             g_4b0c04[g_4b0d06] = id;
             g_4b0d06++;
-            parts[40] = g_4b0d10[5];
+            parts[40] = lineValues[5];
             break;
         case 6:
             g_4b0c36[g_4b0d08] = id;
             g_4b0d08++;
-            parts[40] = g_4b0d10[6];
+            parts[40] = lineValues[6];
             break;
         case 7:
             g_4b0c68[g_4b0d0a] = id;
             g_4b0d0a++;
-            parts[40] = g_4b0d10[7];
+            parts[40] = lineValues[7];
             break;
         case 8:
             g_4b0c9a[g_4b0d0c] = id;
             g_4b0d0c++;
-            parts[40] = g_4b0d10[8];
+            parts[40] = lineValues[8];
             break;
         default:
-            g_4b0a10[g_4b0cfe] = id;
-            g_4b0cfe++;
-            parts[40] = g_4b0d10[1];
+            lineViews[lineViewCount] = id;
+            lineViewCount++;
+            parts[40] = lineValues[1];
             break;
         }
         switch (parts[30]) {
@@ -1745,9 +1745,9 @@ void addMazeSnoidView(Snoid *snoid)
             made->unknownF4 = 2;
             break;
         case 2:
-            parts[41] = g_4a25e0[mazeSequence[g_4b00c2]][0] + 1;
-            parts[42] = g_4a25e0[mazeSequence[g_4b00c2]][1];
-            g_4b00c2++;
+            parts[41] = g_4a25e0[mazeSequence[sequenceIndex]][0] + 1;
+            parts[42] = g_4a25e0[mazeSequence[sequenceIndex]][1];
+            sequenceIndex++;
             made->unknownF4 = 3;
             break;
         default:
@@ -1788,7 +1788,7 @@ short takeRareRow(short exclude, short whole)
                 for (column = 0; column < 4; column++) {
                     fresh = 1;
                     if (featureRows[row][column] > 0 && featureRows[row][column] + featureOffsets[column] == v) {
-                        for (k = 0; k < 20 && g_4b00d0 < 3; k++)
+                        for (k = 0; k < 20 && takenRowCount < 3; k++)
                             if (takenRows[k][0] > 0 && takenRows[k][0] == featureRows[row][0])
                                 fresh = 0;
                             else if (takenRows[k][1] > 0 && takenRows[k][1] == featureRows[row][1])
@@ -1808,24 +1808,24 @@ short takeRareRow(short exclude, short whole)
                     }
                 }
     if (best) {
-        if (g_4b00d0 < 4) {
+        if (takenRowCount < 4) {
             if (!whole) {
-                takenRows[g_4b00d0][bestColumn] = featureRows[bestRow][bestColumn];
-                takenRowsCopy[g_4b00d0][0] = featureRows[bestRow][0];
-                takenRowsCopy[g_4b00d0][1] = featureRows[bestRow][1];
-                takenRowsCopy[g_4b00d0][2] = featureRows[bestRow][2];
-                takenRowsCopy[g_4b00d0][3] = featureRows[bestRow][3];
-                g_4b00d0++;
+                takenRows[takenRowCount][bestColumn] = featureRows[bestRow][bestColumn];
+                takenRowsCopy[takenRowCount][0] = featureRows[bestRow][0];
+                takenRowsCopy[takenRowCount][1] = featureRows[bestRow][1];
+                takenRowsCopy[takenRowCount][2] = featureRows[bestRow][2];
+                takenRowsCopy[takenRowCount][3] = featureRows[bestRow][3];
+                takenRowCount++;
             } else {
-                takenRowsCopy[g_4b00d0][0] = featureRows[bestRow][0];
-                takenRowsCopy[g_4b00d0][1] = featureRows[bestRow][1];
-                takenRowsCopy[g_4b00d0][2] = featureRows[bestRow][2];
-                takenRowsCopy[g_4b00d0][3] = featureRows[bestRow][3];
-                takenRows[g_4b00d0][0] = featureRows[bestRow][0];
-                takenRows[g_4b00d0][1] = featureRows[bestRow][1];
-                takenRows[g_4b00d0][2] = featureRows[bestRow][2];
-                takenRows[g_4b00d0][3] = featureRows[bestRow][3];
-                g_4b00d0++;
+                takenRowsCopy[takenRowCount][0] = featureRows[bestRow][0];
+                takenRowsCopy[takenRowCount][1] = featureRows[bestRow][1];
+                takenRowsCopy[takenRowCount][2] = featureRows[bestRow][2];
+                takenRowsCopy[takenRowCount][3] = featureRows[bestRow][3];
+                takenRows[takenRowCount][0] = featureRows[bestRow][0];
+                takenRows[takenRowCount][1] = featureRows[bestRow][1];
+                takenRows[takenRowCount][2] = featureRows[bestRow][2];
+                takenRows[takenRowCount][3] = featureRows[bestRow][3];
+                takenRowCount++;
             }
         }
         featureRows[bestRow][0] = 0;
@@ -1843,8 +1843,8 @@ short takeRareRow(short exclude, short whole)
 
 /* The maze Zoombinis' notify: at frame 3 of events 20, 30, 40 and 50 it
    counts the Zoombini onto its square (squareOccupants): the first is recorded,
-   a second meeting it lists both in g_4b0980 and clears the square (as
-   more do); 21, 31, 41, 51 and 61 list it in g_4b08e0. */
+   a second meeting it lists both in meetingList and clears the square (as
+   more do); 21, 31, 41, 51 and 61 list it in arrivedList. */
 /* @zoombi32 0x0043638b */
 void mazeSnoidNotify(View *view, short event)
 {
@@ -1859,10 +1859,10 @@ void mazeSnoidNotify(View *view, short event)
             if (count == 1) {
                 squareOccupants[parts[33]][parts[34]][1] = view->id;
             } else if (count == 2) {
-                g_4b0980[g_4b0a02] = squareOccupants[parts[33]][parts[34]][1];
-                g_4b0a02++;
-                g_4b0980[g_4b0a02] = view->id;
-                g_4b0a02++;
+                meetingList[meetingCount] = squareOccupants[parts[33]][parts[34]][1];
+                meetingCount++;
+                meetingList[meetingCount] = view->id;
+                meetingCount++;
                 squareOccupants[parts[33]][parts[34]][1] = 0;
                 squareOccupants[parts[33]][parts[34]][0] = 0;
             } else if (count > 2) {
@@ -1872,7 +1872,7 @@ void mazeSnoidNotify(View *view, short event)
         }
         break;
     case 21:
-        g_4b08e0[g_4b09f8] = view->id;
+        arrivedList[g_4b09f8] = view->id;
         g_4b09f8++;
         break;
     case 30:
@@ -1882,10 +1882,10 @@ void mazeSnoidNotify(View *view, short event)
             if (count == 1) {
                 squareOccupants[parts[33]][parts[34]][1] = view->id;
             } else if (count == 2) {
-                g_4b0980[g_4b0a02] = squareOccupants[parts[33]][parts[34]][1];
-                g_4b0a02++;
-                g_4b0980[g_4b0a02] = view->id;
-                g_4b0a02++;
+                meetingList[meetingCount] = squareOccupants[parts[33]][parts[34]][1];
+                meetingCount++;
+                meetingList[meetingCount] = view->id;
+                meetingCount++;
                 squareOccupants[parts[33]][parts[34]][1] = 0;
                 squareOccupants[parts[33]][parts[34]][0] = 0;
             }
@@ -1896,7 +1896,7 @@ void mazeSnoidNotify(View *view, short event)
         }
         break;
     case 31:
-        g_4b08e0[g_4b09f8] = view->id;
+        arrivedList[g_4b09f8] = view->id;
         g_4b09f8++;
         break;
     case 40:
@@ -1906,10 +1906,10 @@ void mazeSnoidNotify(View *view, short event)
             if (count == 1) {
                 squareOccupants[parts[33]][parts[34]][1] = view->id;
             } else if (count == 2) {
-                g_4b0980[g_4b0a02] = squareOccupants[parts[33]][parts[34]][1];
-                g_4b0a02++;
-                g_4b0980[g_4b0a02] = view->id;
-                g_4b0a02++;
+                meetingList[meetingCount] = squareOccupants[parts[33]][parts[34]][1];
+                meetingCount++;
+                meetingList[meetingCount] = view->id;
+                meetingCount++;
                 squareOccupants[parts[33]][parts[34]][1] = 0;
                 squareOccupants[parts[33]][parts[34]][0] = 0;
             }
@@ -1920,7 +1920,7 @@ void mazeSnoidNotify(View *view, short event)
         }
         break;
     case 41:
-        g_4b08e0[g_4b09f8] = view->id;
+        arrivedList[g_4b09f8] = view->id;
         g_4b09f8++;
         break;
     case 50:
@@ -1930,10 +1930,10 @@ void mazeSnoidNotify(View *view, short event)
             if (count == 1) {
                 squareOccupants[parts[33]][parts[34]][1] = view->id;
             } else if (count == 2) {
-                g_4b0980[g_4b0a02] = squareOccupants[parts[33]][parts[34]][1];
-                g_4b0a02++;
-                g_4b0980[g_4b0a02] = view->id;
-                g_4b0a02++;
+                meetingList[meetingCount] = squareOccupants[parts[33]][parts[34]][1];
+                meetingCount++;
+                meetingList[meetingCount] = view->id;
+                meetingCount++;
                 squareOccupants[parts[33]][parts[34]][1] = 0;
                 squareOccupants[parts[33]][parts[34]][0] = 0;
             }
@@ -1944,11 +1944,11 @@ void mazeSnoidNotify(View *view, short event)
         }
         break;
     case 51:
-        g_4b08e0[g_4b09f8] = view->id;
+        arrivedList[g_4b09f8] = view->id;
         g_4b09f8++;
         break;
     case 61:
-        g_4b08e0[g_4b09f8] = view->id;
+        arrivedList[g_4b09f8] = view->id;
         g_4b09f8++;
         break;
     }
@@ -1994,8 +1994,8 @@ void chooseSequence1()
     short other;
 
     sequenceLength = 0;
-    g_4b00c0 = 0;
-    g_4b00c2 = 0;
+    unusedSequenceIndex = 0;
+    sequenceIndex = 0;
     copyChosenFeatures();
     rows = clearRowsWithFeature(0);
     listEmptyValues();
@@ -2018,14 +2018,14 @@ void chooseSequence1()
         mazeSequence[sequenceLength] = emptyValueList[randomBetween(anyEmptyValue, emptyValueCount)];
     mazeSequence[sequenceLength + 1] = mazeSequence[sequenceLength];
     sequenceLength++;
-    if (g_4a210c == 2) {
+    if (hotSpotTableUsed == 2) {
         mazeSequence[sequenceLength + 1] = mazeSequence[sequenceLength];
         sequenceLength++;
     }
     value = clearRowsWithFeature(mazeSequence[sequenceLength]);
     sequenceLength++;
     if (countValuesPresent() > 4) {
-        mazeSequence[sequenceLength] = largestBetween(1, g_4a2666[value]);
+        mazeSequence[sequenceLength] = largestBetween(1, largestLimitByRows[value]);
         if (!mazeSequence[sequenceLength]) {
             mazeSequence[sequenceLength] = emptyValueList[randomBetween(anyEmptyValue, emptyValueCount)];
             rows = 0;
@@ -2034,7 +2034,7 @@ void chooseSequence1()
         }
         clearRowsWithFeature(mazeSequence[sequenceLength]);
         sequenceLength++;
-        mazeSequence[sequenceLength] = largestOfKind(mazeSequence[sequenceLength - 1], 1, g_4a2666[value]);
+        mazeSequence[sequenceLength] = largestOfKind(mazeSequence[sequenceLength - 1], 1, largestLimitByRows[value]);
         if (!mazeSequence[sequenceLength]) {
             mazeSequence[sequenceLength] = emptyValueList[randomBetween(anyEmptyValue, emptyValueCount)];
             other = 0;
@@ -2065,8 +2065,8 @@ void chooseSequence2()
     short other;
 
     sequenceLength = 0;
-    g_4b00c0 = 0;
-    g_4b00c2 = 0;
+    unusedSequenceIndex = 0;
+    sequenceIndex = 0;
     copyChosenFeatures();
     rows = clearRowsWithFeature(0);
     listEmptyValues();
@@ -2094,7 +2094,7 @@ void chooseSequence2()
     value = clearRowsWithFeature(mazeSequence[sequenceLength]);
     sequenceLength++;
     if (countValuesPresent() > 4) {
-        mazeSequence[sequenceLength] = largestBetween(1, g_4a2666[value]);
+        mazeSequence[sequenceLength] = largestBetween(1, largestLimitByRows[value]);
         if (!mazeSequence[sequenceLength]) {
             mazeSequence[sequenceLength] = emptyValueList[randomBetween(anyEmptyValue, emptyValueCount)];
             rows = 0;
@@ -2103,7 +2103,7 @@ void chooseSequence2()
         }
         clearRowsWithFeature(mazeSequence[sequenceLength]);
         sequenceLength++;
-        mazeSequence[sequenceLength] = largestOfKind(mazeSequence[sequenceLength - 1], 1, g_4a2666[value]);
+        mazeSequence[sequenceLength] = largestOfKind(mazeSequence[sequenceLength - 1], 1, largestLimitByRows[value]);
         if (!mazeSequence[sequenceLength]) {
             mazeSequence[sequenceLength] = emptyValueList[randomBetween(anyEmptyValue, emptyValueCount)];
             other = 0;
@@ -2140,8 +2140,8 @@ void chooseSequence3()
     short other;
 
     sequenceLength = 0;
-    g_4b00c0 = 0;
-    g_4b00c2 = 0;
+    unusedSequenceIndex = 0;
+    sequenceIndex = 0;
     copyChosenFeatures();
     rows = clearRowsWithFeature(0);
     listEmptyValues();
@@ -2175,7 +2175,7 @@ void chooseSequence3()
             mazeSequence[sequenceLength] = emptyValueList[randomBetween(anyEmptyValue, emptyValueCount)];
     }
     sequenceLength++;
-    if (g_4afc32 == 1) {
+    if (mazeLevel == 1) {
         mazeSequence[sequenceLength] = mazeSequence[sequenceLength - 1];
         sequenceLength++;
     }
@@ -2196,7 +2196,7 @@ void chooseSequence3()
     rows = clearRowsWithFeature(mazeSequence[0]);
     sequenceLength++;
     if (countValuesPresent() > 4) {
-        mazeSequence[sequenceLength] = largestBetween(1, g_4a2666[rows]);
+        mazeSequence[sequenceLength] = largestBetween(1, largestLimitByRows[rows]);
         if (!mazeSequence[sequenceLength]) {
             mazeSequence[sequenceLength] = emptyValueList[randomBetween(anyEmptyValue, emptyValueCount)];
             most = 0;
@@ -2205,7 +2205,7 @@ void chooseSequence3()
         }
         clearRowsWithFeature(mazeSequence[sequenceLength]);
         sequenceLength++;
-        mazeSequence[sequenceLength] = largestOfKind(mazeSequence[sequenceLength - 1], 1, g_4a2666[rows]);
+        mazeSequence[sequenceLength] = largestOfKind(mazeSequence[sequenceLength - 1], 1, largestLimitByRows[rows]);
         if (!mazeSequence[sequenceLength]) {
             mazeSequence[sequenceLength] = emptyValueList[randomBetween(anyEmptyValue, emptyValueCount)];
             other = 0;
@@ -2219,7 +2219,7 @@ void chooseSequence3()
         }
         sequenceLength++;
     } else {
-        if (g_4a210c == 1) {
+        if (hotSpotTableUsed == 1) {
             mazeSequence[sequenceLength] = indexOfLargestExcept(0);
             if (!mazeSequence[sequenceLength])
                 mazeSequence[sequenceLength] = emptyValueList[randomBetween(anyEmptyValue, emptyValueCount)];
@@ -2247,8 +2247,8 @@ void chooseSequence4()
     short other;
 
     sequenceLength = 0;
-    g_4b00c0 = 0;
-    g_4b00c2 = 0;
+    unusedSequenceIndex = 0;
+    sequenceIndex = 0;
     copyChosenFeatures();
     rows = clearRowsWithFeature(0);
     listEmptyValues();
@@ -2300,7 +2300,7 @@ void chooseSequence4()
     listEmptyValues2();
     packEmptyValues2();
     if (countValuesPresent() > 4) {
-        mazeSequence[sequenceLength] = largestBetween(1, g_4a2666[rows]);
+        mazeSequence[sequenceLength] = largestBetween(1, largestLimitByRows[rows]);
         if (!mazeSequence[sequenceLength]) {
             mazeSequence[sequenceLength] = emptyValues2[randomBetween(anyEmptyValue2, emptyValueCount2)];
             if (!mazeSequence[sequenceLength])
@@ -2311,7 +2311,7 @@ void chooseSequence4()
         }
         clearRowsWithFeature(mazeSequence[sequenceLength]);
         sequenceLength++;
-        mazeSequence[sequenceLength] = largestOfKind(mazeSequence[sequenceLength - 1], 1, g_4a2666[rows]);
+        mazeSequence[sequenceLength] = largestOfKind(mazeSequence[sequenceLength - 1], 1, largestLimitByRows[rows]);
         if (!mazeSequence[sequenceLength]) {
             mazeSequence[sequenceLength] = emptyValues2[randomBetween(anyEmptyValue2, emptyValueCount2)];
             if (!mazeSequence[sequenceLength])
@@ -2352,8 +2352,8 @@ void chooseSequence5()
     short i;
 
     sequenceLength = 0;
-    g_4b00c0 = 0;
-    g_4b00c2 = 0;
+    unusedSequenceIndex = 0;
+    sequenceIndex = 0;
     remaining = 0;
     copyChosenFeatures();
     clearRowsWithFeature(0);
@@ -2377,7 +2377,7 @@ void chooseSequence5()
         last = emptyValueList[randomBetween(anyEmptyValue, emptyValueCount)];
     clearRowsWithFeature(mazeSequence[0]);
     clearRowsWithFeature(mazeSequence[1]);
-    total = g_4a26aa[clearRowsWithFeature(mazeSequence[2])];
+    total = rowTotals[clearRowsWithFeature(mazeSequence[2])];
     for (i = 0, n = 0; i < total; i++)
         if (!i) {
             mazeSequence[sequenceLength] = takeCommonestValue(1, 1);
@@ -2433,7 +2433,7 @@ void chooseSequence5()
 }
 
 /* Sets the maze up for a level (0-4): the squares' kinds (squareKinds, from
-   g_4a23be/g_4a239a), the lines' values shuffled (g_4b0d10), a sequence of
+   g_4a23be/squareKindTable), the lines' values shuffled (lineValues), a sequence of
    values by one of the ways for the level (alternating between two where
    there are two), and the Zoombinis' views. */
 /* @zoombi32 0x00436abf */
@@ -2445,15 +2445,15 @@ void setUpMaze(short level)
     short pick;
 
     for (i = 0; i < 11; i++)
-        order[i] = g_4a25ca[i];
+        order[i] = lineOrder[i];
     for (i = 0; i < 18; i++)
-        squareKinds[g_4a23be[i][0]][g_4a23be[i][1]] = g_4a239a[i];
-    g_4b0d10[0] = 0;
-    g_4b0d10[10] = 0;
-    g_4b0d10[1] = g_4a25ca[1];
+        squareKinds[g_4a23be[i][0]][g_4a23be[i][1]] = squareKindTable[i];
+    lineValues[0] = 0;
+    lineValues[10] = 0;
+    lineValues[1] = lineOrder[1];
     for (last = 8, i = 2; i < 9; i++) {
         pick = randomBetween(2, last);
-        g_4b0d10[i] = order[pick];
+        lineValues[i] = order[pick];
         for (; pick < last + 1; pick++)
             order[pick] = order[pick + 1];
         last--;
@@ -2461,33 +2461,33 @@ void setUpMaze(short level)
     switch (level) {
     case 0:
         chooseSequence1();
-        g_4a210e[0]++;
-        if (g_4a210e[0] > 1)
-            g_4a210e[0] = 0;
+        hotSpotTableKeys[0]++;
+        if (hotSpotTableKeys[0] > 1)
+            hotSpotTableKeys[0] = 0;
         break;
     case 1:
-        if (!g_4a210e[1])
+        if (!hotSpotTableKeys[1])
             chooseSequence2();
         else
             chooseSequence3();
-        g_4a210e[1]++;
-        if (g_4a210e[1] > 1)
-            g_4a210e[1] = 0;
+        hotSpotTableKeys[1]++;
+        if (hotSpotTableKeys[1] > 1)
+            hotSpotTableKeys[1] = 0;
         break;
     case 2:
-        if (!g_4a210e[2])
+        if (!hotSpotTableKeys[2])
             chooseSequence3();
         else
             chooseSequence4();
-        g_4a210e[2]++;
-        if (g_4a210e[2] > 1)
-            g_4a210e[2] = 0;
+        hotSpotTableKeys[2]++;
+        if (hotSpotTableKeys[2] > 1)
+            hotSpotTableKeys[2] = 0;
         break;
     case 3:
         chooseSequence5();
-        g_4a210e[3] += 2;
-        if (g_4a210e[3] > 2)
-            g_4a210e[3] = 0;
+        hotSpotTableKeys[3] += 2;
+        if (hotSpotTableKeys[3] > 2)
+            hotSpotTableKeys[3] = 0;
         break;
     case 4:
         chooseSequence4();
@@ -2515,80 +2515,80 @@ void openMaze()
     g_4a7d40 = 0;
     sceneDue = 0;
     g_4afc68 = 0;
-    g_4afc6a = 0;
-    g_4afc3c = 1;
-    g_4afc3e = 0;
-    g_4afc40 = 0;
-    g_4afc38 = 0;
-    g_4afc3a = 0;
-    g_4b0d26 = 0;
+    mazeGoReady = 0;
+    dragFromStart = 1;
+    unusedDragFlag = 0;
+    startPlace = 0;
+    partsSetUp = 0;
+    unusedMaze2 = 0;
+    poseReachedCount = 0;
     emptyValueCount = 0;
     anyEmptyValue = 0;
-    g_4afc2e = 0;
-    g_4afc48 = 0;
-    g_4afc46 = 0;
-    g_4afc44 = 0;
-    g_4b00d0 = 0;
-    g_4afc2c = 0;
+    mazeEvent10Seen = 0;
+    pieceView2 = 0;
+    pieceView1 = 0;
+    mazeAnchorView1 = 0;
+    takenRowCount = 0;
+    unusedMaze3 = 0;
     g_4a2116 = 0;
-    g_4b00ce = 0;
+    unusedMaze4 = 0;
     fillMemory(takenRows, 0, 160);
     fillMemory(takenRowsCopy, 0, 160);
     fillMemory(featureRows, 0, 160);
     fillMemory(valueCounts, 0, 42);
     fillMemory(mazeSequence, 0, 20);
-    fillMemory(g_4b00aa, 0, 20);
+    fillMemory(unusedMazeTable, 0, 20);
     fillMemory(emptyValueList2, 0, 42);
     fillMemory(emptyValueList, 0, 42);
     sequenceLength = 0;
-    g_4b00c0 = 0;
-    g_4b00c2 = 0;
-    g_4a2550 = 0;
-    g_4a2552 = 0;
+    unusedSequenceIndex = 0;
+    sequenceIndex = 0;
+    unusedMaze5 = 0;
+    unusedMaze6 = 0;
     fillMemory(squareViews, 0, 338);
     fillMemory(squareKinds, 0, 338);
-    g_4afc60 = 0;
+    mazeSnoidCount = 0;
     g_4b08b0 = 0;
-    g_4b076c = 0;
+    snoidPartsTable = 0;
     g_4b08b0 = 0;
-    g_4b08b2 = 0;
-    g_4b08b4 = 1;
-    g_4afe52 = 16;
-    g_4afe54 = 0;
-    g_4afe56 = 0;
-    g_4afe58 = 0;
+    unusedMaze7 = 0;
+    nextSnoidParts = 1;
+    exitSpotNext1 = 16;
+    exitSpotNext2 = 0;
+    exitSpotNext3 = 0;
+    exitSpotNext4 = 0;
     hintSound = 0;
     fillMemory(g_4afc6c, 0, 30);
-    fillMemory(g_4b08b8, 0, 40);
-    fillMemory(g_4b08e0, 0, 40);
-    fillMemory(g_4b0908, 0, 40);
-    fillMemory(g_4b0930, 0, 40);
-    fillMemory(g_4b0958, 0, 40);
-    fillMemory(g_4b09a8, 0, 40);
+    fillMemory(poseDoneList, 0, 40);
+    fillMemory(arrivedList, 0, 40);
+    fillMemory(helperDoneList, 0, 40);
+    fillMemory(partnerList, 0, 40);
+    fillMemory(finishedList, 0, 40);
+    fillMemory(placedQueue, 0, 40);
     g_4b09f8 = 0;
     g_4b09fa = 0;
-    g_4b09fc = 0;
+    helperDoneCount = 0;
     g_4b09fe = 0;
-    g_4b0a00 = 0;
-    g_4b0a02 = 0;
-    g_4b0a04 = 0;
-    g_4b0a06 = 0;
-    g_4b0d3a = 0;
-    g_4b0d38 = 0;
-    g_4b0d3c = 0;
-    g_4b0a08 = 0;
-    g_4b0a0a = 0;
-    g_4b0a0c = 0;
+    finishedCount = 0;
+    meetingCount = 0;
+    placedQueueCount = 0;
+    pose3Count = 0;
+    mazeFidgetsDone = 0;
+    mazeFidgetsAllowed = 0;
+    mazeFidgeting = 0;
+    unusedMaze8 = 0;
+    gate1CloseDue = 0;
+    gate3CloseDue = 0;
     fillMemory(squareOccupants, 0, 1014);
-    fillMemory(g_4b09d0, 0, 40);
+    fillMemory(pose3List, 0, 40);
     fillMemory(g_4afd8c, 0, 32);
-    fillMemory(g_4b0980, 0, 40);
-    fillMemory(g_4afd26, 0, 6);
-    fillMemory(g_4afdac, 0, 6);
-    fillMemory(g_4afd2c, 0, 28);
-    fillMemory(g_4afd48, 0, 28);
-    fillMemory(g_4afc92, 0, 28);
-    fillMemory(g_4b0a10, 0, 350);
+    fillMemory(meetingList, 0, 40);
+    fillMemory(lineSecondViews, 0, 6);
+    fillMemory(unusedMazeTable2, 0, 6);
+    fillMemory(pieceViews, 0, 28);
+    fillMemory(pieceSecondViews, 0, 28);
+    fillMemory(pieceViews7000, 0, 28);
+    fillMemory(lineViews, 0, 350);
     fillMemory(g_4b0b6e, 0, 50);
     fillMemory(g_4b0ba0, 0, 50);
     fillMemory(g_4b0bd2, 0, 50);
@@ -2596,8 +2596,8 @@ void openMaze()
     fillMemory(g_4b0c36, 0, 50);
     fillMemory(g_4b0c68, 0, 50);
     fillMemory(g_4b0c9a, 0, 50);
-    fillMemory(g_4b0ccc, 0, 50);
-    g_4b0cfe = 0;
+    fillMemory(unusedMazeTable3, 0, 50);
+    lineViewCount = 0;
     g_4b0d00 = 0;
     g_4b0d02 = 0;
     g_4b0d04 = 0;
@@ -2605,12 +2605,12 @@ void openMaze()
     g_4b0d08 = 0;
     g_4b0d0a = 0;
     g_4b0d0c = 0;
-    g_4b0d0e = 0;
-    fillMemory(g_4b0d10, 0, 22);
+    unusedMaze1 = 0;
+    fillMemory(lineValues, 0, 22);
     for (i = 0; i < 11; i++)
-        g_4afc4a[i] = 0;
-    openGameFile(&g_4afc64, "Maze2.MHK");
-    setCurrentMap(g_4afc64);
+        mazeSnoidViews[i] = 0;
+    openGameFile(&mazeFile, "Maze2.MHK");
+    setCurrentMap(mazeFile);
     loadTerrain(100);
     drawBackdrop(5000);
     loadFeatureGroup(7000, 0, 0);
@@ -2626,32 +2626,32 @@ void openMaze()
     setArrivalHook(mazeArrivalHook);
     loadSnoidScripts(14000, 8, 0);
     addSnoidScripts(15000, 96, 0);
-    g_4afbd8 = 0;
-    squarePlaces = (Point *)loadShortTable(16000, &g_4afbd8);
-    loadMazeTable(&g_4afc18, &g_4afc20, 16501, &g_4afc24);
-    mazeHotSpotsX = loadShortTable(17000, &g_4afbe0);
-    mazeHotSpotsY = loadShortTable(17001, &g_4afbe4);
-    mazeImages = loadImageBank(5100, &g_4afbc4);
-    g_4afbd0 = loadShortTable(18000, &g_4afbc8);
-    g_4afbd4 = loadShortTable(18001, &g_4afbcc);
+    unusedMazeResource = 0;
+    squarePlaces = (Point *)loadShortTable(16000, &unusedMazeResource);
+    loadMazeTable(&hotSpotTableResource, &hotSpotTableHandle, 16501, &g_4afc24);
+    mazeHotSpotsX = loadShortTable(17000, &mazeHotSpotsXResource);
+    mazeHotSpotsY = loadShortTable(17001, &mazeHotSpotsYResource);
+    mazeImages = loadImageBank(5100, &mazeImagesResource);
+    partHotX = loadShortTable(18000, &partHotXResource);
+    partHotY = loadShortTable(18001, &partHotYResource);
     fadeOutViews();
     copyPaletteRange(10, 236);
-    g_4afc2a = addView(0x4188000, drawCels, runViewScript, 12001, 7, 0, 0, 0);
+    mazeAnchorView2 = addView(0x4188000, drawCels, runViewScript, 12001, 7, 0, 0, 0);
     setViewPlaces(20, places, 1);
     makePartySnoids(0);
     featureRowCount = listChosenSnoids()->count;
-    g_4b0d38 = featureRowCount - 1;
-    g_4afc32 = sceneLevel();
-    if (g_4afc32 == 3 && featureRowCount < 5)
-        g_4afc32++;
-    g_4b076c = loadHotSpotTable(g_4afc32);
+    mazeFidgetsAllowed = featureRowCount - 1;
+    mazeLevel = sceneLevel();
+    if (mazeLevel == 3 && featureRowCount < 5)
+        mazeLevel++;
+    snoidPartsTable = loadHotSpotTable(mazeLevel);
     for (i = 1; i < 10; i++) {
-        kind = g_4b076c[i];
+        kind = snoidPartsTable[i];
         if (kind) {
             kind--;
-            switch (g_4a22ec[kind]) {
+            switch (pieceLineKinds[kind]) {
             case 1:
-                g_4afd26[g_4a22ec[kind]] = addView(0x4188000, drawCels, runViewScript, g_4a22ec[kind] + 9005, 7, 0, 0, 0);
+                lineSecondViews[pieceLineKinds[kind]] = addView(0x4188000, drawCels, runViewScript, pieceLineKinds[kind] + 9005, 7, 0, 0, 0);
                 break;
             }
         }
@@ -2659,133 +2659,133 @@ void openMaze()
     for (i = 0; i < 16; i++)
         placedViews[i] = 0;
     for (i = 1; i < 10; i++) {
-        kind = g_4b076c[i];
+        kind = snoidPartsTable[i];
         if (kind) {
             kind--;
-            g_4afc92[kind] = addView(0x4108000, drawCels, runViewScript, kind + 7000, 6, 0, 0, 0);
+            pieceViews7000[kind] = addView(0x4108000, drawCels, runViewScript, kind + 7000, 6, 0, 0, 0);
         }
     }
     for (i = 1; i < 10; i++) {
-        kind = g_4b076c[i];
+        kind = snoidPartsTable[i];
         if (kind) {
             kind--;
             placedViewCount = kind;
-            placedViews[kind] = addView(0x508a000, drawCels, runViewScript, kind + 7014, 7, &g_4a21f0[kind], 0, 0);
+            placedViews[kind] = addView(0x508a000, drawCels, runViewScript, kind + 7014, 7, &startPlacePoints[kind], 0, 0);
         } else if (!placedViews[i]) {
             placeClaims[i] = -10;
         }
     }
     for (i = 1; i < 10; i++) {
-        kind = g_4b076c[i];
+        kind = snoidPartsTable[i];
         if (kind >= 7 && kind <= 9) {
             kind--;
             switch (kind) {
             case 6:
-                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                pieceViews[kind] = addView(0x4988000, drawCels, runViewScript, pieceScripts[kind], 7, &piecePoints[kind], 0, 0);
                 addView(0x4008000, drawCels, runViewScript, 8006, 0, 0, 0, 0);
-                g_4afc44 = g_4afd2c[kind];
+                mazeAnchorView1 = pieceViews[kind];
                 break;
             case 7:
-                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                pieceViews[kind] = addView(0x4988000, drawCels, runViewScript, pieceScripts[kind], 7, &piecePoints[kind], 0, 0);
                 addView(0x4008000, drawCels, runViewScript, 8007, 0, 0, 0, 0);
-                g_4afc44 = g_4afd2c[kind];
+                mazeAnchorView1 = pieceViews[kind];
                 break;
             case 8:
-                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
-                g_4afc44 = g_4afd2c[kind];
+                pieceViews[kind] = addView(0x4988000, drawCels, runViewScript, pieceScripts[kind], 7, &piecePoints[kind], 0, 0);
+                mazeAnchorView1 = pieceViews[kind];
                 break;
             default:
-                g_4afd2c[kind] = 0;
+                pieceViews[kind] = 0;
                 break;
             }
-            view = findView(g_4afd2c[kind]);
+            view = findView(pieceViews[kind]);
             if (view) {
                 short *parts = (short *)&view->body;
 
-                parts[45] = g_4a22ec[kind];
+                parts[45] = pieceLineKinds[kind];
             }
-            if (g_4a22d0[kind])
-                g_4afd48[kind] = addView(0x5988000, drawCels, runViewScript, g_4a2308[kind] + 1, 7, &g_4a232a[kind], 0, 0);
+            if (pieceHasSecond[kind])
+                pieceSecondViews[kind] = addView(0x5988000, drawCels, runViewScript, pieceScripts[kind] + 1, 7, &piecePoints[kind], 0, 0);
         }
     }
-    if (g_4afc44) {
+    if (mazeAnchorView1) {
         i = addView(0x4008000, drawCels, runViewScript, 8005, 0, 0, 0, 0);
-        moveView(i, 1, g_4afc44);
-        g_4afc44 = i;
+        moveView(i, 1, mazeAnchorView1);
+        mazeAnchorView1 = i;
     } else {
         addView(0x4008000, drawCels, runViewScript, 8010, 0, 0, 0, 0);
     }
-    g_4afd26[0] = addView(0x4180000, drawCels, runViewScript, 9005, 7, 0, 0, 0);
+    lineSecondViews[0] = addView(0x4180000, drawCels, runViewScript, 9005, 7, 0, 0, 0);
     if (featureRowCount > 0) {
-        g_4b08b0 = g_4b076c[0];
-        setUpMaze(g_4afc32);
+        g_4b08b0 = snoidPartsTable[0];
+        setUpMaze(mazeLevel);
     }
     for (i = 0; i < 3; i++)
         g_4afd8c[i] = addView(0x4008000, mazeNoDraw, mazeNoUpdate, 8011, 0, 0, 0, 0);
     for (i = 3; i < 11; i++)
         g_4afd8c[i] = addView(0x4008000, mazeNoDraw, mazeNoUpdate, 8011, 0, 0, 0, 0);
     for (i = 1; i < 10; i++) {
-        kind = g_4b076c[i];
+        kind = snoidPartsTable[i];
         if (kind) {
             kind--;
-            switch (g_4a22ec[kind]) {
+            switch (pieceLineKinds[kind]) {
             case 2:
-                g_4afd26[g_4a22ec[kind]] = addView(0x180000, drawCels, runViewScript, g_4a22ec[kind] + 9005, 7, 0, 0, 0);
+                lineSecondViews[pieceLineKinds[kind]] = addView(0x180000, drawCels, runViewScript, pieceLineKinds[kind] + 9005, 7, 0, 0, 0);
                 break;
             }
         }
     }
     for (i = 1; i < 10; i++) {
-        kind = g_4b076c[i];
+        kind = snoidPartsTable[i];
         if (kind && (kind < 7 || kind > 9)) {
             kind--;
             switch (kind) {
             case 3:
-                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                pieceViews[kind] = addView(0x4988000, drawCels, runViewScript, pieceScripts[kind], 7, &piecePoints[kind], 0, 0);
                 addView(0x4008000, drawCels, runViewScript, 8002, 0, 0, 0, 0);
-                g_4afc46 = g_4afd2c[kind];
+                pieceView1 = pieceViews[kind];
                 break;
             case 4:
-                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                pieceViews[kind] = addView(0x4988000, drawCels, runViewScript, pieceScripts[kind], 7, &piecePoints[kind], 0, 0);
                 addView(0x4008000, drawCels, runViewScript, 8003, 0, 0, 0, 0);
-                g_4afc46 = g_4afd2c[kind];
+                pieceView1 = pieceViews[kind];
                 break;
             case 5:
-                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
-                g_4afc46 = g_4afd2c[kind];
+                pieceViews[kind] = addView(0x4988000, drawCels, runViewScript, pieceScripts[kind], 7, &piecePoints[kind], 0, 0);
+                pieceView1 = pieceViews[kind];
                 break;
             case 12:
-                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                pieceViews[kind] = addView(0x4988000, drawCels, runViewScript, pieceScripts[kind], 7, &piecePoints[kind], 0, 0);
                 addView(0x4000000, drawCels, runViewScript, 8009, 0, 0, 0, 0);
-                g_4afc48 = g_4afd2c[kind];
+                pieceView2 = pieceViews[kind];
                 break;
             case 13:
-                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
-                g_4afc48 = g_4afd2c[kind];
+                pieceViews[kind] = addView(0x4988000, drawCels, runViewScript, pieceScripts[kind], 7, &piecePoints[kind], 0, 0);
+                pieceView2 = pieceViews[kind];
                 break;
             default:
-                g_4afd2c[kind] = addView(0x4988000, drawCels, runViewScript, g_4a2308[kind], 7, &g_4a232a[kind], 0, 0);
+                pieceViews[kind] = addView(0x4988000, drawCels, runViewScript, pieceScripts[kind], 7, &piecePoints[kind], 0, 0);
                 break;
             }
-            view = findView(g_4afd2c[kind]);
+            view = findView(pieceViews[kind]);
             if (view) {
                 short *parts = (short *)&view->body;
 
-                parts[45] = g_4a22ec[kind];
+                parts[45] = pieceLineKinds[kind];
             }
-            if (g_4a22d0[kind])
-                g_4afd48[kind] = addView(0x5980000, drawCels, runViewScript, g_4a2308[kind] + 1, 7, &g_4a232a[kind], 0, 0);
+            if (pieceHasSecond[kind])
+                pieceSecondViews[kind] = addView(0x5980000, drawCels, runViewScript, pieceScripts[kind] + 1, 7, &piecePoints[kind], 0, 0);
         }
     }
-    if (g_4afc46) {
+    if (pieceView1) {
         i = addView(0x4008000, drawCels, runViewScript, 8001, 0, 0, 0, 0);
-        moveView(i, 1, g_4afc46);
-        g_4afc46 = i;
+        moveView(i, 1, pieceView1);
+        pieceView1 = i;
     }
-    if (g_4afc48) {
+    if (pieceView2) {
         i = addView(0x4008000, drawCels, runViewScript, 8008, 0, 0, 0, 0);
-        moveView(i, 1, g_4afc48);
-        g_4afc48 = i;
+        moveView(i, 1, pieceView2);
+        pieceView2 = i;
     }
     addView(0x4008000, drawCels, runViewScript, 8011, 0, 0, 0, 0);
     addView(0x4000000, drawCels, runViewScript, 8004, 0, 0, 0, 0);

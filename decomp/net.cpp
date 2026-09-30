@@ -20,7 +20,7 @@
 /*
  * Lays out a maze Zoombini's cels (unless it's in state 1; 3 and others
  * become 1), by its move (word 30), placed by the hot spots in
- * g_4afbd0/g_4afbd4: its body (from word 40), with the ways open (words
+ * partHotX/partHotY: its body (from word 40), with the ways open (words
  * 34-37) and its direction (38), and a helper part (words 41, 42); or a
  * turn (1: word 38 cycling 0-3), a spin (5: word 38 cycling 0-5), or
  * falling (6, 7: then, in state 2, one of four more frames by word 46,
@@ -61,24 +61,24 @@ void layOutMazeCels(Snoid *snoid)
     case 4:
         part = parts[40];
         *cel++ = part;
-        *cel++ = where.x - g_4afbd0[part];
-        *cel++ = where.y - g_4afbd4[part];
+        *cel++ = where.x - partHotX[part];
+        *cel++ = where.y - partHotY[part];
         for (k = 1; k < 5; k++)
             if (parts[33 + k]) {
                 part = parts[40] + k;
                 *cel++ = part;
-                *cel++ = where.x - g_4afbd0[part];
-                *cel++ = where.y - g_4afbd4[part];
+                *cel++ = where.x - partHotX[part];
+                *cel++ = where.y - partHotY[part];
             }
         part = parts[40] + parts[38] + 5;
         *cel++ = part;
-        *cel++ = where.x - g_4afbd0[part];
-        *cel++ = where.y - g_4afbd4[part];
+        *cel++ = where.x - partHotX[part];
+        *cel++ = where.y - partHotY[part];
         if (parts[41]) {
             part = parts[41] * 5 + parts[42] + 5;
             *cel++ = part;
-            *cel++ = where.x - g_4afbd0[part];
-            *cel++ = where.y - g_4afbd4[part];
+            *cel++ = where.x - partHotX[part];
+            *cel++ = where.y - partHotY[part];
         }
         break;
     case 1:
@@ -87,8 +87,8 @@ void layOutMazeCels(Snoid *snoid)
             parts[38] = 0;
         part = parts[38] + 2;
         *cel++ = part;
-        *cel++ = where.x - g_4afbd0[part];
-        *cel++ = where.y - g_4afbd4[part];
+        *cel++ = where.x - partHotX[part];
+        *cel++ = where.y - partHotY[part];
         break;
     case 5:
         parts[38]++;
@@ -96,20 +96,20 @@ void layOutMazeCels(Snoid *snoid)
             parts[38] = 0;
         part = parts[40] + parts[38] + 9;
         *cel++ = part;
-        *cel++ = where.x - g_4afbd0[part];
-        *cel++ = where.y - g_4afbd4[part];
+        *cel++ = where.x - partHotX[part];
+        *cel++ = where.y - partHotY[part];
         break;
     case 6:
         part = parts[40] + 19;
         *cel++ = part;
-        *cel++ = where.x - g_4afbd0[part];
-        *cel++ = where.y - g_4afbd4[part];
+        *cel++ = where.x - partHotX[part];
+        *cel++ = where.y - partHotY[part];
         if (snoid->unknownF4 == 2) {
             if (parts[46] >= 0 && parts[46] < 4) {
                 part = parts[40] + parts[46] + 15;
                 *cel++ = part;
-                *cel++ = where.x - g_4afbd0[part];
-                *cel++ = where.y - g_4afbd4[part];
+                *cel++ = where.x - partHotX[part];
+                *cel++ = where.y - partHotY[part];
                 parts[46]++;
             } else {
                 snoid->unknownF4 = 1;
@@ -119,14 +119,14 @@ void layOutMazeCels(Snoid *snoid)
     case 7:
         part = parts[40] + 20;
         *cel++ = part;
-        *cel++ = where.x - g_4afbd0[part];
-        *cel++ = where.y - g_4afbd4[part];
+        *cel++ = where.x - partHotX[part];
+        *cel++ = where.y - partHotY[part];
         if (snoid->unknownF4 == 2) {
             if (parts[46] >= 0 && parts[46] < 4) {
                 part = parts[40] + parts[46] + 15;
                 *cel++ = part;
-                *cel++ = where.x - g_4afbd0[part];
-                *cel++ = where.y - g_4afbd4[part];
+                *cel++ = where.x - partHotX[part];
+                *cel++ = where.y - partHotY[part];
                 parts[46]++;
             } else {
                 snoid->unknownF4 = 1;
@@ -828,7 +828,7 @@ void splitIntoGroups()
  * word 38 of the view `other`, which, if its word 39 is set, first turns
  * to its next open way (words 34-37; sound 5101/5102 in turn) and gets
  * pose 3). Lands on a square of kind 5 (squareKinds): that square's view
- * gives up its partner (word 43, listed in g_4b0930), which takes the
+ * gives up its partner (word 43, listed in partnerList), which takes the
  * direction. Then places it and starts its walking script (from word 21)
  * with its helper view's (script 10000 on), grouped. Reads `other`'s words
  * even when there's no such view.
@@ -892,7 +892,7 @@ void stepMazeSnoid(View *view, short other)
         if (paired) {
             its = (short *)&paired->body;
             if (its[43]) {
-                g_4b0930[g_4b09fe] = its[43];
+                partnerList[g_4b09fe] = its[43];
                 g_4b09fe++;
                 paired = findView(its[43]);
                 its[43] = 0;
@@ -1032,7 +1032,7 @@ void putOnSquare(View *view, short)
 /* Stops a maze Zoombini (state 2) and moves on the Zoombinis in its
    line's list (by its word 33): those in pose 4 turn to their next
    direction (word 38) with a way open (words 34-37); those in pose 5 with
-   a partner (word 43) list it in g_4b0930. */
+   a partner (word 43) list it in partnerList. */
 /* @zoombi32 0x00439e55 */
 void stopMazeSnoid(short id)
 {
@@ -1047,7 +1047,7 @@ void stopMazeSnoid(short id)
         parts[46] = 0;
         switch (parts[33]) {
         case 1:
-            list = g_4b0a10;
+            list = lineViews;
             n = 0;
             break;
         case 2:
@@ -1079,7 +1079,7 @@ void stopMazeSnoid(short id)
             n = g_4b0d0c;
             break;
         default:
-            list = g_4b0a10;
+            list = lineViews;
             n = 0;
             break;
         }
@@ -1100,7 +1100,7 @@ void stopMazeSnoid(short id)
                     ((Snoid *)&view->body)->unknownF4 = 3;
                 }
                 if (parts[30] == 5 && parts[43]) {
-                    g_4b0930[g_4b09fe] = parts[43];
+                    partnerList[g_4b09fe] = parts[43];
                     g_4b09fe++;
                     parts[43] = 0;
                 }
@@ -1211,7 +1211,7 @@ void landMarker(short n)
 
 /* Steps a maze Zoombini one square on in its direction (word 20; within
    the 13 by 13 board); a square of kind 5 there hands its partner on (to
-   g_4b0930, turned the same way). Then puts it there with its helper view
+   partnerList, turned the same way). Then puts it there with its helper view
    (script 10000 on) and starts its script. */
 /* @zoombi32 0x00439cb4 */
 void stepMazeSnoidOn(View *view)
@@ -1252,7 +1252,7 @@ void stepMazeSnoidOn(View *view)
         if (other) {
             its = (short *)&other->body;
             if (its[43]) {
-                g_4b0930[g_4b09fe] = its[43];
+                partnerList[g_4b09fe] = its[43];
                 g_4b09fe++;
                 View *partner = findView(its[43]);
 
@@ -1333,7 +1333,7 @@ void stepAtTurning(View *view, short other)
         if (square) {
             its = (short *)&square->body;
             if (its[43]) {
-                g_4b0930[g_4b09fe] = its[43];
+                partnerList[g_4b09fe] = its[43];
                 g_4b09fe++;
                 View *partner = findView(its[43]);
 
