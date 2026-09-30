@@ -21,12 +21,12 @@
 #include "sound.h"
 #include "view.h"
 
-/* A view's update: redraws button 2 when g_4b15e6 changes, and button 1
+/* A view's update: redraws button 2 when pizzaGoReady changes, and button 1
    once. */
 /* @zoombi32 0x00441127 */
-void fn_441127(View *, short region)
+void updatePizzaButtons(View *, short region)
 {
-    if (g_4b15e6) {
+    if (pizzaGoReady) {
         if (!g_4a3d98) {
             g_4a3d98 = 1;
             unionRgnRect(region, &pizzaButtons[1].rect);
@@ -41,7 +41,7 @@ void fn_441127(View *, short region)
     }
 }
 
-/* Draws button `which` (1: 5, 2: 2, or 1 if g_4b15e6 isn't set; the
+/* Draws button `which` (1: 5, 2: 2, or 1 if pizzaGoReady isn't set; the
    next image if lit) from the bank g_4a3d94, showing it if `show`. */
 /* @zoombi32 0x00441071 */
 void drawPizzaButton(short which, short lit, short show)
@@ -54,7 +54,7 @@ void drawPizzaButton(short which, short lit, short show)
         break;
     case 2:
         image = 2;
-        if (!g_4b15e6) {
+        if (!pizzaGoReady) {
             lit = 0;
             image = 1;
         }
@@ -89,20 +89,20 @@ void closePizza()
     }
 }
 
-/* Shows the view g_4b162e with script 7001 on (by g_4b161e), adding it
-   if need be, placed by fn_442443. */
+/* Shows the view g_4b162e with script 7001 on (by pizzaLevel), adding it
+   if need be, placed by placeMealToppings. */
 /* @zoombi32 0x004423d7 */
-void fn_4423d7()
+void showMealView()
 {
     View *view = findView(g_4b162e);
 
     if (view) {
-        setViewScript(view, g_4b161e + 7001, 1);
+        setViewScript(view, pizzaLevel + 7001, 1);
     } else {
-        g_4b162e = addView(0x108000, drawCels, runViewScript, g_4b161e + 7001, 6, 0, 0, 0);
+        g_4b162e = addView(0x108000, drawCels, runViewScript, pizzaLevel + 7001, 6, 0, 0, 0);
         view = findView(g_4b162e);
     }
-    view->placed = fn_442443;
+    view->placed = placeMealToppings;
 }
 
 /* Sends the party's Zoombinis flagged (their word F7 is 1) to their
@@ -110,7 +110,7 @@ void fn_4423d7()
 /* Not exact: the original turns the view's register into the Snoid's in
    place (add esi, 0x30) where BCC computes it into eax. */
 /* @zoombi32 0x004468eb */
-void fn_4468eb()
+void sendFlaggedToPlaces()
 {
     Point where;
     short i;
@@ -128,72 +128,72 @@ void fn_4468eb()
     }
 }
 
-/* A random topping (of g_4b1624) that troll `troll` (0-2: Arno, Willa, Shyler)
+/* A random topping (of toppingCount) that troll `troll` (0-2: Arno, Willa, Shyler)
    wants. */
 /* @zoombi32 0x00443316 */
-short fn_443316(short troll)
+short randomWantedTopping(short troll)
 {
     short n;
 
     switch (troll) {
     case 0:
         do
-            n = randomUpTo(g_4b1624 - 1);
+            n = randomUpTo(toppingCount - 1);
         while (!arnoWants[n]);
         break;
     case 1:
         do
-            n = randomUpTo(g_4b1624 - 1);
+            n = randomUpTo(toppingCount - 1);
         while (!willaWants[n]);
         break;
     case 2:
         do
-            n = randomUpTo(g_4b1624 - 1);
+            n = randomUpTo(toppingCount - 1);
         while (!shylerWants[n]);
         break;
     }
     return n;
 }
 
-/* Picks the toppings (g_4b1676) at random: each (of g_4b1624, but not the
+/* Picks the toppings (pickedToppings) at random: each (of toppingCount, but not the
    fifth at level 1) with chance g_4b1626 in 1000, until g_4b1628 have been
    picked; if none was, one of the first four. */
 /* @zoombi32 0x0044410b */
-void fn_44410b()
+void pickToppings()
 {
     short none;
     short skip;
     short left;
     short i;
 
-    fillMemory(g_4b1676, 0, 16);
+    fillMemory(pickedToppings, 0, 16);
     none = 1;
     skip = -1;
-    if (g_4b161e == 1)
+    if (pizzaLevel == 1)
         skip = 4;
     left = g_4b1628;
     do {
-        for (i = 0; i < g_4b1624; i++)
-            if ((short)randomUpTo(1000) < g_4b1626 && !g_4b1676[i] && i != skip) {
-                g_4b1676[i]++;
+        for (i = 0; i < toppingCount; i++)
+            if ((short)randomUpTo(1000) < g_4b1626 && !pickedToppings[i] && i != skip) {
+                pickedToppings[i]++;
                 left--;
                 none = 0;
             }
     } while (left > 0);
     if (none)
-        g_4b1676[randomUpTo(3)]++;
+        pickedToppings[randomUpTo(3)]++;
 }
 
-/* Whether the toppings on the pizza (g_4b16da, as a set of eight bits) are
-   one of the sets tried already (g_4b16ec, g_4b1708 + 1 of them). */
+/* Whether the toppings on the pizza (pizzaToppings, as a set of eight bits) are
+   one of the sets tried already (triedPizzas, lastTriedPizza + 1 of them). */
 /* @zoombi32 0x0044460a */
-short fn_44460a()
+short pizzaTriedBefore()
 {
-    short *toppings = g_4b16da;
+    short *toppings = pizzaToppings;
     char set;
     short i;
 
-    if (g_4b1708 < 0)
+    if (lastTriedPizza < 0)
         return 0;
     set = 0;
     if (toppings[0])
@@ -212,80 +212,80 @@ short fn_44460a()
         set |= 0x40;
     if (toppings[7])
         set |= 0x80;
-    for (i = 0; i <= g_4b1708; i++)
-        if (set == g_4b16ec[i])
+    for (i = 0; i <= lastTriedPizza; i++)
+        if (set == triedPizzas[i])
             return 1;
     return 0;
 }
 
-/* Records the toppings on the pizza (g_4b16da) as a set tried (the next
-   of g_4b16ec). */
+/* Records the toppings on the pizza (pizzaToppings) as a set tried (the next
+   of triedPizzas). */
 /* @zoombi32 0x00444556 */
-void fn_444556()
+void recordPizzaTried()
 {
-    short *toppings = g_4b16da;
+    short *toppings = pizzaToppings;
 
-    g_4b1708++;
+    lastTriedPizza++;
     if (toppings[0])
-        g_4b16ec[g_4b1708] |= 1;
+        triedPizzas[lastTriedPizza] |= 1;
     if (toppings[1])
-        g_4b16ec[g_4b1708] |= 2;
+        triedPizzas[lastTriedPizza] |= 2;
     if (toppings[2])
-        g_4b16ec[g_4b1708] |= 4;
+        triedPizzas[lastTriedPizza] |= 4;
     if (toppings[3])
-        g_4b16ec[g_4b1708] |= 8;
+        triedPizzas[lastTriedPizza] |= 8;
     if (toppings[4])
-        g_4b16ec[g_4b1708] |= 0x10;
+        triedPizzas[lastTriedPizza] |= 0x10;
     if (toppings[5])
-        g_4b16ec[g_4b1708] |= 0x20;
+        triedPizzas[lastTriedPizza] |= 0x20;
     if (toppings[6])
-        g_4b16ec[g_4b1708] |= 0x40;
+        triedPizzas[lastTriedPizza] |= 0x40;
     if (toppings[7])
-        g_4b16ec[g_4b1708] |= 0x80;
+        triedPizzas[lastTriedPizza] |= 0x80;
 }
 
-/* Starts the view g_4a3d42 over (action 1) and puts it in front of the
-   troll view that's up (g_4b160e, g_4b1610 or g_4b1612, unless
+/* Starts the view zoombiniAtPizza over (action 1) and puts it in front of the
+   troll view that's up (arnoView, willaView or shylerView, unless
    g_4b1720), grouped. */
 /* @zoombi32 0x0044509b */
-void fn_44509b()
+void restartPizzaView()
 {
-    View *view = findView(g_4a3d42);
+    View *view = findView(zoombiniAtPizza);
 
     view->interval = 6;
     setSnoidAction((Snoid *)&view->body, 1, 0);
     if (!g_4b1720) {
-        if (g_4b1618 == 1)
-            moveView(g_4a3d42, 1, g_4b160e);
-        else if (g_4b161a == 1)
-            moveView(g_4a3d42, 1, g_4b1610);
-        else if (g_4b161c == 1)
-            moveView(g_4a3d42, 1, g_4b1612);
+        if (arnoState == 1)
+            moveView(zoombiniAtPizza, 1, arnoView);
+        else if (willaState == 1)
+            moveView(zoombiniAtPizza, 1, willaView);
+        else if (shylerState == 1)
+            moveView(zoombiniAtPizza, 1, shylerView);
     } else {
         g_4b1720 = 0;
     }
-    g_4b15f8 = groupViews(g_4a3d42, g_4a3d42, 0, 0, 0, 0);
+    g_4b15f8 = groupViews(zoombiniAtPizza, zoombiniAtPizza, 0, 0, 0, 0);
 }
 
-/* A view's notify: unless busy (g_4b15f2, g_4b160a, g_4b1662), counts in
-   g_4b165a once all the party is through (g_4b15d6), else shows the view
-   g_4b162e (script 7067, or 7068 from level 1) placed by fn_442443. */
+/* A view's notify: unless busy (g_4b15f2, g_4b160a, pizzaSolved), counts in
+   g_4b165a once all the party is through (nextZoombini), else shows the view
+   g_4b162e (script 7067, or 7068 from level 1) placed by placeMealToppings. */
 /* @zoombi32 0x00445ae1 */
-void fn_445ae1(View *, short)
+void pizzaDoneNotify(View *, short)
 {
     View *view;
 
-    if (!g_4b15f2 && !g_4b160a && !g_4b1662) {
-        if (g_4b15d6 >= g_4b15d4) {
+    if (!g_4b15f2 && !g_4b160a && !pizzaSolved) {
+        if (nextZoombini >= g_4b15d4) {
             g_4b165a++;
         } else {
             view = findView(g_4b162e);
-            if (!g_4b161e)
+            if (!pizzaLevel)
                 setViewScript(view, 7067, 1);
             else
                 setViewScript(view, 7068, 1);
             g_4b160a = groupViews(g_4b162e, g_4b162e, 0, 0, 0, 0);
-            view->placed = fn_442443;
+            view->placed = placeMealToppings;
         }
     }
 }
@@ -294,7 +294,7 @@ void fn_445ae1(View *, short)
    not on the pizza (g_4b164a-g_4b1658). `i` never
    moves. */
 /* @zoombi32 0x00442443 */
-void fn_442443(View *view)
+void placeMealToppings(View *view)
 {
     short *cel = (short *)&view->body;
     short i = 0;
@@ -357,54 +357,54 @@ void fn_442443(View *view)
     }
 }
 
-/* Starts the troll of the level (g_4b161e: Arno g_4b160e at 0, Willa
-   g_4b1610 at 1, Shyler g_4b1612 from 2) on one of its scripts (8014,
+/* Starts the troll of the level (pizzaLevel: Arno arnoView at 0, Willa
+   willaView at 1, Shyler shylerView from 2) on one of its scripts (8014,
    9019-9020 or 10001-10008). */
 /* @zoombi32 0x004458c3 */
-void fn_4458c3()
+void startLevelTroll()
 {
     View *view;
 
     g_4b1660 = 1;
-    if (!g_4b161e) {
-        view = findView(g_4b160e);
+    if (!pizzaLevel) {
+        view = findView(arnoView);
         setViewScript(view, 8014, 1);
-        g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
-    } else if (g_4b161e == 1) {
-        view = findView(g_4b1610);
+        g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
+    } else if (pizzaLevel == 1) {
+        view = findView(willaView);
         setViewScript(view, randomUpTo(1) + 9019, 1);
-        g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
-    } else if (g_4b161e >= 2) {
-        view = findView(g_4b1612);
+        g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
+    } else if (pizzaLevel >= 2) {
+        view = findView(shylerView);
         setViewScript(view, randomUpTo(7) + 10001, 1);
-        g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+        g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
     }
 }
 
 /* Steps the trolls' turns on (g_4b165e: 1-4): each of the trolls there
    are at the level in turn (scripts 8032, 9034, 10038), then back to 0. */
 /* @zoombi32 0x004459b3 */
-void fn_4459b3()
+void stepTrollTurns()
 {
     short *step = &g_4b165e;
 
     if (*step == 1) {
-        setViewScript(findView(g_4b160e), 8032, 1);
-        g_4b1608 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+        setViewScript(findView(arnoView), 8032, 1);
+        g_4b1608 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
         (*step)++;
-    } else if (!g_4b161e && *step == 2) {
+    } else if (!pizzaLevel && *step == 2) {
         *step = 0;
-    } else if (g_4b161e >= 1 && *step == 2) {
-        setViewScript(findView(g_4b1610), 9034, 1);
-        g_4b1608 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+    } else if (pizzaLevel >= 1 && *step == 2) {
+        setViewScript(findView(willaView), 9034, 1);
+        g_4b1608 = groupViews(willaView, willaView, 0, 0, 0, 0);
         (*step)++;
-    } else if (g_4b161e == 1 && *step == 3) {
+    } else if (pizzaLevel == 1 && *step == 3) {
         *step = 0;
-    } else if (g_4b161e >= 2 && *step == 3) {
-        setViewScript(findView(g_4b1612), 10038, 1);
-        g_4b1608 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+    } else if (pizzaLevel >= 2 && *step == 3) {
+        setViewScript(findView(shylerView), 10038, 1);
+        g_4b1608 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
         (*step)++;
-    } else if (g_4b161e >= 2 && *step == 4) {
+    } else if (pizzaLevel >= 2 && *step == 4) {
         *step = 0;
     }
 }
@@ -417,41 +417,41 @@ void drawPizzaButtonsView(View *)
     drawPizzaButton(2, 0, 0);
 }
 
-/* Brings the next of the party (g_4b15d6) up to the pizza spot (g_4a3d44)
+/* Brings the next of the party (nextZoombini) up to the pizza spot (g_4a3d44)
    when the last one's done (g_4b15da), unless busy; counts in g_4b165a
    once they've all been. */
-/* Not exact: BCC keeps g_4b15d6's address in esi (see docs/findings.md on
+/* Not exact: BCC keeps nextZoombini's address in esi (see docs/findings.md on
    cached global addresses); the original addresses it directly. */
 /* @zoombi32 0x00445789 */
-void fn_445789()
+void bringNextZoombini()
 {
     View *view;
 
-    if (!g_4b165a && !g_4b1662 && (g_4b15d6 == -1 || g_4b15da)) {
+    if (!g_4b165a && !pizzaSolved && (nextZoombini == -1 || g_4b15da)) {
         g_4b15da = 0;
-        if (++g_4b15d6 >= g_4b15d4) {
+        if (++nextZoombini >= g_4b15d4) {
             g_4b165a++;
             return;
         }
         g_4b15d8 = 0;
-        if (g_4b15d6 < 0) {
-            g_4b15d6 = 0;
+        if (nextZoombini < 0) {
+            nextZoombini = 0;
         } else {
-            view = findView(partyViews[g_4b15d6]);
+            view = findView(partyViews[nextZoombini]);
             if (view->body.x == g_4a3d44.x) {
-                g_4a3d42 = view->id;
+                zoombiniAtPizza = view->id;
                 return;
             }
         }
-        if (g_4b15d6 < g_4b15d4) {
-            view = findView(partyViews[g_4b15d6]);
+        if (nextZoombini < g_4b15d4) {
+            view = findView(partyViews[nextZoombini]);
             if (!view)
                 return;
             setSnoidAction((Snoid *)&view->body, 7, 0);
             *(Point *)&((Snoid *)&view->body)->targetX = g_4a3d44;
             view->interval = 2;
-            g_4a3d42 = view->id;
-            g_4b15fa = groupViews(g_4a3d42, g_4a3d42, 0, 0, 0, 0);
+            zoombiniAtPizza = view->id;
+            g_4b15fa = groupViews(zoombiniAtPizza, zoombiniAtPizza, 0, 0, 0, 0);
             if (g_4b15ee)
                 g_4b171e++;
         } else {
@@ -460,50 +460,50 @@ void fn_445789()
     }
 }
 
-/* Puts the Zoombini at the pizza (g_4a3d42) and the trolls up (g_4b160e,
-   g_4b1610, g_4b1612, as g_4b1618-g_4b161c say) in front of each other,
-   behind g_4b1616; and the view g_4b1664 too. */
+/* Puts the Zoombini at the pizza (zoombiniAtPizza) and the trolls up (arnoView,
+   willaView, shylerView, as arnoState-shylerState say) in front of each other,
+   behind g_4b1616; and the view pizzaView too. */
 /* @zoombi32 0x00446035 */
-void fn_446035()
+void orderPizzaViews()
 {
-    if (g_4b1664) {
-        moveView(g_4b1664, 1, g_4b1616);
-        if (g_4b1618 == 3) {
+    if (pizzaView) {
+        moveView(pizzaView, 1, g_4b1616);
+        if (arnoState == 3) {
             if (g_4b1712 >= 0)
-                moveView(g_4b160e, 0, g_4b1734[0].view);
+                moveView(arnoView, 0, shownPizzas[0].view);
             else
-                moveView(g_4b160e, 0, g_4b1664);
+                moveView(arnoView, 0, pizzaView);
         }
     }
-    if (g_4a3d42 < 0)
+    if (zoombiniAtPizza < 0)
         return;
-    moveView(g_4a3d42, 0, g_4b1616);
-    if (g_4b1618 == 1) {
-        moveView(g_4b160e, 0, g_4a3d42);
-        if (g_4b161c == 1) {
-            moveView(g_4b1612, 0, g_4b160e);
-            if (g_4b161a == 1)
-                moveView(g_4b1610, 0, g_4b1612);
-        } else if (g_4b161a == 1) {
-            moveView(g_4b1610, 0, g_4b160e);
+    moveView(zoombiniAtPizza, 0, g_4b1616);
+    if (arnoState == 1) {
+        moveView(arnoView, 0, zoombiniAtPizza);
+        if (shylerState == 1) {
+            moveView(shylerView, 0, arnoView);
+            if (willaState == 1)
+                moveView(willaView, 0, shylerView);
+        } else if (willaState == 1) {
+            moveView(willaView, 0, arnoView);
         }
-    } else if (g_4b161c == 1) {
-        moveView(g_4b1612, 0, g_4a3d42);
-        if (g_4b161a == 1)
-            moveView(g_4b1610, 0, g_4b1612);
-    } else if (g_4b161a == 1) {
-        moveView(g_4b1610, 0, g_4a3d42);
+    } else if (shylerState == 1) {
+        moveView(shylerView, 0, zoombiniAtPizza);
+        if (willaState == 1)
+            moveView(willaView, 0, shylerView);
+    } else if (willaState == 1) {
+        moveView(willaView, 0, zoombiniAtPizza);
     }
 }
 
-/* Clears the toppings (g_4b16ca, and the ones shown, g_4b164a-g_4b1658) and sets
+/* Clears the toppings (mealToppings, and the ones shown, g_4b164a-g_4b1658) and sets
    the topping views (toppingViews) to the level's scripts (7005 on). */
 /* @zoombi32 0x00446198 */
-void fn_446198()
+void clearToppings()
 {
-    fillMemory(g_4b16ca, 0, 16);
+    fillMemory(mealToppings, 0, 16);
     g_4b1652 = g_4b1650 = g_4b164c = g_4b164e = g_4b164a = g_4b1654 = g_4b1656 = g_4b1658 = 0;
-    switch (g_4b161e) {
+    switch (pizzaLevel) {
     case 0:
         setViewScript(findView(toppingViews[0]), 7005, 1);
         setViewScript(findView(toppingViews[1]), 7007, 1);
@@ -542,12 +542,12 @@ void fn_446198()
 }
 
 /* A view's placing: drops the cels of toppings not on the pizza
-   (g_4b16da; images 5-24 by topping, 25-40 by level too: 29-32 only at
+   (pizzaToppings; images 5-24 by topping, 25-40 by level too: 29-32 only at
    level 3) and moves the
    rest by (g_4b1666, g_4b1668), or, while g_4b1630, to there from where
    the first one was. */
 /* @zoombi32 0x00442a9f */
-void fn_442a9f(View *view)
+void placePizzaToppings(View *view)
 {
     short dx;
     short dy;
@@ -562,7 +562,7 @@ void fn_442a9f(View *view)
         case 6:
         case 7:
         case 8:
-            if (!g_4b16da[4]) {
+            if (!pizzaToppings[4]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -571,7 +571,7 @@ void fn_442a9f(View *view)
         case 10:
         case 11:
         case 12:
-            if (!g_4b16da[3]) {
+            if (!pizzaToppings[3]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -580,7 +580,7 @@ void fn_442a9f(View *view)
         case 14:
         case 15:
         case 16:
-            if (!g_4b16da[2]) {
+            if (!pizzaToppings[2]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -589,7 +589,7 @@ void fn_442a9f(View *view)
         case 18:
         case 19:
         case 20:
-            if (!g_4b16da[1]) {
+            if (!pizzaToppings[1]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -598,7 +598,7 @@ void fn_442a9f(View *view)
         case 22:
         case 23:
         case 24:
-            if (!g_4b16da[0]) {
+            if (!pizzaToppings[0]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -607,7 +607,7 @@ void fn_442a9f(View *view)
         case 26:
         case 27:
         case 28:
-            if (!g_4b161e) {
+            if (!pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -616,7 +616,7 @@ void fn_442a9f(View *view)
         case 38:
         case 39:
         case 40:
-            if (!g_4b16da[5] || !g_4b161e) {
+            if (!pizzaToppings[5] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -625,7 +625,7 @@ void fn_442a9f(View *view)
         case 34:
         case 35:
         case 36:
-            if (!g_4b16da[6] || !g_4b161e) {
+            if (!pizzaToppings[6] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -634,7 +634,7 @@ void fn_442a9f(View *view)
         case 30:
         case 31:
         case 32:
-            if (!g_4b16da[7] || g_4b161e != 3) {
+            if (!pizzaToppings[7] || pizzaLevel != 3) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -658,10 +658,10 @@ void fn_442a9f(View *view)
     }
 }
 
-/* A view's placing: fn_442a9f for the toppings troll 0 wants
+/* A view's placing: placePizzaToppings for the toppings troll 0 wants
    (images 156-191). */
 /* @zoombi32 0x0044468e */
-void fn_44468e(View *view)
+void placeArnoToppings(View *view)
 {
     short dx;
     short dy;
@@ -721,7 +721,7 @@ void fn_44468e(View *view)
         case 177:
         case 178:
         case 179:
-            if (!g_4b161e) {
+            if (!pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -730,7 +730,7 @@ void fn_44468e(View *view)
         case 189:
         case 190:
         case 191:
-            if (!arnoWants[5] || !g_4b161e) {
+            if (!arnoWants[5] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -739,7 +739,7 @@ void fn_44468e(View *view)
         case 185:
         case 186:
         case 187:
-            if (!arnoWants[6] || !g_4b161e) {
+            if (!arnoWants[6] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -748,7 +748,7 @@ void fn_44468e(View *view)
         case 181:
         case 182:
         case 183:
-            if (!arnoWants[7] || !g_4b161e) {
+            if (!arnoWants[7] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -772,10 +772,10 @@ void fn_44468e(View *view)
     }
 }
 
-/* A view's placing: fn_442a9f for the toppings troll 1 wants
-   (images 156-191, and 212 when g_4b1618 is 3). */
+/* A view's placing: placePizzaToppings for the toppings troll 1 wants
+   (images 156-191, and 212 when arnoState is 3). */
 /* @zoombi32 0x0044485d */
-void fn_44485d(View *view)
+void placeWillaToppings(View *view)
 {
     short dx;
     short dy;
@@ -835,7 +835,7 @@ void fn_44485d(View *view)
         case 177:
         case 178:
         case 179:
-            if (!g_4b161e) {
+            if (!pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -844,7 +844,7 @@ void fn_44485d(View *view)
         case 189:
         case 190:
         case 191:
-            if (!willaWants[5] || !g_4b161e) {
+            if (!willaWants[5] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -853,7 +853,7 @@ void fn_44485d(View *view)
         case 185:
         case 186:
         case 187:
-            if (!willaWants[6] || !g_4b161e) {
+            if (!willaWants[6] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -862,13 +862,13 @@ void fn_44485d(View *view)
         case 181:
         case 182:
         case 183:
-            if (!willaWants[7] || !g_4b161e) {
+            if (!willaWants[7] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 212:
-            if (g_4b1618 == 3) {
+            if (arnoState == 3) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -892,10 +892,10 @@ void fn_44485d(View *view)
     }
 }
 
-/* A view's placing: fn_442a9f for the toppings troll 2 wants
+/* A view's placing: placePizzaToppings for the toppings troll 2 wants
    (images 156-191). */
 /* @zoombi32 0x00444a93 */
-void fn_444a93(View *view)
+void placeShylerToppings(View *view)
 {
     short dx;
     short dy;
@@ -955,7 +955,7 @@ void fn_444a93(View *view)
         case 177:
         case 178:
         case 179:
-            if (!g_4b161e) {
+            if (!pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -964,7 +964,7 @@ void fn_444a93(View *view)
         case 189:
         case 190:
         case 191:
-            if (!shylerWants[5] || !g_4b161e) {
+            if (!shylerWants[5] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -973,7 +973,7 @@ void fn_444a93(View *view)
         case 185:
         case 186:
         case 187:
-            if (!shylerWants[6] || !g_4b161e) {
+            if (!shylerWants[6] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -982,7 +982,7 @@ void fn_444a93(View *view)
         case 181:
         case 182:
         case 183:
-            if (!shylerWants[7] || !g_4b161e) {
+            if (!shylerWants[7] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -1007,12 +1007,12 @@ void fn_444a93(View *view)
 }
 
 /*
- * What troll `troll` (0-2) makes of the pizza (g_4b16da): 0 if it has one
+ * What troll `troll` (0-2) makes of the pizza (pizzaToppings): 0 if it has one
  * topping the troll doesn't want, 4 if more; else 2 if it has all the
  * troll wants, 1 if not all. (3 is never returned.)
  */
 /* @zoombi32 0x0044338b */
-short fn_44338b(short troll)
+short judgePizza(short troll)
 {
     short never;
     short wanted;
@@ -1023,11 +1023,11 @@ short fn_44338b(short troll)
     never = wanted = right = wrong = 0;
     switch (troll) {
     case 0:
-        for (i = 0; i < g_4b1624; i++)
+        for (i = 0; i < toppingCount; i++)
             if (arnoWants[i])
                 wanted++;
-        for (i = 0; i < g_4b1624; i++)
-            if (g_4b16da[i]) {
+        for (i = 0; i < toppingCount; i++)
+            if (pizzaToppings[i]) {
                 if (arnoWants[i])
                     right++;
                 else
@@ -1041,11 +1041,11 @@ short fn_44338b(short troll)
             return 4;
         break;
     case 1:
-        for (i = 0; i < g_4b1624; i++)
+        for (i = 0; i < toppingCount; i++)
             if (willaWants[i])
                 wanted++;
-        for (i = 0; i < g_4b1624; i++)
-            if (g_4b16da[i]) {
+        for (i = 0; i < toppingCount; i++)
+            if (pizzaToppings[i]) {
                 if (willaWants[i])
                     right++;
                 else
@@ -1059,11 +1059,11 @@ short fn_44338b(short troll)
             return 4;
         break;
     case 2:
-        for (i = 0; i < g_4b1624; i++)
+        for (i = 0; i < toppingCount; i++)
             if (shylerWants[i])
                 wanted++;
-        for (i = 0; i < g_4b1624; i++)
-            if (g_4b16da[i]) {
+        for (i = 0; i < toppingCount; i++)
+            if (pizzaToppings[i]) {
                 if (shylerWants[i])
                     right++;
                 else
@@ -1088,44 +1088,44 @@ short fn_44338b(short troll)
 /* Not exact: the original keeps `view` in ebx and `r` in esi; BCC swaps
    them, whatever the declaration order. */
 /* @zoombi32 0x00446745 */
-void fn_446745()
+void trollFidget()
 {
     short r;
     View *view;
 
     if (!g_4b1600 && !g_4b1602 && !g_4b1604) {
-        switch (g_4b161e) {
+        switch (pizzaLevel) {
         case 0:
-            if (g_4b1618 != 3) {
-                view = findView(g_4b160e);
+            if (arnoState != 3) {
+                view = findView(arnoView);
                 setViewScript(view, randomUpTo(1) + 8034, 1);
             }
             break;
         case 1:
-            if (randomUpTo(1000) < 500 && g_4b1618 == 1) {
-                view = findView(g_4b160e);
+            if (randomUpTo(1000) < 500 && arnoState == 1) {
+                view = findView(arnoView);
                 setViewScript(view, randomUpTo(1) + 8034, 1);
-            } else if (g_4b161a == 1) {
-                view = findView(g_4b1610);
+            } else if (willaState == 1) {
+                view = findView(willaView);
                 setViewScript(view, randomUpTo(1) + 9019, 1);
             }
             break;
         case 2:
         case 3:
             r = randomUpTo(1000);
-            if (r < 300 && g_4b1618 == 1) {
-                view = findView(g_4b160e);
+            if (r < 300 && arnoState == 1) {
+                view = findView(arnoView);
                 setViewScript(view, randomUpTo(1) + 8034, 1);
-            } else if (r < 600 && g_4b161a == 1) {
-                view = findView(g_4b1610);
+            } else if (r < 600 && willaState == 1) {
+                view = findView(willaView);
                 setViewScript(view, randomUpTo(1) + 9019, 1);
-            } else if (g_4b161c == 1) {
+            } else if (shylerState == 1) {
                 r = randomUpTo(3);
                 if (!r)
                     r = 1;
                 else
                     r += 5;
-                view = findView(g_4b1612);
+                view = findView(shylerView);
                 setViewScript(view, r + 10000, 1);
             }
             break;
@@ -1134,96 +1134,96 @@ void fn_446745()
 }
 
 /* Records the pizza as tried and has the troll whose turn it is
-   (g_4b1614, or g_4b1670 if set, counted down: 0 Arno, 1 Willa, 2
-   Shyler) react (8020, 9026 or 10030), placed by fn_442c6c; Willa's turn
-   is skipped while g_4b16bc. Clears the view g_4b1664. */
+   (trollTurn, or g_4b1670 if set, counted down: 0 Arno, 1 Willa, 2
+   Shyler) react (8020, 9026 or 10030), placed by placeTrollToppings; Willa's turn
+   is skipped while g_4b16bc. Clears the view pizzaView. */
 /* @zoombi32 0x00444c62 */
-void fn_444c62()
+void trollReacts()
 {
     View *view;
 
-    deleteView(g_4b1664);
-    g_4b1664 = 0;
+    deleteView(pizzaView);
+    pizzaView = 0;
     if (g_4b1670)
-        g_4b1614 = g_4b1670;
-    g_4b1614--;
-    fn_444556();
-    if (!g_4b1614) {
-        view = findView(g_4b160e);
+        trollTurn = g_4b1670;
+    trollTurn--;
+    recordPizzaTried();
+    if (!trollTurn) {
+        view = findView(arnoView);
         setViewScript(view, 8020, 1);
-        moveView(g_4b160e, 1, g_4b1616);
-        if (g_4b1620 > 0)
-            moveView(g_4a3d42, 1, g_4b160e);
-        g_4b1606 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
-    } else if (g_4b1614 == 1) {
+        moveView(arnoView, 1, g_4b1616);
+        if (pizzasLeft > 0)
+            moveView(zoombiniAtPizza, 1, arnoView);
+        g_4b1606 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
+    } else if (trollTurn == 1) {
         if (g_4b16bc) {
-            g_4b15fe = ++g_4b1614;
+            g_4b15fe = ++trollTurn;
             return;
         }
-        view = findView(g_4b1610);
+        view = findView(willaView);
         setViewScript(view, 9026, 1);
-        view->notify = fn_4441a8;
-        moveView(g_4b1610, 1, g_4b1616);
-        moveView(g_4a3d42, 1, g_4b1610);
-        g_4b1606 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
-    } else if (g_4b1614 == 2) {
-        view = findView(g_4b1612);
+        view->notify = willaNotify;
+        moveView(willaView, 1, g_4b1616);
+        moveView(zoombiniAtPizza, 1, willaView);
+        g_4b1606 = groupViews(willaView, willaView, 0, 0, 0, 0);
+    } else if (trollTurn == 2) {
+        view = findView(shylerView);
         setViewScript(view, 10030, 1);
-        moveView(g_4b1612, 1, g_4b1616);
-        g_4b1606 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+        moveView(shylerView, 1, g_4b1616);
+        g_4b1606 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
     }
-    view->placed = fn_442c6c;
-    g_4b1614 = 0;
+    view->placed = placeTrollToppings;
+    trollTurn = 0;
 }
 
-/* The trolls there are (Arno always; Willa if g_4b161a, Shyler if
-   g_4b161c) eat (8024-8031, 9030-9033, 10035-10037), each placing the
+/* The trolls there are (Arno always; Willa if willaState, Shyler if
+   shylerState) eat (8024-8031, 9030-9033, 10035-10037), each placing the
    toppings it wants. */
 /* @zoombi32 0x00444391 */
-void fn_444391()
+void trollsEat()
 {
     View *view;
     short r;
 
-    if (!g_4b161a && !g_4b161c) {
-        view = findView(g_4b160e);
+    if (!willaState && !shylerState) {
+        view = findView(arnoView);
         setViewScript(view, randomUpTo(1) + 8024, 1);
-        view->placed = fn_44468e;
-    } else if (g_4b161a && !g_4b161c) {
+        view->placed = placeArnoToppings;
+    } else if (willaState && !shylerState) {
         r = randomUpTo(1);
-        view = findView(g_4b160e);
+        view = findView(arnoView);
         setViewScript(view, r + 8026, 1);
-        view->placed = fn_44468e;
-        view = findView(g_4b1610);
+        view->placed = placeArnoToppings;
+        view = findView(willaView);
         setViewScript(view, r + 9030, 1);
-        view->placed = fn_44485d;
-    } else if (!g_4b161a && g_4b161c) {
+        view->placed = placeWillaToppings;
+    } else if (!willaState && shylerState) {
         r = randomUpTo(1);
-        view = findView(g_4b160e);
+        view = findView(arnoView);
         setViewScript(view, r + 8028, 1);
-        view->placed = fn_44468e;
-        view = findView(g_4b1612);
+        view->placed = placeArnoToppings;
+        view = findView(shylerView);
         setViewScript(view, r + 10035, 1);
-        view->placed = fn_444a93;
-    } else if (g_4b161a && g_4b161c) {
+        view->placed = placeShylerToppings;
+    } else if (willaState && shylerState) {
         r = randomUpTo(1);
-        view = findView(g_4b160e);
+        view = findView(arnoView);
         setViewScript(view, r + 8030, 1);
-        view->placed = fn_44468e;
-        view = findView(g_4b1610);
+        view->placed = placeArnoToppings;
+        view = findView(willaView);
         setViewScript(view, r + 9032, 1);
-        view->placed = fn_44485d;
-        view = findView(g_4b1612);
+        view->placed = placeWillaToppings;
+        view = findView(shylerView);
         setViewScript(view, r + 10036, 1);
-        view->placed = fn_444a93;
+        view->placed = placeShylerToppings;
     }
-    g_4b15ec = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+    g_4b15ec = groupViews(arnoView, arnoView, 0, 0, 0, 0);
 }
 
-/* A view's placing: fn_442a9f with the troll's images (156-191, and 212
-   when g_4b1618 is 3) for the toppings on the pizza (g_4b16da). */
+/* A view's placing: placePizzaToppings with the troll's images (156-191, and 212
+   when arnoState is 3) for the toppings on the pizza (pizzaToppings). */
 /* @zoombi32 0x00442c6c */
-void fn_442c6c(View *view)
+void placeTrollToppings(View *view)
 {
     short dx;
     short dy;
@@ -1238,7 +1238,7 @@ void fn_442c6c(View *view)
         case 157:
         case 158:
         case 159:
-            if (!g_4b16da[4]) {
+            if (!pizzaToppings[4]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -1247,7 +1247,7 @@ void fn_442c6c(View *view)
         case 161:
         case 162:
         case 163:
-            if (!g_4b16da[3]) {
+            if (!pizzaToppings[3]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -1256,7 +1256,7 @@ void fn_442c6c(View *view)
         case 165:
         case 166:
         case 167:
-            if (!g_4b16da[2]) {
+            if (!pizzaToppings[2]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -1265,7 +1265,7 @@ void fn_442c6c(View *view)
         case 169:
         case 170:
         case 171:
-            if (!g_4b16da[1]) {
+            if (!pizzaToppings[1]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -1274,7 +1274,7 @@ void fn_442c6c(View *view)
         case 173:
         case 174:
         case 175:
-            if (!g_4b16da[0]) {
+            if (!pizzaToppings[0]) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -1283,7 +1283,7 @@ void fn_442c6c(View *view)
         case 177:
         case 178:
         case 179:
-            if (!g_4b161e) {
+            if (!pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -1292,7 +1292,7 @@ void fn_442c6c(View *view)
         case 189:
         case 190:
         case 191:
-            if (!g_4b16da[5] || !g_4b161e) {
+            if (!pizzaToppings[5] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -1301,7 +1301,7 @@ void fn_442c6c(View *view)
         case 185:
         case 186:
         case 187:
-            if (!g_4b16da[6] || !g_4b161e) {
+            if (!pizzaToppings[6] || !pizzaLevel) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -1310,13 +1310,13 @@ void fn_442c6c(View *view)
         case 181:
         case 182:
         case 183:
-            if (!g_4b16da[7] || g_4b161e != 3) {
+            if (!pizzaToppings[7] || pizzaLevel != 3) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
             break;
         case 212:
-            if (g_4b1618 == 3) {
+            if (arnoState == 3) {
                 removeFirstCel((ViewCel *)cel);
                 removed++;
             }
@@ -1341,14 +1341,14 @@ void fn_442c6c(View *view)
 }
 
 /*
- * Willa's notify: 32 puts the pizza up (g_4b1664, script 12000) in front;
+ * Willa's notify: 32 puts the pizza up (pizzaView, script 12000) in front;
  * 60 has the Zoombini at the pizza step (13000 on, by its feet); 99 puts
  * her in front of Arno; when her script ends, the Zoombini reacts (13005,
- * 13010 or 13015 on, by the troll up; notify fn_444e0c) and the pizza with
+ * 13010 or 13015 on, by the troll up; notify pizzaZoombiniNotify) and the pizza with
  * it (12001, 12006 or 12011 on).
  */
 /* @zoombi32 0x004441a8 */
-void fn_4441a8(View *, short event)
+void willaNotify(View *, short event)
 {
     View *view;
     short feet;
@@ -1356,37 +1356,37 @@ void fn_4441a8(View *, short event)
 
     switch (event) {
     case 32:
-        view = findView(g_4b1664);
+        view = findView(pizzaView);
         if (view) {
             setViewScript(view, 12000, 1);
         } else {
-            g_4b1664 = addView(0x108000, drawCels, runViewScript, 12000, 6, 0, 0, 0);
-            view = findView(g_4b1664);
-            moveView(g_4b1616, 1, g_4b1664);
+            pizzaView = addView(0x108000, drawCels, runViewScript, 12000, 6, 0, 0, 0);
+            view = findView(pizzaView);
+            moveView(g_4b1616, 1, pizzaView);
         }
-        view->placed = fn_442a9f;
-        fn_446035();
-        g_4b15f4 = groupViews(g_4b1664, g_4b1664, 0, 0, 0, 0);
-        fn_4423d7();
+        view->placed = placePizzaToppings;
+        orderPizzaViews();
+        g_4b15f4 = groupViews(pizzaView, pizzaView, 0, 0, 0, 0);
+        showMealView();
         break;
     case 60:
-        view = findView(g_4a3d42);
+        view = findView(zoombiniAtPizza);
         feet = ((Snoid *)&view->body)->features[3] - 1;
         startSnoidScript((Snoid *)&view->body, feet + 13000, 0, 0);
         view->notifyEnd = 1;
-        view->notify = fn_4441a8;
+        view->notify = willaNotify;
         break;
     case 99:
-        if (g_4b1618 == 1)
-            moveView(g_4b1610, 0, g_4b160e);
+        if (arnoState == 1)
+            moveView(willaView, 0, arnoView);
         break;
     case -1:
-        view = findView(g_4a3d42);
+        view = findView(zoombiniAtPizza);
         feet = ((Snoid *)&view->body)->features[3] - 1;
-        if (g_4b1618 == 1) {
+        if (arnoState == 1) {
             script = feet + 13005;
             feet += 12001;
-        } else if (g_4b161a == 1) {
+        } else if (willaState == 1) {
             script = feet + 13010;
             feet += 12006;
         } else {
@@ -1395,13 +1395,13 @@ void fn_4441a8(View *, short event)
         }
         startSnoidScript((Snoid *)&view->body, script, 0, 0);
         view->notifyEnd = 0;
-        view->notify = fn_444e0c;
-        view = findView(g_4b1664);
+        view->notify = pizzaZoombiniNotify;
+        view = findView(pizzaView);
         setViewScript(view, feet, 1);
-        view->placed = fn_442a9f;
-        fn_446035();
-        g_4b15f6 = groupViews(g_4b1664, g_4a3d42, 0, 0, 0, 0);
-        fn_4423d7();
+        view->placed = placePizzaToppings;
+        orderPizzaViews();
+        g_4b15f6 = groupViews(pizzaView, zoombiniAtPizza, 0, 0, 0, 0);
+        showMealView();
         break;
     }
 }
@@ -1415,7 +1415,7 @@ void fn_4441a8(View *, short event)
  * if it was the last to go, it's done and the next may come (g_4b15da).
  */
 /* @zoombi32 0x00444e0c */
-void fn_444e0c(View *view, short event)
+void pizzaZoombiniNotify(View *view, short event)
 {
     Point where;
     Snoid *snoid = (Snoid *)&view->body;
@@ -1449,18 +1449,18 @@ void fn_444e0c(View *view, short event)
         }
         where.x = 180;
         where.y = 327;
-        zoombini = findView(g_4a3d42);
+        zoombini = findView(zoombiniAtPizza);
         last = 0;
         if (!g_4b1646)
             last = 1;
-        if (g_4b1618 == 1) {
+        if (arnoState == 1) {
             if (!g_4b1646) {
                 where.x = 34;
                 where.y = 59;
             }
             startSnoidScript((Snoid *)&zoombini->body, g_4b1646 + 14000, &where, last);
             queueViewSound(8040, 0);
-        } else if (g_4b161a == 1) {
+        } else if (willaState == 1) {
             if (!g_4b1646) {
                 where.x = 46;
                 where.y = 46;
@@ -1475,7 +1475,7 @@ void fn_444e0c(View *view, short event)
             startSnoidScript((Snoid *)&zoombini->body, g_4b1646 + 14004, &where, last);
             queueViewSound(8040, 0);
         }
-        zoombini->notify = fn_444e0c;
+        zoombini->notify = pizzaZoombiniNotify;
         if (g_4b1646) {
             zoombini->notifyEnd = 1;
             g_4b15e0 = 0;
@@ -1487,7 +1487,7 @@ void fn_444e0c(View *view, short event)
         break;
     case -1:
         if (!g_4b15e0) {
-            zoombini = findView(g_4a3d42);
+            zoombini = findView(zoombiniAtPizza);
             where = g_4a3d44;
             if (zoombini) {
                 setSnoidAction((Snoid *)&zoombini->body, 7, 0);
@@ -1508,45 +1508,45 @@ void fn_444e0c(View *view, short event)
     }
 }
 
-/* A pizza is served: counts down the pizzas left (g_4b1620; g_4b1646 set
+/* A pizza is served: counts down the pizzas left (pizzasLeft; g_4b1646 set
    while some are); the troll up takes it (8022, 9028 or 10032 on) and the
    Zoombini at the pizza gets its notify, unless it's the last with none
-   left to judge, when the pizza view starts over (fn_44509b). */
+   left to judge, when the pizza view starts over (restartPizzaView). */
 /* @zoombi32 0x00445153 */
-void fn_445153()
+void servePizza()
 {
     View *view;
 
     g_4b165c = 0;
     g_4b1646 = 0;
-    if (--g_4b1620 >= 0)
+    if (--pizzasLeft >= 0)
         g_4b1646 = 1;
-    if (!g_4b1620)
+    if (!pizzasLeft)
         g_4b1648++;
     if (g_4b1648 || !g_4b1646) {
-        if (g_4b1618 == 1) {
-            view = findView(g_4b160e);
+        if (arnoState == 1) {
+            view = findView(arnoView);
             setViewScript(view, g_4b1646 + 8022, 1);
             if (g_4b1648) {
                 g_4b16bc++;
-                g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+                g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
             } else {
-                g_4b15fc = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+                g_4b15fc = groupViews(arnoView, arnoView, 0, 0, 0, 0);
             }
-        } else if (g_4b161a == 1) {
-            view = findView(g_4b1610);
+        } else if (willaState == 1) {
+            view = findView(willaView);
             setViewScript(view, g_4b1646 + 9028, 1);
-            g_4b15fc = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
-        } else if (g_4b161c == 1) {
-            view = findView(g_4b1612);
+            g_4b15fc = groupViews(willaView, willaView, 0, 0, 0, 0);
+        } else if (shylerState == 1) {
+            view = findView(shylerView);
             setViewScript(view, g_4b1646 + 10032, 1);
-            g_4b15fc = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            g_4b15fc = groupViews(shylerView, shylerView, 0, 0, 0, 0);
         }
         view->notifyEnd = 0;
-        view->notify = fn_444e0c;
+        view->notify = pizzaZoombiniNotify;
         g_4b1648 = g_4b171a = 0;
     } else {
-        fn_44509b();
+        restartPizzaView();
         g_4b171a++;
         g_4b15fc = 1000;
     }
@@ -1555,65 +1555,65 @@ void fn_445153()
 
 /* Shows four pizzas, each with two of the toppings a, b, c and d (a and
    b, b and c, c and d, a and d), recording each as tried and shown
-   (g_4b1734; scripts 12042 on, g_4b170e counting). */
+   (shownPizzas; scripts 12042 on, g_4b170e counting). */
 /* @zoombi32 0x00446487 */
-void fn_446487(short a, short b, short c, short d)
+void showFourPizzas(short a, short b, short c, short d)
 {
-    fillMemory(g_4b16da, 0, 16);
-    g_4b16da[a] = 1;
-    g_4b16da[b] = 1;
-    fn_444556();
+    fillMemory(pizzaToppings, 0, 16);
+    pizzaToppings[a] = 1;
+    pizzaToppings[b] = 1;
+    recordPizzaTried();
     g_4b1712++;
-    g_4b1734[g_4b1712].set = g_4b16ec[g_4b1708];
-    g_4b1734[g_4b1712].unknown4 = 4;
+    shownPizzas[g_4b1712].set = triedPizzas[lastTriedPizza];
+    shownPizzas[g_4b1712].unknown4 = 4;
     g_4b170e++;
-    g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
-    g_4b1734[g_4b1712].script = g_4b170e + 12025;
-    findView(g_4b1734[g_4b1712].view)->placed = fn_442a9f;
+    shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
+    shownPizzas[g_4b1712].script = g_4b170e + 12025;
+    findView(shownPizzas[g_4b1712].view)->placed = placePizzaToppings;
     updateViews();
-    fillMemory(g_4b16da, 0, 16);
-    g_4b16da[b] = 1;
-    g_4b16da[c] = 1;
-    fn_444556();
+    fillMemory(pizzaToppings, 0, 16);
+    pizzaToppings[b] = 1;
+    pizzaToppings[c] = 1;
+    recordPizzaTried();
     g_4b1712++;
-    g_4b1734[g_4b1712].set = g_4b16ec[g_4b1708];
-    g_4b1734[g_4b1712].unknown4 = 4;
+    shownPizzas[g_4b1712].set = triedPizzas[lastTriedPizza];
+    shownPizzas[g_4b1712].unknown4 = 4;
     g_4b170e++;
-    g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
-    g_4b1734[g_4b1712].script = g_4b170e + 12025;
-    findView(g_4b1734[g_4b1712].view)->placed = fn_442a9f;
+    shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
+    shownPizzas[g_4b1712].script = g_4b170e + 12025;
+    findView(shownPizzas[g_4b1712].view)->placed = placePizzaToppings;
     updateViews();
-    fillMemory(g_4b16da, 0, 16);
-    g_4b16da[c] = 1;
-    g_4b16da[d] = 1;
-    fn_444556();
+    fillMemory(pizzaToppings, 0, 16);
+    pizzaToppings[c] = 1;
+    pizzaToppings[d] = 1;
+    recordPizzaTried();
     g_4b1712++;
-    g_4b1734[g_4b1712].set = g_4b16ec[g_4b1708];
-    g_4b1734[g_4b1712].unknown4 = 4;
+    shownPizzas[g_4b1712].set = triedPizzas[lastTriedPizza];
+    shownPizzas[g_4b1712].unknown4 = 4;
     g_4b170e++;
-    g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
-    g_4b1734[g_4b1712].script = g_4b170e + 12025;
-    findView(g_4b1734[g_4b1712].view)->placed = fn_442a9f;
+    shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 6, 0, 0, 0);
+    shownPizzas[g_4b1712].script = g_4b170e + 12025;
+    findView(shownPizzas[g_4b1712].view)->placed = placePizzaToppings;
     updateViews();
-    fillMemory(g_4b16da, 0, 16);
-    g_4b16da[a] = 1;
-    g_4b16da[d] = 1;
-    fn_444556();
+    fillMemory(pizzaToppings, 0, 16);
+    pizzaToppings[a] = 1;
+    pizzaToppings[d] = 1;
+    recordPizzaTried();
     g_4b1712++;
-    g_4b1734[g_4b1712].set = g_4b16ec[g_4b1708];
-    g_4b1734[g_4b1712].unknown4 = 4;
+    shownPizzas[g_4b1712].set = triedPizzas[lastTriedPizza];
+    shownPizzas[g_4b1712].unknown4 = 4;
     g_4b170e++;
-    g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 0, 0, 0, 0);
-    g_4b1734[g_4b1712].script = g_4b170e + 12025;
-    findView(g_4b1734[g_4b1712].view)->placed = fn_442a9f;
+    shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12041, 0, 0, 0, 0);
+    shownPizzas[g_4b1712].script = g_4b170e + 12025;
+    findView(shownPizzas[g_4b1712].view)->placed = placePizzaToppings;
     updateViews();
-    fillMemory(g_4b16da, 0, 16);
+    fillMemory(pizzaToppings, 0, 16);
 }
 
 /* Debugging: shows what each troll there wants and the meal on the pizza
-   (g_4b16ca) in a box at the top right. */
+   (mealToppings) in a box at the top right. */
 /* @zoombi32 0x00443e2e */
-void fn_443e2e()
+void drawTrollWants()
 {
     ShortRect box = {400, 1, 600, 80};
     ShortRect arnoLine = {400, 1, 600, 20};
@@ -1633,15 +1633,15 @@ void fn_443e2e()
             willaWants[3], willaWants[4], willaWants[5], willaWants[6], willaWants[7]);
     sprintf(shyler, "Shyler  %d %d %d %d %d %d %d %d", shylerWants[0], shylerWants[1], shylerWants[2],
             shylerWants[3], shylerWants[4], shylerWants[5], shylerWants[6], shylerWants[7]);
-    sprintf(meal, "Meal     %d %d %d %d %d %d %d %d", g_4b16ca[0], g_4b16ca[1], g_4b16ca[2], g_4b16ca[3],
-            g_4b16ca[4], g_4b16ca[5], g_4b16ca[6], g_4b16ca[7]);
+    sprintf(meal, "Meal     %d %d %d %d %d %d %d %d", mealToppings[0], mealToppings[1], mealToppings[2], mealToppings[3],
+            mealToppings[4], mealToppings[5], mealToppings[6], mealToppings[7]);
     fillPortRect(box, Color(14), 0);
     frameRect(box);
-    if (g_4b1618 == 1)
+    if (arnoState == 1)
         drawText(arnoLine, 0x22, arno, 0xffff);
-    if (g_4b161a == 1)
+    if (willaState == 1)
         drawText(willaLine, 0x22, willa, 0xffff);
-    if (g_4b161c == 1)
+    if (shylerState == 1)
         drawText(shylerLine, 0x22, shyler, 0xffff);
     drawText(mealLine, 0x22, meal, 0xffff);
     setForeColor(saved);
@@ -1649,37 +1649,37 @@ void fn_443e2e()
 }
 
 /*
- * A troll reacts to the pizza by its verdict (fn_44338b): for 0 or 4, the
+ * A troll reacts to the pizza by its verdict (judgePizza): for 0 or 4, the
  * troll is picked from those there (with both Willa and Shyler there, it
- * sets g_4b161a again from g_4b161c first); 1 (not all it wants) it
+ * sets willaState again from shylerState first); 1 (not all it wants) it
  * asks for more (8000, 9021 or 10009 on, by g_4b16b6, g_4b16be,
  * g_4b16c4); otherwise it grumbles (8015, 9017 or 10027 on).
  */
 /* @zoombi32 0x00445b80 */
-void fn_445b80(short troll, short verdict)
+void trollVerdict(short troll, short verdict)
 {
     View *view;
     long both;
 
     g_4b16ea = 0;
     if (!verdict || verdict == 4) {
-        if (g_4b1618 == 1) {
-            if (g_4b161a != 1 && g_4b161c != 1)
+        if (arnoState == 1) {
+            if (willaState != 1 && shylerState != 1)
                 troll = 0;
-            else if (g_4b161a == 1 && g_4b161c != 1)
+            else if (willaState == 1 && shylerState != 1)
                 troll = randomUpTo(1);
-            else if (g_4b161a != 1 && g_4b161c == 1)
+            else if (willaState != 1 && shylerState == 1)
                 troll = randomUpTo(1) * 2;
             else {
-                if (g_4b161c != 1)
+                if (shylerState != 1)
                     both = 0;
                 else
                     both = 1;
-                if ((g_4b161a = both) != 0)
+                if ((willaState = both) != 0)
                     troll = randomUpTo(2);
             }
-        } else if (g_4b161a == 1) {
-            if (g_4b161c != 1)
+        } else if (willaState == 1) {
+            if (shylerState != 1)
                 troll = 1;
             else
                 troll = randomUpTo(1) + 1;
@@ -1691,51 +1691,51 @@ void fn_445b80(short troll, short verdict)
     case 0:
         g_4b15fe = 1;
         if (verdict == 1) {
-            view = findView(g_4b160e);
+            view = findView(arnoView);
             setViewScript(view, g_4b16b6 + 8000, 1);
-            fn_446035();
-            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
             g_4b1670 = 1;
             g_4b1710 = 5;
         } else {
-            view = findView(g_4b160e);
+            view = findView(arnoView);
             setViewScript(view, randomUpTo(1) + 8015, 1);
-            fn_446035();
-            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
             g_4b1710 = 4;
         }
         break;
     case 1:
         g_4b15fe = 2;
         if (verdict == 1) {
-            view = findView(g_4b1610);
+            view = findView(willaView);
             setViewScript(view, g_4b16be + 9021, 1);
-            fn_446035();
-            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
             g_4b1670 = 2;
             g_4b1710 = 6;
         } else {
-            view = findView(g_4b1610);
+            view = findView(willaView);
             setViewScript(view, randomUpTo(1) + 9017, 1);
-            fn_446035();
-            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
             g_4b1710 = 4;
         }
         break;
     case 2:
         g_4b15fe = 3;
         if (verdict == 1) {
-            view = findView(g_4b1612);
+            view = findView(shylerView);
             setViewScript(view, g_4b16c4 + 10009, 1);
-            fn_446035();
-            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
             g_4b1670 = 3;
             g_4b1710 = 7;
         } else {
-            view = findView(g_4b1612);
+            view = findView(shylerView);
             setViewScript(view, randomUpTo(2) + 10027, 1);
-            fn_446035();
-            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
             g_4b1710 = 4;
         }
         break;
@@ -1744,22 +1744,22 @@ void fn_445b80(short troll, short verdict)
 
 /*
  * Shows the pizza just judged (g_4b1710: 4 thrown, 5-7 on the pile of
- * the troll that took it) and records it (g_4b1734): thrown ones cycle
+ * the troll that took it) and records it (shownPizzas): thrown ones cycle
  * through 16 scripts (12025 on, skipping 13; once they've all been used,
  * g_4a3dcc, the view already there is reused); piled ones take the next
  * of three places per pile (12016, 12019 or 12022 on), each in front of
  * the one it replaces.
  */
 /* @zoombi32 0x00445307 */
-void fn_445307()
+void showJudgedPizza()
 {
     short behind;
     View *view;
     short i;
 
     g_4b1712++;
-    g_4b1734[g_4b1712].set = g_4b16ec[g_4b1708];
-    g_4b1734[g_4b1712].unknown4 = g_4b1710;
+    shownPizzas[g_4b1712].set = triedPizzas[lastTriedPizza];
+    shownPizzas[g_4b1712].unknown4 = g_4b1710;
     behind = 0;
     switch (g_4b1710) {
     case 4:
@@ -1770,16 +1770,16 @@ void fn_445307()
             g_4b170e = 14;
         }
         if (!g_4a3dcc) {
-            g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12025, 6, 0, 0, 0);
-            g_4b1734[g_4b1712].script = g_4b170e + 12025;
-            view = findView(g_4b1734[g_4b1712].view);
-            view->placed = fn_442a9f;
+            shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b170e + 12025, 6, 0, 0, 0);
+            shownPizzas[g_4b1712].script = g_4b170e + 12025;
+            view = findView(shownPizzas[g_4b1712].view);
+            view->placed = placePizzaToppings;
         } else {
             for (i = 0; i < 28; i++)
-                if (g_4b1734[i].script == g_4b170e + 12025) {
-                    view = findView(g_4b1734[i].view);
+                if (shownPizzas[i].script == g_4b170e + 12025) {
+                    view = findView(shownPizzas[i].view);
                     setViewScript(view, g_4b170e + 12025, 1);
-                    view->placed = fn_442a9f;
+                    view->placed = placePizzaToppings;
                     break;
                 }
         }
@@ -1789,64 +1789,64 @@ void fn_445307()
             g_4b1714 = 0;
         if (g_4b1722[g_4b1714])
             behind = g_4b1722[g_4b1714];
-        g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1714 + 12016, 6, 0, 0, 0);
-        g_4b1734[g_4b1712].script = g_4b1714 + 12016;
-        view = findView(g_4b1734[g_4b1712].view);
-        view->placed = fn_442a9f;
+        shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1714 + 12016, 6, 0, 0, 0);
+        shownPizzas[g_4b1712].script = g_4b1714 + 12016;
+        view = findView(shownPizzas[g_4b1712].view);
+        view->placed = placePizzaToppings;
         if (behind)
-            moveView(g_4b1734[g_4b1712].view, 1, behind);
-        g_4b1722[g_4b1714] = g_4b1734[g_4b1712].view;
-        g_4b1734[g_4b1712].unknown4 = 5;
+            moveView(shownPizzas[g_4b1712].view, 1, behind);
+        g_4b1722[g_4b1714] = shownPizzas[g_4b1712].view;
+        shownPizzas[g_4b1712].unknown4 = 5;
         break;
     case 6:
         if (++g_4b1716 > 2)
             g_4b1716 = 0;
         if (g_4b1728[g_4b1716])
             behind = g_4b1728[g_4b1716];
-        g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1716 + 12019, 6, 0, 0, 0);
-        g_4b1734[g_4b1712].script = g_4b1716 + 12019;
-        view = findView(g_4b1734[g_4b1712].view);
-        view->placed = fn_442a9f;
+        shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1716 + 12019, 6, 0, 0, 0);
+        shownPizzas[g_4b1712].script = g_4b1716 + 12019;
+        view = findView(shownPizzas[g_4b1712].view);
+        view->placed = placePizzaToppings;
         if (behind)
-            moveView(g_4b1734[g_4b1712].view, 1, behind);
-        g_4b1728[g_4b1716] = g_4b1734[g_4b1712].view;
-        g_4b1734[g_4b1712].unknown4 = 6;
+            moveView(shownPizzas[g_4b1712].view, 1, behind);
+        g_4b1728[g_4b1716] = shownPizzas[g_4b1712].view;
+        shownPizzas[g_4b1712].unknown4 = 6;
         break;
     case 7:
         if (++g_4b1718 > 2)
             g_4b1718 = 0;
         if (g_4b172e[g_4b1718])
             behind = g_4b172e[g_4b1718];
-        g_4b1734[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1718 + 12022, 6, 0, 0, 0);
-        g_4b1734[g_4b1712].script = g_4b1718 + 12022;
-        view = findView(g_4b1734[g_4b1712].view);
-        view->placed = fn_442a9f;
+        shownPizzas[g_4b1712].view = addView(0x4108000, drawCels, runViewScript, g_4b1718 + 12022, 6, 0, 0, 0);
+        shownPizzas[g_4b1712].script = g_4b1718 + 12022;
+        view = findView(shownPizzas[g_4b1712].view);
+        view->placed = placePizzaToppings;
         if (behind)
-            moveView(g_4b1734[g_4b1712].view, 1, behind);
-        g_4b172e[g_4b1718] = g_4b1734[g_4b1712].view;
-        g_4b1734[g_4b1712].unknown4 = 7;
+            moveView(shownPizzas[g_4b1712].view, 1, behind);
+        g_4b172e[g_4b1718] = shownPizzas[g_4b1712].view;
+        shownPizzas[g_4b1712].unknown4 = 7;
         break;
     }
     view->notifyEnd = 1;
-    view->notify = fn_445ae1;
-    fn_446035();
-    if (g_4b1734[g_4b1712].unknown4 == 4) {
-        moveView(g_4b1734[g_4b1712].view, 1, g_4b1616);
-    } else if (g_4b1734[g_4b1712].unknown4 == 6 && g_4b1728[1]) {
-        moveView(g_4b1728[1], 0, g_4b1610);
+    view->notify = pizzaDoneNotify;
+    orderPizzaViews();
+    if (shownPizzas[g_4b1712].unknown4 == 4) {
+        moveView(shownPizzas[g_4b1712].view, 1, g_4b1616);
+    } else if (shownPizzas[g_4b1712].unknown4 == 6 && g_4b1728[1]) {
+        moveView(g_4b1728[1], 0, willaView);
         moveView(g_4b1728[0], 0, g_4b1728[1]);
     }
     moveView(g_4a3d38, 0, -1);
-    g_4b160c = groupViews(g_4b1734[g_4b1712].view, g_4b1734[g_4b1712].view, 0, 0, 0, 0);
+    g_4b160c = groupViews(shownPizzas[g_4b1712].view, shownPizzas[g_4b1712].view, 0, 0, 0, 0);
 }
 
 /* A topping button (4-11: the eight toppings, those the level has; 3
-   serves the pizza): toggles the topping on the meal (g_4b16ca) and its
+   serves the pizza): toggles the topping on the meal (mealToppings) and its
    view (by level), and redraws the pizza; 3 has the pizza carried off
    (7057, or 7058 from level 1; 7066) and clears the toppings, without
    the redraw. */
 /* @zoombi32 0x00442560 */
-void fn_442560(short button)
+void toppingButton(short button)
 {
     short redraw;
     View *view;
@@ -1858,122 +1858,122 @@ void fn_442560(short button)
     case 3:
         redraw = 0;
         view = findView(g_4b162e);
-        if (!g_4b161e)
+        if (!pizzaLevel)
             setViewScript(view, 7057, 1);
         else
             setViewScript(view, 7058, 1);
         view = findView(g_4b15f0);
         setViewScript(view, 7066, 1);
         g_4b15f2 = groupViews(g_4b15f0, g_4b15f0, 0, 0, 0, 0);
-        view->notify = fn_4441a8;
-        fn_446198();
+        view->notify = willaNotify;
+        clearToppings();
         break;
     case 4:
         g_4b1652 ^= 1;
-        g_4b16ca[0] = g_4b1652;
+        mealToppings[0] = g_4b1652;
         view = findView(toppingViews[0]);
-        if (!g_4b161e)
+        if (!pizzaLevel)
             setViewScript(view, g_4b1652 + 7005, 1);
-        else if (g_4b161e == 1)
+        else if (pizzaLevel == 1)
             setViewScript(view, g_4b1652 + 7015, 1);
-        else if (g_4b161e == 2)
+        else if (pizzaLevel == 2)
             setViewScript(view, g_4b1652 + 7027, 1);
         else
             setViewScript(view, g_4b1652 + 7041, 1);
         break;
     case 5:
         g_4b1650 ^= 1;
-        g_4b16ca[1] = g_4b1650;
+        mealToppings[1] = g_4b1650;
         view = findView(toppingViews[1]);
-        if (!g_4b161e)
+        if (!pizzaLevel)
             setViewScript(view, g_4b1650 + 7007, 1);
-        else if (g_4b161e == 1)
+        else if (pizzaLevel == 1)
             setViewScript(view, g_4b1650 + 7017, 1);
-        else if (g_4b161e == 2)
+        else if (pizzaLevel == 2)
             setViewScript(view, g_4b1650 + 7029, 1);
         else
             setViewScript(view, g_4b1650 + 7043, 1);
         break;
     case 6:
         g_4b164e ^= 1;
-        g_4b16ca[2] = g_4b164e;
+        mealToppings[2] = g_4b164e;
         view = findView(toppingViews[2]);
-        if (!g_4b161e)
+        if (!pizzaLevel)
             setViewScript(view, g_4b164e + 7009, 1);
-        else if (g_4b161e == 1)
+        else if (pizzaLevel == 1)
             setViewScript(view, g_4b164e + 7019, 1);
-        else if (g_4b161e == 2)
+        else if (pizzaLevel == 2)
             setViewScript(view, g_4b164e + 7031, 1);
         else
             setViewScript(view, g_4b164e + 7045, 1);
         break;
     case 7:
         g_4b164c ^= 1;
-        g_4b16ca[3] = g_4b164c;
+        mealToppings[3] = g_4b164c;
         view = findView(toppingViews[3]);
-        if (!g_4b161e)
+        if (!pizzaLevel)
             setViewScript(view, g_4b164c + 7011, 1);
-        else if (g_4b161e == 1)
+        else if (pizzaLevel == 1)
             setViewScript(view, g_4b164c + 7021, 1);
-        else if (g_4b161e == 2)
+        else if (pizzaLevel == 2)
             setViewScript(view, g_4b164c + 7033, 1);
         else
             setViewScript(view, g_4b164c + 7047, 1);
         break;
     case 8:
         g_4b164a ^= 1;
-        g_4b16ca[4] = g_4b164a;
+        mealToppings[4] = g_4b164a;
         view = findView(toppingViews[4]);
-        if (!g_4b161e)
+        if (!pizzaLevel)
             setViewScript(view, g_4b164a + 7013, 1);
-        else if (g_4b161e == 2)
+        else if (pizzaLevel == 2)
             setViewScript(view, g_4b164a + 7035, 1);
-        else if (g_4b161e == 3)
+        else if (pizzaLevel == 3)
             setViewScript(view, g_4b164a + 7049, 1);
         break;
     case 9:
-        if (g_4b161e) {
+        if (pizzaLevel) {
             g_4b1654 ^= 1;
-            g_4b16ca[5] = g_4b1654;
+            mealToppings[5] = g_4b1654;
             view = findView(toppingViews[5]);
-            if (g_4b161e == 1)
+            if (pizzaLevel == 1)
                 setViewScript(view, g_4b1654 + 7023, 1);
-            else if (g_4b161e == 2)
+            else if (pizzaLevel == 2)
                 setViewScript(view, g_4b1654 + 7037, 1);
             else
                 setViewScript(view, g_4b1654 + 7051, 1);
         }
         break;
     case 10:
-        if (g_4b161e) {
+        if (pizzaLevel) {
             g_4b1656 ^= 1;
-            g_4b16ca[6] = g_4b1656;
+            mealToppings[6] = g_4b1656;
             view = findView(toppingViews[6]);
-            if (g_4b161e == 1)
+            if (pizzaLevel == 1)
                 setViewScript(view, g_4b1656 + 7025, 1);
-            else if (g_4b161e == 2)
+            else if (pizzaLevel == 2)
                 setViewScript(view, g_4b1656 + 7039, 1);
             else
                 setViewScript(view, g_4b1656 + 7053, 1);
         }
         break;
     case 11:
-        if (g_4b161e == 3) {
+        if (pizzaLevel == 3) {
             g_4b1658 ^= 1;
-            g_4b16ca[7] = g_4b1658;
+            mealToppings[7] = g_4b1658;
             view = findView(toppingViews[7]);
             setViewScript(view, g_4b1658 + 7055, 1);
         }
         break;
     }
     if (redraw)
-        fn_4423d7();
+        showMealView();
 }
 
 /* The scene's keys (debugging ones only while debugging messages are on):
    A shows the trolls' wants; R, O, D in turn arm the rest (g_4b15e8), then
    P makes the trolls eat, N, W and S step Arno, Willa and Shyler through
-   their scripts, and space sets the pizzas left (g_4b1620) to g_4b1634.
+   their scripts, and space sets the pizzas left (pizzasLeft) to g_4b1634.
    Notes the time of the key (g_4b1824). */
 /* @zoombi32 0x00442166 */
 short pizzaKey(unsigned short key)
@@ -1987,7 +1987,7 @@ short pizzaKey(unsigned short key)
         return 1;
     case 'A':
     case 'a':
-        fn_443e2e();
+        drawTrollWants();
         return 1;
     case 'R':
         if (g_4b15e8 > 2)
@@ -2006,7 +2006,7 @@ short pizzaKey(unsigned short key)
     case 'P':
     case 'p':
         if (g_4b15e8 >= 3) {
-            fn_444391();
+            trollsEat();
             g_4b15ec = 0;
             return 1;
         }
@@ -2016,8 +2016,8 @@ short pizzaKey(unsigned short key)
         if (g_4b15e8 >= 3) {
             if (g_4a3d9e >= 36)
                 g_4a3d9e = 0;
-            setViewScript(findView(g_4b160e), g_4a3d9e++ + 8000, 1);
-            fn_446035();
+            setViewScript(findView(arnoView), g_4a3d9e++ + 8000, 1);
+            orderPizzaViews();
             return 1;
         }
         break;
@@ -2026,8 +2026,8 @@ short pizzaKey(unsigned short key)
         if (g_4b15e8 >= 3) {
             if (g_4a3da2 >= 39)
                 g_4a3da2 = 0;
-            setViewScript(findView(g_4b1612), g_4a3da2++ + 10000, 1);
-            fn_446035();
+            setViewScript(findView(shylerView), g_4a3da2++ + 10000, 1);
+            orderPizzaViews();
             return 1;
         }
         break;
@@ -2036,14 +2036,14 @@ short pizzaKey(unsigned short key)
         if (g_4b15e8 >= 3) {
             if (g_4a3da0 >= 35)
                 g_4a3da0 = 0;
-            setViewScript(findView(g_4b1610), g_4a3da0++ + 9000, 1);
-            fn_446035();
+            setViewScript(findView(willaView), g_4a3da0++ + 9000, 1);
+            orderPizzaViews();
             return 1;
         }
         break;
     case ' ':
         if (g_4b15e8 >= 3) {
-            g_4b1620 = g_4b1634;
+            pizzasLeft = g_4b1634;
             return 1;
         }
         break;
@@ -2054,13 +2054,13 @@ short pizzaKey(unsigned short key)
 }
 
 /*
- * Shares the toppings picked (fn_44410b) out among the trolls there (at
+ * Shares the toppings picked (pickToppings) out among the trolls there (at
  * random; from level 2 each troll gets at least one, taken from the troll
  * with more), then, at level 1 or 3, shows four pizzas made from two
  * toppings the troll with the fewest wants and one each the others want.
  */
 /* @zoombi32 0x00442ea2 */
-void fn_442ea2()
+void shareToppings()
 {
     short shyler;
     short a;
@@ -2075,19 +2075,19 @@ void fn_442ea2()
     fillMemory(arnoWants, 0, 16);
     fillMemory(willaWants, 0, 16);
     fillMemory(shylerWants, 0, 16);
-    fn_44410b();
+    pickToppings();
     arno = 0;
     willa = 0;
     shyler = 0;
     a = b = c = d = -1;
-    switch (g_4b161e) {
+    switch (pizzaLevel) {
     case 0:
-        for (i = 0; i < g_4b1624; i++)
-            arnoWants[i] = g_4b1676[i];
+        for (i = 0; i < toppingCount; i++)
+            arnoWants[i] = pickedToppings[i];
         break;
     case 1:
-        for (i = 0; i < g_4b1624; i++)
-            if (g_4b1676[i]) {
+        for (i = 0; i < toppingCount; i++)
+            if (pickedToppings[i]) {
                 if (!randomUpTo(1)) {
                     arnoWants[i] = 1;
                     arno++;
@@ -2097,7 +2097,7 @@ void fn_442ea2()
                 }
             }
         if (!arno && !willa) {
-            i = randomUpTo(g_4b1624 - 1);
+            i = randomUpTo(toppingCount - 1);
             if (randomUpTo(1000) < 500)
                 willaWants[i] = 1;
             else
@@ -2106,8 +2106,8 @@ void fn_442ea2()
         break;
     case 2:
     case 3:
-        for (i = 0; i < g_4b1624; i++)
-            if (g_4b1676[i]) {
+        for (i = 0; i < toppingCount; i++)
+            if (pickedToppings[i]) {
                 short r = randomUpTo(2);
 
                 if (!r) {
@@ -2125,7 +2125,7 @@ void fn_442ea2()
             if (!arno) {
                 if (willa > shyler) {
                     do
-                        i = randomUpTo(g_4b1624 - 1);
+                        i = randomUpTo(toppingCount - 1);
                     while (!willaWants[i]);
                     willaWants[i] = 0;
                     willa--;
@@ -2133,7 +2133,7 @@ void fn_442ea2()
                     arno = 1;
                 } else {
                     do
-                        i = randomUpTo(g_4b1624 - 1);
+                        i = randomUpTo(toppingCount - 1);
                     while (!shylerWants[i]);
                     shylerWants[i] = 0;
                     shyler--;
@@ -2144,7 +2144,7 @@ void fn_442ea2()
             if (!willa) {
                 if (arno > shyler) {
                     do
-                        i = randomUpTo(g_4b1624 - 1);
+                        i = randomUpTo(toppingCount - 1);
                     while (!arnoWants[i]);
                     arnoWants[i] = 0;
                     arno--;
@@ -2152,7 +2152,7 @@ void fn_442ea2()
                     willa = 1;
                 } else {
                     do
-                        i = randomUpTo(g_4b1624 - 1);
+                        i = randomUpTo(toppingCount - 1);
                     while (!shylerWants[i]);
                     shylerWants[i] = 0;
                     shyler--;
@@ -2163,7 +2163,7 @@ void fn_442ea2()
             if (!shyler) {
                 if (arno > willa) {
                     do
-                        i = randomUpTo(g_4b1624 - 1);
+                        i = randomUpTo(toppingCount - 1);
                     while (!arnoWants[i]);
                     arnoWants[i] = 0;
                     arno--;
@@ -2171,7 +2171,7 @@ void fn_442ea2()
                     shyler = 1;
                 } else {
                     do
-                        i = randomUpTo(g_4b1624 - 1);
+                        i = randomUpTo(toppingCount - 1);
                     while (!willaWants[i]);
                     willaWants[i] = 0;
                     willa--;
@@ -2180,7 +2180,7 @@ void fn_442ea2()
                 }
             }
         } while (!arno || !willa || !shyler);
-        if (g_4b161e == 2)
+        if (pizzaLevel == 2)
             break;
         fewest = 0;
         if (willa > arno) {
@@ -2192,44 +2192,44 @@ void fn_442ea2()
         }
         switch (fewest) {
         case 0:
-            a = fn_443316(0);
+            a = randomWantedTopping(0);
             do
-                c = fn_443316(0);
+                c = randomWantedTopping(0);
             while (c == a);
-            b = fn_443316(1);
-            d = fn_443316(2);
+            b = randomWantedTopping(1);
+            d = randomWantedTopping(2);
             break;
         case 1:
-            a = fn_443316(1);
+            a = randomWantedTopping(1);
             do
-                c = fn_443316(1);
+                c = randomWantedTopping(1);
             while (c == a);
-            b = fn_443316(0);
-            d = fn_443316(2);
+            b = randomWantedTopping(0);
+            d = randomWantedTopping(2);
             break;
         case 2:
-            a = fn_443316(2);
+            a = randomWantedTopping(2);
             do
-                c = fn_443316(2);
+                c = randomWantedTopping(2);
             while (c == a);
-            b = fn_443316(0);
-            d = fn_443316(1);
+            b = randomWantedTopping(0);
+            d = randomWantedTopping(1);
             break;
         }
-        fn_446487(a, b, c, d);
+        showFourPizzas(a, b, c, d);
         break;
     }
 }
 
 /*
  * A pizza served to troll `troll` (0-2), unless it's done (3): it reacts
- * by its verdict (fn_44338b): 2 (all it wants) it's satisfied (state 2);
+ * by its verdict (judgePizza): 2 (all it wants) it's satisfied (state 2);
  * 1 it wants more (the next of its scripts; the pizza goes on its pile
  * the first time); 0 and 4 it rejects it; 3 never happens. Once every
- * troll there is satisfied, the puzzle is solved (g_4b1662).
+ * troll there is satisfied, the puzzle is solved (pizzaSolved).
  */
 /* @zoombi32 0x00443521 */
-void fn_443521(short troll, short)
+void pizzaServedTo(short troll, short)
 {
     View *view;
 
@@ -2237,21 +2237,21 @@ void fn_443521(short troll, short)
     view = 0;
     switch (troll) {
     case 0:
-        if (g_4b1618 == 3)
+        if (arnoState == 3)
             break;
-        switch (fn_44338b(0)) {
+        switch (judgePizza(0)) {
         case 2:
-            view = findView(g_4b160e);
+            view = findView(arnoView);
             setViewScript(view, randomUpTo(2) + 8017, 1);
-            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
-            g_4b1618 = 2;
+            g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
+            arnoState = 2;
             g_4b16ea++;
             break;
         case 1:
-            view = findView(g_4b160e);
+            view = findView(arnoView);
             setViewScript(view, g_4b16b6 + 8000, 1);
-            fn_446035();
-            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
             if (++g_4b16b6 >= 6)
                 g_4b16b6 = 5;
             g_4a3d40 = 0;
@@ -2263,10 +2263,10 @@ void fn_443521(short troll, short)
             g_4b16ea = 0;
             break;
         case 0:
-            view = findView(g_4b160e);
+            view = findView(arnoView);
             setViewScript(view, g_4b16b8 + 8006, 1);
-            fn_446035();
-            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
             if (++g_4b16b8 >= 2)
                 g_4b16b8 = 0;
             g_4b16ea = 0;
@@ -2274,10 +2274,10 @@ void fn_443521(short troll, short)
             g_4b1710 = 4;
             break;
         case 4:
-            view = findView(g_4b160e);
+            view = findView(arnoView);
             setViewScript(view, g_4b16ba + 8008, 1);
-            fn_446035();
-            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
             if (++g_4b16ba >= 6)
                 g_4b16ba = 0;
             g_4b16ea = 0;
@@ -2285,10 +2285,10 @@ void fn_443521(short troll, short)
             g_4b1710 = 4;
             break;
         case 3:
-            view = findView(g_4b160e);
+            view = findView(arnoView);
             setViewScript(view, randomUpTo(1) + 8015, 1);
-            fn_446035();
-            g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
             g_4b16ea = 0;
             g_4b15fe = 1;
             g_4b1710 = 4;
@@ -2296,22 +2296,22 @@ void fn_443521(short troll, short)
         }
         break;
     case 1:
-        if (g_4b161a == 3)
+        if (willaState == 3)
             break;
-        switch (fn_44338b(1)) {
+        switch (judgePizza(1)) {
         case 2:
-            view = findView(g_4b1610);
+            view = findView(willaView);
             setViewScript(view, randomUpTo(6) + 9010, 1);
-            fn_446035();
-            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
-            g_4b161a = 2;
+            orderPizzaViews();
+            g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
+            willaState = 2;
             g_4b16ea++;
             break;
         case 1:
-            view = findView(g_4b1610);
+            view = findView(willaView);
             setViewScript(view, g_4b16be + 9021, 1);
-            fn_446035();
-            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
             if (++g_4b16be >= 5)
                 g_4b16be = 4;
             g_4a3d40 = 1;
@@ -2323,10 +2323,10 @@ void fn_443521(short troll, short)
             g_4b16ea = 0;
             break;
         case 0:
-            view = findView(g_4b1610);
+            view = findView(willaView);
             setViewScript(view, g_4b16c0 + 9000, 1);
-            fn_446035();
-            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
             if (++g_4b16c0 >= 5)
                 g_4b16c0 = 0;
             g_4b16ea = 0;
@@ -2335,10 +2335,10 @@ void fn_443521(short troll, short)
                 g_4b1710 = 4;
             break;
         case 4:
-            view = findView(g_4b1610);
+            view = findView(willaView);
             setViewScript(view, g_4b16c2 + 9005, 1);
-            fn_446035();
-            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
             if (++g_4b16c2 >= 5)
                 g_4b16c2 = 0;
             g_4b16ea = 0;
@@ -2347,10 +2347,10 @@ void fn_443521(short troll, short)
                 g_4b1710 = 4;
             break;
         case 3:
-            view = findView(g_4b1610);
+            view = findView(willaView);
             setViewScript(view, randomUpTo(1) + 9017, 1);
-            fn_446035();
-            g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
             g_4b16ea = 0;
             g_4b15fe = 2;
             g_4b1710 = 4;
@@ -2358,22 +2358,22 @@ void fn_443521(short troll, short)
         }
         break;
     case 2:
-        if (g_4b161c == 3)
+        if (shylerState == 3)
             break;
-        switch (fn_44338b(2)) {
+        switch (judgePizza(2)) {
         case 2:
-            view = findView(g_4b1612);
+            view = findView(shylerView);
             setViewScript(view, randomUpTo(3) + 10023, 1);
-            fn_446035();
-            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
-            g_4b161c = 2;
+            orderPizzaViews();
+            g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
+            shylerState = 2;
             g_4b16ea++;
             break;
         case 1:
-            view = findView(g_4b1612);
+            view = findView(shylerView);
             setViewScript(view, g_4b16c4 + 10009, 1);
-            fn_446035();
-            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
             if (++g_4b16c4 >= 5)
                 g_4b16c4 = 4;
             g_4a3d40 = 2;
@@ -2385,10 +2385,10 @@ void fn_443521(short troll, short)
             g_4b15fe = 3;
             break;
         case 0:
-            view = findView(g_4b1612);
+            view = findView(shylerView);
             setViewScript(view, g_4b16c6 + 10014, 1);
-            fn_446035();
-            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
             if (++g_4b16c6 >= 6)
                 g_4b16c6 = 0;
             g_4b16ea = 0;
@@ -2397,10 +2397,10 @@ void fn_443521(short troll, short)
                 g_4b1710 = 4;
             break;
         case 4:
-            view = findView(g_4b1612);
+            view = findView(shylerView);
             setViewScript(view, g_4b16c8 + 10020, 1);
-            fn_446035();
-            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
             if (++g_4b16c8 >= 3)
                 g_4b16c8 = 0;
             g_4b16ea = 0;
@@ -2409,10 +2409,10 @@ void fn_443521(short troll, short)
                 g_4b1710 = 4;
             break;
         case 3:
-            view = findView(g_4b1612);
+            view = findView(shylerView);
             setViewScript(view, randomUpTo(2) + 10027, 1);
-            fn_446035();
-            g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+            orderPizzaViews();
+            g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
             g_4b16ea = 0;
             g_4b15fe = 3;
             g_4b1710 = 4;
@@ -2421,23 +2421,23 @@ void fn_443521(short troll, short)
         break;
     }
     if (view)
-        view->placed = fn_442c6c;
-    if (g_4b1618 >= 2 && !g_4b161a && !g_4b161c)
-        g_4b1662 = 1;
-    else if (g_4b1618 >= 2 && g_4b161a >= 2 && !g_4b161c)
-        g_4b1662 = 1;
-    else if (g_4b1618 >= 2 && !g_4b161a && g_4b161c >= 2)
-        g_4b1662 = 1;
-    else if (g_4b1618 >= 2 && g_4b161a >= 2 && g_4b161c >= 2)
-        g_4b1662 = 1;
-    if (g_4b1662)
+        view->placed = placeTrollToppings;
+    if (arnoState >= 2 && !willaState && !shylerState)
+        pizzaSolved = 1;
+    else if (arnoState >= 2 && willaState >= 2 && !shylerState)
+        pizzaSolved = 1;
+    else if (arnoState >= 2 && !willaState && shylerState >= 2)
+        pizzaSolved = 1;
+    else if (arnoState >= 2 && willaState >= 2 && shylerState >= 2)
+        pizzaSolved = 1;
+    if (pizzaSolved)
         g_4b181c = g_4b15d4 - 1;
 }
 
 /* Plays sound `sound` and waits for it (fn_412084); unloads it unless
    `keep`. Returns whether it was cut short. */
 /* @zoombi32 0x00445feb */
-short fn_445feb(short sound, short keep)
+short playAndWait(short sound, short keep)
 {
     short stopped = 0;
     short played;
@@ -2454,7 +2454,7 @@ short fn_445feb(short sound, short keep)
 /* Says one of the scene's introductions (0-4; sounds 15000-15006), if
    sound is on, stopping when one's cut short. */
 /* @zoombi32 0x00445eb3 */
-void fn_445eb3(short which)
+void sayIntroduction(short which)
 {
     short stopped;
 
@@ -2462,34 +2462,34 @@ void fn_445eb3(short which)
         return;
     switch (which) {
     case 0:
-        stopped = fn_445feb(15005, 0);
+        stopped = playAndWait(15005, 0);
         waitForEventFor(0, 60, 0, 1);
         if (!stopped)
-            fn_445feb(15006, 0);
+            playAndWait(15006, 0);
         break;
     case 1:
-        stopped = fn_445feb(15000, 0);
+        stopped = playAndWait(15000, 0);
         if (!stopped)
-            fn_445feb(15001, 0);
+            playAndWait(15001, 0);
         break;
     case 2:
-        fn_445feb(15002, 0);
+        playAndWait(15002, 0);
         break;
     case 3:
-        stopped = fn_445feb(15003, 0);
+        stopped = playAndWait(15003, 0);
         if (!stopped)
-            fn_445feb(15004, 0);
+            playAndWait(15004, 0);
         break;
     case 4:
-        stopped = fn_445feb(15003, 0);
+        stopped = playAndWait(15003, 0);
         if (!stopped) {
-            stopped = fn_445feb(15004, 0);
+            stopped = playAndWait(15004, 0);
             if (!stopped) {
                 waitForEventFor(0, 20, 0, 1);
-                stopped = fn_445feb(15005, 0);
+                stopped = playAndWait(15005, 0);
                 if (!stopped) {
                     waitForEventFor(0, 60, 0, 1);
-                    fn_445feb(15006, 0);
+                    playAndWait(15006, 0);
                 }
             }
         }
@@ -2499,7 +2499,7 @@ void fn_445eb3(short which)
 
 /*
  * The scene's buttons: leaves at once if asked to; 1 asks to leave for the
- * map (999, keeping the party); 2, once the party is through (g_4b15e6),
+ * map (999, keeping the party); 2, once the party is through (pizzaGoReady),
  * sends the Zoombinis on (996) and asks to leave for scene 4; 3 (and 12)
  * serves the pizza when nothing's going on; 4-11 toggle toppings (8 not
  * at level 1, 11 only at level 3); 13 (debugging, armed) drags a Zoombini
@@ -2530,8 +2530,8 @@ void pizzaButtonClicked(short button)
         break;
     case 2:
         if (g_4b1820)
-            fn_4468eb();
-        if (g_4b15e6) {
+            sendFlaggedToPlaces();
+        if (pizzaGoReady) {
             queueViewSound(0, 0);
             drawPizzaButton(button, 1, 1);
             waitForEventFor(0, 2, 0, 1);
@@ -2546,15 +2546,15 @@ void pizzaButtonClicked(short button)
         break;
     case 3:
     case 12:
-        if (!g_4b171e && !g_4b1660 && !g_4b1662 && !g_4b165a && !g_4b1600 && !g_4b1602 && !g_4b1604 && !g_4b160c
+        if (!g_4b171e && !g_4b1660 && !pizzaSolved && !g_4b165a && !g_4b1600 && !g_4b1602 && !g_4b1604 && !g_4b160c
             && g_4b83e4[0]) {
             g_4b171e++;
             g_4b1824 = clockTime();
-            if (g_4b15d6 == -1)
-                fn_445789();
-            memcpy(g_4b16da, g_4b16ca, 16);
+            if (nextZoombini == -1)
+                bringNextZoombini();
+            memcpy(pizzaToppings, mealToppings, 16);
             if (!g_4b165a)
-                fn_442560(3);
+                toppingButton(3);
         }
         break;
     case 13:
@@ -2567,8 +2567,8 @@ void pizzaButtonClicked(short button)
                 g_4b1672 = view->id;
                 if (heldPlaceNumber()) {
                     g_4b15d8 = 0;
-                    g_4a3d42 = view->id;
-                    fn_442560(3);
+                    zoombiniAtPizza = view->id;
+                    toppingButton(3);
                 }
             }
         }
@@ -2577,19 +2577,19 @@ void pizzaButtonClicked(short button)
     case 5:
     case 6:
     case 7:
-        fn_442560(button);
+        toppingButton(button);
         break;
     case 8:
-        if (g_4b161e != 1)
-            fn_442560(button);
+        if (pizzaLevel != 1)
+            toppingButton(button);
         break;
     case 9:
     case 10:
-        fn_442560(button);
+        toppingButton(button);
         break;
     case 11:
-        if (g_4b161e == 3)
-            fn_442560(button);
+        if (pizzaLevel == 3)
+            toppingButton(button);
         break;
     }
 }
@@ -2603,8 +2603,8 @@ void pizzaButtonClicked(short button)
  * g_4b1604: satisfied trolls step aside and the next comes up), the
  * trolls' turns, a pizza's reaction and piling, the next Zoombini up;
  * walks the Zoombini at the pizza to its spot, and sends waiting ones
- * fidgeting (13035 on) while g_4b1820. Several calls to fn_445ae1 pass
- * `view` before it's set, as the original does (fn_445ae1 ignores it).
+ * fidgeting (13035 on) while g_4b1820. Several calls to pizzaDoneNotify pass
+ * `view` before it's set, as the original does (pizzaDoneNotify ignores it).
  */
 /* Not exact: BCC caches groupLeader's address in edi and g_4b165c's in
    esi; the original the other way round (and `reacted` in edi). */
@@ -2646,7 +2646,7 @@ void pizzaFrame()
     if (clockTime() - g_4b1824 > 3600) {
         g_4b1824 = clockTime();
         if (!g_4b9684)
-            fn_446745();
+            trollFidget();
     }
     if (g_4b15f2 && !groupLeader[g_4b15f2])
         g_4b15f2 = 0;
@@ -2657,30 +2657,30 @@ void pizzaFrame()
         if (!groupLeader[g_4b15f6]) {
             g_4b1670 = 0;
             g_4b15f6 = 0;
-            g_4b1674 = fn_44460a();
+            g_4b1674 = pizzaTriedBefore();
             if (!g_4b1674) {
-                if (g_4b1618 == 1)
-                    fn_443521(0, 0);
-                else if (g_4b161a == 1 && !g_4b165c)
-                    fn_443521(1, 1);
-                else if (g_4b161c == 1 && !g_4b165c)
-                    fn_443521(2, 2);
+                if (arnoState == 1)
+                    pizzaServedTo(0, 0);
+                else if (willaState == 1 && !g_4b165c)
+                    pizzaServedTo(1, 1);
+                else if (shylerState == 1 && !g_4b165c)
+                    pizzaServedTo(2, 2);
             } else {
                 reacted = 0;
-                if (g_4b1618 == 1 && fn_44338b(0) == 1) {
-                    fn_445b80(0, 1);
+                if (arnoState == 1 && judgePizza(0) == 1) {
+                    trollVerdict(0, 1);
                     reacted++;
                 }
-                if (g_4b161a == 1 && !reacted && fn_44338b(1) == 1) {
-                    fn_445b80(1, 1);
+                if (willaState == 1 && !reacted && judgePizza(1) == 1) {
+                    trollVerdict(1, 1);
                     reacted++;
                 }
-                if (g_4b161c == 1 && !reacted && fn_44338b(2) == 1) {
-                    fn_445b80(2, 1);
+                if (shylerState == 1 && !reacted && judgePizza(2) == 1) {
+                    trollVerdict(2, 1);
                     reacted++;
                 }
                 if (!reacted)
-                    fn_445b80(2, 0);
+                    trollVerdict(2, 0);
             }
         }
     } else if (g_4b1600) {
@@ -2690,43 +2690,43 @@ void pizzaFrame()
                 g_4b16bc = 0;
                 g_4b15fc = 1000;
             } else {
-                if (g_4b1618 == 3) {
+                if (arnoState == 3) {
                     if (g_4b1722[0])
-                        moveView(g_4b160e, 0, g_4b1722[0]);
-                    fn_445ae1(view, 0);
+                        moveView(arnoView, 0, g_4b1722[0]);
+                    pizzaDoneNotify(view, 0);
                 }
                 if (g_4b1660) {
                     g_4b1660 = 0;
                     g_4b7564 = 1;
-                    fn_445ae1(view, 0);
-                } else if (g_4b1618 == 2) {
-                    deleteView(g_4b1664);
-                    g_4b1664 = 0;
-                    view = findView(g_4b160e);
+                    pizzaDoneNotify(view, 0);
+                } else if (arnoState == 2) {
+                    deleteView(pizzaView);
+                    pizzaView = 0;
+                    view = findView(arnoView);
                     setViewScript(view, 8021, 1);
                     if (g_4b15d4 - g_4b15ee > 3)
                         g_4b1820++;
-                    moveView(g_4b160e, 1, g_4b1616);
-                    moveView(g_4a3d42, 1, g_4b160e);
-                    g_4b1618 = 3;
+                    moveView(arnoView, 1, g_4b1616);
+                    moveView(zoombiniAtPizza, 1, arnoView);
+                    arnoState = 3;
                     g_4a3d40 = 0;
-                    view->placed = fn_44468e;
-                    g_4b1600 = groupViews(g_4b160e, g_4b160e, 0, 0, 0, 0);
+                    view->placed = placeArnoToppings;
+                    g_4b1600 = groupViews(arnoView, arnoView, 0, 0, 0, 0);
                     g_4b1720++;
-                    fn_44509b();
+                    restartPizzaView();
                     g_4b165c++;
-                    g_4b1614 = 0;
+                    trollTurn = 0;
                     g_4b15fe = 0;
                 } else {
-                if (g_4b1662) {
-                    fn_444391();
-                    g_4b15e6 = 1;
+                if (pizzaSolved) {
+                    trollsEat();
+                    pizzaGoReady = 1;
                 } else if (g_4b1674) {
                     g_4b16ea = 0;
-                } else if (g_4b161a == 1 && !g_4b165c) {
-                    fn_443521(1, 1);
-                } else if (g_4b161c == 1 && !g_4b165c) {
-                    fn_443521(2, 2);
+                } else if (willaState == 1 && !g_4b165c) {
+                    pizzaServedTo(1, 1);
+                } else if (shylerState == 1 && !g_4b165c) {
+                    pizzaServedTo(2, 2);
                 } else {
                     g_4b165c = 0;
                 }
@@ -2737,45 +2737,45 @@ void pizzaFrame()
     } else if (g_4b1602) {
         if (!groupLeader[g_4b1602]) {
             g_4b1602 = g_4b1630 = 0;
-            if (g_4b161a == 3) {
+            if (willaState == 3) {
                 if (g_4b1728[0])
-                    moveView(g_4b1610, 0, g_4b1728[0]);
+                    moveView(willaView, 0, g_4b1728[0]);
                 if (g_4b1728[1])
                     moveView(g_4b1728[1], 1, g_4b1728[0]);
                 if (g_4b1728[2])
                     moveView(g_4b1728[2], 1, g_4b1728[1]);
-                fn_445ae1(view, 0);
+                pizzaDoneNotify(view, 0);
             }
             if (g_4b1660) {
                 g_4b1660 = 0;
                 g_4b7564 = 1;
-                fn_445ae1(view, 0);
-            } else if (g_4b161a == 2) {
-                deleteView(g_4b1664);
-                g_4b1664 = 0;
-                view = findView(g_4b1610);
+                pizzaDoneNotify(view, 0);
+            } else if (willaState == 2) {
+                deleteView(pizzaView);
+                pizzaView = 0;
+                view = findView(willaView);
                 setViewScript(view, 9027, 1);
                 if (g_4b15d4 - g_4b15ee > 3)
                     g_4b1820++;
-                moveView(g_4b1610, 1, g_4b1616);
-                moveView(g_4a3d42, 1, g_4b1610);
-                g_4b161a = 3;
+                moveView(willaView, 1, g_4b1616);
+                moveView(zoombiniAtPizza, 1, willaView);
+                willaState = 3;
                 g_4a3d40 = 1;
-                g_4b1602 = groupViews(g_4b1610, g_4b1610, 0, 0, 0, 0);
-                view->placed = fn_44485d;
+                g_4b1602 = groupViews(willaView, willaView, 0, 0, 0, 0);
+                view->placed = placeWillaToppings;
                 g_4b1720++;
-                fn_44509b();
+                restartPizzaView();
                 g_4b165c++;
-                g_4b1614 = 0;
+                trollTurn = 0;
                 g_4b15fe = 0;
             } else {
-                if (g_4b1662) {
-                    fn_444391();
-                    g_4b15e6 = 1;
+                if (pizzaSolved) {
+                    trollsEat();
+                    pizzaGoReady = 1;
                 } else if (g_4b1674) {
                     g_4b16ea = 0;
-                } else if (g_4b161c == 1 && !g_4b165c) {
-                    fn_443521(2, 2);
+                } else if (shylerState == 1 && !g_4b165c) {
+                    pizzaServedTo(2, 2);
                 } else {
                     g_4b165c = 0;
                 }
@@ -2785,36 +2785,36 @@ void pizzaFrame()
     } else if (g_4b1604) {
         if (!groupLeader[g_4b1604]) {
             g_4b1604 = g_4b1630 = 0;
-            if (g_4b161c == 3) {
+            if (shylerState == 3) {
                 if (g_4b172e[0])
-                    moveView(g_4b1612, 0, g_4b172e[0]);
-                fn_445ae1(view, 0);
+                    moveView(shylerView, 0, g_4b172e[0]);
+                pizzaDoneNotify(view, 0);
             }
             if (g_4b1660) {
                 g_4b1660 = 0;
                 g_4b7564 = 1;
-                fn_445ae1(view, 0);
-            } else if (g_4b161c == 2) {
-                deleteView(g_4b1664);
-                g_4b1664 = 0;
-                view = findView(g_4b1612);
+                pizzaDoneNotify(view, 0);
+            } else if (shylerState == 2) {
+                deleteView(pizzaView);
+                pizzaView = 0;
+                view = findView(shylerView);
                 setViewScript(view, 10031, 1);
                 if (g_4b15d4 - g_4b15ee > 3)
                     g_4b1820++;
-                moveView(g_4b1612, 1, g_4b1616);
-                g_4b161c = 3;
+                moveView(shylerView, 1, g_4b1616);
+                shylerState = 3;
                 g_4a3d40 = 2;
-                view->placed = fn_444a93;
-                g_4b1604 = groupViews(g_4b1612, g_4b1612, 0, 0, 0, 0);
+                view->placed = placeShylerToppings;
+                g_4b1604 = groupViews(shylerView, shylerView, 0, 0, 0, 0);
                 g_4b1720++;
-                fn_44509b();
+                restartPizzaView();
                 g_4b165c++;
-                g_4b1614 = 0;
+                trollTurn = 0;
                 g_4b15fe = 0;
             } else {
-                if (g_4b1662) {
-                    fn_444391();
-                    g_4b15e6 = 1;
+                if (pizzaSolved) {
+                    trollsEat();
+                    pizzaGoReady = 1;
                 } else if (g_4b1674) {
                     g_4b16ea = 0;
                 } else {
@@ -2826,44 +2826,44 @@ void pizzaFrame()
     } else if (g_4b1608) {
         if (!groupLeader[g_4b1608]) {
             g_4b1608 = 0;
-            fn_4459b3();
+            stepTrollTurns();
             if (!g_4b165e)
-                fn_4458c3();
+                startLevelTroll();
         }
     } else if (g_4b15fc) {
         if (g_4b15fc == 1000) {
             g_4b15fc = 0;
-            g_4b1614 = g_4b15fe;
+            trollTurn = g_4b15fe;
             g_4b15fe = 0;
-            fn_444c62();
+            trollReacts();
         } else if (!groupLeader[g_4b15fc]) {
             g_4b15fc = 0;
-            g_4b1614 = g_4b15fe;
+            trollTurn = g_4b15fe;
             g_4b15fe = 0;
-            fn_444c62();
+            trollReacts();
         }
     } else if (g_4b15fe) {
-        fn_445153();
+        servePizza();
     } else if (g_4b1606) {
         if (!groupLeader[g_4b1606]) {
             g_4b1606 = 0;
-            fn_445307();
+            showJudgedPizza();
         }
     } else if (g_4b160c) {
         if (!groupLeader[g_4b160c]) {
             g_4b160c = 0;
-            if (g_4b1618 == 3)
-                moveView(g_4b160e, 0, g_4b1734[0].view);
-            if (g_4b161a == 3)
-                moveView(g_4b1610, 0, g_4b1734[0].view);
-            if (g_4b161c == 3)
-                moveView(g_4b1612, 0, g_4b1734[0].view);
+            if (arnoState == 3)
+                moveView(arnoView, 0, shownPizzas[0].view);
+            if (willaState == 3)
+                moveView(willaView, 0, shownPizzas[0].view);
+            if (shylerState == 3)
+                moveView(shylerView, 0, shownPizzas[0].view);
         }
     } else if (g_4b160a) {
         if (!groupLeader[g_4b160a]) {
             g_4b171e = g_4b160a = 0;
             if (g_4b15da) {
-                fn_445789();
+                bringNextZoombini();
                 g_4b166e++;
             }
         }
@@ -2879,17 +2879,17 @@ void pizzaFrame()
     if (g_4b15f8) {
         if (!groupLeader[g_4b15f8]) {
             g_4b15f8 = 0;
-            view = findView(g_4a3d42);
+            view = findView(zoombiniAtPizza);
             if (view) {
                 setSnoidAction((Snoid *)&view->body, 7, 0);
                 *(Point *)&((Snoid *)&view->body)->targetX = g_4a3d44;
-                g_4b15fa = groupViews(g_4a3d42, g_4a3d42, 0, 0, 0, 0);
+                g_4b15fa = groupViews(zoombiniAtPizza, zoombiniAtPizza, 0, 0, 0, 0);
             }
         }
     } else if (g_4b15fa && !g_4b166e) {
         if (!groupLeader[g_4b15fa]) {
             g_4b15fa = 0;
-            setSnoidAction((Snoid *)&findView(g_4a3d42)->body, 2, 0);
+            setSnoidAction((Snoid *)&findView(zoombiniAtPizza)->body, 2, 0);
             if (g_4b15ee)
                 g_4b171e = 0;
         }
@@ -2903,12 +2903,12 @@ void pizzaFrame()
             done = 0;
             if (g_4b15d4 - g_4b15ee < 4) {
                 g_4b1820 = g_4b171e = 0;
-                fn_445ae1(view, 0);
+                pizzaDoneNotify(view, 0);
             } else {
                 g_4b1814 = clockTime();
                 do {
                     n = allocateSlot(&g_4b1818, g_4b15d4, 0);
-                    if (partyViews[n] != g_4a3d42) {
+                    if (partyViews[n] != zoombiniAtPizza) {
                         waiting = idleSnoidView(partyViews[n]);
                         if (waiting && waiting->body.running && waiting->flags == 1) {
                             script = ((Snoid *)&waiting->body)->features[3] - 1 + 13035;
@@ -2933,7 +2933,7 @@ void pizzaFrame()
    buttons (from the tables g_4a35b8-g_4a3b34), loads Pizza.MHK's backdrop,
    images, features and scripts, adds the pizza, the topping views and the
    trolls there at the level, the toppings and what each troll wants
-   (fn_442ea2), brings the party in, and says an introduction. */
+   (shareToppings), brings the party in, and says an introduction. */
 /* @zoombi32 0x004402c0 */
 void openPizza()
 {
@@ -2942,19 +2942,19 @@ void openPizza()
 
     unloadSounds();
     g_4b0d52 = g_4b15ee = 0;
-    g_4b15e4 = g_4b15e6 = 0;
+    g_4b15e4 = pizzaGoReady = 0;
     g_4b1824 = clockTime();
     g_4b966e = g_4b166e = 0;
     g_4b15f2 = g_4b162e = g_4b1630 = g_4b1632 = 0;
     g_4b15f4 = g_4b15f6 = g_4b15ea = g_4b16bc = 0;
-    g_4b1708 = g_4b15d6 = -1;
+    lastTriedPizza = nextZoombini = -1;
     g_4b164a = g_4b164c = g_4b164e = g_4b1650 = g_4b1652 = 0;
     g_4b166a = g_4b1654 = g_4b1656 = g_4b1658 = g_4b16ea = 0;
-    g_4b1662 = g_4b1600 = g_4b1602 = g_4b1604 = 0;
+    pizzaSolved = g_4b1600 = g_4b1602 = g_4b1604 = 0;
     g_4b16b6 = g_4b16b8 = g_4b16ba = g_4b1606 = 0;
     g_4b16be = g_4b16c0 = g_4b16c2 = g_4b171e = 0;
     g_4b16c4 = g_4b16c6 = g_4b16c8 = g_4b15e8 = 0;
-    g_4b1614 = g_4b1710 = g_4b1660 = g_4b160a = g_4b15ec = 0;
+    trollTurn = g_4b1710 = g_4b1660 = g_4b160a = g_4b15ec = 0;
     g_4b165a = g_4b165c = g_4b1608 = g_4b160c = 0;
     g_4b15f8 = g_4b15fa = g_4b15fc = g_4b15fe = 0;
     g_4b1814 = 0;
@@ -2966,18 +2966,18 @@ void openPizza()
     g_4b15d8 = 1;
     g_4b165e = g_4b170a = 1;
     g_4b1712 = g_4b1714 = g_4b1716 = g_4b1718 = g_4b170e = -1;
-    fillMemory(g_4b1734, 0, 224);
-    g_4b161e = sceneLevel();
-    fillMemory(g_4b16da, 0, 16);
-    fillMemory(g_4b16ca, 0, 16);
-    fillMemory(g_4b16ec, 0, 28);
-    if (!g_4b161e)
+    fillMemory(shownPizzas, 0, 224);
+    pizzaLevel = sceneLevel();
+    fillMemory(pizzaToppings, 0, 16);
+    fillMemory(mealToppings, 0, 16);
+    fillMemory(triedPizzas, 0, 28);
+    if (!pizzaLevel)
         memcpy(pizzaButtons, g_4a35b8, sizeof g_4a35b8);
-    else if (g_4b161e == 1)
+    else if (pizzaLevel == 1)
         memcpy(pizzaButtons, g_4a378c, sizeof g_4a378c);
-    else if (g_4b161e == 2)
+    else if (pizzaLevel == 2)
         memcpy(pizzaButtons, g_4a3960, sizeof g_4a3960);
-    else if (g_4b161e == 3)
+    else if (pizzaLevel == 3)
         memcpy(pizzaButtons, g_4a3b34, sizeof g_4a3b34);
     openGameFile(&g_4b15d0, "Pizza.MHK");
     fn_46be2e(g_4b15d0);
@@ -2991,7 +2991,7 @@ void openPizza()
     loadScripts(7000, 69);
     addScripts(8000, 36, 0);
     addScripts(12000, 45, 0);
-    switch (g_4b161e) {
+    switch (pizzaLevel) {
     case 1:
         loadFeatureGroup(9000, 3, 0);
         addScripts(9000, 35, 0);
@@ -3004,7 +3004,7 @@ void openPizza()
         addScripts(10000, 39, 0);
         break;
     }
-    g_4a3d38 = addView(0x1000, drawPizzaButtonsView, fn_441127, 0, 0, 0, 0, 0);
+    g_4a3d38 = addView(0x1000, drawPizzaButtonsView, updatePizzaButtons, 0, 0, 0, 0, 0);
     loadSnoidScripts(14000, 6, 0);
     addSnoidScripts(13000, 40, 0);
     g_4b166c = g_4b755e;
@@ -3013,9 +3013,9 @@ void openPizza()
     g_4b15f0 = addView(0x188000, drawCels, runViewScript, 7000, 6, 0, 0, 0);
     loadViewSounds(g_4b15f0, 0);
     g_4b15f2 = groupViews(g_4b15f0, g_4b15f0, 0, 0, 0, 0);
-    g_4b162c = g_4b161e + 5;
-    g_4b1618 = g_4b161a = g_4b161c = g_4b171a = 0;
-    switch (g_4b161e) {
+    g_4b162c = pizzaLevel + 5;
+    arnoState = willaState = shylerState = g_4b171a = 0;
+    switch (pizzaLevel) {
     case 0:
         toppingViews[0] = addView(0x188000, drawCels, runViewScript, 7005, 6, 0, 0, 0);
         toppingViews[1] = addView(0x188000, drawCels, runViewScript, 7007, 6, 0, 0, 0);
@@ -3023,12 +3023,12 @@ void openPizza()
         toppingViews[3] = addView(0x188000, drawCels, runViewScript, 7011, 6, 0, 0, 0);
         toppingViews[4] = addView(0x188000, drawCels, runViewScript, 7013, 6, 0, 0, 0);
         g_4b1622 = 1;
-        g_4b1624 = 5;
+        toppingCount = 5;
         g_4b1628 = 2;
         g_4b1626 = 500;
         g_4b162a = 0;
-        g_4b1620 = 6;
-        g_4b1618 = 1;
+        pizzasLeft = 6;
+        arnoState = 1;
         break;
     case 1:
         toppingViews[0] = addView(0x188000, drawCels, runViewScript, 7015, 6, 0, 0, 0);
@@ -3038,13 +3038,13 @@ void openPizza()
         toppingViews[5] = addView(0x188000, drawCels, runViewScript, 7023, 6, 0, 0, 0);
         toppingViews[6] = addView(0x188000, drawCels, runViewScript, 7025, 6, 0, 0, 0);
         g_4b1622 = 2;
-        g_4b1624 = 7;
+        toppingCount = 7;
         g_4b1626 = 800;
         g_4b1628 = 3;
         g_4b162a = 0;
-        g_4b1620 = 7;
-        g_4b1618 = 1;
-        g_4b161a = 1;
+        pizzasLeft = 7;
+        arnoState = 1;
+        willaState = 1;
         break;
     case 2:
         toppingViews[0] = addView(0x188000, drawCels, runViewScript, 7027, 6, 0, 0, 0);
@@ -3055,14 +3055,14 @@ void openPizza()
         toppingViews[5] = addView(0x188000, drawCels, runViewScript, 7037, 6, 0, 0, 0);
         toppingViews[6] = addView(0x188000, drawCels, runViewScript, 7039, 6, 0, 0, 0);
         g_4b1622 = 2;
-        g_4b1624 = 7;
+        toppingCount = 7;
         g_4b1626 = 1000;
         g_4b1628 = 3;
         g_4b162a = 1;
-        g_4b1620 = 7;
-        g_4b1618 = 1;
-        g_4b161a = 1;
-        g_4b161c = 1;
+        pizzasLeft = 7;
+        arnoState = 1;
+        willaState = 1;
+        shylerState = 1;
         break;
     case 3:
         toppingViews[0] = addView(0x188000, drawCels, runViewScript, 7041, 6, 0, 0, 0);
@@ -3074,23 +3074,23 @@ void openPizza()
         toppingViews[6] = addView(0x188000, drawCels, runViewScript, 7053, 6, 0, 0, 0);
         toppingViews[7] = addView(0x188000, drawCels, runViewScript, 7055, 6, 0, 0, 0);
         g_4b1622 = 3;
-        g_4b1624 = 8;
+        toppingCount = 8;
         g_4b1626 = 1000;
         g_4b1628 = 4;
         g_4b162a = 2;
-        g_4b1620 = 7;
-        g_4b1618 = 1;
-        g_4b161a = 1;
-        g_4b161c = 1;
+        pizzasLeft = 7;
+        arnoState = 1;
+        willaState = 1;
+        shylerState = 1;
         break;
     }
     fn_4148da(10, 236);
     saved = g_4b87fe;
     g_4b87fe = 0;
     g_4b1648 = 0;
-    g_4b1634 = g_4b1620;
-    fn_442ea2();
-    fn_4423d7();
+    g_4b1634 = pizzasLeft;
+    shareToppings();
+    showMealView();
     setViewPlaces(16, g_4a3d54, 1);
     makePartySnoids(0);
     enterSnoids(200);
@@ -3127,17 +3127,17 @@ void openPizza()
     addSoundRange(12003, 12099, 0);
     addSoundRange(13000, 13099, 0);
     g_4b87fe = saved;
-    if (!g_4b161e)
+    if (!pizzaLevel)
         g_4b966e = 20071;
     else
         g_4b966e = 20072;
     switch (campHint((short *)(g_4a4ba0 + 0x2e))) {
     case 1:
-        fn_445eb3(0);
+        sayIntroduction(0);
         break;
     case 5:
-        if (!g_4b161e) {
-            fn_445eb3(0);
+        if (!pizzaLevel) {
+            sayIntroduction(0);
             break;
         }
     default: {
@@ -3151,15 +3151,15 @@ void openPizza()
             r = 1;
         else
             r = 0;
-        fn_445eb3(r);
+        sayIntroduction(r);
         break;
     }
     }
-    if (g_4b161a)
-        g_4b1610 = addView(0x188000, drawCels, runViewScript, 9034, 6, 0, 0, 0);
-    g_4b160e = addView(0x188000, drawCels, runViewScript, 8032, 6, 0, 0, 0);
-    if (g_4b161c)
-        g_4b1612 = addView(0x188000, drawCels, runViewScript, 10038, 6, 0, 0, 0);
+    if (willaState)
+        willaView = addView(0x188000, drawCels, runViewScript, 9034, 6, 0, 0, 0);
+    arnoView = addView(0x188000, drawCels, runViewScript, 8032, 6, 0, 0, 0);
+    if (shylerState)
+        shylerView = addView(0x188000, drawCels, runViewScript, 10038, 6, 0, 0, 0);
     g_4b1616 = addView(0x4108000, drawCels, runViewScript, 8033, 6, 0, 0, 0);
     saved = g_4b87fe;
     g_4b87fe = 0;
@@ -3168,7 +3168,7 @@ void openPizza()
     g_4b15e4 = 1;
     g_4b171e = 1;
     g_4b87fe = saved;
-    fn_4459b3();
+    stepTrollTurns();
     setViewsLocked(0);
     g_4b83e4[0] = 1;
 }

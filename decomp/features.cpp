@@ -546,24 +546,24 @@ void strandParty()
     case 1:
     case 6:
         party()->count = 0;
-        fn_41f551();
+        saveRoster();
         return;
     case 4:
         *savedParty() = *party();
         party()->count = 0;
-        fn_41f551();
+        saveRoster();
         savedParty()->count = 0;
         return;
     case 5:
         waitingParties()[2] = *party();
         party()->count = 0;
-        fn_41f551();
+        saveRoster();
         waitingParties()[2].count = 0;
         return;
     case 3:
         waitingParties()[0] = *party();
         party()->count = 0;
-        fn_41f551();
+        saveRoster();
         waitingParties()[0].count = 0;
         return;
     case 2:
@@ -579,7 +579,7 @@ void strandParty()
     case 16:
     case 17:
     case 18:
-        fn_41f551();
+        saveRoster();
         party()->count = 0;
         return;
     case -1:
@@ -698,7 +698,7 @@ void startNewGame()
 
     g_4b80e2 = 0;
     scene = currentScene;
-    fn_41f6fc(1);
+    fillRosterHeader(1);
     fn_41f668();
     currentScene = scene;
     *(short *)(g_4a4ba0 + 0xca) = g_4b0d56 = 3;
@@ -1739,8 +1739,8 @@ void placeDialogList(View *view)
                             strcpy(gameName, savedGameList->games[g_4b9666 - 1].name);
                             strcpy(userFile, savedGameList->games[g_4b9666 - 1].file);
                             strcat(userFile, ".txt");
-                            fn_41f6fc(1);
-                            fn_41f5d0();
+                            fillRosterHeader(1);
+                            readRoster();
                             viewsLocked = 1;
                             g_4afb32 = 0;
                             if (!g_4b0d52)

@@ -22,25 +22,25 @@
 #include "view.h"
 
 /*
- * The notify of the Zoombinis cheering on the roster screen (rosterFrame),
+ * The notify of the Zoombinis cheering on the roster screen (cavesFrame),
  * which returns its event plus one (ignored).
  * The original adds one with `sub eax, -1`; BCC32 turns every way of writing
  * it tried so far (+ 1, - -1, enums, consts, unsigned, compound assignment,
  * locals, other -O options, and Borland C++ 4.52 as well as 4.5) into `inc eax`.
  */
 /* @zoombi32 0x0041d3e6 */
-int fn_41d3e6(View *, short value)
+int cheerNotify(View *, short value)
 {
     return value + 1;
 }
 
 /* @zoombi32 0x0041d9e4 */
-void fn_41d9e4(View *)
+void cavesNoDraw(View *)
 {
 }
 
 /* @zoombi32 0x0041d9eb */
-void fn_41d9eb(View *, short)
+void cavesNoUpdate(View *, short)
 {
 }
 
@@ -48,7 +48,7 @@ void fn_41d9eb(View *, short)
    swapped here, locked in g_4aba68 and g_4aba6c) and its hieroglyphs
    (shape 10000). */
 /* @zoombi32 0x0041dbce */
-void fn_41dbce()
+void loadCaveResources()
 {
     short i;
     unsigned short *data;
@@ -72,22 +72,22 @@ void fn_41dbce()
             data++;
         }
     }
-    loadShape(&g_4a0fd4, 10000, "Hieroglyphs");
+    loadShape(&glyphShape, 10000, "Hieroglyphs");
 }
 
-/* Frees the resource g_4a0fd4, if loaded. */
+/* Frees the resource glyphShape, if loaded. */
 /* @zoombi32 0x0041dccb */
-void fn_41dccb()
+void freeGlyphShape()
 {
-    if (g_4a0fd4) {
-        fn_46c602(&g_4a0fd4);
-        g_4a0fd4 = 0;
+    if (glyphShape) {
+        fn_46c602(&glyphShape);
+        glyphShape = 0;
     }
 }
 
 /* A view's update: redraws g_4a11ac when the view asks to (reset). */
 /* @zoombi32 0x0041dbab */
-void fn_41dbab(View *view, short region)
+void updateGlyphArea(View *view, short region)
 {
     if (view->reset) {
         view->reset = 0;
@@ -98,7 +98,7 @@ void fn_41dbab(View *view, short region)
 /* Puts view `id` in placed spot n (1-20), noting the spot's point in
    g_4ab8e0. */
 /* @zoombi32 0x0041e8f3 */
-void fn_41e8f3(short id, short n)
+void claimSpot(short id, short n)
 {
     if (n > 0 && n < 21) {
         placedViewPoint(&g_4ab8e0, n);
@@ -130,12 +130,12 @@ void reportRosterError(const char *message)
     freeText((void **)&rosterError);
 }
 
-/* Starts the view g_4ab874's Snoid on script `script` (by g_4ab8e4,
+/* Starts the view walkerView's Snoid on script `script` (by g_4ab8e4,
    unknownF8 `f8`), in group `group`, with notify `notify` if given. */
 /* @zoombi32 0x0041d167 */
-void fn_41d167(short group, short script, ViewNotify notify, char f8)
+void startWalkerScript(short group, short script, ViewNotify notify, char f8)
 {
-    View *view = findView(g_4ab874);
+    View *view = findView(walkerView);
 
     if (view) {
         startSnoidScript((Snoid *)&view->body, script, g_4ab8e4, f8);
@@ -145,23 +145,23 @@ void fn_41d167(short group, short script, ViewNotify notify, char f8)
     }
 }
 
-/* Shows frame n (up to g_4a1002) of the view g_4ab9f8 (script g_4a1000
-   on), if it's not running, with notify fn_41d30b. */
+/* Shows frame n (up to finalFrame) of the view frameView (script firstFrame
+   on), if it's not running, with notify frameNotify. */
 /* @zoombi32 0x0041dd37 */
-void fn_41dd37(volatile short n)
+void showFrame(volatile short n)
 {
-    View *view = findView(g_4ab9f8);
+    View *view = findView(frameView);
 
-    if (view && !view->body.running && n <= g_4a1002) {
-        setViewScript(view, g_4a1000 + n, 1);
-        view->notify = fn_41d30b;
+    if (view && !view->body.running && n <= finalFrame) {
+        setViewScript(view, firstFrame + n, 1);
+        view->notify = frameNotify;
     }
 }
 
 /* Releases the two locked handles (g_4aba78) and their resources
    (g_4aba70). */
 /* @zoombi32 0x0041dce6 */
-void fn_41dce6()
+void freeCaveResources()
 {
     short i;
 
@@ -177,20 +177,20 @@ void fn_41dce6()
 /* A view's update: redraws button 2 when g_4a0fe8 changes, and button 1
    once. */
 /* @zoombi32 0x0041d972 */
-void fn_41d972(View *, short region)
+void updateCavesButtons(View *, short region)
 {
     if (g_4a0fe8) {
         if (!g_4a120a) {
             g_4a120a = 1;
-            unionRgnRect(region, &rosterButtons[1].rect);
+            unionRgnRect(region, &cavesButtons[1].rect);
         }
     } else if (g_4a120a) {
         g_4a120a = 0;
-        unionRgnRect(region, &rosterButtons[1].rect);
+        unionRgnRect(region, &cavesButtons[1].rect);
     }
     if (!g_4a120c) {
         g_4a120c = 1;
-        unionRgnRect(region, &rosterButtons[0].rect);
+        unionRgnRect(region, &cavesButtons[0].rect);
     }
 }
 
@@ -236,7 +236,7 @@ short openRosterFile(const char *path, short mode)
 /* Draws button `which` (1: 5, 2: 2, or 1 if g_4a0fe8 isn't set; the next
    image if lit) from the bank g_4a1020, showing it if `show`. */
 /* @zoombi32 0x0041d8bc */
-void drawRosterButton(short which, short lit, short show)
+void drawCavesButton(short which, short lit, short show)
 {
     short image = 0;
 
@@ -255,17 +255,17 @@ void drawRosterButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)(g_4a1020->offsets[image] + (char *)g_4a1020), rosterButtons[which - 1].rect.left,
-                      rosterButtons[which - 1].rect.top, 8);
+        drawImageData((unsigned short *)(g_4a1020->offsets[image] + (char *)g_4a1020), cavesButtons[which - 1].rect.left,
+                      cavesButtons[which - 1].rect.top, 8);
         if (show)
-            showRect(&rosterButtons[which - 1].rect);
+            showRect(&cavesButtons[which - 1].rect);
     }
 }
 
 /* Draws feature n of kind `kind` (1-4: a table each; kind 1 five pixels
    further up and left) from the Zoombini images at `rect`, and shows it. */
 /* @zoombi32 0x0041ed59 */
-void fn_41ed59(short kind, short n, ShortRect rect)
+void drawFeatureImage(short kind, short n, ShortRect rect)
 {
     short handle;
     short image;
@@ -295,10 +295,10 @@ void fn_41ed59(short kind, short n, ShortRect rect)
     showRect(&rect);
 }
 
-/* Sends up to three of the placed Zoombinis (g_4ab8ec, from the 20th)
+/* Sends up to three of the placed Zoombinis (spotSnoids, from the 20th)
    that are ready off to (x, y), `interval` apart. */
 /* @zoombi32 0x0041d80e */
-void fn_41d80e(short x, short y, long interval)
+void sendReadyOff(short x, short y, long interval)
 {
     unsigned long when;
     short count;
@@ -308,7 +308,7 @@ void fn_41d80e(short x, short y, long interval)
     count = 0;
     when = clockTime();
     for (i = 20; i > 0 && count < 3; i--) {
-        view = findView(g_4ab8ec[i]);
+        view = findView(spotSnoids[i]);
         if (view) {
             view->flags = 1;
             Snoid *snoid = (Snoid *)&view->body;
@@ -331,23 +331,23 @@ void fn_41d80e(short x, short y, long interval)
 
 /* The view drawing the two buttons. */
 /* @zoombi32 0x0041d955 */
-void drawRosterButtonsView(View *)
+void drawCavesButtons(View *)
 {
-    drawRosterButton(1, 0, 0);
-    drawRosterButton(2, 0, 0);
+    drawCavesButton(1, 0, 0);
+    drawCavesButton(2, 0, 0);
 }
 
 /* Opens scene 16, the caves (Caves.MHK): the state, the scripts and
    sounds, the views for 20 places (the party's, and the cave's rows), the
    roster's resources, and a line by the level. */
 /* @zoombi32 0x0041c09c */
-void openScene16()
+void openCaves()
 {
     short i;
     View *view;
 
-    fn_41dfe3(g_4ab878 = sceneLevel() + 1);
-    g_4a0fec = 0;
+    resetCavesState(cavesLevel = sceneLevel() + 1);
+    cavesOpen = 0;
     g_4b0d52 = 0;
     g_4a0fe8 = 0;
     g_4a1006 = 0;
@@ -390,18 +390,18 @@ void openScene16()
     g_4ab9f0 = addView(0x4088000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
     g_4ab9f2 = addView(0x4088000, drawCels, runViewScript, 6001, 6, 0, 0, 0);
     g_4ab9f4 = addView(0x4188000, drawCels, runViewScript, 6002, 8, 0, 0, 0);
-    setViewPlaces(20, g_4a115c, 1);
+    setViewPlaces(20, chosenSpots, 1);
     makePartySnoids(0);
-    g_4a1014 = listChosenSnoids()->count;
-    g_4aba04 = g_4a1014 - 1;
-    g_4a1016 = 20 - g_4a1014;
+    chosenCount = listChosenSnoids()->count;
+    g_4aba04 = chosenCount - 1;
+    g_4a1016 = 20 - chosenCount;
     if (g_4a1016 > 4)
         g_4a1016 = 4;
     if (g_4a1016)
         g_4ab96a[0] = addView(0x4108000, drawCels, runViewScript, g_4a1016 + 9024, 6, 0, 0, 0);
-    g_4a100c = 21 - g_4a1014;
+    firstCave = 21 - chosenCount;
     {
-        short rows = g_4a100c;
+        short rows = firstCave;
 
         if (rows > 5)
             ; /* the original tests this and does nothing */
@@ -410,17 +410,17 @@ void openScene16()
         placedViews[i] = addView(0x508a000, drawCels, runViewScript, i + 7000, 7, &g_4a10a8[i + 1], 0, 0);
     for (i = 5; i < 12; i++) {
         g_4ab96a[i] = addView(0x4108000, drawCels, runViewScript, i + 8999, 6, 0, 0, 0);
-        g_4ab9c4[i] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+        g_4ab9c4[i] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
         placedViews[i - 1] = addView(0x508a000, drawCels, runViewScript, i + 6999, 7, &g_4a10a8[i], 0, 0);
     }
     g_4ab96a[15] = addView(0x4108000, drawCels, runViewScript, 9014, 6, 0, 0, 0);
-    g_4ab9c4[15] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+    g_4ab9c4[15] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
     g_4ab96a[14] = addView(0x4108000, drawCels, runViewScript, 9013, 6, 0, 0, 0);
-    g_4ab9c4[14] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+    g_4ab9c4[14] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
     g_4ab96a[13] = addView(0x4108000, drawCels, runViewScript, 9012, 6, 0, 0, 0);
-    g_4ab9c4[13] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+    g_4ab9c4[13] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
     g_4ab96a[12] = addView(0x4108000, drawCels, runViewScript, 9011, 6, 0, 0, 0);
-    g_4ab9c4[12] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+    g_4ab9c4[12] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
     placedViews[11] = addView(0x508a000, drawCels, runViewScript, 7011, 7, &g_4a10a8[12], 0, 0);
     placedViews[12] = addView(0x508a000, drawCels, runViewScript, 7012, 7, &g_4a10a8[13], 0, 0);
     placedViews[13] = addView(0x508a000, drawCels, runViewScript, 7013, 7, &g_4a10a8[14], 0, 0);
@@ -431,28 +431,28 @@ void openScene16()
     moveView(placedViews[14], 1, g_4ab9c4[15]);
     for (i = 16; i < 21; i++) {
         g_4ab96a[i] = addView(0x4108000, drawCels, runViewScript, i + 8999, 6, 0, 0, 0);
-        g_4ab9c4[i] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+        g_4ab9c4[i] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
         placedViews[i - 1] = addView(0x508a000, drawCels, runViewScript, i + 6999, 7, &g_4a10a8[i], 0, 0);
     }
-    g_4ab9c4[21] = addView(0x4008000, fn_41d9e4, fn_41d9eb, 6000, 0, 0, 0, 0);
+    g_4ab9c4[21] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
     for (i = 0; i < g_4a1016; i++)
         g_4b83e4[i] = g_4ab96a[0];
-    g_4ab9f8 = addView(0x4000000, drawCels, runViewScript, 6012, 0, 0, 0, 0);
-    g_4ab9f8 = addView(0x8180000, drawCels, runViewScript, g_4a1000 + 1, 9, 0, 0, 0);
+    frameView = addView(0x4000000, drawCels, runViewScript, 6012, 0, 0, 0, 0);
+    frameView = addView(0x8180000, drawCels, runViewScript, firstFrame + 1, 9, 0, 0, 0);
     fadeOutViews();
     fn_4148da(10, 236);
-    fn_41dbce();
-    fn_41e0e3();
-    fn_41e326(g_4ab878);
-    g_4a101c = addView(0x8000, fn_41dadf, fn_41dbab, 0, 0, 0, 0, 0);
-    addView(0x1000, drawRosterButtonsView, fn_41d972, 0, 0, 0, 0, 0);
+    loadCaveResources();
+    setUpCaves();
+    placeGlyphs(cavesLevel);
+    g_4a101c = addView(0x8000, drawGlyphs, updateGlyphArea, 0, 0, 0, 0, 0);
+    addView(0x1000, drawCavesButtons, updateCavesButtons, 0, 0, 0, 0, 0);
     enterSnoids(0);
     updateViews();
     staggerSnoids(45, 30);
     g_4a0fe6 = g_4a0fea = countChosenSnoids() >= 20;
     setGroupLists(caveGroups, 1, (short)0xc000);
-    drawRosterButton(1, 0, 0);
-    drawRosterButton(2, 0, 0);
+    drawCavesButton(1, 0, 0);
+    drawCavesButton(2, 0, 0);
     showRect(&g_4aa7b8);
     fadeInViews();
     chooseSnoids(0, 0);
@@ -460,7 +460,7 @@ void openScene16()
     view = findView(g_4a101c);
     if (view)
         view->nextUpdate = clockTime() + 120;
-    g_4a0fec = 1;
+    cavesOpen = 1;
     addSoundRange(996, 997, 0);
     addSoundRange(20000, 29999, 1);
     addSoundRange(6006, 6006, 0);
@@ -475,7 +475,7 @@ void openScene16()
     addSoundRange(8200, 12001, 0);
     addSoundRange(425, 499, 0);
     addSoundRange(600, 799, 0);
-    if (g_4ab878 < 4)
+    if (cavesLevel < 4)
         queueViewSound(sceneLevel() + 30025, 0);
     campHint((short *)(g_4a4ba0 + 0x40));
     g_4b966e = 20065;
@@ -483,15 +483,15 @@ void openScene16()
 
 /* Closes the roster screen. */
 /* @zoombi32 0x0041c9ed */
-void closeRoster()
+void closeCaves()
 {
-    if (g_4a0fec) {
-        g_4a0fec = 0;
+    if (cavesOpen) {
+        cavesOpen = 0;
         short saved = fn_46bee9(1);
 
         clearViews();
-        fn_41dccb();
-        fn_41dce6();
+        freeGlyphShape();
+        freeCaveResources();
         fn_46c602(&g_4a0fd0);
         unloadSounds();
         fn_46bee9(saved);
@@ -501,11 +501,11 @@ void closeRoster()
     }
 }
 
-/* Picks the roster's features: one (two when g_4ab878 is above 2) of the
+/* Picks the roster's features: one (two when cavesLevel is above 2) of the
    four at random, the first hair (2) when g_4a1018 asks, and for each
    g_4a0ff2 different values (1-5) at random. */
 /* @zoombi32 0x0041e0f3 */
-void fn_41e0f3()
+void pickCaveFeatures()
 {
     short left;
     volatile short unused; /* set, never read: volatile keeps the store */
@@ -516,15 +516,15 @@ void fn_41e0f3()
     short k;
     short valuesLeft;
 
-    if (g_4ab878 > 2)
+    if (cavesLevel > 2)
         g_4a0ff4 = 2;
     else
         g_4a0ff4 = 1;
     for (i = 0; i < 2; i++)
-        rosterFeatures[i] = 0;
+        caveFeatures[i] = 0;
     for (j = 0; j < g_4a0ff4; j++)
         for (i = 0; i < g_4a0ff2; i++)
-            rosterValues[j][i] = 0;
+            caveValues[j][i] = 0;
     left = 3;
     for (i = 0; i < 4; i++)
         features[i] = i;
@@ -538,17 +538,17 @@ void fn_41e0f3()
                 k = 2;
                 g_4a1018 = 0;
             }
-            rosterFeatures[0] = features[k];
+            caveFeatures[0] = features[k];
             for (; k < left + 1; k++)
                 features[k] = features[k + 1];
             left--;
         } else {
-            rosterFeatures[1] = features[randomBetween(0, left)];
+            caveFeatures[1] = features[randomBetween(0, left)];
         }
         valuesLeft = 5;
         for (i = 0; i < g_4a0ff2; i++) {
             k = randomBetween(1, valuesLeft);
-            rosterValues[j][i] = values[k];
+            caveValues[j][i] = values[k];
             for (; k < valuesLeft + 1; k++)
                 values[k] = values[k + 1];
             valuesLeft--;
@@ -556,12 +556,12 @@ void fn_41e0f3()
     }
 }
 
-/* Counts the chosen Zoombinis (g_4a1014 of them) by feature
-   rosterFeatures[0], and when there's a second (g_4ab878 above 2), by both
-   it and rosterFeatures[1], into
-   g_4ab892. */
+/* Counts the chosen Zoombinis (chosenCount of them) by feature
+   caveFeatures[0], and when there's a second (cavesLevel above 2), by both
+   it and caveFeatures[1], into
+   caveValueCounts. */
 /* @zoombi32 0x0041e273 */
-void fn_41e273()
+void countByCaveFeatures()
 {
     short second;
     ChosenSnoids *chosen = listChosenSnoids();
@@ -569,84 +569,84 @@ void fn_41e273()
     short j;
     short first;
 
-    if (g_4ab878 > 2)
+    if (cavesLevel > 2)
         g_4a0ff4 = 2;
     else
         g_4a0ff4 = 1;
     for (i = 0; i < 6; i++)
         for (j = 0; j < 6; j++)
-            g_4ab892[i][j] = 0;
-    for (j = 0; j < g_4a1014; j++) {
-        first = chosen->features[j][rosterFeatures[0]];
-        g_4ab892[0][first]++;
+            caveValueCounts[i][j] = 0;
+    for (j = 0; j < chosenCount; j++) {
+        first = chosen->features[j][caveFeatures[0]];
+        caveValueCounts[0][first]++;
         if (g_4a0ff4 > 1) {
-            second = chosen->features[j][rosterFeatures[1]];
-            g_4ab892[second][first]++;
+            second = chosen->features[j][caveFeatures[1]];
+            caveValueCounts[second][first]++;
         }
     }
 }
 
-/* The notify of the roster's walking Zoombini (g_4ab874): 1 and 2 start
+/* The notify of the roster's walking Zoombini (walkerView): 1 and 2 start
    the scripts g_4a0ffe and the next (in its group); 4 moves on to the next frame
-   (fn_41dd37) and deletes the view g_4a0ffa; 5 sets g_4a1006; 10 walks
+   (showFrame) and deletes the view g_4a0ffa; 5 sets g_4a1006; 10 walks
    back to the last point pushed on g_4aba14 (script 12013); 20 and 21 as
-   in fn_41d30b. */
+   in frameNotify. */
 /* @zoombi32 0x0041d1b1 */
-void fn_41d1b1(View *view, short event)
+void walkerNotify(View *view, short event)
 {
     switch (event) {
     case 1:
-        fn_41d167(view->body.group, g_4a0ffe, fn_41d1b1, 1);
+        startWalkerScript(view->body.group, g_4a0ffe, walkerNotify, 1);
         break;
     case 5:
         g_4a1006 = 1;
         break;
     case 2:
-        fn_41d167(view->body.group, g_4a0ffe + 1, fn_41d1b1, 0);
+        startWalkerScript(view->body.group, g_4a0ffe + 1, walkerNotify, 0);
         break;
     case 4:
         fn_465175();
         g_4ab994 = 1;
-        g_4a1004++;
-        fn_41dd37(g_4a1004);
+        currentFrame++;
+        showFrame(currentFrame);
         deleteView(g_4a0ffa);
         break;
     case 10:
         g_4aba64--;
         g_4ab8e4 = &g_4aba14[g_4aba64];
-        fn_41d167(view->body.group, 12013, fn_41d1b1, 0);
+        startWalkerScript(view->body.group, 12013, walkerNotify, 0);
         break;
     case 20:
-        g_4ab874 = 0;
-        if (g_4a1004 == g_4a1002)
+        walkerView = 0;
+        if (currentFrame == finalFrame)
             g_4a0ff0 = 1;
         else
             g_4a0ff0 = 0;
         fn_465175();
         break;
     case 21:
-        g_4ab874 = 0;
+        walkerView = 0;
         g_4a0ff0 = 1;
         break;
     }
 }
 
-/* The notify of the view g_4ab9f8's frames (fn_41dd37): 10 sets g_4ab872
+/* The notify of the view frameView's frames (showFrame): 10 sets g_4ab872
    to 2; 20 notes the view done and, on its last frame, remarks (now and
    then) if not all are chosen, and sets g_4a0ff0; 21 likewise, ending the
    walk when g_4b754a. */
 /* @zoombi32 0x0041d30b */
-void fn_41d30b(View *, short event)
+void frameNotify(View *, short event)
 {
     switch (event) {
     case 10:
         g_4ab872 = 2;
         break;
     case 20:
-        g_4ab874 = 0;
-        if (g_4a1004 == g_4a1002) {
-            if (countChosenSnoids() < g_4a1014) {
-                if (randomBetween(0, 4) > g_4ab878 - 1 || (*(short *)(g_4a4ba0 + 0x40) & 0xfff) <= 3)
+        walkerView = 0;
+        if (currentFrame == finalFrame) {
+            if (countChosenSnoids() < chosenCount) {
+                if (randomBetween(0, 4) > cavesLevel - 1 || (*(short *)(g_4a4ba0 + 0x40) & 0xfff) <= 3)
                     queueViewSound(randomBetween(20045, 20048), 0);
             }
             g_4a0ff0 = 1;
@@ -655,7 +655,7 @@ void fn_41d30b(View *, short event)
         }
         break;
     case 21:
-        g_4ab874 = 0;
+        walkerView = 0;
         g_4a0ff0 = 1;
         if (g_4b754a) {
             g_4b755a = 0;
@@ -665,11 +665,11 @@ void fn_41d30b(View *, short event)
     }
 }
 
-/* Draws image `image` (from the resource g_4a0fd4; big-endian offsets
+/* Draws image `image` (from the resource glyphShape; big-endian offsets
    and sizes) at place `which` (1-10), centred across it and raised by
    g_4aba6c. */
 /* @zoombi32 0x0041d9f2 */
-void fn_41d9f2(short which, short image, long)
+void drawGlyph(short which, short image, long)
 {
     short xs[11] = {0, 326, 348, 375, 397, 423, 324, 347, 373, 395, 422};
     short ys[11] = {0, 36, 39, 42, 44, 46, 77, 80, 83, 86, 90};
@@ -679,7 +679,7 @@ void fn_41d9f2(short which, short image, long)
     short x;
     short y;
 
-    handle = fn_46beac(g_4a0fd4);
+    handle = fn_46beac(glyphShape);
     lockHandle(handle);
     bank = (ImageBank *)handleData(handle);
     data = (unsigned short *)(swapLong(bank->offsets[image]) + (char *)bank);
@@ -689,53 +689,53 @@ void fn_41d9f2(short which, short image, long)
     unlockHandle(handle);
 }
 
-/* Draws the images placed (rosterPlaced) at each of the ten places,
+/* Draws the images placed (glyphPlaced) at each of the ten places,
    after adding g_4a11ac to the region to redraw (`unused` is passed on to
-   fn_41d9f2, which ignores it). */
+   drawGlyph, which ignores it). */
 /* @zoombi32 0x0041db60 */
-void fn_41db60(long unused)
+void redrawGlyphs(long unused)
 {
     short i;
 
     unionRgnRect(removedRgn, &g_4a11ac);
     for (i = 1; i < 11; i++)
-        if (rosterPlaced[i])
-            fn_41d9f2(i, rosterPlaceImages[i], unused);
+        if (glyphPlaced[i])
+            drawGlyph(i, glyphImages[i], unused);
 }
 
 /* Draws the images placed at the ten places, except at place g_4ab86c
-   when g_4ab878 is 1 and it's one of the first five. */
+   when cavesLevel is 1 and it's one of the first five. */
 /* @zoombi32 0x0041dadf */
-void fn_41dadf(View *)
+void drawGlyphs(View *)
 {
     short i;
 
-    if (g_4ab878 == 1 && g_4ab86c < 6) {
+    if (cavesLevel == 1 && g_4ab86c < 6) {
         for (i = 1; i < 11; i++)
-            if (rosterPlaced[i] && i != g_4ab86c)
-                fn_41d9f2(i, rosterPlaceImages[i], 0);
+            if (glyphPlaced[i] && i != g_4ab86c)
+                drawGlyph(i, glyphImages[i], 0);
     } else {
         for (i = 1; i < 11; i++)
-            if (rosterPlaced[i])
-                fn_41d9f2(i, rosterPlaceImages[i], 0);
+            if (glyphPlaced[i])
+                drawGlyph(i, glyphImages[i], 0);
     }
 }
 
-/* Resets the screen for g_4ab878 (fn_41dfe3) and shows the frame before
-   the first (or the first, 6003) of the view g_4ab9f8 if it's not
+/* Resets the screen for cavesLevel (resetCavesState) and shows the frame before
+   the first (or the first, 6003) of the view frameView if it's not
    running. */
 /* @zoombi32 0x0041eaf1 */
-void fn_41eaf1()
+void resetCavesScreen()
 {
     View *view;
 
-    fn_41dfe3(g_4ab878);
-    view = findView(g_4ab9f8);
+    resetCavesState(cavesLevel);
+    view = findView(frameView);
     if (view && !view->body.running) {
-        if (g_4a1000 > 6003)
-            setViewScript(view, g_4a1000 - 1, 1);
+        if (firstFrame > 6003)
+            setViewScript(view, firstFrame - 1, 1);
         else
-            setViewScript(view, g_4a1000, 1);
+            setViewScript(view, firstFrame, 1);
     }
 }
 
@@ -743,7 +743,7 @@ void fn_41eaf1()
    default one (ZBUser.txt), checks its version (107) and applies its
    settings. */
 /* @zoombi32 0x0041f5d0 */
-void fn_41f5d0()
+void readRoster()
 {
     char name[32] = "ZBUser";
 
@@ -757,12 +757,12 @@ void fn_41f5d0()
     }
 }
 
-/* Lays out, from place g_4a100c on, which values of the roster's
+/* Lays out, from place firstCave on, which values of the roster's
    features each of the 21 places wants (g_4ab916): for each value of the
-   first feature as many places as chosen Zoombinis have it (g_4ab892),
+   first feature as many places as chosen Zoombinis have it (caveValueCounts),
    and for the second feature likewise within them. */
 /* @zoombi32 0x0041e5e1 */
-void fn_41e5e1()
+void layOutCaves()
 {
     short v;
     short start;
@@ -772,31 +772,31 @@ void fn_41e5e1()
     short w;
 
     for (i = 0; i < 21; i++)
-        g_4ab8ec[i] = 0;
+        spotSnoids[i] = 0;
     first = 0;
     second = 1;
-    start = g_4a100c;
+    start = firstCave;
     for (v = 0; v < g_4a0ff2; v++) {
-        for (i = start; i < g_4ab892[first][rosterValues[first][v]] + start; i++)
-            g_4ab916[first][i] = rosterValues[first][v];
+        for (i = start; i < caveValueCounts[first][caveValues[first][v]] + start; i++)
+            g_4ab916[first][i] = caveValues[first][v];
         start = i;
     }
-    start = g_4a100c;
+    start = firstCave;
     for (v = 0; v < g_4a0ff2; v++) {
         for (w = 0; w < g_4a0ff2; w++) {
-            for (i = start; i < g_4ab892[rosterValues[second][w]][rosterValues[first][v]] + start; i++)
-                if (rosterValues[second][w])
-                    g_4ab916[second][i] = rosterValues[second][w];
+            for (i = start; i < caveValueCounts[caveValues[second][w]][caveValues[first][v]] + start; i++)
+                if (caveValues[second][w])
+                    g_4ab916[second][i] = caveValues[second][w];
             start = i;
         }
     }
 }
 
-/* The place (from g_4a100c) for the Zoombini of view `id`: `n` if it's
+/* The place (from firstCave) for the Zoombini of view `id`: `n` if it's
    free and wants the Zoombini's values of the roster's features, else a
    free one that does, at random; 1 if none. */
 /* @zoombi32 0x0041e771 */
-short fn_41e771(short id, short n)
+short pickCave(short id, short n)
 {
     short places[21];
     View *view;
@@ -811,27 +811,27 @@ short fn_41e771(short id, short n)
     first = 0;
     second = 0;
     for (i = 0; i < g_4a0ff2; i++) {
-        if (viewSnoid(view)->features[rosterFeatures[0]] == rosterValues[0][i])
-            first = rosterValues[0][i];
+        if (viewSnoid(view)->features[caveFeatures[0]] == caveValues[0][i])
+            first = caveValues[0][i];
         if (first)
             i = g_4a0ff2;
     }
     for (i = 0; i < g_4a0ff2; i++) {
-        if (viewSnoid(view)->features[rosterFeatures[1]] == rosterValues[1][i])
-            second = rosterValues[1][i];
+        if (viewSnoid(view)->features[caveFeatures[1]] == caveValues[1][i])
+            second = caveValues[1][i];
         if (second)
             i = g_4a0ff2;
     }
-    for (i = g_4a100c; i < 21; i++)
-        if (first == g_4ab916[0][i] && i == n && !g_4ab8ec[i]) {
+    for (i = firstCave; i < 21; i++)
+        if (first == g_4ab916[0][i] && i == n && !spotSnoids[i]) {
             if (g_4a0ff4 <= 1)
                 return i;
             if (second != g_4ab916[1][i])
                 continue;
             return i;
         }
-    for (i = g_4a100c; i < 21; i++)
-        if (!g_4ab8ec[i] && first == g_4ab916[0][i]) {
+    for (i = firstCave; i < 21; i++)
+        if (!spotSnoids[i] && first == g_4ab916[0][i]) {
             if (g_4a0ff4 > 1) {
                 if (second == g_4ab916[1][i])
                     places[count++] = i;
@@ -848,7 +848,7 @@ short fn_41e771(short id, short n)
    107, default settings) with the sound slots (allocateSlot) and more reset, else the
    player's current settings; then the scene (or, in scene 2, g_4b0d54). */
 /* @zoombi32 0x0041f6fc */
-void fn_41f6fc(short reset)
+void fillRosterHeader(short reset)
 {
     if (reset) {
         fillMemory(g_4a4ba0, 0, 0xae05);
@@ -967,14 +967,14 @@ void readWriteSavedGames(SavedGameList *list, short mode)
 /* Walks the roster's next Zoombini (g_4ab9c2) on: 0 from the view
    g_4ab8da (script g_4a0ffc on, for frame g_4a1010, with a view of its
    own in front, g_4a0ffa), 1 likewise from g_4ab8dc (for frame g_4a1012,
-   after fn_41e8f3), 2 off toward the view g_4ab9f8 (script 12012). */
+   after claimSpot), 2 off toward the view frameView (script 12012). */
 /* @zoombi32 0x0041cf14 */
-void fn_41cf14(short which)
+void walkNext(short which)
 {
     View *view;
 
     if (g_4ab9c2) {
-        g_4ab874 = g_4ab9c2;
+        walkerView = g_4ab9c2;
         switch (which) {
         case 0:
             view = findView(g_4ab8da);
@@ -983,7 +983,7 @@ void fn_41cf14(short which)
             view = findView(g_4ab8dc);
             break;
         case 2:
-            view = findView(g_4ab874);
+            view = findView(walkerView);
             break;
         }
         if (view) {
@@ -991,32 +991,32 @@ void fn_41cf14(short which)
             case 0:
                 g_4ab8e4 = 0;
                 setViewScript(view, (g_4a1010 - 1) * 4 + g_4a0ffc, 1);
-                view->notify = fn_41d1b1;
+                view->notify = walkerNotify;
                 deleteView(g_4a0ffa);
-                moveView(g_4ab874, 1, g_4ab9c4[g_4a1010]);
+                moveView(walkerView, 1, g_4ab9c4[g_4a1010]);
                 g_4a0ffa = addView(0x4108000, drawCels, runViewScript, (g_4a1010 - 1) * 4 + g_4a0ffc + 1, 6,
-                                   0, 1, g_4ab874);
+                                   0, 1, walkerView);
                 groupViews(view->id, g_4a0ffa, 0, 0, 0, 0);
                 break;
             case 1:
-                fn_41e8f3(g_4ab874, g_4a1012);
+                claimSpot(walkerView, g_4a1012);
                 g_4ab8e4 = &g_4ab8e0;
                 setViewScript(view, (g_4a1012 - 1) * 4 + g_4a0ffc + 2, 1);
-                view->notify = fn_41d1b1;
+                view->notify = walkerNotify;
                 deleteView(g_4a0ffa);
-                moveView(g_4ab874, 1, g_4ab9c4[g_4a1012]);
+                moveView(walkerView, 1, g_4ab9c4[g_4a1012]);
                 g_4a0ffa = addView(0x4108000, drawCels, runViewScript, (g_4a1012 - 1) * 4 + g_4a0ffc + 3, 6,
-                                   0, 1, g_4ab874);
+                                   0, 1, walkerView);
                 groupViews(view->id, g_4a0ffa, 0, 0, 0, 0);
                 break;
             case 2:
                 setViewsLocked(0);
                 g_4ab8e4 = 0;
                 viewSnoid(view)->unknownF2 = 0;
-                view->notify = fn_41d1b1;
+                view->notify = walkerNotify;
                 startSnoidScript(viewSnoid(view), 12012, g_4ab8e4, 1);
                 groupViews(view->id, view->id, 0, 0, 0, 0);
-                moveView(view->id, 0, g_4ab9f8);
+                moveView(view->id, 0, frameView);
                 break;
             }
         }
@@ -1028,7 +1028,7 @@ void fn_41cf14(short which)
    showing the value there of the row's feature (images 5 apart per
    feature). */
 /* @zoombi32 0x0041e326 */
-void fn_41e326(short kind)
+void placeGlyphs(short kind)
 {
     short count;
     short offset;
@@ -1041,20 +1041,20 @@ void fn_41e326(short kind)
     for (i = 0; i < 7; i++)
         order[i] = i;
     for (i = 0; i < 11; i++) {
-        rosterPlaced[i] = 0;
-        rosterPlaceImages[i] = 0;
+        glyphPlaced[i] = 0;
+        glyphImages[i] = 0;
     }
     switch (kind) {
     case 1:
         for (i = 1; i < 6; i++)
-            rosterPlaced[i] = 1;
+            glyphPlaced[i] = 1;
         break;
     case 2:
         left = 5;
         count = randomBetween(2, 2);
         for (i = 0; i < count; i++) {
             k = randomBetween(1, left);
-            rosterPlaced[order[k]] = 1;
+            glyphPlaced[order[k]] = 1;
             for (; k < left + 1; k++)
                 order[k] = order[k + 1];
             left--;
@@ -1072,7 +1072,7 @@ void fn_41e326(short kind)
             count = randomBetween(2, 2);
             for (i = 0; i < count; i++) {
                 k = randomBetween(1, left);
-                rosterPlaced[offset + order[k]] = 1;
+                glyphPlaced[offset + order[k]] = 1;
                 for (; k < left + 1; k++)
                     order[k] = order[k + 1];
                 left--;
@@ -1083,44 +1083,44 @@ void fn_41e326(short kind)
         break;
     }
     for (i = 1; i < 6; i++)
-        if (rosterPlaced[i])
-            switch (rosterFeatures[0]) {
+        if (glyphPlaced[i])
+            switch (caveFeatures[0]) {
             case 0:
-                rosterPlaceImages[i] = rosterValues[0][i - 1];
+                glyphImages[i] = caveValues[0][i - 1];
                 break;
             case 1:
-                rosterPlaceImages[i] = rosterValues[0][i - 1] + 5;
+                glyphImages[i] = caveValues[0][i - 1] + 5;
                 break;
             case 2:
-                rosterPlaceImages[i] = rosterValues[0][i - 1] + 10;
+                glyphImages[i] = caveValues[0][i - 1] + 10;
                 break;
             case 3:
-                rosterPlaceImages[i] = rosterValues[0][i - 1] + 15;
+                glyphImages[i] = caveValues[0][i - 1] + 15;
                 break;
             }
     for (i = 6; i < 11; i++)
-        if (rosterPlaced[i])
-            switch (rosterFeatures[1]) {
+        if (glyphPlaced[i])
+            switch (caveFeatures[1]) {
             case 0:
-                rosterPlaceImages[i] = rosterValues[1][i - 6];
+                glyphImages[i] = caveValues[1][i - 6];
                 break;
             case 1:
-                rosterPlaceImages[i] = rosterValues[1][i - 6] + 5;
+                glyphImages[i] = caveValues[1][i - 6] + 5;
                 break;
             case 2:
-                rosterPlaceImages[i] = rosterValues[1][i - 6] + 10;
+                glyphImages[i] = caveValues[1][i - 6] + 10;
                 break;
             case 3:
-                rosterPlaceImages[i] = rosterValues[1][i - 6] + 15;
+                glyphImages[i] = caveValues[1][i - 6] + 15;
                 break;
             }
 }
 
 /* Draws the roster's feature table: for each feature asked about, its
    letter and the pictures of its values, and under the first, how many of
-   the chosen Zoombinis have each (g_4ab892). */
+   the chosen Zoombinis have each (caveValueCounts). */
 /* @zoombi32 0x0041edf7 */
-void fn_41edf7()
+void drawFeatureTable()
 {
     ShortRect firstName = {120, 360, 260, 386};
     ShortRect firstValues = {120, 390, 260, 416};
@@ -1144,14 +1144,14 @@ void fn_41edf7()
             rect = secondName;
         fillPortRect(rect, Color(14), 0);
         frameRect(rect);
-        drawText(rect, 0x22, letters[rosterFeatures[i]], 0xffff);
+        drawText(rect, 0x22, letters[caveFeatures[i]], 0xffff);
         if (!i)
             rect = firstValues;
         else
             rect = secondValues;
         rect.top += 5;
         for (j = 0; j < g_4a0ff2; j++) {
-            fn_41ed59(rosterFeatures[i] + 1, rosterValues[i][j], rect);
+            drawFeatureImage(caveFeatures[i] + 1, caveValues[i][j], rect);
             rect.left += 30;
             rect.right = rect.left + 25;
         }
@@ -1161,8 +1161,8 @@ void fn_41edf7()
             rect.left += 10;
             rect.top += 5;
             for (j = 0; j < g_4a0ff2; j++) {
-                if (g_4ab892[0][rosterValues[i][j]])
-                    drawText(rect, 1, numbers[g_4ab892[0][rosterValues[i][j]]], 0xffff);
+                if (caveValueCounts[0][caveValues[i][j]])
+                    drawText(rect, 1, numbers[caveValueCounts[0][caveValues[i][j]]], 0xffff);
                 else
                     drawText(rect, 1, numbers[0], 0xffff);
                 rect.left += 30;
@@ -1176,18 +1176,18 @@ void fn_41edf7()
 
 /* Picks the roster's features and lays out the places for them. */
 /* @zoombi32 0x0041e0e3 */
-void fn_41e0e3()
+void setUpCaves()
 {
-    fn_41e0f3();
-    fn_41e273();
-    fn_41e5e1();
+    pickCaveFeatures();
+    countByCaveFeatures();
+    layOutCaves();
 }
 
-/* Walks the chosen Zoombinis (up to g_4a1014 + 1) to their spots on the
-   roster screen (g_4a115c), resets the view g_4a101c, and clears the
-   places from g_4a100c on and the screen's state. */
+/* Walks the chosen Zoombinis (up to chosenCount + 1) to their spots on the
+   roster screen (chosenSpots), resets the view g_4a101c, and clears the
+   places from firstCave on and the screen's state. */
 /* @zoombi32 0x0041ec69 */
-void fn_41ec69()
+void walkToSpots()
 {
     volatile short unused; /* never used; volatile keeps its stack slot */
     View *view;
@@ -1196,9 +1196,9 @@ void fn_41ec69()
     short i;
 
     n = 0;
-    for (walker = viewListEnd(1); walker && n <= g_4a1014; walker = walker->next)
+    for (walker = viewListEnd(1); walker && n <= chosenCount; walker = walker->next)
         if (walker->flags == 1) {
-            setSnoidAction(viewSnoid(walker), 0, &g_4a115c[n]);
+            setSnoidAction(viewSnoid(walker), 0, &chosenSpots[n]);
             n++;
         }
     view = findView(g_4a101c);
@@ -1206,13 +1206,13 @@ void fn_41ec69()
         view->reset = 1;
     unionRgnRect(removedRgn, &g_4a11ac);
     mainLoopEvents();
-    for (i = g_4a100c; i < 21; i++) {
-        g_4ab8ec[i] = 0;
+    for (i = firstCave; i < 21; i++) {
+        spotSnoids[i] = 0;
         g_4b83e4[i - 1] = 0;
     }
     for (i = 0; i < g_4a1016; i++)
         g_4b83e4[i] = g_4ab96a[0];
-    fn_41eaf1();
+    resetCavesScreen();
     g_4a0fea = 0;
     g_4a0fe8 = 0;
     g_4a0ff0 = 0;
@@ -1220,17 +1220,17 @@ void fn_41ec69()
     g_4a100e = 0;
 }
 
-/* Saves the roster (with the player's settings, fn_41f6fc) if it changed
+/* Saves the roster (with the player's settings, fillRosterHeader) if it changed
    (g_4afb32) and the user file isn't the default one (ZBUser.txt). */
 /* @zoombi32 0x0041f551 */
-void fn_41f551()
+void saveRoster()
 {
     char name[32] = "ZBUser";
 
     strcat(name, ".txt");
     if (strncmp(userFile, name, strlen(userFile)) && g_4afb32) {
         if (g_4a4ba0) {
-            fn_41f6fc(0);
+            fillRosterHeader(0);
             readWriteRoster(g_4a4ba0, 0);
         }
         g_4afb32 = 0;
@@ -1238,10 +1238,10 @@ void fn_41f551()
 }
 
 /* Gives each Zoombini on the roster screen without a place (from
-   g_4a100c) one (fn_41e771) and walks it there, then claims the places
+   firstCave) one (pickCave) and walks it there, then claims the places
    taken and lets the others be chosen again. */
 /* @zoombi32 0x0041eb43 */
-void fn_41eb43()
+void sendToCaves()
 {
     View *view;
     View *other;
@@ -1251,24 +1251,24 @@ void fn_41eb43()
     for (view = viewListEnd(1); view; view = view->next)
         if (view->flags == 1) {
             found = 0;
-            for (i = g_4a100c; i < 21; i++)
-                if (g_4ab8ec[i] == view->id) {
+            for (i = firstCave; i < 21; i++)
+                if (spotSnoids[i] == view->id) {
                     found = 1;
                     i = 21;
                 }
             if (!found) {
-                g_4a1012 = fn_41e771(view->id, 0);
+                g_4a1012 = pickCave(view->id, 0);
                 placedViewPoint(&g_4ab8e0, g_4a1012);
                 setSnoidAction(viewSnoid(view), 5, &g_4ab8e0);
-                g_4ab8ec[g_4a1012] = view->id;
+                spotSnoids[g_4a1012] = view->id;
             }
         }
     other = findView(g_4a101c);
     if (other)
         other->reset = 1;
-    for (i = g_4a100c; i < 21; i++)
-        if (g_4ab8ec[i])
-            claimPlacedView(i, g_4ab8ec[i]);
+    for (i = firstCave; i < 21; i++)
+        if (spotSnoids[i])
+            claimPlacedView(i, spotSnoids[i]);
         else
             g_4b83e4[i] = 0;
     for (i = 0; i < g_4a1016; i++)
@@ -1282,7 +1282,7 @@ void fn_41eb43()
    second moves on if they'd be the same), lays the places out again and
    walks the Zoombinis that had places to their new ones. */
 /* @zoombi32 0x0041e920 */
-void fn_41e920(short feature)
+void changeCaveFeature(short feature)
 {
     short placed[21];
     View *view;
@@ -1291,49 +1291,49 @@ void fn_41e920(short feature)
     if (feature != -1) {
         switch (feature) {
         case 0:
-            rosterFeatures[0] = 0;
+            caveFeatures[0] = 0;
             break;
         case 1:
-            rosterFeatures[0] = 1;
+            caveFeatures[0] = 1;
             break;
         case 2:
-            rosterFeatures[0] = 2;
+            caveFeatures[0] = 2;
             break;
         case 3:
-            rosterFeatures[0] = 3;
+            caveFeatures[0] = 3;
             break;
         }
-        if (rosterFeatures[0] == rosterFeatures[1])
-            rosterFeatures[1]++;
-        if (rosterFeatures[1] > 3)
-            rosterFeatures[1] = 0;
+        if (caveFeatures[0] == caveFeatures[1])
+            caveFeatures[1]++;
+        if (caveFeatures[1] > 3)
+            caveFeatures[1] = 0;
     }
-    for (i = g_4a100c; i < 21; i++)
-        placed[i] = g_4ab8ec[i];
+    for (i = firstCave; i < 21; i++)
+        placed[i] = spotSnoids[i];
     chooseSnoids(1, 0);
-    fn_41e273();
-    fn_41e5e1();
+    countByCaveFeatures();
+    layOutCaves();
     chooseSnoids(0, 0);
-    for (i = g_4a100c; i < 21; i++)
+    for (i = firstCave; i < 21; i++)
         if (placed[i]) {
             g_4a1010 = i;
-            g_4a1012 = fn_41e771(placed[i], g_4a1010);
+            g_4a1012 = pickCave(placed[i], g_4a1010);
             placedViewPoint(&g_4ab8e0, g_4a1012);
             setSnoidAction((Snoid *)&findView(placed[i])->body, 5, &g_4ab8e0);
-            g_4ab8ec[g_4a1012] = placed[i];
+            spotSnoids[g_4a1012] = placed[i];
         }
-    for (i = g_4a100c; i < 21; i++)
-        if (g_4ab8ec[i])
-            claimPlacedView(i, g_4ab8ec[i]);
+    for (i = firstCave; i < 21; i++)
+        if (spotSnoids[i])
+            claimPlacedView(i, spotSnoids[i]);
         else
             g_4b83e4[i - 1] = 0;
     for (i = 0; i < g_4a1016; i++)
         g_4b83e4[i] = g_4ab96a[0];
-    fn_41e326(g_4ab878);
+    placeGlyphs(cavesLevel);
     view = findView(g_4a101c);
     if (view)
         view->reset = 1;
-    unionRgnRect(removedRgn, &rosterButtons[0].rect);
+    unionRgnRect(removedRgn, &cavesButtons[0].rect);
 }
 
 /* The roster screen's clicks: button 1 asks whether to keep the party,
@@ -1342,7 +1342,7 @@ void fn_41e920(short feature)
    doesn't belong there) or, dropped outside the places, walked back. A
    click after one of the buttons (g_4b0d52) leaves the screen. */
 /* @zoombi32 0x0041d3f4 */
-void rosterClicked(short which)
+void cavesClicked(short which)
 {
     Point where;
     Point from;
@@ -1356,7 +1356,7 @@ void rosterClicked(short which)
         g_4b0d50 = g_4b0d52;
         g_4b0d52 = 0;
         fn_46be2e(0);
-        closeRoster();
+        closeCaves();
         return;
     }
     view = 0;
@@ -1364,9 +1364,9 @@ void rosterClicked(short which)
     switch (which) {
     case 1:
         queueViewSound(999, 0);
-        drawRosterButton(which, 1, 1);
+        drawCavesButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
-        drawRosterButton(which, 0, 1);
+        drawCavesButton(which, 0, 1);
         g_4b755c = 1;
         g_4b0d52 = 1;
         askKeepParty();
@@ -1377,9 +1377,9 @@ void rosterClicked(short which)
                 g_4ab870 = 1;
                 g_4a0ff0 = 1;
             }
-            drawRosterButton(which, 1, 1);
+            drawCavesButton(which, 1, 1);
             waitForEventFor(0, 2, 0, 1);
-            drawRosterButton(which, 0, 1);
+            drawCavesButton(which, 0, 1);
             markPlacedSnoids();
             g_4b0d52 = 17;
         }
@@ -1390,7 +1390,7 @@ void rosterClicked(short which)
         if (view) {
             free = 1;
             for (i = 1; i < 21; i++)
-                if (g_4ab8ec[i] == view->id)
+                if (spotSnoids[i] == view->id)
                     free = 0;
             if (free == 1 && !g_4a0ff0 && g_4b755a <= 0) {
                 from = *(Point *)&view->body.x;
@@ -1400,19 +1400,19 @@ void rosterClicked(short which)
                     snoid = viewSnoid(view);
                     snoid->unknownF7 = 1;
                     view->flags = 0x4008001;
-                    if ((g_4a1012 = fn_41e771(view->id, g_4a1010)) == g_4a1010) {
-                        g_4ab8ec[g_4a1010] = view->id;
+                    if ((g_4a1012 = pickCave(view->id, g_4a1010)) == g_4a1010) {
+                        spotSnoids[g_4a1010] = view->id;
                         snoid->unknownF1 = g_4a11b4[g_4a1010];
                         snoid->unknownF2 = g_4a11de[g_4a1010];
                         g_4a100e++;
-                        g_4ab874 = 0;
+                        walkerView = 0;
                         if (g_4a100e == 1) {
                             g_4a0fe8 = 1;
-                            unionRgnRect(removedRgn, &rosterButtons[1].rect);
+                            unionRgnRect(removedRgn, &cavesButtons[1].rect);
                             g_4ab996[g_4ab9be] = view->id;
                             g_4ab9be++;
                             g_4ab8e8 = &g_4a10a8[g_4a1010];
-                        } else if (g_4a100e == g_4a1014) {
+                        } else if (g_4a100e == chosenCount) {
                             g_4aba08 = 1;
                             g_4a0ff0 = 1;
                             queueViewSound(randomBetween(20055, 20063), 0);
@@ -1423,7 +1423,7 @@ void rosterClicked(short which)
                         }
                         moveView(view->id, 1, g_4ab9c4[g_4a1010]);
                     } else {
-                        g_4ab8ec[g_4a1012] = view->id;
+                        spotSnoids[g_4a1012] = view->id;
                         g_4ab9c2 = view->id;
                         g_4ab8da = g_4ab96a[g_4a1010];
                         g_4ab8dc = g_4ab96a[g_4a1012];
@@ -1433,8 +1433,8 @@ void rosterClicked(short which)
                         releaseHeldPlace();
                         if (g_4a100e == 1) {
                             g_4a0fe8 = 1;
-                            unionRgnRect(removedRgn, &rosterButtons[1].rect);
-                        } else if (g_4a100e == g_4a1014) {
+                            unionRgnRect(removedRgn, &cavesButtons[1].rect);
+                        } else if (g_4a100e == chosenCount) {
                             queueViewSound(randomBetween(20055, 20063), 0);
                         }
                     }
@@ -1449,7 +1449,7 @@ void rosterClicked(short which)
                         g_4ab9c2 = view->id;
                         g_4aba14[g_4aba64] = from;
                         g_4aba64++;
-                        fn_41cf14(2);
+                        walkNext(2);
                     }
                 }
             }
@@ -1461,11 +1461,11 @@ void rosterClicked(short which)
 /* The roster screen's frame (scenes[]): leaves the screen after a button
    (g_4b0d52) once the sound and the Zoombinis are done, starts the walk
    (g_4ab870), shows the frames' changes (g_4ab994), walks Zoombinis on
-   (fn_41cf14), blinks the place g_4ab86c, has placed Zoombinis (g_4ab996)
+   (walkNext), blinks the place g_4ab86c, has placed Zoombinis (g_4ab996)
    and, when all are placed (g_4aba08), the others cheer, and plays the
    ambient sounds. */
 /* @zoombi32 0x0041ca44 */
-void rosterFrame()
+void cavesFrame()
 {
     View *view;
     Snoid *snoid;
@@ -1473,7 +1473,7 @@ void rosterFrame()
     short i;
     short n;
 
-    if (!g_4a1208 && g_4a0fec) {
+    if (!g_4a1208 && cavesOpen) {
         g_4a1208 = 1;
         updateViews();
         if (g_4b0d52) {
@@ -1489,14 +1489,14 @@ void rosterFrame()
                     g_4b0d50 = g_4b0d52;
                     g_4b0d52 = 0;
                     fn_46be2e(0);
-                    closeRoster();
+                    closeCaves();
                     g_4a1208 = 0;
                     return;
                 }
                 if (g_4ab872 == 2) {
                     g_4ab872 = 3;
                     queueViewSound(996, 0);
-                    fn_41d80e(660, 376, 30);
+                    sendReadyOff(660, 376, 30);
                 }
             } else if (g_4b9688 == 2) {
                 g_4b9688 = 0;
@@ -1508,7 +1508,7 @@ void rosterFrame()
             g_4a1208 = 0;
             return;
         }
-        if (g_4ab870 && !g_4ab874) {
+        if (g_4ab870 && !walkerView) {
             g_4ab870 = 0;
             g_4ab872 = 1;
             setViewsLocked(0);
@@ -1516,7 +1516,7 @@ void rosterFrame()
             if (view) {
                 g_4a0fea = 1;
                 setViewScript(view, 6002, 1);
-                view->notify = fn_41d30b;
+                view->notify = frameNotify;
                 insertViewAtEnd(view);
             }
         }
@@ -1532,7 +1532,7 @@ void rosterFrame()
                 setViewScript(view, g_4a1012 + 8999, 0);
                 view->body.running = 1;
             }
-            view = findView(g_4ab874);
+            view = findView(walkerView);
             if (view) {
                 snoid = viewSnoid(view);
                 snoid->unknownF1 = g_4a11b4[g_4a1012];
@@ -1542,13 +1542,13 @@ void rosterFrame()
         if (g_4ab876) {
             g_4ab876 = 0;
             setViewsLocked(0);
-            fn_41cf14(0);
+            walkNext(0);
         }
         if (g_4a1006) {
             g_4a1006 = 0;
-            fn_41cf14(1);
+            walkNext(1);
         }
-        if (g_4ab878 == 1 && g_4ab86c < 6) {
+        if (cavesLevel == 1 && g_4ab86c < 6) {
             view = findView(g_4a101c);
             if (view && clockTime() >= view->nextUpdate) {
                 if (!g_4ab86c) {
@@ -1570,7 +1570,7 @@ void rosterFrame()
                 snoid = viewSnoid(view);
                 startSnoidScript(viewSnoid(view), snoid->features[3] + 12999, g_4ab8e8, 0);
                 view->notifyEnd = 1;
-                view->notify = (ViewNotify)fn_41d3e6;
+                view->notify = (ViewNotify)cheerNotify;
                 g_4ab8e8 = 0;
             }
         }
@@ -1578,8 +1578,8 @@ void rosterFrame()
             if (clockTime() - g_4ab9fc > 30) {
                 started = 0;
                 g_4ab9fc = clockTime();
-                for (i = 0; i < g_4a1014 && !started; i++) {
-                    n = allocateSlot(&g_4aba00, g_4a1014, 0);
+                for (i = 0; i < chosenCount && !started; i++) {
+                    n = allocateSlot(&g_4aba00, chosenCount, 0);
                     if (partyViews[n]) {
                         view = idleSnoidView(partyViews[n]);
                         /* The original's test is always true: == binds before |. */
@@ -1587,7 +1587,7 @@ void rosterFrame()
                             snoid = viewSnoid(view);
                             startSnoidScript(viewSnoid(view), snoid->features[3] + 12999, 0, 0);
                             view->notifyEnd = 1;
-                            view->notify = (ViewNotify)fn_41d3e6;
+                            view->notify = (ViewNotify)cheerNotify;
                             g_4aba06++;
                             started = 1;
                         }
@@ -1603,12 +1603,12 @@ void rosterFrame()
 }
 
 /* The roster screen's keys (with debugging on, g_4b8803, or else only
-   0x16f): 1-4 set the level (g_4ab878) and show it, L shows it, space
-   resets the frames (fn_41eaf1), 0x171 walks the Zoombinis to their spots,
+   0x16f): 1-4 set the level (cavesLevel) and show it, L shows it, space
+   resets the frames (resetCavesScreen), 0x171 walks the Zoombinis to their spots,
    0x173-0x176 change the first feature, 0x16f (below level 4) calls
    fn_466b93. Returns whether the key was used. */
 /* @zoombi32 0x0041dd83 */
-short rosterKey(unsigned short key)
+short cavesKey(unsigned short key)
 {
     Color saved;
     char digits[32] = "01234";
@@ -1624,56 +1624,56 @@ short rosterKey(unsigned short key)
     case '2':
     case '3':
     case '4':
-        g_4ab878 = key - '0';
-        fn_41e920(-1);
-        fn_41db60(1);
+        cavesLevel = key - '0';
+        changeCaveFeature(-1);
+        redrawGlyphs(1);
         if (g_4a101a)
-            fn_41edf7();
+            drawFeatureTable();
     case 'L':
-        level[6] = digits[g_4ab878];
+        level[6] = digits[cavesLevel];
         shown = 1;
         used = 1;
         break;
     case ' ':
-        fn_41eaf1();
+        resetCavesScreen();
         used = 1;
         break;
     case 0x170:
         used = 1;
         break;
     case 0x171:
-        fn_41ec69();
+        walkToSpots();
         used = 1;
         break;
     case 0x172:
         used = 1;
         break;
     case 0x173:
-        fn_41e920(0);
-        fn_41edf7();
-        fn_41db60(1);
+        changeCaveFeature(0);
+        drawFeatureTable();
+        redrawGlyphs(1);
         used = 1;
         break;
     case 0x174:
-        fn_41e920(1);
-        fn_41edf7();
-        fn_41db60(1);
+        changeCaveFeature(1);
+        drawFeatureTable();
+        redrawGlyphs(1);
         used = 1;
         break;
     case 0x175:
-        fn_41e920(2);
-        fn_41edf7();
-        fn_41db60(1);
+        changeCaveFeature(2);
+        drawFeatureTable();
+        redrawGlyphs(1);
         used = 1;
         break;
     case 0x176:
-        fn_41e920(3);
-        fn_41edf7();
-        fn_41db60(1);
+        changeCaveFeature(3);
+        drawFeatureTable();
+        redrawGlyphs(1);
         used = 1;
         break;
     case 0x16f:
-        if (g_4ab878 < 4)
+        if (cavesLevel < 4)
             fn_466b93();
         used = 1;
         break;
@@ -1723,14 +1723,14 @@ void readWriteRoster(void *data, short read)
 }
 
 /* Resets the roster screen's state for mode `which` (1-4: the frames
-   g_4a1000-g_4a1002 it shows). */
+   firstFrame-finalFrame it shows). */
 /* @zoombi32 0x0041dfe3 */
-void fn_41dfe3(short which)
+void resetCavesState(short which)
 {
     g_4ab870 = 0;
     g_4ab872 = 0;
     g_4aba64 = 0;
-    g_4ab874 = 0;
+    walkerView = 0;
     g_4ab86c = 0;
     g_4ab86e = 0;
     g_4a100e = 0;
@@ -1741,25 +1741,25 @@ void fn_41dfe3(short which)
     g_4a101a = 0;
     g_4a0ffa = 0;
     g_4a0ff8 = 0;
-    g_4a1004 = 0;
+    currentFrame = 0;
     g_4a0fe4 = 0;
     g_4a0ff0 = 0;
     switch (which) {
     case 1:
-        g_4a1002 = 4;
-        g_4a1000 = 6006;
+        finalFrame = 4;
+        firstFrame = 6006;
         break;
     case 2:
-        g_4a1002 = 5;
-        g_4a1000 = 6005;
+        finalFrame = 5;
+        firstFrame = 6005;
         break;
     case 3:
-        g_4a1002 = 6;
-        g_4a1000 = 6004;
+        finalFrame = 6;
+        firstFrame = 6004;
         break;
     case 4:
-        g_4a1002 = 7;
-        g_4a1000 = 6003;
+        finalFrame = 7;
+        firstFrame = 6003;
         break;
     }
 }

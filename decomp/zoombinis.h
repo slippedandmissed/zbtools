@@ -3876,11 +3876,11 @@ extern short g_4a25c8; /* the maze's frame is running */
 extern Point g_4a2406[4][20]; /* each row's spots to walk off by */
 extern unsigned long g_4b0d30;
 extern unsigned long g_4b0d34;
-extern short g_4b161e;
+extern short pizzaLevel;
 extern short g_4b15d4;
-extern short g_4b161a;
-extern short g_4b161c;
-extern short g_4b1662;
+extern short willaState;
+extern short shylerState;
+extern short pizzaSolved;
 extern short g_4b1658;
 /* The pizzas shown (from 1, g_4b1712 of them). */
 struct ShownPizza
@@ -3893,9 +3893,9 @@ struct ShownPizza
 extern short g_4b1666;
 extern short g_4b1668;
 extern short g_4b181c;
-extern short g_4ab874;
-extern short rosterValues[2][5]; /* @data 0x4ab87e: and their values */
-extern short g_4ab892[6][6];
+extern short walkerView;
+extern short caveValues[2][5]; /* @data 0x4ab87e: and their values */
+extern short caveValueCounts[6][6];
 extern short g_4a0ff0;
 extern short g_4ab916[2][21]; /* @data 0x4ab916: the values of the roster's features each place wants */
 extern unsigned long g_4a75e4; /* @data 0x4a75e4: slots used (allocateSlot) */

@@ -1218,7 +1218,7 @@ void closeScene1()
                 strcpy(userFile, "ZBtemp");
                 viewsLocked = 0;
                 g_4afb32 = 1;
-                fn_41f551();
+                saveRoster();
                 g_4afb30 = 1;
             }
             *(short *)(g_4a4ba0 + 0xa92e) = 16;
@@ -1816,7 +1816,7 @@ void scene20Frame()
 
 /* Leaves practice for the game: puts back the map's saved areas, makes its
    views again (shown as in the game), and the first time, the player's
-   user file and roster (fn_41f5d0). */
+   user file and roster (readRoster). */
 /* @zoombi32 0x00430724 */
 void fn_430724()
 {
@@ -1857,7 +1857,7 @@ void fn_430724()
     g_4b754a = level;
     if (g_4afb30) {
         g_4afb30 = 0;
-        fn_41f5d0();
+        readRoster();
         viewsLocked = 1;
         g_4b0d52 = 0;
         strcpy(userFile, savedUserFile);

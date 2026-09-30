@@ -181,7 +181,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     g_4a4ba0 = (char *)newPtr(0xae05);
     if (!g_4a4ba0)
         fn_41f195(msgOutOfMemory);
-    fn_41f6fc(1);
+    fillRosterHeader(1);
     fn_41f668();
     g_4b0d52 = 0;
     g_4b0d56 = -1;
