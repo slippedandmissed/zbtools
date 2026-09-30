@@ -1,0 +1,66 @@
+name: Main
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+# The report needs the game CD, the Borland C++ 4.5 CD, Ghidra and a JDK: the
+# CDs are bring-your-own and never in the repository, so it runs on a
+# self-hosted runner with them in data/ (plus 7-Zip, Wine and JDK 21), and only
+# once the repository variable GAME_DATA_RUNNER is set to "true". The
+# deployment needs only the repository (the game's resources are in assets/).
+jobs:
+  report:
+    if: vars.GAME_DATA_RUNNER == 'true'
+    runs-on: [self-hosted, zbtools-data]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bring-your-own files
+        run: ln -sfn "$ZBTOOLS_DATA" data
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run extract-game
+      - run: uv run toolchain setup
+      - run: uv run ghidra setup
+      - run: uv run runtime-symbols
+      - run: uv run classes
+      - run: uv run report
+      # The report contains the game's disassembly: anyone who can read this
+      # repository's Actions artifacts can download it, so keep the repository
+      # private (or drop this step and read the report on the runner).
+      - uses: actions/upload-artifact@v4
+        with:
+          name: report
+          path: build/report/
+          retention-days: 14
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - uses: actions/cache@v4
+        with:
+          path: build/emsdk
+          # The SDK version is pinned in port.py.
+          key: emsdk-${{ hashFiles('src/zbtools/port.py') }}
+      - run: uv run port setup
+      - run: uv run port build web
+      # build/port/site/: the page and the game's data, every file under
+      # Cloudflare Pages' 25 MiB limit.
+      - run: uv run port package
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/port/site --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main

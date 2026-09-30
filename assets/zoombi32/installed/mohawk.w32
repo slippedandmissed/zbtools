@@ -1,0 +1,28 @@
+[WaveMix]
+fEnable = false
+
+[MidiMap.TargetDevices]
+;Known devices
+'SB AWE32 MIDI Synth' = 4
+'Creative OPL3 FM' = 2
+'Yamaha OPL2/OPL3 Synthesis' = 2
+
+;Unknown devices
+unknown device (4+ voices)	= -2	;8 voice, KBP #10
+unknown device (19+ voices)	= -4	;16 voice, KBP #10
+unknown device (port)		= -4	;16 voice, KBP #10
+
+
+[MidiMap.TargetDeviceInfo]
+;General MIDI device target info:
+2	= 012345678XXXXXX9;10;1;1	;mute channels 10-15, map 16 to 10
+4	= 01234XX789ABCDEX;10;1;1	;mute channel 16
+;unknown device target info:
+-2	= 012345678XXXXXX9;10;1;1	;mute channels 10-15, map 16 to 10
+-4	= 01234XX789ABCDEX;10;1;1	;mute channel 16
+
+[Audio]
+fCacheDefaultMIDIDevice=true
+
+[Wavemix]
+fDefaultEnable=false

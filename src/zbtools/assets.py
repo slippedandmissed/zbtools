@@ -28,10 +28,57 @@ from pydantic import BaseModel, ConfigDict
 
 from zbtools import exe_resources, mohawk, paths
 from zbtools.exe import Executable
-from zbtools.formats import FORMATS, Raw, Unconvertible
+from zbtools.formats import FORMATS, Raw, Unconvertible, roster
 from zbtools.formats.base import RAW_SUFFIX
 
 MANIFEST = "archive.toml"
+
+
+# The installed game's files besides zoombi32.exe that the port reads, in
+# assets/zoombi32/installed/ (the rest of build/zoombi32/ is unused): the
+# settings file and the font are kept as they are; the list of saved games
+# is converted (formats/roster.py), else kept as it is.
+ROSTER = "Zoombini.who"
+VERBATIM_FILES = ("mohawk.w32", "CORNER.TTF")
+INSTALLED_FILES = (*VERBATIM_FILES, ROSTER)
+
+
+def load_installed(directory: Path) -> dict[str, bytes]:
+    """The installed files' contents, by name."""
+    found = {name: (directory / name).read_bytes() for name in VERBATIM_FILES}
+    stem = directory / ROSTER
+    found[ROSTER] = roster.load(stem) if roster.converted(stem).exists() else stem.read_bytes()
+    return found
+
+
+def extract_installed(game_dir: Path, out_dir: Path) -> None:
+    """Copies the installed game's files into out_dir, the roster as TOML if
+    that gives back the same bytes."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name in VERBATIM_FILES:
+        shutil.copyfile(game_dir / name, out_dir / name)
+    data = (game_dir / ROSTER).read_bytes()
+    try:
+        roster.save(data, out_dir / ROSTER)
+        if roster.load(out_dir / ROSTER) == data:
+            return
+    except (Unconvertible, ValueError):
+        pass
+    roster.converted(out_dir / ROSTER).unlink(missing_ok=True)
+    (out_dir / ROSTER).write_bytes(data)
+
+
+def verify_installed(game_dir: Path, directory: Path) -> list[str]:
+    """What differs between the installed files in assets/ and the game's."""
+    try:
+        ours = load_installed(directory)
+    except (OSError, ValueError) as e:
+        return [f"  can't load them: {e}"]
+    return [
+        f"  {name}: changed"
+        for name in INSTALLED_FILES
+        if ours[name] != (game_dir / name).read_bytes()
+    ]
 
 
 def save_resource(tag: bytes, data: bytes, stem: Path, archive: list[mohawk.Resource]) -> bool:
@@ -236,6 +283,8 @@ def extract(
     shutil.rmtree(exe_dir, ignore_errors=True)
     count = exe_resources.extract(Executable(exe), exe_dir)
     print(f"{exe.name}: {count} resources")
+    extract_installed(exe.parent, exe_dir / "installed")
+    print(f"{len(INSTALLED_FILES)} installed files")
 
 
 @app.command()
@@ -275,5 +324,11 @@ def verify(
         print("\n".join([f"{exe.name} resources: differ", *report]))
     else:
         print(f"{exe.name} resources: identical")
+    report = verify_installed(exe.parent, assets_dir / exe_resources.ASSETS.name / "installed")
+    if report:
+        failed += 1
+        print("\n".join(["installed files: differ", *report]))
+    else:
+        print("installed files: identical")
     if failed:
         raise typer.Exit(1)

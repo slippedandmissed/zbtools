@@ -55,8 +55,6 @@ CD_LABEL = "ZOOMBINIS"
 CD_SERIAL = 0x1996_0101
 # What the game's installer would have written (see docs/findings.md).
 _CFG = "[INSTALL]\r\nINSTALLFROMDIR=D:\\\r\nINSTALLTODIR=C:\\ZOOMBI32\\\r\n"
-# The installed game's files it reads (the rest of build/zoombi32/ is unused).
-_INSTALLED_FILES = ("MIDIMAP.DAT", "mohawk.w32", "ReadMe.txt", "Zoombini.who")
 _FONT = "CORNER.TTF"
 WEB_PAGE = "zoombinis.html"
 # The site's page (the web build's, renamed so a host serves it at /), and the
@@ -170,23 +168,33 @@ def _build_type(out: Path) -> str | None:
     return None
 
 
-def lay_out_drives(game: Path = paths.GAME32_DIR) -> Path:
+def lay_out_drives(
+    installed: Path = paths.INSTALLED_ASSETS, packed: Path = paths.PACKED_ASSETS_DIR
+) -> Path:
     r"""C: in build/port/data/c/: the game installed in C:\ZOOMBI32 (what it
     reads of it, and the configuration its installer would have written) and
-    its font in C:\WINDOWS\FONTS. What the game has saved there is kept."""
-    if not (paths.DISC_DIR / "DATA").is_dir() or not (game / _FONT).is_file():
-        raise PortError("the game isn't extracted: run `uv run extract-game` first")
+    its font in C:\WINDOWS\FONTS. The installed files are assets/'s
+    (`assets.INSTALLED_FILES`, and MIDIMAP.DAT, which `assets pack` builds),
+    so nothing here needs the game's disc. What the game has saved there is
+    kept."""
+    midimap = packed / "MIDIMAP.DAT"
+    if not (installed / _FONT).is_file():
+        raise PortError(f"{installed} not found: run `uv run assets extract`")
+    if not midimap.is_file():
+        raise PortError(f"{midimap} not found: run `uv run assets pack`")
+    files = assets.load_installed(installed)
     c = paths.PORT_DATA_DIR / "c"
-    installed = c / "ZOOMBI32"
-    installed.mkdir(parents=True, exist_ok=True)
-    for name in _INSTALLED_FILES:
-        target = installed / name
-        if not target.exists():  # the roster, once the game has saved it, is the player's
-            shutil.copyfile(game / name, target)
-    (installed / "ZOOMBI32.CFG").write_bytes(_CFG.encode("ascii"))
+    target_dir = c / "ZOOMBI32"
+    target_dir.mkdir(parents=True, exist_ok=True)
     fonts = c / "WINDOWS" / "FONTS"
     fonts.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(game / _FONT, fonts / _FONT)
+    (fonts / _FONT).write_bytes(files.pop(_FONT))
+    files["MIDIMAP.DAT"] = midimap.read_bytes()
+    for name, data in files.items():
+        target = target_dir / name
+        if not target.exists():  # the roster, once the game has saved it, is the player's
+            target.write_bytes(data)
+    (target_dir / "ZOOMBI32.CFG").write_bytes(_CFG.encode("ascii"))
     (c / "WINDOWS" / "TEMP").mkdir(exist_ok=True)
     return c
 
@@ -278,10 +286,10 @@ def package_web() -> Path:
     can't play them yet."""
     web = build_dir("web")
     build("web", _build_type(web) or "RelWithDebInfo")
-    c = lay_out_drives()
-    soundfont = setup_soundfont()
     for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
         print(line)
+    c = lay_out_drives()
+    soundfont = setup_soundfont()
     pieces = site_pieces(
         _page_files(c, paths.PACKED_ASSETS_DIR / "DATA", soundfont), SITE_FILE_LIMIT
     )
