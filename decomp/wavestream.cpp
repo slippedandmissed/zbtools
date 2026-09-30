@@ -741,7 +741,7 @@ short setSoundError(short error)
 
 /* Placement new that zeroes the object first. */
 /* @zoombi32 0x0047dea7 */
-void *__cdecl operator new(size_t size, void *where)
+void *__cdecl audioObj::operator new(size_t size, void *where)
 {
     return memset(where, 0, size);
 }

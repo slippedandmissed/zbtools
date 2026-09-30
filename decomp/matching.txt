@@ -1405,7 +1405,7 @@
 0x0047dd92 wavestreamObj::seek
 0x0047dde7 wavestreamObj::setText
 0x0047de96 setSoundError
-0x0047dea7 operator new
+0x0047dea7 audioObj::operator new
 0x0047df34 streamCallback
 0x0047df7a streamBufferDone
 0x0047e0d3 notifySound

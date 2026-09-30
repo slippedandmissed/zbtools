@@ -22,17 +22,17 @@ Module.preRun.push(function () {
       console.warn('IndexedDB unavailable; nothing will be saved:', error);
     removeRunDependency('zb-drive-c');
   });
-  var start = document.getElementById('start');
-  if (start) {
-    Module.setStatus('Ready.');
-    start.disabled = false;
-    start.onclick = function () {
-      document.getElementById('overlay').style.display = 'none';
-      Module.canvas.focus();
-      removeRunDependency('zb-start');
-    };
-  } else
+  // The page's Start button (shell.html); without one, start at once.
+  window.zbStart = function () {
+    window.zbStart = null;
+    var overlay = document.getElementById('overlay');
+    if (overlay)
+      overlay.style.display = 'none';
+    Module.canvas.focus();
     removeRunDependency('zb-start');
+  };
+  if (window.zbStartClicked || !document.getElementById('start'))
+    window.zbStart();
 });
 
 // Once the data package has loaded too (it's a run dependency of its own),

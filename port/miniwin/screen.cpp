@@ -332,6 +332,44 @@ static void button(Uint8 which, bool down)
     }
 }
 
+/* A scripted click (for tests): at a point on the screen, as if the mouse
+   had moved there and clicked. */
+struct ScriptedClick
+{
+    DWORD at;
+    int x, y;
+};
+
+static std::vector<ScriptedClick> scriptedClicks;
+static DWORD scriptStart;
+
+void scriptClick(DWORD at, int x, int y)
+{
+    if (!scriptStart)
+        scriptStart = now();
+    scriptedClicks.push_back({scriptStart + at, x, y});
+}
+
+static void runScript()
+{
+    DWORD time = now();
+    for (size_t i = 0; i < scriptedClicks.size();) {
+        ScriptedClick click = scriptedClicks[i];
+        if ((LONG)(time - click.at) < 0) {
+            i++;
+            continue;
+        }
+        scriptedClicks.erase(scriptedClicks.begin() + i);
+        trace("scripted click at %d, %d", click.x, click.y);
+        SetCursorPos(click.x, click.y);
+        HWND main = mainWindow();
+        if (main)
+            SendMessage(main, WM_SETCURSOR, (WPARAM)main, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
+        button(SDL_BUTTON_LEFT, true);
+        button(SDL_BUTTON_LEFT, false);
+    }
+}
+
 static void key(const SDL_KeyboardEvent &event, bool down)
 {
     int vk = virtualKey(event.keysym.sym);
@@ -360,6 +398,8 @@ void pumpEvents()
 {
     SDL_Event event;
 
+    if (!scriptedClicks.empty())
+        runScript();
     while (SDL_PollEvent(&event)) {
         HWND main = mainWindow();
         switch (event.type) {

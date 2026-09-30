@@ -2531,6 +2531,12 @@ public:
     virtual void __cdecl stop();
     virtual void __cdecl close();
 
+    /* Placement new that zeroes the object first (the sounds' constructors
+       leave their fields to it). A member, not the global placement new as
+       it may have been: standard C++ reserves that one, and compilers
+       assume it doesn't touch the memory. */
+    static void *__cdecl operator new(size_t size, void *where); /* 0x47dea7 */
+
     unsigned long tag; /* 'AObj' */
     long kind; /* 0 MIDI, 1 wave */
     audioObj *next;
@@ -2617,7 +2623,6 @@ long __cdecl parseNumber(const char *text); /* 0x47a066 */
 short setSoundError(short error); /* 0x47de96 */
 void __cdecl notifySound(audioObj *object, SoundNotice *notice); /* 0x47e0d3 */
 audioObj *__cdecl newMidiSound(short data); /* 0x478f0b */
-void *__cdecl operator new(size_t size, void *where); /* 0x47dea7: zeroed */
 audioObj *__cdecl newWaveSound(short data); /* 0x47a28d */
 audioObj *__cdecl newStreamedWave(long resource, long file, long preloadMs); /* 0x47cd5c */
 

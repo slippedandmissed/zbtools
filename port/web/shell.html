@@ -26,7 +26,7 @@
 <div id="overlay">
   <div><strong>Logical Journey of the Zoombinis</strong></div>
   <div id="status">Loading…</div>
-  <button id="start" disabled>Start</button>
+  <button id="start">Start</button>
 </div>
 <script>
   // ?noalert: message boxes go to the console instead of blocking the page
@@ -35,13 +35,29 @@
     window.alert = function (text) { console.error('alert: ' + text); };
     window.confirm = function (text) { console.error('confirm: ' + text); return true; };
   }
+  // The last lines the game printed, for inspecting from a script.
+  window.zbLog = [];
+  function zbKeep(text) {
+    zbLog.push(text);
+    if (zbLog.length > 5000)
+      zbLog.splice(0, 1000);
+  }
   var overlay = document.getElementById('overlay');
   var statusLine = document.getElementById('status');
   var startButton = document.getElementById('start');
+  // Start may be clicked before the game is ready: pre.js starts it then.
+  window.zbStartClicked = false;
+  startButton.onclick = function () {
+    window.zbStartClicked = true;
+    startButton.disabled = true;
+    statusLine.textContent = 'Starting…';
+    if (window.zbStart)
+      window.zbStart();
+  };
   var Module = {
     canvas: document.getElementById("canvas"),
-    print: function (text) { console.log(text); },
-    printErr: function (text) { console.warn(text); },
+    print: function (text) { console.log(text); zbKeep(text); },
+    printErr: function (text) { console.warn(text); zbKeep(text); },
     setStatus: function (text) {
       var m = text.match(/\((\d+(\.\d+)?)\/(\d+)\)/);
       if (m)

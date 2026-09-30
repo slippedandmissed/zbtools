@@ -1,12 +1,9 @@
-/*
- * Borland's new.h. Empty: the game declares its own placement new (which
- * zeroes the object, zoombinis.h), so the standard <new>, whose placement
- * new can't be replaced, mustn't be included with the game's sources.
- */
+/* Borland's new.h: the standard <new> (the placement new that memoryport
+   uses; the game's own, which zeroes, is audioObj's). */
 
 #ifndef MINIWIN_NEW_H
 #define MINIWIN_NEW_H
 
-#include <stddef.h>
+#include <new>
 
 #endif

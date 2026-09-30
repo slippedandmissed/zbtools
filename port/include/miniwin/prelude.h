@@ -6,7 +6,6 @@
  *   packing; then everything after (the game's own headers) is packed to
  *   bytes, as BCC32 packs by default. The game's structures mirror its data
  *   files and each other's sizes, so their layout must be the original's.
- * - <new> is left out: the game defines its own placement new (see new.h).
  * - Borland's calling-convention and memory-model keywords mean nothing
  *   (miniwin/types.h).
  * - The Borland runtime's extras (itoa, stricmp, getdisk...) come from

@@ -275,6 +275,10 @@ def run(
         Path | None, typer.Option(help="Write the screen to this BMP about once a second")
     ] = None,
     seconds: Annotated[float | None, typer.Option(help="Quit after this many seconds")] = None,
+    click: Annotated[
+        list[str] | None,
+        typer.Option(help="Click at a point of the screen: MS:X,Y (ms after starting)"),
+    ] = None,
 ) -> None:
     """Run the native build (or the headless one) on the game's drives."""
     target = "headless" if headless else "native"
@@ -290,6 +294,8 @@ def run(
         arguments += ["--screenshot", str(screenshot.resolve())]
     if seconds:
         arguments += ["--run-for", str(int(seconds * 1000))]
+    for spec in click or []:
+        arguments += ["--click", spec]
     if headless:
         node = sorted((paths.EMSDK_DIR / "node").glob("*/bin/node"))
         command = [str(node[-1]), str(program), *arguments]

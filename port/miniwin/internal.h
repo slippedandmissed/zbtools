@@ -114,6 +114,8 @@ void closeScreen();
 void pumpEvents();
 void presentIfDue(bool force = false);
 void setScreenshotPath(const char *path);
+/* A click at screen (x, y), `at` ms after the first one was scripted (for tests). */
+void scriptClick(DWORD at, int x, int y);
 /* Quits after `ms` milliseconds (for tests). */
 void setRunFor(DWORD ms);
 void screenChanged();
