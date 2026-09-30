@@ -167,7 +167,7 @@ note = "'Tunnels.MHK'"
 
 [[module]]
 start = 0x4623b8
-name = "module_4623b8"
+name = "mainloop"
 note = "debug keys: 'ALL in party', 'midi test on'"
 
 [[module]]
@@ -200,7 +200,7 @@ note = "QuickTime for Windows' SDK glue (library code; see quicktime.py)"
 
 [[module]]
 start = 0x46d754
-name = "os_46d754"
+name = "os_fixed"
 note = "the start of the Mohawk OS layer"
 
 [[module]]
@@ -225,7 +225,7 @@ note = "the threading classes; timeGetTime"
 
 [[module]]
 start = 0x46f5c0
-name = "os_46f5c0"
+name = "os_contexts"
 note = "follows the threading classes (after event::~event)"
 
 # The Mohawk engine (after the runtime library), compiled separately. Its
@@ -233,27 +233,27 @@ note = "follows the threading classes (after event::~event)"
 
 [[module]]
 start = 0x4764bc
-name = "module_4764bc"
+name = "sounddevices"
 
 [[module]]
 start = 0x477794
-name = "module_477794"
+name = "newsound"
 
 [[module]]
 start = 0x477848
-name = "module_477848"
+name = "newstreamedsound"
 
 [[module]]
 start = 0x4778b0
-name = "module_4778b0"
+name = "midimap"
 
 [[module]]
 start = 0x478814
-name = "module_478814"
+name = "midisound"
 
 [[module]]
 start = 0x47a0ec
-name = "module_47a0ec"
+name = "wavesound"
 
 [[module]]
 start = 0x47af1c
@@ -262,192 +262,192 @@ note = "RTTI classes wavebuf, wavebufWO, wavebufDS; 'WaveMix.DeviceInfo', 'not s
 
 [[module]]
 start = 0x47cb30
-name = "module_47cb30"
+name = "wavestream"
 
 [[module]]
 start = 0x47e0ec
-name = "module_47e0ec"
+name = "wmxdevice"
 
 [[module]]
 start = 0x47fae8
-name = "module_47fae8"
+name = "wmxmix"
 
 [[module]]
 start = 0x47fd60
-name = "module_47fd60"
+name = "wmxwaveout"
 
 [[module]]
 start = 0x4800c4
-name = "module_4800c4"
+name = "ini"
 note = "the settings-file parser; starts after wmxWaveOut's type descriptors (aligned, so no padding)"
 
 [[module]]
 start = 0x480788
-name = "module_480788"
+name = "inierror"
 
 [[module]]
 start = 0x480790
-name = "module_480790"
+name = "getinistring"
 
 [[module]]
 start = 0x4809f8
-name = "module_4809f8"
+name = "getinibool"
 
 [[module]]
 start = 0x480bbc
-name = "module_480bbc"
+name = "insetrect"
 
 [[module]]
 start = 0x480bdc
-name = "module_480bdc"
+name = "emptyrect"
 
 [[module]]
 start = 0x480c04
-name = "module_480c04"
+name = "offsetrect"
 
 [[module]]
 start = 0x480c24
-name = "module_480c24"
+name = "sectrect"
 
 [[module]]
 start = 0x480ca0
-name = "module_480ca0"
+name = "unionrect"
 
 [[module]]
 start = 0x480d64
-name = "module_480d64"
+name = "sectrgnrects"
 
 [[module]]
 start = 0x480f90
-name = "module_480f90"
+name = "sectrgnwithrect"
 
 [[module]]
 start = 0x480fc0
-name = "module_480fc0"
+name = "copyrgn"
 
 [[module]]
 start = 0x481200
-name = "module_481200"
+name = "setrectrgn"
 
 [[module]]
 start = 0x481274
-name = "module_481274"
+name = "newrgn"
 
 [[module]]
 start = 0x4812bc
-name = "module_4812bc"
+name = "disposergn"
 
 [[module]]
 start = 0x48130c
-name = "module_48130c"
+name = "diffrgnrects"
 
 [[module]]
 start = 0x481640
-name = "module_481640"
+name = "diffrgnrect"
 
 [[module]]
 start = 0x481670
-name = "module_481670"
+name = "setemptyrgn"
 
 [[module]]
 start = 0x4816d4
-name = "module_4816d4"
+name = "emptyrgn"
 
 [[module]]
 start = 0x481710
-name = "module_481710"
+name = "tidyrgn"
 
 [[module]]
 start = 0x481820
-name = "module_481820"
+name = "unionrgn"
 
 [[module]]
 start = 0x48187c
-name = "module_48187c"
+name = "unionrgnrects"
 
 [[module]]
 start = 0x48203c
-name = "module_48203c"
+name = "unionrgnrect"
 
 [[module]]
 start = 0x48206c
-name = "module_48206c"
+name = "regionerror"
 
 [[module]]
 start = 0x48213c
-name = "module_48213c"
+name = "asyncworker"
 
 [[module]]
 start = 0x48266c
-name = "module_48266c"
+name = "fileops"
 
 [[module]]
 start = 0x482b50
-name = "module_482b50"
+name = "drive"
 
 [[module]]
 start = 0x4831bc
-name = "module_4831bc"
+name = "foreachfile"
 
 [[module]]
 start = 0x483464
-name = "module_483464"
+name = "files"
 
 [[module]]
 start = 0x4845fc
-name = "module_4845fc"
+name = "filelength"
 
 [[module]]
 start = 0x484678
-name = "module_484678"
+name = "programdirectory"
 
 [[module]]
 start = 0x484690
-name = "module_484690"
+name = "filesize"
 
 [[module]]
 start = 0x484934
-name = "module_484934"
+name = "filespecof"
 
 [[module]]
 start = 0x484994
-name = "module_484994"
+name = "tempdirectory"
 
 [[module]]
 start = 0x4849ac
-name = "module_4849ac"
+name = "volumeinfo"
 
 [[module]]
 start = 0x484b50
-name = "module_484b50"
+name = "openfile"
 
 [[module]]
 start = 0x484c08
-name = "module_484c08"
+name = "readfile"
 
 [[module]]
 start = 0x484dc4
-name = "module_484dc4"
+name = "seekfile"
 
 [[module]]
 start = 0x484e9c
-name = "module_484e9c"
+name = "setfilesize"
 
 [[module]]
 start = 0x4850d4
-name = "module_4850d4"
+name = "setaskuser"
 
 [[module]]
 start = 0x4850ec
-name = "module_4850ec"
+name = "filespec"
 
 [[module]]
 start = 0x485e08
-name = "module_485e08"
+name = "volume"
 
 [[module]]
 start = 0x4860cc
-name = "module_4860cc"
+name = "writefile"
 
 [[module]]
 start = 0x486318
@@ -456,47 +456,47 @@ note = "RTTI class basePort (its vtable's methods, constructor and destructor, a
 
 [[module]]
 start = 0x4887f4
-name = "module_4887f4"
+name = "beginportupdate"
 
 [[module]]
 start = 0x488828
-name = "module_488828"
+name = "clipporttorect"
 
 [[module]]
 start = 0x488874
-name = "module_488874"
+name = "color"
 
 [[module]]
 start = 0x488a88
-name = "module_488a88"
+name = "copyportbits"
 
 [[module]]
 start = 0x488ad0
-name = "module_488ad0"
+name = "newfont"
 
 [[module]]
 start = 0x488ba8
-name = "module_488ba8"
+name = "newport"
 
 [[module]]
 start = 0x488d08
-name = "module_488d08"
+name = "newpalette"
 
 [[module]]
 start = 0x488f34
-name = "module_488f34"
+name = "newwindowport"
 
 [[module]]
 start = 0x488ff4
-name = "module_488ff4"
+name = "disposefont"
 
 [[module]]
 start = 0x48906c
-name = "module_48906c"
+name = "disposepalette"
 
 [[module]]
 start = 0x4890f8
-name = "module_4890f8"
+name = "deleteport"
 
 [[module]]
 start = 0x489148
@@ -515,7 +515,7 @@ note = "RTTI class DIBPort (its constructor and methods); Rect's and DIB's out-o
 
 [[module]]
 start = 0x48ac68
-name = "module_48ac68"
+name = "initdisplaymode"
 
 [[module]]
 start = 0x48ac90
@@ -524,7 +524,7 @@ note = "RTTI class displayPort; 'DISPLAY'"
 
 [[module]]
 start = 0x48adf0
-name = "module_48adf0"
+name = "drawimagedata"
 
 [[module]]
 start = 0x48aed8
@@ -533,63 +533,63 @@ note = "DrawTextA"
 
 [[module]]
 start = 0x48b1b4
-name = "module_48b1b4"
+name = "endportupdate"
 
 [[module]]
 start = 0x48b1e8
-name = "module_48b1e8"
+name = "eraserect"
 
 [[module]]
 start = 0x48b2d8
-name = "module_48b2d8"
+name = "getdisplaymode"
 
 [[module]]
 start = 0x48b358
-name = "module_48b358"
+name = "getporterror"
 
 [[module]]
 start = 0x48b360
-name = "module_48b360"
+name = "getfont"
 
 [[module]]
 start = 0x48b4a8
-name = "module_48b4a8"
+name = "getportpalette"
 
 [[module]]
 start = 0x48b4d8
-name = "module_48b4d8"
+name = "getforecolor"
 
 [[module]]
 start = 0x48b530
-name = "module_48b530"
+name = "textwidth"
 
 [[module]]
 start = 0x48b594
-name = "module_48b594"
+name = "displaysettings"
 
 [[module]]
 start = 0x48c4cc
-name = "module_48c4cc"
+name = "globaltolocal"
 
 [[module]]
 start = 0x48c538
-name = "module_48c538"
+name = "hidecursor"
 
 [[module]]
 start = 0x48c5fc
-name = "module_48c5fc"
+name = "invertrect"
 
 [[module]]
 start = 0x48c648
-name = "module_48c648"
+name = "lineto"
 
 [[module]]
 start = 0x48c688
-name = "module_48c688"
+name = "localtoglobal"
 
 [[module]]
 start = 0x48c750
-name = "module_48c750"
+name = "lockport"
 
 [[module]]
 start = 0x48c774
@@ -598,71 +598,71 @@ note = "RTTI class memoryPort; 'DISPLAY'; Rect(left, top, right, bottom) and mov
 
 [[module]]
 start = 0x48c9ac
-name = "module_48c9ac"
+name = "fillportrect"
 
 [[module]]
 start = 0x48c9e8
-name = "module_48c9e8"
+name = "canusedisplaymode"
 
 [[module]]
 start = 0x48cab4
-name = "module_48cab4"
+name = "realizepalette"
 
 [[module]]
 start = 0x48d194
-name = "module_48d194"
+name = "setcliprect"
 
 [[module]]
 start = 0x48d1e0
-name = "module_48d1e0"
+name = "setclip"
 
 [[module]]
 start = 0x48d278
-name = "module_48d278"
+name = "setcursorshape"
 
 [[module]]
 start = 0x48d480
-name = "module_48d480"
+name = "setdisplaymode"
 
 [[module]]
 start = 0x48d574
-name = "module_48d574"
+name = "setportpalette"
 
 [[module]]
 start = 0x48d5ec
-name = "module_48d5ec"
+name = "setpalettecolors"
 
 [[module]]
 start = 0x48d798
-name = "module_48d798"
+name = "setminimalreserve"
 
 [[module]]
 start = 0x48d884
-name = "module_48d884"
+name = "setforecolor"
 
 [[module]]
 start = 0x48d90c
-name = "module_48d90c"
+name = "setpenwidth"
 
 [[module]]
 start = 0x48d960
-name = "module_48d960"
+name = "setport"
 
 [[module]]
 start = 0x48d9c8
-name = "module_48d9c8"
+name = "setorigin"
 
 [[module]]
 start = 0x48da48
-name = "module_48da48"
+name = "settakestatic"
 
 [[module]]
 start = 0x48daa8
-name = "module_48daa8"
+name = "showcursor"
 
 [[module]]
 start = 0x48db08
-name = "module_48db08"
+name = "unlockport"
 
 [[module]]
 start = 0x48db64
@@ -671,172 +671,172 @@ note = "RTTI class windowPort (GetDC, GetUpdateRgn, ScrollDC); WinRect's constru
 
 [[module]]
 start = 0x48e0a0
-name = "module_48e0a0"
+name = "decompressimage"
 
 [[module]]
 start = 0x48e5ec
-name = "module_48e5ec"
+name = "newhandle"
 
 [[module]]
 start = 0x48e6f0
-name = "module_48e6f0"
+name = "availablememory"
 
 [[module]]
 start = 0x48e71c
-name = "module_48e71c"
+name = "disposehandle"
 
 [[module]]
 start = 0x48e7b8
-name = "module_48e7b8"
+name = "disposeptr"
 
 [[module]]
 start = 0x48e7ec
-name = "module_48e7ec"
+name = "availablevirtualmemory"
 
 [[module]]
 start = 0x48e80c
-name = "module_48e80c"
+name = "memerror"
 
 [[module]]
 start = 0x48e814
-name = "module_48e814"
+name = "handlesize"
 
 [[module]]
 start = 0x48e8b4
-name = "module_48e8b4"
+name = "handlestate"
 
 [[module]]
 start = 0x48e8f4
-name = "module_48e8f4"
+name = "ptrsize"
 
 [[module]]
 start = 0x48ea00
-name = "module_48ea00"
+name = "lockhandlealias"
 
 [[module]]
 start = 0x48ea14
-name = "module_48ea14"
+name = "memoryblocks"
 
 [[module]]
 start = 0x48ef24
-name = "module_48ef24"
+name = "movememory"
 
 [[module]]
 start = 0x48ef7c
-name = "module_48ef7c"
+name = "unlockptr"
 
 [[module]]
 start = 0x48efbc
-name = "module_48efbc"
+name = "purgememory"
 
 [[module]]
 start = 0x48f1c0
-name = "module_48f1c0"
+name = "setpurgeenabled"
 
 [[module]]
 start = 0x48f294
-name = "module_48f294"
+name = "fillmemory"
 
 [[module]]
 start = 0x48f2b0
-name = "module_48f2b0"
+name = "setgrowproc"
 
 [[module]]
 start = 0x48f2c8
-name = "module_48f2c8"
+name = "sethandlesize"
 
 [[module]]
 start = 0x48f360
-name = "module_48f360"
+name = "sethandlelocks"
 
 [[module]]
 start = 0x48f44c
-name = "module_48f44c"
+name = "setpurgeproc"
 
 [[module]]
 start = 0x48f464
-name = "module_48f464"
+name = "setpurgeable"
 
 [[module]]
 start = 0x48f4bc
-name = "module_48f4bc"
+name = "swaphandledata"
 
 [[module]]
 start = 0x48f5bc
-name = "module_48f5bc"
+name = "handledata"
 
 [[module]]
 start = 0x48f660
-name = "module_48f660"
+name = "resourcefile"
 
 [[module]]
 start = 0x48fd68
-name = "module_48fd68"
+name = "findresourcebyhandle"
 
 [[module]]
 start = 0x48fdd8
-name = "module_48fdd8"
+name = "releaseresource"
 
 [[module]]
 start = 0x48feb8
-name = "module_48feb8"
+name = "resourceerror"
 
 [[module]]
 start = 0x48fec0
-name = "module_48fec0"
+name = "getresourceinfo"
 
 [[module]]
 start = 0x48ff28
-name = "module_48ff28"
+name = "resourcesize"
 
 [[module]]
 start = 0x48ff90
-name = "module_48ff90"
+name = "loadresource"
 
 [[module]]
 start = 0x490140
-name = "module_490140"
+name = "openresourcefile"
 
 [[module]]
 start = 0x490570
-name = "module_490570"
+name = "purgeresource"
 
 [[module]]
 start = 0x49060c
-name = "module_49060c"
+name = "preload"
 
 [[module]]
 start = 0x491598
-name = "module_491598"
+name = "readresourcebytes"
 
 [[module]]
 start = 0x4916e8
-name = "module_4916e8"
+name = "resourcedirectory"
 
 [[module]]
 start = 0x4927dc
-name = "module_4927dc"
+name = "writeresource"
 
 [[module]]
 start = 0x4928e4
-name = "module_4928e4"
+name = "writeresourcemap"
 
 [[module]]
 start = 0x492a3c
-name = "module_492a3c"
+name = "writeresourcedata"
 
 [[module]]
 start = 0x492dc4
-name = "module_492dc4"
+name = "newtimer"
 
 [[module]]
 start = 0x492ec0
-name = "module_492ec0"
+name = "killtimer"
 
 [[module]]
 start = 0x492f9c
-name = "module_492f9c"
+name = "locktimers"
 
 [[module]]
 start = 0x492fc8
-name = "module_492fc8"
+name = "timers"

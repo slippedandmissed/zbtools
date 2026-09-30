@@ -7,8 +7,8 @@
 #include "debug.h"
 #include "events.h"
 #include "graphics.h"
-#include "module_4623b8.h"
-#include "os_46d754.h"
+#include "mainloop.h"
+#include "os_fixed.h"
 #include "platform.h"
 
 /* How many events are queued (eventHead is where reading starts, eventTail

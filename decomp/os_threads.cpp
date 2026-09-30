@@ -10,7 +10,7 @@
 
 #include <string.h>
 #include "zoombinis.h"
-#include "os_46f5c0.h"
+#include "os_contexts.h"
 #include "os_localmem.h"
 #include "os_manager.h"
 #include "os_refcount.h"

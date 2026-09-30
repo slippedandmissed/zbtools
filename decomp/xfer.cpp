@@ -12,7 +12,7 @@
 #include "focus.h"
 #include "game.h"
 #include "graphics.h"
-#include "module_4623b8.h"
+#include "mainloop.h"
 #include "snoids.h"
 #include "sound.h"
 #include "town.h"

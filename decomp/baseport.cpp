@@ -10,7 +10,7 @@
 #define RECT_OUT_OF_LINE
 #include "zoombinis.h"
 #include "graphics.h"
-#include "os_46d754.h"
+#include "os_fixed.h"
 #include "os_localmem.h"
 
 DWORD patternRops[8] = {PATCOPY, 0xa000c9, 0xfa0089, PATINVERT,

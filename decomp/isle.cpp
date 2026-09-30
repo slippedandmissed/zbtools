@@ -11,7 +11,7 @@
 #include "focus.h"
 #include "graphics.h"
 #include "isle.h"
-#include "module_4623b8.h"
+#include "mainloop.h"
 #include "platform.h"
 #include "snoids.h"
 #include "sound.h"

@@ -10,7 +10,7 @@
 #include "focus.h"
 #include "graphics.h"
 #include "maze.h"
-#include "module_4623b8.h"
+#include "mainloop.h"
 #include "net.h"
 #include "random.h"
 #include "snoids.h"

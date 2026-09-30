@@ -7,7 +7,7 @@
 #include "config.h"
 #include "e2memory.h"
 #include "loading.h"
-#include "module_4623b8.h"
+#include "mainloop.h"
 
 char installFromDirKey[] = "INSTALLFROMDIR";
 char dataDirName[] = "Data\\";

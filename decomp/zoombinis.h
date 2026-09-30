@@ -3143,7 +3143,7 @@ struct WmxBlock
     unsigned long loopsDone;
 };
 
-/* A mixing loop (module_47fae8): see there. */
+/* A mixing loop (wmxmix): see there. */
 typedef void (*WmxMixProc)(unsigned char *out, const unsigned char *in, unsigned long count,
                            long outStride, long inStride, unsigned long step, long volume,
                            short identity, const unsigned char *table);
