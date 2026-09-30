@@ -214,9 +214,9 @@ void mazeButtonClicked(short button)
     View *helper;
     short i;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeMaze();
         return;
@@ -227,8 +227,8 @@ void mazeButtonClicked(short button)
         drawMazeButton(button, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawMazeButton(button, 0, 1);
-        g_4b755c = 1;
-        g_4b0d52 = 1;
+        snoidsArrived = 1;
+        sceneDue = 1;
         askKeepParty();
         break;
     case 2:
@@ -237,11 +237,11 @@ void mazeButtonClicked(short button)
             drawMazeButton(button, 1, 1);
             waitForEventFor(0, 2, 0, 1);
             drawMazeButton(button, 0, 1);
-            g_4b0d52 = 6;
+            sceneDue = 6;
         }
         break;
     case 3:
-        if (g_4b755a > 0)
+        if (snoidsOnTheirWay > 0)
             break;
         if (!g_4afc38 && featureRowCount > 0) {
             g_4afc38 = 1;
@@ -343,12 +343,12 @@ void mazeButtonClicked(short button)
 }
 
 /* The scene's keys: 0x16f calls replayHint (the only one; the check of
-   g_4b8803 for other keys is left from the other scenes' cheat keys).
+   debugMessagesOn for other keys is left from the other scenes' cheat keys).
    Returns whether the key was used. */
 /* @zoombi32 0x0043570e */
 short mazeKey(unsigned short key)
 {
-    if (!g_4b8803 && key != 0x16f)
+    if (!debugMessagesOn && key != 0x16f)
         return 0;
     switch (key) {
     case 0x16f:
@@ -678,7 +678,7 @@ void updateMazeSnoid(View *view, short region)
     Snoid *snoid;
     short changed = 0;
 
-    if (!g_4b9684 && view->body.running && clockTime() >= view->nextUpdate) {
+    if (!dialogFlags && view->body.running && clockTime() >= view->nextUpdate) {
         view->nextUpdate = clockTime() + view->interval;
         snoid = (Snoid *)&view->body;
         switch (snoid->unknownF4) {
@@ -1043,8 +1043,8 @@ short clearRowsWithFeature(short id)
  * paused, works through the Zoombinis waiting for each step: ones placed
  * to start (startMazeView), stopped (stepMazeSnoidOn), moving in front, reaching
  * the gates, falling (15090 on), gates to close (g_4b0a0a/c), ones done
- * walking off to their row's exit (by the next of 20 spots in g_4a2406),
- * ones reaching a square (by its kind in g_4b061a: 0 stops, 1 a turn, 2
+ * walking off to their row's exit (by the next of 20 spots in mazeExitSpots),
+ * ones reaching a square (by its kind in squareKinds: 0 stops, 1 a turn, 2
  * and 3-4 a turning square, 5 a straight one, 6 a blocked one (sound
  * 5103), 20-23 a pose), and pairs meeting; and starts waiting Zoombinis
  * fidgeting now and then while g_4b0d3c (its test of a view's flags is
@@ -1065,33 +1065,33 @@ void mazeFrame()
     View *other;
     Snoid *snoid;
 
-    if (g_4a25c8 || !g_4afc68)
+    if (inMazeFrame || !g_4afc68)
         return;
-    g_4a25c8 = 1;
+    inMazeFrame = 1;
     updateViews();
-    if (g_4b0d52) {
+    if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-            g_4a25c8 = 0;
+            inMazeFrame = 0;
             return;
         }
-        if (!g_4b9688 || g_4b9688 == 3) {
-            if (g_4b9688 == 3)
+        if (!dialogQuestion || dialogQuestion == 3) {
+            if (dialogQuestion == 3)
                 chooseSnoids(0, 0);
-            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
-                g_4b0d50 = g_4b0d52;
-                g_4b0d52 = 0;
+            if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1) {
+                pendingScene = sceneDue;
+                sceneDue = 0;
                 setCurrentMap(0);
                 closeMaze();
-                g_4a25c8 = 0;
+                inMazeFrame = 0;
                 return;
             }
-        } else if (g_4b9688 == 2) {
-            g_4b9688 = 0;
-            g_4b0d52 = 0;
+        } else if (dialogQuestion == 2) {
+            dialogQuestion = 0;
+            sceneDue = 0;
         }
-    } else if (g_4b9684) {
+    } else if (dialogFlags) {
         playAmbientSound();
-        g_4a25c8 = 0;
+        inMazeFrame = 0;
         return;
     } else {
         while (*placed)
@@ -1169,7 +1169,7 @@ void mazeFrame()
                     snoid = (Snoid *)&view->body;
                     snoid->unknownF1 = 0;
                     setSnoidAction((Snoid *)&view->body, 7, 0);
-                    *(Point *)&((Snoid *)&view->body)->targetX = g_4a2406[parts[35]][(*spot)++];
+                    *(Point *)&((Snoid *)&view->body)->targetX = mazeExitSpots[parts[35]][(*spot)++];
                     if (*spot > 19)
                         *spot = 0;
                 }
@@ -1187,33 +1187,33 @@ void mazeFrame()
                     squareOccupants[parts[33]][parts[34]][0] = 0;
                     squareOccupants[parts[33]][parts[34]][1] = 0;
                 }
-                switch (g_4b061a[parts[33]][parts[34]]) {
+                switch (squareKinds[parts[33]][parts[34]]) {
                 case 0:
                     stepMazeSnoidOn(view);
                     break;
                 case 1:
-                    putOnSquare(view, g_4b04c8[parts[33]][parts[34]]);
+                    putOnSquare(view, squareViews[parts[33]][parts[34]]);
                     break;
                 case 2:
-                    stepAtTurning(view, g_4b04c8[parts[33]][parts[34]]);
+                    stepAtTurning(view, squareViews[parts[33]][parts[34]]);
                     break;
                 case 3:
                 case 4:
-                    stepMazeSnoid(view, g_4b04c8[parts[33]][parts[34]]);
+                    stepMazeSnoid(view, squareViews[parts[33]][parts[34]]);
                     break;
                 case 5:
-                    moveMazeSnoidOn(view, g_4b04c8[parts[33]][parts[34]]);
+                    moveMazeSnoidOn(view, squareViews[parts[33]][parts[34]]);
                     break;
                 case 6:
                     queueViewSound(5103, 0);
-                    stopMazeSnoid(g_4b04c8[parts[33]][parts[34]]);
+                    stopMazeSnoid(squareViews[parts[33]][parts[34]]);
                     stepMazeSnoidOn(view);
                     break;
                 case 20:
                 case 21:
                 case 22:
                 case 23:
-                    putSnoidInMaze(view, g_4b061a[parts[33]][parts[34]]);
+                    putSnoidInMaze(view, squareKinds[parts[33]][parts[34]]);
                     break;
                 default:
                     stepMazeSnoidOn(view);
@@ -1256,7 +1256,7 @@ void mazeFrame()
         }
     }
     playAmbientSound();
-    g_4a25c8 = 0;
+    inMazeFrame = 0;
 }
 
 /* Puts a Zoombini in the maze in pose `pose` - 20 on its square (from
@@ -1667,7 +1667,7 @@ short takeCommonestValueCopy(short low, short high)
 
 /* Adds a view for a Zoombini in the maze (drawn by drawMazeSnoid, updated by
    updateMazeSnoid) from `snoid`: gives it the next ten words of g_4b076c (its
-   kind, square, line...), records it on its square (g_4b04c8, g_4b061a)
+   kind, square, line...), records it on its square (squareViews, squareKinds)
    and in its line's list, and lays it out. */
 /* @zoombi32 0x00436d39 */
 void addMazeSnoidView(Snoid *snoid)
@@ -1689,8 +1689,8 @@ void addMazeSnoidView(Snoid *snoid)
         for (i = 0; i < 10; i++)
             parts[30 + i] = (g_4b076c + i)[g_4b08b4 * 10];
         g_4b08b4++;
-        g_4b04c8[parts[31]][parts[32]] = view->id;
-        g_4b061a[parts[31]][parts[32]] = parts[30];
+        squareViews[parts[31]][parts[32]] = view->id;
+        squareKinds[parts[31]][parts[32]] = parts[30];
         *(Point *)&made->body.x = (squarePlaces + parts[32])[parts[31] * 13];
         switch (parts[33]) {
         case 1:
@@ -2432,7 +2432,7 @@ void chooseSequence5()
     sequenceLength++;
 }
 
-/* Sets the maze up for a level (0-4): the squares' kinds (g_4b061a, from
+/* Sets the maze up for a level (0-4): the squares' kinds (squareKinds, from
    g_4a23be/g_4a239a), the lines' values shuffled (g_4b0d10), a sequence of
    values by one of the ways for the level (alternating between two where
    there are two), and the Zoombinis' views. */
@@ -2447,7 +2447,7 @@ void setUpMaze(short level)
     for (i = 0; i < 11; i++)
         order[i] = g_4a25ca[i];
     for (i = 0; i < 18; i++)
-        g_4b061a[g_4a23be[i][0]][g_4a23be[i][1]] = g_4a239a[i];
+        squareKinds[g_4a23be[i][0]][g_4a23be[i][1]] = g_4a239a[i];
     g_4b0d10[0] = 0;
     g_4b0d10[10] = 0;
     g_4b0d10[1] = g_4a25ca[1];
@@ -2513,7 +2513,7 @@ void openMaze()
     View *view;
 
     g_4a7d40 = 0;
-    g_4b0d52 = 0;
+    sceneDue = 0;
     g_4afc68 = 0;
     g_4afc6a = 0;
     g_4afc3c = 1;
@@ -2545,8 +2545,8 @@ void openMaze()
     g_4b00c2 = 0;
     g_4a2550 = 0;
     g_4a2552 = 0;
-    fillMemory(g_4b04c8, 0, 338);
-    fillMemory(g_4b061a, 0, 338);
+    fillMemory(squareViews, 0, 338);
+    fillMemory(squareKinds, 0, 338);
     g_4afc60 = 0;
     g_4b08b0 = 0;
     g_4b076c = 0;
@@ -2672,7 +2672,7 @@ void openMaze()
             placedViewCount = kind;
             placedViews[kind] = addView(0x508a000, drawCels, runViewScript, kind + 7014, 7, &g_4a21f0[kind], 0, 0);
         } else if (!placedViews[i]) {
-            g_4b83e4[i] = -10;
+            placeClaims[i] = -10;
         }
     }
     for (i = 1; i < 10; i++) {
@@ -2803,7 +2803,7 @@ void openMaze()
     setGroupLists(&g_4a2194, 1, -0x4000);
     drawMazeButton(1, 0, 0);
     drawMazeButton(2, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     queueViewSound(997, 0);
     chooseSnoids(0, 0);
@@ -2821,7 +2821,7 @@ void openMaze()
     addSoundRange(12000, 12000, 0);
     addSoundRange(10001, 10001, 0);
     queueViewSound(sceneLevel() + 30035, 0);
-    campHint((short *)(g_4a4ba0 + 0x44));
+    campHint((short *)(gameState + 0x44));
     hintSound = 20068;
     requestViewSort();
 }

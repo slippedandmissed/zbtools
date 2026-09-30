@@ -37,8 +37,8 @@ void initGraphics(DisplayMode *mode, short depth)
     gameRect.bottom = height;
     if (!createMainWindow(width, height))
         fatalError(msgNoScreenPort);
-    g_4aa7b8 = gameRect;
-    sectRect(&g_4aa7b8, &screenRect);
+    shownGameRect = gameRect;
+    sectRect(&shownGameRect, &screenRect);
     if (!allocateBlock((void **)&g_4ab3f0, 0x400))
         notEnoughNearMemory("initial RGB's");
     memset(g_4ab3f0, 0, 4);
@@ -154,11 +154,11 @@ void setColors(PALETTEENTRY *from, short first, short count)
     }
 }
 
-/* Copies `count` entries of g_4aa7e8 to g_4aabe8, from `first`. */
+/* Copies `count` entries of loadedPalette to targetPalette, from `first`. */
 /* @zoombi32 0x004148da */
 void copyPaletteRange(short first, short count)
 {
-    memcpy(&g_4aabe8[first], &g_4aa7e8[first], count * sizeof(PALETTEENTRY));
+    memcpy(&targetPalette[first], &loadedPalette[first], count * sizeof(PALETTEENTRY));
 }
 
 /*
@@ -400,7 +400,7 @@ void alignRect(ShortRect *rect, short x, short y, short how)
 void resetDisplayModes()
 {
     initDisplayMode(&displayMode, 0xffff, 0xffff, -1, 0);
-    initDisplayMode(&g_4aa7dc, 0xffff, 0xffff, -1, 0);
+    initDisplayMode(&savedDisplayMode, 0xffff, 0xffff, -1, 0);
 }
 
 /* Redraws a rectangle of the work port (invertRect) and shows it. */

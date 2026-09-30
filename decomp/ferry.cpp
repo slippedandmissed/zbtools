@@ -172,7 +172,7 @@ void resetFerry()
     g_4abaee = g_4abaf0 = g_4abaf2 = g_4abaa6 = 0;
     g_4aba98 = 0;
     g_4abab0 = g_4abaa2 = g_4abaa4 = 0;
-    g_4abb06 = g_4abb04 = g_4abaa0 = g_4b0d52 = 0;
+    g_4abb06 = g_4abb04 = g_4abaa0 = sceneDue = 0;
     g_4abab6 = g_4abab8 = g_4ababa = g_4ababc = g_4ababe = 0;
 }
 
@@ -427,7 +427,7 @@ void drawFerryButtons(View *)
     drawFerryButton(2, 0, 0);
 }
 
-/* Scene 10's keys (with debugging on, g_4b8803, or else only 0x16f; case
+/* Scene 10's keys (with debugging on, debugMessagesOn, or else only 0x16f; case
    ignored): 0x16f replayHint; A draws the links between the places; L
    reports the level (from 1); F plays Captain Cajun's script g_4abb14
    (1800-1832; else his current one). Returns whether the key was used. */
@@ -438,7 +438,7 @@ short ferryKey(unsigned short key)
     ShortRect unused = {0, 0, 225, 18};
     View *view;
 
-    if (!g_4b8803 && key != 0x16f)
+    if (!debugMessagesOn && key != 0x16f)
         return 0;
     if (key >= 'a' && key <= 'z')
         key -= 32;
@@ -476,7 +476,7 @@ short ferryKey(unsigned short key)
  * Lays out the places from 'SCRB' script `id`: its first two frames are
  * two lists of parts, taken in turn, a list at a time; each part is a view
  * (script part + 1499) at a point: 1-3 places to stand (placed views, from
- * g_4abac4 on), 4-10 scenery (unless g_4a4ba0's +0x20).
+ * g_4abac4 on), 4-10 scenery (unless gameState's +0x20).
  */
 /* @zoombi32 0x00420cce */
 void layOutFerry(short id)
@@ -588,9 +588,9 @@ void layOutFerry(short id)
             placedViewPoints[count].x = at.x + 22;
             placedViewPoints[count].y = at.y - 7;
             placedViews[count] = g_4abac6[count];
-            g_4b83e4[count] = 0;
+            placeClaims[count] = 0;
             count++;
-        } else if (word >= 4 && word <= 10 && !*(short *)(g_4a4ba0 + 0x20)) {
+        } else if (word >= 4 && word <= 10 && !*(short *)(gameState + 0x20)) {
             after = addView(0x74980000, drawCels, runViewScript, word + 1499, 6, &at, 1, after);
         }
     }
@@ -678,7 +678,7 @@ void openFerry()
         g_4abab4 = g_4a13e4[allocateSlot(&g_4a13ec, 4, 0)];
     g_4abab4 = addView(0x188000, drawCels, runViewScript, g_4abab4, 6, 0, 0, 0);
     g_4abaf2 = g_4abab4;
-    if (!*(short *)(g_4a4ba0 + 0x20)) {
+    if (!*(short *)(gameState + 0x20)) {
         g_4abab6 = addView(0x8000, drawCels, runViewScript, 1602, 6, 0, 0, 0);
         g_4abab8 = addView(0x8000, drawCels, runViewScript, 1603, 6, 0, 0, 0);
         pairViews(g_4abab6, g_4abab8);
@@ -702,7 +702,7 @@ void openFerry()
     setGroupLists(ferryGroups, 1, (short)0xc000);
     drawFerryButton(1, 0, 0);
     drawFerryButton(2, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     queueViewSound(997, 0);
     chooseSnoids(0, 0);
@@ -710,7 +710,7 @@ void openFerry()
     resetViewClock();
     g_4aba84 = randomBetween(5400, 10800);
     g_4abaac = 1;
-    switch (campHint((short *)(g_4a4ba0 + 0x32))) {
+    switch (campHint((short *)(gameState + 0x32))) {
     case 2:
         hintSound = 20074;
         break;
@@ -749,24 +749,24 @@ void ferryFrame()
         startView(g_4abab4, randomBetween(1608, 1609), slideFerryViews, 0);
         loadViewSounds(g_4abab4, 1);
         g_4abaa6 = groupViews(g_4abab4, g_4abab4, 0, 0, 0, 0);
-        g_4b0d52 = 11;
+        sceneDue = 11;
     }
     updateViews();
-    if (g_4b0d52) {
-        if (!g_4b9688 || g_4b9688 == 3) {
-            if (g_4b9688 == 3 && !g_4b754a)
+    if (sceneDue) {
+        if (!dialogQuestion || dialogQuestion == 3) {
+            if (dialogQuestion == 3 && !practiceLevel)
                 chooseSnoids(0, 0);
             if (viewsLocked || !groupLeader[g_4abaa6]) {
-                g_4b0d50 = g_4b0d52;
-                g_4b0d52 = 0;
+                pendingScene = sceneDue;
+                sceneDue = 0;
                 setCurrentMap(0);
                 closeFerry();
                 g_4a1574 = 0;
                 return;
             }
-        } else if (g_4b9688 == 2) {
-            g_4b9688 = 0;
-            g_4b0d52 = 0;
+        } else if (dialogQuestion == 2) {
+            dialogQuestion = 0;
+            sceneDue = 0;
         }
     }
     if (g_4abaa0) {
@@ -826,7 +826,7 @@ void ferryFrame()
             g_4abb06 = 0;
         }
     }
-    if (!g_4abab0 && !g_4b755a && !isSoundPlaying(997, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+    if (!g_4abab0 && !snoidsOnTheirWay && !isSoundPlaying(997, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
         g_4abab0 = 1;
         startView(g_4abab4, 0, 0, 0);
         loadViewSounds(g_4abab4, 1);
@@ -859,11 +859,11 @@ void ferryClicked(short which)
     short f;
     View *view;
 
-    if (g_4b0d52 || g_4abaf4) {
+    if (sceneDue || g_4abaf4) {
         if (g_4abaf4)
-            g_4b0d52 = 11;
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+            sceneDue = 11;
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeFerry();
         return;
@@ -874,7 +874,7 @@ void ferryClicked(short which)
         drawFerryButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawFerryButton(which, 0, 1);
-        g_4b0d52 = 1;
+        sceneDue = 1;
         askKeepParty();
         break;
     case 2:
@@ -889,7 +889,7 @@ void ferryClicked(short which)
         g_4abaf4 = 1;
         break;
     case 3:
-        if (g_4b755a > 0 || g_4aba90)
+        if (snoidsOnTheirWay > 0 || g_4aba90)
             break;
         getCursorPosition(&where);
         view = viewAt(where, 1, 1);
@@ -908,7 +908,7 @@ void ferryClicked(short which)
             g_4abb04 = 0;
             for (k = 0; ok && k < 8; k++)
                 if (ferryLinks[g_4abac0 - 1][k]) {
-                    other = findView(g_4b83e4[ferryLinks[g_4abac0 - 1][k] - 1]);
+                    other = findView(placeClaims[ferryLinks[g_4abac0 - 1][k] - 1]);
                     if (other) {
                         ok = 0;
                         for (f = 0; f < 4; f++)
@@ -945,7 +945,7 @@ void ferryClicked(short which)
                     }
                 }
                 viewSnoid(view)->unknownF7 = 1;
-                if (g_4abb04 && g_4b754a)
+                if (g_4abb04 && practiceLevel)
                     g_4abb06 = view->id;
             } else {
                 g_4abb0a++;

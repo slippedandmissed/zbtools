@@ -531,7 +531,7 @@ short isInputWaiting(short which)
 }
 /*
  * The main window's procedure. QuickTime's component manager sees each
- * message first when g_4b2ad4 is set. Messages other than timer, mouse and
+ * message first when movieShowing is set. Messages other than timer, mouse and
  * cursor ones are logged before and after (logMessage), and clear g_4b2b00
  * unless they're keys. Keys and clicks become game events; closing the
  * window, or the session ending, is a fatal error (it quits); the window is
@@ -551,7 +551,7 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     UINT hitTest;
     BOOL active;
 
-    if (g_4b2ad4 && cmgr_0b(g_4b2adc, window, message, wParam, lParam))
+    if (movieShowing && cmgr_0b(movieController, window, message, wParam, lParam))
         return 0;
     if (message != WM_TIMER && (message < WM_KEYFIRST || message > WM_KEYLAST)
         && (message < WM_MOUSEFIRST || message > WM_MOUSELAST) && message != WM_NCHITTEST
@@ -805,7 +805,7 @@ void activateApp(long active)
         appActive = active;
         if (active) {
             if (!g_4b2d3a && systemState.windowsVersion >= 0x395 && !g_4b2b04) {
-                getDisplayMode(&g_4aa7dc);
+                getDisplayMode(&savedDisplayMode);
                 setDisplayMode(&displayMode);
             }
             placeGamePort();
@@ -830,7 +830,7 @@ void activateApp(long active)
             setSoundsActive(0);
             osSetActive(0);
             if (!g_4b2d3a && systemState.windowsVersion >= 0x395 && !g_4b2b04)
-                setDisplayMode(&g_4aa7dc);
+                setDisplayMode(&savedDisplayMode);
             if (!g_4b2d32 && systemState.windowsVersion >= 0x395 && g_4a4a0c && !g_4b2d3a) {
                 windowed = 1;
                 SendMessage(mainWindow, WM_SYSCOMMAND, SC_MINIMIZE, 0);
@@ -854,11 +854,11 @@ void placeGamePort()
     screen->left = screen->top = 0;
     screen->right = GetSystemMetrics(SM_CXSCREEN);
     screen->bottom = GetSystemMetrics(SM_CYSCREEN);
-    centred = g_4aa7b8 = gameRect;
+    centred = shownGameRect = gameRect;
     alignRect(&centred, (screen->right + screen->left) >> 1, (screen->bottom + screen->top) >> 1,
               0x22);
     offsetRect(screen, -centred.left, -centred.top);
-    sectRect(&g_4aa7b8, screen);
+    sectRect(&shownGameRect, screen);
     if (!screenPort) {
         screenPort = newWindowPort(centred, mainWindow, 0);
         if (screenPort)
@@ -898,18 +898,18 @@ void drawPaletteChart()
 }
 
 /* With a screen port: activating clears the game's area (and fills it via
-   fillPortRect) when g_4b2ad4 and g_4b2ad8 are set; deactivating calls
+   fillPortRect) when movieShowing and currentMovie are set; deactivating calls
    stopMovie then, and clears the area. */
 /* @zoombi32 0x00456b2e */
 void gameActivated(short active)
 {
     if (screenPort) {
         if (active) {
-            if (g_4b2ad4 && g_4b2ad8) {
+            if (movieShowing && currentMovie) {
                 setClipRect(gameRect);
                 fillPortRect(gameRect, Color(0), 0);
             }
-        } else if (g_4b2ad4 && g_4b2ad8) {
+        } else if (movieShowing && currentMovie) {
             g_4b7cf8 = 1;
             stopMovie(1);
         }

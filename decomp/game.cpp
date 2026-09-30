@@ -47,7 +47,7 @@ void gameFrame()
         drawMemoryStats(1);
     else
         drawMemoryStats(0);
-    if (g_4b80d2 >= 1) {
+    if (cursorMode >= 1) {
         unsigned long now = clockTime();
         if (now >= g_4b80d4) {
             g_4b80d4 = now + 12;
@@ -177,15 +177,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     loadFont(&fonts[2], "CornerStone", 18, 0);
     setFont(fonts[1]);
 
-    g_4b754a = 0;
-    g_4a4ba0 = (char *)newPtr(0xae05);
-    if (!g_4a4ba0)
+    practiceLevel = 0;
+    gameState = (char *)newPtr(0xae05);
+    if (!gameState)
         reportRosterError(msgOutOfMemory);
     fillRosterHeader(1);
     applyPlayerSettings();
-    g_4b0d52 = 0;
-    g_4b0d56 = -1;
-    g_4b0d54 = -1;
+    sceneDue = 0;
+    journeyFrom = -1;
+    journeyTo = -1;
     currentScene = -1;
     initViews();
     loadSnoids(1);
@@ -193,11 +193,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     /* Cursors 1-5 ('CURS' resources). */
     for (i = 0; i < 6; i++) {
         cursors[i] = 0;
-        g_4b80c4[i] = 0;
+        modeCursors[i] = 0;
         if (i) {
             loadResourceAs(&cursors[i], RESOURCE_TYPE('C', 'U', 'R', 'S'), i, 0, 1);
-            g_4b80c4[i] = usedResourceHandle(cursors[i]);
-            lockHandleAlias(g_4b80c4[i]);
+            modeCursors[i] = usedResourceHandle(cursors[i]);
+            lockHandleAlias(modeCursors[i]);
         }
     }
     setCurrentMap(0);
@@ -210,8 +210,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     else
         quickTimeReady = 1;
 
-    g_4b0d50 = 0;
-    while (mainLoopUpdate() && !g_4b80e0)
+    pendingScene = 0;
+    while (mainLoopUpdate() && !quitRequested)
         mainLoopEvents();
     quitSilently();
     return 0;
@@ -533,29 +533,29 @@ void shutDownGame()
 
     if (shuttingDown)
         return;
-    if (!isWindowed() && !g_4b754a && viewsReady && g_4b2aea && g_4afb32 && !g_4b9684
+    if (!isWindowed() && !practiceLevel && viewsReady && g_4b2aea && rosterChanged && !dialogFlags
         && currentScene >= 1 && currentScene <= 18) {
-        g_4b80e0 = 2;
-        i = g_4b9684;
+        quitRequested = 2;
+        i = dialogFlags;
         showDialog(4, dialogTexts[32], dialogTexts[33], dialogTexts[34]);
         do {
             mainLoopUpdate();
             mainLoopEvents();
-        } while (g_4b9684);
-        if (i == g_4b9684) {
-            if (g_4b80e0 == 3)
+        } while (dialogFlags);
+        if (i == dialogFlags) {
+            if (quitRequested == 3)
                 saveBeforeQuitting = 1;
-            g_4b80e0 = 0;
+            quitRequested = 0;
         }
         if (saveBeforeQuitting) {
             askSaveGame();
             do {
                 mainLoopUpdate();
                 mainLoopEvents();
-            } while (g_4b9684);
+            } while (dialogFlags);
         }
     }
-    g_4a48e6 = shuttingDown = 1;
+    leavingGame = shuttingDown = 1;
     setFrameHook(0);
     setFreeAtOnce(1);
     stopMovie(1);
@@ -568,7 +568,7 @@ void shutDownGame()
     for (i = 0; i < 6; i++)
         freeResource(&cursors[i]);
     if (g_4b2aea) {
-        if (!g_4b754a)
+        if (!practiceLevel)
             readWriteSavedGames(0, 1);
         deleteTempFile();
         if (viewsReady)
@@ -600,7 +600,7 @@ void shutDownGame()
 /* @zoombi32 0x00454c8e */
 void quitSilently()
 {
-    g_4a48e6 = 1;
+    leavingGame = 1;
     fatalError(0, 0);
 }
 
@@ -707,28 +707,28 @@ void smokeFrame()
         return;
     inSmokeFrame = 1;
     updateViews();
-    if (g_4b0d52) {
+    if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
             inSmokeFrame = 0;
             return;
         }
-        if (!g_4b9688 || g_4b9688 == 3) {
-            if (g_4b9688 == 3)
+        if (!dialogQuestion || dialogQuestion == 3) {
+            if (dialogQuestion == 3)
                 chooseSnoids(0, 0);
-            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
-                g_4b0d50 = g_4b0d52;
-                g_4b0d52 = 0;
+            if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1) {
+                pendingScene = sceneDue;
+                sceneDue = 0;
                 setCurrentMap(0);
                 closeSmoke();
                 inSmokeFrame = 0;
                 return;
             }
-        } else if (g_4b9688 == 2) {
-            g_4b9688 = 0;
-            g_4b0d52 = 0;
+        } else if (dialogQuestion == 2) {
+            dialogQuestion = 0;
+            sceneDue = 0;
         }
     }
-    if (g_4b9684) {
+    if (dialogFlags) {
         playAmbientSound();
         inSmokeFrame = 0;
         return;
@@ -806,7 +806,7 @@ void smokeFrame()
                 queueViewSound(randomBetween(20055, 20063), 0);
             } else if (chosen < g_4b262e) {
                 if (randomBetween(0, 4) > g_4b2630 - 1
-                    || (*(short *)(g_4a4ba0 + 0x42) & 0xfff) <= 3)
+                    || (*(short *)(gameState + 0x42) & 0xfff) <= 3)
                     queueViewSound(randomBetween(20045, 20048), 0);
             }
         }
@@ -1013,18 +1013,18 @@ long loadMovie(const char *path)
 /* @zoombi32 0x00455273 */
 void stopMovie(short shutdown)
 {
-    if (g_4b2ad4) {
+    if (movieShowing) {
         g_4b2ad6 = 1;
-        g_4b2ad4 = 0;
-        qtim_31(g_4b2ad8, 0);
-        qtim_07(g_4b2ad8);
+        movieShowing = 0;
+        qtim_31(currentMovie, 0);
+        qtim_07(currentMovie);
         setPort(g_4b2ae4);
     }
     if (shutdown && quickTimeReady) {
         quickTimeReady = 0;
-        if (g_4b2adc) {
-            qtim_37(g_4b2adc);
-            g_4b2adc = 0;
+        if (movieController) {
+            qtim_37(movieController);
+            movieController = 0;
         }
         qtim_0c();
         QTTerminate();
@@ -2260,7 +2260,7 @@ void advanceRightFeatures()
     }
 }
 
-/* The scene's keys (with g_4b8803, the cheat keys; else only 0x16f): L shows
+/* The scene's keys (with debugMessagesOn, the cheat keys; else only 0x16f): L shows
    the level, 0x172 and 0x173 turn cheating (cheatMode) on and off, 0x16f
    calls replayHint. Returns whether the key was used. */
 /* Not exact: the original keeps `key` in esi and `show` in ebx (saving esi
@@ -2275,7 +2275,7 @@ short smokeKey(unsigned short key)
     ShortRect rect = g_4a48b2;
     char text[52];
 
-    if (!g_4b8803 && key != 0x16f)
+    if (!debugMessagesOn && key != 0x16f)
         return 0;
     switch (key) {
     case 'L':
@@ -2394,7 +2394,7 @@ short placeAlike(short cell, volatile short direction)
     return -1;
 }
 
-/* The memory statistics line (with g_4a48e4): free, purgeable and the
+/* The memory statistics line (with showMemoryStats): free, purgeable and the
    least free seen (leastFreeMemory), in thousands; with `clear`, unloads the
    sounds and blanks the line instead. */
 /* Not exact: the original gives `port` esi and `freeThousands` ebx (shared
@@ -2422,7 +2422,7 @@ void drawMemoryStats(short clear)
         text[0] = 0;
         drawText(Rect(memoryStatsRect), 0x11, text, 0xffff);
         setPort(port);
-    } else if (g_4a48e4) {
+    } else if (showMemoryStats) {
         available = availableVirtualMemory();
         purgeable = purgeMemory(0, 0);
         if (available < leastFreeMemory)
@@ -2465,10 +2465,10 @@ short idleMovie()
 {
     long flags;
 
-    if (!g_4b2adc)
+    if (!movieController)
         return -1;
-    cmgr_05(g_4b2adc, &flags);
-    cmgr_09(g_4b2adc);
+    cmgr_05(movieController, &flags);
+    cmgr_09(movieController);
     if (flags & 0x40)
         return 0;
     stopMovie(0);
@@ -2550,7 +2550,7 @@ void clearLine(short first, short second, short middle)
 }
 
 /* Plays a QuickTime movie from a file, centred in the window: loads it
-   (loadMovie), makes or reuses the movie controller (g_4b2adc; qtim_38 is
+   (loadMovie), makes or reuses the movie controller (movieController; qtim_38 is
    NewMovieController?), and starts it. Returns 0, or 1 if it failed. */
 /* @zoombi32 0x0045537f */
 short playMovie(const char *path)
@@ -2562,34 +2562,34 @@ short playMovie(const char *path)
     short i;
 
     failed = 1;
-    g_4b2ad8 = loadMovie(path);
-    if (g_4b2ad8) {
+    currentMovie = loadMovie(path);
+    if (currentMovie) {
         g_4b2ae4 = getPort();
         setPort(screenPort);
-        qtim_0f(g_4b2ad8, &bounds);
+        qtim_0f(currentMovie, &bounds);
         OffsetRect(&bounds, -bounds.left, -bounds.top);
         offset.x = ((screenRect.right - screenRect.left) - (gameRect.right - gameRect.left)) / 2;
         offset.y = ((screenRect.bottom - screenRect.top) - (gameRect.bottom - gameRect.top)) / 2;
         OffsetRect(&bounds, offset.x, offset.y);
-        if (!g_4b2adc) {
-            g_4b2adc = qtim_38(g_4b2ad8, &bounds, 11, mainWindow);
+        if (!movieController) {
+            movieController = qtim_38(currentMovie, &bounds, 11, mainWindow);
         } else {
             where.x = offset.x;
             where.y = offset.y;
-            cmgr_0d(g_4b2adc, g_4b2ad8, mainWindow, where);
+            cmgr_0d(movieController, currentMovie, mainWindow, where);
         }
-        cmgr_0e(g_4b2adc, &bounds, 0, 11);
-        cmgr_00(g_4b2adc, mainWindow, 1);
-        cmgr_01(g_4b2adc, 0x20, 0);
-        qtim_31(g_4b2ad8, 1);
+        cmgr_0e(movieController, &bounds, 0, 11);
+        cmgr_00(movieController, mainWindow, 1);
+        cmgr_01(movieController, 0x20, 0);
+        qtim_31(currentMovie, 1);
         qtim_62(0, 0);
-        qtim_2f(g_4b2ad8, 0, 0x10000);
+        qtim_2f(currentMovie, 0, 0x10000);
         for (i = 0; i < 100; i++)
-            cmgr_09(g_4b2adc);
-        cmgr_01(g_4b2adc, 8, 0x10000);
+            cmgr_09(movieController);
+        cmgr_01(movieController, 8, 0x10000);
         failed = 0;
         g_4b2ad6 = 0;
-        g_4b2ad4 = 1;
+        movieShowing = 1;
     }
     return failed;
 }
@@ -3296,7 +3296,7 @@ void updateSmokeSnoid(View *view, short region)
     Snoid *snoid;
     char *features;
 
-    if (!g_4b9684 && view->body.running && clockTime() >= view->nextUpdate) {
+    if (!dialogFlags && view->body.running && clockTime() >= view->nextUpdate) {
         view->nextUpdate = clockTime() + view->interval;
         snoid = (Snoid *)&view->body;
         if (snoid->unknownF8 && clockTime() >= view->body.frameOffset) {
@@ -3527,8 +3527,8 @@ void smokeViewNotify(View *view, short event)
         g_4b2746 = 1;
         break;
     case 60:
-        g_4b755a = 0;
-        g_4b755c = 1;
+        snoidsOnTheirWay = 0;
+        snoidsArrived = 1;
         break;
     }
 }
@@ -4239,7 +4239,7 @@ void openSmoke()
     View *view;
     View *other;
 
-    g_4b0d52 = 0;
+    sceneDue = 0;
     smokeOpen = 0;
     g_4b2792 = 0;
     g_4b2788 = 0;
@@ -4275,8 +4275,8 @@ void openSmoke()
     g_4b275c = 0;
     g_4b2760 = 0;
     g_4b2762 = 0;
-    g_4b274e = g_4b87fe;
-    g_4b87fe = 0;
+    g_4b274e = soundOn;
+    soundOn = 0;
     g_4b2794 = g_4a47cc;
     for (i = 0; i < 8; i++)
         g_4b2768[i] = i;
@@ -4425,7 +4425,7 @@ void openSmoke()
     setGroupLists(&g_4a47a8, 1, -0x4000);
     drawSmokeButton(1, 0, 0);
     drawSmokeButton(2, 0, 0);
-    g_4b87fe = g_4b274e;
+    soundOn = g_4b274e;
     g_4b2644 = 0;
     view = findView(g_4b258c);
     setViewScript(view, 11015, 1);
@@ -4435,7 +4435,7 @@ void openSmoke()
     setViewScript(other, 11016, 1);
     other->notify = smokeViewNotify;
     groupViews(view->id, other->id, 0, 0, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     chooseSnoids(0, 0);
     resetViewClock();
@@ -4474,7 +4474,7 @@ void openSmoke()
         addSoundRange(11000, 11000, 0);
     }
     queueViewSound(sceneLevel() + 30030, 0);
-    campHint((short *)(g_4a4ba0 + 0x42));
+    campHint((short *)(gameState + 0x42));
     hintSound = randomBetween(20066, 20067);
     if (g_4b2630 == 3 || g_4b2630 == 4) {
         g_4b2752 = 1;
@@ -4506,9 +4506,9 @@ void smokeClicked(short action)
     short m;
     View *other;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeSmoke();
         return;
@@ -4519,8 +4519,8 @@ void smokeClicked(short action)
         drawSmokeButton(action, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawSmokeButton(action, 0, 1);
-        g_4b755c = 1;
-        g_4b0d52 = 1;
+        snoidsArrived = 1;
+        sceneDue = 1;
         askKeepParty();
         break;
     case 2:
@@ -4530,13 +4530,13 @@ void smokeClicked(short action)
             waitForEventFor(0, 2, 0, 1);
             drawSmokeButton(action, 0, 1);
             g_4b2750 = 1;
-            g_4b755a = 1;
-            g_4b755c = 0;
-            g_4b0d52 = 18;
+            snoidsOnTheirWay = 1;
+            snoidsArrived = 0;
+            sceneDue = 18;
         }
         break;
     case 3:
-        if (g_4b755a > 0 || g_4b266c >= g_4b262e)
+        if (snoidsOnTheirWay > 0 || g_4b266c >= g_4b262e)
             break;
         getCursorPosition(&where);
         if (dealButtonState == 1) {
@@ -4553,7 +4553,7 @@ void smokeClicked(short action)
             g_4b2752 = 0;
             dealButtonState = 0;
             pressDealButton(11002, 1);
-            g_4b83e4[0] = 0;
+            placeClaims[0] = 0;
             releaseHeldPlace();
             claimPlacedView(heldPlaceNumber(), 0);
             setViewsLocked(0);
@@ -4570,7 +4570,7 @@ void smokeClicked(short action)
             if (ok && view->body.running) {
                 g_4b2794 = *(long *)&view->body.x;
                 if (view->id == g_4b26b2) {
-                    g_4b83e4[0] = 0;
+                    placeClaims[0] = 0;
                     releaseHeldPlace();
                     claimPlacedView(heldPlaceNumber(), 0);
                     g_4b26b2 = 0;

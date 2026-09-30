@@ -198,7 +198,7 @@ struct AnimSpec
     unsigned short id;
     unsigned char idOffset;
     AnimFlags flags;
-    unsigned short firstColor; /* colours set from g_4aa7e8 */
+    unsigned short firstColor; /* colours set from loadedPalette */
     unsigned short colorCount;
 };
 
@@ -993,67 +993,67 @@ extern short g_4a4a10;
 extern long buttonKeys[3]; /* @data 0x4a4abc */
 extern UINT buttonUpMessages[3]; /* @data 0x4a4ac8 */
 extern short g_4a4b98;
-extern char *g_4a4ba0;
+extern char *gameState;
 /* Per puzzle scene (from scene 7): bits 0-3, left at level 0-3; bits 4-7,
    passed at level 0-3. */
 inline char *sceneFlags()
 {
-    return g_4a4ba0 + 0x56;
+    return gameState + 0x56;
 }
 /* The records of groups passed (16): when, which group and level (+1; 0: none). */
 inline short *recordYears()
 {
-    return (short *)(g_4a4ba0 + 0x62);
+    return (short *)(gameState + 0x62);
 }
 inline char *recordMonths()
 {
-    return g_4a4ba0 + 0x82;
+    return gameState + 0x82;
 }
 inline char *recordDays()
 {
-    return g_4a4ba0 + 0x92;
+    return gameState + 0x92;
 }
 inline char *recordGroups()
 {
-    return g_4a4ba0 + 0xa2;
+    return gameState + 0xa2;
 }
 inline char *recordLevels()
 {
-    return g_4a4ba0 + 0xb2;
+    return gameState + 0xb2;
 }
 /* The level reached in each group of scenes (1-4). */
 inline short *puzzleLevels()
 {
-    return (short *)(g_4a4ba0 + 0xc0);
+    return (short *)(gameState + 0xc0);
 }
 /* The scene the game is in, as saved. */
 inline short &savedScene()
 {
-    return *(short *)(g_4a4ba0 + 0xcc);
+    return *(short *)(gameState + 0xcc);
 }
 /* How many Zoombinis of each kind there are (by hair, eyes, nose and feet,
    each 0-4). */
 inline char (*zoombiniCounts())[5][5][5]
 {
-    return (char (*)[5][5][5])(g_4a4ba0 + 0xab94);
+    return (char (*)[5][5][5])(gameState + 0xab94);
 }
 inline Party *party()
 {
-    return (Party *)(g_4a4ba0 + 0xa92e);
+    return (Party *)(gameState + 0xa92e);
 }
 inline Party *savedParty()
 {
-    return (Party *)(g_4a4ba0 + 0xa462);
+    return (Party *)(gameState + 0xa462);
 }
 /* The parties waiting in scenes 3, 4 (the camp: savedParty) and 5. */
 inline Party *waitingParties()
 {
-    return (Party *)(g_4a4ba0 + 0xa1fc);
+    return (Party *)(gameState + 0xa1fc);
 }
 /* The Zoombinis on the journey. */
 inline Traveller *travellers()
 {
-    return (Traveller *)(g_4a4ba0 + 0xa934);
+    return (Traveller *)(gameState + 0xa934);
 }
 extern char msgOutOfMemory[]; /* @data 0x4a5063 */
 /* Texts drawn on the map screens: 0 "terrain key", 1 "choose a level",
@@ -1077,43 +1077,43 @@ extern short breakpointRequested; /* @data 0x4aa5d8 */
 extern basePort *screenPort; /* @data 0x4aa7a4: the window's port */
 extern ShortRect gameRect; /* @data 0x4aa7a8: the game's area */
 extern ShortRect screenRect; /* @data 0x4aa7b0 */
-extern ShortRect g_4aa7b8;
+extern ShortRect shownGameRect;
 extern basePort *workPort; /* @data 0x4aa7c8: where the game draws, off screen */
 extern short g_4aa7cc;
 extern short g_4aa7ce;
 extern DisplayMode displayMode; /* @data 0x4aa7d0 */
-extern DisplayMode g_4aa7dc;
-extern PALETTEENTRY g_4aa7e8[256];
-extern PALETTEENTRY g_4aabe8[256];
+extern DisplayMode savedDisplayMode;
+extern PALETTEENTRY loadedPalette[256];
+extern PALETTEENTRY targetPalette[256];
 extern Palette *palette; /* @data 0x4aafe8 */
 extern short bitsPerPixel; /* @data 0x4aafec */
 extern short debugMode; /* @data 0x4ab474 */
 extern short debugging; /* @data 0x4ab476: errors stop in the debugger */
 extern short loadingAnimation; /* @data 0x4ab480: the main loop's callback is held off */
 extern short clockInTicks; /* @data 0x4ab482: the clock counts 60ths of a second, else ms */
-extern short g_4a48e6;
-extern short g_4b755a;
-extern short g_4b755c;
-extern short g_4b9684;
-extern short g_4b80d0; /* the mouse button down */
+extern short leavingGame;
+extern short snoidsOnTheirWay;
+extern short snoidsArrived;
+extern short dialogFlags;
+extern short buttonDown; /* the mouse button down */
 extern ShortRect g_4a0a34[5];
 extern short g_4ab530[5];
-extern char g_4b87fe;
-extern short g_4afb32;
+extern char soundOn;
+extern short rosterChanged;
 extern short g_4b7562;
-extern short g_4b0d4c;
+extern short puzzleLeft;
 extern short campY[10][5]; /* @data 0x4a09c6: each slot's y, in two layouts */
 extern short currentScene; /* @data 0x4b0d4e */
-extern short g_4b0d50;
-extern short g_4b0d52;
-extern short g_4b0d54;
-extern short g_4b0d56;
+extern short pendingScene;
+extern short sceneDue;
+extern short journeyTo;
+extern short journeyFrom;
 extern char installDir[256]; /* @data 0x4b1828 */
 extern char moduleFileName[256]; /* @data 0x4b28d4 */
 extern char g_4b29d4[];
-extern short g_4b2ad4;
-extern long g_4b2ad8;
-extern long g_4b2adc;
+extern short movieShowing;
+extern long currentMovie;
+extern long movieController;
 extern short g_4b2aea;
 extern HINSTANCE appInstance; /* @data 0x4b2af0 */
 extern HINSTANCE appPreviousInstance; /* @data 0x4b2af4 */
@@ -1126,12 +1126,12 @@ extern short windowed; /* @data 0x4b2d38 */
 extern short g_4b2d3a;
 extern short g_4b2d3e;
 extern short g_4b2d40;
-extern short g_4b754a;
+extern short practiceLevel;
 typedef void (*SnoidArrived)(short id);
-extern short g_4b80c4[6];
-extern short g_4b80d2;
+extern short modeCursors[6];
+extern short cursorMode;
 extern unsigned long g_4b80d4;
-extern short g_4b80e0; /* ends the main loop when set */
+extern short quitRequested; /* ends the main loop when set */
 extern short regionErrorCode; /* @data 0x4b9b64 */
 extern OsState os; /* @data 0x4b9cf4 */
 extern short g_4b7cf8;
@@ -1140,10 +1140,10 @@ extern ThreadState threads; /* @data 0x4b9d4c */
 /* Game functions not decompiled yet */
 
 unsigned long timerTime(); /* the engine's clock, in ms */
-extern short g_4a7e68;
+extern short journeyRoute;
 short playSound(short key, long type, short channel, short eventType, short discard); /* 0x41200c */
 
-extern unsigned short g_4a48e4; /* show the memory statistics */
+extern unsigned short showMemoryStats; /* show the memory statistics */
 /* QuickTime (see quicktime.py) */
 long __cdecl QTInitialize(long *version);
 long qtim_0b();
@@ -3566,30 +3566,30 @@ extern short viewsLocked; /* @data 0x4b80ee */
 extern short viewsShown; /* @data 0x4b80ec */
 extern short viewPlaceCount; /* @data 0x4b84de */
 extern Point viewPlaces[125]; /* @data 0x4b84e0 */
-extern short g_4b86d4[125];
+extern short viewPlaceOwners[125];
 extern short groupLeader[17]; /* @data 0x4b8b10 */
-extern char g_4b8b32[17];
-extern char g_4b8b43[17];
+extern char groupFlagsA[17];
+extern char groupFlagsB[17];
 extern short soundRanges; /* @data 0x4b94b8 */
 extern short placedViewCount; /* @data 0x4b80f4 */
 extern short placedViews[125]; /* @data 0x4b80f6: views added with flag 0x2000 */
 extern Point placedViewPoints[125]; /* @data 0x4b81f0 */
-extern short g_4b83e4[125];
+extern short placeClaims[125];
 extern short g_4a7d42;
-extern short g_4b9688;
+extern short dialogQuestion;
 extern short g_4b754c;
 extern short g_4b755e;
 extern short g_4b7560;
-extern long g_4b7544; /* @data 0x4b7544: the last one-feature rule made (tunnels, bridge) */
-extern short g_4b7548; /* @data 0x4b7548: and how many it matched */
+extern long lastRuleMask; /* @data 0x4b7544: the last one-feature rule made (tunnels, bridge) */
+extern short lastRuleCount; /* @data 0x4b7548: and how many it matched */
 extern short g_4b7566;
-extern long g_4b9670;
-extern long g_4b9674;
+extern long creditsImagesResource;
+extern long creditsBackdropResource;
 extern SoundChannels viewSounds; /* @data 0x4b8a0c */
 extern SoundChannels viewSounds2; /* @data 0x4b8a8e */
-extern long g_4b7b4c; /* the sounds' map */
-extern long g_4b7b50; /* the MIDI map */
-extern char g_4b8803; /* debugging messages are on (debugMessage) */
+extern long soundsMap; /* the sounds' map */
+extern long midiMapFile; /* the MIDI map */
+extern char debugMessagesOn; /* debugging messages are on (debugMessage) */
 extern short fillViews; /* @data 0x4a7b78: debugging: fill the game area first */
 extern short labelActorsOnly; /* @data 0x4a7b7a: drawViewLabels only labels Zoombinis */
 extern short labelIds; /* @data 0x4a7b7c: drawViewLabels shows ids */
@@ -3598,20 +3598,20 @@ extern short viewsPaused; /* @data 0x4a7b82 */
 extern short viewsStep; /* @data 0x4a7b84: one update while paused */
 extern ShortRect fpsRect; /* @data 0x4a7bba */
 extern short lastViewSound; /* @data 0x4b80ea */
-extern char g_4b87ff;
+extern char musicOn;
 extern unsigned long updateTime; /* @data 0x4b8b54 */
 extern unsigned long fpsTime; /* @data 0x4b9590 */
 extern unsigned long fpsFrames; /* @data 0x4b9594 */
 extern unsigned long fpsMin; /* @data 0x4b9598 */
 extern unsigned long fpsMax; /* @data 0x4b959c */
 extern short g_4b966c;
-extern short g_4b9686;
+extern short dialogClosing;
 extern unsigned short soundTests; /* @data 0x4a7b80: report the sounds started */
 extern short *scripts[300]; /* @data 0x4b9008: the 'SCRB' scripts loaded */
 extern short hintSound;
-extern short g_4b97fc;
-extern short g_4b9804;
-extern short g_4b98cc;
+extern short dialogPressed;
+extern short creditsView;
+extern short pendingDialogPress;
 /* The dialogs' texts, by index. */
 enum DialogText
 {
@@ -3651,11 +3651,11 @@ enum DialogText
 };
 extern char gameName[]; /* @data 0x4a48ea */
 extern char clickToDragOption; /* @data 0x4b8800: the options' click-to-drag setting */
-extern unsigned short g_4b0d4a;
+extern unsigned short transitionsOn;
 extern short g_4a74dc;
 extern short savedGames; /* @data 0x4b95a0 */
 extern short nextSaveId; /* @data 0x4b95a2 */
-extern short g_4a7d3c;
+extern short busyCount;
 extern ImageBank *groupBanks[8]; /* @data 0x4b95c4 */
 /* The points Zoombinis' paths join ('NODE', big-endian), numbered from 1. */
 struct PathNodes
@@ -3815,8 +3815,8 @@ extern short g_4afc6c[];
 extern short g_4afd8c[];
 extern short takenRows[20][4]; /* the rows taken */
 extern short takenRowsCopy[20][4]; /* and a copy */
-extern short g_4b04c8[][13];
-extern short g_4b061a[][13];
+extern short squareViews[][13];
+extern short squareKinds[][13];
 extern short g_4b0a10[];
 extern short g_4b0b6e[];
 extern short g_4b0ba0[];
@@ -3847,22 +3847,22 @@ extern short *g_4afbd4;
 extern GroupList g_4a2194;
 
 extern short g_4b15a8;
-extern SceneButton g_4a288a[4];
-extern Snoid g_4b1484; /* the Zoombini being made */
+extern SceneButton netButtons[4];
+extern Snoid snoidBeingMade; /* the Zoombini being made */
 extern short g_4b15a6;
 extern short g_4b15aa;
-extern SceneButton g_4a2efc[27]; /* [0] isn't a button */
-extern ImageBank *g_4b15a0;
+extern SceneButton isleButtons[27]; /* [0] isn't a button */
+extern ImageBank *isleButtonImages;
 extern char g_4b157d[];
 extern short ambientSound; /* @data 0x4b0d48: the last one */
 extern short ambientSoundCount; /* @data 0x4b0d58 */
 extern char g_4a7410;
-extern short g_4a25c8; /* the maze's frame is running */
-extern Point g_4a2406[4][20]; /* each row's spots to walk off by */
+extern short inMazeFrame; /* the maze's frame is running */
+extern Point mazeExitSpots[4][20]; /* each row's spots to walk off by */
 extern unsigned long g_4b0d30;
 extern unsigned long g_4b0d34;
 extern short pizzaLevel;
-extern short g_4b15d4;
+extern short pizzaPartySize;
 extern short willaState;
 extern short shylerState;
 extern short pizzaSolved;
@@ -3875,14 +3875,14 @@ struct ShownPizza
     short unknown4;
     short script;
 };
-extern short g_4b1666;
-extern short g_4b1668;
+extern short toppingsDx;
+extern short toppingsDy;
 extern short g_4b181c;
 extern short walkerView;
 extern short caveValues[2][5]; /* @data 0x4ab87e: and their values */
 extern short caveValueCounts[6][6];
 extern short g_4a0ff0;
-extern short g_4ab916[2][21]; /* @data 0x4ab916: the values of the roster's features each place wants */
+extern short cavePlaceValues[2][21]; /* @data 0x4ab916: the values of the roster's features each place wants */
 extern unsigned long g_4a75e4; /* @data 0x4a75e4: slots used (allocateSlot) */
 extern unsigned long g_4a7600; /* @data 0x4a7600: slots used (allocateSlot) */
 extern unsigned long g_4a7614; /* @data 0x4a7614 */

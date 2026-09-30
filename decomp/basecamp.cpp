@@ -574,7 +574,7 @@ void nudgeRect(ShortRect *rect, short direction)
 /* @zoombi32 0x00416754 */
 void resetCamp()
 {
-    g_4ab518 = g_4ab51a = g_4b0d52 = 0;
+    g_4ab518 = g_4ab51a = sceneDue = 0;
     g_4ab52a = g_4ab52c = 0;
     g_4ab512 = 0;
     g_4ab52e = 0;
@@ -594,7 +594,7 @@ long campKey(long)
 /* Not exact: register allocation. The original shares ebx between the
    loop counters, `returned` and `reason`, esi between the views, `last` and
    `sound`, and edi between `appended` and `limit`; here `last` gets a frame
-   slot and edi caches g_4a4ba0's address instead. */
+   slot and edi caches gameState's address instead. */
 /* @zoombi32 0x00416789 */
 void enterCamp()
 {
@@ -613,13 +613,13 @@ void enterCamp()
 
     campActive = 0;
     resetCamp();
-    saved = g_4b87fe;
-    g_4b87fe = 0;
-    g_4afb32 = 1;
+    saved = soundOn;
+    soundOn = 0;
+    rosterChanged = 1;
     addSoundRange(20000, 29999, 1);
     addSoundRange(2000, 0x833, 0);
     addSoundRange(0x44c, 0x4af, 1);
-    camp = (Camp *)(g_4a4ba0 + 0xce);
+    camp = (Camp *)(gameState + 0xce);
     campRow = camp->row;
     campCount = camp->count;
     campLast = campSlotsUsed();
@@ -651,7 +651,7 @@ void enterCamp()
         View *view = findView(addView(0x20000, drawCels, runViewScript, k, 0, 0, 0, 0));
         if (view) {
             runViewScript(view, removedRgn);
-            value = ((short *)(g_4a4ba0 + 0x14))[k - 0x457];
+            value = ((short *)(gameState + 0x14))[k - 0x457];
             view->body.frameOffset = scriptFrameOffset(scripts[view->body.script], &value, 0);
             view->body.frame = value;
             view->nextUpdate = 0;
@@ -669,7 +669,7 @@ void enterCamp()
     if (party()->count)
         makePartySnoids(0);
     returned = countChosenSnoids();
-    *(short *)(g_4a4ba0 + 0x4a) += returned;
+    *(short *)(gameState + 0x4a) += returned;
     *party() = *savedParty();
     savedParty()->count = 0;
     savedParty()->unknown2 = 1;
@@ -696,12 +696,12 @@ void enterCamp()
     updateViews();
     if (returned)
         staggerSnoids(0x2d, 0x1e);
-    g_4ab52e = *(short *)(g_4a4ba0 + 0x48) >= 625
-               && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0xa1fc) < 16;
+    g_4ab52e = *(short *)(gameState + 0x48) >= 625
+               && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0xa1fc) < 16;
     if (g_4ab52e) {
         short n = countChosenSnoids();
 
-        g_4ab524 = n && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0xa1fc) <= n;
+        g_4ab524 = n && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0xa1fc) <= n;
         g_4ab526 = g_4ab524;
     } else {
         g_4ab526 = g_4ab524 = countChosenSnoids() >= 16;
@@ -709,22 +709,22 @@ void enterCamp()
     setGroupLists(campGroupLists, 2, (short)0xc000);
     highlightItemAt(1, 1);
     drawSceneButtons(0, 0, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     campActive = 1;
     sound = 0;
     reason = -1;
-    if (g_4b0d4c) {
-        reason = campHint((short *)(g_4a4ba0 + 0x30));
-        g_4b0d4c = 0;
+    if (puzzleLeft) {
+        reason = campHint((short *)(gameState + 0x30));
+        puzzleLeft = 0;
     }
-    if (reason == 2 && !*(short *)(g_4a4ba0 + 0x32) && !*(short *)(g_4a4ba0 + 0x38)
-        && *(short *)(g_4a4ba0 + 0x4a) <= 16) {
+    if (reason == 2 && !*(short *)(gameState + 0x32) && !*(short *)(gameState + 0x38)
+        && *(short *)(gameState + 0x4a) <= 16) {
         reason = 1;
-        *(unsigned short *)(g_4a4ba0 + 0x30) &= 0xcfff;
+        *(unsigned short *)(gameState + 0x30) &= 0xcfff;
     }
     limit = 4;
-    if (*(unsigned short *)(g_4a4ba0 + 0x30) & 0x3000)
+    if (*(unsigned short *)(gameState + 0x30) & 0x3000)
         limit = 6;
     if (!g_4ab52e) {
         switch (reason) {
@@ -777,13 +777,13 @@ void enterCamp()
         }
     }
     resetViewClock();
-    g_4b87fe = saved;
+    soundOn = saved;
     if (sound)
         queueViewSound(sound, 0);
 }
 
 /* Leaves the camp: the party that set out (or, if it was the journey's
-   end or g_4a48e6 is set, none) saved, and everything the camp loaded
+   end or leavingGame is set, none) saved, and everything the camp loaded
    freed. */
 /* @zoombi32 0x00416ede */
 void leaveCamp()
@@ -794,7 +794,7 @@ void leaveCamp()
 
         clearViews();
         if (!viewsLocked) {
-            if (g_4a48e6 || g_4b0d50 == 1) {
+            if (leavingGame || pendingScene == 1) {
                 party()->unknown2 = 0;
                 party()->unknown4 = 0;
                 *savedParty() = *party();
@@ -805,7 +805,7 @@ void leaveCamp()
                 *savedParty() = *party();
                 party()->unknown2 = 0;
                 party()->unknown4 = 1;
-                *(short *)(g_4a4ba0 + 0x4a) -= countPresentTravellers();
+                *(short *)(gameState + 0x4a) -= countPresentTravellers();
             }
             compactCamp();
             noteCampSlot(-1);
@@ -820,7 +820,7 @@ void leaveCamp()
     }
 }
 
-/* The camp's idle work: leaving once asked to (g_4b0d52) and sound 996 is
+/* The camp's idle work: leaving once asked to (sceneDue) and sound 996 is
    done, else noting which of buttons 3-6 the cursor is over. */
 /* @zoombi32 0x00417000 */
 void campIdle()
@@ -830,21 +830,21 @@ void campIdle()
     if (!campBusy && campActive) {
         campBusy = 1;
         updateViews();
-        if (g_4b0d52) {
+        if (sceneDue) {
             if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
                 campBusy = 0;
                 return;
             }
-            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
-                g_4b0d50 = g_4b0d52;
-                g_4b0d52 = 0;
+            if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1) {
+                pendingScene = sceneDue;
+                sceneDue = 0;
                 setCurrentMap(0);
                 leaveCamp();
             }
         } else {
             short over = 0;
 
-            if (!g_4ab52c && !g_4b9684) {
+            if (!g_4ab52c && !dialogFlags) {
                 getCursorPosition(&where);
                 for (short i = 3; !over && i < 7; i++)
                     if (ptInRect(&campButtons[i].rect, where))
@@ -868,9 +868,9 @@ void campButtonClicked(short button)
     Point where;
     short sound;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         leaveCamp();
     } else {
@@ -884,7 +884,7 @@ void campButtonClicked(short button)
                 drawSceneButtons(button, 0, 0, 1);
                 markPlacedSnoids();
                 sendSnoids(0x2a8, 0x13c, 0x2d);
-                g_4b0d52 = 10;
+                sceneDue = 10;
             } else {
                 if (g_4ab52e) {
                     switch (randomBetween(1, 3)) {
@@ -912,7 +912,7 @@ void campButtonClicked(short button)
                 drawSceneButtons(button, 0, 0, 1);
                 markPlacedSnoids();
                 sendSnoids(0x2a8, 0x190, 0x2d);
-                g_4b0d52 = 13;
+                sceneDue = 13;
             } else {
                 if (g_4ab52e) {
                     switch (randomBetween(1, 3)) {
@@ -937,7 +937,7 @@ void campButtonClicked(short button)
             drawSceneButtons(button, 1, 0, 1);
             waitForEventFor(0, 2, 0, 1);
             drawSceneButtons(button, 0, 0, 1);
-            g_4b0d50 = 1;
+            pendingScene = 1;
             leaveCamp();
             break;
         case 4:
@@ -950,7 +950,7 @@ void campButtonClicked(short button)
                 g_4a080c = button - 3;
                 updateCampScroll(0);
                 mainLoopEvents();
-            } while (isButtonStillDown(g_4b80d0));
+            } while (isButtonStillDown(buttonDown));
             updateCampScroll(1);
             g_4ab512 = 0;
             drawSceneButtons(button, 0, 0, 1);
@@ -980,16 +980,16 @@ void campMouse(short action)
     short slot;
     short i;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         leaveCamp();
     } else if (!g_4ab52a || action == 2) {
         getCursorPosition(&where);
         picked = 0;
         view = 0;
-        if (action == 1 && g_4b755a <= 0) {
+        if (action == 1 && snoidsOnTheirWay <= 0) {
             if ((view = viewAt(where, 1, 1)) == 0) {
                 spot.left = spot.right = where.x;
                 spot.top = spot.bottom = where.y;
@@ -1021,7 +1021,7 @@ void campMouse(short action)
         case 1:
             break;
         case 2:
-            if (!view && g_4b755a <= 0)
+            if (!view && snoidsOnTheirWay <= 0)
                 view = viewAt(where, 1, 1);
             if (view) {
                 short placed = 0;
@@ -1072,7 +1072,7 @@ void campMouse(short action)
                 if (g_4ab52e) {
                     short n = countChosenSnoids();
 
-                    g_4ab524 = n && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0xa1fc) <= n;
+                    g_4ab524 = n && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0xa1fc) <= n;
                 } else {
                     g_4ab524 = countChosenSnoids() >= 16;
                 }
@@ -1102,8 +1102,8 @@ void campMouse(short action)
                     sound = 0x462;
                     break;
                 }
-                ((short *)(g_4a4ba0 + 0x14))[i] = view->body.frame + 1;
-                ((short *)(g_4a4ba0 + 0x14))[i] %= view->body.lastFrame + 1;
+                ((short *)(gameState + 0x14))[i] = view->body.frame + 1;
+                ((short *)(gameState + 0x14))[i] %= view->body.lastFrame + 1;
                 if (sound)
                     queueViewSound(sound, 0);
             } else if ((view = viewAt(where, 0x40000, 1)) != 0) {

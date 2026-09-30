@@ -20,7 +20,7 @@
 /*
  * One pass of the main loop (WinMain runs it and mainLoopEvents until it's
  * told to quit); always carries on. While g_4a4a10 is set it runs the game's
- * timed work, and if g_4b80d2 is 1 that's all; otherwise it handles a pending
+ * timed work, and if cursorMode is 1 that's all; otherwise it handles a pending
  * event (handleNextEvent/discardEvents), or passes on where the cursor is (handleMouse).
  */
 /* @zoombi32 0x004623b8 */
@@ -29,7 +29,7 @@ short mainLoopUpdate()
     Point cursor;
 
     if (g_4a4a10) {
-        if (g_4b0d50 != -1)
+        if (pendingScene != -1)
             enterNextScene();
         if (g_4a4b98 && viewTimeSinceMark() > 3600) {
             markViewTime();
@@ -37,7 +37,7 @@ short mainLoopUpdate()
             if (!g_4a4b98)
                 g_4a4b98 = 1;
         }
-        if (g_4b80d2 == 1) {
+        if (cursorMode == 1) {
             if (g_4a79c0) {
                 g_4b80d8 = clockTime();
                 g_4a79c0 = 0;
@@ -60,7 +60,7 @@ short mainLoopUpdate()
 }
 
 /*
- * Shows a debugging message, if they're on (g_4b8803) and `value` isn't 0:
+ * Shows a debugging message, if they're on (debugMessagesOn) and `value` isn't 0:
  * `before`, *number, `after` and `value` (if positive), in debugRect; if
  * `wait`, waits for a key or click.
  */
@@ -71,7 +71,7 @@ void debugMessage(short value, const char *after, short *number, const char *bef
     Color saved;
     short i;
 
-    if (g_4b8803) {
+    if (debugMessagesOn) {
         if (value) {
             line[255] = 0;
             if (before)
@@ -113,7 +113,7 @@ void debugMessage(short value, const char *after, short *number, const char *bef
 
 /* A key pressed: noted for the cheats, then given to the dialog or the
    scene; else the game's own keys (the options, the dialogs, and with
-   debugging on, g_4b8803, the debugging keys), showing a toggle's new
+   debugging on, debugMessagesOn, the debugging keys), showing a toggle's new
    setting. */
 /* @zoombi32 0x0046293a */
 void gameKey(unsigned short key)
@@ -123,7 +123,7 @@ void gameKey(unsigned short key)
 
     if (key < 256)
         noteCheatKey(key);
-    if (g_4b9684) {
+    if (dialogFlags) {
         dialogKey(key);
         handled = 1;
     } else if (currentScene != -1 && scenes[currentScene]->key && scenes[currentScene]->key(key))
@@ -132,7 +132,7 @@ void gameKey(unsigned short key)
         switch (key) {
         case 32:
             if ((short)isCheat(0xa675d204, 0xfd3939a0)) {
-                g_4b8803 = 1;
+                debugMessagesOn = 1;
                 showNameTag("you got it", 90, 1);
             } else if ((short)isCheat(0xd09804a9, 0xdd3934a0)) {
                 midiTest = !midiTest;
@@ -151,14 +151,14 @@ void gameKey(unsigned short key)
             }
             break;
         case 94:
-            if (g_4b8803)
-                g_4a48e4 = !g_4a48e4;
+            if (debugMessagesOn)
+                showMemoryStats = !showMemoryStats;
             break;
         case 64:
-            if (g_4b8803) {
-                g_4a4ba0[0x50] |= 1;
-                *(short *)(g_4a4ba0 + 0x52) |= 1;
-                g_4a4ba0[0x51] |= 1;
+            if (debugMessagesOn) {
+                gameState[0x50] |= 1;
+                *(short *)(gameState + 0x52) |= 1;
+                gameState[0x51] |= 1;
             }
             break;
         case 47:
@@ -175,8 +175,8 @@ void gameKey(unsigned short key)
             askSaveGame();
             break;
         case 2:
-            g_4b87ff = !g_4b87ff;
-            if (g_4b87ff) {
+            musicOn = !musicOn;
+            if (musicOn) {
                 queueViewSound(0, 0);
                 message = 1;
             } else {
@@ -185,19 +185,19 @@ void gameKey(unsigned short key)
             }
             break;
         case 4:
-            g_4b87fe = !g_4b87fe;
-            if (!g_4b87fe && lastViewSound) {
+            soundOn = !soundOn;
+            if (!soundOn && lastViewSound) {
                 stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 lastViewSound = 0;
             }
-            if (g_4b87fe)
+            if (soundOn)
                 message = 3;
             else
                 message = 4;
             break;
         case 7:
-            *(unsigned short *)(g_4a4ba0 + 0x20) = !*(unsigned short *)(g_4a4ba0 + 0x20);
-            if (*(short *)(g_4a4ba0 + 0x20))
+            *(unsigned short *)(gameState + 0x20) = !*(unsigned short *)(gameState + 0x20);
+            if (*(short *)(gameState + 0x20))
                 message = 5;
             else
                 message = 6;
@@ -221,8 +221,8 @@ void gameKey(unsigned short key)
             handled = 1;
             break;
         case 20:
-            g_4b0d4a = !g_4b0d4a;
-            if (g_4b0d4a)
+            transitionsOn = !transitionsOn;
+            if (transitionsOn)
                 message = 12;
             else
                 message = 11;
@@ -239,26 +239,26 @@ void gameKey(unsigned short key)
             handled = 1;
             break;
         case 61:
-            if (g_4b8803)
+            if (debugMessagesOn)
                 unionRgnRect(removedRgn, &gameRect);
             break;
         case 38:
-            if (g_4b8803)
+            if (debugMessagesOn)
                 drawPaletteChart();
             break;
         case 42:
-            if (g_4b8803)
+            if (debugMessagesOn)
                 g_4a4b98 = g_4a7af8 = 0;
             break;
         case 91:
-            if (g_4b8803) {
+            if (debugMessagesOn) {
                 viewStep = 0;
                 viewsPaused = 0;
                 debugMessage(-1, "Step-Mode OFF", 0, 0, 0);
             }
             break;
         case 93:
-            if (g_4b8803) {
+            if (debugMessagesOn) {
                 if (viewsPaused) {
                     if (viewStep) {
                         viewStep++;
@@ -279,7 +279,7 @@ void gameKey(unsigned short key)
             break;
         case 5:
         case 6:
-            if (g_4b8803) {
+            if (debugMessagesOn) {
                 labelActorsOnly = key == 6;
                 if (viewsPaused)
                     viewStep = 1;
@@ -291,7 +291,7 @@ void gameKey(unsigned short key)
             break;
         case 24:
         case 25:
-            if (g_4b8803) {
+            if (debugMessagesOn) {
                 labelActorsOnly = key == 25;
                 if (viewsPaused)
                     viewStep = 1;
@@ -302,7 +302,7 @@ void gameKey(unsigned short key)
             }
             break;
         case 9:
-            if (g_4b8803) {
+            if (debugMessagesOn) {
                 if (countSnoidViews() > countChosenSnoids()) {
                     chooseSnoids(1, 1);
                     debugMessage(-1, "ALL in party", 0, 0, 0);
@@ -311,11 +311,11 @@ void gameKey(unsigned short key)
             }
             break;
         case 78:
-            if (g_4b8803)
+            if (debugMessagesOn)
                 drawPaths();
             break;
         case 80:
-            if (g_4b8803) {
+            if (debugMessagesOn) {
                 fpsTime = clockTime();
                 fpsMin = 999;
                 fpsMax = 0;
@@ -326,15 +326,15 @@ void gameKey(unsigned short key)
             }
             break;
         case 83:
-            if (g_4b8803)
+            if (debugMessagesOn)
                 soundTests = !soundTests;
             break;
         case 18:
-            if (g_4b8803)
+            if (debugMessagesOn)
                 toggleShowPositions();
             break;
         case 26:
-            if (g_4b8803) {
+            if (debugMessagesOn) {
                 if (!fillViews)
                     fillViews = 1;
                 else {
@@ -352,36 +352,36 @@ void gameKey(unsigned short key)
         resetViewClock();
 }
 
-/* Sets the cursor mode (0: the arrow; else cursor g_4b80c4[mode]):
+/* Sets the cursor mode (0: the arrow; else cursor modeCursors[mode]):
    whether it changed. */
 /* @zoombi32 0x0046251c */
 short setCursorMode(long mode)
 {
-    short changed = mode != g_4b80d2;
+    short changed = mode != cursorMode;
 
     if (changed) {
-        if (g_4b80d2 == 1)
+        if (cursorMode == 1)
             g_4b80d4 = g_4b80dc = clockTime();
         discardEvents(3);
         if (!mode)
             setCursorShape(0);
         else
-            setCursorShape((const MacCursor *)handleData(g_4b80c4[mode]));
-        g_4b80d2 = mode;
+            setCursorShape((const MacCursor *)handleData(modeCursors[mode]));
+        cursorMode = mode;
     }
     return changed;
 }
 
-/* Sets the cursor for mode g_4b80d2: the arrow for 0, else that mode's
-   cursor (g_4b80c4). */
+/* Sets the cursor for mode cursorMode: the arrow for 0, else that mode's
+   cursor (modeCursors). */
 /* @zoombi32 0x0046258a */
 void setModeCursor()
 {
-    if (!g_4b80d2) {
+    if (!cursorMode) {
         setCursorShape(0);
         return;
     }
-    setCursorShape((const MacCursor *)handleData(g_4b80c4[g_4b80d2]));
+    setCursorShape((const MacCursor *)handleData(modeCursors[cursorMode]));
 }
 
 /* Shows the about box (the title, version and copyright, in a framed
@@ -423,9 +423,9 @@ void showAboutBox()
 /* @zoombi32 0x004624bd */
 void mousePressed(Point *where, short button)
 {
-    g_4b80d0 = button;
+    buttonDown = button;
     resetViewClock();
-    if (g_4b9684)
+    if (dialogFlags)
         dialogClick(*where);
     else
         handleMouse(where, button);

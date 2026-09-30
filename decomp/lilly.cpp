@@ -93,7 +93,7 @@ short lillyClaimIndex()
 /* @zoombi32 0x0042e69a */
 void releaseLillyClaim()
 {
-    g_4b83e4[lillyClaim] = 0;
+    placeClaims[lillyClaim] = 0;
     lillyClaim = 0;
 }
 
@@ -151,7 +151,7 @@ void updateLillyBackdrop(View *view, short region)
 {
     ShortRect unused;
 
-    if (!g_4b9684 && view->reset) {
+    if (!dialogFlags && view->reset) {
         view->reset = 0;
         unionRgnRect(region, &g_4a1dfc);
     }
@@ -188,7 +188,7 @@ void deleteHotelTalker()
 {
     deleteView(g_4ac0ba);
     g_4ac0ba = 0;
-    if (g_4b87fe && lastViewSound) {
+    if (soundOn && lastViewSound) {
         stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
         lastViewSound = 0;
     }
@@ -361,9 +361,9 @@ void lillyActorNotify(View *view, short event)
     switch (event) {
     case 1:
         setLillyStage(5);
-        g_4b755a--;
-        if (g_4b755a < 0)
-            g_4b755a = 0;
+        snoidsOnTheirWay--;
+        if (snoidsOnTheirWay < 0)
+            snoidsOnTheirWay = 0;
         break;
     case 2:
         g_4ace72[g_4ace9a] = self->id;
@@ -477,7 +477,7 @@ void updateMarkerView(View *view, short region)
 {
     ShortRect rect;
 
-    if (!g_4b9684) {
+    if (!dialogFlags) {
         if (view->reset) {
             view->reset = 0;
             view->nextUpdate = 0;
@@ -626,7 +626,7 @@ void checkLillyArrivals()
         }
     }
     if (count < g_4af0e8)
-        if (randomBetween(0, 4) > g_4a1b1c - 1 || (*(short *)(g_4a4ba0 + 0x34) & 0xfff) <= 3)
+        if (randomBetween(0, 4) > g_4a1b1c - 1 || (*(short *)(gameState + 0x34) & 0xfff) <= 3)
             queueViewSound(randomBetween(20045, 20048), 0);
 }
 
@@ -634,7 +634,7 @@ void checkLillyArrivals()
 /* @zoombi32 0x0042c306 */
 void updateSquareHighlight(View *view, short region)
 {
-    if (!g_4b9684) {
+    if (!dialogFlags) {
         if (view->reset) {
             view->body.running = 0;
             view->nextUpdate = 0;
@@ -2817,7 +2817,7 @@ void flashSquare(View *view)
 /* @zoombi32 0x00426831 */
 short hotelKey(unsigned short key)
 {
-    if (!g_4b8803 && key != 367)
+    if (!debugMessagesOn && key != 367)
         return 0;
     switch (key) {
     case 367:
@@ -2980,25 +2980,25 @@ void hotelFrame()
         return;
     g_4a1ab0 = 1;
     updateViews();
-    if (g_4b0d52) {
+    if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
             g_4a1ab0 = 0;
             return;
         }
-        if (!g_4b9688 || g_4b9688 == 3) {
-            if (g_4b9688 == 3)
+        if (!dialogQuestion || dialogQuestion == 3) {
+            if (dialogQuestion == 3)
                 chooseSnoids(0, 0);
-            if (viewsLocked || !g_4b755a) {
-                g_4b0d50 = g_4b0d52;
-                g_4b0d52 = 0;
+            if (viewsLocked || !snoidsOnTheirWay) {
+                pendingScene = sceneDue;
+                sceneDue = 0;
                 setCurrentMap(0);
                 closeHotel();
                 g_4a1ab0 = 0;
                 return;
             }
-        } else if (g_4b9688 == 2) {
-            g_4b9688 = 0;
-            g_4b0d52 = 0;
+        } else if (dialogQuestion == 2) {
+            dialogQuestion = 0;
+            sceneDue = 0;
         }
     }
     if (g_4ac0f0) {
@@ -3083,7 +3083,7 @@ void hotelFrame()
             drawHotelButton(1, 0, 0);
             drawHotelButton(2, 0, 0);
             updateViews();
-            showRect(&g_4aa7b8);
+            showRect(&shownGameRect);
             resetViewClock();
         }
     } else if ((!g_4ac0be || g_4ac0be == 4) && g_4ac0c0 && !g_4ac13c) {
@@ -3155,7 +3155,7 @@ void hotelFrame()
                         startRoomColumnViews();
                 } else {
                     startView9007(hotelRoom);
-                    if (g_4ac0fe >= 11 && !*(short *)(g_4a4ba0 + 0x20)) {
+                    if (g_4ac0fe >= 11 && !*(short *)(gameState + 0x20)) {
                         other = findView(g_4ac40a[hotelRoom]);
                         other->notify = roomViewNotify;
                     }
@@ -3606,9 +3606,9 @@ void lillyClick(short action)
     short first;
     short second;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeHotel();
         return;
@@ -3626,7 +3626,7 @@ void lillyClick(short action)
         drawHotelButton(action, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawHotelButton(action, 0, 1);
-        g_4b0d52 = 1;
+        sceneDue = 1;
         askKeepParty();
         break;
     case 2:
@@ -3637,11 +3637,11 @@ void lillyClick(short action)
             drawHotelButton(action, 0, 1);
             queueViewSound(996, 0);
             showBusyCursor();
-            g_4b0d52 = 15;
+            sceneDue = 15;
         }
         break;
     case 3:
-        if (g_4ac0f2 || g_4ac0f4 || g_4ac0e6 || g_4ac0dc || g_4b755a > 0 || g_4ac0ce)
+        if (g_4ac0f2 || g_4ac0f4 || g_4ac0e6 || g_4ac0dc || snoidsOnTheirWay > 0 || g_4ac0ce)
             break;
         chosen = 0;
         getCursorPosition(&where);
@@ -3668,7 +3668,7 @@ void lillyClick(short action)
         }
         if (view && !chosen) {
             for (i = 0; i < placedViewCount; i++)
-                g_4b83e4[i] = 0;
+                placeClaims[i] = 0;
             dragSnoid(view, where, 0, 0);
             unloadSounds();
             g_4ac0d4 = heldPlaceNumber();
@@ -3811,7 +3811,7 @@ void openHotel()
     g_4ac104 = g_4ac100;
     if (hotelLevel == 3)
         g_4ac0ee = 125;
-    g_4b0d52 = g_4abec4 = 0;
+    sceneDue = g_4abec4 = 0;
     g_4abec0 = hotelGoReady = 0;
     useAltSnoids(0);
     openGameFile(&g_4abebc, "Hotel.MHK");
@@ -3877,11 +3877,11 @@ void openHotel()
         g_4ac0c8 = addView(0x108000, drawCels, runViewScript, labels + 11500, 6, 0, 0, 0);
     }
     g_4ac0be = 0;
-    campHint((short *)(g_4a4ba0 + 0x3a));
+    campHint((short *)(gameState + 0x3a));
     hintSound = 20081;
     switch (hotelLevel) {
     case 0:
-        if ((*(short *)(g_4a4ba0 + 0x3a) & 0xfff) > 1)
+        if ((*(short *)(gameState + 0x3a) & 0xfff) > 1)
             g_4ac0be = randomUpTo(2) + 1;
         break;
     case 1:
@@ -3915,7 +3915,7 @@ void openHotel()
     g_4ac0ca = addView(0x100000, drawCels, runViewScript, 11800, 6, 0, 0, 0);
     updateViews();
     g_4ac0f2 = groupViews(g_4ac0ba, g_4ac0ba, 0, 0, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     getColors(&g_4ac51c[10], 10, 236);
     g_4abec0 = 1;
@@ -3934,9 +3934,9 @@ void otherClick(short action)
     LillyActor *actor;
     short *cel;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeLilly();
         return;
@@ -3947,18 +3947,18 @@ void otherClick(short action)
         drawLillyButton(action, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawLillyButton(action, 0, 1);
-        g_4b755c = 1;
-        g_4b0d52 = 1;
+        snoidsArrived = 1;
+        sceneDue = 1;
         askKeepParty();
         break;
     case 2:
-        if (lillyGoReady && !g_4b0d52) {
+        if (lillyGoReady && !sceneDue) {
             queueViewSound(996, 0);
             drawLillyButton(action, 1, 1);
             waitForEventFor(0, 2, 0, 1);
             drawLillyButton(action, 0, 1);
-            g_4b0d52 = 12;
-            g_4b755a = 0;
+            sceneDue = 12;
+            snoidsOnTheirWay = 0;
             g_4af360 = 0;
         }
         break;
@@ -3967,7 +3967,7 @@ void otherClick(short action)
         view = viewAt(where, 0x980002, 1);
         if (view && !g_4af360) {
             actor = (LillyActor *)&view->body;
-            if ((g_4b755a <= 0 || (g_4b755a > 0 && actor->unknownC0 == 2)) && !actor->unknownC2
+            if ((snoidsOnTheirWay <= 0 || (snoidsOnTheirWay > 0 && actor->unknownC0 == 2)) && !actor->unknownC2
                 && actor->unknownC0 != 1) {
                 dragLillyPiece(view, where);
                 actor = (LillyActor *)&view->body;
@@ -4020,7 +4020,7 @@ void otherClick(short action)
                     if (g_4af0ec == g_4af0e8) {
                         if (g_4ac922 == 6)
                             checkLillyArrivals();
-                        g_4b755a = 1;
+                        snoidsOnTheirWay = 1;
                     }
                 } else if (!actor->unknownC0) {
                     *(Point *)&actor->body.x = g_4a1ca4[cel[20]];
@@ -4144,7 +4144,7 @@ void dragLillyPiece(View *piece, Point where0)
                 short down = isButtonStillDown(2);
 
                 if (!down)
-                    down = isButtonStillDown(g_4b80d0);
+                    down = isButtonStillDown(buttonDown);
                 if (down) {
                     if (g_4af664 != 4) {
                         short d;
@@ -4536,7 +4536,7 @@ void openLilly()
     g_4ac926 = 0;
     g_4ac958 = 0;
     lillyGoReady = 0;
-    g_4b0d52 = 0;
+    sceneDue = 0;
     g_4af36c = 0;
     g_4af368 = 0;
     g_4af332 = 0;
@@ -4631,7 +4631,7 @@ void openLilly()
         place.x = g_4ac940[i + 1] + 18;
         place.y = g_4ac944[i + 1] + 15;
         placedViewPoints[i] = place;
-        g_4b83e4[i] = 0;
+        placeClaims[i] = 0;
     }
     placedViewCount = 12;
     g_4b7560 = 1;
@@ -4664,9 +4664,9 @@ void openLilly()
                         other->placed = placeByHotSpot;
                         other->notify = lillyActorNotify;
                     }
-                    g_4b755a = g_4af0e8 - n;
-                    if (g_4b755a < 0)
-                        g_4b755a = 0;
+                    snoidsOnTheirWay = g_4af0e8 - n;
+                    if (snoidsOnTheirWay < 0)
+                        snoidsOnTheirWay = 0;
                 }
                 n++;
             }
@@ -4698,7 +4698,7 @@ void openLilly()
     setGroupLists(g_4a1bc8, 1, (short)0xc000);
     drawLillyButton(1, 0, 0);
     drawLillyButton(2, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     if (g_4a1b1c == 1)
         queueViewSound(997, 0);
@@ -4717,7 +4717,7 @@ void openLilly()
     addSoundRange(10004, 10004, 0);
     addSoundRange(10003, 10003, 0);
     addSoundRange(10005, 10008, 0);
-    switch (campHint((short *)(g_4a4ba0 + 0x34))) {
+    switch (campHint((short *)(gameState + 0x34))) {
     case 2:
         hintSound = randomBetween(20076, 20077);
         break;
@@ -4760,27 +4760,27 @@ void lillyFrame()
         return;
     g_4a1d88 = 1;
     updateViews();
-    if (g_4b0d52) {
+    if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
             g_4a1d88 = 0;
             return;
         }
-        if (!g_4b9688 || g_4b9688 == 3) {
-            if (g_4b9688 == 3)
+        if (!dialogQuestion || dialogQuestion == 3) {
+            if (dialogQuestion == 3)
                 chooseSnoids(0, 0);
-            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
-                g_4b0d50 = g_4b0d52;
-                g_4b0d52 = 0;
+            if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1) {
+                pendingScene = sceneDue;
+                sceneDue = 0;
                 setCurrentMap(0);
                 closeLilly();
                 g_4a1d88 = 0;
                 return;
             }
-        } else if (g_4b9688 == 2) {
-            g_4b9688 = 0;
-            g_4b0d52 = 0;
+        } else if (dialogQuestion == 2) {
+            dialogQuestion = 0;
+            sceneDue = 0;
         }
-    } else if (g_4b9684) {
+    } else if (dialogFlags) {
         playAmbientSound();
         g_4a1d88 = 0;
         return;
@@ -4906,7 +4906,7 @@ void lillyFrame()
             } else {
                 g_4af5a4 = 1;
                 if (g_4a1b1c > 2 && !g_4af360) {
-                    if (g_4b755a <= 0) {
+                    if (snoidsOnTheirWay <= 0) {
                         while (g_4acfe6) {
                             view = findView(g_4acec6[--g_4acfe6]);
                             if (view) {

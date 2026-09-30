@@ -504,7 +504,7 @@ void setupAnim(AnimSpec *spec)
     loadPalette(&anim->unknown352, spec->id, name, 0);
     freePalette(&anim->unknown352);
     if (spec->colorCount)
-        setColors(&g_4aa7e8[spec->firstColor], spec->firstColor, spec->colorCount);
+        setColors(&loadedPalette[spec->firstColor], spec->firstColor, spec->colorCount);
     loadSoundList(&anim->sounds, resource, name);
 }
 

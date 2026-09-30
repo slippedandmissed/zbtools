@@ -30,7 +30,7 @@ void resetTunnels()
     g_4b7fee = g_4b8088 = g_4b808a = 0;
     g_4b7fe4 = g_4b8092 = g_4b8096 = 0;
     g_4b755e = 40;
-    g_4b0d52 = g_4b7ff0.count = 0;
+    sceneDue = g_4b7ff0.count = 0;
     g_4b7fd4 = hintSound = g_4b8094 = 0;
     g_4b7fd2 = g_4b7fd0 = g_4b7fce = 0;
     g_4b7fda = g_4b7fdc = g_4b808e = 0;
@@ -47,9 +47,9 @@ void resetTunnels()
     else
         g_4b80a0 = 60;
     fillMemory(&g_4b7f18, 0, 28);
-    if (g_4b754a) {
-        g_4b7548 = 0;
-        g_4b7544 = 0;
+    if (practiceLevel) {
+        lastRuleCount = 0;
+        lastRuleMask = 0;
     }
     g_4b7fbc = randomBetween(0, 1);
 }
@@ -127,7 +127,7 @@ void tunnelRemarkNotify(View *, short event)
     case -1:
         requestViewSort();
         g_4b7fd0 = 1;
-        if (randomBetween(0, 4) > g_4b7fbe || (*(short *)(g_4a4ba0 + 0x2c) & 0xfff) <= 3) {
+        if (randomBetween(0, 4) > g_4b7fbe || (*(short *)(gameState + 0x2c) & 0xfff) <= 3) {
             chosen = countChosenSnoids();
             if (chosen < g_4b8094 && chosen)
                 queueViewSound(randomBetween(20045, 20048), 1);
@@ -214,7 +214,7 @@ void unghostDoorView()
     }
 }
 
-/* Scene 8's keys (with debugging on, g_4b8803, or else only 0x16f): t, T,
+/* Scene 8's keys (with debugging on, debugMessagesOn, or else only 0x16f): t, T,
    w (W also sets g_4b807e) and e queue a remark (queueRemark), a shows the rules,
    C, F, I and O step the views tunnelsSpeakers through their scripts, H
    adds 4 to g_4b8098. Returns whether the key was used. */
@@ -230,7 +230,7 @@ short tunnelsKey(unsigned short key)
     short i;
     short script;
 
-    if (!g_4b8803 && key != 0x16f)
+    if (!debugMessagesOn && key != 0x16f)
         return 0;
     switch (key) {
     case 0x16f:
@@ -452,7 +452,7 @@ short turnedBackAtDoor(FeatureRules *rules, short door, Snoid *snoid, unsigned s
 
 /* Makes a one-feature rule (level 1): counts the chosen Zoombinis having
    each of the 20 feature values (a nibble each of a long, big-endian like
-   the features), leaves out (g_4b7544) the count g_4b7548 if others remain,
+   the features), leaves out (lastRuleMask) the count lastRuleCount if others remain,
    looks around half the party's size for a count some values have, picks
    one of those values at random as the rule, which the door accepts or
    refuses at random (back). */
@@ -511,14 +511,14 @@ void makeOneFeatureRule()
                 || (features & 0xf000000) == (masks[i] & 0xf000000))
                 counts[i]++;
     }
-    if (g_4b7544 && g_4b7548) {
+    if (lastRuleMask && lastRuleCount) {
         found = 0;
         for (i = 0; !found && i < n; i++)
-            if (counts[i] && counts[i] != g_4b7548)
+            if (counts[i] && counts[i] != lastRuleCount)
                 found = 1;
         if (found)
             for (i = 0; i < n; i++)
-                if (counts[i] == g_4b7548)
+                if (counts[i] == lastRuleCount)
                     counts[i] = 0;
     }
     matches = 0;
@@ -1646,7 +1646,7 @@ void tunnelsSnoidNotify(View *view, short event)
     }
 }
 
-/* Scene 8's frame. Leaves the scene when asked (g_4b0d52) unless a
+/* Scene 8's frame. Leaves the scene when asked (sceneDue) unless a
    character is talking; ends the warning (g_4b8090) when its sound has;
    says the line set up to follow (g_4b7fd4) or queues the pending sound
    (g_4b8096) when nobody's talking. While turn-backs are left
@@ -1679,25 +1679,25 @@ void tunnelsFrame()
         if (isSoundPlaying(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D')))
             aside = 1;
     }
-    if (g_4b0d52) {
+    if (sceneDue) {
         if (talking) {
             g_4a7888 = 0;
             return;
         }
-        if (!g_4b9688 || g_4b9688 == 3) {
-            if (g_4b9688 == 3)
+        if (!dialogQuestion || dialogQuestion == 3) {
+            if (dialogQuestion == 3)
                 chooseSnoids(0, 0);
-            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
-                g_4b0d50 = g_4b0d52;
-                g_4b0d52 = 0;
+            if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1) {
+                pendingScene = sceneDue;
+                sceneDue = 0;
                 setCurrentMap(0);
                 closeTunnels();
                 g_4a7888 = 0;
                 return;
             }
-        } else if (g_4b9688 == 2) {
-            g_4b9688 = 0;
-            g_4b0d52 = 0;
+        } else if (dialogQuestion == 2) {
+            dialogQuestion = 0;
+            sceneDue = 0;
         }
     }
     if (g_4b8090 && g_4b808e && !isSoundPlaying(g_4b8090, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
@@ -1916,13 +1916,13 @@ void openTunnels()
     setGroupLists(tunnelsGroups, 1, (short)0xc000);
     drawTunnelsButton(1, 0, 0);
     drawTunnelsButton(2, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     chooseSnoids(0, 0);
     resetViewClock();
     g_4b7fb8 = 1;
     g_4b8094 = countSnoidViews();
-    campHint((short *)(g_4a4ba0 + 0x2c));
+    campHint((short *)(gameState + 0x2c));
     hintSound = randomBetween(20069, 20070);
     queueRemark(1);
     g_4b7fe0 = randomBetween(5400, 10800);
@@ -1958,9 +1958,9 @@ void tunnelsClicked(short which)
     short script;
     TunnelEntry entry;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeTunnels();
         return;
@@ -1971,7 +1971,7 @@ void tunnelsClicked(short which)
         drawTunnelsButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawTunnelsButton(which, 0, 1);
-        g_4b0d52 = 1;
+        sceneDue = 1;
         askKeepParty();
         break;
     case 2:
@@ -1984,7 +1984,7 @@ void tunnelsClicked(short which)
         waitForEventFor(0, 2, 0, 1);
         drawTunnelsButton(which, 0, 1);
         sendSnoids(670, 30, 45);
-        g_4b0d52 = 9;
+        sceneDue = 9;
         if (lastViewSound && isSoundPlaying(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
             stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
             lastViewSound = 0;
@@ -1996,7 +1996,7 @@ void tunnelsClicked(short which)
             g_4b7ff0.count = 0;
             g_4b7fd2 = 0;
         }
-        if (g_4b755a > 0 || g_4b7fce)
+        if (snoidsOnTheirWay > 0 || g_4b7fce)
             break;
         removed = 0;
         getCursorPosition(&where);

@@ -463,15 +463,15 @@ void freeShapeListInfo(long *resource)
 }
 
 /* Colours from a palette resource (big-endian first colour and count, then
-   the entries), into g_4aa7e8. */
+   the entries), into loadedPalette. */
 /* @zoombi32 0x0046c79c */
 void applyPaletteResource(unsigned short *data)
 {
     unsigned short first = swapShort(data[0]);
     unsigned short count = swapShort(data[1]);
 
-    memcpy(&g_4aa7e8[first], data + 2, count * sizeof(PALETTEENTRY));
-    brightenPalette(g_4aa7e8, first, count);
+    memcpy(&loadedPalette[first], data + 2, count * sizeof(PALETTEENTRY));
+    brightenPalette(loadedPalette, first, count);
 }
 
 /* @zoombi32 0x0046c808 */

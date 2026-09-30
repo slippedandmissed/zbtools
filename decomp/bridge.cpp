@@ -44,12 +44,12 @@ void resetBridge()
     g_4ab7f0 = 0;
     g_4b755e = 55;
     g_4ab7ea = g_4ab7e6 = 0;
-    g_4ab7ee = g_4b0d52 = g_4ab800 = 0;
+    g_4ab7ee = sceneDue = g_4ab800 = 0;
     g_4ab7f2 = hintSound = 0;
     g_4ab78c = g_4ab78e = 0;
     for (i = 0; i < 16; i++)
         g_4ab792[i] = g_4ab7b2[i] = 0;
-    g_4b755a = g_4b755c = g_4ab802 = 0;
+    snoidsOnTheirWay = snoidsArrived = g_4ab802 = 0;
     g_4ab7d8 = g_4ab824 = 0;
     g_4ab82a = g_4ab82c = 0;
     g_4ab830 = g_4ab838 = 0;
@@ -191,14 +191,14 @@ void bridgeViewNotify(View *view, short event)
         break;
     case -1:
         if (countChosenSnoids() < g_4ab82e
-            && (randomBetween(0, 4) > g_4ab790 || (*(short *)(g_4a4ba0 + 0x2a) & 0xfff) <= 3)
+            && (randomBetween(0, 4) > g_4ab790 || (*(short *)(gameState + 0x2a) & 0xfff) <= 3)
             && countChosenSnoids())
             queueViewSound(randomBetween(20045, 20048), 0);
         break;
     }
 }
 
-/* Scene 7's keys (with debugging on, g_4b8803, or else only 0x16f; case
+/* Scene 7's keys (with debugging on, debugMessagesOn, or else only 0x16f; case
    ignored; only while the scene is open and nobody's moving): 0x16f
    replayHint; R reports the script and type g_4ab826/g_4ab828; A shows the
    rule. Returns whether the key was used. */
@@ -209,11 +209,11 @@ short bridgeKey(unsigned short key)
     ShortRect area = {225, 0, 350, 70};
     short x;
 
-    if (!g_4b8803 && key != 0x16f)
+    if (!debugMessagesOn && key != 0x16f)
         return 0;
     if (key >= 'a' && key <= 'z')
         key -= 32;
-    if (!g_4ab788 || g_4b755a > 0)
+    if (!g_4ab788 || snoidsOnTheirWay > 0)
         return 0;
     switch (key) {
     case 0x16f:
@@ -414,7 +414,7 @@ void bridgeSnoidNotify(View *view, short event)
  * feature; 2: a value of each of two features; 3: 500 combinations), counts
  * the chosen Zoombinis matching each, and picks at random among those
  * matching as near half as possible (skipping, at level 0, the count of the
- * last rule, g_4b7548). The rule's side is random.
+ * last rule, lastRuleCount). The rule's side is random.
  */
 /* Not exact: register allocation (the original keeps `masks` in ebx and
    `value` in esi, saving esi around the arrays' copies; here they're the
@@ -615,11 +615,11 @@ void makeBridgeRule()
             picked = masks[i];
             i = n;
         }
-    g_4b7548 = 0;
-    g_4b7544 = 0;
+    lastRuleCount = 0;
+    lastRuleMask = 0;
     if (!g_4ab790 && matches == 1) {
-        g_4b7548 = best;
-        g_4b7544 = picked;
+        lastRuleCount = best;
+        lastRuleMask = picked;
     }
     bridgeRules.count = 1;
     bridgeRules.rules[0].side = randomBetween(0, 1);
@@ -765,7 +765,7 @@ void openBridge()
     setGroupLists(bridgeGroups, 1, (short)0xc000);
     drawBridgeButton(1, 0, 0);
     drawBridgeButton(2, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     chooseSnoids(0, 0);
     resetViewClock();
@@ -773,7 +773,7 @@ void openBridge()
     g_4ab788 = 1;
     g_4ab82e = countSnoidViews();
     queueViewSound(997, 0);
-    switch (campHint((short *)(g_4a4ba0 + 0x2a))) {
+    switch (campHint((short *)(gameState + 0x2a))) {
     }
 }
 
@@ -797,25 +797,25 @@ void bridgeFrame()
         return;
     g_4a0f0c = 1;
     updateViews();
-    if (g_4b0d52) {
+    if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
             g_4a0f0c = 0;
             return;
         }
-        if (!g_4b9688 || g_4b9688 == 3) {
-            if (g_4b9688 == 3)
+        if (!dialogQuestion || dialogQuestion == 3) {
+            if (dialogQuestion == 3)
                 chooseSnoids(0, 0);
-            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
-                g_4b0d50 = g_4b0d52;
-                g_4b0d52 = 0;
+            if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1) {
+                pendingScene = sceneDue;
+                sceneDue = 0;
                 setCurrentMap(0);
                 closeBridge();
                 g_4a0f0c = 0;
                 return;
             }
-        } else if (g_4b9688 == 2) {
-            g_4b9688 = 0;
-            g_4b0d52 = 0;
+        } else if (dialogQuestion == 2) {
+            dialogQuestion = 0;
+            sceneDue = 0;
         }
     }
     if (g_4ab7e6) {
@@ -970,9 +970,9 @@ void bridgeClicked(short which)
     short place;
     View *view;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeBridge();
         return;
@@ -983,7 +983,7 @@ void bridgeClicked(short which)
         drawBridgeButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawBridgeButton(which, 0, 1);
-        g_4b0d52 = 1;
+        sceneDue = 1;
         askKeepParty();
         break;
     case 2:
@@ -994,10 +994,10 @@ void bridgeClicked(short which)
         waitForEventFor(0, 2, 0, 1);
         drawBridgeButton(which, 0, 1);
         sendSnoids(680, 316, 45);
-        g_4b0d52 = 8;
+        sceneDue = 8;
         break;
     case 3:
-        if (g_4b755a > 0 && !g_4ab7d8)
+        if (snoidsOnTheirWay > 0 && !g_4ab7d8)
             break;
         if (g_4ab7da >= 6)
             break;

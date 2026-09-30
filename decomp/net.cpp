@@ -630,7 +630,7 @@ void openNet()
                         {135, 397}, {121, 407}, {115, 368}, {114, 342}, {99, 375},  {97, 394},
                         {95, 346},  {91, 411},  {79, 355},  {62, 404}};
 
-    g_4b755a = g_4b755c = hintSound = 0;
+    snoidsOnTheirWay = snoidsArrived = hintSound = 0;
     netLevel = sceneLevel();
     g_4b142e = 25;
     if (netLevel > 1)
@@ -653,7 +653,7 @@ void openNet()
     g_4b145e = g_4b1460 = g_4b1458 = g_4b145a = 0;
     g_4b1464 = g_4b145c = 0;
     g_4b1406 = 1;
-    g_4b0d52 = g_4b147c = 0;
+    sceneDue = g_4b147c = 0;
     g_4b12a8 = g_4b12aa = 0;
     g_4b143e = randomUpTo(4);
     g_4b1442 = randomUpTo(4);
@@ -682,7 +682,7 @@ void openNet()
     g_4b0d68 = listChosenSnoids();
     netPartySize = g_4b0d68->count;
     g_4b1478 = 3;
-    if (*(short *)(g_4a4ba0 + 0x20))
+    if (*(short *)(gameState + 0x20))
         g_4b1478 = 2;
     g_4b147a = 0;
     g_4b0e68 = 0;
@@ -706,11 +706,11 @@ void openNet()
     addSoundRange(9000, 10999, 0);
     addSoundRange(7000, 7999, 0);
     addSoundRange(10000, 10099, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     g_4b12a8 = 1;
     setViewsLocked(0);
-    campHint((short *)(g_4a4ba0 + 0x3c));
+    campHint((short *)(gameState + 0x3c));
     hintSound = 20064;
 }
 
@@ -736,10 +736,10 @@ void drawNetButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        drawImageData((unsigned short *)(g_4a2e60->offsets[image] + (char *)g_4a2e60), g_4a288a[which].rect.left,
-                      g_4a288a[which].rect.top, 8);
+        drawImageData((unsigned short *)(g_4a2e60->offsets[image] + (char *)g_4a2e60), netButtons[which].rect.left,
+                      netButtons[which].rect.top, 8);
         if (show)
-            showRect(&g_4a288a[which].rect);
+            showRect(&netButtons[which].rect);
     }
 }
 
@@ -759,15 +759,15 @@ void updateNetButtons(View *, short region)
     if (g_4b12aa) {
         if (!g_4a2ea4) {
             g_4a2ea4 = 1;
-            unionRgnRect(region, &g_4a288a[3].rect);
+            unionRgnRect(region, &netButtons[3].rect);
         }
     } else if (g_4a2ea4) {
         g_4a2ea4 = 0;
-        unionRgnRect(region, &g_4a288a[3].rect);
+        unionRgnRect(region, &netButtons[3].rect);
     }
     if (!g_4a2ea6) {
         g_4a2ea6 = 1;
-        unionRgnRect(region, &g_4a288a[2].rect);
+        unionRgnRect(region, &netButtons[2].rect);
     }
 }
 
@@ -827,7 +827,7 @@ void splitIntoGroups()
  * Steps a maze Zoombini on a square in its direction (word 20, set from
  * word 38 of the view `other`, which, if its word 39 is set, first turns
  * to its next open way (words 34-37; sound 5101/5102 in turn) and gets
- * pose 3). Lands on a square of kind 5 (g_4b061a): that square's view
+ * pose 3). Lands on a square of kind 5 (squareKinds): that square's view
  * gives up its partner (word 43, listed in g_4b0930), which takes the
  * direction. Then places it and starts its walking script (from word 21)
  * with its helper view's (script 10000 on), grouped. Reads `other`'s words
@@ -885,10 +885,10 @@ void stepMazeSnoid(View *view, short other)
             parts[33] = 0;
         break;
     }
-    short kind = g_4b061a[parts[33]][parts[34]];
+    short kind = squareKinds[parts[33]][parts[34]];
 
     if (kind == 5) {
-        paired = findView(g_4b04c8[parts[33]][parts[34]]);
+        paired = findView(squareViews[parts[33]][parts[34]]);
         if (paired) {
             its = (short *)&paired->body;
             if (its[43]) {
@@ -1150,7 +1150,7 @@ void flyMarker(short n)
 /* @zoombi32 0x0043e5a7 */
 void updateFlyingMarker(View *view, short region)
 {
-    if (++g_4b1456 > 5 || *(short *)(g_4a4ba0 + 0x20)) {
+    if (++g_4b1456 > 5 || *(short *)(gameState + 0x20)) {
         g_4b1456 = 0;
         view->update = runViewScript;
         landMarker(view->unknown1e);
@@ -1244,10 +1244,10 @@ void stepMazeSnoidOn(View *view)
             parts[33]++;
         break;
     }
-    short kind = g_4b061a[parts[33]][parts[34]];
+    short kind = squareKinds[parts[33]][parts[34]];
 
     if (kind == 5) {
-        View *other = findView(g_4b04c8[parts[33]][parts[34]]);
+        View *other = findView(squareViews[parts[33]][parts[34]]);
 
         if (other) {
             its = (short *)&other->body;
@@ -1325,10 +1325,10 @@ void stepAtTurning(View *view, short other)
             parts[33] = 0;
         break;
     }
-    short kind = g_4b061a[parts[33]][parts[34]];
+    short kind = squareKinds[parts[33]][parts[34]];
 
     if (kind == 5) {
-        View *square = findView(g_4b04c8[parts[33]][parts[34]]);
+        View *square = findView(squareViews[parts[33]][parts[34]]);
 
         if (square) {
             its = (short *)&square->body;
@@ -1419,7 +1419,7 @@ void addNetViews()
 /* @zoombi32 0x0043c655 */
 short netKey(unsigned short key)
 {
-    if (!g_4b8803 && key != 367)
+    if (!debugMessagesOn && key != 367)
         return 0;
     switch (key) {
     case 367:
@@ -1510,7 +1510,7 @@ void playAmbientSound()
     short sound;
     short i;
 
-    if (g_4b87fe && g_4b87ff) {
+    if (soundOn && musicOn) {
         now = clockTime();
         if (now >= ambientSoundTime) {
             if (isSoundPlaying(ambientSound, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
@@ -1574,11 +1574,11 @@ void playAmbientSound()
 }
 
 /*
- * Moves on to the next scene (g_4b0d50): leaving a group's last puzzle
+ * Moves on to the next scene (pendingScene): leaving a group's last puzzle
  * (9, 12, 15, 18) for its camp notes the level passed in the game state
- * (g_4b0d4c: the puzzle left). Whether to go by the map (scene 2) first
- * depends on the scenes left and entered (not while g_4b754a, g_4b7562 or
- * g_4b0d4a; always while g_4a7e68). Then unlocks the views, sets the next
+ * (puzzleLeft: the puzzle left). Whether to go by the map (scene 2) first
+ * depends on the scenes left and entered (not while practiceLevel, g_4b7562 or
+ * transitionsOn; always while journeyRoute). Then unlocks the views, sets the next
  * ambient sound 15 seconds off, clips to the game's area and opens the
  * scene.
  */
@@ -1587,9 +1587,9 @@ void enterNextScene()
 {
     short viaMap = 0;
 
-    if (g_4b0d50 == -1)
+    if (pendingScene == -1)
         return;
-    if (!g_4b754a) {
+    if (!practiceLevel) {
         short level = sceneLevel();
 
         if (g_4b7558 && level)
@@ -1599,36 +1599,36 @@ void enterNextScene()
 
         switch (currentScene) {
         case 9:
-            if (g_4b0d50 == 4) {
-                g_4b0d4c = 9;
-                g_4a4ba0[0x50] |= bit;
+            if (pendingScene == 4) {
+                puzzleLeft = 9;
+                gameState[0x50] |= bit;
             }
             break;
         case 12:
-            if (g_4b0d50 == 5) {
-                g_4b0d4c = 12;
-                *(short *)(g_4a4ba0 + 0x52) |= (char)bit;
+            if (pendingScene == 5) {
+                puzzleLeft = 12;
+                *(short *)(gameState + 0x52) |= (char)bit;
             }
             break;
         case 15:
-            if (g_4b0d50 == 5) {
-                g_4b0d4c = 15;
-                *(short *)(g_4a4ba0 + 0x52) |= bit << 4;
+            if (pendingScene == 5) {
+                puzzleLeft = 15;
+                *(short *)(gameState + 0x52) |= bit << 4;
             }
             break;
         case 18:
-            if (g_4b0d50 == 6) {
-                g_4b0d4c = 18;
-                g_4a4ba0[0x51] |= bit;
+            if (pendingScene == 6) {
+                puzzleLeft = 18;
+                gameState[0x51] |= bit;
             }
             break;
         }
     }
-    if (g_4b754a) {
+    if (practiceLevel) {
         viaMap = 0;
-        if (currentScene != 1 && g_4b0d50 != 3 && g_4b0d50 != 0)
-            g_4b0d50 = 1;
-    } else if (currentScene != 1 && currentScene != 2 && currentScene != 6 && g_4b0d50 != 1) {
+        if (currentScene != 1 && pendingScene != 3 && pendingScene != 0)
+            pendingScene = 1;
+    } else if (currentScene != 1 && currentScene != 2 && currentScene != 6 && pendingScene != 1) {
         switch (currentScene) {
         case 0:
             viaMap = 0;
@@ -1664,35 +1664,35 @@ void enterNextScene()
             break;
         }
     }
-    *(short *)(g_4a4ba0 + 0xca) = currentScene;
-    if (g_4b0d50 != 0 && g_4b0d50 != 2)
-        savedScene() = g_4b0d50;
-    if (g_4b7562 || g_4b0d4a)
+    *(short *)(gameState + 0xca) = currentScene;
+    if (pendingScene != 0 && pendingScene != 2)
+        savedScene() = pendingScene;
+    if (g_4b7562 || transitionsOn)
         viaMap = 0;
-    if (g_4a7e68)
+    if (journeyRoute)
         viaMap = 1;
     if (viaMap) {
-        g_4b0d56 = currentScene;
-        g_4b0d54 = g_4b0d50;
+        journeyFrom = currentScene;
+        journeyTo = pendingScene;
         currentScene = 2;
-        g_4b0d50 = -1;
+        pendingScene = -1;
     } else {
-        g_4b0d56 = currentScene;
-        currentScene = g_4b0d50;
-        g_4b0d50 = -1;
-        g_4b0d54 = -1;
+        journeyFrom = currentScene;
+        currentScene = pendingScene;
+        pendingScene = -1;
+        journeyTo = -1;
     }
-    if (g_4b754a) {
-        *(short *)(g_4a4ba0 + 0x54) = 0;
+    if (practiceLevel) {
+        *(short *)(gameState + 0x54) = 0;
     } else {
         if (!viewsLocked)
-            g_4afb32 = 1;
+            rosterChanged = 1;
         switch (currentScene) {
         case 7:
         case 10:
         case 13:
         case 16:
-            *(short *)(g_4a4ba0 + 0x54) = 1;
+            *(short *)(gameState + 0x54) = 1;
             break;
         }
     }
@@ -2232,25 +2232,25 @@ void netFrame()
         return;
     g_4a2ea8 = g_4b1480 = 1;
     updateViews();
-    if (g_4b0d52) {
+    if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
             g_4a2ea8 = 0;
             return;
         }
-        if (!g_4b9688 || g_4b9688 == 3) {
-            if (g_4b9688 == 3)
+        if (!dialogQuestion || dialogQuestion == 3) {
+            if (dialogQuestion == 3)
                 chooseSnoids(0, 0);
-            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
-                g_4b0d50 = g_4b0d52;
-                g_4b0d52 = 0;
+            if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1) {
+                pendingScene = sceneDue;
+                sceneDue = 0;
                 setCurrentMap(0);
                 closeNet();
                 g_4a2ea8 = 0;
                 return;
             }
-        } else if (g_4b9688 == 2) {
-            g_4b9688 = 0;
-            g_4b0d52 = 0;
+        } else if (dialogQuestion == 2) {
+            dialogQuestion = 0;
+            sceneDue = 0;
         }
     }
     if (g_4b1406 && g_4b142a && !groupLeader[g_4b142a]) {
@@ -2275,7 +2275,7 @@ void netFrame()
             g_4b1464 = 0;
             if (--g_4b140a < 0) {
                 g_4b142c++;
-                if (randomBetween(0, 4) > netLevel || (*(short *)(g_4a4ba0 + 0x3c) & 0xfff) <= 3) {
+                if (randomBetween(0, 4) > netLevel || (*(short *)(gameState + 0x3c) & 0xfff) <= 3) {
                     if (g_4b145a < 1) {
                         if (g_4b0e6c >= 1 && g_4b0e6c < netPartySize)
                             queueViewSound(randomBetween(20045, 20048), 0);
@@ -2489,9 +2489,9 @@ void netClicked(short button)
 {
     short code;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeNet();
         return;
@@ -2545,7 +2545,7 @@ void netClicked(short button)
         drawNetButton(button, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawNetButton(button, 0, 1);
-        g_4b0d52 = 1;
+        sceneDue = 1;
         askKeepParty();
         break;
     case 2:
@@ -2556,7 +2556,7 @@ void netClicked(short button)
             drawNetButton(button, 0, 1);
             queueViewSound(996, 0);
             sendSnoids(600, -100, 45);
-            g_4b0d52 = 5;
+            sceneDue = 5;
         }
         break;
     }

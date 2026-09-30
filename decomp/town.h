@@ -68,13 +68,13 @@ extern char g_4a7592; /* @data 0x4a7592: the next record the . key makes */
 /* Which of the town's six screens is shown (0-5). */
 inline short &townScreen()
 {
-    return *(short *)(g_4a4ba0 + 0x1e);
+    return *(short *)(gameState + 0x1e);
 }
 
 /* Zoombiniville's population. */
 inline short &population()
 {
-    return *(short *)(g_4a4ba0 + 0x4e);
+    return *(short *)(gameState + 0x4e);
 }
 
 extern GroupList townGroups6[1]; /* @data 0x4a74a4 */

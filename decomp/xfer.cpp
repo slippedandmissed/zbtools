@@ -25,7 +25,7 @@ void resetJourney()
 {
     short i;
 
-    g_4b0d52 = xferSound = 0;
+    sceneDue = xferSound = 0;
     g_4b9904 = g_4b9906 = g_4b9908 = g_4b990a = 0;
     g_4b9922 = g_4b9924 = g_4b9926 = g_4b9920 = g_4b9928 = 0;
     g_4b9912 = 0;
@@ -54,8 +54,8 @@ long journeyKey(long)
 }
 
 /* Fills `levels` (17) with the highest level (1-4) each place has
-   reached, by the game state's bits (or all g_4b754a); then notes the
-   place of scene g_4b0d54 in g_4b991c, and its level in g_4b991e. */
+   reached, by the game state's bits (or all practiceLevel); then notes the
+   place of scene journeyTo in g_4b991c, and its level in g_4b991e. */
 /* @zoombi32 0x0046b084 */
 void readPlaceLevels(char *levels)
 {
@@ -65,8 +65,8 @@ void readPlaceLevels(char *levels)
     short saved;
 
     for (i = 0; i <= 16; i++) {
-        if (g_4b754a)
-            value = g_4b754a;
+        if (practiceLevel)
+            value = practiceLevel;
         else {
             value = bits = 0;
             switch (i) {
@@ -76,10 +76,10 @@ void readPlaceLevels(char *levels)
             case 1:
             case 2:
             case 3:
-                bits = g_4a4ba0[0x55 + i] & 0xf;
+                bits = gameState[0x55 + i] & 0xf;
                 break;
             case 4:
-                bits = g_4a4ba0[0x50] & 0xf;
+                bits = gameState[0x50] & 0xf;
                 break;
             case 5:
             case 6:
@@ -87,21 +87,21 @@ void readPlaceLevels(char *levels)
             case 8:
             case 9:
             case 10:
-                bits = g_4a4ba0[0x54 + i] & 0xf;
+                bits = gameState[0x54 + i] & 0xf;
                 break;
             case 11:
-                bits = *(short *)(g_4a4ba0 + 0x52) & 0xf;
+                bits = *(short *)(gameState + 0x52) & 0xf;
                 break;
             case 12:
             case 13:
             case 14:
-                bits = g_4a4ba0[0x53 + i] & 0xf;
+                bits = gameState[0x53 + i] & 0xf;
                 break;
             case 15:
-                bits = g_4a4ba0[0x51] & 0xf;
+                bits = gameState[0x51] & 0xf;
                 break;
             case 16:
-                bits = *(short *)(g_4a4ba0 + 0x52) & 0xf0;
+                bits = *(short *)(gameState + 0x52) & 0xf0;
                 bits = bits >> 4;
                 break;
             }
@@ -118,10 +118,10 @@ void readPlaceLevels(char *levels)
     }
     g_4b991c = i = 0;
     saved = currentScene;
-    currentScene = g_4b0d54;
+    currentScene = journeyTo;
     value = sceneLevel() + 1;
     currentScene = saved;
-    switch (g_4b0d54) {
+    switch (journeyTo) {
     case 7:
         i = 1;
         bits = value;
@@ -151,7 +151,7 @@ void readPlaceLevels(char *levels)
         bits = levels[6];
         break;
     case 5:
-        if (g_4b0d56 == 12) {
+        if (journeyFrom == 12) {
             i = 11;
             bits = levels[7];
         } else {
@@ -408,7 +408,7 @@ void drawPopulationSign(View *view)
 }
 
 /* Scene 2's frame: leaves for the scene due; else goes on to scene
-   g_4b0d54 after 300 ticks (and sound xferSound), and now and then starts
+   journeyTo after 300 ticks (and sound xferSound), and now and then starts
    something moving: the next of the party (with xferSnoidNotify), one of the
    views g_4b98f8 or g_4b98f6, or g_4b990a's once g_4b9908 passes 4. */
 /* @zoombi32 0x0046ace4 */
@@ -421,25 +421,25 @@ void journeyFrame()
         return;
     g_4a7ede = 1;
     updateViews();
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
-        if (g_4a7e68) {
-            g_4a7e68 = 0;
-            g_4b0d50 = 1;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
+        if (journeyRoute) {
+            journeyRoute = 0;
+            pendingScene = 1;
         }
         setCurrentMap(0);
         closeJourney();
         g_4a7ede = 0;
         return;
     }
-    if (!g_4b9684) {
-        if (g_4b87fe && xferSound) {
+    if (!dialogFlags) {
+        if (soundOn && xferSound) {
             if (!isSoundPlaying(xferSound, RESOURCE_TYPE(0, 'S', 'N', 'D')) && viewClock() > 300)
-                g_4b0d52 = g_4b0d54;
+                sceneDue = journeyTo;
         } else if (viewClock() > 300)
-            g_4b0d52 = g_4b0d54;
-        if (!g_4b0d52 && clockTime() > g_4b98e0) {
+            sceneDue = journeyTo;
+        if (!sceneDue && clockTime() > g_4b98e0) {
             if (g_4b9908 > 4) {
                 g_4b9908 = -1;
                 view = findView(g_4b990a);
@@ -507,25 +507,25 @@ void journeyFrame()
     g_4a7ede = 0;
 }
 
-/* Scene 2's clicks: once a scene is due (g_4b0d52), leaves for it (for
-   scene 1 if g_4a7e68); 1 goes on to scene g_4b0d54. */
+/* Scene 2's clicks: once a scene is due (sceneDue), leaves for it (for
+   scene 1 if journeyRoute); 1 goes on to scene journeyTo. */
 /* @zoombi32 0x0046b00e */
 void journeyClicked(short which)
 {
     if (g_4b98d8) {
-        if (g_4b0d52) {
-            g_4b0d50 = g_4b0d52;
-            g_4b0d52 = 0;
-            if (g_4a7e68) {
-                g_4a7e68 = 0;
-                g_4b0d50 = 1;
+        if (sceneDue) {
+            pendingScene = sceneDue;
+            sceneDue = 0;
+            if (journeyRoute) {
+                journeyRoute = 0;
+                pendingScene = 1;
             }
             setCurrentMap(0);
             closeJourney();
         } else
             switch (which) {
             case 1:
-                g_4b0d52 = g_4b0d54;
+                sceneDue = journeyTo;
                 break;
             }
     }
@@ -583,11 +583,11 @@ unsigned long spreadGridMarks(long permille)
 void xferEndNotify(View *, short event)
 {
     if (event == 30)
-        g_4b0d52 = g_4b0d54;
+        sceneDue = journeyTo;
 }
 
-/* Opens scene 2, the journey on from a place (route g_4a7e68, 1-16: from
-   scene g_4b0d56 to g_4b0d54): the backdrop, views and sounds of the map
+/* Opens scene 2, the journey on from a place (route journeyRoute, 1-16: from
+   scene journeyFrom to journeyTo): the backdrop, views and sounds of the map
    the next place is on (xferMap: 0 Zoombini Isle, 1-4 the maps, 5 the
    town), a sound chosen by the camp's hint and the level, the party and,
    on the maps, the grid being filled in under the map's name. */
@@ -612,13 +612,13 @@ void openJourney()
     Font *font;
 
     g_4b98d8 = 0;
-    g_4a7d3c++;
+    busyCount++;
     resetJourney();
     addSoundRange(20000, 29999, 1);
     setViewsLocked(0);
     openGameFile(&g_4b98d4, "xfer.MHK");
     setCurrentMap(g_4b98d4);
-    switch (g_4a7e68) {
+    switch (journeyRoute) {
     case 1:
         from = 3;
         to = 7;
@@ -720,8 +720,8 @@ void openJourney()
         break;
     }
     if (from) {
-        g_4b0d56 = from;
-        g_4b0d54 = to;
+        journeyFrom = from;
+        journeyTo = to;
         readPlaceLevels(placeLevels);
         if (placeLevels[fromPlace] < 0)
             placeLevels[fromPlace] = 1;
@@ -729,72 +729,72 @@ void openJourney()
         placeLevels[toPlace] = -1;
     } else
         readPlaceLevels(placeLevels);
-    switch (g_4b0d54) {
+    switch (journeyTo) {
     case 5:
         xferMap = 2;
-        if (g_4b0d56 == 15)
+        if (journeyFrom == 15)
             xferMap = 3;
-        visits = *(short *)(g_4a4ba0 + 0x3e);
+        visits = *(short *)(gameState + 0x3e);
         break;
     case 7:
         xferMap = 0;
-        visits = *(short *)(g_4a4ba0 + 0x2a);
+        visits = *(short *)(gameState + 0x2a);
         break;
     case 8:
         xferMap = 1;
-        visits = *(short *)(g_4a4ba0 + 0x2c);
+        visits = *(short *)(gameState + 0x2c);
         break;
     case 9:
         xferMap = 1;
-        visits = *(short *)(g_4a4ba0 + 0x2e);
+        visits = *(short *)(gameState + 0x2e);
         break;
     case 4:
         xferMap = 1;
-        visits = *(short *)(g_4a4ba0 + 0x30);
+        visits = *(short *)(gameState + 0x30);
         break;
     case 10:
         xferMap = 2;
-        visits = *(short *)(g_4a4ba0 + 0x32);
+        visits = *(short *)(gameState + 0x32);
         break;
     case 11:
         xferMap = 2;
-        visits = *(short *)(g_4a4ba0 + 0x34);
+        visits = *(short *)(gameState + 0x34);
         break;
     case 12:
         xferMap = 2;
-        visits = *(short *)(g_4a4ba0 + 0x36);
+        visits = *(short *)(gameState + 0x36);
         break;
     case 13:
         xferMap = 3;
-        visits = *(short *)(g_4a4ba0 + 0x38);
+        visits = *(short *)(gameState + 0x38);
         break;
     case 14:
         xferMap = 3;
-        visits = *(short *)(g_4a4ba0 + 0x3a);
+        visits = *(short *)(gameState + 0x3a);
         break;
     case 15:
         xferMap = 3;
-        visits = *(short *)(g_4a4ba0 + 0x3c);
+        visits = *(short *)(gameState + 0x3c);
         break;
     case 16:
         xferMap = 4;
-        visits = *(short *)(g_4a4ba0 + 0x40);
+        visits = *(short *)(gameState + 0x40);
         break;
     case 17:
         xferMap = 4;
-        visits = *(short *)(g_4a4ba0 + 0x42);
+        visits = *(short *)(gameState + 0x42);
         break;
     case 18:
         xferMap = 4;
-        visits = *(short *)(g_4a4ba0 + 0x44);
+        visits = *(short *)(gameState + 0x44);
         break;
     case 6:
-        visits = *(short *)(g_4a4ba0 + 0x46);
+        visits = *(short *)(gameState + 0x46);
         xferMap = 5;
         break;
     }
     scene = currentScene;
-    currentScene = g_4b0d54;
+    currentScene = journeyTo;
     level = sceneLevel() + 1;
     hint = campHint(&visits);
     currentScene = scene;
@@ -861,7 +861,7 @@ void openJourney()
         scripts = 9;
         break;
     case 1:
-        switch (g_4b0d54) {
+        switch (journeyTo) {
         case 8:
             switch (hint) {
             default:
@@ -936,7 +936,7 @@ void openJourney()
         scripts = 3;
         break;
     case 2:
-        switch (g_4b0d54) {
+        switch (journeyTo) {
         case 10:
             switch (hint) {
             case 0:
@@ -1065,7 +1065,7 @@ void openJourney()
         scripts = 3;
         break;
     case 3:
-        switch (g_4b0d54) {
+        switch (journeyTo) {
         case 13:
             switch (hint) {
             case 0:
@@ -1171,7 +1171,7 @@ void openJourney()
         scripts = 3;
         break;
     case 4:
-        switch (g_4b0d54) {
+        switch (journeyTo) {
         case 16:
             switch (hint) {
             case 0:
@@ -1376,7 +1376,7 @@ void openJourney()
     setGroupLists(xferGroups, 1, (short)0xc000);
     if (xferSound)
         queueViewSound(xferSound, 1);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     resetViewClock();
     g_4b991a = countChosenSnoids();
@@ -1395,7 +1395,7 @@ void closeJourney()
         g_4b98d8 = 0;
         short saved = setFreeAtOnce(1);
 
-        g_4a7e68 = 0;
+        journeyRoute = 0;
         useAltSnoids(1);
         chooseSnoids(1, 1);
         clearViews();
@@ -1405,8 +1405,8 @@ void closeJourney()
         fadeOutViews();
         showBusyCursor();
         g_4a4b98 = 64;
-        if (g_4a7d3c)
-            g_4a7d3c--;
+        if (busyCount)
+            busyCount--;
     }
 }
 
@@ -1610,7 +1610,7 @@ void drawGridView(View *view)
 /* @zoombi32 0x0046bdde */
 void updateGridView(View *view, short region)
 {
-    if (!g_4b9684) {
+    if (!dialogFlags) {
         runViewScript(view, region);
         if (view->nextUpdate <= updateTime) {
             view->changed = 1;

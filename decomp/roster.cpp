@@ -200,16 +200,16 @@ void updateCavesButtons(View *, short region)
 /* @zoombi32 0x0041f668 */
 void applyPlayerSettings()
 {
-    clickTime = swapShort(*(unsigned short *)(g_4a4ba0 + 2));
-    g_4b87fe = g_4a4ba0[4];
-    g_4b87ff = g_4a4ba0[5];
-    clickToDragOption = g_4a4ba0[6];
-    hideDragCursor = g_4a4ba0[7];
-    g_4b8803 = g_4a4ba0[8];
-    dragClicks = g_4a4ba0[9];
-    g_4b0d4a = *(short *)(g_4a4ba0 + 0xa);
-    g_4b0d52 = *(short *)(g_4a4ba0 + 0xcc);
-    g_4b0d56 = *(short *)(g_4a4ba0 + 0xca);
+    clickTime = swapShort(*(unsigned short *)(gameState + 2));
+    soundOn = gameState[4];
+    musicOn = gameState[5];
+    clickToDragOption = gameState[6];
+    hideDragCursor = gameState[7];
+    debugMessagesOn = gameState[8];
+    dragClicks = gameState[9];
+    transitionsOn = *(short *)(gameState + 0xa);
+    sceneDue = *(short *)(gameState + 0xcc);
+    journeyFrom = *(short *)(gameState + 0xca);
 }
 
 /* Opens the roster file `path` (mode `mode`) as g_4aba7c, making its
@@ -325,8 +325,8 @@ void sendReadyOff(short x, short y, long interval)
         }
     }
     sortViews();
-    g_4b755a = 1;
-    g_4b755c = 0;
+    snoidsOnTheirWay = 1;
+    snoidsArrived = 0;
 }
 
 /* The view drawing the two buttons. */
@@ -348,7 +348,7 @@ void openCaves()
 
     resetCavesState(cavesLevel = sceneLevel() + 1);
     cavesOpen = 0;
-    g_4b0d52 = 0;
+    sceneDue = 0;
     g_4a0fe8 = 0;
     g_4a1006 = 0;
     g_4a1008 = 0;
@@ -436,7 +436,7 @@ void openCaves()
     }
     g_4ab9c4[21] = addView(0x4008000, cavesNoDraw, cavesNoUpdate, 6000, 0, 0, 0, 0);
     for (i = 0; i < g_4a1016; i++)
-        g_4b83e4[i] = g_4ab96a[0];
+        placeClaims[i] = g_4ab96a[0];
     frameView = addView(0x4000000, drawCels, runViewScript, 6012, 0, 0, 0, 0);
     frameView = addView(0x8180000, drawCels, runViewScript, firstFrame + 1, 9, 0, 0, 0);
     fadeOutViews();
@@ -453,7 +453,7 @@ void openCaves()
     setGroupLists(caveGroups, 1, (short)0xc000);
     drawCavesButton(1, 0, 0);
     drawCavesButton(2, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     chooseSnoids(0, 0);
     resetViewClock();
@@ -477,7 +477,7 @@ void openCaves()
     addSoundRange(600, 799, 0);
     if (cavesLevel < 4)
         queueViewSound(sceneLevel() + 30025, 0);
-    campHint((short *)(g_4a4ba0 + 0x40));
+    campHint((short *)(gameState + 0x40));
     hintSound = 20065;
 }
 
@@ -634,7 +634,7 @@ void walkerNotify(View *view, short event)
 /* The notify of the view frameView's frames (showFrame): 10 sets g_4ab872
    to 2; 20 notes the view done and, on its last frame, remarks (now and
    then) if not all are chosen, and sets g_4a0ff0; 21 likewise, ending the
-   walk when g_4b754a. */
+   walk when practiceLevel. */
 /* @zoombi32 0x0041d30b */
 void frameNotify(View *, short event)
 {
@@ -646,7 +646,7 @@ void frameNotify(View *, short event)
         walkerView = 0;
         if (currentFrame == finalFrame) {
             if (countChosenSnoids() < chosenCount) {
-                if (randomBetween(0, 4) > cavesLevel - 1 || (*(short *)(g_4a4ba0 + 0x40) & 0xfff) <= 3)
+                if (randomBetween(0, 4) > cavesLevel - 1 || (*(short *)(gameState + 0x40) & 0xfff) <= 3)
                     queueViewSound(randomBetween(20045, 20048), 0);
             }
             g_4a0ff0 = 1;
@@ -657,9 +657,9 @@ void frameNotify(View *, short event)
     case 21:
         walkerView = 0;
         g_4a0ff0 = 1;
-        if (g_4b754a) {
-            g_4b755a = 0;
-            g_4b755c = 1;
+        if (practiceLevel) {
+            snoidsOnTheirWay = 0;
+            snoidsArrived = 1;
         }
         break;
     }
@@ -739,7 +739,7 @@ void resetCavesScreen()
     }
 }
 
-/* Reads the roster file (into g_4a4ba0) unless the user file is the
+/* Reads the roster file (into gameState) unless the user file is the
    default one (ZBUser.txt), checks its version (107) and applies its
    settings. */
 /* @zoombi32 0x0041f5d0 */
@@ -749,16 +749,16 @@ void readRoster()
 
     strcat(name, ".txt");
     if (strncmp(userFileName, name, strlen(userFileName))) {
-        readWriteRoster(g_4a4ba0, 1);
-        if (swapShort(*(unsigned short *)g_4a4ba0) != 107)
+        readWriteRoster(gameState, 1);
+        if (swapShort(*(unsigned short *)gameState) != 107)
             reportRosterError("Invalid user file, delete and try again: ");
         applyPlayerSettings();
-        g_4b0d54 = 0;
+        journeyTo = 0;
     }
 }
 
 /* Lays out, from place firstCave on, which values of the roster's
-   features each of the 21 places wants (g_4ab916): for each value of the
+   features each of the 21 places wants (cavePlaceValues): for each value of the
    first feature as many places as chosen Zoombinis have it (caveValueCounts),
    and for the second feature likewise within them. */
 /* @zoombi32 0x0041e5e1 */
@@ -778,7 +778,7 @@ void layOutCaves()
     start = firstCave;
     for (v = 0; v < g_4a0ff2; v++) {
         for (i = start; i < caveValueCounts[first][caveValues[first][v]] + start; i++)
-            g_4ab916[first][i] = caveValues[first][v];
+            cavePlaceValues[first][i] = caveValues[first][v];
         start = i;
     }
     start = firstCave;
@@ -786,7 +786,7 @@ void layOutCaves()
         for (w = 0; w < g_4a0ff2; w++) {
             for (i = start; i < caveValueCounts[caveValues[second][w]][caveValues[first][v]] + start; i++)
                 if (caveValues[second][w])
-                    g_4ab916[second][i] = caveValues[second][w];
+                    cavePlaceValues[second][i] = caveValues[second][w];
             start = i;
         }
     }
@@ -823,17 +823,17 @@ short pickCave(short id, short n)
             i = g_4a0ff2;
     }
     for (i = firstCave; i < 21; i++)
-        if (first == g_4ab916[0][i] && i == n && !spotSnoids[i]) {
+        if (first == cavePlaceValues[0][i] && i == n && !spotSnoids[i]) {
             if (g_4a0ff4 <= 1)
                 return i;
-            if (second != g_4ab916[1][i])
+            if (second != cavePlaceValues[1][i])
                 continue;
             return i;
         }
     for (i = firstCave; i < 21; i++)
-        if (!spotSnoids[i] && first == g_4ab916[0][i]) {
+        if (!spotSnoids[i] && first == cavePlaceValues[0][i]) {
             if (g_4a0ff4 > 1) {
-                if (second == g_4ab916[1][i])
+                if (second == cavePlaceValues[1][i])
                     places[count++] = i;
             } else {
                 places[count++] = i;
@@ -844,25 +844,25 @@ short pickCave(short id, short n)
     return 1;
 }
 
-/* Fills in the roster's header (g_4a4ba0): when `reset`, a new one (version
+/* Fills in the roster's header (gameState): when `reset`, a new one (version
    107, default settings) with the sound slots (allocateSlot) and more reset, else the
-   player's current settings; then the scene (or, in scene 2, g_4b0d54). */
+   player's current settings; then the scene (or, in scene 2, journeyTo). */
 /* @zoombi32 0x0041f6fc */
 void fillRosterHeader(short reset)
 {
     if (reset) {
-        fillMemory(g_4a4ba0, 0, 0xae05);
-        *(unsigned short *)g_4a4ba0 = swapShort(107);
-        *(unsigned short *)(g_4a4ba0 + 2) = swapShort(30);
-        g_4a4ba0[4] = 1;
-        g_4a4ba0[5] = 1;
-        g_4a4ba0[6] = 1;
-        g_4a4ba0[7] = 1;
-        g_4a4ba0[8] = 0;
-        g_4a4ba0[9] = 0;
-        *(short *)(g_4a4ba0 + 0xa) = 0;
-        *(short *)(g_4a4ba0 + 0x20) = g_4b2b00;
-        g_4afb32 = 1;
+        fillMemory(gameState, 0, 0xae05);
+        *(unsigned short *)gameState = swapShort(107);
+        *(unsigned short *)(gameState + 2) = swapShort(30);
+        gameState[4] = 1;
+        gameState[5] = 1;
+        gameState[6] = 1;
+        gameState[7] = 1;
+        gameState[8] = 0;
+        gameState[9] = 0;
+        *(short *)(gameState + 0xa) = 0;
+        *(short *)(gameState + 0x20) = g_4b2b00;
+        rosterChanged = 1;
         g_4afb30 = 0;
         g_4b807e = 0;
         g_4a75e4 = g_4a7600 = g_4a7614 = g_4a7628 = g_4a763c = 0;
@@ -872,19 +872,19 @@ void fillRosterHeader(short reset)
         g_4abafc = 0;
         g_4abb00 = 0;
     } else {
-        *(unsigned short *)(g_4a4ba0 + 2) = swapShort(clickTime);
-        g_4a4ba0[4] = g_4b87fe;
-        g_4a4ba0[5] = g_4b87ff;
-        g_4a4ba0[6] = clickToDragOption;
-        g_4a4ba0[7] = hideDragCursor;
-        g_4a4ba0[8] = g_4b8803;
-        g_4a4ba0[9] = dragClicks;
-        *(short *)(g_4a4ba0 + 0xa) = g_4b0d4a;
+        *(unsigned short *)(gameState + 2) = swapShort(clickTime);
+        gameState[4] = soundOn;
+        gameState[5] = musicOn;
+        gameState[6] = clickToDragOption;
+        gameState[7] = hideDragCursor;
+        gameState[8] = debugMessagesOn;
+        gameState[9] = dragClicks;
+        *(short *)(gameState + 0xa) = transitionsOn;
     }
-    *(short *)(g_4a4ba0 + 0xcc) = currentScene;
-    *(short *)(g_4a4ba0 + 0xca) = g_4b0d56;
+    *(short *)(gameState + 0xcc) = currentScene;
+    *(short *)(gameState + 0xca) = journeyFrom;
     if (currentScene == 2)
-        *(short *)(g_4a4ba0 + 0xcc) = g_4b0d54;
+        *(short *)(gameState + 0xcc) = journeyTo;
 }
 
 /* Reads or writes the list of saved games (the file rosterFileName in the
@@ -1208,10 +1208,10 @@ void walkToSpots()
     mainLoopEvents();
     for (i = firstCave; i < 21; i++) {
         spotSnoids[i] = 0;
-        g_4b83e4[i - 1] = 0;
+        placeClaims[i - 1] = 0;
     }
     for (i = 0; i < g_4a1016; i++)
-        g_4b83e4[i] = g_4ab96a[0];
+        placeClaims[i] = g_4ab96a[0];
     resetCavesScreen();
     g_4a0fea = 0;
     g_4a0fe8 = 0;
@@ -1221,19 +1221,19 @@ void walkToSpots()
 }
 
 /* Saves the roster (with the player's settings, fillRosterHeader) if it changed
-   (g_4afb32) and the user file isn't the default one (ZBUser.txt). */
+   (rosterChanged) and the user file isn't the default one (ZBUser.txt). */
 /* @zoombi32 0x0041f551 */
 void saveRoster()
 {
     char name[32] = "ZBUser";
 
     strcat(name, ".txt");
-    if (strncmp(userFileName, name, strlen(userFileName)) && g_4afb32) {
-        if (g_4a4ba0) {
+    if (strncmp(userFileName, name, strlen(userFileName)) && rosterChanged) {
+        if (gameState) {
             fillRosterHeader(0);
-            readWriteRoster(g_4a4ba0, 0);
+            readWriteRoster(gameState, 0);
         }
-        g_4afb32 = 0;
+        rosterChanged = 0;
     }
 }
 
@@ -1270,9 +1270,9 @@ void sendToCaves()
         if (spotSnoids[i])
             claimPlacedView(i, spotSnoids[i]);
         else
-            g_4b83e4[i] = 0;
+            placeClaims[i] = 0;
     for (i = 0; i < g_4a1016; i++)
-        g_4b83e4[i] = g_4ab96a[0];
+        placeClaims[i] = g_4ab96a[0];
     chooseSnoids(1, 0);
     unionRgnRect(removedRgn, &gameRect);
     mainLoopEvents();
@@ -1326,9 +1326,9 @@ void changeCaveFeature(short feature)
         if (spotSnoids[i])
             claimPlacedView(i, spotSnoids[i]);
         else
-            g_4b83e4[i - 1] = 0;
+            placeClaims[i - 1] = 0;
     for (i = 0; i < g_4a1016; i++)
-        g_4b83e4[i] = g_4ab96a[0];
+        placeClaims[i] = g_4ab96a[0];
     placeGlyphs(cavesLevel);
     view = findView(g_4a101c);
     if (view)
@@ -1340,7 +1340,7 @@ void changeCaveFeature(short feature)
    button 2 (once any Zoombini is placed) goes on; otherwise a Zoombini
    not yet placed is dragged to a place (walked to the right one if it
    doesn't belong there) or, dropped outside the places, walked back. A
-   click after one of the buttons (g_4b0d52) leaves the screen. */
+   click after one of the buttons (sceneDue) leaves the screen. */
 /* @zoombi32 0x0041d3f4 */
 void cavesClicked(short which)
 {
@@ -1352,9 +1352,9 @@ void cavesClicked(short which)
     short found;
     short i;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeCaves();
         return;
@@ -1367,8 +1367,8 @@ void cavesClicked(short which)
         drawCavesButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawCavesButton(which, 0, 1);
-        g_4b755c = 1;
-        g_4b0d52 = 1;
+        snoidsArrived = 1;
+        sceneDue = 1;
         askKeepParty();
         break;
     case 2:
@@ -1381,7 +1381,7 @@ void cavesClicked(short which)
             waitForEventFor(0, 2, 0, 1);
             drawCavesButton(which, 0, 1);
             markPlacedSnoids();
-            g_4b0d52 = 17;
+            sceneDue = 17;
         }
         break;
     case 3:
@@ -1392,7 +1392,7 @@ void cavesClicked(short which)
             for (i = 1; i < 21; i++)
                 if (spotSnoids[i] == view->id)
                     free = 0;
-            if (free == 1 && !g_4a0ff0 && g_4b755a <= 0) {
+            if (free == 1 && !g_4a0ff0 && snoidsOnTheirWay <= 0) {
                 from = *(Point *)&view->body.x;
                 dragSnoid(view, where, 0, 0);
                 g_4a1010 = heldPlaceNumber();
@@ -1459,7 +1459,7 @@ void cavesClicked(short which)
 }
 
 /* The roster screen's frame (scenes[]): leaves the screen after a button
-   (g_4b0d52) once the sound and the Zoombinis are done, starts the walk
+   (sceneDue) once the sound and the Zoombinis are done, starts the walk
    (g_4ab870), shows the frames' changes (g_4ab994), walks Zoombinis on
    (walkNext), blinks the place g_4ab86c, has placed Zoombinis (g_4ab996)
    and, when all are placed (g_4aba08), the others cheer, and plays the
@@ -1476,18 +1476,18 @@ void cavesFrame()
     if (!g_4a1208 && cavesOpen) {
         g_4a1208 = 1;
         updateViews();
-        if (g_4b0d52) {
+        if (sceneDue) {
             if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
                 g_4a1208 = 0;
                 return;
             }
-            if (!g_4b9688 || g_4b9688 == 3) {
-                if (g_4b9688 == 3)
+            if (!dialogQuestion || dialogQuestion == 3) {
+                if (dialogQuestion == 3)
                     chooseSnoids(0, 0);
-                if ((viewsLocked || !g_4b755a || g_4b755c >= 1)
-                    && (g_4ab872 == 3 || g_4b0d52 == 1 || viewsLocked)) {
-                    g_4b0d50 = g_4b0d52;
-                    g_4b0d52 = 0;
+                if ((viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1)
+                    && (g_4ab872 == 3 || sceneDue == 1 || viewsLocked)) {
+                    pendingScene = sceneDue;
+                    sceneDue = 0;
                     setCurrentMap(0);
                     closeCaves();
                     g_4a1208 = 0;
@@ -1498,12 +1498,12 @@ void cavesFrame()
                     queueViewSound(996, 0);
                     sendReadyOff(660, 376, 30);
                 }
-            } else if (g_4b9688 == 2) {
-                g_4b9688 = 0;
-                g_4b0d52 = 0;
+            } else if (dialogQuestion == 2) {
+                dialogQuestion = 0;
+                sceneDue = 0;
             }
         }
-        if (g_4b9684) {
+        if (dialogFlags) {
             playAmbientSound();
             g_4a1208 = 0;
             return;
@@ -1602,7 +1602,7 @@ void cavesFrame()
     }
 }
 
-/* The roster screen's keys (with debugging on, g_4b8803, or else only
+/* The roster screen's keys (with debugging on, debugMessagesOn, or else only
    0x16f): 1-4 set the level (cavesLevel) and show it, L shows it, space
    resets the frames (resetCavesScreen), 0x171 walks the Zoombinis to their spots,
    0x173-0x176 change the first feature, 0x16f (below level 4) calls
@@ -1617,7 +1617,7 @@ short cavesKey(unsigned short key)
     ShortRect rect = {275, 0, 375, 18};
     short used;
 
-    if (!g_4b8803 && key != 0x16f)
+    if (!debugMessagesOn && key != 0x16f)
         return 0;
     switch (key) {
     case '1':

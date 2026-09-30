@@ -23,7 +23,7 @@ void resetSnoids()
 {
     g_4b7564 = g_4b7558 = 0;
     arrivalHook = 0;
-    g_4b754a = 0;
+    practiceLevel = 0;
     g_4b7562 = g_4b7566 = g_4b7568 = 0;
     g_4b7552 = 0;
     g_4b7554 = 1;
@@ -39,9 +39,9 @@ void resetSnoids()
 void loadSnoids(short files)
 {
     if (files) {
-        openGameFile(&g_4b7b50, "MidiMPC.MHK");
-        openGameFile(&g_4b7b4c, "Zoombini.MHK");
-        setCurrentMap(g_4b7b4c);
+        openGameFile(&midiMapFile, "MidiMPC.MHK");
+        openGameFile(&soundsMap, "Zoombini.MHK");
+        setCurrentMap(soundsMap);
     } else {
         snoidImages = loadImageBank(3000, &snoidImagesResource);
         snoidImages2 = loadImageBank(3100, &snoidImages2Resource);
@@ -62,9 +62,9 @@ void closeSnoids()
 {
     short saved = setFreeAtOnce(1);
 
-    if (g_4a4ba0) {
-        disposePtr(g_4a4ba0);
-        g_4a4ba0 = 0;
+    if (gameState) {
+        disposePtr(gameState);
+        gameState = 0;
     }
     if (snoidTablesLoaded)
         snoidTablesLoaded = 0;
@@ -75,8 +75,8 @@ void closeSnoids()
     freeResource(&snoidImages2Resource);
     freeResource(&snoidImages3Resource);
     setFreeAtOnce(saved);
-    closeGameFile(&g_4b7b4c);
-    closeGameFile(&g_4b7b50);
+    closeGameFile(&soundsMap);
+    closeGameFile(&midiMapFile);
 }
 
 /* Loads a table of big-endian words ('REGS'), swapping them. */
@@ -362,8 +362,8 @@ void drawSnoidView(View *view)
 short countPresentTravellers()
 {
     int count = 0;
-    for (short i = 0; i < *(short *)(g_4a4ba0 + 0xa92e); i++)
-        if (*(g_4a4ba0 + 0xa93c + i * 0x13) != 0)
+    for (short i = 0; i < *(short *)(gameState + 0xa92e); i++)
+        if (*(gameState + 0xa93c + i * 0x13) != 0)
             count++;
     return count;
 }
@@ -372,7 +372,7 @@ short countPresentTravellers()
 void releaseHeldPlace()
 {
     if (placeHeld) {
-        g_4b83e4[heldPlace] = 0;
+        placeClaims[heldPlace] = 0;
         placeHeld = 0;
     }
 }
@@ -412,7 +412,7 @@ void claimPlacedView(short n, short id)
 {
     if (n > 0 && n < 125) {
         if (id >= 0)
-            g_4b83e4[n - 1] = id;
+            placeClaims[n - 1] = id;
     }
 }
 
@@ -441,7 +441,7 @@ void makePartySnoids(short all)
     short slot;
     short i;
 
-    g_4b755c = g_4b755a = placed = 0;
+    snoidsArrived = snoidsOnTheirWay = placed = 0;
     slot = countSnoidViews();
     for (i = slot; i < 32; i++)
         partyViews[i] = 0;
@@ -504,7 +504,7 @@ void updateSnoidView(View *view, short region)
     changed = 0;
     if (!view->body.running)
         return;
-    if (g_4b9684)
+    if (dialogFlags)
         return;
     {
         short due;
@@ -513,9 +513,9 @@ void updateSnoidView(View *view, short region)
             if (!groupLeader[view->body.group])
                 groupLeader[view->body.group] = view->id;
             if (groupLeader[view->body.group] == view->id)
-                g_4b8b32[view->body.group] = due = view->nextUpdate <= updateTime;
+                groupFlagsA[view->body.group] = due = view->nextUpdate <= updateTime;
             else
-                due = g_4b8b32[view->body.group];
+                due = groupFlagsA[view->body.group];
         } else {
             due = view->nextUpdate <= updateTime;
         }
@@ -542,9 +542,9 @@ void updateSnoidView(View *view, short region)
             unionRgnRect(currentViewRgn, &snoid->body.bounds);
             snoid->unknownF8 = 0;
             setSnoidAction(snoid, snoidMode, 0);
-            if (g_4b755a > 0) {
-                g_4b755a--;
-                g_4b755c++;
+            if (snoidsOnTheirWay > 0) {
+                snoidsOnTheirWay--;
+                snoidsArrived++;
             }
             if (g_4b7566 && snoid->unknownF7 == 2)
                 view->flags |= 0x4000000;
@@ -555,16 +555,16 @@ void updateSnoidView(View *view, short region)
             if (g_4b7554) {
                 found = 0;
                 for (i = 0; !found && i < placedViewCount; i++)
-                    if (!g_4b83e4[i] && ptInRect(&rect, placedViewPoints[i])) {
+                    if (!placeClaims[i] && ptInRect(&rect, placedViewPoints[i])) {
                         found = 1;
-                        g_4b83e4[i] = view->id;
+                        placeClaims[i] = view->id;
                     }
             }
             found = 0;
             for (i = 0; !found && i < viewPlaceCount; i++)
-                if (!g_4b86d4[i] && ptInRect(&rect, viewPlaces[i])) {
+                if (!viewPlaceOwners[i] && ptInRect(&rect, viewPlaces[i])) {
                     found = 1;
-                    g_4b86d4[i] = view->id;
+                    viewPlaceOwners[i] = view->id;
                 }
             if (arrivalHook)
                 arrivalHook(view->id);
@@ -636,7 +636,7 @@ void updateSnoidView(View *view, short region)
             snoid->unknownF5 = 0;
             changed = 1;
         }
-        if (g_4a4b98 && !g_4b9684 && snoid->unknownF8++ > g_4a4b98) {
+        if (g_4a4b98 && !dialogFlags && snoid->unknownF8++ > g_4a4b98) {
             snoid->unknownF8 = 0;
             if (!altSnoids && randomBetween(0, 100) < 10) {
                 snoid->unknownF5 = randomBetween(0, 7);
@@ -678,7 +678,7 @@ void updateSnoidView(View *view, short region)
         return;
     case 10:
         setSnoidAction(snoid, 7, 0);
-        g_4b755a++;
+        snoidsOnTheirWay++;
         return;
     }
     if (!changed)
@@ -862,7 +862,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
     savedFlags = dragged->flags;
     dragged->flags |= 0x4001000;
     insertViewAtEnd(dragged);
-    if ((!g_4b754a && viewSnoid(view)->name[0]) || showPositions)
+    if ((!practiceLevel && viewSnoid(view)->name[0]) || showPositions)
         showNameTag(viewSnoid(view)->name, 0, 0);
     savedInterval = dragged->interval;
     dragged->nextUpdate = 0;
@@ -889,15 +889,15 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
             if (ptInRect(&rect, placedViewPoints[i])) {
                 hit = i + 1;
                 found = 1;
-                if (g_4b83e4[i] == id)
-                    g_4b83e4[i] = 0;
+                if (placeClaims[i] == id)
+                    placeClaims[i] = 0;
             }
         found = 0;
         for (i = 0; !found && i < viewPlaceCount; i++)
             if (ptInRect(&rect, viewPlaces[i])) {
                 found = 1;
-                if (g_4b86d4[i] == id)
-                    g_4b86d4[i] = 0;
+                if (viewPlaceOwners[i] == id)
+                    viewPlaceOwners[i] = 0;
             }
     }
     target = 0;
@@ -948,7 +948,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
             found = 0;
             if (!g_4b754c) {
                 for (i = 0; !found && i < placedViewCount && g_4b7560; i++)
-                    if (!g_4b83e4[i] && ptInRect(&rect, placedViewPoints[i])) {
+                    if (!placeClaims[i] && ptInRect(&rect, placedViewPoints[i])) {
                         if ((placed = findView(placedViews[i])) != 0) {
                             found = 1;
                             if (placed->id != target) {
@@ -979,7 +979,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
         resetViewClock();
     }
     if (target && !g_4b7556) {
-        g_4b83e4[which] = id;
+        placeClaims[which] = id;
         heldPlace = which;
         placeHeld = id;
         if ((old = findView(target)) != 0 && old->body.running) {
@@ -1037,7 +1037,7 @@ void showNameTag(const char *text, unsigned long duration, short large)
     View *view;
 
     deleteView(-2);
-    if (!g_4b9684) {
+    if (!dialogFlags) {
         view = (View *)newPtr(0xec);
         if (view) {
             initView(view, 0, 0, -2);
@@ -1174,8 +1174,8 @@ void setSnoidsRunning(short running)
 void markPlacedSnoids()
 {
     for (short i = 0; i < 125; i++)
-        if (g_4b83e4[i]) {
-            View *view = findView(g_4b83e4[i]);
+        if (placeClaims[i]) {
+            View *view = findView(placeClaims[i]);
 
             if (view && (view->flags & 1))
                 viewSnoid(view)->unknownF7 = 1;
@@ -1964,7 +1964,7 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
             script = snoid->unknownF5 + 38;
             break;
         }
-        if (g_4a4b98 && g_4b87fe) {
+        if (g_4a4b98 && soundOn) {
             if (randomBetween(1, 100) <= 50)
                 which = 4;
             else
@@ -2042,7 +2042,7 @@ void sendSnoids(short x, short y, unsigned long interval)
 {
     unsigned long when;
 
-    g_4b755c = g_4b755a = 0;
+    snoidsArrived = snoidsOnTheirWay = 0;
     sortSnoids(0);
     if (sortedCount) {
         when = clockTime();
@@ -2122,8 +2122,8 @@ void enterSnoids(short dy)
     View *view;
 
     x = -50;
-    g_4b755c = g_4b755a = 0;
-    if (*(short *)(g_4a4ba0 + 0x20) || g_4b7562) {
+    snoidsArrived = snoidsOnTheirWay = 0;
+    if (*(short *)(gameState + 0x20) || g_4b7562) {
         g_4b7562 = 0;
         g_4b7b86 = 0;
     } else {
@@ -2145,7 +2145,7 @@ void enterSnoids(short dy)
                         *(Point *)&snoid->targetX = viewPlaces[first + placed];
                         setSnoidAction(snoid, 7, 0);
                         view->nextUpdate = 0;
-                        g_4b755a++;
+                        snoidsOnTheirWay++;
                         placed++;
                     }
                 } else {
@@ -2158,15 +2158,15 @@ void enterSnoids(short dy)
                     rect.bottom = snoid->body.y + g_4b755e;
                     found = 0;
                     for (j = 0; !found && j < placedViewCount; j++)
-                        if (!g_4b83e4[j] && ptInRect(&rect, placedViewPoints[j])) {
+                        if (!placeClaims[j] && ptInRect(&rect, placedViewPoints[j])) {
                             found = 1;
-                            g_4b83e4[j] = view->id;
+                            placeClaims[j] = view->id;
                         }
                     found = 0;
                     for (j = 0; !found && j < viewPlaceCount; j++)
-                        if (!g_4b86d4[j] && ptInRect(&rect, viewPlaces[j])) {
+                        if (!viewPlaceOwners[j] && ptInRect(&rect, viewPlaces[j])) {
                             found = 1;
-                            g_4b86d4[j] = view->id;
+                            viewPlaceOwners[j] = view->id;
                         }
                 }
             }
@@ -2450,12 +2450,12 @@ short keepDragging()
 
     if (!dragging) {
         dragging = 1;
-        dragButtonDown = isButtonStillDown(g_4b80d0);
+        dragButtonDown = isButtonStillDown(buttonDown);
         clickToDrag = clickToDragOption;
         if (hideDragCursor)
             hideCursor();
     } else {
-        short down = isButtonStillDown(g_4b80d0);
+        short down = isButtonStillDown(buttonDown);
 
         if (g_4b7556 && !down) {
             dragging = 0;
@@ -2531,7 +2531,7 @@ void useAltSnoids(short restore)
         }
         long saved = currentMapFile;
 
-        setCurrentMap(g_4b7b4c);
+        setCurrentMap(soundsMap);
         snoidImages = loadImageBank(0xc80, &altSnoidResources[0]);
         snoidTables[0] = loadShortTable(0xc80, &altSnoidResources[1]);
         snoidTables[1] = loadShortTable(0xc81, &altSnoidResources[2]);
@@ -2540,7 +2540,7 @@ void useAltSnoids(short restore)
 }
 
 /*
- * The difficulty level (0-3) of the current scene: g_4b754a's, if set
+ * The difficulty level (0-3) of the current scene: practiceLevel's, if set
  * (1-4), else the level reached in its group of scenes (or the scenes
  * before them).
  */
@@ -2549,8 +2549,8 @@ short sceneLevel()
 {
     short level = 0;
 
-    if (g_4b754a >= 1 && g_4b754a <= 4) {
-        level = g_4b754a - 1;
+    if (practiceLevel >= 1 && practiceLevel <= 4) {
+        level = practiceLevel - 1;
     } else {
         short last;
         short group = sceneGroup(&last);
@@ -2581,14 +2581,14 @@ short sceneLevel()
 /*
  * Counts a visit to the camp in *visits (its low 12 bits) and picks the
  * hint to give: 1 at the first level; at the second, 2 then 12, once each
- * (flags 0x1000, 0x2000 in *visits); 5 if g_4b754a is set; else 0.
+ * (flags 0x1000, 0x2000 in *visits); 5 if practiceLevel is set; else 0.
  */
 /* @zoombi32 0x0045bdc4 */
 short campHint(short *visits)
 {
     short hint = 0;
 
-    if (!g_4b754a) {
+    if (!practiceLevel) {
         if ((*visits & 0xfff) < 0xfff)
             (*visits)++;
         switch (sceneLevel()) {
@@ -2871,7 +2871,7 @@ void recordParty(short ending, short all)
     }
     if (viewsLocked)
         return;
-    if (g_4b754a && ending) {
+    if (practiceLevel && ending) {
         party()->count = 0;
         party()->unknown2 = 1;
         party()->unknown4 = 1;
@@ -2890,7 +2890,7 @@ void recordParty(short ending, short all)
                 if (viewSnoid(view)->unknownF7)
                     viewSnoid(view)->unknownF7 = 1;
             }
-    if (g_4a48e6 && currentScene != 4 && currentScene != 5 && currentScene != 6)
+    if (leavingGame && currentScene != 4 && currentScene != 5 && currentScene != 6)
         chooseSnoids(1, 1);
     party()->count = countSnoidViews();
     chosen = 1;
@@ -2954,11 +2954,11 @@ void recordParty(short ending, short all)
             case 2:
             case 3:
                 waiting = &waitingParties()[1];
-                *(short *)(g_4a4ba0 + 0x4a) += lost;
+                *(short *)(gameState + 0x4a) += lost;
                 break;
             case 4:
                 waiting = &waitingParties()[2];
-                *(short *)(g_4a4ba0 + 0x4c) += lost;
+                *(short *)(gameState + 0x4c) += lost;
                 break;
             }
             if (waiting->unknown2)
@@ -3005,9 +3005,9 @@ void recordParty(short ending, short all)
                 waitingParties()[2] = *waiting;
                 break;
             }
-            *(short *)(g_4a4ba0 + 0x54) = 0;
+            *(short *)(gameState + 0x54) = 0;
             party()->count -= lost;
-        } else if (*(short *)(g_4a4ba0 + 0x54) && !g_4a48e6) {
+        } else if (*(short *)(gameState + 0x54) && !leavingGame) {
             short done;
 
             switch (puzzleLevels()[group]) {

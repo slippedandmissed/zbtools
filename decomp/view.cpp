@@ -56,8 +56,8 @@ void initViews()
     viewTail.body.bounds = g_4a7bb2;
     for (short i = 0; i < 17; i++) {
         groupLeader[i] = 0;
-        g_4b8b32[i] = 0;
-        g_4b8b43[i] = 0;
+        groupFlagsA[i] = 0;
+        groupFlagsB[i] = 0;
     }
     resetSnoids();
     for (short j = 0; j < 32; j++) {
@@ -103,12 +103,12 @@ void clearViews()
 {
     View *view;
 
-    g_4a7d42 = g_4b9688 = 0;
+    g_4a7d42 = dialogQuestion = 0;
     soundRanges = 0;
     addSoundRange(0x3e4, 0x3e5, 0);
     if (viewsReady) {
         freeDragCursors();
-        if (g_4b754a) {
+        if (practiceLevel) {
             party()->count = 0;
             party()->unknown2 = 1;
             party()->unknown4 = 1;
@@ -136,12 +136,12 @@ void clearViews()
         freeScripts();
         freeTerrain();
         freeSnoidScripts();
-        freeResource(&g_4b9670);
-        freeResource(&g_4b9674);
+        freeResource(&creditsImagesResource);
+        freeResource(&creditsBackdropResource);
         for (short i = 0; i < 17; i++) {
             groupLeader[i] = 0;
-            g_4b8b32[i] = 0;
-            g_4b8b43[i] = 0;
+            groupFlagsA[i] = 0;
+            groupFlagsB[i] = 0;
         }
         g_4b754c = g_4b8a0a = 0;
         g_4b755e = 15;
@@ -154,7 +154,7 @@ void clearViews()
         }
         viewSounds.active = 0;
         viewSounds2.active = 0;
-        g_4b9684 = 0;
+        dialogFlags = 0;
         setArrivalHook(0);
     }
 }
@@ -241,7 +241,7 @@ void updateViews()
         for (view = views; view; view = view->next)
             if (view->update)
                 view->update(view, currentViewRgn);
-        if (viewsSorted && !g_4b9684)
+        if (viewsSorted && !dialogFlags)
             sortViews();
         sectRgnWithRect(currentViewRgn, &gameRect);
         compactRgn(currentViewRgn);
@@ -263,12 +263,12 @@ void updateViews()
             view->changed = 0;
         }
         {
-            short sound = playViewSounds(&viewSounds, g_4b87fe, 1);
+            short sound = playViewSounds(&viewSounds, soundOn, 1);
 
             if (sound)
                 lastViewSound = sound;
         }
-        playViewSounds(&viewSounds2, g_4b87ff, 0);
+        playViewSounds(&viewSounds2, musicOn, 0);
         if (fillViews)
             unionRgnRect(currentViewRgn, &gameRect);
         compactRgn(currentViewRgn);
@@ -276,20 +276,20 @@ void updateViews()
         setEmptyRgn(currentViewRgn);
         setClipRect(gameRect);
         setPort(saved);
-        if (g_4b9686) {
-            if (g_4b9686 > 0)
-                closeDialog(g_4b9686);
-            g_4b9686 = 0;
+        if (dialogClosing) {
+            if (dialogClosing > 0)
+                closeDialog(dialogClosing);
+            dialogClosing = 0;
             if (g_4b966c == 4) {
                 g_4b966c = 0;
                 askQuit();
             }
             if (g_4b966c == 3) {
                 g_4b966c++;
-                g_4b9686 = -1;
+                dialogClosing = -1;
             }
             if (g_4b966c == 2) {
-                g_4b9686 = 1;
+                dialogClosing = 1;
                 g_4b966c++;
             }
         }
@@ -388,7 +388,7 @@ void setViewPlaces(short count, Point *places, short apply)
     short i;
 
     for (i = 0; i < 125; i++)
-        g_4b86d4[i] = 0;
+        viewPlaceOwners[i] = 0;
     viewPlaceCount = count;
     for (i = 0; i < count; i++)
         viewPlaces[i] = places[i];
@@ -589,7 +589,7 @@ void loadScripts(short first, short count)
 
     placedViewCount = 0;
     for (i = 0; i < 125; i++)
-        g_4b83e4[i] = 0;
+        placeClaims[i] = 0;
     scriptGroups = 0;
     if (count > 300)
         fatalError("Too many main feature SCRBs");
@@ -671,9 +671,9 @@ void freeScripts()
     for (i = 0; i < 300; i++)
         freeResource(&scriptResources[i]);
     for (i = 0; i < 125; i++)
-        g_4b83e4[i] = 0;
+        placeClaims[i] = 0;
     for (i = 0; i < 125; i++)
-        g_4b86d4[i] = 0;
+        viewPlaceOwners[i] = 0;
     placedViewCount = 0;
     viewPlaceCount = 0;
     scriptGroups = 0;
@@ -802,8 +802,8 @@ short freeViewGroup()
         for (short g = 1; g < 17; g++)
             if (!used[g]) {
                 groupLeader[g] = 0;
-                g_4b8b32[g] = 0;
-                g_4b8b43[g] = 0;
+                groupFlagsA[g] = 0;
+                groupFlagsB[g] = 0;
                 return g;
             }
     }
@@ -843,8 +843,8 @@ short groupViews(short a, short b, short c, short d, short e, short f)
                 if (view) {
                     if (view->body.group && groupLeader[view->body.group] == view->id) {
                         groupLeader[view->body.group] = 0;
-                        g_4b8b32[view->body.group] = 0;
-                        g_4b8b43[view->body.group] = 0;
+                        groupFlagsA[view->body.group] = 0;
+                        groupFlagsB[view->body.group] = 0;
                     }
                     view->body.group = group;
                 }
@@ -868,7 +868,7 @@ void pairViews(short a, short b)
         if (group) {
             first->body.group = group;
             second->body.group = group;
-            g_4b8b43[group] = 1;
+            groupFlagsB[group] = 1;
         }
     }
 }
@@ -945,7 +945,7 @@ unsigned long resetViewClock()
 /* @zoombi32 0x00464d64 */
 unsigned long viewClock()
 {
-    if (g_4b9684)
+    if (dialogFlags)
         return 0;
     return clockTime() - viewClockStart;
 }
@@ -959,7 +959,7 @@ void markViewTime()
 /* @zoombi32 0x00464d88 */
 unsigned long viewTimeSinceMark()
 {
-    if (g_4b9684)
+    if (dialogFlags)
         return 0;
     return clockTime() - viewClockMark;
 }
@@ -1070,7 +1070,7 @@ short *loadSwappedResource(long *resource, short id, long type)
 void fadeInViews()
 {
     viewsBusy = 1;
-    fadePalette(g_4aabe8, 1, 0xfe, 0, 1, 0);
+    fadePalette(targetPalette, 1, 0xfe, 0, 1, 0);
     viewsBusy = 0;
     viewsShown = 1;
     showNormalCursor();
@@ -1083,7 +1083,7 @@ void fadeOutViews()
         viewsBusy = 1;
         viewsShown = 0;
         fadePalette(0, 1, 0xfe, 0, 1, 0);
-        if (g_4a48e6) {
+        if (leavingGame) {
             fillPortRect(gameRect, Color(0), 0);
             showRect(&gameRect);
         }
@@ -1169,7 +1169,7 @@ void loadViewSounds(short id, short now)
     short sounds[4];
     long saved;
 
-    if (g_4b87fe) {
+    if (soundOn) {
         View *view = findView(id);
 
         if (view) {
@@ -1178,7 +1178,7 @@ void loadViewSounds(short id, short now)
             viewSoundList(view, &count, sounds);
             for (short i = 0; i < count; i++) {
                 if (sounds[i] < 1000 || sounds[i] >= 20000)
-                    setCurrentMap(g_4b7b4c);
+                    setCurrentMap(soundsMap);
                 else
                     currentMapFile = saved;
                 if (now)
@@ -1374,12 +1374,12 @@ short playViewSounds(SoundChannels *channels, short played, short pick)
                     saved = currentMapFile;
                     type = RESOURCE_TYPE(0, 'S', 'N', 'D');
                     if (channels->sounds[i] >= 30000) {
-                        setCurrentMap(g_4b7b50);
+                        setCurrentMap(midiMapFile);
                         type = RESOURCE_TYPE('t', 'M', 'I', 'D');
                     } else if (channels->sounds[i] < 1000) {
-                        setCurrentMap(g_4b7b4c);
+                        setCurrentMap(soundsMap);
                     } else if (channels->sounds[i] >= 20000) {
-                        setCurrentMap(g_4b7b4c);
+                        setCurrentMap(soundsMap);
                         channels->unknown42[i] = 1;
                     }
                     if (channels->unknown42[i]) {
@@ -1389,7 +1389,7 @@ short playViewSounds(SoundChannels *channels, short played, short pick)
                         ok = findAndPlaySound(last, type, -1);
                         if (ok)
                             channels->state[i] = 2;
-                        if (g_4b8803) {
+                        if (debugMessagesOn) {
                             if (!ok)
                                 debugMessage(last, "Could not Get/Start s-sound ", 0, 0, 1);
                             else if (soundTests)
@@ -1398,7 +1398,7 @@ short playViewSounds(SoundChannels *channels, short played, short pick)
                     } else {
                         last = channels->sounds[i];
                         playSoundOn(last, type, -1);
-                        if (g_4b8803) {
+                        if (debugMessagesOn) {
                             if (!playSoundOn(last, type, -1))
                                 debugMessage(last, "Could not Get/Start sound ", 0, 0, 1);
                             else if (soundTests)
@@ -1721,7 +1721,7 @@ short addView(unsigned long flags, ViewDraw draw, ViewUpdate update, short kind,
         runViewScript(view, removedRgn);
         placedViews[placedViewCount] = id;
         placedViewPoints[placedViewCount] = *(Point *)data;
-        g_4b83e4[placedViewCount] = 0;
+        placeClaims[placedViewCount] = 0;
         placedViewCount++;
     }
     return id;

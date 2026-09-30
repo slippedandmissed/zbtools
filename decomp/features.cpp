@@ -116,14 +116,14 @@ void queueViewSound(short sound, char streamed)
     SoundChannels *channels;
 
     if (sound >= 30000 || (!sound && g_4a7d42 >= 30000)) {
-        if (!g_4b87ff)
+        if (!musicOn)
             return;
         if (!sound)
             sound = g_4a7d42;
         channels = &viewSounds2;
         g_4a7d42 = sound;
     } else {
-        if (!g_4b87fe)
+        if (!soundOn)
             return;
         channels = &viewSounds;
     }
@@ -195,7 +195,7 @@ void runViewScript(View *view, short region)
     short *cel;
     short word;
 
-    if (g_4b9684)
+    if (dialogFlags)
         return;
     if (!view->body.running) {
         if (view->body.group) {
@@ -211,27 +211,27 @@ void runViewScript(View *view, short region)
             if (!groupLeader[view->body.group])
                 groupLeader[view->body.group] = view->id;
             if (groupLeader[view->body.group] == view->id) {
-                if (g_4b8b43[view->body.group]) {
-                    if (!g_4b8b32[view->body.group])
-                        g_4b8b32[view->body.group] = due = view->nextUpdate <= updateTime;
+                if (groupFlagsB[view->body.group]) {
+                    if (!groupFlagsA[view->body.group])
+                        groupFlagsA[view->body.group] = due = view->nextUpdate <= updateTime;
                     else
                         due = 0;
                 } else {
-                    g_4b8b32[view->body.group] = due = view->nextUpdate <= updateTime;
+                    groupFlagsA[view->body.group] = due = view->nextUpdate <= updateTime;
                 }
-            } else if (g_4b8b43[view->body.group]) {
-                switch (g_4b8b32[view->body.group]) {
+            } else if (groupFlagsB[view->body.group]) {
+                switch (groupFlagsA[view->body.group]) {
                 case 1:
-                    g_4b8b32[view->body.group] = 2;
+                    groupFlagsA[view->body.group] = 2;
                     due = 0;
                     break;
                 case 2:
-                    g_4b8b32[view->body.group] = 0;
+                    groupFlagsA[view->body.group] = 0;
                     due = 1;
                     break;
                 }
             } else {
-                due = g_4b8b32[view->body.group];
+                due = groupFlagsA[view->body.group];
             }
         } else {
             due = view->nextUpdate <= updateTime;
@@ -294,7 +294,7 @@ void runViewScript(View *view, short region)
                 ended = 1;
                 if (view->body.group) {
                     groupLeader[view->body.group] = 0;
-                    g_4b8b43[view->body.group] = 0;
+                    groupFlagsB[view->body.group] = 0;
                     view->body.group = 0;
                 }
                 view->body.running = 0;
@@ -452,7 +452,7 @@ void runViewCels(View *view, short region)
 {
     short *cel;
 
-    if (view->body.running && !g_4b9684 && view->nextUpdate <= updateTime) {
+    if (view->body.running && !dialogFlags && view->nextUpdate <= updateTime) {
         ShortRect rect;
         short *hotY;
         short *cels;
@@ -587,7 +587,7 @@ void strandParty()
     case 19:
     case 20:
     case 21:
-        g_4afb32 = 0;
+        rosterChanged = 0;
         party()->count = 0;
         break;
     }
@@ -613,12 +613,12 @@ void loadDialogs()
     long saved;
 
     if (!dialogResource) {
-        g_4b98cc = 0;
-        g_4b9686 = g_4b97fc = g_4b9688 = 0;
-        dialogView = dialogButton1 = dialogButton2 = g_4b9804 = 0;
+        pendingDialogPress = 0;
+        dialogClosing = dialogPressed = dialogQuestion = 0;
+        dialogView = dialogButton1 = dialogButton2 = creditsView = 0;
         g_4b9806 = g_4b9808 = g_4b980a = g_4b980c = g_4b980e = 0;
         saved = currentMapFile;
-        setCurrentMap(g_4b7b4c);
+        setCurrentMap(soundsMap);
         dialogImages = loadImageBank(1, &dialogResource);
         for (short i = 0; i < 11; i++)
             dialogScripts[i] = loadSwappedResource(&dialogScriptResources[i], i + 1,
@@ -630,7 +630,7 @@ void loadDialogs()
 /* @zoombi32 0x00466c95 */
 void freeDialogs()
 {
-    g_4b9686 = g_4b97fc = 0;
+    dialogClosing = dialogPressed = 0;
     dialogView = dialogButton1 = dialogButton2 = 0;
     g_4b9806 = g_4b9808 = g_4b980a = g_4b980c = g_4b980e = 0;
     if (savedGameList) {
@@ -652,22 +652,22 @@ void freeDialogs()
 /* @zoombi32 0x00466d3d */
 void askKeepParty()
 {
-    if (!g_4b754a && currentScene >= 1 && currentScene <= 18) {
-        g_4b9688 = 1;
+    if (!practiceLevel && currentScene >= 1 && currentScene <= 18) {
+        dialogQuestion = 1;
         showDialog(4, dialogTexts[textKeepParty], dialogTexts[textLoseEm], dialogTexts[textKeepEm]);
     }
 }
 
 /* Which of the dialog's hot spots (1-17) a click hits, of those the dialog
-   showing (g_4b9684) has; notes it in g_4b97fc. */
+   showing (dialogFlags) has; notes it in dialogPressed. */
 /* @zoombi32 0x0046879e */
 void dialogClick(Point where)
 {
     short hit;
     short i;
 
-    if (g_4b9684 & 0x10) {
-        g_4b9686 = 5;
+    if (dialogFlags & 0x10) {
+        dialogClosing = 5;
         return;
     }
     for (i = 0; i < 17; i++)
@@ -678,16 +678,16 @@ void dialogClick(Point where)
         if (ptInRect(&dialogSpots[i], where)) {
             short spot = i + 1;
 
-            if (g_4b9684 & 8)
+            if (dialogFlags & 8)
                 hit = spot >= 15 && spot <= 16;
-            else if (g_4b9684 & 2)
+            else if (dialogFlags & 2)
                 hit = (spot >= 11 && spot <= 14) || spot == 17;
-            else if (g_4b9684 & 4)
+            else if (dialogFlags & 4)
                 hit = spot >= 11 && spot <= 14;
-            else if (g_4b9684 & 1)
+            else if (dialogFlags & 1)
                 hit = spot >= 1 && spot <= 10;
             if (hit)
-                g_4b97fc = spot;
+                dialogPressed = spot;
         }
 }
 
@@ -701,13 +701,13 @@ void startNewGame()
     fillRosterHeader(1);
     applyPlayerSettings();
     currentScene = scene;
-    *(short *)(g_4a4ba0 + 0xca) = g_4b0d56 = 3;
-    g_4b0d54 = -1;
-    g_4b0d50 = -1;
-    g_4b0d52 = 1;
+    *(short *)(gameState + 0xca) = journeyFrom = 3;
+    journeyTo = -1;
+    pendingScene = -1;
+    sceneDue = 1;
     if (currentScene != 1)
-        g_4b0d52 = 3;
-    *(short *)(g_4a4ba0 + 0xcc) = g_4b0d52;
+        sceneDue = 3;
+    *(short *)(gameState + 0xcc) = sceneDue;
     viewsLocked = 1;
     g_4b7562 = 1;
     strcpy(gameName, "New Game");
@@ -720,10 +720,10 @@ void startNewGame()
 void askNewGame()
 {
     if (currentScene >= 1 && currentScene <= 18) {
-        if (!g_4b754a) {
+        if (!practiceLevel) {
             if (!g_4b80e2) {
                 g_4b80e2 = 1;
-                if (g_4afb32)
+                if (rosterChanged)
                     showDialog(4, dialogTexts[textNotSavedNewGame], dialogTexts[textNewGame], dialogTexts[textCancel]);
                 else
                     showDialog(4, dialogTexts[textSureNewGame], dialogTexts[textNewGame], dialogTexts[textCancel]);
@@ -741,7 +741,7 @@ void askNewGame()
 void askLoadGame()
 {
     if (currentScene >= 1 && currentScene <= 18) {
-        if (!g_4b754a)
+        if (!practiceLevel)
             showDialog(2, 0, 0, 0);
         else
             showDialog(4, dialogTexts[textPracticeNoLoad], dialogTexts[textOk2], 0);
@@ -753,7 +753,7 @@ void askLoadGame()
 void askSaveGame()
 {
     if (currentScene >= 1 && currentScene <= 18) {
-        if (!g_4b754a)
+        if (!practiceLevel)
             showDialog(3, 0, 0, 0);
         else
             showDialog(4, dialogTexts[textPracticeNoSave], dialogTexts[textOk2], 0);
@@ -764,24 +764,24 @@ void askSaveGame()
 /* @zoombi32 0x00469669 */
 void askQuit()
 {
-    if (!g_4b966c && (g_4b9684 & 1))
+    if (!g_4b966c && (dialogFlags & 1))
         g_4b966c = 1;
     if (g_4b966c) {
         showDialog(4, dialogTexts[textReallyQuit], dialogTexts[textYes], dialogTexts[textNo]);
         return;
     }
-    if (!g_4b754a && currentScene >= 1 && currentScene <= 18) {
-        if (!g_4b80e0 && !g_4b80e2)
-            g_4b80e0 = 1;
+    if (!practiceLevel && currentScene >= 1 && currentScene <= 18) {
+        if (!quitRequested && !g_4b80e2)
+            quitRequested = 1;
     } else {
-        g_4b80e0 = -1;
+        quitRequested = -1;
     }
 }
 
 /*
  * Shows a dialog: 1 (unused?), 2 load a game, 3 save one, 4 a message with
  * one or two buttons, 5 the credits(?). Not over another dialog or while
- * leaving a scene; each kind's flag goes in g_4b9684 while it shows.
+ * leaving a scene; each kind's flag goes in dialogFlags while it shows.
  */
 /* @zoombi32 0x00466d7e */
 void showDialog(short kind, const char *text, const char *button2, const char *button1)
@@ -790,7 +790,7 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
     short flag;
     short y;
 
-    if (!viewsReady || !g_4b2aea || g_4a74dc != -1 || g_4b0d52 > 1 || g_4b0d50 != -1)
+    if (!viewsReady || !g_4b2aea || g_4a74dc != -1 || sceneDue > 1 || pendingScene != -1)
         return;
     viewsPaused = 0;
     setDragCursor(0);
@@ -839,7 +839,7 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
     }
     if (!flag)
         return;
-    if (g_4b9684 & flag)
+    if (dialogFlags & flag)
         return;
     if (lastViewSound != 999) {
         stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
@@ -866,7 +866,7 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
         break;
     case 2:
         if (!savedGames) {
-            g_4a7d3c++;
+            busyCount++;
             showDialog(4, dialogTexts[textNoSavedGames], dialogTexts[textOk2], 0);
             kind = 0;
             break;
@@ -875,7 +875,7 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
         {
             short script;
 
-            g_4a7d3c++;
+            busyCount++;
             if (kind == 2)
                 script = 4;
             else
@@ -902,7 +902,7 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
         }
         break;
     case 4:
-        g_4a7d3c++;
+        busyCount++;
         g_4b980c = addView(0x4001000, drawDialogPart, updateDialogPart, 10, 0, 0, 0, 0);
         g_4b980e = addView(0x4001000, drawDialogPart, updateDialogPart, 11, 15, 0, 0, 0);
         {
@@ -911,26 +911,26 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
             if (view)
                 view->placed = placeDialogList;
         }
-        g_4b9688 = 1;
+        dialogQuestion = 1;
         break;
     case 5:
         {
             long interval;
 
-            g_4a7d3c++;
+            busyCount++;
             saved = currentMapFile;
-            setCurrentMap(g_4b7b4c);
-            creditsImages = loadImageBank(20, &g_4b9670);
-            creditsBackdrop = loadSwappedResource(&g_4b9674, 20, RESOURCE_TYPE('S', 'C', 'R', 'B'));
+            setCurrentMap(soundsMap);
+            creditsImages = loadImageBank(20, &creditsImagesResource);
+            creditsBackdrop = loadSwappedResource(&creditsBackdropResource, 20, RESOURCE_TYPE('S', 'C', 'R', 'B'));
             interval = 1;
-            g_4b9804 = addView(0x4001000, drawCredits, tickView, 0, interval, 0, 0, 0);
+            creditsView = addView(0x4001000, drawCredits, tickView, 0, interval, 0, 0, 0);
             currentMapFile = saved;
             queueViewSound(20104, 0);
         }
         break;
     }
     if (kind)
-        g_4b9684 |= flag;
+        dialogFlags |= flag;
 }
 
 /* Closes a dialog (by kind, as showDialog), bringing the one below back
@@ -968,15 +968,15 @@ void closeDialog(short kind)
             freeSave(&saveFieldSave);
             saveFieldSave = 0;
         }
-        if (g_4a7d3c)
-            g_4a7d3c--;
+        if (busyCount)
+            busyCount--;
         break;
     case 4:
         flag = 8;
         deleteView(g_4b980c);
         deleteView(g_4b980e);
         g_4b980c = g_4b980e = 0;
-        if (g_4b9684 & 4) {
+        if (dialogFlags & 4) {
             View *view = findView(g_4b9806);
 
             if (view)
@@ -985,8 +985,8 @@ void closeDialog(short kind)
             if (view)
                 view->changed = 1;
         }
-        if (g_4a7d3c)
-            g_4a7d3c--;
+        if (busyCount)
+            busyCount--;
         break;
     case 5:
         flag = 0x10;
@@ -994,22 +994,22 @@ void closeDialog(short kind)
             stopSounds(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
             lastViewSound = 0;
         }
-        deleteView(g_4b9804);
-        g_4b9804 = 0;
-        freeResource(&g_4b9670);
-        freeResource(&g_4b9674);
+        deleteView(creditsView);
+        creditsView = 0;
+        freeResource(&creditsImagesResource);
+        freeResource(&creditsBackdropResource);
         unionRgnRect(removedRgn, &gameRect);
-        if (g_4a7d3c)
-            g_4a7d3c--;
+        if (busyCount)
+            busyCount--;
         break;
     default:
-        g_4b9686 &= 0x1f;
+        dialogClosing &= 0x1f;
         closed = 0;
         break;
     }
     if (closed) {
-        g_4b9684 &= ~flag;
-        if (g_4b9684 == 1) {
+        dialogFlags &= ~flag;
+        if (dialogFlags == 1) {
             View *view = findView(dialogButton1);
 
             if (view)
@@ -1020,9 +1020,9 @@ void closeDialog(short kind)
         }
     }
     resetViewClock();
-    if (g_4b98cc) {
-        g_4b97fc = g_4b98cc;
-        g_4b98cc = 0;
+    if (pendingDialogPress) {
+        dialogPressed = pendingDialogPress;
+        pendingDialogPress = 0;
     }
 }
 
@@ -1199,8 +1199,8 @@ void placeDialogButton(View *view)
 {
     short *cel = (short *)view->body.cels;
     short first = view->id == dialogButton1;
-    short pressedFirst = first && g_4b97fc >= 1 && g_4b97fc <= 8;
-    short pressedSecond = !first && (g_4b97fc == 9 || g_4b97fc == 10);
+    short pressedFirst = first && dialogPressed >= 1 && dialogPressed <= 8;
+    short pressedSecond = !first && (dialogPressed == 9 || dialogPressed == 10);
 
     if (view->changed) {
         if (first) {
@@ -1212,11 +1212,11 @@ void placeDialogButton(View *view)
 
                 switch (i) {
                 case 12:
-                    if (!g_4b87fe)
+                    if (!soundOn)
                         off = 1;
                     break;
                 case 15:
-                    if (!g_4b87ff)
+                    if (!musicOn)
                         off = 1;
                     break;
                 case 18:
@@ -1224,7 +1224,7 @@ void placeDialogButton(View *view)
                         off = 1;
                     break;
                 case 21:
-                    if (g_4b0d4a)
+                    if (transitionsOn)
                         off = 1;
                     break;
                 }
@@ -1251,14 +1251,14 @@ void placeDialogButton(View *view)
             }
         }
     } else if (pressedFirst || pressedSecond) {
-        if (g_4b97fc != 17) {
+        if (dialogPressed != 17) {
             queueViewSound(999, 0);
             waitForEventFor(0, 2, 0, 1);
         }
-        view->unknown1e = g_4b97fc;
-        buttonPressed[g_4b97fc - 1] = 1;
+        view->unknown1e = dialogPressed;
+        buttonPressed[dialogPressed - 1] = 1;
         view->changed = 1;
-        g_4b97fc = -1;
+        dialogPressed = -1;
         view->nextUpdate = clockTime() + 2;
     } else if (view->unknown1e && view->nextUpdate) {
         if (clockTime() > view->nextUpdate || clockTime() < view->nextUpdate - 2) {
@@ -1279,11 +1279,11 @@ void placeDialogButton(View *view)
                 askQuit();
                 break;
             case 5:
-                g_4b87fe = !g_4b87fe;
+                soundOn = !soundOn;
                 break;
             case 6:
-                g_4b87ff = !g_4b87ff;
-                if (g_4b87ff)
+                musicOn = !musicOn;
+                if (musicOn)
                     queueViewSound(0, 0);
                 else
                     stopSounds(g_4a7d42, RESOURCE_TYPE(0, 'S', 'N', 'D'));
@@ -1292,17 +1292,17 @@ void placeDialogButton(View *view)
                 clickToDragOption = !clickToDragOption;
                 break;
             case 8:
-                g_4b0d4a = !g_4b0d4a;
+                transitionsOn = !transitionsOn;
                 break;
             case 9:
-                if (!g_4b9686)
-                    g_4b9686 = 1;
+                if (!dialogClosing)
+                    dialogClosing = 1;
                 break;
             case 10:
                 showDialog(5, 0, 0, 0);
                 break;
             }
-            g_4b97fc = view->unknown1e = 0;
+            dialogPressed = view->unknown1e = 0;
         }
     }
     while (*cel) {
@@ -1323,13 +1323,13 @@ void dialogKey(unsigned short key)
 {
     short done = 0;
 
-    if (g_4b97fc)
+    if (dialogPressed)
         return;
-    if (g_4b9684 & 0x10) {
-        g_4b9686 = 5;
+    if (dialogFlags & 0x10) {
+        dialogClosing = 5;
         return;
     }
-    if (!done && !(g_4b9684 & 8)
+    if (!done && !(dialogFlags & 8)
         && ((key >= 0x20 && key <= 0x7a) || key == 8 || key == 0x124 || key == 0x126)) {
         short length;
 
@@ -1393,78 +1393,78 @@ void dialogKey(unsigned short key)
     }
     switch (key) {
     case 17:
-        if (g_4b9684 == 1) {
-            g_4b97fc = 4;
+        if (dialogFlags == 1) {
+            dialogPressed = 4;
         } else {
-            if (g_4b9684 & 8) {
-                g_4b9686 = 4;
+            if (dialogFlags & 8) {
+                dialogClosing = 4;
                 updateViews();
             }
-            if (g_4b9684 & 2) {
-                g_4b9686 = 2;
+            if (dialogFlags & 2) {
+                dialogClosing = 2;
                 updateViews();
             }
-            if (g_4b9684 & 4) {
-                g_4b9686 = 3;
+            if (dialogFlags & 4) {
+                dialogClosing = 3;
                 updateViews();
                 g_4b98d2++;
                 if (g_4b98d2 > 1)
-                    g_4b754a = 1;
+                    practiceLevel = 1;
             }
             gameKey(key);
         }
         break;
     case 0x125:
-        if ((g_4b9684 & 6) && !(g_4b9684 & 8))
-            g_4b97fc = 11;
+        if ((dialogFlags & 6) && !(dialogFlags & 8))
+            dialogPressed = 11;
         break;
     case 0x127:
-        if ((g_4b9684 & 6) && !(g_4b9684 & 8))
-            g_4b97fc = 12;
+        if ((dialogFlags & 6) && !(dialogFlags & 8))
+            dialogPressed = 12;
         break;
     case 14:
-        if (g_4b9684 == 1)
-            g_4b97fc = 1;
+        if (dialogFlags == 1)
+            dialogPressed = 1;
         break;
     case 12:
-        if (g_4b9684 == 1)
-            g_4b97fc = 2;
+        if (dialogFlags == 1)
+            dialogPressed = 2;
         break;
     case 19:
-        if (g_4b9684 == 1)
-            g_4b97fc = 3;
+        if (dialogFlags == 1)
+            dialogPressed = 3;
         break;
     case 4:
-        if (g_4b9684 == 1)
-            g_4b97fc = 5;
+        if (dialogFlags == 1)
+            dialogPressed = 5;
         break;
     case 2:
-        if (g_4b9684 == 1)
-            g_4b97fc = 6;
+        if (dialogFlags == 1)
+            dialogPressed = 6;
         break;
     case 10:
-        if (g_4b9684 == 1)
-            g_4b97fc = 7;
+        if (dialogFlags == 1)
+            dialogPressed = 7;
         break;
     case 20:
-        if (g_4b9684 == 1)
-            g_4b97fc = 8;
+        if (dialogFlags == 1)
+            dialogPressed = 8;
         break;
     case 27:
-        if (g_4b9684 & 8) {
+        if (dialogFlags & 8) {
             if (dialogButton1Text)
-                g_4b97fc = 16;
-        } else if (g_4b9684 & 6) {
-            g_4b97fc = 14;
+                dialogPressed = 16;
+        } else if (dialogFlags & 6) {
+            dialogPressed = 14;
         }
         break;
     case 13:
-        if (g_4b9684 & 8)
-            g_4b97fc = 15;
-        else if (g_4b9684 & 6)
-            g_4b97fc = 13;
-        else if (g_4b9684 & 1)
-            g_4b97fc = 9;
+        if (dialogFlags & 8)
+            dialogPressed = 15;
+        else if (dialogFlags & 6)
+            dialogPressed = 13;
+        else if (dialogFlags & 1)
+            dialogPressed = 9;
         break;
     }
 }
@@ -1498,7 +1498,7 @@ void drawDialogPart(View *view)
             drawImageData(image, x, y, 8);
         }
     }
-    if (g_4b9684 & 8) {
+    if (dialogFlags & 8) {
         if (!view->changed)
             return;
         if (dialogText) {
@@ -1510,7 +1510,7 @@ void drawDialogPart(View *view)
             drawText(dialogButton2Rect, 0x22, dialogButton2Text, 0xffff);
         if (dialogButton1Text)
             drawText(dialogButton1Rect, 0x22, dialogButton1Text, 0xffff);
-    } else if (g_4b9684 & 4) {
+    } else if (dialogFlags & 4) {
         if (view->changed) {
             if (view->id == g_4b980a) {
                 drawText(dialogOkRect, 0x22, dialogTexts[textSave], 0xffff);
@@ -1566,7 +1566,7 @@ void drawDialogPart(View *view)
             lineTo(caret, saveField.bottom);
         }
         copyPortBits(screenPort, workPort, saveField, saveField, 0);
-    } else if (g_4b9684 & 2) {
+    } else if (dialogFlags & 2) {
         if (!view->changed)
             return;
         saved = setForeColor(Color(0x2d));
@@ -1597,7 +1597,7 @@ void drawDialogPart(View *view)
             drawText(dialogCancelRect, 0x22, dialogTexts[g_4a7d3e ? text40 : textCancel], 0xffff);
         }
         setForeColor(saved);
-    } else if ((g_4b9684 & 1) && view->changed) {
+    } else if ((dialogFlags & 1) && view->changed) {
         if (view->id == dialogButton1) {
             saved = setForeColor(Color(0x2d));
             setFont(fonts[2]);
@@ -1654,11 +1654,11 @@ void placeDialogList(View *view)
 
     if (view->id == g_4b9808) {
         first = 11;
-        if (g_4b97fc >= 11 && g_4b97fc <= 12)
+        if (dialogPressed >= 11 && dialogPressed <= 12)
             hit = 1;
     } else if (view->id == g_4b980a) {
         first = 13;
-        if ((g_4b97fc >= 13 && g_4b97fc <= 14) || g_4b97fc == 17)
+        if ((dialogPressed >= 13 && dialogPressed <= 14) || dialogPressed == 17)
             hit = 1;
     } else if (view->id == g_4b980e) {
         if (!dialogButton1Text) {
@@ -1668,7 +1668,7 @@ void placeDialogList(View *view)
             cel[7] -= 90;
         }
         first = 15;
-        if (g_4b97fc >= 15 && g_4b97fc <= 16)
+        if (dialogPressed >= 15 && dialogPressed <= 16)
             hit = 1;
     } else {
         return;
@@ -1683,14 +1683,14 @@ void placeDialogList(View *view)
             i += 3;
         }
     } else if (hit) {
-        if ((g_4b97fc != 13 || !g_4b98c8) && g_4b97fc != 17) {
+        if ((dialogPressed != 13 || !g_4b98c8) && dialogPressed != 17) {
             queueViewSound(999, 0);
             waitForEventFor(0, 2, 0, 1);
         }
-        view->unknown1e = g_4b97fc;
-        buttonPressed[g_4b97fc - 1] = 1;
+        view->unknown1e = dialogPressed;
+        buttonPressed[dialogPressed - 1] = 1;
         view->changed = 1;
-        g_4b97fc = -1;
+        dialogPressed = -1;
         view->nextUpdate = clockTime() + 2;
     } else if (view->unknown1e && view->nextUpdate) {
         if (clockTime() > view->nextUpdate || clockTime() < view->nextUpdate - 2) {
@@ -1733,8 +1733,8 @@ void placeDialogList(View *view)
                 }
                 break;
             case 13:
-                if (!g_4b9686) {
-                    if (g_4b9684 & 2) {
+                if (!dialogClosing) {
+                    if (dialogFlags & 2) {
                         if (g_4b9666 > 0) {
                             strcpy(gameName, savedGameList->games[g_4b9666 - 1].name);
                             strcpy(userFileName, savedGameList->games[g_4b9666 - 1].file);
@@ -1742,11 +1742,11 @@ void placeDialogList(View *view)
                             fillRosterHeader(1);
                             readRoster();
                             viewsLocked = 1;
-                            g_4afb32 = 0;
-                            if (!g_4b0d52)
-                                g_4b0d52 = 3;
+                            rosterChanged = 0;
+                            if (!sceneDue)
+                                sceneDue = 3;
                             g_4b7562 = 1;
-                            g_4b9686 = 2;
+                            dialogClosing = 2;
                         }
                     } else {
                         found = 0;
@@ -1776,8 +1776,8 @@ void placeDialogList(View *view)
                                     }
                                 }
                             }
-                            if (g_4b9688 == 3) {
-                                g_4b9688 = 0;
+                            if (dialogQuestion == 3) {
+                                dialogQuestion = 0;
                                 g_4b98c8 = 0;
                             }
                             if (!g_4b98c8) {
@@ -1790,7 +1790,7 @@ void placeDialogList(View *view)
                                 } else {
                                     i = 2;
                                 }
-                                g_4afb32 = i;
+                                rosterChanged = i;
                                 switch (i) {
                                 case 1:
                                     strcpy(userFileName, savedGameList->games[found - 1].file);
@@ -1817,7 +1817,7 @@ void placeDialogList(View *view)
                                     break;
                                 }
                                 if (i) {
-                                    g_4b9686 = 3;
+                                    dialogClosing = 3;
                                     if (currentScene == 1)
                                         showMapBox();
                                 }
@@ -1827,15 +1827,15 @@ void placeDialogList(View *view)
                 }
                 break;
             case 14:
-                if (!g_4b9686) {
-                    if (g_4b9684 & 2)
-                        g_4b9686 = 2;
+                if (!dialogClosing) {
+                    if (dialogFlags & 2)
+                        dialogClosing = 2;
                     else
-                        g_4b9686 = 3;
+                        dialogClosing = 3;
                 }
                 break;
             case 17:
-                if (!g_4b9686) {
+                if (!dialogClosing) {
                     now = clockTime();
                     i = dialogWhere.y - dialogFrame.top;
                     if (i)
@@ -1844,8 +1844,8 @@ void placeDialogList(View *view)
                         i = 19;
                     i = i + g_4b9664 + 1;
                     if (i == g_4b9666 && now - g_4b9668 <= 30 && g_4b9666) {
-                        g_4b9686 = 0x1000;
-                        g_4b98cc = 13;
+                        dialogClosing = 0x1000;
+                        pendingDialogPress = 13;
                     }
                     {
                         View *other = findView(g_4b9806);
@@ -1861,35 +1861,35 @@ void placeDialogList(View *view)
                 }
                 break;
             case 15:
-                if (!g_4b9686) {
-                    g_4b9686 = 4;
-                    g_4b9688 = 3;
+                if (!dialogClosing) {
+                    dialogClosing = 4;
+                    dialogQuestion = 3;
                     if (g_4b80e2) {
                         startNewGame();
                     } else {
-                        if (g_4b80e0 == 2)
-                            g_4b80e0 = 3;
-                        else if ((g_4b9684 & 4) && !g_4b98ca)
-                            g_4b98cc = 13;
+                        if (quitRequested == 2)
+                            quitRequested = 3;
+                        else if ((dialogFlags & 4) && !g_4b98ca)
+                            pendingDialogPress = 13;
                         if (g_4b966c == 1)
                             g_4b966c++;
                     }
                 }
                 break;
             case 16:
-                if (!g_4b9686) {
+                if (!dialogClosing) {
                     g_4b966c = 0;
                     g_4b80e2 = 0;
-                    g_4b9686 = 4;
-                    g_4b9688 = 2;
-                    if (g_4b80e0 == 2)
-                        g_4b80e0 = -1;
+                    dialogClosing = 4;
+                    dialogQuestion = 2;
+                    if (quitRequested == 2)
+                        quitRequested = -1;
                     else
                         g_4b98c8 = 0;
                 }
                 break;
             }
-            g_4b97fc = view->unknown1e = 0;
+            dialogPressed = view->unknown1e = 0;
         }
     }
     while (*cel) {

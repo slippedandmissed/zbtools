@@ -65,12 +65,12 @@ void openMap()
         g_4afb42 = view->body.bounds;
         view->placed = placePressed;
     }
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     g_4afb14 = 1;
     g_4a7410 = 0;
     saved = currentMapFile;
-    setCurrentMap(g_4b7b4c);
+    setCurrentMap(soundsMap);
     loadSoundByKey(998, RESOURCE_TYPE(0, 'S', 'N', 'D'));
     loadSoundByKey(999, RESOURCE_TYPE(0, 'S', 'N', 'D'));
     currentMapFile = saved;
@@ -114,7 +114,7 @@ void openCatch()
     short i;
     View *view;
 
-    g_4b0d52 = 0;
+    sceneDue = 0;
     pickerData.game.leave.left = pickerData.game.leave.top = 7;
     pickerData.game.leave.right = pickerData.game.leave.bottom = 41;
     pickerData.game.speed = 8;
@@ -155,7 +155,7 @@ void openCatch()
     updateViews();
     hideCursor();
     setGroupLists(catchGroups, 1, (short)0xc000);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     g_4afb14 = 1;
     queueViewSound(30025, 0);
@@ -188,7 +188,7 @@ void openTargets()
     short i;
     View *view;
 
-    g_4b0d52 = 0;
+    sceneDue = 0;
     g_4afbbe = 0;
     g_4afbbc = 0;
     g_4afbb8 = g_4a4b98;
@@ -219,7 +219,7 @@ void openTargets()
     loadSoundByKey(3002, RESOURCE_TYPE(0, 'S', 'N', 'D'));
     copyPaletteRange(10, 236);
     setGroupLists(targetGroups, 1, (short)0xc000);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     g_4afb14 = 1;
     queueViewSound(30035, 0);
@@ -276,14 +276,14 @@ void caughtNotify(View *, short event)
     }
 }
 
-/* A view's placed callback: raises cel g_4b754a (1-4) by four images and
+/* A view's placed callback: raises cel practiceLevel (1-4) by four images and
    moves it two pixels up and left. */
 /* @zoombi32 0x00430f8e */
 void placeLevelMarker(View *view)
 {
     ViewBody *body = &view->body;
 
-    switch (g_4b754a) {
+    switch (practiceLevel) {
     case 1:
         body->cels[1].image += 4;
         body->cels[1].x += -2;
@@ -379,13 +379,13 @@ void placeCatchScore(View *view)
 
     if (pickerData.game.count > 99)
         pickerData.game.count = 0;
-    if (*(short *)(g_4a4ba0 + 0x22) < pickerData.game.count)
-        *(short *)(g_4a4ba0 + 0x22) = pickerData.game.count;
+    if (*(short *)(gameState + 0x22) < pickerData.game.count)
+        *(short *)(gameState + 0x22) = pickerData.game.count;
     body = &view->body;
     first = body->cels[0].image;
-    tens = *(short *)(g_4a4ba0 + 0x22) / 10;
+    tens = *(short *)(gameState + 0x22) / 10;
     body->cels[0].image = first + tens;
-    body->cels[1].image = *(short *)(g_4a4ba0 + 0x22) - tens * 10 + first;
+    body->cels[1].image = *(short *)(gameState + 0x22) - tens * 10 + first;
     tens = pickerData.game.count / 10;
     body->cels[2].image = first + tens;
     body->cels[3].image = pickerData.game.count - tens * 10 + first;
@@ -408,7 +408,7 @@ void resetMap()
     g_4afb5e = 0;
     for (i = 0; i < 6; i++)
         g_4afb18[i] = 0;
-    g_4b0d52 = 0;
+    sceneDue = 0;
     levelListView = mapBoxView = pickedHotspot = 0;
     g_4afb36 = -1;
     for (i = 0; i <= 15; i++) {
@@ -426,7 +426,7 @@ void resetMap()
 }
 
 /* Picks hotspot `n` (1-16; -1 for none) as pickedHotspot and redraws the view
-   g_4afb3a: with g_4b754a any of them, except 5, 12 and 16 until the
+   g_4afb3a: with practiceLevel any of them, except 5, 12 and 16 until the
    roster says they're open (+0x50, +0x52, +0x51); otherwise only 1, 5, 12
    and 16. */
 /* @zoombi32 0x00430030 */
@@ -438,19 +438,19 @@ void pickHotspot(short n)
 
     picked = 0;
     if (n >= 1 && n <= 16) {
-        if (g_4b754a) {
+        if (practiceLevel) {
             allowed = 1;
             switch (n) {
             case 16:
-                if (!(g_4a4ba0[0x51] & 0xf))
+                if (!(gameState[0x51] & 0xf))
                     allowed = 0;
                 break;
             case 12:
-                if (!(g_4a4ba0[0x52] & 0xff))
+                if (!(gameState[0x52] & 0xff))
                     allowed = 0;
                 break;
             case 5:
-                if (!(g_4a4ba0[0x50] & 0xf))
+                if (!(gameState[0x50] & 0xf))
                     allowed = 0;
                 break;
             }
@@ -489,17 +489,17 @@ void placeTargetScore(View *view)
 
     if (targetScore > 999)
         targetScore = 0;
-    if (*(short *)(g_4a4ba0 + 0x24) < targetScore)
-        *(short *)(g_4a4ba0 + 0x24) = targetScore;
+    if (*(short *)(gameState + 0x24) < targetScore)
+        *(short *)(gameState + 0x24) = targetScore;
     body = &view->body;
     first = body->cels[0].image;
-    digit = *(short *)(g_4a4ba0 + 0x24) / 100;
+    digit = *(short *)(gameState + 0x24) / 100;
     body->cels[0].image = first + digit;
     counted = digit * 100;
-    digit = (*(short *)(g_4a4ba0 + 0x24) - counted) / 10;
+    digit = (*(short *)(gameState + 0x24) - counted) / 10;
     body->cels[1].image = first + digit;
     counted += digit * 10;
-    body->cels[2].image = *(short *)(g_4a4ba0 + 0x24) - counted + first;
+    body->cels[2].image = *(short *)(gameState + 0x24) - counted + first;
     digit = targetScore / 100;
     body->cels[3].image = first + digit;
     counted = digit * 100;
@@ -574,7 +574,7 @@ short fireShot()
 }
 
 /* A view's placed callback: keeps its cels for the hotspots open
-   (openHotspots, 11 also by 16; 4, 11 and 15 always with g_4b754a), with the
+   (openHotspots, 11 also by 16; 4, 11 and 15 always with practiceLevel), with the
    one picked (pickedHotspot) lit (93 images on; for 1, image 109), and drops
    the others. */
 /* @zoombi32 0x00430cb3 */
@@ -599,7 +599,7 @@ void placeOpenHotspots(View *view)
             images[i] = 0;
         else
             images[i] = i;
-    if (g_4b754a) {
+    if (practiceLevel) {
         images[4] = 4;
         images[11] = 11;
         images[15] = 15;
@@ -622,8 +622,8 @@ void placeOpenHotspots(View *view)
 }
 
 /* A view's placed callback: keeps its cels 17-32 for the hotspots open
-   (openHotspots, as placeOpenHotspots orders them; all with g_4b754a), each moved on
-   16 images for each level past the first (g_4b754a, else the hotspot's
+   (openHotspots, as placeOpenHotspots orders them; all with practiceLevel), each moved on
+   16 images for each level past the first (practiceLevel, else the hotspot's
    own), and drops the others. */
 /* @zoombi32 0x00430dc0 */
 void placeHotspotLevels(View *view)
@@ -638,7 +638,7 @@ void placeHotspotLevels(View *view)
 
     for (i = 17; i <= 32; i++)
         images[i] = i;
-    if (!g_4b754a) {
+    if (!practiceLevel) {
         n = 0;
         for (i = 17; i <= 32; i++)
             switch (i) {
@@ -679,8 +679,8 @@ void placeHotspotLevels(View *view)
     n = 0;
     for (i = 17; i <= 32; i++, n++)
         if (images[i]) {
-            if (g_4b754a)
-                level = g_4b754a;
+            if (practiceLevel)
+                level = practiceLevel;
             else
                 level = levels[n];
             if (level)
@@ -705,53 +705,53 @@ void placeHotspotLevels(View *view)
 /* Fills `open` (17 bytes, one per hotspot from 0) with what the roster says
    is open, level by level: each group of hotspots is at its level's count
    plus one if the roster has one (+0xc2-+0xc8), else at the flags in the
-   roster's low or high nibbles. With g_4b754a, all are at that level. */
+   roster's low or high nibbles. With practiceLevel, all are at that level. */
 /* @zoombi32 0x004312e2 */
 void findOpenHotspots(char *open)
 {
     short i;
     short count;
 
-    if (g_4b754a) {
+    if (practiceLevel) {
         for (i = 0; i <= 16; i++)
-            open[i] = (char)g_4b754a;
+            open[i] = (char)practiceLevel;
         return;
     }
     open[0] = 1;
-    count = *(short *)(g_4a4ba0 + 0xc2);
+    count = *(short *)(gameState + 0xc2);
     if (!count) {
         for (i = 1; i <= 3; i++)
-            open[i] = g_4a4ba0[i + 0x55] & 0xf;
-        open[4] = g_4a4ba0[0x50] & 0xf;
+            open[i] = gameState[i + 0x55] & 0xf;
+        open[4] = gameState[0x50] & 0xf;
     } else {
         for (i = 1; i <= 4; i++)
             open[i] = count + 1;
     }
-    count = *(short *)(g_4a4ba0 + 0xc4);
+    count = *(short *)(gameState + 0xc4);
     if (!count) {
         for (i = 5; i <= 7; i++)
-            open[i] = g_4a4ba0[i + 0x54] & 0xf;
-        open[11] = g_4a4ba0[0x52] & 0xf;
+            open[i] = gameState[i + 0x54] & 0xf;
+        open[11] = gameState[0x52] & 0xf;
     } else {
         for (i = 5; i <= 7; i++)
             open[i] = count + 1;
         open[11] = count + 1;
     }
-    count = *(short *)(g_4a4ba0 + 0xc6);
+    count = *(short *)(gameState + 0xc6);
     if (!count) {
         for (i = 8; i <= 10; i++)
-            open[i] = g_4a4ba0[i + 0x54] & 0xf;
-        open[16] = (short)(*(short *)(g_4a4ba0 + 0x52) & 0xf0) >> 4;
+            open[i] = gameState[i + 0x54] & 0xf;
+        open[16] = (short)(*(short *)(gameState + 0x52) & 0xf0) >> 4;
     } else {
         for (i = 8; i <= 10; i++)
             open[i] = count + 1;
         open[16] = count + 1;
     }
-    count = *(short *)(g_4a4ba0 + 0xc8);
+    count = *(short *)(gameState + 0xc8);
     if (!count) {
         for (i = 12; i <= 14; i++)
-            open[i] = g_4a4ba0[i + 0x53] & 0xf;
-        open[15] = g_4a4ba0[0x51] & 0xf;
+            open[i] = gameState[i + 0x53] & 0xf;
+        open[15] = gameState[0x51] & 0xf;
     } else {
         for (i = 12; i <= 14; i++)
             open[i] = count + 1;
@@ -760,8 +760,8 @@ void findOpenHotspots(char *open)
 }
 
 /* Draws the levels' list in `rect`: a title ("terrain key", or with
-   g_4b754a "choose a level") and the four levels, the current one
-   (g_4b754a) outlined (levelTexts 0-5). */
+   practiceLevel "choose a level") and the four levels, the current one
+   (practiceLevel) outlined (levelTexts 0-5). */
 /* @zoombi32 0x00430b31 */
 void drawLevelList(ShortRect *rect)
 {
@@ -781,11 +781,11 @@ void drawLevelList(ShortRect *rect)
     line.left = rect->left + 36;
     line.right = rect->right;
     i = 0;
-    if (g_4b754a)
+    if (practiceLevel)
         i = 1;
     drawText(title, 0x22, levelTexts[i], 0xffff);
     for (i = 2; i <= 5; i++) {
-        if (i - 1 == g_4b754a) {
+        if (i - 1 == practiceLevel) {
             drawOutlinedText(outlines[i - 2], 45, line, 1, levelTexts[i]);
         } else {
             setForeColor(Color(45));
@@ -797,13 +797,13 @@ void drawLevelList(ShortRect *rect)
     setForeColor(saved);
 }
 
-/* Scene 20's buttons: 1 leaves (g_4b0d50 = 1). */
+/* Scene 20's buttons: 1 leaves (pendingScene = 1). */
 /* @zoombi32 0x004328e2 */
 void targetsClicked(short which)
 {
     switch (which) {
     case 1:
-        g_4b0d50 = 1;
+        pendingScene = 1;
         setCurrentMap(0);
         closeTargets();
         break;
@@ -811,7 +811,7 @@ void targetsClicked(short which)
 }
 
 /* A view's update: while running, runs its script when it's to be redrawn;
-   stopped, a second after its last update (unless g_4b9684), redraws it and
+   stopped, a second after its last update (unless dialogFlags), redraws it and
    picks no hotspot (pickHotspot). */
 /* @zoombi32 0x0043108f */
 void updateTextView(View *view, volatile short region)
@@ -823,7 +823,7 @@ void updateTextView(View *view, volatile short region)
             view->body.running = 1;
             view->reset = 1;
         }
-    } else if (!g_4b9684 && !view->reset && clockTime() > view->nextUpdate + 60) {
+    } else if (!dialogFlags && !view->reset && clockTime() > view->nextUpdate + 60) {
         unionRgnRect(region, &view->body.bounds);
         view->reset = 1;
         pickHotspot(-1);
@@ -847,7 +847,7 @@ void drawLevelListView(View *view)
 }
 
 /* Draws the names of the terrains with a hotspot open (all with
-   g_4b754a) outlined, straight to the screen. */
+   practiceLevel) outlined, straight to the screen. */
 /* @zoombi32 0x00431111 */
 void drawTerrainNames()
 {
@@ -857,8 +857,8 @@ void drawTerrainNames()
 
     saved = setForeColor(Color(45));
     for (i = 0; i < 4; i++)
-        shown[i] = g_4b754a != 0;
-    for (i = 0; !g_4b754a && i <= 15; i++)
+        shown[i] = practiceLevel != 0;
+    for (i = 0; !practiceLevel && i <= 15; i++)
         if (openHotspots[i]) {
             if (i >= 1 && i <= 3)
                 shown[0] = 1;
@@ -1188,7 +1188,7 @@ short startTarget(short kind, short preset)
     return g_4afbac[slot];
 }
 
-/* Closes scene 1 (the map). Leaving it for a level (g_4b754a), the first
+/* Closes scene 1 (the map). Leaving it for a level (practiceLevel), the first
    time switches the user file to ZBtemp (keeping the player's in
    savedUserFile) and saves; then fills the roster's party with 16 (or
    g_4afb5e) Zoombinis at random (with the 0x800 modifier, all alike by
@@ -1204,36 +1204,36 @@ void closeMap()
     if (g_4afb14) {
         g_4afb14 = 0;
         saved = setFreeAtOnce(1);
-        if (!g_4b754a && !viewsLocked) {
+        if (!practiceLevel && !viewsLocked) {
             viewsLocked = 1;
-            *(short *)(g_4a4ba0 + 0xa92e) = 0;
-            *(short *)(g_4a4ba0 + 0xa930) = 1;
-            *(short *)(g_4a4ba0 + 0xa932) = 1;
+            *(short *)(gameState + 0xa92e) = 0;
+            *(short *)(gameState + 0xa930) = 1;
+            *(short *)(gameState + 0xa932) = 1;
         }
         clearViews();
-        if (g_4b754a) {
+        if (practiceLevel) {
             if (!g_4afb30) {
                 strcpy(savedUserFile, userFileName);
                 g_4a48e8 = 1;
                 strcpy(userFileName, "ZBtemp");
                 viewsLocked = 0;
-                g_4afb32 = 1;
+                rosterChanged = 1;
                 saveRoster();
                 g_4afb30 = 1;
             }
-            *(short *)(g_4a4ba0 + 0xa92e) = 16;
+            *(short *)(gameState + 0xa92e) = 16;
             if (g_4afb5e)
-                *(short *)(g_4a4ba0 + 0xa92e) = g_4afb5e;
+                *(short *)(gameState + 0xa92e) = g_4afb5e;
             alike = addModifierKeys(0) == 0x800;
-            for (i = 0; i < *(short *)(g_4a4ba0 + 0xa92e); i++) {
+            for (i = 0; i < *(short *)(gameState + 0xa92e); i++) {
                 for (j = 0; j < 4; j++)
                     if (alike)
-                        (g_4a4ba0 + i * 19)[j + 0xa934] = i % 5 + 1;
+                        (gameState + i * 19)[j + 0xa934] = i % 5 + 1;
                     else
-                        (g_4a4ba0 + i * 19)[j + 0xa934] = randomBetween(1, 5);
-                g_4a4ba0[i * 19 + 0xa93d] = 0;
-                g_4a4ba0[i * 19 + 0xa93c] = 1;
-                *(short *)(g_4a4ba0 + 0xa930) = 0;
+                        (gameState + i * 19)[j + 0xa934] = randomBetween(1, 5);
+                gameState[i * 19 + 0xa93d] = 0;
+                gameState[i * 19 + 0xa93c] = 1;
+                *(short *)(gameState + 0xa930) = 0;
             }
         }
         for (i = 0; i < 6; i++)
@@ -1488,7 +1488,7 @@ short targetsKey(unsigned short key)
 
 /* Draws the map's box in `rect`: the game's name and how many Zoombinis
    are still to come (625 less those at the camps) and at each camp; in
-   practice (g_4b754a), "practice mode" and how to get back to the game
+   practice (practiceLevel), "practice mode" and how to get back to the game
    from the furthest level reached. */
 /* @zoombi32 0x00430878 */
 void drawMapBox(ShortRect *rect)
@@ -1513,26 +1513,26 @@ void drawMapBox(ShortRect *rect)
     line.right = line.left + 115;
     count.left = line.right;
     count.right = rect->right + -7;
-    if (!g_4b754a)
+    if (!practiceLevel)
         strcpy(name, gameName);
     else
         strcpy(name, mapTexts[4]);
     drawText(title, 0x22, name, 0xffff);
-    if (!g_4b754a) {
+    if (!practiceLevel) {
         for (i = 0; i < 4; i++) {
             switch (i) {
             case 0:
-                n = 625 - (*(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c)
-                           + *(short *)(g_4a4ba0 + 0x4e));
+                n = 625 - (*(short *)(gameState + 0x4a) + *(short *)(gameState + 0x4c)
+                           + *(short *)(gameState + 0x4e));
                 break;
             case 1:
-                n = *(short *)(g_4a4ba0 + 0x4a);
+                n = *(short *)(gameState + 0x4a);
                 break;
             case 2:
-                n = *(short *)(g_4a4ba0 + 0x4c);
+                n = *(short *)(gameState + 0x4c);
                 break;
             case 3:
-                n = *(short *)(g_4a4ba0 + 0x4e);
+                n = *(short *)(gameState + 0x4e);
                 break;
             }
             drawText(line, 1, mapTexts[i], 0xffff);
@@ -1544,11 +1544,11 @@ void drawMapBox(ShortRect *rect)
             line.bottom += 18;
         }
     } else {
-        if (g_4a4ba0[0x51] & 0xf)
+        if (gameState[0x51] & 0xf)
             n = 17;
-        else if (g_4a4ba0[0x52] & 0xff)
+        else if (gameState[0x52] & 0xff)
             n = 13;
-        else if (g_4a4ba0[0x50] & 0xf)
+        else if (gameState[0x50] & 0xf)
             n = 9;
         else
             n = 5;
@@ -1596,7 +1596,7 @@ void makeMapViews(short update)
     findOpenHotspots(openHotspots);
     drawTerrainNames();
     interval = 0;
-    if (g_4b754a)
+    if (practiceLevel)
         interval = 6;
     levelListView = addView(0x100000, drawLevelListView, runViewScript, 1003, interval, 0, 0, 0);
     view = findView(levelListView);
@@ -1659,7 +1659,7 @@ void catchFrame()
 
 /* Scene 1's frame (the map): shows the name of the open hotspot under the
    cursor in the view g_4afb3e and picks it (pickHotspot), or hides the name;
-   leaves when a choice was made (g_4b0d52). */
+   leaves when a choice was made (sceneDue). */
 /* @zoombi32 0x0042feaf */
 void mapFrame()
 {
@@ -1671,9 +1671,9 @@ void mapFrame()
     if (!g_4a2008 && g_4afb14) {
         g_4a2008 = 1;
         view = 0;
-        if (!g_4b9684)
+        if (!dialogFlags)
             view = findView(g_4afb3e);
-        if (view && !g_4b9684) {
+        if (view && !dialogFlags) {
             getCursorPosition(&where);
             for (i = 0; i < 16; i++) {
                 if (i == 11)
@@ -1707,9 +1707,9 @@ void mapFrame()
                 view->body.running = 0;
         }
         updateViews();
-        if (g_4b0d52) {
-            g_4b0d50 = g_4b0d52;
-            g_4b0d52 = 0;
+        if (sceneDue) {
+            pendingScene = sceneDue;
+            sceneDue = 0;
             setCurrentMap(0);
             closeMap();
         }
@@ -1825,8 +1825,8 @@ void leavePractice()
     short i;
     short id;
 
-    level = g_4b754a;
-    g_4b754a = 0;
+    level = practiceLevel;
+    practiceLevel = 0;
     for (i = 0; i < 6; i++)
         copyPortBits(viewPort, g_4afb18[i]->port, g_4a1f54[i], g_4a1f54[i], 0);
     makeMapViews(0);
@@ -1854,12 +1854,12 @@ void leavePractice()
         }
     }
     updateViews();
-    g_4b754a = level;
+    practiceLevel = level;
     if (g_4afb30) {
         g_4afb30 = 0;
         readRoster();
         viewsLocked = 1;
-        g_4b0d52 = 0;
+        sceneDue = 0;
         strcpy(userFileName, savedUserFile);
     }
 }
@@ -1879,13 +1879,13 @@ short mapKey(unsigned short key)
     short id;
 
     used = 0;
-    if (g_4b8803 && g_4afb16) {
+    if (debugMessagesOn && g_4afb16) {
         unionRgnRect(removedRgn, &debugRect);
         g_4afb16 = 0;
-        g_4a7e68 = 0;
+        journeyRoute = 0;
         if (key >= 'a' && key <= 'p') {
-            g_4a7e68 = key - 0x60;
-            g_4b0d50 = 7;
+            journeyRoute = key - 0x60;
+            pendingScene = 7;
             setCurrentMap(0);
             closeMap();
             return 1;
@@ -1893,11 +1893,11 @@ short mapKey(unsigned short key)
     }
     switch (key) {
     case '+':
-        if (!g_4b8803)
+        if (!debugMessagesOn)
             return 0;
         g_4afb5e += 2;
     case '-':
-        if (!g_4b8803)
+        if (!debugMessagesOn)
             return 0;
         g_4afb5e--;
         if (g_4afb5e < 1)
@@ -1910,25 +1910,25 @@ short mapKey(unsigned short key)
     case '2':
     case '3':
     case '4':
-        if (!g_4b754a)
+        if (!practiceLevel)
             break;
     case 0x10:
-        old = g_4b754a;
+        old = practiceLevel;
         if (key == 0x10) {
-            if (g_4b754a)
+            if (practiceLevel)
                 break;
-            g_4b754a = 1;
+            practiceLevel = 1;
         } else {
-            g_4b754a = key - '0';
+            practiceLevel = key - '0';
         }
-        if (old == g_4b754a)
+        if (old == practiceLevel)
             break;
-        if ((!old && g_4b754a) || (old && !g_4b754a)) {
+        if ((!old && practiceLevel) || (old && !practiceLevel)) {
             for (i = 0; i < 6; i++)
                 copyPortBits(viewPort, g_4afb18[i]->port, g_4a1f54[i], g_4a1f54[i], 0);
             makeMapViews(0);
         }
-        if (g_4b754a) {
+        if (practiceLevel) {
             copyPortBits(viewPort, *g_4afb2c, g_4a1f7c, g_4a1f7c, 0);
             findOpenHotspots(openHotspots);
             view = findView(levelListView);
@@ -1958,7 +1958,7 @@ short mapKey(unsigned short key)
         used = 1;
         break;
     case 'T':
-        if (g_4b8803 && g_4b754a) {
+        if (debugMessagesOn && practiceLevel) {
             debugMessage(-1, "Which Transition (a-p):", 0, 0, 0);
             g_4afb16 = 1;
         }
@@ -1986,7 +1986,7 @@ void catchClicked(short)
 
     getCursorPosition(&where);
     if (ptInRect(&pickerData.game.leave, where)) {
-        g_4b0d50 = 1;
+        pendingScene = 1;
         setCurrentMap(0);
         closeCatch();
         return;
@@ -2115,13 +2115,13 @@ void mapClicked(short which)
     scene = 0;
     go = 0;
     getCursorPosition(&where);
-    if (g_4b754a)
+    if (practiceLevel)
         go = 1;
     switch (which) {
     case 1:
         scene = 3;
         leavePractice();
-        g_4b754a = 0;
+        practiceLevel = 0;
         go = 1;
         break;
     case 2:
@@ -2135,10 +2135,10 @@ void mapClicked(short which)
         break;
     case 5:
         scene = 4;
-        go = g_4a4ba0[0x50] & 0xf;
-        if (g_4b754a && go) {
+        go = gameState[0x50] & 0xf;
+        if (practiceLevel && go) {
             leavePractice();
-            g_4b754a = 0;
+            practiceLevel = 0;
         }
         break;
     case 6:
@@ -2167,10 +2167,10 @@ void mapClicked(short which)
         break;
     case 12:
         scene = 5;
-        go = *(short *)(g_4a4ba0 + 0x52) & 0xff;
-        if (g_4b754a && go) {
+        go = *(short *)(gameState + 0x52) & 0xff;
+        if (practiceLevel && go) {
             leavePractice();
-            g_4b754a = 0;
+            practiceLevel = 0;
         }
         break;
     case 13:
@@ -2184,10 +2184,10 @@ void mapClicked(short which)
         break;
     case 16:
         scene = 6;
-        go = g_4a4ba0[0x51] & 0xf;
-        if (g_4b754a && go) {
+        go = gameState[0x51] & 0xf;
+        if (practiceLevel && go) {
             leavePractice();
-            g_4b754a = 0;
+            practiceLevel = 0;
         }
         break;
     case 17:
@@ -2206,7 +2206,7 @@ void mapClicked(short which)
                 view->body.running = 0;
                 showDialog(1, 0, 0, 0);
             }
-        } else if (g_4b754a) {
+        } else if (practiceLevel) {
             for (i = 0; !clicked && i < 4; i++)
                 if (ptInRect(&g_4a1fa8[i], where)) {
                     mapKey(i + '1');
@@ -2217,11 +2217,11 @@ void mapClicked(short which)
         break;
     }
     if (go) {
-        if (!g_4b9684)
+        if (!dialogFlags)
             pickHotspot(which);
         queueViewSound(998, 0);
         waitForEventFor(0, 2, 0, 1);
-        g_4b0d50 = scene;
+        pendingScene = scene;
         setCurrentMap(0);
         closeMap();
     }

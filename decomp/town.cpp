@@ -27,7 +27,7 @@
 void openIntro()
 {
     g_4b7cf4 = g_4b7cf8 = g_4b7cf6 = 0;
-    g_4b0d52 = g_4b7cec = 0;
+    sceneDue = g_4b7cec = 0;
     g_4b7cf0 = 1;
     setGroupLists(townGroups, 1, (short)0xc000);
     g_4b7cf4 = 1;
@@ -44,7 +44,7 @@ void introClicked(short which)
         g_4a7410 = 2;
     if (abs(which) == 1) {
         g_4b7cf0 = g_4b7cf6 = 0;
-        g_4b0d52 = sceneToReturnTo();
+        sceneDue = sceneToReturnTo();
     }
 }
 
@@ -96,13 +96,13 @@ void updateTownButton(View *view, short region)
     }
 }
 
-/* A script from 3000-3002 by g_4a4ba0's +0x46. */
+/* A script from 3000-3002 by gameState's +0x46. */
 /* @zoombi32 0x0045d04c */
 short townScript()
 {
     short script;
 
-    script = ((*(short *)(g_4a4ba0 + 0x46) - 1) & 0xfff) % 3 + 3000;
+    script = ((*(short *)(gameState + 0x46) - 1) & 0xfff) % 3 + 3000;
     if (script < 3000)
         script = 3000;
     if (script >= 3003)
@@ -229,9 +229,9 @@ void closeTown()
         useAltSnoids(1);
         if (!viewsLocked) {
             viewsLocked = 1;
-            *(short *)(g_4a4ba0 + 0xa92e) = 0;
-            *(short *)(g_4a4ba0 + 0xa930) = 1;
-            *(short *)(g_4a4ba0 + 0xa932) = 1;
+            *(short *)(gameState + 0xa92e) = 0;
+            *(short *)(gameState + 0xa930) = 1;
+            *(short *)(gameState + 0xa932) = 1;
         }
         clearViews();
         unloadSounds();
@@ -275,7 +275,7 @@ short introKey(unsigned short key)
         return 1;
     case 0x11:
         closeIntro();
-        g_4b80e0 = -1;
+        quitRequested = -1;
         return 1;
     }
 }
@@ -442,23 +442,23 @@ void placeRecordHotspots(View *view)
 }
 
 /* Scene 0's frame: plays the logo movie (Data\Logo025.MOV) once, then
-   clicks; leaves when asked (g_4b0d52). */
+   clicks; leaves when asked (sceneDue). */
 /* @zoombi32 0x0045c212 */
 void introFrame()
 {
     if (g_4a7412 || !g_4b7cf4)
         return;
     g_4a7412 = 1;
-    if (g_4b2ad4 && !g_4b7cf8) {
+    if (movieShowing && !g_4b7cf8) {
         if (idleMovie() == 1)
             g_4b7cf0 = 1;
-    } else if (g_4b7cf8 || !g_4b2ad4 && g_4b7cf6) {
+    } else if (g_4b7cf8 || !movieShowing && g_4b7cf6) {
         g_4b7cf6 = 0;
-        g_4b0d52 = sceneToReturnTo();
+        sceneDue = sceneToReturnTo();
     }
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeIntro();
     } else if (g_4b7cf0) {
@@ -466,7 +466,7 @@ void introFrame()
         case 0:
             g_4b7cf0 = 0;
             g_4b7cec++;
-            if (!g_4b2ad4) {
+            if (!movieShowing) {
                 g_4a7410 = 1;
                 logoPath[0] = 0;
                 strcpy(logoPath, installDir);
@@ -605,7 +605,7 @@ void addTownsperson()
     short i;
     View *view;
 
-    if (!g_4b7f12 || g_4b9684 || g_4a74dc != -1)
+    if (!g_4b7f12 || dialogFlags || g_4a74dc != -1)
         return;
     initSnoid(&snoid);
     snoid.features[0] = 1;
@@ -679,7 +679,7 @@ void setTownFrames(short frame)
     }
 }
 
-/* Scene 6's keys (with debugging on, g_4b8803): z and x (once the last
+/* Scene 6's keys (with debugging on, debugMessagesOn): z and x (once the last
    group has a record) step the plaque shown by cheat (g_4b7eba, 0-16) and
    space reports it; F toggles the townspeople; . records the next group
    passed (g_4a7592 counting through the groups and levels) now; 0 clears
@@ -693,7 +693,7 @@ short townKey(unsigned short key)
     short used = 0;
     View *view;
 
-    if (!g_4b8803)
+    if (!debugMessagesOn)
         return used;
     switch (key) {
     case 'x':
@@ -793,7 +793,7 @@ void townClicked(short which)
         drawTownButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawTownButton(which, 0, 1);
-        g_4b0d50 = 1;
+        pendingScene = 1;
         setCurrentMap(0);
         closeTown();
         break;
@@ -881,7 +881,7 @@ void openTown()
     population() += countPresentTravellers();
     if (population() >= 625)
         g_4b7ecc = 1;
-    townSlots = (Camp *)(g_4a4ba0 + 0x6c42);
+    townSlots = (Camp *)(gameState + 0x6c42);
     settleTravellers();
     party()->count = 0;
     last = -1;
@@ -1005,21 +1005,21 @@ void openTown()
     updateViews();
     setGroupLists(townGroups6, 1, (short)0xc000);
     drawTownButton(1, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     g_4b7e00 = 1;
     i = 0;
-    if (g_4b0d4c) {
-        g_4b0d4c = 0;
-        i = campHint((short *)(g_4a4ba0 + 0x46));
+    if (puzzleLeft) {
+        puzzleLeft = 0;
+        i = campHint((short *)(gameState + 0x46));
         if (i == 2 && population() <= 16) {
             i = 1;
-            *(short *)(g_4a4ba0 + 0x46) &= 0xcfff;
+            *(short *)(gameState + 0x46) &= 0xcfff;
         }
     }
     switch (i) {
     case 1:
-        switch (*(short *)(g_4a4ba0 + 0x46)) {
+        switch (*(short *)(gameState + 0x46)) {
         case 1:
             g_4b7ec4 = 20086;
             break;
@@ -1091,7 +1091,7 @@ void openTown()
 }
 
 /* Scene 6's frame: deletes the townspeople who have walked off, adds
-   more, leaves when asked (g_4b0d52); every 150-300 ticks after a sound
+   more, leaves when asked (sceneDue); every 150-300 ticks after a sound
    ends plays the next (the greetings 3000-3002 in turn, or at random one
    of g_4a74cc, not 20093 once over 600 live here); now and then has one
    of the settled Zoombinis on screen do something (g_4b7f00 times, more
@@ -1121,15 +1121,15 @@ void townFrame()
                     g_4b7f10--;
             }
     addTownsperson();
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeTown();
         g_4a7580 = 0;
         return;
     }
-    if (!isSoundPlaying(g_4b7ec4, RESOURCE_TYPE(0, 'S', 'N', 'D')) && !g_4b9684) {
+    if (!isSoundPlaying(g_4b7ec4, RESOURCE_TYPE(0, 'S', 'N', 'D')) && !dialogFlags) {
         if (g_4b7ec8) {
             g_4b7ec0 = clockTime();
             g_4b7ebc = randomBetween(150, 300);
@@ -1163,7 +1163,7 @@ void townFrame()
             g_4b7ec8 = 1;
         }
     }
-    if (g_4b7f02 && !g_4b9684 && g_4a74dc == -1) {
+    if (g_4b7f02 && !dialogFlags && g_4a74dc == -1) {
         if (g_4b7f00 > 0) {
             if (clockTime() - g_4b7f04 > g_4b7f08) {
                 n = 0;
@@ -1191,7 +1191,7 @@ void townFrame()
             g_4b7f00 = 1;
         }
     }
-    if (!g_4b9684 && !g_4b7eca && g_4a74dc == -1) {
+    if (!dialogFlags && !g_4b7eca && g_4a74dc == -1) {
         findTownHotspot(&where);
         if (!ptInRect(&townButtons[0].rect, where) && where.y > 30 && where.y < 450 && where.x > 3
             && where.x < 637) {

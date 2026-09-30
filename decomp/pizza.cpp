@@ -118,7 +118,7 @@ void sendFlaggedToPlaces()
     Snoid *snoid;
 
     g_4b1820 = 0;
-    for (i = 0; i < g_4b15d4; i++) {
+    for (i = 0; i < pizzaPartySize; i++) {
         where.x = g_4a3d54[i].x;
         where.y = g_4a3d54[i].y;
         if ((view = findView(partyViews[i])) != 0 && ((Snoid *)&view->body)->unknownF7 == 1) {
@@ -276,7 +276,7 @@ void pizzaDoneNotify(View *, short)
     View *view;
 
     if (!g_4b15f2 && !g_4b160a && !pizzaSolved) {
-        if (nextZoombini >= g_4b15d4) {
+        if (nextZoombini >= pizzaPartySize) {
             g_4b165a++;
         } else {
             view = findView(g_4b162e);
@@ -429,7 +429,7 @@ void bringNextZoombini()
 
     if (!g_4b165a && !pizzaSolved && (nextZoombini == -1 || g_4b15da)) {
         g_4b15da = 0;
-        if (++nextZoombini >= g_4b15d4) {
+        if (++nextZoombini >= pizzaPartySize) {
             g_4b165a++;
             return;
         }
@@ -443,7 +443,7 @@ void bringNextZoombini()
                 return;
             }
         }
-        if (nextZoombini < g_4b15d4) {
+        if (nextZoombini < pizzaPartySize) {
             view = findView(partyViews[nextZoombini]);
             if (!view)
                 return;
@@ -544,7 +544,7 @@ void clearToppings()
 /* A view's placing: drops the cels of toppings not on the pizza
    (pizzaToppings; images 5-24 by topping, 25-40 by level too: 29-32 only at
    level 3) and moves the
-   rest by (g_4b1666, g_4b1668), or, while g_4b1630, to there from where
+   rest by (toppingsDx, toppingsDy), or, while g_4b1630, to there from where
    the first one was. */
 /* @zoombi32 0x00442a9f */
 void placePizzaToppings(View *view)
@@ -642,16 +642,16 @@ void placePizzaToppings(View *view)
         }
         if (!removed) {
             if (!g_4b1630) {
-                cel[1] += g_4b1666;
-                cel[2] += g_4b1668;
+                cel[1] += toppingsDx;
+                cel[2] += toppingsDy;
             } else {
                 if (first) {
                     dx = cel[1];
                     dy = cel[2];
                     first = 0;
                 }
-                cel[1] += g_4b1666 - dx;
-                cel[2] += g_4b1668 - dy;
+                cel[1] += toppingsDx - dx;
+                cel[2] += toppingsDy - dy;
             }
             cel += 3;
         }
@@ -756,16 +756,16 @@ void placeArnoToppings(View *view)
         }
         if (!removed) {
             if (!g_4b1630) {
-                cel[1] += g_4b1666;
-                cel[2] += g_4b1668;
+                cel[1] += toppingsDx;
+                cel[2] += toppingsDy;
             } else {
                 if (first) {
                     dx = cel[1];
                     dy = cel[2];
                     first = 0;
                 }
-                cel[1] += g_4b1666 - dx;
-                cel[2] += g_4b1668 - dy;
+                cel[1] += toppingsDx - dx;
+                cel[2] += toppingsDy - dy;
             }
             cel += 3;
         }
@@ -876,16 +876,16 @@ void placeWillaToppings(View *view)
         }
         if (!removed) {
             if (!g_4b1630) {
-                cel[1] += g_4b1666;
-                cel[2] += g_4b1668;
+                cel[1] += toppingsDx;
+                cel[2] += toppingsDy;
             } else {
                 if (first) {
                     dx = cel[1];
                     dy = cel[2];
                     first = 0;
                 }
-                cel[1] += g_4b1666 - dx;
-                cel[2] += g_4b1668 - dy;
+                cel[1] += toppingsDx - dx;
+                cel[2] += toppingsDy - dy;
             }
             cel += 3;
         }
@@ -990,16 +990,16 @@ void placeShylerToppings(View *view)
         }
         if (!removed) {
             if (!g_4b1630) {
-                cel[1] += g_4b1666;
-                cel[2] += g_4b1668;
+                cel[1] += toppingsDx;
+                cel[2] += toppingsDy;
             } else {
                 if (first) {
                     dx = cel[1];
                     dy = cel[2];
                     first = 0;
                 }
-                cel[1] += g_4b1666 - dx;
-                cel[2] += g_4b1668 - dy;
+                cel[1] += toppingsDx - dx;
+                cel[2] += toppingsDy - dy;
             }
             cel += 3;
         }
@@ -1324,16 +1324,16 @@ void placeTrollToppings(View *view)
         }
         if (!removed) {
             if (!g_4b1630) {
-                cel[1] += g_4b1666;
-                cel[2] += g_4b1668;
+                cel[1] += toppingsDx;
+                cel[2] += toppingsDy;
             } else {
                 if (first) {
                     dx = cel[1];
                     dy = cel[2];
                     first = 0;
                 }
-                cel[1] += g_4b1666 - dx;
-                cel[2] += g_4b1668 - dy;
+                cel[1] += toppingsDx - dx;
+                cel[2] += toppingsDy - dy;
             }
             cel += 3;
         }
@@ -1496,7 +1496,7 @@ void pizzaZoombiniNotify(View *view, short event)
             g_4b15ea = 1;
             g_4b15da = 0;
         } else if (g_4b15e0) {
-            g_4b83e4[0] = 0;
+            placeClaims[0] = 0;
             ((Snoid *)&g_4b15e0->body)->unknownF7 = 0;
             g_4b15e0->body.running = 0;
             g_4b15e0 = 0;
@@ -1979,7 +1979,7 @@ void toppingButton(short button)
 short pizzaKey(unsigned short key)
 {
     g_4b1824 = clockTime();
-    if (!g_4b8803 && key != 367)
+    if (!debugMessagesOn && key != 367)
         return 0;
     switch (key) {
     case 367:
@@ -2431,7 +2431,7 @@ void pizzaServedTo(short troll, short)
     else if (arnoState >= 2 && willaState >= 2 && shylerState >= 2)
         pizzaSolved = 1;
     if (pizzaSolved)
-        g_4b181c = g_4b15d4 - 1;
+        g_4b181c = pizzaPartySize - 1;
 }
 
 /* Plays sound `sound` and waits for it (awaitSound); unloads it unless
@@ -2458,7 +2458,7 @@ void sayIntroduction(short which)
 {
     short stopped;
 
-    if (!g_4b87fe || which > 4)
+    if (!soundOn || which > 4)
         return;
     switch (which) {
     case 0:
@@ -2512,9 +2512,9 @@ void pizzaButtonClicked(short button)
     View *view;
 
     g_4b1824 = clockTime();
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closePizza();
         return;
@@ -2525,7 +2525,7 @@ void pizzaButtonClicked(short button)
         drawPizzaButton(button, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawPizzaButton(button, 0, 1);
-        g_4b0d52 = 1;
+        sceneDue = 1;
         askKeepParty();
         break;
     case 2:
@@ -2540,14 +2540,14 @@ void pizzaButtonClicked(short button)
             g_4b7564 = 0;
             queueViewSound(996, 0);
             sendSnoids(690, 250, 45);
-            g_4b0d52 = 4;
+            sceneDue = 4;
             g_4b15ec = g_4b1820 = 0;
         }
         break;
     case 3:
     case 12:
         if (!g_4b171e && !g_4b1660 && !pizzaSolved && !g_4b165a && !g_4b1600 && !g_4b1602 && !g_4b1604 && !g_4b160c
-            && g_4b83e4[0]) {
+            && placeClaims[0]) {
             g_4b171e++;
             g_4b1824 = clockTime();
             if (nextZoombini == -1)
@@ -2558,7 +2558,7 @@ void pizzaButtonClicked(short button)
         }
         break;
     case 13:
-        if (g_4b15e8 >= 6 && g_4b755a <= 0 && g_4b15d8) {
+        if (g_4b15e8 >= 6 && snoidsOnTheirWay <= 0 && g_4b15d8) {
             claimPlacedView(1, 0);
             getCursorPosition(&cursor);
             view = viewAt(cursor, 1, 1);
@@ -2622,30 +2622,30 @@ void pizzaFrame()
         return;
     g_4a3d9c = 1;
     updateViews();
-    if (g_4b0d52) {
+    if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
             g_4a3d9c = 0;
             return;
         }
-        if (!g_4b9688 || g_4b9688 == 3) {
-            if (g_4b9688 == 3)
+        if (!dialogQuestion || dialogQuestion == 3) {
+            if (dialogQuestion == 3)
                 chooseSnoids(0, 0);
-            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
-                g_4b0d50 = g_4b0d52;
-                g_4b0d52 = 0;
+            if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1) {
+                pendingScene = sceneDue;
+                sceneDue = 0;
                 setCurrentMap(0);
                 closePizza();
                 g_4a3d9c = 0;
                 return;
             }
-        } else if (g_4b9688 == 2) {
-            g_4b9688 = 0;
-            g_4b0d52 = 0;
+        } else if (dialogQuestion == 2) {
+            dialogQuestion = 0;
+            sceneDue = 0;
         }
     }
     if (clockTime() - g_4b1824 > 3600) {
         g_4b1824 = clockTime();
-        if (!g_4b9684)
+        if (!dialogFlags)
             trollFidget();
     }
     if (g_4b15f2 && !groupLeader[g_4b15f2])
@@ -2704,7 +2704,7 @@ void pizzaFrame()
                     pizzaView = 0;
                     view = findView(arnoView);
                     setViewScript(view, 8021, 1);
-                    if (g_4b15d4 - g_4b15ee > 3)
+                    if (pizzaPartySize - g_4b15ee > 3)
                         g_4b1820++;
                     moveView(arnoView, 1, g_4b1616);
                     moveView(zoombiniAtPizza, 1, arnoView);
@@ -2755,7 +2755,7 @@ void pizzaFrame()
                 pizzaView = 0;
                 view = findView(willaView);
                 setViewScript(view, 9027, 1);
-                if (g_4b15d4 - g_4b15ee > 3)
+                if (pizzaPartySize - g_4b15ee > 3)
                     g_4b1820++;
                 moveView(willaView, 1, g_4b1616);
                 moveView(zoombiniAtPizza, 1, willaView);
@@ -2799,7 +2799,7 @@ void pizzaFrame()
                 pizzaView = 0;
                 view = findView(shylerView);
                 setViewScript(view, 10031, 1);
-                if (g_4b15d4 - g_4b15ee > 3)
+                if (pizzaPartySize - g_4b15ee > 3)
                     g_4b1820++;
                 moveView(shylerView, 1, g_4b1616);
                 shylerState = 3;
@@ -2896,18 +2896,18 @@ void pizzaFrame()
     } else {
         g_4b166e = 0;
     }
-    if (g_4b1820 && g_4b15d4 - g_4b15ee < 5)
+    if (g_4b1820 && pizzaPartySize - g_4b15ee < 5)
         g_4b1820 = 0;
     if (g_4b1820 && g_4b181e < g_4b181c) {
         if (clockTime() - g_4b1814 > 30) {
             done = 0;
-            if (g_4b15d4 - g_4b15ee < 4) {
+            if (pizzaPartySize - g_4b15ee < 4) {
                 g_4b1820 = g_4b171e = 0;
                 pizzaDoneNotify(view, 0);
             } else {
                 g_4b1814 = clockTime();
                 do {
-                    n = allocateSlot(&g_4b1818, g_4b15d4, 0);
+                    n = allocateSlot(&g_4b1818, pizzaPartySize, 0);
                     if (partyViews[n] != zoombiniAtPizza) {
                         waiting = idleSnoidView(partyViews[n]);
                         if (waiting && waiting->body.running && waiting->flags == 1) {
@@ -2941,7 +2941,7 @@ void openPizza()
     short i;
 
     unloadSounds();
-    g_4b0d52 = g_4b15ee = 0;
+    sceneDue = g_4b15ee = 0;
     g_4b15e4 = pizzaGoReady = 0;
     g_4b1824 = clockTime();
     hintSound = g_4b166e = 0;
@@ -3085,8 +3085,8 @@ void openPizza()
         break;
     }
     copyPaletteRange(10, 236);
-    saved = g_4b87fe;
-    g_4b87fe = 0;
+    saved = soundOn;
+    soundOn = 0;
     g_4b1648 = 0;
     g_4b1634 = pizzasLeft;
     shareToppings();
@@ -3095,17 +3095,17 @@ void openPizza()
     makePartySnoids(0);
     enterSnoids(200);
     g_4b15dc = listChosenSnoids();
-    g_4b15d4 = g_4b15dc->count;
+    pizzaPartySize = g_4b15dc->count;
     g_4b181c = 3;
-    if (g_4b181c > g_4b15d4)
-        g_4b181c = g_4b15d4 - 1;
+    if (g_4b181c > pizzaPartySize)
+        g_4b181c = pizzaPartySize - 1;
     g_4b181e = 0;
     staggerSnoids(45, 30);
     chooseSnoids(0, 0);
     setGroupLists(g_4a3d18, 1, (short)0xc000);
     drawPizzaButton(1, 0, 0);
     drawPizzaButton(2, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     addSoundRange(20000, 29999, 1);
     addSoundRange(8024, 8029, 1);
     addSoundRange(15000, 15099, 1);
@@ -3126,12 +3126,12 @@ void openPizza()
     addSoundRange(7000, 7007, 0);
     addSoundRange(12003, 12099, 0);
     addSoundRange(13000, 13099, 0);
-    g_4b87fe = saved;
+    soundOn = saved;
     if (!pizzaLevel)
         hintSound = 20071;
     else
         hintSound = 20072;
-    switch (campHint((short *)(g_4a4ba0 + 0x2e))) {
+    switch (campHint((short *)(gameState + 0x2e))) {
     case 1:
         sayIntroduction(0);
         break;
@@ -3161,14 +3161,14 @@ void openPizza()
     if (shylerState)
         shylerView = addView(0x188000, drawCels, runViewScript, 10038, 6, 0, 0, 0);
     g_4b1616 = addView(0x4108000, drawCels, runViewScript, 8033, 6, 0, 0, 0);
-    saved = g_4b87fe;
-    g_4b87fe = 0;
+    saved = soundOn;
+    soundOn = 0;
     updateViews();
     fadeInViews();
     g_4b15e4 = 1;
     g_4b171e = 1;
-    g_4b87fe = saved;
+    soundOn = saved;
     stepTrollTurns();
     setViewsLocked(0);
-    g_4b83e4[0] = 1;
+    placeClaims[0] = 1;
 }

@@ -22,7 +22,7 @@
 /* @zoombi32 0x00418698 */
 void resetCamp2()
 {
-    bookView = g_4ab652 = g_4b0d52 = 0;
+    bookView = g_4ab652 = sceneDue = 0;
     g_4ab662 = g_4ab668 = g_4ab664 = 0;
     g_4ab64a = 0;
     g_4ab666 = 1;
@@ -47,13 +47,13 @@ void openCamp2()
 
     g_4ab660 = 0;
     resetCamp2();
-    saved = g_4b87fe;
-    g_4b87fe = 0;
-    g_4afb32 = 1;
+    saved = soundOn;
+    soundOn = 0;
+    rosterChanged = 1;
     addSoundRange(20000, 29999, 1);
     addSoundRange(2000, 2099, 0);
     addSoundRange(6000, 6099, 1);
-    bookEntries = (CampEntries *)(g_4a4ba0 + 0x3688);
+    bookEntries = (CampEntries *)(gameState + 0x3688);
     bookRow = bookEntries->row;
     bookCount = bookEntries->count;
     bookHighest = lastBookEntry();
@@ -90,7 +90,7 @@ void openCamp2()
     if (party()->count)
         makePartySnoids(0);
     n = countChosenSnoids();
-    *(short *)(g_4a4ba0 + 0x4c) += n;
+    *(short *)(gameState + 0x4c) += n;
     *party() = waitingParties()[2];
     waitingParties()[2].count = 0;
     waitingParties()[2].unknown2 = 1;
@@ -115,15 +115,15 @@ void openCamp2()
     updateViews();
     if (n)
         staggerSnoids(45, 30);
-    g_4ab67e = *(short *)(g_4a4ba0 + 0x48) >= 625
-               && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c)
+    g_4ab67e = *(short *)(gameState + 0x48) >= 625
+               && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0x4c)
                           + waitingParties()[0].count
                       < 16;
     if (g_4ab67e) {
         short count = countChosenSnoids();
 
         enoughChosen = count
-                   && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c)
+                   && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0x4c)
                               + waitingParties()[0].count
                           <= count;
         g_4ab65e = enoughChosen;
@@ -132,21 +132,21 @@ void openCamp2()
     setGroupLists(campGroups, 2, (short)0xc000);
     highlightItemAt(1, 1);
     drawCamp2Button(0, 0, 0, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     g_4ab660 = 1;
     m = 0;
     n = -1;
-    if (g_4b0d4c) {
-        n = campHint((short *)(g_4a4ba0 + 0x3e));
-        g_4b0d4c = 0;
+    if (puzzleLeft) {
+        n = campHint((short *)(gameState + 0x3e));
+        puzzleLeft = 0;
     }
-    if (n == 2 && !*(short *)(g_4a4ba0 + 0x40) && *(short *)(g_4a4ba0 + 0x4c) <= 16) {
+    if (n == 2 && !*(short *)(gameState + 0x40) && *(short *)(gameState + 0x4c) <= 16) {
         n = 1;
-        *(short *)(g_4a4ba0 + 0x3e) &= 0xcfff;
+        *(short *)(gameState + 0x3e) &= 0xcfff;
     }
     choices = 3;
-    if (*(short *)(g_4a4ba0 + 0x3e) & 0x3000)
+    if (*(short *)(gameState + 0x3e) & 0x3000)
         choices = 4;
     switch (n) {
     case 0:
@@ -177,7 +177,7 @@ void openCamp2()
         break;
     }
     resetViewClock();
-    g_4b87fe = saved;
+    soundOn = saved;
     if (m)
         queueViewSound(m, 0);
 }
@@ -195,7 +195,7 @@ void closeCamp2()
         saved = setFreeAtOnce(1);
         clearViews();
         if (!viewsLocked) {
-            if (g_4a48e6 || g_4b0d50 == 1) {
+            if (leavingGame || pendingScene == 1) {
                 party()->unknown2 = 0;
                 party()->unknown4 = 0;
                 waitingParties()[2] = *party();
@@ -206,7 +206,7 @@ void closeCamp2()
                 waitingParties()[2] = *party();
                 party()->unknown2 = 0;
                 party()->unknown4 = 1;
-                *(short *)(g_4a4ba0 + 0x4c) -= countPresentTravellers();
+                *(short *)(gameState + 0x4c) -= countPresentTravellers();
             }
             dropEmptyBookRows();
             countBookEntry(-1);
@@ -236,20 +236,20 @@ void camp2Frame()
         return;
     g_4a0ce8 = 1;
     updateViews();
-    if (g_4b0d52) {
+    if (sceneDue) {
         if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
             g_4a0ce8 = 0;
             return;
         }
-        if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
-            g_4b0d50 = g_4b0d52;
-            g_4b0d52 = 0;
+        if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1) {
+            pendingScene = sceneDue;
+            sceneDue = 0;
             setCurrentMap(0);
             closeCamp2();
         }
     } else {
         button = 0;
-        if (!g_4ab664 && !g_4b9684) {
+        if (!g_4ab664 && !dialogFlags) {
             getCursorPosition(&where);
             for (i = 3; !button && i < 7; i++)
                 if (ptInRect(&camp2Buttons[i].rect, where))
@@ -276,9 +276,9 @@ void camp2Clicked(short which)
 {
     Point where;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeCamp2();
         return;
@@ -293,7 +293,7 @@ void camp2Clicked(short which)
             drawCamp2Button(which, 0, 0, 1);
             markPlacedSnoids();
             sendSnoids(680, 316, 45);
-            g_4b0d52 = 16;
+            sceneDue = 16;
         } else
             switch (randomBetween(1, 3)) {
             case 1:
@@ -312,7 +312,7 @@ void camp2Clicked(short which)
         drawCamp2Button(which, 1, 0, 1);
         waitForEventFor(0, 2, 0, 1);
         drawCamp2Button(which, 0, 0, 1);
-        g_4b0d50 = 1;
+        pendingScene = 1;
         closeCamp2();
         break;
     case 4:
@@ -356,9 +356,9 @@ void campDragged(short event)
     short entry;
     short i;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeCamp2();
         return;
@@ -368,7 +368,7 @@ void campDragged(short event)
     getCursorPosition(&where);
     picked = 0;
     view = 0;
-    if (event == 1 && g_4b755a <= 0) {
+    if (event == 1 && snoidsOnTheirWay <= 0) {
         view = viewAt(where, 1, 1);
         if (!view) {
             rect.left = rect.right = where.x;
@@ -400,7 +400,7 @@ void campDragged(short event)
     case 1:
         break;
     case 2:
-        if (!view && g_4b755a <= 0)
+        if (!view && snoidsOnTheirWay <= 0)
             view = viewAt(where, 1, 1);
         if (view) {
             i = 0;
@@ -451,7 +451,7 @@ void campDragged(short event)
                 short chosen = countChosenSnoids();
 
                 enoughChosen = chosen
-                           && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c)
+                           && *(short *)(gameState + 0x4a) + *(short *)(gameState + 0x4c)
                                       + waitingParties()[0].count
                                   <= chosen;
             } else

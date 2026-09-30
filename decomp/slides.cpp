@@ -28,8 +28,8 @@ void openStoneRise()
     short i;
 
     hintSound = 0;
-    g_4b755a = g_4b755c = 0;
-    g_4b0d52 = listedCount = g_4b2410 = 0;
+    snoidsOnTheirWay = snoidsArrived = 0;
+    sceneDue = listedCount = g_4b2410 = 0;
     g_4b1930 = slidesGoReady = 0;
     g_4b2524 = g_4b1a34 = g_4b1a3e = g_4b1a40 = 0;
     g_4b2540 = g_4b2542 = g_4b1a3c = 0;
@@ -88,12 +88,12 @@ void openStoneRise()
     addSoundRange(8500, 8599, 0);
     addSoundRange(425, 499, 0);
     addSoundRange(7002, 7002, 0);
-    showRect(&g_4aa7b8);
+    showRect(&shownGameRect);
     fadeInViews();
     unloadSounds();
     queueViewSound(997, 0);
     g_4b1930 = 1;
-    campHint((short *)(g_4a4ba0 + 0x36));
+    campHint((short *)(gameState + 0x36));
     hintSound = 20078;
 }
 
@@ -190,13 +190,13 @@ void remarkOnLit()
     if (n > lastLitCount) {
         slidesGoReady = 1;
         if (n - lastLitCount > 4) {
-            if (g_4b87fe && lastViewSound == 8505) {
+            if (soundOn && lastViewSound == 8505) {
                 stopSounds(8505, RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 lastViewSound = 0;
             }
             queueViewSound(8505, 0);
         } else {
-            if (g_4b87fe && lastViewSound == 8504) {
+            if (soundOn && lastViewSound == 8504) {
                 stopSounds(8504, RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 lastViewSound = 0;
             }
@@ -204,13 +204,13 @@ void remarkOnLit()
         }
     } else if (n < lastLitCount) {
         if (lastLitCount - n > 4) {
-            if (g_4b87fe && lastViewSound == 8501) {
+            if (soundOn && lastViewSound == 8501) {
                 stopSounds(8501, RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 lastViewSound = 0;
             }
             queueViewSound(8501, 0);
         } else {
-            if (g_4b87fe && lastViewSound == 8500) {
+            if (soundOn && lastViewSound == 8500) {
                 stopSounds(8500, RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 lastViewSound = 0;
             }
@@ -1031,7 +1031,7 @@ short placeUnalike(short cell, short dir)
     return -1;
 }
 
-/* Scene 12's frame: leaves after a choice (g_4b0d52) once the sound and the
+/* Scene 12's frame: leaves after a choice (sceneDue) once the sound and the
    Zoombinis are done; cycles colours (g_4b1a3c) every 6 ticks; when the
    group g_4b251a has arrived, sends the Zoombinis on the finished cells
    off (by the level, g_4b1934) and ends; and has an idle Zoombini fidget
@@ -1046,25 +1046,25 @@ void stoneRiseFrame()
     if (!g_4a41e4 && g_4b1930) {
         g_4a41e4 = 1;
         updateViews();
-        if (g_4b0d52) {
+        if (sceneDue) {
             if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
                 g_4a41e4 = 0;
                 return;
             }
-            if (!g_4b9688 || g_4b9688 == 3) {
-                if (g_4b9688 == 3)
+            if (!dialogQuestion || dialogQuestion == 3) {
+                if (dialogQuestion == 3)
                     chooseSnoids(0, 0);
-                if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
-                    g_4b0d50 = g_4b0d52;
-                    g_4b0d52 = 0;
+                if (viewsLocked || !snoidsOnTheirWay || snoidsArrived >= 1) {
+                    pendingScene = sceneDue;
+                    sceneDue = 0;
                     setCurrentMap(0);
                     closeStoneRise();
                     g_4a41e4 = 0;
                     return;
                 }
-            } else if (g_4b9688 == 2) {
-                g_4b9688 = 0;
-                g_4b0d52 = 0;
+            } else if (dialogQuestion == 2) {
+                dialogQuestion = 0;
+                sceneDue = 0;
             }
         }
         if (g_4b1a3c && clockTime() - g_4b2534 > 6) {
@@ -1100,7 +1100,7 @@ void stoneRiseFrame()
                 sendSnoids(800, 200, 45);
                 markLitSnoids();
             }
-            g_4b0d52 = 5;
+            sceneDue = 5;
         }
         if (!g_4b2542 && g_4b2540 && g_4b253e < g_4b253c) {
             g_4b2542++;
@@ -1920,12 +1920,12 @@ void relightPath()
         lightFromStarts();
 }
 
-/* Scene 12's keys (with debugging on, g_4b8803, or else only 0x16f): typing
+/* Scene 12's keys (with debugging on, debugMessagesOn, or else only 0x16f): typing
    "solve" (g_4b2412 counts the letters) solves level 3. */
 /* @zoombi32 0x00448231 */
 short stoneRiseKey(unsigned short key)
 {
-    if (!g_4b8803 && key != 0x16f)
+    if (!debugMessagesOn && key != 0x16f)
         return 0;
     switch (key) {
     case 0x16f:
@@ -1986,9 +1986,9 @@ void stoneRiseClicked(short which)
     short x;
     short y;
 
-    if (g_4b0d52) {
-        g_4b0d50 = g_4b0d52;
-        g_4b0d52 = 0;
+    if (sceneDue) {
+        pendingScene = sceneDue;
+        sceneDue = 0;
         setCurrentMap(0);
         closeStoneRise();
         return;
@@ -2006,7 +2006,7 @@ void stoneRiseClicked(short which)
         drawSlidesButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawSlidesButton(which, 0, 1);
-        g_4b0d52 = 1;
+        sceneDue = 1;
         askKeepParty();
         break;
     case 2:
@@ -2054,7 +2054,7 @@ void stoneRiseClicked(short which)
             standFilledCells();
             break;
         }
-        if (g_4b755a > 0 || g_4b1a3e || g_4b251a)
+        if (snoidsOnTheirWay > 0 || g_4b1a3e || g_4b251a)
             break;
         getCursorPosition(&where);
         view = viewAt(where, 1, 1);
