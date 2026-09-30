@@ -238,6 +238,18 @@ void fn_45074d();
 void fn_450796();
 void fn_4507bb();
 
-void fn_44b550();
+void layOutGrid();
+extern Point g_4a3fcc[117]; /* @data 0x4a3fcc: where each hex cell is */
+extern short g_4a4238[26]; /* @data 0x4a4238: level 3's open cells */
+extern short g_4a426c[43]; /* @data 0x4a426c: level 3's blocked cells */
+extern short g_4a42c2[20]; /* @data 0x4a42c2 */
+extern short g_4a42ea[20]; /* @data 0x4a42ea */
+extern short g_4a4374[14]; /* @data 0x4a4374: levels 0-1: the first row's cell, by rows */
+extern short g_4a4390[14]; /* @data 0x4a4390: and the cells between rows */
+extern short g_4a43ac[18]; /* @data 0x4a43ac: level 2's blocked cells */
+extern short g_4a43d0[18]; /* @data 0x4a43d0: its open cells */
+extern short g_4a43f4[3]; /* @data 0x4a43f4: its start cells */
+extern short g_4a43fa[3]; /* @data 0x4a43fa */
+extern short g_4a4400[12]; /* @data 0x4a4400 */
 
 #endif

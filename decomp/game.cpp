@@ -1202,6 +1202,529 @@ void fn_45162e(short)
         groupViews(view->id, view->id, 0, 0, 0, 0);
 }
 
+/* Lays out the hex grid for level g_4b1934 (0-3), with the start cells
+   (state g_4b2512, 504 or at level 3 perhaps 505), the cells open (506)
+   and blocked (501), the Zoombinis already placed (507) and the cells'
+   link bits (g_4b2324); notes the open cells (g_4b240e of them, where to
+   show them in g_4b1a48), then adds every cell's view and the rows'
+   views, and puts the party behind them. */
+/* @zoombi32 0x0044b550 */
+void layOutGrid()
+{
+    short row;
+    short k;
+    short base;
+    short step;
+    short placed;
+    short extra;
+    short unused[2]; /* only takes stack space */
+    short cell;
+    short count;
+    short found;
+    View *view;
+
+    fillMemory(g_4b2544, 0, 4);
+    g_4b2512 = 504;
+    g_4b2514 = 48;
+    if (g_4b1934 == 3) {
+        g_4b2512 = randomUpTo(1) + 504;
+        if (g_4b2512 != 504)
+            g_4b2514 = 24;
+    }
+    k = 0;
+    fn_449b40();
+    switch (g_4b1934) {
+    case 0:
+        fn_4494b3();
+        base = g_4a4374[g_4b2450];
+        step = g_4a4390[g_4b2450];
+        for (row = 0; row < g_4b2450; row++) {
+            extra = 0;
+            cell = row * step + base;
+            if (g_4b2450 > 7 && cell % 2) {
+                short c;
+
+                g_4b1aea[cell].state = g_4b2512;
+                g_4b2324[cell] = 16;
+                g_4b1aea[cell].links[4] = cell + 1;
+                for (c = cell + 1; c < cell + 4; c++) {
+                    g_4b1aea[c].state = g_4b2512;
+                    g_4b2324[c] = 18;
+                    g_4b1aea[c].links[4] = c + 1;
+                    g_4b1aea[c].links[1] = c - 1;
+                }
+                extra = 3;
+            }
+            g_4b1aea[cell + extra].state = g_4b2512;
+            g_4b1aea[cell + extra + 1].state = 506;
+            g_4b240e++;
+            g_4b1a48[g_4b240e] = g_4a3fcc[cell + extra + 1];
+            g_4b1ab4[g_4b240e] = extra + cell + 1;
+            g_4b1a48[g_4b240e].x += 24;
+            g_4b1a48[g_4b240e].y -= 5;
+            if (g_4b2452[k] != 501) {
+                g_4b1aea[cell + extra + 2].snoid = g_4b2452[k];
+                g_4b1aea[cell + extra + 2].state = 501;
+                g_4b1aea[cell + extra + 3].state = 506;
+                g_4b240e++;
+                g_4b1a48[g_4b240e] = g_4a3fcc[cell + extra + 3];
+                g_4b1ab4[g_4b240e] = extra + cell + 3;
+                g_4b1a48[g_4b240e].x += 24;
+                g_4b1a48[g_4b240e].y -= 5;
+                g_4b2324[cell + extra] |= 16;
+                g_4b2324[cell + extra + 1] = 18;
+                g_4b2324[cell + extra + 2] = 18;
+                g_4b2324[cell + extra + 3] |= 2;
+                k++;
+            } else {
+                g_4b2324[cell + extra] |= 16;
+                g_4b2324[cell + extra + 1] |= 2;
+                k++;
+            }
+        }
+        linkCells();
+        break;
+    case 1:
+        fn_44986f();
+        base = g_4a4374[g_4b2450];
+        step = g_4a4390[g_4b2450];
+        placed = 0;
+        for (row = 0; row < g_4b2450; row++) {
+            cell = row * step + base;
+            g_4b1aea[cell].state = g_4b2512;
+            g_4b1aea[cell + 1].state = 506;
+            g_4b240e++;
+            g_4b1a48[g_4b240e] = g_4a3fcc[cell + 1];
+            g_4b1ab4[g_4b240e] = cell + 1;
+            g_4b1a48[g_4b240e].x += 24;
+            g_4b1a48[g_4b240e].y -= 5;
+            if (++placed >= g_4b2414) {
+                g_4b2324[cell] = 16;
+                g_4b2324[cell + 1] = 2;
+                break;
+            }
+            if (g_4b2452[k] && g_4b2452[k] != 501) {
+                g_4b1aea[cell + 2].snoid = g_4b2452[k];
+                g_4b1aea[cell + 2].state = 501;
+                g_4b1aea[cell + 3].state = 506;
+                g_4b240e++;
+                g_4b1a48[g_4b240e] = g_4a3fcc[cell + 3];
+                g_4b1ab4[g_4b240e] = cell + 3;
+                g_4b1a48[g_4b240e].x += 24;
+                g_4b1a48[g_4b240e].y -= 5;
+                g_4b2324[cell] |= 16;
+                g_4b2324[cell + 1] = 18;
+                g_4b2324[cell + 2] = 18;
+                g_4b2324[cell + 3] |= 2;
+                k++;
+                if (++placed >= g_4b2414)
+                    break;
+            } else if (g_4b2452[k]) {
+                g_4b1aea[cell + 2].snoid = 0;
+                g_4b1aea[cell + 2].state = 501;
+                g_4b1aea[cell + 3].state = 506;
+                g_4b240e++;
+                g_4b1a48[g_4b240e] = g_4a3fcc[cell + 3];
+                g_4b1ab4[g_4b240e] = cell + 3;
+                g_4b1a48[g_4b240e].x += 24;
+                g_4b1a48[g_4b240e].y -= 5;
+                g_4b2324[cell] |= 16;
+                g_4b2324[cell + 1] = 18;
+                g_4b2324[cell + 2] = 18;
+                g_4b2324[cell + 3] |= 2;
+                k++;
+                if (++placed >= g_4b2414)
+                    break;
+            }
+            if (g_4b2452[k] && g_4b2452[k] != 501) {
+                g_4b1aea[cell + 4].snoid = g_4b2452[k];
+                g_4b1aea[cell + 4].state = 501;
+                g_4b1aea[cell + 5].state = 506;
+                g_4b240e++;
+                g_4b1a48[g_4b240e] = g_4a3fcc[cell + 5];
+                g_4b1ab4[g_4b240e] = cell + 5;
+                g_4b1a48[g_4b240e].x += 24;
+                g_4b1a48[g_4b240e].y -= 5;
+                g_4b2324[cell + 3] |= 16;
+                g_4b2324[cell + 4] = 18;
+                g_4b2324[cell + 5] = 2;
+                k++;
+                if (++placed >= g_4b2414)
+                    break;
+            } else if (g_4b2452[k]) {
+                g_4b1aea[cell + 4].snoid = 0;
+                g_4b1aea[cell + 4].state = 501;
+                g_4b1aea[cell + 5].state = 506;
+                g_4b240e++;
+                g_4b1a48[g_4b240e] = g_4a3fcc[cell + 5];
+                g_4b1ab4[g_4b240e] = cell + 5;
+                g_4b1a48[g_4b240e].x += 24;
+                g_4b1a48[g_4b240e].y -= 5;
+                g_4b2324[cell + 3] |= 16;
+                g_4b2324[cell + 4] = 18;
+                g_4b2324[cell + 5] = 2;
+                k++;
+                if (++placed >= g_4b2414)
+                    break;
+            }
+        }
+        linkCells();
+        break;
+    case 2:
+        for (cell = 0; cell < 3; cell++) {
+            g_4b1aea[g_4a43f4[cell]].state = g_4b2512;
+            g_4b2324[g_4a43f4[cell]] = 16;
+            g_4b2324[g_4a43f4[cell] + 1] = 42;
+            g_4b2324[g_4a43f4[cell] - 8] |= 4;
+            g_4b2324[g_4a43f4[cell] + 10] |= 1;
+        }
+        for (cell = 0; cell < 3; cell++) {
+            g_4b1aea[g_4a43fa[cell]].state = 506;
+            g_4b2324[g_4a43fa[cell]] = 5;
+            g_4b2324[g_4a43fa[cell] - 10] |= 8;
+            g_4b2324[g_4a43fa[cell] + 8] |= 32;
+        }
+        for (cell = 0; cell < 18; cell++) {
+            g_4b1aea[g_4a43ac[cell]].state = 501;
+            g_4b1aea[g_4a43d0[cell]].state = 506;
+        }
+        for (cell = 0; cell < 12; cell++) {
+            g_4b2324[g_4a4400[cell]] |= 18;
+            g_4b2324[g_4a4400[cell] - 1] |= 16;
+            g_4b2324[g_4a4400[cell] + 1] |= 2;
+        }
+        linkCells();
+        fn_449c18();
+        if (randomUpTo(100) < 50) {
+            fn_44abce(19);
+            fn_44abce(55);
+            fn_44abce(91);
+        } else if (randomUpTo(100) < 50) {
+            fn_44abce(55);
+            fn_44abce(91);
+            fn_44abce(19);
+        } else {
+            fn_44abce(91);
+            fn_44abce(19);
+            fn_44abce(55);
+        }
+        cell = fn_449f96(11, 13);
+        if (cell)
+            g_4b1aea[12].snoid = cell;
+        cell = fn_449f96(29, 31);
+        if (cell)
+            g_4b1aea[30].snoid = cell;
+        cell = fn_449f96(47, 49);
+        if (cell)
+            g_4b1aea[48].snoid = cell;
+        cell = fn_449f96(65, 67);
+        if (cell)
+            g_4b1aea[66].snoid = cell;
+        cell = fn_449f96(83, 85);
+        if (cell)
+            g_4b1aea[84].snoid = cell;
+        cell = fn_449f96(101, 103);
+        if (cell)
+            g_4b1aea[102].snoid = cell;
+        count = 0;
+        for (cell = 0; cell < 18; cell++)
+            if (g_4b1aea[g_4a43d0[cell]].state == 507)
+                count++;
+        if (count <= g_4b2414) {
+            count = g_4b2414 - count;
+            do {
+                if (count) {
+                    count--;
+                    for (cell = 0; cell < 18; cell++)
+                        if (g_4b1aea[g_4a43d0[cell]].state != 507) {
+                            g_4b1aea[g_4a43d0[cell]].state = 507;
+                            break;
+                        }
+                }
+            } while (count);
+        } else {
+            count -= g_4b2414;
+            do {
+                found = 0;
+                for (cell = 0; cell < 6; cell++)
+                    if (g_4b1aea[g_4a43d0[cell]].state == 507 && g_4b1aea[g_4a43d0[cell] - 1].snoid == -1) {
+                        g_4b1aea[g_4a43d0[cell]].state = 501;
+                        g_4b1aea[g_4a43d0[cell]].snoid = -1;
+                        count--;
+                        found++;
+                        break;
+                    }
+                if (!found)
+                    for (cell = 6; cell < 12; cell++)
+                        if (g_4b1aea[g_4a43d0[cell]].state == 507
+                            && g_4b1aea[g_4a43d0[cell] + 1].snoid == -1) {
+                            g_4b1aea[g_4a43d0[cell]].state = 501;
+                            g_4b1aea[g_4a43d0[cell]].snoid = -1;
+                            count--;
+                            found++;
+                            break;
+                        }
+                if (!found)
+                    for (cell = 12; cell < 15; cell++)
+                        if (g_4b1aea[g_4a43d0[cell]].state == 507
+                            && g_4b1aea[g_4a43d0[cell] - 10].snoid == -1
+                            && g_4b1aea[g_4a43d0[cell] + 8].snoid == -1) {
+                            g_4b1aea[g_4a43d0[cell]].state = 501;
+                            g_4b1aea[g_4a43d0[cell]].snoid = -1;
+                            count--;
+                            found++;
+                            break;
+                        }
+                if (!found)
+                    count = 0;
+            } while (count);
+        }
+        for (cell = 0; cell < 117; cell++)
+            if (g_4b1aea[cell].state == 506) {
+                g_4b1aea[cell].state = 501;
+                g_4b1aea[cell].snoid = -1;
+            }
+        g_4b240e = 0;
+        for (cell = 0; cell < 18; cell++)
+            if (g_4b1aea[g_4a43d0[cell]].state == 507) {
+                g_4b240e++;
+                g_4b1a48[g_4b240e] = g_4a3fcc[g_4a43d0[cell]];
+                g_4b1ab4[g_4b240e] = g_4a43d0[cell];
+                g_4b1a48[g_4b240e].x += 24;
+                g_4b1a48[g_4b240e].y -= 5;
+            }
+        break;
+    case 3:
+        for (cell = 0; cell < 43; cell++)
+            g_4b1aea[g_4a426c[cell]].state = 501;
+        for (cell = 0; cell < 20; cell++)
+            g_4b2324[g_4a42c2[cell]] = 36;
+        for (cell = 0; cell < 20; cell++)
+            g_4b2324[g_4a42ea[cell]] = 9;
+        g_4b2324[54] = 16;
+        g_4b1aea[54].state = g_4b2512;
+        g_4b2324[55] = 58;
+        g_4b2324[57] = g_4b2324[59] = 63;
+        g_4b2324[56] = g_4b2324[58] = g_4b2324[60] = 18;
+        g_4b2324[38] = g_4b2324[40] = g_4b2324[42] = g_4b2324[21] = g_4b2324[74] = g_4b2324[76] = g_4b2324[78]
+            = g_4b2324[93] = g_4b2324[23] = g_4b2324[95] = 45;
+        g_4b2324[19] = g_4b2324[91] = 40;
+        g_4b2324[44] = g_4b2324[80] = 5;
+        g_4b2324[2] = g_4b2324[4] = g_4b2324[25] = g_4b2324[6] = 12;
+        g_4b2324[110] = g_4b2324[112] = g_4b2324[97] = g_4b2324[114] = 33;
+        g_4b2324[61] = 47;
+        g_4b2324[25] = 13;
+        g_4b2324[97] = 37;
+        for (cell = 0; cell < 26; cell++)
+            g_4b1aea[g_4a4238[cell]].state = 506;
+        linkCells();
+        if (g_4b2414 > 5)
+            fn_44cc51(54);
+        else {
+            fn_449c18();
+            for (cell = 0; cell < 117; cell++) {
+                g_4b2324[cell] = 0;
+                g_4b1aea[cell].state = 500;
+            }
+            g_4b1aea[54].state = g_4b2512;
+            g_4b1aea[55].state = 507;
+            g_4b1aea[55].snoid = partyViews[0];
+            g_4b2324[54] = 16;
+            g_4b2324[55] = 2;
+            switch (g_4b2414) {
+            case 2:
+                g_4b1aea[56].state = 501;
+                g_4b1aea[57].state = 507;
+                g_4b1aea[57].snoid = partyViews[1];
+                if (fn_44cd71(g_4b2430[0], g_4b2430[1]))
+                    g_4b1aea[56].snoid = g_4b2516 + 510;
+                g_4b2324[55] = 18;
+                g_4b2324[56] = 18;
+                g_4b2324[57] = 2;
+                g_4b2430[0] = g_4b2430[1] = -1;
+                break;
+            case 3:
+                g_4b1aea[56].state = 501;
+                g_4b1aea[57].state = 507;
+                g_4b1aea[57].snoid = partyViews[1];
+                g_4b1aea[58].state = 501;
+                g_4b1aea[59].state = 507;
+                g_4b1aea[59].snoid = partyViews[2];
+                if (fn_44cd71(g_4b2430[0], g_4b2430[1]))
+                    g_4b1aea[56].snoid = g_4b2516 + 510;
+                if (fn_44cd71(g_4b2430[1], g_4b2430[2]))
+                    g_4b1aea[58].snoid = g_4b2516 + 510;
+                g_4b2324[55] = 18;
+                g_4b2324[56] = 18;
+                g_4b2324[57] = 18;
+                g_4b2324[58] = 18;
+                g_4b2324[59] = 2;
+                g_4b2430[0] = g_4b2430[1] = g_4b2430[2] = -1;
+                break;
+            case 4:
+                g_4b1aea[56].state = 501;
+                g_4b1aea[57].state = 507;
+                g_4b1aea[57].snoid = partyViews[1];
+                g_4b1aea[58].state = 501;
+                g_4b1aea[59].state = 507;
+                g_4b1aea[59].snoid = partyViews[2];
+                g_4b1aea[60].state = 501;
+                g_4b1aea[61].state = 507;
+                g_4b1aea[61].snoid = partyViews[3];
+                if (fn_44cd71(g_4b2430[0], g_4b2430[1]))
+                    g_4b1aea[56].snoid = g_4b2516 + 510;
+                if (fn_44cd71(g_4b2430[1], g_4b2430[2]))
+                    g_4b1aea[58].snoid = g_4b2516 + 510;
+                if (fn_44cd71(g_4b2430[2], g_4b2430[3]))
+                    g_4b1aea[60].snoid = g_4b2516 + 510;
+                g_4b2324[55] = 18;
+                g_4b2324[56] = 18;
+                g_4b2324[57] = 18;
+                g_4b2324[58] = 18;
+                g_4b2324[59] = 18;
+                g_4b2324[60] = 18;
+                g_4b2324[61] = 2;
+                g_4b2430[0] = g_4b2430[1] = -1;
+                g_4b2430[2] = g_4b2430[3] = -1;
+                break;
+            case 5:
+                g_4b1aea[56].state = 501;
+                g_4b1aea[57].state = 507;
+                g_4b1aea[57].snoid = partyViews[1];
+                g_4b1aea[58].state = 501;
+                g_4b1aea[59].state = 507;
+                g_4b1aea[59].snoid = partyViews[2];
+                g_4b1aea[60].state = 501;
+                g_4b1aea[61].state = 507;
+                g_4b1aea[61].snoid = partyViews[3];
+                g_4b1aea[52].state = 501;
+                g_4b1aea[44].state = 507;
+                g_4b1aea[44].snoid = partyViews[4];
+                if (fn_44cd71(g_4b2430[0], g_4b2430[1]))
+                    g_4b1aea[56].snoid = g_4b2516 + 510;
+                if (fn_44cd71(g_4b2430[1], g_4b2430[2]))
+                    g_4b1aea[58].snoid = g_4b2516 + 510;
+                if (fn_44cd71(g_4b2430[2], g_4b2430[3]))
+                    g_4b1aea[60].snoid = g_4b2516 + 510;
+                if (fn_44cd71(g_4b2430[3], g_4b2430[4]))
+                    g_4b1aea[52].snoid = g_4b2516 + 510;
+                g_4b2324[55] = 18;
+                g_4b2324[56] = 18;
+                g_4b2324[57] = 18;
+                g_4b2324[58] = 18;
+                g_4b2324[59] = 18;
+                g_4b2324[60] = 18;
+                g_4b2324[61] = 34;
+                g_4b2324[52] = 36;
+                g_4b2324[44] = 4;
+                g_4b2430[0] = g_4b2430[1] = -1;
+                g_4b2430[2] = g_4b2430[3] = -1;
+                g_4b2430[4] = -1;
+                break;
+            }
+        }
+        if (fn_44d102())
+            fn_44d5f5();
+        fn_44d127();
+        if (g_4b2414 > 5) {
+            fn_44e21a(83, 84, 93);
+            fn_44e21a(29, 30, 21);
+            fn_44e21a(102, 103, 112);
+            fn_44e21a(12, 13, 4);
+            fn_44e21a(85, 86, 95);
+            fn_44e21a(31, 32, 23);
+            fn_44e21a(68, 69, 78);
+            fn_44e21a(50, 51, 42);
+            fn_44e21a(66, 67, 76);
+            fn_44e21a(104, 105, 114);
+            fn_44e21a(14, 15, 6);
+            fn_44e21a(34, 52, 44);
+            fn_44e21a(70, 88, 80);
+        }
+        if (g_4b1aea[60].state == 501 && g_4b1aea[61].state == 501 && g_4b2414 > 5
+            && g_4b1aea[69].state == 500 && g_4b1aea[51].state == 500 && g_4b1aea[52].state == 500
+            && g_4b1aea[70].state == 500) {
+            fn_44e314(60);
+            fn_44e314(61);
+        }
+        if (g_4b2414 <= 2) {
+            fillMemory(g_4b2324, 0, 234);
+            fillMemory(g_4b1aea, 0, 2106);
+            for (cell = 0; cell < 117; cell++)
+                g_4b1aea[cell].state = 500;
+            g_4b1aea[54].state = g_4b2512;
+            g_4b2324[54] = 16;
+            g_4b1aea[54].state = g_4b2512;
+            g_4b1aea[55].snoid = partyViews[0];
+            g_4b2324[55] = 2;
+            g_4b1aea[55].state = 507;
+            g_4b1aea[54].links[4] = 55;
+            g_4b1aea[55].links[1] = 54;
+            if (g_4b2414 == 2) {
+                g_4b1aea[57].snoid = partyViews[1];
+                g_4b1aea[55].links[4] = 56;
+                g_4b1aea[56].links[4] = 57;
+                g_4b1aea[56].links[1] = 55;
+                g_4b1aea[57].links[1] = 56;
+                g_4b2324[55] &= 16;
+                g_4b2324[56] = 18;
+                g_4b2324[57] = 2;
+                g_4b1aea[57].state = 507;
+                g_4b1aea[57].snoid = partyViews[1];
+                g_4b1aea[56].state = 501;
+                g_4b2430[0] = -1;
+                g_4b2430[1] = 1;
+                fn_44d3b8(55, 4);
+            }
+        }
+        count = 0;
+        for (cell = 0; cell < 26; cell++) {
+            row = g_4a4238[cell];
+            if (g_4b1aea[row].state == 507) {
+                g_4b240e++;
+                g_4b1a48[g_4b240e] = g_4a3fcc[row];
+                g_4b1ab4[g_4b240e] = row;
+                g_4b1a48[g_4b240e].x += 24;
+                g_4b1a48[g_4b240e].y -= 5;
+                g_4b2544[count].cell = row;
+                g_4b2544[count].snoid = g_4b1aea[row].snoid;
+                count++;
+            }
+        }
+        break;
+    }
+    for (cell = 0; cell < 117; cell++) {
+        if (g_4b1aea[cell].state == 507)
+            g_4b1aea[cell].state = 506;
+        if (g_4b1aea[cell].state == 500)
+            g_4b1aea[cell].view = addView(0x988000, drawCels, runViewScript, 7001, 6, &g_4a3fcc[cell], 0, 0);
+        else if (g_4b1aea[cell].state == g_4b2512) {
+            g_4b1aea[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &g_4a3fcc[cell], 0, 0);
+            view = findView(g_4b1aea[cell].view);
+            view->placed = fn_4489ce;
+            g_4b241a++;
+            g_4b241c[g_4b241a - 1] = cell;
+            if (g_4b2512 == 505)
+                g_4b241c[g_4b241a - 1] += 20;
+            if (g_4b241a == 1)
+                g_4b2518 = groupViews(g_4b1aea[cell].view, g_4b1aea[cell].view, 0, 0, 0, 0);
+        } else {
+            g_4b1aea[cell].view = addView(0x988000, drawCels, runViewScript, 7000, 6, &g_4a3fcc[cell], 0, 0);
+            view = findView(g_4b1aea[cell].view);
+            view->placed = fn_4489ce;
+        }
+    }
+    for (cell = 1; cell < 9; cell++)
+        g_4b1936[cell] = addView(0x188000, drawCels, runViewScript, cell + 7003, 6, 0, 0, 0);
+    view = findView(partyViews[0]);
+    g_4b2526 = (short)view->flags;
+    for (cell = g_4b2414 - 1; cell >= 0; cell--) {
+        view = findView(partyViews[cell]);
+        moveView(partyViews[cell], 0, g_4b1936[8]);
+        view->flags |= 0x4008000;
+    }
+}
+
 /* Starts the hex grid at the cell after `cell`: puts the first of the
    party on it (the next one alike to the one before it), then grows the
    grid from there (fn_44ce56) and from the 13 cells of g_4a4418 while

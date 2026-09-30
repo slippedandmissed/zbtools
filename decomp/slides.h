@@ -14,6 +14,7 @@ extern long g_4a3fc8; /* @data 0x4a3fc8 */
 extern SceneButton slidesButtons[2]; /* @data 0x4a3f28: buttons 1 and 2 */
 extern short g_4a41e0; /* @data 0x4a41e0: button 2 is drawn lit */
 extern short g_4a41e2; /* @data 0x4a41e2: button 1 has been drawn */
+extern Point g_4b1a48[27]; /* @data 0x4b1a48: where to show them (from 1) */
 extern short g_4b1ab4[27]; /* @data 0x4b1ab4: cells (from 1, g_4b240e of them) */
 extern short g_4b240e; /* @data 0x4b240e */
 extern short g_4b1a42; /* @data 0x4b1a42 */

@@ -20,7 +20,7 @@
 #include "view.h"
 
 /* Opens scene 12 (Stone Rise): Slides.MHK, the board (all cells empty,
-   500, until fn_44b550 lays it out for the level), the cells' views, the
+   500, until layOutGrid lays it out for the level), the cells' views, the
    buttons and the party. */
 /* @zoombi32 0x00446bf8 */
 void openScene12()
@@ -63,7 +63,7 @@ void openScene12()
     enterSnoids(0);
     g_4b192c = listChosenSnoids();
     g_4b253c = g_4b2414 = g_4b192c->count;
-    fn_44b550();
+    layOutGrid();
     moveView(g_4b1936[1], 0, g_4b1aea[9].view);
     moveView(g_4b1936[2], 0, g_4b1aea[27].view);
     moveView(g_4b1936[3], 0, g_4b1aea[45].view);
