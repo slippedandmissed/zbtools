@@ -10,7 +10,9 @@ Every function in `zoombi32.exe`'s game code and Mohawk engine (about 2,100 func
 
 Every function, global, source module and most struct fields now has a descriptive name (the address markers keep the link to the binary); fields nothing reads keep their offset names (`unknown66`).
 
-The code doesn't build into a working executable yet: the game's data, its resources and the link are next (see the [roadmap](#roadmap)).
+The game's resources are in `assets/`, converted from its Mohawk archives to modern formats: 1,333 sounds as WAV, about 10,000 images as PNG, the music as MIDI, and its animation scripts, palettes and tables as TOML. `uv run assets pack` turns them back into archives identical, byte for byte, to the disc's.
+
+The code doesn't build into a working executable yet: the game's initialised data and the link are next (see the [roadmap](#roadmap)).
 
 ## Setup
 
@@ -187,7 +189,7 @@ The game's resources are kept as source, like the decompiled code, in `assets/` 
 | `CURS` | cursors | Windows cursor (`.cur`) |
 | `REGS`, `NODE`, `PATH`, `SYSX` | tables: offsets, the paths Zoombinis walk, MIDI messages | TOML |
 
-Edit a resource and `pack` builds the archives with the change; `verify` names the resources that differ from the disc's. An image's pixel values are what the game draws: its PNG's palette is only for viewing, and colours are changed in the palette resources. Packing re-creates Broderbund's own compression, so unedited resources pack to exactly the original bytes; it caches compressed images in `build/assets-cache/` (compressing them all takes about two minutes of CPU time). `extract` needs `uv run extract-game` first, and won't overwrite archives already in `assets/` unless given `--force`. A resource a format can't convert exactly would be kept as it is (`.bin`); none of the game's are.
+Edit a resource and `pack` builds the archives with the change; `verify` names the resources that differ from the disc's. An image's pixel values are what the game draws: its PNG's palette is only for viewing, and colours are changed in the palette resources. Packing re-creates Broderbund's own compression, so unedited resources pack to exactly the original bytes; it caches compressed images in `build/assets-cache/` (compressing them all takes about two minutes of CPU time). `pack` needs only `assets/`, so it works from a fresh clone; `extract` and `verify` need the disc (`uv run extract-game` first), and `extract` won't overwrite archives already in `assets/` unless given `--force`. A resource a format can't convert exactly would be kept as it is (`.bin`); none of the game's are.
 
 ### Cleaning up
 
@@ -243,6 +245,7 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 | `BRODFONT.DLL`, `BRODMIDI.DLL`, `BRODPGI.DLL`, `BRODREG.DLL`, `BRODUTIL.DLL` | Broderbund shared support libraries (Win16) |
 | `DATA/*.MHK` | Mohawk resource archives, roughly one per puzzle/area; shared by both builds and read from the CD at runtime |
 | `DATA/*.MOV`, `*.QTC` | QuickTime movies and codecs |
+| `MIDIMAP.DAT` | A small Mohawk archive (installed next to the program) of MIDI messages sent to MIDI devices |
 | `MOHAWK.WIN`, `DATA/MOHAWK.MAC` | Mohawk engine configuration |
 | `QTWSET32/`, `QTWSETUP/` | QuickTime for Windows 2.x installers, 32-bit and 16-bit (third-party) |
 | `SYSTEM/WING*` | Microsoft WinG graphics library, used by the Windows 3.1 build (third-party) |
