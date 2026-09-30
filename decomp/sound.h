@@ -7,9 +7,9 @@
 #define SOUND_H
 
 extern short soundLevel; /* @data 0x4a0090 */
-extern long g_4a0098;
-extern unsigned long g_4a009c; /* sounds larger than this are loaded differently */
-extern SoundEntry *g_4a00a0;
+extern long streamedSoundArg; /* @data 0x4a0098 */
+extern unsigned long largestLoadedSound; /* @data 0x4a009c: sounds larger than this are loaded differently */
+extern SoundEntry *soundEntries; /* @data 0x4a00a0 */
 extern short channelCounts[2]; /* @data 0x4a00a4 */
 extern char currentChannel[2]; /* @data 0x4a00a8 */
 extern long soundTypes[2]; /* @data 0x4a00dc */
@@ -25,10 +25,10 @@ extern char formatJoin[]; /* @data 0x4a027d */
 extern char formatErrorNumber[]; /* @data 0x4a0282 */
 extern char formatSoundId[]; /* @data 0x4a028d */
 extern char msgDeviceFailed[]; /* @data 0x4a0297 */
-extern short g_4aa42c;
-extern char *g_4aa430;
-extern char *g_4aa434;
-extern char *g_4aa438;
+extern short reportMissingSounds; /* @data 0x4aa42c */
+extern char *soundErrorText; /* @data 0x4aa430 */
+extern char *soundErrorKindText; /* @data 0x4aa434 */
+extern char *soundErrorNameText; /* @data 0x4aa438 */
 extern short soundErrorsIgnored; /* @data 0x4aa43c */
 unsigned short loadSoundByKey(short key, long type);
 unsigned short findAndLoadSound(short key, long type);

@@ -36,7 +36,7 @@ inline short getIniString(const fileSpec &file, const char *section, const char 
  * Finds the game's data. Zoombi32.CFG (written by the installer) names the
  * directory the game was installed from (the CD) and the one it was installed
  * to. If the CD's Data directory has Zoombini.mhk the game uses that and sets
- * g_4a3e5c; otherwise it uses the installed copy, and if that's missing too it
+ * dataFromInstallSource; otherwise it uses the installed copy, and if that's missing too it
  * asks for the CD.
  */
 /* @zoombi32 0x00446969 */
@@ -53,7 +53,7 @@ void findGameData()
     strcat(path, "Zoombini.mhk");
     fileSpec archive(path);
     if (!fileMissing(archive)) {
-        g_4a3e5c = 1;
+        dataFromInstallSource = 1;
     } else {
         if (getIniString(configFileName, "INSTALL", installToDirKey, installDir, 0x100))
             fatalError("unable to read file Zoombi32.CFG");

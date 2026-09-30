@@ -103,7 +103,7 @@ extern short otherEyesImages[6]; /* @data 0x4a4d04 */
 extern short otherHairImages[6]; /* @data 0x4a4d10 */
 short stepAlongPath(Snoid *snoid);
 void choosePath(Snoid *snoid, Point *target);
-extern short g_4b7568;
+extern short dragInProgress; /* @data 0x4b7568 */
 extern long snoidImages2Resource; /* @data 0x4b7b58 */
 extern ImageBank *snoidImages; /* @data 0x4b7b5c */
 extern ImageBank *snoidImages2; /* @data 0x4b7b60 */
@@ -120,7 +120,7 @@ extern short snoidScriptGroups; /* @data 0x4b7b84 */
 void loadPaths(short);
 void enterSnoids(short dy);
 void staggerSnoids(unsigned long interval, unsigned long delay);
-extern short g_4b7b86;
+extern short staggerDue; /* @data 0x4b7b86 */
 short sceneLevel();
 short campHint(short *visits);
 short heldPlaceNumber(); /* 0x457fbb */
@@ -131,7 +131,7 @@ void drawPaths();
 void startSnoidScript(Snoid *snoid, short id, Point *anchor, char unknownF8);
 void findSpot(View *view, ShortRect *area, short walk, short radius);
 void pickFreePlace(Point *result, Point *places, short count, short radius);
-extern Point g_4a4d1c;
+extern Point spotOrigin; /* @data 0x4a4d1c */
 void initSnoid(Snoid *snoid); /* 0x45bf41 */
 void setSnoidFacing(Snoid *snoid, short facing);
 short layOutSnoid(Snoid *snoid, short *event);

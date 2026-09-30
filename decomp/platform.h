@@ -6,10 +6,10 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-extern short g_4a4ad6;
+extern short deactivateOnNcActivate; /* @data 0x4a4ad6 */
 extern Callback aboutHook; /* @data 0x4a4a14 */
-extern long g_4a4a18;
-extern long g_4a4a1c;
+extern long platformPair1; /* @data 0x4a4a18 */
+extern long platformPair2; /* @data 0x4a4a1c */
 extern char minimumOfText[]; /* @data 0x4a4a20 */
 extern char colors256Text[]; /* @data 0x4a4a2e */
 extern char svgaRequiredFormat[]; /* @data 0x4a4a39 */
@@ -20,21 +20,21 @@ extern unsigned short resolutionWidths[4]; /* @data 0x4a4aac */
 extern unsigned short resolutionHeights[4]; /* @data 0x4a4ab4 */
 extern char messageLogName[]; /* @data 0x4a4ad8 */
 extern unsigned short appActive; /* @data 0x4a4ae4 */
-extern ShortRect g_4a4ae6;
-extern short g_4b2b04;
+extern ShortRect paletteChartRect; /* @data 0x4a4ae6 */
+extern short keepDisplayMode; /* @data 0x4b2b04 */
 extern char programPath[0x100]; /* @data 0x4b2b06 */
 extern char savedDirectory[]; /* @data 0x4b2c06 */
 extern WNDCLASS windowClass; /* @data 0x4b2d06 */
 extern short classRegistered; /* @data 0x4b2d2e */
-extern short g_4b2d30;
+extern short wasActivated; /* @data 0x4b2d30 */
 extern short inputIgnored; /* @data 0x4b2d36: keys and clicks are dropped */
-extern short g_4b2d3c;
-extern short g_4b2d42;
-extern long g_4b2d44[0x400];
-extern long g_4b3d44[0x400];
-extern long g_4b4d44[0x400];
-extern long g_4b5d44[0x400];
-extern short g_4b6d44[0x400];
+extern short pauseLoopRunning; /* @data 0x4b2d3c */
+extern short messageLogCount; /* @data 0x4b2d42 */
+extern long loggedMessages[0x400]; /* @data 0x4b2d44 */
+extern long loggedWParams[0x400]; /* @data 0x4b3d44 */
+extern long loggedLParams[0x400]; /* @data 0x4b4d44 */
+extern long loggedResults[0x400]; /* @data 0x4b5d44 */
+extern short loggedAfter[0x400]; /* @data 0x4b6d44 */
 LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
 void drawPaletteChart();
 void mouseButtonDown(short button, long keys, long where);

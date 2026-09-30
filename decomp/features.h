@@ -42,17 +42,17 @@ extern short *dialogScripts[11]; /* @data 0x4b97cc */
 extern short dialogView; /* @data 0x4b97fe */
 extern short dialogButton1; /* @data 0x4b9800 */
 extern short dialogButton2; /* @data 0x4b9802 */
-extern short g_4b9806;
-extern short g_4b9808;
-extern short g_4b980a;
-extern short g_4b980c;
-extern short g_4b980e;
+extern short gamesDialogView; /* @data 0x4b9806 */
+extern short gamesDialogPart2; /* @data 0x4b9808 */
+extern short gamesDialogButtons; /* @data 0x4b980a */
+extern short confirmDialogView; /* @data 0x4b980c */
+extern short confirmDialogButtons; /* @data 0x4b980e */
 extern SavedGameList *savedGameList; /* @data 0x4a7d4c */
 extern const char *dialogTexts[]; /* @data 0x4a53fc */
-extern short g_4b80e2;
+extern short newGameAsked; /* @data 0x4b80e2 */
 extern Point dialogWhere; /* @data 0x4b97f8 */
 extern ShortRect dialogSpots[17]; /* @data 0x4b982a */
-extern short g_4b98d2;
+extern short thirdButtonPresses; /* @data 0x4b98d2 */
 extern ShortRect saveField; /* @data 0x4a7d44: where the save dialog's name is typed */
 extern MapSave *saveFieldSave; /* @data 0x4a7d50: what's under it */
 extern ShortRect optionsTitleRect; /* @data 0x4a7d74 */
@@ -72,10 +72,10 @@ extern ShortRect dialogButton1Rect; /* @data 0x4b98a2 */
 extern short caretBlink; /* @data 0x4b9828 */
 extern char buttonPressed[17]; /* @data 0x4b98b2: dialog hot spots shown pressed */
 extern char confirmText[]; /* @data 0x4b9698 */
-extern short g_4a7d3e;
-extern short g_4b9664;
-extern short g_4b9666;
-extern long g_4b9668;
+extern short loadCancelAlt; /* @data 0x4a7d3e */
+extern short firstGameShown; /* @data 0x4b9664 */
+extern short selectedGame; /* @data 0x4b9666 */
+extern long lastGameClickTime; /* @data 0x4b9668 */
 extern ImageBank *creditsImages; /* @data 0x4b9678 */
 extern short *creditsBackdrop; /* @data 0x4b967c: the images, as cels (after a count) */
 extern short creditsShowing; /* @data 0x4b9680 */
@@ -90,9 +90,9 @@ extern const char *dialogText; /* @data 0x4b968c */
 extern const char *dialogButton2Text; /* @data 0x4b9690 */
 extern const char *dialogButton1Text; /* @data 0x4b9694 */
 extern ShortRect dialogFrame; /* @data 0x4b98aa */
-extern long g_4b98c4;
-extern short g_4b98c8;
-extern short g_4b98ca;
+extern long lastCaretBlink; /* @data 0x4b98c4 */
+extern short askingReplace; /* @data 0x4b98c8 */
+extern short tooManyGames; /* @data 0x4b98ca */
 extern char saveName[]; /* @data 0x4b9810 */
 extern unsigned short saveNameLength; /* @data 0x4b9826 */
 extern long groupBankResources[8]; /* @data 0x4b95a4 */

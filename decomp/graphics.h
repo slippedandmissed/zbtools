@@ -8,12 +8,12 @@
 
 extern char msgUnableToLockPort[]; /* @data 0x4a0710 */
 extern PALETTEENTRY colors[256]; /* @data 0x4aafee: the palette's colours */
-extern PALETTEENTRY *g_4ab3f0;
-extern char *g_4ab3f4;
-extern char *g_4ab3f8;
-extern char *g_4ab3fc;
-extern char *g_4ab400;
-extern short g_4ab404; /* displayMode.unknown8 */
+extern PALETTEENTRY *paletteEntries; /* @data 0x4ab3f0 */
+extern char *backPortErrorName; /* @data 0x4ab3f4 */
+extern char *backPortErrorText; /* @data 0x4ab3f8 */
+extern char *mapSaveErrorText; /* @data 0x4ab3fc */
+extern char *saveRectErrorText; /* @data 0x4ab400 */
+extern short displayPalettized; /* @data 0x4ab404: displayMode.unknown8 */
 /* graphics */
 void initGraphics(DisplayMode *mode, short depth);
 void closeGraphics();

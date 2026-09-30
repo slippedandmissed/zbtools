@@ -19,7 +19,7 @@
 
 /*
  * One pass of the main loop (WinMain runs it and mainLoopEvents until it's
- * told to quit); always carries on. While g_4a4a10 is set it runs the game's
+ * told to quit); always carries on. While gameActive is set it runs the game's
  * timed work, and if cursorMode is 1 that's all; otherwise it handles a pending
  * event (handleNextEvent/discardEvents), or passes on where the cursor is (handleMouse).
  */
@@ -28,7 +28,7 @@ short mainLoopUpdate()
 {
     Point cursor;
 
-    if (g_4a4a10) {
+    if (gameActive) {
         if (pendingScene != -1)
             enterNextScene();
         if (snoidIdleDelay && viewTimeSinceMark() > 3600) {
@@ -38,21 +38,21 @@ short mainLoopUpdate()
                 snoidIdleDelay = 1;
         }
         if (cursorMode == 1) {
-            if (g_4a79c0) {
-                g_4b80d8 = clockTime();
-                g_4a79c0 = 0;
-            } else if (clockTime() > g_4b80d8 + 3)
+            if (busyCursorFresh) {
+                busyCursorSince = clockTime();
+                busyCursorFresh = 0;
+            } else if (clockTime() > busyCursorSince + 3)
                 showNormalCursor();
             return 1;
         }
     }
     if (handleNextEvent()) {
         discardEvents(2);
-        g_4a79c0 = 1;
-        g_4b80dc = clockTime();
+        busyCursorFresh = 1;
+        lastEventTime = clockTime();
     } else {
         getCursorPosition(&cursor);
-        g_4a79c8 = clockTime() - lastClickTime;
+        clickInterval = clockTime() - lastClickTime;
         lastClickTime = clockTime();
         handleMouse(&cursor, 0);
     }
@@ -248,7 +248,7 @@ void gameKey(unsigned short key)
             break;
         case 42:
             if (debugMessagesOn)
-                snoidIdleDelay = g_4a7af8 = 0;
+                snoidIdleDelay = unusedDebugFlag = 0;
             break;
         case 91:
             if (debugMessagesOn) {
@@ -361,7 +361,7 @@ short setCursorMode(long mode)
 
     if (changed) {
         if (cursorMode == 1)
-            g_4b80d4 = g_4b80dc = clockTime();
+            g_4b80d4 = lastEventTime = clockTime();
         discardEvents(3);
         if (!mode)
             setCursorShape(0);
@@ -441,7 +441,7 @@ void showNormalCursor()
 void showBusyCursor()
 {
     if (setCursorMode(1)) {
-        g_4a79c0 = 1;
-        g_4b80dc = -7202;
+        busyCursorFresh = 1;
+        lastEventTime = -7202;
     }
 }

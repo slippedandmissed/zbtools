@@ -6,7 +6,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-extern short g_4a3e5c; /* set when the game data is found in INSTALLFROMDIR */
+extern short dataFromInstallSource; /* @data 0x4a3e5c: set when the game data is found in INSTALLFROMDIR */
 extern char dataDirName[]; /* @data 0x4a3f15 */
 extern char installToDirKey[]; /* @data 0x4a3f1b */
 extern char configFileName[]; /* @data 0x4a5149 */

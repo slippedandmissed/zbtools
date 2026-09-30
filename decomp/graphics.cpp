@@ -29,7 +29,7 @@ void initGraphics(DisplayMode *mode, short depth)
     height = mode->height;
     checkDisplayMode(mode);
     displayMode = *mode;
-    g_4ab404 = mode->palettized;
+    displayPalettized = mode->palettized;
     if (openGraphicsEngine(mode, 0))
         fatalError("unable to initialize graphics");
     setMinimalReserve(depth);
@@ -39,14 +39,14 @@ void initGraphics(DisplayMode *mode, short depth)
         fatalError(msgNoScreenPort);
     shownGameRect = gameRect;
     sectRect(&shownGameRect, &screenRect);
-    if (!allocateBlock((void **)&g_4ab3f0, 0x400))
+    if (!allocateBlock((void **)&paletteEntries, 0x400))
         notEnoughNearMemory("initial RGB's");
-    memset(g_4ab3f0, 0, 4);
+    memset(paletteEntries, 0, 4);
     for (i = 0; i < 0x100; i++)
-        g_4ab3f0[i].peFlags = PC_RESERVED;
-    if ((palette = newPalette(0x100, (ColorBytes *)g_4ab3f0)) == 0)
+        paletteEntries[i].peFlags = PC_RESERVED;
+    if ((palette = newPalette(0x100, (ColorBytes *)paletteEntries)) == 0)
         fatalError("unable to create palette");
-    freeAndClear((void **)&g_4ab3f0);
+    freeAndClear((void **)&paletteEntries);
     setPort(screenPort);
     setPortPalette(palette);
     createPort(&workPort, &gameRect, 1, "work port");
@@ -60,10 +60,10 @@ void initGraphics(DisplayMode *mode, short depth)
 /* @zoombi32 0x00414653 */
 void closeGraphics()
 {
-    freeText((void **)&g_4ab3f4);
-    freeText((void **)&g_4ab3f8);
-    freeText((void **)&g_4ab3fc);
-    freeText((void **)&g_4ab400);
+    freeText((void **)&backPortErrorName);
+    freeText((void **)&backPortErrorText);
+    freeText((void **)&mapSaveErrorText);
+    freeText((void **)&saveRectErrorText);
     destroyPort(&workPort, 1);
     if (palette) {
         setPort(screenPort);
@@ -71,7 +71,7 @@ void closeGraphics()
         deletePalette(palette);
         palette = 0;
     }
-    freeAndClear((void **)&g_4ab3f0);
+    freeAndClear((void **)&paletteEntries);
     destroyMainWindow();
     if (graphicsBufferSize()) {
         setCursorLevel(isMousePresent() - 1);
@@ -135,7 +135,7 @@ void getColors(PALETTEENTRY *to, short first, short count)
 }
 
 /* Sets `count` of the palette's colours from `first` (to black without
-   `from`), and shows the result unless g_4ab404. */
+   `from`), and shows the result unless displayPalettized. */
 /* @zoombi32 0x00414845 */
 void setColors(PALETTEENTRY *from, short first, short count)
 {
@@ -149,7 +149,7 @@ void setColors(PALETTEENTRY *from, short first, short count)
             memcpy(&colors[first], from, count * sizeof(PALETTEENTRY));
         setPaletteColors(current, first, count, (ColorBytes *)&colors[first]);
         realizePalette(current, 1);
-        if (!g_4ab404)
+        if (!displayPalettized)
             showRect(&gameRect);
     }
 }
@@ -174,15 +174,15 @@ void createPort(basePort **port, ShortRect *bounds, short keep, const char *name
     basePort *saved;
     Palette *current;
 
-    joinText(&g_4ab3f4, name, "back port");
+    joinText(&backPortErrorName, name, "back port");
     if (*port) {
-        joinText(&g_4ab3f8, "e2GetBackPort error:", g_4ab3f4);
-        reportJoinedError(g_4ab3f8);
+        joinText(&backPortErrorText, "e2GetBackPort error:", backPortErrorName);
+        reportJoinedError(backPortErrorText);
     }
     width = bounds->right - bounds->left;
     height = bounds->bottom - bounds->top;
     if ((*port = newPort(width, height, bitsPerPixel, 0)) == 0)
-        reportJoinedError(g_4ab3f4);
+        reportJoinedError(backPortErrorName);
     saved = getPort();
     current = getPortPalette();
     lockPortOrFail(*port);
@@ -192,7 +192,7 @@ void createPort(basePort **port, ShortRect *bounds, short keep, const char *name
     if (!keep)
         unlockPort(*port);
     setPort(saved);
-    freeText((void **)&g_4ab3f4);
+    freeText((void **)&backPortErrorName);
 }
 
 /* Destroys a port (releasing it first, if asked), leaving no current port if
@@ -200,8 +200,8 @@ void createPort(basePort **port, ShortRect *bounds, short keep, const char *name
 /* @zoombi32 0x004149e0 */
 void destroyPort(basePort **port, short release)
 {
-    freeText((void **)&g_4ab3f4);
-    freeText((void **)&g_4ab3f8);
+    freeText((void **)&backPortErrorName);
+    freeText((void **)&backPortErrorText);
     if (*port) {
         if (getPort() == *port)
             setPort(0);
@@ -232,12 +232,12 @@ void setPortBounds(basePort *port, ShortRect *bounds)
 void saveRect(MapSave **save, ShortRect *rect, short locked, const char *name)
 {
     if (*save) {
-        joinText(&g_4ab400, "e2SaveRect error:", name);
-        reportJoinedError(g_4ab400);
+        joinText(&saveRectErrorText, "e2SaveRect error:", name);
+        reportJoinedError(saveRectErrorText);
     }
     if (!allocateBlock((void **)save, sizeof(MapSave))) {
-        joinText(&g_4ab3fc, name, "e2MapSave structure");
-        reportJoinedError(g_4ab3fc);
+        joinText(&mapSaveErrorText, name, "e2MapSave structure");
+        reportJoinedError(mapSaveErrorText);
     }
     (*save)->rect = *rect;
     (*save)->port = 0;
@@ -267,8 +267,8 @@ void restoreRect(MapSave **save, short free)
 /* @zoombi32 0x00414b76 */
 void freeSave(MapSave **save)
 {
-    freeText((void **)&g_4ab3fc);
-    freeText((void **)&g_4ab400);
+    freeText((void **)&mapSaveErrorText);
+    freeText((void **)&saveRectErrorText);
     if (*save) {
         while ((*save)->locks)
             unlockSave(*save);

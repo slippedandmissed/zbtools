@@ -44,7 +44,7 @@ unsigned short loadSoundByKey(short key, long type)
 /*
  * Loads the sound with a key (of a type), finding its resource first unless
  * g_4aa428 is set: the key if it's loaded, 0 if sound is off, else -1. Sounds
- * no larger than g_4a009c are loaded by loadSoundByKey.
+ * no larger than largestLoadedSound are loaded by loadSoundByKey.
  */
 /* @zoombi32 0x00411382 */
 unsigned short findAndLoadSound(short key, long type)
@@ -61,13 +61,13 @@ unsigned short findAndLoadSound(short key, long type)
         if (entry->handle)
             return key;
         if (!(entry->unknownA = findMapResource(type, key, 1))) {
-            if (g_4aa42c)
+            if (reportMissingSounds)
                 reportSoundError(key, type, 0, 0);
             removeSound(&entry);
             loadFailed = 0;
         } else {
             entry->type = 0;
-            if (resourceSize(entry->unknownA) <= g_4a009c)
+            if (resourceSize(entry->unknownA) <= largestLoadedSound)
                 return loadSoundByKey(key, type);
             if (!entry->unknown2 && !resourceHandle(entry->unknownA))
                 entry->unknown2 = 1;
@@ -116,7 +116,7 @@ SoundEntry *getSound(short key, long type)
         return 0;
     if (entry->handle)
         return entry;
-    loadResourceAs(&entry->unknownA, type, key, textSound, g_4aa42c);
+    loadResourceAs(&entry->unknownA, type, key, textSound, reportMissingSounds);
     if (!entry->unknownA)
         removeSound(&entry);
     else
@@ -142,7 +142,7 @@ SoundEntry *findOrAddSound(short key, long type)
 /* @zoombi32 0x004115f5 */
 SoundEntry *findSound(short key, long tag)
 {
-    SoundEntry *entry = g_4a00a0;
+    SoundEntry *entry = soundEntries;
     while (entry && (key != entry->key || (tag != 0x534e44 && tag != soundTypes[entry->type])))
         entry = entry->next;
     return entry;
@@ -154,7 +154,7 @@ SoundEntry *addSound(short key, long type)
 {
     SoundEntry **link;
 
-    for (link = &g_4a00a0; *link; link = &(*link)->next)
+    for (link = &soundEntries; *link; link = &(*link)->next)
         ;
     if (allocateBlock((void **)link, sizeof(SoundEntry))) {
         memset(*link, 0, sizeof(SoundEntry));
@@ -173,7 +173,7 @@ void removeSound(SoundEntry **entry)
 
     disposeSoundHandle(*entry);
     freeResource(&(*entry)->unknownA);
-    for (link = &g_4a00a0; *link != *entry; link = &(*link)->next)
+    for (link = &soundEntries; *link != *entry; link = &(*link)->next)
         ;
     next = (*link)->next;
     freeAndClear((void **)link);
@@ -210,7 +210,7 @@ short loadSound(SoundEntry *entry)
     if (!entry->handle) {
         if (entry->unknown2) {
             checkStarvationKeepingFlags();
-            entry->handle = newStreamedSound(entry->unknownA, g_4a0098);
+            entry->handle = newStreamedSound(entry->unknownA, streamedSoundArg);
             mainLoopEvents();
         } else
             entry->handle = newSound(usedResourceHandle(entry->unknownA));
@@ -339,10 +339,10 @@ void reportSoundError(short id, long type, SoundEntry *entry, const char *messag
         errorText = error;
     }
     formatText(0x14, name, formatSoundId, textSound, (unsigned short)id);
-    joinText(&g_4aa438, name, errorText);
-    joinText(&g_4aa434, kind, g_4aa438);
-    joinText(&g_4aa430, message, g_4aa434);
-    reportJoinedError(g_4aa430);
+    joinText(&soundErrorNameText, name, errorText);
+    joinText(&soundErrorKindText, kind, soundErrorNameText);
+    joinText(&soundErrorText, message, soundErrorKindText);
+    reportJoinedError(soundErrorText);
 }
 
 /*
@@ -515,10 +515,10 @@ void unloadSounds()
 {
     SoundEntry *entry;
 
-    freeText((void **)&g_4aa430);
-    freeText((void **)&g_4aa434);
-    freeText((void **)&g_4aa438);
-    while ((entry = g_4a00a0) != 0)
+    freeText((void **)&soundErrorText);
+    freeText((void **)&soundErrorKindText);
+    freeText((void **)&soundErrorNameText);
+    while ((entry = soundEntries) != 0)
         unloadSoundNow(entry->key, RESOURCE_TYPE(0, 'S', 'N', 'D'));
 }
 

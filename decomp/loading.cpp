@@ -216,7 +216,7 @@ void formatArgument(long size, char **text, const char **format)
             break;
         case 'L':
         case 'l':
-            from = g_4a07a8 + 1;
+            from = oneCharString + 1;
             (*format)++;
             index = **format - '1';
             if (index < 0) {
@@ -231,8 +231,8 @@ void formatArgument(long size, char **text, const char **format)
             }
             break;
         default:
-            g_4a07a8[0] = **format;
-            from = g_4a07a8;
+            oneCharString[0] = **format;
+            from = oneCharString;
         }
     } else
         from = formatCharacter(**format);

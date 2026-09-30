@@ -30,7 +30,7 @@ void initViews()
     soundRanges = 0;
     addSoundRange(0x3e4, 0x3e5, 0);
     createPort(&viewPort, &gameRect, 1, "view port");
-    g_4b8a0a = 0;
+    backdropView = 0;
     setViewsLocked(1);
     views = &viewHead;
     initView(&viewHead, 0, &viewTail, 1);
@@ -53,7 +53,7 @@ void initViews()
         if ((featureClipRgn = newRgn()) == 0)
             notEnoughNearMemory("gFeatureClipRgn");
     }
-    viewTail.body.bounds = g_4a7bb2;
+    viewTail.body.bounds = viewTailBounds;
     for (short i = 0; i < 17; i++) {
         groupLeader[i] = 0;
         groupFlagsA[i] = 0;
@@ -143,7 +143,7 @@ void clearViews()
             groupFlagsA[i] = 0;
             groupFlagsB[i] = 0;
         }
-        g_4b754c = g_4b8a0a = 0;
+        g_4b754c = backdropView = 0;
         g_4b755e = 15;
         g_4b7566 = 0;
         g_4b7560 = 1;
@@ -1652,10 +1652,10 @@ View *mergeViewList(View *into, View *list)
 
 /*
  * Adds a view with a new id (one more than the highest): at the end, or
- * with `target` -3 after view g_4b8a0a, or with an id after that view (with
+ * with `target` -3 after view backdropView, or with an id after that view (with
  * `after`) or before it. Flag 1 copies a Zoombini's body from `data`, flag
  * 2 a larger one; 0x800000 takes its place from `data`; 0x2000 records it
- * as placed there; 0x8000 makes it g_4b8a0a.
+ * as placed there; 0x8000 makes it backdropView.
  */
 /* @zoombi32 0x00463afe */
 short addView(unsigned long flags, ViewDraw draw, ViewUpdate update, short kind, long interval,
@@ -1675,7 +1675,7 @@ short addView(unsigned long flags, ViewDraw draw, ViewUpdate update, short kind,
         for (at = views; !found && at; at = at->next) {
             if (at->next && at->next->id == -1) {
                 found = 1;
-            } else if (target == -3 && at->id == g_4b8a0a) {
+            } else if (target == -3 && at->id == backdropView) {
                 found = 1;
             } else if (target && at->id == target) {
                 if (after) {
@@ -1687,7 +1687,7 @@ short addView(unsigned long flags, ViewDraw draw, ViewUpdate update, short kind,
             }
             if (found) {
                 if (flags & 0x8000)
-                    g_4b8a0a = id;
+                    backdropView = id;
                 {
                     unsigned long size = 0xec;
 

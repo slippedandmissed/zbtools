@@ -616,7 +616,7 @@ void loadDialogs()
         pendingDialogPress = 0;
         dialogClosing = dialogPressed = dialogQuestion = 0;
         dialogView = dialogButton1 = dialogButton2 = creditsView = 0;
-        g_4b9806 = g_4b9808 = g_4b980a = g_4b980c = g_4b980e = 0;
+        gamesDialogView = gamesDialogPart2 = gamesDialogButtons = confirmDialogView = confirmDialogButtons = 0;
         saved = currentMapFile;
         setCurrentMap(soundsMap);
         dialogImages = loadImageBank(1, &dialogResource);
@@ -632,7 +632,7 @@ void freeDialogs()
 {
     dialogClosing = dialogPressed = 0;
     dialogView = dialogButton1 = dialogButton2 = 0;
-    g_4b9806 = g_4b9808 = g_4b980a = g_4b980c = g_4b980e = 0;
+    gamesDialogView = gamesDialogPart2 = gamesDialogButtons = confirmDialogView = confirmDialogButtons = 0;
     if (savedGameList) {
         disposePtr(savedGameList);
         savedGameList = 0;
@@ -696,7 +696,7 @@ void startNewGame()
 {
     short scene;
 
-    g_4b80e2 = 0;
+    newGameAsked = 0;
     scene = currentScene;
     fillRosterHeader(1);
     applyPlayerSettings();
@@ -721,8 +721,8 @@ void askNewGame()
 {
     if (currentScene >= 1 && currentScene <= 18) {
         if (!practiceLevel) {
-            if (!g_4b80e2) {
-                g_4b80e2 = 1;
+            if (!newGameAsked) {
+                newGameAsked = 1;
                 if (rosterChanged)
                     showDialog(4, dialogTexts[textNotSavedNewGame], dialogTexts[textNewGame], dialogTexts[textCancel]);
                 else
@@ -771,7 +771,7 @@ void askQuit()
         return;
     }
     if (!practiceLevel && currentScene >= 1 && currentScene <= 18) {
-        if (!quitRequested && !g_4b80e2)
+        if (!quitRequested && !newGameAsked)
             quitRequested = 1;
     } else {
         quitRequested = -1;
@@ -803,16 +803,16 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
         flag = 1;
         break;
     case 2:
-        g_4b9664 = 0;
-        g_4b9666 = 1;
-        g_4b9668 = 0;
+        firstGameShown = 0;
+        selectedGame = 1;
+        lastGameClickTime = 0;
         flag = 2;
         y = 0x6e;
         break;
     case 3:
-        g_4b98c8 = g_4b98ca = 0;
-        g_4b98c4 = 0;
-        g_4b9664 = 0;
+        askingReplace = tooManyGames = 0;
+        lastCaretBlink = 0;
+        firstGameShown = 0;
         strcpy(saveName, gameName);
         saveNameLength = strlen(saveName);
         flag = 4;
@@ -884,17 +884,17 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
             if (!savedGameList)
                 reportRosterError("Out of Memory.");
             readWriteSavedGames(savedGameList, 2);
-            g_4b9806 = addView(0x4001000, drawDialogPart, updateDialogPart, script, 0, 0, 0, 0);
-            g_4b9808 = addView(0x4000000, drawDialogPart, updateDialogPart, script + 1, 11, 0, 0, 0);
-            g_4b980a = addView(0x4000000, drawDialogPart, updateDialogPart, script + 2, 13, 0, 0, 0);
+            gamesDialogView = addView(0x4001000, drawDialogPart, updateDialogPart, script, 0, 0, 0, 0);
+            gamesDialogPart2 = addView(0x4000000, drawDialogPart, updateDialogPart, script + 1, 11, 0, 0, 0);
+            gamesDialogButtons = addView(0x4000000, drawDialogPart, updateDialogPart, script + 2, 13, 0, 0, 0);
             {
-                View *view = findView(g_4b9808);
+                View *view = findView(gamesDialogPart2);
 
                 if (view)
                     view->placed = placeDialogList;
             }
             {
-                View *view = findView(g_4b980a);
+                View *view = findView(gamesDialogButtons);
 
                 if (view)
                     view->placed = placeDialogList;
@@ -903,10 +903,10 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
         break;
     case 4:
         busyCount++;
-        g_4b980c = addView(0x4001000, drawDialogPart, updateDialogPart, 10, 0, 0, 0, 0);
-        g_4b980e = addView(0x4001000, drawDialogPart, updateDialogPart, 11, 15, 0, 0, 0);
+        confirmDialogView = addView(0x4001000, drawDialogPart, updateDialogPart, 10, 0, 0, 0, 0);
+        confirmDialogButtons = addView(0x4001000, drawDialogPart, updateDialogPart, 11, 15, 0, 0, 0);
         {
-            View *view = findView(g_4b980e);
+            View *view = findView(confirmDialogButtons);
 
             if (view)
                 view->placed = placeDialogList;
@@ -950,7 +950,7 @@ void closeDialog(short kind)
         flag = 1;
         break;
     case 2:
-        g_4a7d3e = 0;
+        loadCancelAlt = 0;
     case 3:
         if (savedGameList) {
             disposePtr(savedGameList);
@@ -960,10 +960,10 @@ void closeDialog(short kind)
             flag = 2;
         else
             flag = 4;
-        deleteView(g_4b9806);
-        deleteView(g_4b9808);
-        deleteView(g_4b980a);
-        g_4b9806 = g_4b9808 = g_4b980a = 0;
+        deleteView(gamesDialogView);
+        deleteView(gamesDialogPart2);
+        deleteView(gamesDialogButtons);
+        gamesDialogView = gamesDialogPart2 = gamesDialogButtons = 0;
         if (saveFieldSave) {
             freeSave(&saveFieldSave);
             saveFieldSave = 0;
@@ -973,15 +973,15 @@ void closeDialog(short kind)
         break;
     case 4:
         flag = 8;
-        deleteView(g_4b980c);
-        deleteView(g_4b980e);
-        g_4b980c = g_4b980e = 0;
+        deleteView(confirmDialogView);
+        deleteView(confirmDialogButtons);
+        confirmDialogView = confirmDialogButtons = 0;
         if (dialogFlags & 4) {
-            View *view = findView(g_4b9806);
+            View *view = findView(gamesDialogView);
 
             if (view)
                 view->changed = 1;
-            view = findView(g_4b980a);
+            view = findView(gamesDialogButtons);
             if (view)
                 view->changed = 1;
         }
@@ -1333,15 +1333,15 @@ void dialogKey(unsigned short key)
         && ((key >= 0x20 && key <= 0x7a) || key == 8 || key == 0x124 || key == 0x126)) {
         short length;
 
-        if (g_4b98c8) {
-            g_4b98c8 = 0;
-            g_4b9666 = 0;
+        if (askingReplace) {
+            askingReplace = 0;
+            selectedGame = 0;
             {
-                View *view = findView(g_4b9806);
+                View *view = findView(gamesDialogView);
 
                 if (view)
                     view->changed = 1;
-                view = findView(g_4b980a);
+                view = findView(gamesDialogButtons);
                 if (view)
                     view->changed = 1;
             }
@@ -1407,8 +1407,8 @@ void dialogKey(unsigned short key)
             if (dialogFlags & 4) {
                 dialogClosing = 3;
                 updateViews();
-                g_4b98d2++;
-                if (g_4b98d2 > 1)
+                thirdButtonPresses++;
+                if (thirdButtonPresses > 1)
                     practiceLevel = 1;
             }
             gameKey(key);
@@ -1512,10 +1512,10 @@ void drawDialogPart(View *view)
             drawText(dialogButton1Rect, 0x22, dialogButton1Text, 0xffff);
     } else if (dialogFlags & 4) {
         if (view->changed) {
-            if (view->id == g_4b980a) {
+            if (view->id == gamesDialogButtons) {
                 drawText(dialogOkRect, 0x22, dialogTexts[textSave], 0xffff);
                 drawText(dialogCancelRect, 0x22, dialogTexts[textCancel], 0xffff);
-            } else if (view->id == g_4b9806) {
+            } else if (view->id == gamesDialogView) {
                 saved = setForeColor(Color(0xd));
                 setFont(fonts[2]);
                 drawOutlinedText(0xe, 0x2d, saveTitleRect, 0x22, dialogTexts[textSaveAGame]);
@@ -1527,7 +1527,7 @@ void drawDialogPart(View *view)
                 {
                     short shown = 0;
 
-                    for (short game = g_4b9664; game < savedGames && shown < 8; game++, shown++) {
+                    for (short game = firstGameShown; game < savedGames && shown < 8; game++, shown++) {
                         rect.bottom = rect.top + 20;
                         drawText(rect, 1, savedGameList->games[game].name, 0xffff);
                         rect.top += 20;
@@ -1537,7 +1537,7 @@ void drawDialogPart(View *view)
                 setForeColor(saved);
             }
         }
-        if (view->id != g_4b9806)
+        if (view->id != gamesDialogView)
             return;
         if (!saveFieldSave)
             saveRect(&saveFieldSave, &saveField, 1, 0);
@@ -1547,9 +1547,9 @@ void drawDialogPart(View *view)
         }
         if (!saveFieldSave)
             return;
-        if (!view->changed && clockTime() - g_4b98c4 <= 4)
+        if (!view->changed && clockTime() - lastCaretBlink <= 4)
             return;
-        g_4b98c4 = clockTime();
+        lastCaretBlink = clockTime();
         caretBlink++;
         caretBlink &= 3;
         unionRgnRect(currentViewRgn, &saveField);
@@ -1570,18 +1570,18 @@ void drawDialogPart(View *view)
         if (!view->changed)
             return;
         saved = setForeColor(Color(0x2d));
-        if (view->id == g_4b9806) {
+        if (view->id == gamesDialogView) {
             setFont(fonts[2]);
             drawOutlinedText(0xe, 0x2d, loadTitleRect, 0x22, dialogTexts[textLoadAGame]);
             rect.left = 0xc0;
             rect.right = 0x195;
             rect.top = 0x6e;
             {
-                short game = g_4b9664;
+                short game = firstGameShown;
 
                 for (short shown = 0; game < savedGames && shown < 8; shown++) {
                     rect.bottom = rect.top + 20;
-                    if (game == g_4b9666 - 1) {
+                    if (game == selectedGame - 1) {
                         drawOutlinedText(0x2d, 0x22, rect, 1, savedGameList->games[game].name);
                         setForeColor(saved);
                     } else {
@@ -1592,9 +1592,9 @@ void drawDialogPart(View *view)
                 }
             }
             setFont(fonts[1]);
-        } else if (view->id == g_4b980a) {
+        } else if (view->id == gamesDialogButtons) {
             drawText(dialogOkRect, 0x22, dialogTexts[textLoad], 0xffff);
-            drawText(dialogCancelRect, 0x22, dialogTexts[g_4a7d3e ? text40 : textCancel], 0xffff);
+            drawText(dialogCancelRect, 0x22, dialogTexts[loadCancelAlt ? text40 : textCancel], 0xffff);
         }
         setForeColor(saved);
     } else if ((dialogFlags & 1) && view->changed) {
@@ -1652,15 +1652,15 @@ void placeDialogList(View *view)
     short hit = 0;
     short *cel = (short *)view->body.cels;
 
-    if (view->id == g_4b9808) {
+    if (view->id == gamesDialogPart2) {
         first = 11;
         if (dialogPressed >= 11 && dialogPressed <= 12)
             hit = 1;
-    } else if (view->id == g_4b980a) {
+    } else if (view->id == gamesDialogButtons) {
         first = 13;
         if ((dialogPressed >= 13 && dialogPressed <= 14) || dialogPressed == 17)
             hit = 1;
-    } else if (view->id == g_4b980e) {
+    } else if (view->id == confirmDialogButtons) {
         if (!dialogButton1Text) {
             cel[3] = -1;
             cel[9] = -1;
@@ -1683,7 +1683,7 @@ void placeDialogList(View *view)
             i += 3;
         }
     } else if (hit) {
-        if ((dialogPressed != 13 || !g_4b98c8) && dialogPressed != 17) {
+        if ((dialogPressed != 13 || !askingReplace) && dialogPressed != 17) {
             queueViewSound(999, 0);
             waitForEventFor(0, 2, 0, 1);
         }
@@ -1699,34 +1699,34 @@ void placeDialogList(View *view)
             view->changed = 1;
             switch (view->unknown1e) {
             case 11:
-                if (g_4b9664 > 0) {
-                    g_4b9664 -= 8;
-                    if (g_4b9664 < 0)
-                        g_4b9664 = 0;
+                if (firstGameShown > 0) {
+                    firstGameShown -= 8;
+                    if (firstGameShown < 0)
+                        firstGameShown = 0;
                     {
-                        View *other = findView(g_4b9806);
+                        View *other = findView(gamesDialogView);
 
                         if (other)
                             other->changed = 1;
-                        other = findView(g_4b980a);
+                        other = findView(gamesDialogButtons);
                         if (other)
                             other->changed = 1;
                     }
                 }
                 break;
             case 12:
-                if (g_4b9664 < savedGames - 8) {
-                    g_4b9664 += 8;
-                    if (g_4b9664 > savedGames - 8)
-                        g_4b9664 = savedGames - 8;
-                    if (g_4b9664 < 0)
-                        g_4b9664 = 0;
+                if (firstGameShown < savedGames - 8) {
+                    firstGameShown += 8;
+                    if (firstGameShown > savedGames - 8)
+                        firstGameShown = savedGames - 8;
+                    if (firstGameShown < 0)
+                        firstGameShown = 0;
                     {
-                        View *other = findView(g_4b9806);
+                        View *other = findView(gamesDialogView);
 
                         if (other)
                             other->changed = 1;
-                        other = findView(g_4b980a);
+                        other = findView(gamesDialogButtons);
                         if (other)
                             other->changed = 1;
                     }
@@ -1735,9 +1735,9 @@ void placeDialogList(View *view)
             case 13:
                 if (!dialogClosing) {
                     if (dialogFlags & 2) {
-                        if (g_4b9666 > 0) {
-                            strcpy(gameName, savedGameList->games[g_4b9666 - 1].name);
-                            strcpy(userFileName, savedGameList->games[g_4b9666 - 1].file);
+                        if (selectedGame > 0) {
+                            strcpy(gameName, savedGameList->games[selectedGame - 1].name);
+                            strcpy(userFileName, savedGameList->games[selectedGame - 1].file);
                             strcat(userFileName, ".txt");
                             fillRosterHeader(1);
                             readRoster();
@@ -1750,7 +1750,7 @@ void placeDialogList(View *view)
                         }
                     } else {
                         found = 0;
-                        g_4b98ca = 0;
+                        tooManyGames = 0;
                         length = strlen(saveName);
                         while (length > 0 && saveName[length - 1] == ' ') {
                             saveName[length - 1] = 0;
@@ -1762,31 +1762,31 @@ void placeDialogList(View *view)
                                 if (length == otherLength
                                     && !strncmp(savedGameList->games[i].name, saveName, length)) {
                                     found = i + 1;
-                                    g_4b9666 = found;
-                                    g_4b9668 = clockTime();
-                                    if (!g_4b98c8) {
-                                        g_4b98c8 = 1;
+                                    selectedGame = found;
+                                    lastGameClickTime = clockTime();
+                                    if (!askingReplace) {
+                                        askingReplace = 1;
                                         strcpy(confirmText, dialogTexts[textSureReplace]);
                                         strcat(confirmText, saveName);
                                         strcat(confirmText, " \" ?");
                                         showDialog(4, confirmText, dialogTexts[textReplace],
                                                    dialogTexts[textCancel]);
                                     } else {
-                                        g_4b98c8 = 0;
+                                        askingReplace = 0;
                                     }
                                 }
                             }
                             if (dialogQuestion == 3) {
                                 dialogQuestion = 0;
-                                g_4b98c8 = 0;
+                                askingReplace = 0;
                             }
-                            if (!g_4b98c8) {
+                            if (!askingReplace) {
                                 i = 0;
                                 if (found) {
                                     i = 1;
                                 } else if (savedGames >= 50) {
                                     showDialog(4, dialogTexts[textTooManyGames], dialogTexts[textOk2], 0);
-                                    g_4b98ca = 1;
+                                    tooManyGames = 1;
                                 } else {
                                     i = 2;
                                 }
@@ -1842,34 +1842,34 @@ void placeDialogList(View *view)
                         i /= 20;
                     if (i > 19)
                         i = 19;
-                    i = i + g_4b9664 + 1;
-                    if (i == g_4b9666 && now - g_4b9668 <= 30 && g_4b9666) {
+                    i = i + firstGameShown + 1;
+                    if (i == selectedGame && now - lastGameClickTime <= 30 && selectedGame) {
                         dialogClosing = 0x1000;
                         pendingDialogPress = 13;
                     }
                     {
-                        View *other = findView(g_4b9806);
+                        View *other = findView(gamesDialogView);
 
                         if (other)
                             other->changed = 1;
                     }
                     if (i <= savedGames)
-                        g_4b9666 = i;
+                        selectedGame = i;
                     else
-                        g_4b9666 = 0;
-                    g_4b9668 = now;
+                        selectedGame = 0;
+                    lastGameClickTime = now;
                 }
                 break;
             case 15:
                 if (!dialogClosing) {
                     dialogClosing = 4;
                     dialogQuestion = 3;
-                    if (g_4b80e2) {
+                    if (newGameAsked) {
                         startNewGame();
                     } else {
                         if (quitRequested == 2)
                             quitRequested = 3;
-                        else if ((dialogFlags & 4) && !g_4b98ca)
+                        else if ((dialogFlags & 4) && !tooManyGames)
                             pendingDialogPress = 13;
                         if (g_4b966c == 1)
                             g_4b966c++;
@@ -1879,13 +1879,13 @@ void placeDialogList(View *view)
             case 16:
                 if (!dialogClosing) {
                     g_4b966c = 0;
-                    g_4b80e2 = 0;
+                    newGameAsked = 0;
                     dialogClosing = 4;
                     dialogQuestion = 2;
                     if (quitRequested == 2)
                         quitRequested = -1;
                     else
-                        g_4b98c8 = 0;
+                        askingReplace = 0;
                 }
                 break;
             }

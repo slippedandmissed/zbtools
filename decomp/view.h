@@ -69,7 +69,7 @@ extern View *views; /* @data 0x4a7ba8: viewHead, once set up */
 extern long terrainResource; /* @data 0x4a7ba0 */
 extern View *lastActorView; /* @data 0x4a7bac */
 extern short viewsBusy; /* @data 0x4a7bb0 */
-extern ShortRect g_4a7bb2;
+extern ShortRect viewTailBounds; /* @data 0x4a7bb2 */
 extern long viewUnlocks; /* @data 0x4b80f0 */
 extern long dragCursorResource; /* @data 0x4b87d0 */
 extern ImageBank *dragCursors; /* @data 0x4b87d4 */
@@ -89,7 +89,7 @@ extern ResourceList *backdropImages; /* @data 0x4b89e4 */
 extern short scriptGroupFirst[8]; /* @data 0x4b89e8 */
 extern short scriptGroupCount[8]; /* @data 0x4b89f8 */
 extern short scriptGroups; /* @data 0x4b8a08 */
-extern short g_4b8a0a;
+extern short backdropView; /* @data 0x4b8a0a */
 extern char fpsText[]; /* @data 0x4b957a */
 extern short soundRangeLow[32]; /* @data 0x4b94ba */
 extern short soundRangeHigh[32]; /* @data 0x4b94fa */

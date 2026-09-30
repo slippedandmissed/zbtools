@@ -6,7 +6,7 @@
 #ifndef LOADING_H
 #define LOADING_H
 
-extern char g_4a07a8[2]; /* a one-character string (the second byte is an empty one) */
+extern char oneCharString[2]; /* @data 0x4a07a8: a one-character string (the second byte is an empty one) */
 extern Callback fatalHook; /* @data 0x4a07ac: called before a fatal error is reported */
 /* reports an error (showError, as the game sets it up) */
 extern void (*errorReporter)(const char *prefix, const char *format, va_list args); /* @data 0x4a07b0 */

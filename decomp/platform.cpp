@@ -251,7 +251,7 @@ void destroyMainWindow()
 {
     destroyPort(&screenPort, 1);
     if (mainWindow) {
-        g_4b2d32 = 1;
+        windowClosing = 1;
         activateApp(0);
         DestroyWindow(mainWindow);
         mainWindow = 0;
@@ -308,8 +308,8 @@ void setAboutHook(Callback callback)
 /* @zoombi32 0x00456a3e */
 void setPlatformPair(long first, long second)
 {
-    g_4a4a18 = first;
-    g_4a4a1c = second;
+    platformPair1 = first;
+    platformPair2 = second;
 }
 
 /* @zoombi32 0x00456a55 */
@@ -484,11 +484,11 @@ void waitWhilePaused()
 {
     MSG message;
 
-    if (g_4b2d34 && !g_4b2d3c && !g_4b2d32) {
-        inputIgnored = g_4b2d3c = 1;
-        while (g_4b2d34 && !g_4b2d32)
+    if (appPaused && !pauseLoopRunning && !windowClosing) {
+        inputIgnored = pauseLoopRunning = 1;
+        while (appPaused && !windowClosing)
             pumpMessage(&message, 0, 0, 0);
-        inputIgnored = g_4b2d3c = 0;
+        inputIgnored = pauseLoopRunning = 0;
     }
 }
 
@@ -595,9 +595,9 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
         return 0;
     case WM_NCACTIVATE:
         active = wParam;
-        if (g_4a4ad6 && !active)
+        if (deactivateOnNcActivate && !active)
             activateApp(active);
-        g_4a4ad6 = 0;
+        deactivateOnNcActivate = 0;
         break;
     case WM_ACTIVATEAPP:
         activateApp(wParam);
@@ -607,29 +607,29 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
         setTakeStatic(g_4aa7ce);
         realizeFullScreenPalette();
         activateApp(1);
-        g_4b2d3a = 0;
-        if (g_4b2d40) {
-            if (g_4b2d3e) {
-                if (g_4b2d3e > 0)
-                    for (i = 0; i < g_4b2d3e; i++)
+        screenSaverRunning = 0;
+        if (cursorLevelSaved) {
+            if (savedCursorLevel) {
+                if (savedCursorLevel > 0)
+                    for (i = 0; i < savedCursorLevel; i++)
                         showCursor();
                 else
-                    for (i = 0; i < -g_4b2d3e; i++)
+                    for (i = 0; i < -savedCursorLevel; i++)
                         hideCursor();
             }
-            g_4b2d40 = 0;
+            cursorLevelSaved = 0;
         }
         break;
     case WM_KILLFOCUS:
         setTakeStatic(0);
-        if (!g_4b2d40) {
-            g_4b2d3e = setCursorLevel(isMousePresent() - 1);
-            g_4b2d3e -= isMousePresent() - 1;
-            g_4b2d40 = 1;
+        if (!cursorLevelSaved) {
+            savedCursorLevel = setCursorLevel(isMousePresent() - 1);
+            savedCursorLevel -= isMousePresent() - 1;
+            cursorLevelSaved = 1;
         }
         break;
     case WM_ACTIVATE:
-        if (!g_4b2d34) {
+        if (!appPaused) {
             active = LOWORD(wParam);
             if (gameActivateHook)
                 gameActivateHook(active != WA_INACTIVE);
@@ -638,14 +638,14 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     case WM_SYSCOMMAND:
         command = wParam & 0xfff0;
         if (command == SC_SCREENSAVE) {
-            if (g_4b2b02)
+            if (blockScreenSaver)
                 return 1;
-            g_4b2d3a = 1;
+            screenSaverRunning = 1;
         }
         if (command == SC_TASKLIST) {
-            g_4b2d3e = setCursorLevel(isMousePresent() - 1);
-            g_4b2d3e -= isMousePresent() - 1;
-            g_4b2d40 = 1;
+            savedCursorLevel = setCursorLevel(isMousePresent() - 1);
+            savedCursorLevel -= isMousePresent() - 1;
+            cursorLevelSaved = 1;
         }
         if (command != SC_CLOSE)
             break;
@@ -654,8 +654,8 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     case WM_CLOSE:
     case WM_QUIT:
     case WM_ENDSESSION:
-        if (!g_4b2d32) {
-            g_4b2d32 = 1;
+        if (!windowClosing) {
+            windowClosing = 1;
             fatalError(usualFatalMessage);
         }
         return 0;
@@ -702,13 +702,13 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
 /* @zoombi32 0x004565c8 */
 void logMessage(long message, long wParam, long lParam, short after, long result)
 {
-    if (g_4b2d42 != 0x400) {
-        g_4b2d44[g_4b2d42] = message;
-        g_4b3d44[g_4b2d42] = wParam;
-        g_4b4d44[g_4b2d42] = lParam;
-        g_4b6d44[g_4b2d42] = after;
-        g_4b5d44[g_4b2d42] = result;
-        g_4b2d42++;
+    if (messageLogCount != 0x400) {
+        loggedMessages[messageLogCount] = message;
+        loggedWParams[messageLogCount] = wParam;
+        loggedLParams[messageLogCount] = lParam;
+        loggedAfter[messageLogCount] = after;
+        loggedResults[messageLogCount] = result;
+        messageLogCount++;
     }
 }
 
@@ -781,15 +781,15 @@ void dumpMessages()
     file = fopen(messageLogName, "wt");
     if (!file)
         return;
-    for (i = 0; i < g_4b2d42; i++) {
-        if (g_4b6d44[i])
-            fprintf(file, "%3d %4x %8lx %8lx %08lx\n", i, g_4b2d44[i], g_4b3d44[i], g_4b4d44[i],
-                    g_4b5d44[i]);
+    for (i = 0; i < messageLogCount; i++) {
+        if (loggedAfter[i])
+            fprintf(file, "%3d %4x %8lx %8lx %08lx\n", i, loggedMessages[i], loggedWParams[i], loggedLParams[i],
+                    loggedResults[i]);
         else
-            fprintf(file, "%3d %4x %8lx %8lx\n", i, g_4b2d44[i], g_4b3d44[i], g_4b4d44[i]);
+            fprintf(file, "%3d %4x %8lx %8lx\n", i, loggedMessages[i], loggedWParams[i], loggedLParams[i]);
     }
     fclose(file);
-    g_4b2d42 = 0;
+    messageLogCount = 0;
 }
 
 /*
@@ -804,7 +804,7 @@ void activateApp(long active)
     if (!windowed && active != appActive) {
         appActive = active;
         if (active) {
-            if (!g_4b2d3a && systemState.windowsVersion >= 0x395 && !g_4b2b04) {
+            if (!screenSaverRunning && systemState.windowsVersion >= 0x395 && !keepDisplayMode) {
                 getDisplayMode(&savedDisplayMode);
                 setDisplayMode(&displayMode);
             }
@@ -816,22 +816,22 @@ void activateApp(long active)
                     == IDCANCEL)
                     fatalError(usualFatalMessage);
             runClock(1);
-            g_4b2d34 = 0;
-            g_4b2d30 = 1;
-            g_4a4a10 = 1;
-            if (g_4a4a10)
+            appPaused = 0;
+            wasActivated = 1;
+            gameActive = 1;
+            if (gameActive)
                 gameActivated(1);
         } else {
-            g_4a4a10 = 0;
-            if (!g_4a4a10)
+            gameActive = 0;
+            if (!gameActive)
                 gameActivated(0);
-            g_4b2d34 = 1;
+            appPaused = 1;
             runClock(0);
             setSoundsActive(0);
             osSetActive(0);
-            if (!g_4b2d3a && systemState.windowsVersion >= 0x395 && !g_4b2b04)
+            if (!screenSaverRunning && systemState.windowsVersion >= 0x395 && !keepDisplayMode)
                 setDisplayMode(&savedDisplayMode);
-            if (!g_4b2d32 && systemState.windowsVersion >= 0x395 && g_4a4a0c && !g_4b2d3a) {
+            if (!windowClosing && systemState.windowsVersion >= 0x395 && minimizeWhenInactive && !screenSaverRunning) {
                 windowed = 1;
                 SendMessage(mainWindow, WM_SYSCOMMAND, SC_MINIMIZE, 0);
             }
@@ -883,7 +883,7 @@ void drawPaletteChart()
     ShortRect saved;
     short i;
 
-    saved = g_4a4ae6;
+    saved = paletteChartRect;
     Color color;
     color = getForeColor();
     for (i = 0; i <= 0xff; i++) {

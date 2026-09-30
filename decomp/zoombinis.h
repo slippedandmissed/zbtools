@@ -700,7 +700,7 @@ struct MemoryInfo
     unsigned long totalPageFile;
 };
 
-/* A loaded sound (wave or MIDI), in the list at g_4a00a0. */
+/* A loaded sound (wave or MIDI), in the list at soundEntries. */
 struct SoundEntry
 {
     short type; /* 0 a wave, 1 MIDI (see soundTypes) */
@@ -988,8 +988,8 @@ extern short g_4a4974;
 extern void (*gameActivateHook)(short active); /* @data 0x4a4a00: told when the window is (de)activated */
 extern HWND mainWindow; /* @data 0x4a4a04 */
 extern char *appName; /* @data 0x4a4a08 */
-extern short g_4a4a0c;
-extern short g_4a4a10;
+extern short minimizeWhenInactive; /* @data 0x4a4a0c */
+extern short gameActive; /* @data 0x4a4a10 */
 extern long buttonKeys[3]; /* @data 0x4a4abc */
 extern UINT buttonUpMessages[3]; /* @data 0x4a4ac8 */
 extern short snoidIdleDelay; /* @data 0x4a4b98 */
@@ -1119,13 +1119,13 @@ extern HINSTANCE appInstance; /* @data 0x4b2af0 */
 extern HINSTANCE appPreviousInstance; /* @data 0x4b2af4 */
 extern long appShowCommand; /* @data 0x4b2afc */
 extern short g_4b2b00;
-extern short g_4b2b02;
-extern short g_4b2d32;
-extern short g_4b2d34;
+extern short blockScreenSaver; /* @data 0x4b2b02 */
+extern short windowClosing; /* @data 0x4b2d32 */
+extern short appPaused; /* @data 0x4b2d34 */
 extern short windowed; /* @data 0x4b2d38 */
-extern short g_4b2d3a;
-extern short g_4b2d3e;
-extern short g_4b2d40;
+extern short screenSaverRunning; /* @data 0x4b2d3a */
+extern short savedCursorLevel; /* @data 0x4b2d3e */
+extern short cursorLevelSaved; /* @data 0x4b2d40 */
 extern short practiceLevel; /* @data 0x4b754a */
 typedef void (*SnoidArrived)(short id);
 extern short modeCursors[6]; /* @data 0x4b80c4 */

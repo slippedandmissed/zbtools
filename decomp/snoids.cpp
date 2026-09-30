@@ -24,7 +24,7 @@ void resetSnoids()
     g_4b7564 = g_4b7558 = 0;
     arrivalHook = 0;
     practiceLevel = 0;
-    g_4b7562 = g_4b7566 = g_4b7568 = 0;
+    g_4b7562 = g_4b7566 = dragInProgress = 0;
     g_4b7552 = 0;
     g_4b7554 = 1;
     g_4b755e = 15;
@@ -856,7 +856,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
         prevId = view->prev->id;
     if ((dragged = removeView(id, 0)) == 0)
         return 0;
-    g_4b7568 = 1;
+    dragInProgress = 1;
     current = where;
     dragged->id = -3;
     savedFlags = dragged->flags;
@@ -1023,7 +1023,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
         moveView(id, 1, prevId);
     g_4b7556 = 0;
     g_4b754c = 0;
-    g_4b7568 = 0;
+    dragInProgress = 0;
     return hit;
 }
 
@@ -1090,7 +1090,7 @@ void drawNameTag(View *view)
         }
         drawImageData((unsigned short *)((char *)snoidImages3 + snoidImages3->offsets[image]), rect.left,
                       rect.top, 8);
-        if (showPositions && g_4b7568) {
+        if (showPositions && dragInProgress) {
             short length;
 
             intToDecimal(dragX, text);
@@ -2017,8 +2017,8 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
 void staggerSnoids(unsigned long interval, unsigned long delay)
 {
     sortSnoids(0);
-    if (sortedCount && g_4b7b86) {
-        g_4b7b86 = 0;
+    if (sortedCount && staggerDue) {
+        staggerDue = 0;
         unsigned long when = clockTime() + delay;
 
         for (short i = sortedCount - 1; i >= 0; i--) {
@@ -2075,7 +2075,7 @@ void pickFreePlace(Point *result, Point *places, short count, short radius)
     short id;
     short i;
 
-    origin = g_4a4d1c;
+    origin = spotOrigin;
     spotTaken(&origin, 0, radius);
     for (i = 0; i < count; i++) {
         skip = 0;
@@ -2125,9 +2125,9 @@ void enterSnoids(short dy)
     snoidsArrived = snoidsOnTheirWay = 0;
     if (*(short *)(gameState + 0x20) || g_4b7562) {
         g_4b7562 = 0;
-        g_4b7b86 = 0;
+        staggerDue = 0;
     } else {
-        g_4b7b86 = 1;
+        staggerDue = 1;
     }
     count = countChosenSnoids();
     view = nextActorView(1);
@@ -2138,7 +2138,7 @@ void enterSnoids(short dy)
             Snoid *snoid = viewSnoid(view);
 
             if (snoid->unknownF7) {
-                if (g_4b7b86 && i >= first) {
+                if (staggerDue && i >= first) {
                     if (first + placed < viewPlaceCount) {
                         snoid->body.x = x;
                         snoid->body.y = viewPlaces[first + placed].y + dy;
