@@ -315,7 +315,7 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 | `ZOOMBINI._EX` | The Windows 3.1 build. Uncompressed despite the name: a Win16 NE executable, ~940 KB, 191 segments, Borland C++ 4.x runtime |
 | `BRODFONT.DLL`, `BRODMIDI.DLL`, `BRODPGI.DLL`, `BRODREG.DLL`, `BRODUTIL.DLL` | Broderbund shared support libraries (Win16) |
 | `DATA/*.MHK` | Mohawk resource archives, roughly one per puzzle/area; shared by both builds and read from the CD at runtime |
-| `DATA/*.MOV`, `*.QTC` | QuickTime movies and codecs |
+| `DATA/*.MOV`, `QB.DEC` | QuickTime movies (video in Broderbund's `QkBk` codec), and that codec for Win16 (the Windows 95 build's, `qb32.qtc`, is in `ZBARCHIV.Z`) |
 | `MIDIMAP.DAT` | A small Mohawk archive (installed next to the program) of MIDI messages sent to MIDI devices |
 | `MOHAWK.WIN`, `DATA/MOHAWK.MAC` | Mohawk engine configuration |
 | `QTWSET32/`, `QTWSETUP/` | QuickTime for Windows 2.x installers, 32-bit and 16-bit (third-party) |
@@ -351,7 +351,9 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Define the game's globals with their initial values, and check them, and the code's references to them, against the original (`uv run define-data`, `uv run match-data`)
 - [x] Link the decompiled code and its resources (the icon) with TLINK32 into a `zoombi32.exe` that runs in the VM (`uv run build`, `uv run vm run --exe`)
 - [ ] Play the rebuilt game through in the VM, fixing what differs from the original
-- [ ] Replace the QuickTime stand-in with working glue, so the rebuilt game plays its movies
+- [ ] Reverse-engineer Broderbund's `QkBk` video codec, and convert the intro movie to a modern format and back, exactly (plan: [`docs/movies.md`](docs/movies.md))
+- [ ] Replace the QuickTime stand-in with working glue, so the rebuilt game plays its intro movie (packed from `assets/`) in the VM
+- [ ] Play the intro movie in the port, from its modern format
 - [ ] Port to a modern platform layer
 
 ## Legal

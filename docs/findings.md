@@ -322,7 +322,18 @@ What they hold (resource counts across the 20 `.MHK` archives):
 
 ScummVM's `engines/mohawk/resource.h` names the Zoombinis types (`SCRB` "Feature Script", `SCRS` "Snoid Script", `NODE` "Walk Node", `PATH` "Walk Path", `SHPL` "Shape List"), and detects the game but doesn't implement it.
 
-The movies (`DATA/LOGO*.MOV`) are QuickTime files outside the archives: video in `QkBk` (the codec installed as `qb32.qtc`), sound in `twos` (PCM).
+The movies (`DATA/LOGO*.MOV`) are QuickTime files outside the archives: video in `QkBk` (the codec installed as `qb32.qtc`), sound in `twos` (PCM). See "Movies" below.
+
+#### Movies
+
+The game plays one movie, `Data\Logo025.MOV` (the intro logo; `decomp/town.cpp`), and it's the only one either build names: the Windows 95 build's strings and the Win16 `ZOOMBINI._EX`'s both name only `Logo025.MOV`. The disc holds four (`LOGO025`, `LOGO025B`, `LOGO027`, `LOGO027B`, 5.8 to 7.3 MB), all laid out the same way: `moov` (`mvhd`, a video `trak`, a sound `trak`, `udta`), then `mdat`.
+
+- **Video:** 640x480, sample description `QkBk` with vendor `Brod`. `Logo025.MOV` has 1,392 frames of 60 units each at a timescale of 600 (10 fps), 83,520 units in all (139.2 s).
+- **Sound:** `twos`, 8-bit mono at 11,025 Hz (1,503,811 samples).
+- **No other decoder:** ffmpeg's QuickTime tag table (`libavformat/isom_tags.c`) has no `QkBk`, so ffmpeg-based players can read the sound but not the video. The only decoder is Broderbund's QuickTime codec component: `qb32.qtc` (PE32 DLL, 45 KB, in `ZBARCHIV.Z`, installed next to the game), and `QB.DEC` in the disc's root, the same component for Win16 (NE, 24 KB).
+- **What the codec exports:** both copies export the same functions. `THNGIDENTIFY` is QuickTime for Windows' component registration. The rest are `QBSetLogFileName`, `QBSetCallBackProc`, `QBActivateChannel`/`QBDeactivateChannel`, `QBActivateCast`/`QBDeactivateCast`, `DrawMHBkGndToOffworld` and `CopyMHPortToOffworld` ("MH" presumably Mohawk). Both contain the strings `BckR`, `FrtR` and `XFrm`, perhaps chunk tags inside frames. `QB.DEC` says "Copyright 1994-1995 Broderbund Software"; `qb32.qtc` carries Apple's "Copyright 1988-1995" (from QuickTime's component library, presumably). `qb32.qtc`'s PE linker version is 2.50, not TLINK32's 2.25, and it imports a C runtime's usual startup functions, so it wasn't built with the game's Borland toolchain.
+
+`docs/movies.md` has the plan for converting the movies to a modern format and back.
 
 #### Sounds and music
 
