@@ -159,7 +159,7 @@ void closeIntro()
         showBusyCursor();
         loadSnoids(0);
         loadDialogs();
-        g_4b2aea = 1;
+        rosterReady = 1;
         showCursor();
     }
 }
@@ -240,7 +240,7 @@ void closeTown()
         closeGameFile(&townFile);
         fadeOutViews();
         showBusyCursor();
-        g_4a74dc = -1;
+        townDialogView = -1;
     }
 }
 
@@ -280,7 +280,7 @@ short introKey(unsigned short key)
     }
 }
 
-/* Resets scene 6's state; the pace townFidgetInterval by g_4b2b00. */
+/* Resets scene 6's state; the pace townFidgetInterval by fidgetPaceFlag. */
 /* @zoombi32 0x0045c3ec */
 void resetTown()
 {
@@ -292,13 +292,13 @@ void resetTown()
     townFidgetsLeft = townPartySize = townsfolkGone = 0;
     lastTownFidgetTime = 0;
     townFidgetersUsed = 0;
-    if (g_4b2b00)
+    if (fidgetPaceFlag)
         townFidgetInterval = 600;
     else
         townFidgetInterval = 120;
     townSoundPlaying = draggingInTown = townFull = 0;
     hotspotRecord = hotspotScript = townSound = townSoundWasGreeting = 0;
-    g_4a74dc = -1;
+    townDialogView = -1;
     clockShown = 0;
     townSoundEnded = 0;
     for (i = 0; i <= 19; i++)
@@ -342,7 +342,7 @@ void settleTravellers()
         }
 }
 
-/* The clock's view (two cels, its hands): hidden while g_4a74dc is set
+/* The clock's view (two cels, its hands): hidden while townDialogView is set
    and unless clockShown and on screen 1 or 2 (townScreen). Shows the time
    (readClock), or with clockWinds winds the hands round that many times
    (faster, from where they are). */
@@ -352,7 +352,7 @@ void drawClock(View *view)
     ViewCel *cels = view->body.cels;
 
     cels[0].image = 0;
-    if (g_4a74dc > 0) {
+    if (townDialogView > 0) {
         view->changed = 0;
         return;
     }
@@ -481,7 +481,7 @@ void introFrame()
             }
             break;
         case 1:
-            g_4b2ad6 = 0;
+            introPending = 0;
             introStep++;
             introClicked(-1);
             break;
@@ -605,7 +605,7 @@ void addTownsperson()
     short i;
     View *view;
 
-    if (!townspeopleToAdd || dialogFlags || g_4a74dc != -1)
+    if (!townspeopleToAdd || dialogFlags || townDialogView != -1)
         return;
     initSnoid(&snoid);
     snoid.features[0] = 1;
@@ -703,8 +703,8 @@ short townKey(unsigned short key)
                 cheatPlaque++;
             if (key == 'x')
                 cheatPlaque--;
-            if (g_4a74dc > 0) {
-                view = findView(g_4a74dc);
+            if (townDialogView > 0) {
+                view = findView(townDialogView);
                 if (view) {
                     view->interval = hotspotRecord;
                     view->changed = 1;
@@ -780,9 +780,9 @@ void townClicked(short which)
     View *view;
     Snoid *snoid;
 
-    if (g_4a74dc > 0) {
-        deleteView(g_4a74dc);
-        g_4a74dc = -1;
+    if (townDialogView > 0) {
+        deleteView(townDialogView);
+        townDialogView = -1;
         setTownRunning(1);
         onRecordHotspot = 0;
         return;
@@ -807,7 +807,7 @@ void townClicked(short which)
             setDragCursor(0);
             draggingInTown = 1;
             dragSnoid(view, where, 0, 0);
-            g_4b7552 = 0;
+            keepDragPose = 0;
             draggingInTown = 0;
             snoid = viewSnoid(view);
             if (snoid->body.y >= 410 && snoid->body.y <= 475)
@@ -832,13 +832,13 @@ void townClicked(short which)
                     clockShown = 0;
                 }
             }
-        } else if (g_4a74dc == -1) {
-            g_4a74dc = 0;
+        } else if (townDialogView == -1) {
+            townDialogView = 0;
             setDragCursor(0);
             queueViewSound(999, 0);
             updateViews();
             updateViews();
-            g_4a74dc = addView(0x5000, drawPlaque, runViewCels, hotspotScript, hotspotRecord, 0, 0, 0);
+            townDialogView = addView(0x5000, drawPlaque, runViewCels, hotspotScript, hotspotRecord, 0, 0, 0);
             setTownRunning(0);
             waitForEventFor(0, 2, 0, 1);
         }
@@ -1073,7 +1073,7 @@ void openTown()
     }
     resetViewClock();
     townSoundPause = 0;
-    g_4b7562 = 0;
+    skipJourneyMap = 0;
     if (townFull) {
         townspeopleToAdd = 20;
     } else {
@@ -1163,7 +1163,7 @@ void townFrame()
             townSoundPlaying = 1;
         }
     }
-    if (townPartySize && !dialogFlags && g_4a74dc == -1) {
+    if (townPartySize && !dialogFlags && townDialogView == -1) {
         if (townFidgetsLeft > 0) {
             if (clockTime() - lastTownFidgetTime > townFidgetInterval) {
                 n = 0;
@@ -1191,7 +1191,7 @@ void townFrame()
             townFidgetsLeft = 1;
         }
     }
-    if (!dialogFlags && !draggingInTown && g_4a74dc == -1) {
+    if (!dialogFlags && !draggingInTown && townDialogView == -1) {
         findTownHotspot(&where);
         if (!ptInRect(&townButtons[0].rect, where) && where.y > 30 && where.y < 450 && where.x > 3
             && where.x < 637) {

@@ -103,7 +103,7 @@ void clearViews()
 {
     View *view;
 
-    g_4a7d42 = dialogQuestion = 0;
+    currentDialogSound = dialogQuestion = 0;
     soundRanges = 0;
     addSoundRange(0x3e4, 0x3e5, 0);
     if (viewsReady) {
@@ -143,10 +143,10 @@ void clearViews()
             groupFlagsA[i] = 0;
             groupFlagsB[i] = 0;
         }
-        g_4b754c = backdropView = 0;
-        g_4b755e = 15;
-        g_4b7566 = 0;
-        g_4b7560 = 1;
+        endDragNow = backdropView = 0;
+        placeSnapRadius = 15;
+        hideArrivedPlaced = 0;
+        placesClaimable = 1;
         setViewsLocked(1);
         for (short j = 0; j < 32; j++) {
             viewSounds.sounds[j] = 0;
@@ -280,17 +280,17 @@ void updateViews()
             if (dialogClosing > 0)
                 closeDialog(dialogClosing);
             dialogClosing = 0;
-            if (g_4b966c == 4) {
-                g_4b966c = 0;
+            if (dialogStage == 4) {
+                dialogStage = 0;
                 askQuit();
             }
-            if (g_4b966c == 3) {
-                g_4b966c++;
+            if (dialogStage == 3) {
+                dialogStage++;
                 dialogClosing = -1;
             }
-            if (g_4b966c == 2) {
+            if (dialogStage == 2) {
                 dialogClosing = 1;
-                g_4b966c++;
+                dialogStage++;
             }
         }
         viewsBusy = 0;
@@ -1021,7 +1021,7 @@ ImageBank *loadImageBank(short id, long *resource)
     short tries = 4;
     short error = 1;
 
-    g_4a4974 = 1;
+    loadingImages = 1;
     while (error && tries) {
         loadResourceAs(resource, RESOURCE_TYPE('t', 'B', 'M', 'P'), id, 0, 0);
         if (*resource) {
@@ -1040,7 +1040,7 @@ ImageBank *loadImageBank(short id, long *resource)
         bank->count = swapShort(bank->count);
         for (short i = 1; i <= bank->count; i++)
             bank->offsets[i] = swapLong(bank->offsets[i]);
-        g_4a4974 = 0;
+        loadingImages = 0;
         return bank;
     }
     fatalError("Out of memory loading SHP@");

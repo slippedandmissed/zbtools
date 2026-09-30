@@ -24,7 +24,7 @@ void resetZoombiniMade()
 {
     short i;
 
-    g_4b755e = 60;
+    placeSnapRadius = 60;
     isleCheatButtonLit = zoombiniMakeAllowed = isleButton22Due = 0;
     sceneDue = 0;
     settingView1 = settingView2 = isleRemark = 0;
@@ -151,7 +151,7 @@ void openIsle()
     if (isleRemark)
         queueViewSound(isleRemark, 1);
     introClickState = 0;
-    g_4b7562 = 0;
+    skipJourneyMap = 0;
 }
 
 /* Closes the scene, leaving the party waiting (or, when it's leaving,
@@ -347,7 +347,7 @@ void isleButtonClicked(short button)
             drawIsleButtons(button, 0, 1);
             sortViews();
             checkEnoughChosen();
-            makeName(g_4b157d, 10);
+            makeName(madeName, 10);
             drawIsleButtons(3, 1, 1);
         }
         zoombiniMakeAllowed = zoombiniMadeAllowed();
@@ -358,7 +358,7 @@ void isleButtonClicked(short button)
     case 3:
         if (zoombiniMakeAllowed) {
             queueViewSound(1000, 0);
-            makeName(g_4b157d, 10);
+            makeName(madeName, 10);
             drawIsleButtons(button, 1, 1);
         }
         break;
@@ -494,7 +494,7 @@ void isleButtonClicked(short button)
                             ((Snoid *)&view->body)->features[slot] = 0;
                         }
                         for (slot = 0; slot < 10; slot++)
-                            g_4b157d[slot] = ((Snoid *)&view->body)->name[slot];
+                            madeName[slot] = ((Snoid *)&view->body)->name[slot];
                         countZoombiniMade(0);
                         drawFeatureButtons(0, 0, &rect);
                         showRect(&rect);
@@ -517,7 +517,7 @@ void isleButtonClicked(short button)
 
 /* Draws the panel's buttons (1-7, from the bank isleButtonImages; some lit, some
    greyed by the scene's state), or just button `which`, lit or not; the
-   second shows the Zoombini being made, the third its name (g_4b157d, if
+   second shows the Zoombini being made, the third its name (madeName, if
    zoombiniMakeAllowed). Shows the area drawn if `show`. */
 /* @zoombi32 0x0043f5ea */
 void drawIsleButtons(short which, short lit, short show)
@@ -565,7 +565,7 @@ void drawIsleButtons(short which, short lit, short show)
             if (zoombiniMakeAllowed) {
                 rect.top++;
                 rect.left += 4;
-                drawText(rect, 0x22, g_4b157d, 0xffff);
+                drawText(rect, 0x22, madeName, 0xffff);
                 rect.top--;
                 rect.left -= 4;
             }
@@ -729,7 +729,7 @@ void pickZoombiniMade(short rename)
             rename = 1;
     }
     if (rename)
-        makeName(g_4b157d, 10);
+        makeName(madeName, 10);
     isleButton22Due = 1;
 }
 
@@ -886,7 +886,7 @@ void isleQueue(Point *where, short *slot)
             }
         return;
     }
-    g_4b7564 = 1;
+    noPaths = 1;
     for (i = 0; i < 15; i++)
         if (!sortedIds[i]) {
             step = d1 = d2 = d3 = d4 = 0;
@@ -954,7 +954,7 @@ void isleQueue(Point *where, short *slot)
             }
         }
     updateViews();
-    g_4b7564 = 0;
+    noPaths = 0;
 }
 
 /* Adds the views settingView1 (script 4104) and settingView2 (4105) if they

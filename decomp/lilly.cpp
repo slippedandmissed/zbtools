@@ -2763,15 +2763,15 @@ void addLillyViews()
             }
     }
     if (!hotelLevel) {
-        g_4b755e += 10;
+        placeSnapRadius += 10;
         for (i = 4; i < roomCount; i += 5)
             placedViews[(i - 4) / 5] = addView(0x508a000, drawCels, runViewScript, i + 10000, 7, &roomPlaces[i], 0, 0);
     } else if (hotelLevel < 3) {
-        g_4b755e += 10;
+        placeSnapRadius += 10;
         for (i = 0; i < roomCount; i++)
             placedViews[i] = addView(0x508a000, drawCels, runViewScript, i + 10000, 7, &roomPlaces[i], 0, 0);
     } else if (hotelLevel == 3) {
-        g_4b755e = 10;
+        placeSnapRadius = 10;
         for (i = 0; i < roomCount; i++)
             placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 10025, 6, &roomPlaces3d[i], 0, 0);
     }
@@ -3656,10 +3656,10 @@ void lillyClick(short action)
                 if (chosen) {
                     bounds = snoid->body.bounds;
                     snoid->body.clipped = 0;
-                    g_4b7556 = 1;
-                    g_4b7560 = 0;
+                    dragInPlace = 1;
+                    placesClaimable = 0;
                     dragSnoid(view, where, 0, 0);
-                    g_4b7560 = 1;
+                    placesClaimable = 1;
                     snoid->body.bounds = bounds;
                     snoid->body.clipped = 1;
                     break;
@@ -3792,7 +3792,7 @@ void openHotel()
     g_4ac13a = 1;
     roomCount = g_4ac0c4 = g_4ac0c6 = 25;
     g_4ac0da = 1;
-    g_4b7554 = 0;
+    claimOnArrival = 0;
     hintSound = g_4ac0d6 = 0;
     hotelLevel = sceneLevel();
     g_4ac0fe = 1;
@@ -4634,7 +4634,7 @@ void openLilly()
         placeClaims[i] = 0;
     }
     placedViewCount = 12;
-    g_4b7560 = 1;
+    placesClaimable = 1;
     g_4af33c = addView(0x4008000, drawCursorSquare, updateSquareHighlight, 0, 5, 0, 0, 0);
     g_4af33e = addView(0x4008000, flashSquare, updateMarkerView, 0, 4, 0, 0, 0);
     g_4af340 = addView(0x4008000, flashSwap, updateMarkerView, 0, 4, 0, 0, 0);

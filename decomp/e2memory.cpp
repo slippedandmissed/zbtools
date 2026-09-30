@@ -204,7 +204,7 @@ void loadShape(long *resource, short id, char *what)
 
     tries = 4;
     error = 1;
-    g_4a4974 = 1;
+    loadingImages = 1;
     for (; error && tries; tries--) {
         loadResourceAs(resource, RESOURCE_TYPE('t', 'B', 'M', 'P'), id, what, 0);
         if (!*resource)
@@ -217,7 +217,7 @@ void loadShape(long *resource, short id, char *what)
                 reportJoinedError(what);
         }
     }
-    g_4a4974 = 0;
+    loadingImages = 0;
 }
 
 /* @zoombi32 0x0046c23d */

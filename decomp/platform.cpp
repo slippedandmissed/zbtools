@@ -54,7 +54,7 @@ void checkDisplayMode(DisplayMode *mode)
             found = 1;
             mode->width = resolutionWidths[i];
             mode->height = resolutionHeights[i];
-            if (g_4aa7cc) {
+            if (allowModeChange) {
                 width = 512;
                 height = 384;
             } else {
@@ -67,7 +67,7 @@ void checkDisplayMode(DisplayMode *mode)
     if (!canUseDisplayMode(mode, 1)) {
         mode->width = 512;
         mode->height = 384;
-        if (!g_4aa7cc || !canUseDisplayMode(mode, 1))
+        if (!allowModeChange || !canUseDisplayMode(mode, 1))
             fatalError(message);
     }
 }
@@ -427,7 +427,7 @@ void enterProgramDirectory()
     char *first;
     char *last;
 
-    g_4b2b00 = 0;
+    fidgetPaceFlag = 0;
     GetModuleFileName(appInstance, programPath, 0x100);
     strcpy(directory, programPath);
     if (!getcwd(savedDirectory, 0x100))
@@ -532,7 +532,7 @@ short isInputWaiting(short which)
 /*
  * The main window's procedure. QuickTime's component manager sees each
  * message first when movieShowing is set. Messages other than timer, mouse and
- * cursor ones are logged before and after (logMessage), and clear g_4b2b00
+ * cursor ones are logged before and after (logMessage), and clear fidgetPaceFlag
  * unless they're keys. Keys and clicks become game events; closing the
  * window, or the session ending, is a fatal error (it quits); the window is
  * repainted by paintHook (or showRect) and blacked out around it.
@@ -556,7 +556,7 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     if (message != WM_TIMER && (message < WM_KEYFIRST || message > WM_KEYLAST)
         && (message < WM_MOUSEFIRST || message > WM_MOUSELAST) && message != WM_NCHITTEST
         && message != WM_SETCURSOR)
-        g_4b2b00 = 0;
+        fidgetPaceFlag = 0;
     if (message != WM_TIMER && (message < WM_MOUSEFIRST || message > WM_MOUSELAST)
         && message != WM_NCHITTEST && message != WM_SETCURSOR)
         logMessage(message, wParam, lParam, 0, 0);
@@ -604,7 +604,7 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
         break;
     case WM_SETFOCUS:
         windowed = 0;
-        setTakeStatic(g_4aa7ce);
+        setTakeStatic(staticColorsSetting);
         realizeFullScreenPalette();
         activateApp(1);
         screenSaverRunning = 0;
@@ -689,7 +689,7 @@ LRESULT CALLBACK mainWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM
     if (message != WM_TIMER && (message < WM_KEYFIRST || message > WM_KEYLAST)
         && (message < WM_MOUSEFIRST || message > WM_MOUSELAST) && message != WM_NCHITTEST
         && message != WM_SETCURSOR)
-        g_4b2b00 = 0;
+        fidgetPaceFlag = 0;
     if (message != WM_TIMER && (message < WM_MOUSEFIRST || message > WM_MOUSELAST)
         && message != WM_NCHITTEST && message != WM_SETCURSOR)
         logMessage(message, wParam, lParam, 1, result);

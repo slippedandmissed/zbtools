@@ -619,21 +619,21 @@ void walkerNotify(View *view, short event)
     case 20:
         walkerView = 0;
         if (currentFrame == finalFrame)
-            g_4a0ff0 = 1;
+            cavesBusy = 1;
         else
-            g_4a0ff0 = 0;
+            cavesBusy = 0;
         requestViewSort();
         break;
     case 21:
         walkerView = 0;
-        g_4a0ff0 = 1;
+        cavesBusy = 1;
         break;
     }
 }
 
 /* The notify of the view frameView's frames (showFrame): 10 sets exitStage
    to 2; 20 notes the view done and, on its last frame, remarks (now and
-   then) if not all are chosen, and sets g_4a0ff0; 21 likewise, ending the
+   then) if not all are chosen, and sets cavesBusy; 21 likewise, ending the
    walk when practiceLevel. */
 /* @zoombi32 0x0041d30b */
 void frameNotify(View *, short event)
@@ -649,14 +649,14 @@ void frameNotify(View *, short event)
                 if (randomBetween(0, 4) > cavesLevel - 1 || (*(short *)(gameState + 0x40) & 0xfff) <= 3)
                     queueViewSound(randomBetween(20045, 20048), 0);
             }
-            g_4a0ff0 = 1;
+            cavesBusy = 1;
         } else {
-            g_4a0ff0 = 0;
+            cavesBusy = 0;
         }
         break;
     case 21:
         walkerView = 0;
-        g_4a0ff0 = 1;
+        cavesBusy = 1;
         if (practiceLevel) {
             snoidsOnTheirWay = 0;
             snoidsArrived = 1;
@@ -861,10 +861,10 @@ void fillRosterHeader(short reset)
         gameState[8] = 0;
         gameState[9] = 0;
         *(short *)(gameState + 0xa) = 0;
-        *(short *)(gameState + 0x20) = g_4b2b00;
+        *(short *)(gameState + 0x20) = fidgetPaceFlag;
         rosterChanged = 1;
-        g_4afb30 = 0;
-        g_4b807e = 0;
+        switchedToTemp = 0;
+        wPressed = 0;
         speaker0BackLinesUsed = speaker0RepliesUsed = speaker2BackLinesUsed = doors34LinesUsed = speaker3BackLinesUsed = 0;
         speaker3RepliesUsed = speaker1BackLinesUsed = doors16LinesUsed = tunnelRemarks0Used = tunnelRemarks1Used = 0;
         tunnelRemarksUnused = tunnelRemarks2Used = tunnelRemarks3bUsed = tunnelRemarks3cUsed = 0;
@@ -888,7 +888,7 @@ void fillRosterHeader(short reset)
 }
 
 /* Reads or writes the list of saved games (the file rosterFileName in the
-   directory g_4b29d4) into or from `list` (or a list of its own): creates
+   directory rosterDirectory) into or from `list` (or a list of its own): creates
    it if it's new; `mode` 0 reads the count of games, 1 writes it
    (savedGames), 2 reads the count and the next id, 3 writes the list. */
 /* @zoombi32 0x0041f2c8 */
@@ -907,7 +907,7 @@ void readWriteSavedGames(SavedGameList *list, short mode)
         games = list;
     size = sizeof(SavedGameList);
     result = 3;
-    strcpy(path, g_4b29d4);
+    strcpy(path, rosterDirectory);
     strcat(path, rosterFileName);
     result = openRosterFile(path, result);
     if (result == 2)
@@ -1215,7 +1215,7 @@ void walkToSpots()
     resetCavesScreen();
     cavesFullParty = 0;
     cavesGoReady = 0;
-    g_4a0ff0 = 0;
+    cavesBusy = 0;
     exitDue = 0;
     cavesPlacedCount = 0;
 }
@@ -1375,7 +1375,7 @@ void cavesClicked(short which)
         if (cavesGoReady) {
             if (!exitStage) {
                 exitDue = 1;
-                g_4a0ff0 = 1;
+                cavesBusy = 1;
             }
             drawCavesButton(which, 1, 1);
             waitForEventFor(0, 2, 0, 1);
@@ -1392,7 +1392,7 @@ void cavesClicked(short which)
             for (i = 1; i < 21; i++)
                 if (spotSnoids[i] == view->id)
                     free = 0;
-            if (free == 1 && !g_4a0ff0 && snoidsOnTheirWay <= 0) {
+            if (free == 1 && !cavesBusy && snoidsOnTheirWay <= 0) {
                 from = *(Point *)&view->body.x;
                 dragSnoid(view, where, 0, 0);
                 droppedCave = heldPlaceNumber();
@@ -1414,7 +1414,7 @@ void cavesClicked(short which)
                             cheerAnchor = &cavePoints[droppedCave];
                         } else if (cavesPlacedCount == chosenCount) {
                             allPlaced = 1;
-                            g_4a0ff0 = 1;
+                            cavesBusy = 1;
                             queueViewSound(randomBetween(20055, 20063), 0);
                         } else {
                             cheerQueue[cheerQueueCount] = view->id;
@@ -1428,7 +1428,7 @@ void cavesClicked(short which)
                         walkFromView = caveViews[droppedCave];
                         walkToView = caveViews[assignedCave];
                         cavesPlacedCount++;
-                        g_4a0ff0 = 1;
+                        cavesBusy = 1;
                         walkDue = 1;
                         releaseHeldPlace();
                         if (cavesPlacedCount == 1) {
@@ -1445,7 +1445,7 @@ void cavesClicked(short which)
                             i = 12;
                         }
                     if (!found) {
-                        g_4a0ff0 = 1;
+                        cavesBusy = 1;
                         cavesNextWalker = view->id;
                         walkBackPoints[walkBackCount] = from;
                         walkBackCount++;
@@ -1743,7 +1743,7 @@ void resetCavesState(short which)
     unusedCaves1 = 0;
     currentFrame = 0;
     unusedCaves2 = 0;
-    g_4a0ff0 = 0;
+    cavesBusy = 0;
     switch (which) {
     case 1:
         finalFrame = 4;

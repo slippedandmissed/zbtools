@@ -32,7 +32,7 @@ void openStoneRise()
     sceneDue = listedCount = pathStart = 0;
     stoneRiseOpen = slidesGoReady = 0;
     alikeTarget = markerView = cellMarked = slidesDragLocked = 0;
-    g_4b2540 = g_4b2542 = cyclingColours = 0;
+    slidesMoves = slidesFidgetStarted = cyclingColours = 0;
     savedPartyFlags = -1;
     openGameFile(&slidesFile, "Slides.MHK");
     setCurrentMap(slidesFile);
@@ -1035,7 +1035,7 @@ short placeUnalike(short cell, short dir)
    Zoombinis are done; cycles colours (cyclingColours) every 6 ticks; when the
    group finishGroup has arrived, sends the Zoombinis on the finished cells
    off (by the level, stoneRiseLevel) and ends; and has an idle Zoombini fidget
-   now and then while g_4b2540. */
+   now and then while slidesMoves. */
 /* @zoombi32 0x00447171 */
 void stoneRiseFrame()
 {
@@ -1102,8 +1102,8 @@ void stoneRiseFrame()
             }
             sceneDue = 5;
         }
-        if (!g_4b2542 && g_4b2540 && slidesFidgets < slidesFidgetsAllowed) {
-            g_4b2542++;
+        if (!slidesFidgetStarted && slidesMoves && slidesFidgets < slidesFidgetsAllowed) {
+            slidesFidgetStarted++;
             if (clockTime() - lastSlidesFidgetTime > 30) {
                 done = 0;
                 tries = 0;
@@ -1123,7 +1123,7 @@ void stoneRiseFrame()
                 } while (!done);
             }
         } else if (slidesFidgets >= slidesFidgetsAllowed) {
-            slidesFidgets = g_4b2540 = lastSlidesFidgetTime = slidesFidgetersUsed = 0;
+            slidesFidgets = slidesMoves = lastSlidesFidgetTime = slidesFidgetersUsed = 0;
         }
         playAmbientSound();
         inStoneRiseFrame = 0;
@@ -1954,7 +1954,7 @@ short stoneRiseKey(unsigned short key)
                 standPlacedSnoids();
                 relightPath();
                 slidesGoReady = 1;
-                g_4b2540++;
+                slidesMoves++;
             }
             return 1;
         }
@@ -2012,7 +2012,7 @@ void stoneRiseClicked(short which)
     case 2:
         if (!slidesGoReady || slidesGoPressed)
             break;
-        if (g_4b2540)
+        if (slidesMoves)
             standFilledCells();
         drawSlidesButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
@@ -2050,7 +2050,7 @@ void stoneRiseClicked(short which)
     case 3:
         if (slidesDragLocked)
             break;
-        if (g_4b2540) {
+        if (slidesMoves) {
             standFilledCells();
             break;
         }

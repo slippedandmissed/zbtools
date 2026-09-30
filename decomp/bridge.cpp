@@ -34,7 +34,7 @@ unsigned long bridgeTimer()
 }
 
 /* Resets scene 7's state (the rules too); the pace bridgeFidgetInterval by
-   g_4b2b00. */
+   fidgetPaceFlag. */
 /* @zoombi32 0x0041a41b */
 void resetBridge()
 {
@@ -42,7 +42,7 @@ void resetBridge()
 
     debugBridgeScript = debugBridgeEvent = -1;
     crossingGroup = 0;
-    g_4b755e = 55;
+    placeSnapRadius = 55;
     crossingUnderway = cliffSpoke = 0;
     crossersOut = sceneDue = queuedCount = 0;
     reactingView = hintSound = 0;
@@ -53,7 +53,7 @@ void resetBridge()
     bridgeDragStarted = sentBackWalking = 0;
     bridgeFidgetsAllowed = bridgeFidgets = 0;
     lastBridgeFidgetTime = bridgeFidgetersUsed = 0;
-    if (g_4b2b00)
+    if (fidgetPaceFlag)
         bridgeFidgetInterval = 120;
     else
         bridgeFidgetInterval = 60;
@@ -383,7 +383,7 @@ void bridgeSnoidNotify(View *view, short event)
         }
         if (n == bridgePartySize)
             bridgeFidgetsAllowed += 2;
-        g_4b7566 = 1;
+        hideArrivedPlaced = 1;
         viewSnoid(view)->unknownF7 = 2;
         if (n == bridgePartySize && !crossersOut)
             queueViewSound(randomBetween(20055, 20063), 0);
@@ -819,9 +819,9 @@ void bridgeFrame()
         }
     }
     if (cliffSpoke) {
-        g_4b7560 = 0;
+        placesClaimable = 0;
         cliffSpoke = 0;
-        g_4b754c = 1;
+        endDragNow = 1;
         view = findView(view1201);
         if (view) {
             view->body.running = 0;

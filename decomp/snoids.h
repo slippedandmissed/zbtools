@@ -46,7 +46,7 @@ extern Paths *paths; /* @data 0x4a4cd4 */
 extern PathNodes *pathNodes; /* @data 0x4a4cd8 */
 extern long pathsResource; /* @data 0x4a4cdc */
 extern long pathNodesResource; /* @data 0x4a4ce0 */
-extern short g_4a4b9c; /* the path drawPaths draws next */
+extern short nextPathToDraw; /* @data 0x4a4b9c: the path drawPaths draws next */
 extern ChosenSnoids chosenSnoids; /* @data 0x4b7b88 */
 ChosenSnoids *listChosenSnoids();
 void chooseSnoids(short chosen, short run);

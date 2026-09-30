@@ -984,7 +984,7 @@ extern Scene *scenes[]; /* @data 0x4a26e8 */
 extern char installFromDirKey[]; /* @data 0x4a3f06 */
 extern char userFileName[]; /* @data 0x4a4900 */
 extern char rosterFileName[]; /* @data 0x4a4920 */
-extern short g_4a4974;
+extern short loadingImages; /* @data 0x4a4974 */
 extern void (*gameActivateHook)(short active); /* @data 0x4a4a00: told when the window is (de)activated */
 extern HWND mainWindow; /* @data 0x4a4a04 */
 extern char *appName; /* @data 0x4a4a08 */
@@ -1065,8 +1065,8 @@ extern short viewsSorted; /* @data 0x4a7b94: sort the views on the next update *
 extern long currentMapFile; /* @data 0x4a7f58 */
 extern DeferLock *locks; /* @data 0x4a8dcc */
 extern short loadWholeCast; /* @data 0x4aa410 */
-extern short g_4aa428;
-extern short g_4aa42a;
+extern short checkSoundLoaded; /* @data 0x4aa428 */
+extern short quietSoundErrors; /* @data 0x4aa42a */
 extern void (*mouseHook)(Point *where); /* @data 0x4aa4c4 */
 /* Which error reportJoinedError reports */
 extern char allocationFailed; /* @data 0x4aa4c8: "Not enough near memory for" */
@@ -1079,8 +1079,8 @@ extern ShortRect gameRect; /* @data 0x4aa7a8: the game's area */
 extern ShortRect screenRect; /* @data 0x4aa7b0 */
 extern ShortRect shownGameRect; /* @data 0x4aa7b8 */
 extern basePort *workPort; /* @data 0x4aa7c8: where the game draws, off screen */
-extern short g_4aa7cc;
-extern short g_4aa7ce;
+extern short allowModeChange; /* @data 0x4aa7cc */
+extern short staticColorsSetting; /* @data 0x4aa7ce */
 extern DisplayMode displayMode; /* @data 0x4aa7d0 */
 extern DisplayMode savedDisplayMode; /* @data 0x4aa7dc */
 extern PALETTEENTRY loadedPalette[256]; /* @data 0x4aa7e8 */
@@ -1096,11 +1096,11 @@ extern short snoidsOnTheirWay; /* @data 0x4b755a */
 extern short snoidsArrived; /* @data 0x4b755c */
 extern short dialogFlags; /* @data 0x4b9684 */
 extern short buttonDown; /* @data 0x4b80d0: the mouse button down */
-extern ShortRect g_4a0a34[5];
-extern short g_4ab530[5];
+extern ShortRect camp1ThingRects[5]; /* @data 0x4a0a34 */
+extern short camp1ThingViews[5]; /* @data 0x4ab530 */
 extern char soundOn; /* @data 0x4b87fe */
 extern short rosterChanged; /* @data 0x4afb32 */
-extern short g_4b7562;
+extern short skipJourneyMap; /* @data 0x4b7562 */
 extern short puzzleLeft; /* @data 0x4b0d4c */
 extern short campY[10][5]; /* @data 0x4a09c6: each slot's y, in two layouts */
 extern short currentScene; /* @data 0x4b0d4e */
@@ -1110,15 +1110,15 @@ extern short journeyTo; /* @data 0x4b0d54 */
 extern short journeyFrom; /* @data 0x4b0d56 */
 extern char installDir[256]; /* @data 0x4b1828 */
 extern char moduleFileName[256]; /* @data 0x4b28d4 */
-extern char g_4b29d4[];
+extern char rosterDirectory[]; /* @data 0x4b29d4 */
 extern short movieShowing; /* @data 0x4b2ad4 */
 extern long currentMovie; /* @data 0x4b2ad8 */
 extern long movieController; /* @data 0x4b2adc */
-extern short g_4b2aea;
+extern short rosterReady; /* @data 0x4b2aea */
 extern HINSTANCE appInstance; /* @data 0x4b2af0 */
 extern HINSTANCE appPreviousInstance; /* @data 0x4b2af4 */
 extern long appShowCommand; /* @data 0x4b2afc */
-extern short g_4b2b00;
+extern short fidgetPaceFlag; /* @data 0x4b2b00 */
 extern short blockScreenSaver; /* @data 0x4b2b02 */
 extern short windowClosing; /* @data 0x4b2d32 */
 extern short appPaused; /* @data 0x4b2d34 */
@@ -1130,7 +1130,7 @@ extern short practiceLevel; /* @data 0x4b754a */
 typedef void (*SnoidArrived)(short id);
 extern short modeCursors[6]; /* @data 0x4b80c4 */
 extern short cursorMode; /* @data 0x4b80d2 */
-extern unsigned long g_4b80d4;
+extern unsigned long nextCursorFrameTime; /* @data 0x4b80d4 */
 extern short quitRequested; /* @data 0x4b80e0: ends the main loop when set */
 extern short regionErrorCode; /* @data 0x4b9b64 */
 extern OsState os; /* @data 0x4b9cf4 */
@@ -3575,14 +3575,14 @@ extern short placedViewCount; /* @data 0x4b80f4 */
 extern short placedViews[125]; /* @data 0x4b80f6: views added with flag 0x2000 */
 extern Point placedViewPoints[125]; /* @data 0x4b81f0 */
 extern short placeClaims[125]; /* @data 0x4b83e4 */
-extern short g_4a7d42;
+extern short currentDialogSound; /* @data 0x4a7d42 */
 extern short dialogQuestion; /* @data 0x4b9688 */
-extern short g_4b754c;
-extern short g_4b755e;
-extern short g_4b7560;
+extern short endDragNow; /* @data 0x4b754c */
+extern short placeSnapRadius; /* @data 0x4b755e */
+extern short placesClaimable; /* @data 0x4b7560 */
 extern long lastRuleMask; /* @data 0x4b7544: the last one-feature rule made (tunnels, bridge) */
 extern short lastRuleCount; /* @data 0x4b7548: and how many it matched */
-extern short g_4b7566;
+extern short hideArrivedPlaced; /* @data 0x4b7566 */
 extern long creditsImagesResource; /* @data 0x4b9670 */
 extern long creditsBackdropResource; /* @data 0x4b9674 */
 extern SoundChannels viewSounds; /* @data 0x4b8a0c */
@@ -3604,7 +3604,7 @@ extern unsigned long fpsTime; /* @data 0x4b9590 */
 extern unsigned long fpsFrames; /* @data 0x4b9594 */
 extern unsigned long fpsMin; /* @data 0x4b9598 */
 extern unsigned long fpsMax; /* @data 0x4b959c */
-extern short g_4b966c;
+extern short dialogStage; /* @data 0x4b966c */
 extern short dialogClosing; /* @data 0x4b9686 */
 extern unsigned short soundTests; /* @data 0x4a7b80: report the sounds started */
 extern short *scripts[300]; /* @data 0x4b9008: the 'SCRB' scripts loaded */
@@ -3652,7 +3652,7 @@ enum DialogText
 extern char gameName[]; /* @data 0x4a48ea */
 extern char clickToDragOption; /* @data 0x4b8800: the options' click-to-drag setting */
 extern unsigned short transitionsOn; /* @data 0x4b0d4a */
-extern short g_4a74dc;
+extern short townDialogView; /* @data 0x4a74dc */
 extern short savedGames; /* @data 0x4b95a0 */
 extern short nextSaveId; /* @data 0x4b95a2 */
 extern short busyCount; /* @data 0x4a7d3c */
@@ -3683,14 +3683,14 @@ extern char hideDragCursor; /* @data 0x4b8801 */
 extern char dragClicks; /* @data 0x4b8802: a quick click starts a click-to-drag */
 extern short clickTime; /* @data 0x4b87fc: ms */
 extern short partyViews[32]; /* @data 0x4b756c */
-extern short g_4b7bda;
+extern short ambientCounter; /* @data 0x4b7bda */
 extern short snoidMode; /* @data 0x4b756a */
 extern short altSnoids; /* @data 0x4a4cea: the Zoombinis have their other look (useAltSnoids) */
-extern short g_4b7552;
-extern short g_4b7554;
-extern short g_4b7556;
-extern short g_4b7558;
-extern short g_4b7564;
+extern short keepDragPose; /* @data 0x4b7552 */
+extern short claimOnArrival; /* @data 0x4b7554 */
+extern short dragInPlace; /* @data 0x4b7556 */
+extern short levelJustRaised; /* @data 0x4b7558 */
+extern short noPaths; /* @data 0x4b7564 */
 extern long snoidImagesResource; /* @data 0x4b7b54 */
 extern short *baseSnoidScripts[51]; /* @data 0x4b78b4 */
 extern short *snoidScripts[110]; /* @data 0x4b7980 */
@@ -3746,17 +3746,17 @@ extern HexCell hexCells[117]; /* @data 0x4b1aea */
 extern short cellLinkBits[117]; /* @data 0x4b2324: each cell's link bits, one per direction */
 extern short partySize; /* @data 0x4b2414 */
 extern short waitingSnoids[16]; /* @data 0x4b2430: the party, most alike first (orderPartyByAlike) */
-extern short g_4b2540;
-extern short g_4b2542;
+extern short slidesMoves; /* @data 0x4b2540 */
+extern short slidesFidgetStarted; /* @data 0x4b2542 */
 extern short featureSlots[8][4]; /* @data 0x4b26cc: the features of the Zoombini in each slot */
-extern short g_4a48e8; /* the temporary file (ZBtemp) exists */
+extern short tempFileExists; /* @data 0x4a48e8: the temporary file (ZBtemp) exists */
 /* A Zoombini placed on a cell (placedSnoids). */
 struct PlacedSnoid
 {
     short cell;
     short snoid; /* its view */
 };
-extern short g_4b2ad6;
+extern short introPending; /* @data 0x4b2ad6 */
 long __cdecl qtim_02(long file);
 long __cdecl qtim_07(long movie);
 long __cdecl qtim_0c();
@@ -3779,8 +3779,8 @@ long __cdecl cmgr_01(long controller, long action, long parameters);
 long __cdecl cmgr_0d(long controller, long movie, HWND window, POINT where);
 long __cdecl cmgr_0e(long controller, RECT *bounds, long, long);
 extern short startState; /* @data 0x4b2512 */
-extern ShortRect g_4a4584[3][3];
-extern ShortRect g_4a45cc[3][3];
+extern ShortRect leftRowSpots[3][3]; /* @data 0x4a4584 */
+extern ShortRect rightRowSpots[3][3]; /* @data 0x4a45cc */
 /* The party's features (1-5), one array each (the original addresses them
    separately). */
 extern short partyHair[16]; /* @data 0x4b2472 */
@@ -3791,16 +3791,16 @@ extern short partyTaken[16]; /* @data 0x4b24f2 */
 extern short dealButtonState; /* @data 0x4b2754 */
 extern short crossedDue; /* @data 0x4b2736 */
 extern short anchorDue; /* @data 0x4b2746 */
-extern short g_4b27ca[9][4]; /* the puzzle's rows: their features */
-extern short g_4b2812[9][4]; /* and the second set */
-extern short g_4b285a[9][4]; /* the features each row changes */
-extern Point g_4a453c[3][3];
-extern Point g_4a4560[3][3];
+extern short rowFeatures[9][4]; /* @data 0x4b27ca: the puzzle's rows: their features */
+extern short rowFeatures2[9][4]; /* @data 0x4b2812: and the second set */
+extern short rowChanges[9][4]; /* @data 0x4b285a: the features each row changes */
+extern Point leftRowPlaces[3][3]; /* @data 0x4a453c */
+extern Point rightRowPlaces[3][3]; /* @data 0x4a4560 */
 
-extern short g_4afc68; /* the scene is open */
-extern long g_4a21b4;
-extern SceneButton g_4a20f4[3]; /* [0] isn't a button: the data before is a string */
-extern long g_4afbdc;
+extern short mazeOpen; /* @data 0x4afc68: the scene is open */
+extern long mazeButtonResource; /* @data 0x4a21b4 */
+extern SceneButton mazeButtons[3]; /* @data 0x4a20f4: [0] isn't a button: the data before is a string */
+extern long loadedHotSpotTable; /* @data 0x4afbdc */
 extern short featureRows[][4]; /* @data 0x4afe5a */
 extern short mazeFidgetsDone; /* @data 0x4b0d3a */
 extern short mazeFidgetsAllowed; /* @data 0x4b0d38 */
@@ -3810,41 +3810,41 @@ extern short *snoidPartsTable; /* @data 0x4b076c: the loaded table of Zoombini p
 extern short squareOccupants[][13][3]; /* @data 0x4b00d2: the maze's squares */
 extern Point *squarePlaces; /* @data 0x4afbf0: where each square is (13 to a row) */
 extern short poseDoneList[]; /* @data 0x4b08b8 */
-extern short g_4b09fa;
-extern short g_4afc6c[];
-extern short g_4afd8c[];
+extern short poseDoneCount; /* @data 0x4b09fa */
+extern short startPlaceGroups[]; /* @data 0x4afc6c */
+extern short lineAnchorViews[]; /* @data 0x4afd8c */
 extern short takenRows[20][4]; /* @data 0x4b0770: the rows taken */
 extern short takenRowsCopy[20][4]; /* @data 0x4b0810: and a copy */
 extern short squareViews[][13]; /* @data 0x4b04c8 */
 extern short squareKinds[][13]; /* @data 0x4b061a */
 extern short lineViews[]; /* @data 0x4b0a10 */
-extern short g_4b0b6e[];
-extern short g_4b0ba0[];
-extern short g_4b0bd2[];
-extern short g_4b0c04[];
-extern short g_4b0c36[];
-extern short g_4b0c68[];
-extern short g_4b0c9a[];
-extern short g_4b0d00;
-extern short g_4b0d02;
-extern short g_4b0d04;
-extern short g_4b0d06;
-extern short g_4b0d08;
-extern short g_4b0d0a;
-extern short g_4b0d0c;
-extern short g_4a25e0[][2];
+extern short lineList1[]; /* @data 0x4b0b6e */
+extern short lineList2[]; /* @data 0x4b0ba0 */
+extern short lineList3[]; /* @data 0x4b0bd2 */
+extern short lineList4[]; /* @data 0x4b0c04 */
+extern short lineList5[]; /* @data 0x4b0c36 */
+extern short lineList6[]; /* @data 0x4b0c68 */
+extern short lineList7[]; /* @data 0x4b0c9a */
+extern short lineCount1; /* @data 0x4b0d00 */
+extern short lineCount2; /* @data 0x4b0d02 */
+extern short lineCount3; /* @data 0x4b0d04 */
+extern short lineCount4; /* @data 0x4b0d06 */
+extern short lineCount5; /* @data 0x4b0d08 */
+extern short lineCount6; /* @data 0x4b0d0a */
+extern short lineCount7; /* @data 0x4b0d0c */
+extern short valueParts[][2]; /* @data 0x4a25e0 */
 extern short arrivedList[]; /* @data 0x4b08e0 */
-extern short g_4b09f8;
-extern short g_4a23be[18][2];
-extern short g_4b08b0;
-extern short g_4a7d40;
-extern short g_4a2116;
+extern short arrivedCount; /* @data 0x4b09f8 */
+extern short squareKindCells[18][2]; /* @data 0x4a23be */
+extern short mazeSnoidTotal; /* @data 0x4b08b0 */
+extern short mazeReady; /* @data 0x4a7d40 */
+extern short turnSoundToggle; /* @data 0x4a2116 */
 extern short partnerList[20]; /* @data 0x4b0930 */
-extern short g_4b09fe;
-extern short *g_4afc24;
+extern short partnerCount; /* @data 0x4b09fe */
+extern short *squareOffsets; /* @data 0x4afc24 */
 extern short *partHotX; /* @data 0x4afbd0 */
 extern short *partHotY; /* @data 0x4afbd4 */
-extern GroupList g_4a2194;
+extern GroupList mazeGroups; /* @data 0x4a2194 */
 
 extern short enoughToLeaveChosen; /* @data 0x4b15a8 */
 extern SceneButton netButtons[4]; /* @data 0x4a288a */
@@ -3853,14 +3853,14 @@ extern short isleCheatButtonLit; /* @data 0x4b15a6 */
 extern short zoombiniMakeAllowed; /* @data 0x4b15aa */
 extern SceneButton isleButtons[27]; /* @data 0x4a2efc: [0] isn't a button */
 extern ImageBank *isleButtonImages; /* @data 0x4b15a0 */
-extern char g_4b157d[];
+extern char madeName[]; /* @data 0x4b157d */
 extern short ambientSound; /* @data 0x4b0d48: the last one */
 extern short ambientSoundCount; /* @data 0x4b0d58 */
 extern char introClickState; /* @data 0x4a7410 */
 extern short inMazeFrame; /* @data 0x4a25c8: the maze's frame is running */
 extern Point mazeExitSpots[4][20]; /* @data 0x4a2406: each row's spots to walk off by */
-extern unsigned long g_4b0d30;
-extern unsigned long g_4b0d34;
+extern unsigned long lastMazeFidgetTime; /* @data 0x4b0d30 */
+extern unsigned long mazeFidgetersUsed; /* @data 0x4b0d34 */
 extern short pizzaLevel; /* @data 0x4b161e */
 extern short pizzaPartySize; /* @data 0x4b15d4 */
 extern short willaState; /* @data 0x4b161a */
@@ -3877,11 +3877,11 @@ struct ShownPizza
 };
 extern short toppingsDx; /* @data 0x4b1666 */
 extern short toppingsDy; /* @data 0x4b1668 */
-extern short g_4b181c;
+extern short pizzaFidgetsAllowed; /* @data 0x4b181c */
 extern short walkerView; /* @data 0x4ab874 */
 extern short caveValues[2][5]; /* @data 0x4ab87e: and their values */
 extern short caveValueCounts[6][6]; /* @data 0x4ab892 */
-extern short g_4a0ff0;
+extern short cavesBusy; /* @data 0x4a0ff0 */
 extern short cavePlaceValues[2][21]; /* @data 0x4ab916: the values of the roster's features each place wants */
 extern unsigned long speaker0BackLinesUsed; /* @data 0x4a75e4: slots used (allocateSlot) */
 extern unsigned long speaker0RepliesUsed; /* @data 0x4a7600: slots used (allocateSlot) */
@@ -3897,8 +3897,8 @@ extern unsigned long tunnelRemarks2Used; /* @data 0x4a78d0 */
 extern unsigned long tunnelRemarks3bUsed; /* @data 0x4a78d4 */
 extern unsigned long tunnelRemarks3cUsed; /* @data 0x4a78d8: slots used (allocateSlot) */
 extern unsigned long tunnelRemarks3aUsed; /* @data 0x4a78dc */
-extern short g_4afb30; /* @data 0x4afb30 */
-extern short g_4b807e; /* @data 0x4b807e */
+extern short switchedToTemp; /* @data 0x4afb30 */
+extern short wPressed; /* @data 0x4b807e */
 extern short ferryVisits; /* @data 0x4abafc */
 extern unsigned long returnRoutesUsed; /* @data 0x4abb00: slots used (allocateSlot) for the ferry's routes (scene 10) */
 extern short shipDx; /* @data 0x4afb86 */

@@ -357,7 +357,7 @@ void fleensMovingOnNotify(View *view, short event)
     }
 }
 
-/* Resets scene 13's state; the pace fleensFidgetInterval by g_4b2b00. */
+/* Resets scene 13's state; the pace fleensFidgetInterval by fidgetPaceFlag. */
 /* @zoombi32 0x0042160c */
 void resetFleens()
 {
@@ -372,7 +372,7 @@ void resetFleens()
         lineFleens[i] = 0;
     }
     fleensFidgets = lineLength = walkerSnoid = walkerFleen = activeSnoid = 0;
-    g_4b755e = 100;
+    placeSnapRadius = 100;
     pickedFleensFound = sceneDue = putDownFleen = 0;
     lineMoveDue = 0;
     walkerStep4Due = walkerStep9Due = walkerStep3Due = 0;
@@ -382,7 +382,7 @@ void resetFleens()
     pendingFleensFacing = fleensView0Started = 0;
     lastFleensFidgetTime = 0;
     fleensFidgetersUsed = 0;
-    if (g_4b2b00)
+    if (fidgetPaceFlag)
         fleensFidgetInterval = 120;
     else
         fleensFidgetInterval = 60;
@@ -1086,7 +1086,7 @@ void fleensClicked(short which)
             snoid = viewSnoid(view);
             if (viewSnoid(view)->unknownF7) {
                 if (!leaderBusy) {
-                    g_4b7556 = 1;
+                    dragInPlace = 1;
                     dragSnoid(view, where, 0, 0);
                 }
             } else {
@@ -1557,7 +1557,7 @@ void fleensFrame()
     if (!activeSnoid) {
         if (putDownFleen) {
             view = idleSnoidView(putDownSnoid);
-            if (view && !g_4b7556) {
+            if (view && !dragInPlace) {
                 viewSnoid(view)->unknownF7 = 1;
                 activeFleen = putDownFleen;
                 putDownFleen = 0;
@@ -1573,7 +1573,7 @@ void fleensFrame()
                 lineFleens[lineLength] = activeFleen;
                 lineLength++;
                 if (pickedFleensFound > 2)
-                    g_4b754c = 1;
+                    endDragNow = 1;
                 script = fleensSnoidScript(view, 2);
                 if (script) {
                     if (!fleensView0Started)

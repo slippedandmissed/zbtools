@@ -21,7 +21,7 @@
 #include "view.h"
 
 /* Resets scene 8's state (the rules, the entries, the counts; the pace
-   fidgetInterval by g_4b2b00) and picks closedDoorPair at random. */
+   fidgetInterval by fidgetPaceFlag) and picks closedDoorPair at random. */
 /* @zoombi32 0x0045e2d8 */
 void resetTunnels()
 {
@@ -29,7 +29,7 @@ void resetTunnels()
 
     closingStep = speaker0BackCount = speaker3BackCount = 0;
     pendingFacing = warningView = pendingTunnelSound = 0;
-    g_4b755e = 40;
+    placeSnapRadius = 40;
     sceneDue = tunnelQueue.count = 0;
     followingSpeaker = hintSound = tunnelsPartySize = 0;
     entryUnderway = closingRemarkDone = sentThroughDoors = 0;
@@ -37,12 +37,12 @@ void resetTunnels()
     door1Count = door4Count = door2Count = door3Count = doorAnchorView = warningSound = 0;
     for (i = 0; i < 4; i++)
         doorPassesInARow[i] = 0;
-    g_4b7564 = 1;
+    noPaths = 1;
     for (i = 0; i < 16; i++)
         door1Views[i] = door4Views[i] = door2Views[i] = door3Views[i] = 0;
     fidgetsAllowed = fidgetsDone = 0;
     lastFidgetTime = fidgetersUsed = 0;
-    if (g_4b2b00)
+    if (fidgetPaceFlag)
         fidgetInterval = 120;
     else
         fidgetInterval = 60;
@@ -65,7 +65,7 @@ void closeTunnels()
         clearViews();
         unloadSounds();
         freeResource(&tunnelsButtonResource);
-        g_4b7564 = 0;
+        noPaths = 0;
         setFreeAtOnce(saved);
         closeGameFile(&tunnelsFile);
         fadeOutViews();
@@ -215,7 +215,7 @@ void unghostDoorView()
 }
 
 /* Scene 8's keys (with debugging on, debugMessagesOn, or else only 0x16f): t, T,
-   w (W also sets g_4b807e) and e queue a remark (queueRemark), a shows the rules,
+   w (W also sets wPressed) and e queue a remark (queueRemark), a shows the rules,
    C, F, I and O step the views tunnelsSpeakers through their scripts, H
    adds 4 to fidgetsAllowed. Returns whether the key was used. */
 /* @zoombi32 0x0045f63a */
@@ -330,7 +330,7 @@ short tunnelsKey(unsigned short key)
         }
         break;
     case 'W':
-        g_4b807e = 1;
+        wPressed = 1;
     case 'w':
         queueRemark(1);
         break;
@@ -812,7 +812,7 @@ void pickBestMaskPair(ChosenSnoids *chosen, unsigned long *masks, unsigned long 
    views tunnelsSpeakers) to say: one speaker's script (and one to follow
    it), then perhaps another speaker's reply (and its follow-up), picked with
    allocateSlot so that each comes round before any repeats. Kind 1 has a
-   shorter set once W has been pressed (g_4b807e); kind 3 depends on
+   shorter set once W has been pressed (wPressed); kind 3 depends on
    closingRemarkDone and on whether every chosen Zoombini is on screen. */
 /* @zoombi32 0x00460642 */
 void queueRemark(short kind)
@@ -885,7 +885,7 @@ void queueRemark(short kind)
         }
         break;
     case 1:
-        if (g_4b807e != 1) {
+        if (wPressed != 1) {
             switch (allocateSlot(&tunnelRemarks1Used, 8, 0)) {
                     case 0:
                         speaker = tunnelsSpeakers[1];
@@ -1670,7 +1670,7 @@ void tunnelsFrame()
         return;
     inTunnelsFrame = 1;
     if (!turnBacksLeft)
-        g_4b754c = 1;
+        endDragNow = 1;
     updateViews();
     if (lastViewSound >= 4000 && lastViewSound <= 4699) {
         if (isSoundPlaying(lastViewSound, RESOURCE_TYPE(0, 'S', 'N', 'D')))
@@ -1829,7 +1829,7 @@ void openTunnels()
 
     tunnelsOpen = tunnelsGoReady = 0;
     resetTunnels();
-    g_4b807e++;
+    wPressed++;
     tunnelsLevel = sceneLevel();
     switch (tunnelsLevel) {
     case 0:
@@ -1979,7 +1979,7 @@ void tunnelsClicked(short which)
             break;
         if (sentThroughDoors && !closingRemarkDone)
             break;
-        g_4b7564 = 0;
+        noPaths = 0;
         drawTunnelsButton(which, 1, 1);
         waitForEventFor(0, 2, 0, 1);
         drawTunnelsButton(which, 0, 1);
@@ -2003,7 +2003,7 @@ void tunnelsClicked(short which)
         view = viewAt(where, 1, 1);
         if (!view)
             view = viewAt(where, 0x4008001, 1);
-        if (!view || g_4b754c)
+        if (!view || endDragNow)
             break;
         snoid = viewSnoid(view);
         which = snoid->unknownF7;
@@ -2011,7 +2011,7 @@ void tunnelsClicked(short which)
             break;
         home = *(long *)&view->body.x;
         if (which)
-            g_4b7556 = 1;
+            dragInPlace = 1;
         dragSnoid(view, where, 0, 0);
         if (which)
             break;

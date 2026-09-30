@@ -115,13 +115,13 @@ void queueViewSound(short sound, char streamed)
 {
     SoundChannels *channels;
 
-    if (sound >= 30000 || (!sound && g_4a7d42 >= 30000)) {
+    if (sound >= 30000 || (!sound && currentDialogSound >= 30000)) {
         if (!musicOn)
             return;
         if (!sound)
-            sound = g_4a7d42;
+            sound = currentDialogSound;
         channels = &viewSounds2;
-        g_4a7d42 = sound;
+        currentDialogSound = sound;
     } else {
         if (!soundOn)
             return;
@@ -709,7 +709,7 @@ void startNewGame()
         sceneDue = 3;
     *(short *)(gameState + 0xcc) = sceneDue;
     viewsLocked = 1;
-    g_4b7562 = 1;
+    skipJourneyMap = 1;
     strcpy(gameName, "New Game");
     strcpy(userFileName, "ZBUser");
     strcat(userFileName, ".txt");
@@ -764,9 +764,9 @@ void askSaveGame()
 /* @zoombi32 0x00469669 */
 void askQuit()
 {
-    if (!g_4b966c && (dialogFlags & 1))
-        g_4b966c = 1;
-    if (g_4b966c) {
+    if (!dialogStage && (dialogFlags & 1))
+        dialogStage = 1;
+    if (dialogStage) {
         showDialog(4, dialogTexts[textReallyQuit], dialogTexts[textYes], dialogTexts[textNo]);
         return;
     }
@@ -790,7 +790,7 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
     short flag;
     short y;
 
-    if (!viewsReady || !g_4b2aea || g_4a74dc != -1 || sceneDue > 1 || pendingScene != -1)
+    if (!viewsReady || !rosterReady || townDialogView != -1 || sceneDue > 1 || pendingScene != -1)
         return;
     viewsPaused = 0;
     setDragCursor(0);
@@ -1286,7 +1286,7 @@ void placeDialogButton(View *view)
                 if (musicOn)
                     queueViewSound(0, 0);
                 else
-                    stopSounds(g_4a7d42, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                    stopSounds(currentDialogSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 break;
             case 7:
                 clickToDragOption = !clickToDragOption;
@@ -1745,7 +1745,7 @@ void placeDialogList(View *view)
                             rosterChanged = 0;
                             if (!sceneDue)
                                 sceneDue = 3;
-                            g_4b7562 = 1;
+                            skipJourneyMap = 1;
                             dialogClosing = 2;
                         }
                     } else {
@@ -1810,9 +1810,9 @@ void placeDialogList(View *view)
                                     savedGameList->nextId = nextSaveId;
                                     strcat(userFileName, ".txt");
                                     viewsLocked = 0;
-                                    g_4b2aea = 0;
+                                    rosterReady = 0;
                                     strandParty();
-                                    g_4b2aea = 1;
+                                    rosterReady = 1;
                                     readWriteSavedGames(savedGameList, 3);
                                     break;
                                 }
@@ -1871,14 +1871,14 @@ void placeDialogList(View *view)
                             quitRequested = 3;
                         else if ((dialogFlags & 4) && !tooManyGames)
                             pendingDialogPress = 13;
-                        if (g_4b966c == 1)
-                            g_4b966c++;
+                        if (dialogStage == 1)
+                            dialogStage++;
                     }
                 }
                 break;
             case 16:
                 if (!dialogClosing) {
-                    g_4b966c = 0;
+                    dialogStage = 0;
                     newGameAsked = 0;
                     dialogClosing = 4;
                     dialogQuestion = 2;

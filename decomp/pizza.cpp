@@ -74,7 +74,7 @@ void drawPizzaButton(short which, short lit, short show)
 /* @zoombi32 0x00441199 */
 void closePizza()
 {
-    g_4b755e = paceBeforePizza;
+    placeSnapRadius = paceBeforePizza;
     if (pizzaOpen) {
         pizzaOpen = 0;
         short saved = setFreeAtOnce(1);
@@ -2431,7 +2431,7 @@ void pizzaServedTo(short troll, short)
     else if (arnoState >= 2 && willaState >= 2 && shylerState >= 2)
         pizzaSolved = 1;
     if (pizzaSolved)
-        g_4b181c = pizzaPartySize - 1;
+        pizzaFidgetsAllowed = pizzaPartySize - 1;
 }
 
 /* Plays sound `sound` and waits for it (awaitSound); unloads it unless
@@ -2537,7 +2537,7 @@ void pizzaButtonClicked(short button)
             waitForEventFor(0, 2, 0, 1);
             drawPizzaButton(button, 0, 1);
             chooseSnoids(1, 0);
-            g_4b7564 = 0;
+            noPaths = 0;
             queueViewSound(996, 0);
             sendSnoids(690, 250, 45);
             sceneDue = 4;
@@ -2697,7 +2697,7 @@ void pizzaFrame()
                 }
                 if (levelTrollStarted) {
                     levelTrollStarted = 0;
-                    g_4b7564 = 1;
+                    noPaths = 1;
                     pizzaDoneNotify(view, 0);
                 } else if (arnoState == 2) {
                     deleteView(pizzaView);
@@ -2748,7 +2748,7 @@ void pizzaFrame()
             }
             if (levelTrollStarted) {
                 levelTrollStarted = 0;
-                g_4b7564 = 1;
+                noPaths = 1;
                 pizzaDoneNotify(view, 0);
             } else if (willaState == 2) {
                 deleteView(pizzaView);
@@ -2792,7 +2792,7 @@ void pizzaFrame()
             }
             if (levelTrollStarted) {
                 levelTrollStarted = 0;
-                g_4b7564 = 1;
+                noPaths = 1;
                 pizzaDoneNotify(view, 0);
             } else if (shylerState == 2) {
                 deleteView(pizzaView);
@@ -2898,7 +2898,7 @@ void pizzaFrame()
     }
     if (pizzaFidgeting && pizzaPartySize - zoombinisSent < 5)
         pizzaFidgeting = 0;
-    if (pizzaFidgeting && pizzaFidgets < g_4b181c) {
+    if (pizzaFidgeting && pizzaFidgets < pizzaFidgetsAllowed) {
         if (clockTime() - lastPizzaFidgetTime > 30) {
             done = 0;
             if (pizzaPartySize - zoombinisSent < 4) {
@@ -2922,7 +2922,7 @@ void pizzaFrame()
                 } while (!done);
             }
         }
-    } else if (pizzaFidgets >= g_4b181c) {
+    } else if (pizzaFidgets >= pizzaFidgetsAllowed) {
         pizzaFidgets = pizzaFidgeting = lastPizzaFidgetTime = pizzaFidgetersUsed = 0;
     }
     playAmbientSound();
@@ -3007,8 +3007,8 @@ void openPizza()
     pizzaButtonsView = addView(0x1000, drawPizzaButtonsView, updatePizzaButtons, 0, 0, 0, 0, 0);
     loadSnoidScripts(14000, 6, 0);
     addSnoidScripts(13000, 40, 0);
-    paceBeforePizza = g_4b755e;
-    g_4b755e = 25;
+    paceBeforePizza = placeSnapRadius;
+    placeSnapRadius = 25;
     placedViews[0] = addView(0x108a000, drawCels, runViewScript, 7063, 7, &pizzaSpot, 0, 0);
     pizzaView7000 = addView(0x188000, drawCels, runViewScript, 7000, 6, 0, 0, 0);
     loadViewSounds(pizzaView7000, 0);
@@ -3096,9 +3096,9 @@ void openPizza()
     enterSnoids(200);
     pizzaChosen = listChosenSnoids();
     pizzaPartySize = pizzaChosen->count;
-    g_4b181c = 3;
-    if (g_4b181c > pizzaPartySize)
-        g_4b181c = pizzaPartySize - 1;
+    pizzaFidgetsAllowed = 3;
+    if (pizzaFidgetsAllowed > pizzaPartySize)
+        pizzaFidgetsAllowed = pizzaPartySize - 1;
     pizzaFidgets = 0;
     staggerSnoids(45, 30);
     chooseSnoids(0, 0);

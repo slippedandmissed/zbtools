@@ -153,7 +153,7 @@ void layOutMazeCels(Snoid *snoid)
  * Two maze Zoombinis meeting (`a` and `b`): by the directions they face
  * (word 20) picks each one's script (15035 on, from word 45) and its
  * helper view's (10004 on), which also gets an extra view (by the square's
- * g_4afc24) until its script ends (startPairNotify); clears a's square in
+ * squareOffsets) until its script ends (startPairNotify); clears a's square in
  * squareOccupants and regroups each with its helper.
  */
 /* @zoombi32 0x00439666 */
@@ -332,7 +332,7 @@ void mazeZoombinisMeet(View *a, View *b)
         setViewScript(helperA, aHelperScript, 1);
         *(Point *)&helperA->body.x = *(Point *)&a->body.x;
         helperA->placed = placeOnHotSpot35;
-        offset = (g_4afc24 + partsA[33] * 12)[partsA[34]];
+        offset = (squareOffsets + partsA[33] * 12)[partsA[34]];
         where = *(Point *)&helperA->body.x;
         partsA[42] = addView(0x4988000, drawCels, runViewScript, aExtraScript + offset, 7, &where, 0, 0);
         helperA = findView(partsA[42]);
@@ -352,7 +352,7 @@ void mazeZoombinisMeet(View *a, View *b)
         setViewScript(helperB, bHelperScript, 1);
         *(Point *)&helperB->body.x = *(Point *)&b->body.x;
         helperB->placed = placeOnHotSpot35;
-        offset = (g_4afc24 + partsB[33] * 12)[partsB[34]];
+        offset = (squareOffsets + partsB[33] * 12)[partsB[34]];
         where = *(Point *)&helperB->body.x;
         partsB[42] = addView(0x4988000, drawCels, runViewScript, bExtraScript + offset, 7, &where, 0, 0);
         helperB = findView(partsB[42]);
@@ -372,9 +372,9 @@ void mazeZoombinisMeet(View *a, View *b)
         startSnoidScript((Snoid *)&a->body, aScript + partsA[45], 0, 1);
     if (bScript)
         startSnoidScript((Snoid *)&b->body, bScript + partsB[45], 0, 1);
-    moveView(b->id, 0, g_4afd8c[partsB[34]]);
+    moveView(b->id, 0, lineAnchorViews[partsB[34]]);
     moveView(partsB[41], 1, b->id);
-    moveView(a->id, 0, g_4afd8c[partsA[34]]);
+    moveView(a->id, 0, lineAnchorViews[partsA[34]]);
     moveView(partsA[41], 1, a->id);
     if (helperA)
         groupViews(partsA[41], a->id, partsA[42], 0, 0, 0);
@@ -847,10 +847,10 @@ void stepMazeSnoid(View *view, short other)
         its = (short *)&paired->body;
     parts[20] = its[38];
     if (its[39]) {
-        queueViewSound(g_4a2116 + 5101, 0);
-        g_4a2116++;
-        if (g_4a2116 > 1)
-            g_4a2116 = 0;
+        queueViewSound(turnSoundToggle + 5101, 0);
+        turnSoundToggle++;
+        if (turnSoundToggle > 1)
+            turnSoundToggle = 0;
         its[38]++;
         if (its[38] > 3)
             its[38] = 0;
@@ -892,8 +892,8 @@ void stepMazeSnoid(View *view, short other)
         if (paired) {
             its = (short *)&paired->body;
             if (its[43]) {
-                partnerList[g_4b09fe] = its[43];
-                g_4b09fe++;
+                partnerList[partnerCount] = its[43];
+                partnerCount++;
                 paired = findView(its[43]);
                 its[43] = 0;
                 if (paired) {
@@ -1051,32 +1051,32 @@ void stopMazeSnoid(short id)
             n = 0;
             break;
         case 2:
-            list = g_4b0b6e;
-            n = g_4b0d00;
+            list = lineList1;
+            n = lineCount1;
             break;
         case 3:
-            list = g_4b0ba0;
-            n = g_4b0d02;
+            list = lineList2;
+            n = lineCount2;
             break;
         case 4:
-            list = g_4b0bd2;
-            n = g_4b0d04;
+            list = lineList3;
+            n = lineCount3;
             break;
         case 5:
-            list = g_4b0c04;
-            n = g_4b0d06;
+            list = lineList4;
+            n = lineCount4;
             break;
         case 6:
-            list = g_4b0c36;
-            n = g_4b0d08;
+            list = lineList5;
+            n = lineCount5;
             break;
         case 7:
-            list = g_4b0c68;
-            n = g_4b0d0a;
+            list = lineList6;
+            n = lineCount6;
             break;
         case 8:
-            list = g_4b0c9a;
-            n = g_4b0d0c;
+            list = lineList7;
+            n = lineCount7;
             break;
         default:
             list = lineViews;
@@ -1100,8 +1100,8 @@ void stopMazeSnoid(short id)
                     ((Snoid *)&view->body)->unknownF4 = 3;
                 }
                 if (parts[30] == 5 && parts[43]) {
-                    partnerList[g_4b09fe] = parts[43];
-                    g_4b09fe++;
+                    partnerList[partnerCount] = parts[43];
+                    partnerCount++;
                     parts[43] = 0;
                 }
             }
@@ -1252,8 +1252,8 @@ void stepMazeSnoidOn(View *view)
         if (other) {
             its = (short *)&other->body;
             if (its[43]) {
-                partnerList[g_4b09fe] = its[43];
-                g_4b09fe++;
+                partnerList[partnerCount] = its[43];
+                partnerCount++;
                 View *partner = findView(its[43]);
 
                 its[43] = 0;
@@ -1333,8 +1333,8 @@ void stepAtTurning(View *view, short other)
         if (square) {
             its = (short *)&square->body;
             if (its[43]) {
-                partnerList[g_4b09fe] = its[43];
-                g_4b09fe++;
+                partnerList[partnerCount] = its[43];
+                partnerCount++;
                 View *partner = findView(its[43]);
 
                 its[43] = 0;
@@ -1577,7 +1577,7 @@ void playAmbientSound()
  * Moves on to the next scene (pendingScene): leaving a group's last puzzle
  * (9, 12, 15, 18) for its camp notes the level passed in the game state
  * (puzzleLeft: the puzzle left). Whether to go by the map (scene 2) first
- * depends on the scenes left and entered (not while practiceLevel, g_4b7562 or
+ * depends on the scenes left and entered (not while practiceLevel, skipJourneyMap or
  * transitionsOn; always while journeyRoute). Then unlocks the views, sets the next
  * ambient sound 15 seconds off, clips to the game's area and opens the
  * scene.
@@ -1592,7 +1592,7 @@ void enterNextScene()
     if (!practiceLevel) {
         short level = sceneLevel();
 
-        if (g_4b7558 && level)
+        if (levelJustRaised && level)
             level--;
         level &= 3;
         short bit = 1 << level;
@@ -1667,7 +1667,7 @@ void enterNextScene()
     *(short *)(gameState + 0xca) = currentScene;
     if (pendingScene != 0 && pendingScene != 2)
         savedScene() = pendingScene;
-    if (g_4b7562 || transitionsOn)
+    if (skipJourneyMap || transitionsOn)
         viaMap = 0;
     if (journeyRoute)
         viaMap = 1;

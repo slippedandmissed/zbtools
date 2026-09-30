@@ -1212,14 +1212,14 @@ void closeMap()
         }
         clearViews();
         if (practiceLevel) {
-            if (!g_4afb30) {
+            if (!switchedToTemp) {
                 strcpy(savedUserFile, userFileName);
-                g_4a48e8 = 1;
+                tempFileExists = 1;
                 strcpy(userFileName, "ZBtemp");
                 viewsLocked = 0;
                 rosterChanged = 1;
                 saveRoster();
-                g_4afb30 = 1;
+                switchedToTemp = 1;
             }
             *(short *)(gameState + 0xa92e) = 16;
             if (practicePartySize)
@@ -1855,8 +1855,8 @@ void leavePractice()
     }
     updateViews();
     practiceLevel = level;
-    if (g_4afb30) {
-        g_4afb30 = 0;
+    if (switchedToTemp) {
+        switchedToTemp = 0;
         readRoster();
         viewsLocked = 1;
         sceneDue = 0;

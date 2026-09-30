@@ -43,14 +43,14 @@ void gameFrame()
         scenes[currentScene]->frame();
         setPort(saved);
     }
-    if (g_4a4974)
+    if (loadingImages)
         drawMemoryStats(1);
     else
         drawMemoryStats(0);
     if (cursorMode >= 1) {
         unsigned long now = clockTime();
-        if (now >= g_4b80d4) {
-            g_4b80d4 = now + 12;
+        if (now >= nextCursorFrameTime) {
+            nextCursorFrameTime = now + 12;
             if (cursorFrame >= 12)
                 cursorFrame = 0;
             setCursorMode(cursorAnimation[cursorFrame]);
@@ -110,14 +110,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         debugMode = 1;
 
     initDisplayMode(&mode, 0xffff, 0xffff, -1, 0);
-    g_4b2aea = 0;
+    rosterReady = 0;
     quickTimeReady = 0;
     appName = "Zoombini";
-    g_4aa42a = 1;
+    quietSoundErrors = 1;
     clockInTicks = 1;
-    g_4aa428 = 0;
+    checkSoundLoaded = 0;
     minimizeWhenInactive = 1;
-    g_4aa7cc = 0;
+    allowModeChange = 0;
     setFrameHook(gameFrame);
     setFatalHook(shutDownGame);
     setClickHook(refreshCursor);
@@ -153,7 +153,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
         fatalError(msgNoMidiDevices);
 
     enterGameDirectory();
-    unusedPathHook(g_4b29d4, rosterFileName);
+    unusedPathHook(rosterDirectory, rosterFileName);
     readWriteSavedGames(0, 0);
     strcat(userFileName, ".txt");
     unusedPathHook(moduleFileName, userFileName);
@@ -405,8 +405,8 @@ void checkAllFilled()
     for (i = 0; i < 117; i++)
         if (hexCells[i].state == 508)
             count++;
-    if (!g_4b2542 && count >= partySize) {
-        g_4b2540++;
+    if (!slidesFidgetStarted && count >= partySize) {
+        slidesMoves++;
         queueViewSound(randomBetween(20055, 20063), 0);
     }
 }
@@ -518,8 +518,8 @@ void deleteTempFile()
 {
     fileSpec temp("ZBtemp");
 
-    if (g_4a48e8) {
-        g_4a48e8 = 0;
+    if (tempFileExists) {
+        tempFileExists = 0;
         deleteFile(temp);
     }
 }
@@ -533,7 +533,7 @@ void shutDownGame()
 
     if (shuttingDown)
         return;
-    if (!isWindowed() && !practiceLevel && viewsReady && g_4b2aea && rosterChanged && !dialogFlags
+    if (!isWindowed() && !practiceLevel && viewsReady && rosterReady && rosterChanged && !dialogFlags
         && currentScene >= 1 && currentScene <= 18) {
         quitRequested = 2;
         i = dialogFlags;
@@ -567,7 +567,7 @@ void shutDownGame()
             scenes[i]->close();
     for (i = 0; i < 6; i++)
         freeResource(&cursors[i]);
-    if (g_4b2aea) {
+    if (rosterReady) {
         if (!practiceLevel)
             readWriteSavedGames(0, 1);
         deleteTempFile();
@@ -928,7 +928,7 @@ void drawSmokeSnoid(View *view)
 }
 
 /* The scene to go back to: the current one if it is the town, the camp, a
-   waiting place or a puzzle with a party (setting g_4b7562), else 3. */
+   waiting place or a puzzle with a party (setting skipJourneyMap), else 3. */
 /* @zoombi32 0x00454c10 */
 short sceneToReturnTo()
 {
@@ -937,7 +937,7 @@ short sceneToReturnTo()
     if (savedScene() == 3 || savedScene() == 4 || savedScene() == 5 || savedScene() == 6 || savedScene() == 1
         || savedScene() >= 7 && savedScene() <= 18 && party()->count > 0) {
         scene = savedScene();
-        g_4b7562 = 1;
+        skipJourneyMap = 1;
     } else {
         scene = 3;
     }
@@ -952,7 +952,7 @@ void standFilledCells()
     short i;
     View *view;
 
-    g_4b2540 = 0;
+    slidesMoves = 0;
     for (i = 0; i < 117; i++)
         if (hexCells[i].state == 508) {
             view = findView(hexCells[i].view);
@@ -1014,7 +1014,7 @@ long loadMovie(const char *path)
 void stopMovie(short shutdown)
 {
     if (movieShowing) {
-        g_4b2ad6 = 1;
+        introPending = 1;
         movieShowing = 0;
         qtim_31(currentMovie, 0);
         qtim_07(currentMovie);
@@ -2588,7 +2588,7 @@ short playMovie(const char *path)
             cmgr_09(movieController);
         cmgr_01(movieController, 8, 0x10000);
         failed = 0;
-        g_4b2ad6 = 0;
+        introPending = 0;
         movieShowing = 1;
     }
     return failed;
@@ -2780,8 +2780,8 @@ void settleCells()
 /*
  * Drags a Zoombini (from `where`), snapping it to the spot it's over: with
  * smokeLevel below 3, the one spot spot4Rect (4) unless unusedSpot4Block; otherwise
- * one of the three spots in row leftRow of g_4a4584 (0-2) or row rightRow
- * of g_4a45cc (3-5). Returns the spot it was over when released (-1:
+ * one of the three spots in row leftRow of leftRowSpots (0-2) or row rightRow
+ * of rightRowSpots (3-5). Returns the spot it was over when released (-1:
  * none).
  */
 /* @zoombi32 0x00453e8c */
@@ -2829,18 +2829,18 @@ short dragSnoidToSpot(View *view, Point where)
         } else {
             if (leftRow < 3)
                 for (i = 0; i < 3; i++)
-                    if (ptInRect(&g_4a4584[leftRow][i], current)) {
+                    if (ptInRect(&leftRowSpots[leftRow][i], current)) {
                         spot = i;
-                        current.x = g_4a4584[leftRow][i].left + 25;
-                        current.y = g_4a4584[leftRow][i].top + 31;
+                        current.x = leftRowSpots[leftRow][i].left + 25;
+                        current.y = leftRowSpots[leftRow][i].top + 31;
                         i = 3;
                     }
             if (spot < 0 && rightRow < 3)
                 for (i = 0; i < 3; i++)
-                    if (ptInRect(&g_4a45cc[rightRow][i], current)) {
+                    if (ptInRect(&rightRowSpots[rightRow][i], current)) {
                         spot = i + 3;
-                        current.x = g_4a45cc[rightRow][i].left + 25;
-                        current.y = g_4a45cc[rightRow][i].top + 31;
+                        current.x = rightRowSpots[rightRow][i].left + 25;
+                        current.y = rightRowSpots[rightRow][i].top + 31;
                         i = 3;
                     }
         }
@@ -3535,11 +3535,11 @@ void smokeViewNotify(View *view, short event)
 
 /*
  * Makes the scene's puzzle (with n 1) and gives the Zoombini for row n its
- * features. The rows (g_4b27ca, with the second set in g_4b2812) are built
+ * features. The rows (rowFeatures, with the second set in rowFeatures2) are built
  * from the features set in targetFeatures: rows 1 and 2 change one or two
  * features at random, rows 3 and 4 (at smokeLevel 3 and 4) follow on from
  * them, row 7 (and 8, for the second set) from rows 3 and 4, and rows 5
- * and 6 differ by level. g_4b285a marks the features a row changes; the
+ * and 6 differ by level. rowChanges marks the features a row changes; the
  * Zoombini's first such feature is the one it changes (unknownF5).
  */
 /* @zoombi32 0x00452d5d */
@@ -3559,18 +3559,18 @@ void makeSmokeRows(Snoid *snoid, short n)
 
     if (n == 1) {
         for (j = 0; j < 9; j++) {
-            g_4b27ca[j][0] = 0;
-            g_4b27ca[j][1] = 0;
-            g_4b27ca[j][2] = 0;
-            g_4b27ca[j][3] = 0;
-            g_4b2812[j][0] = 0;
-            g_4b2812[j][1] = 0;
-            g_4b2812[j][2] = 0;
-            g_4b2812[j][3] = 0;
-            g_4b285a[j][0] = 0;
-            g_4b285a[j][1] = 0;
-            g_4b285a[j][2] = 0;
-            g_4b285a[j][3] = 0;
+            rowFeatures[j][0] = 0;
+            rowFeatures[j][1] = 0;
+            rowFeatures[j][2] = 0;
+            rowFeatures[j][3] = 0;
+            rowFeatures2[j][0] = 0;
+            rowFeatures2[j][1] = 0;
+            rowFeatures2[j][2] = 0;
+            rowFeatures2[j][3] = 0;
+            rowChanges[j][0] = 0;
+            rowChanges[j][1] = 0;
+            rowChanges[j][2] = 0;
+            rowChanges[j][3] = 0;
         }
         leftFeatureMarks[0] = 0;
         leftFeatureMarks[1] = 0;
@@ -3580,18 +3580,18 @@ void makeSmokeRows(Snoid *snoid, short n)
         rightFeatureMarks[1] = 0;
         rightFeatureMarks[2] = 0;
         rightFeatureMarks[3] = 0;
-        g_4b27ca[0][0] = targetFeatures[0];
-        g_4b27ca[0][1] = targetFeatures[1];
-        g_4b27ca[0][2] = targetFeatures[2];
-        g_4b27ca[0][3] = targetFeatures[3];
+        rowFeatures[0][0] = targetFeatures[0];
+        rowFeatures[0][1] = targetFeatures[1];
+        rowFeatures[0][2] = targetFeatures[2];
+        rowFeatures[0][3] = targetFeatures[3];
         leftTargetFeatures[0] = targetFeatures[0];
         leftTargetFeatures[1] = targetFeatures[1];
         leftTargetFeatures[2] = targetFeatures[2];
         leftTargetFeatures[3] = targetFeatures[3];
-        g_4b2812[0][0] = targetFeatures[4];
-        g_4b2812[0][1] = targetFeatures[5];
-        g_4b2812[0][2] = targetFeatures[6];
-        g_4b2812[0][3] = targetFeatures[7];
+        rowFeatures2[0][0] = targetFeatures[4];
+        rowFeatures2[0][1] = targetFeatures[5];
+        rowFeatures2[0][2] = targetFeatures[6];
+        rowFeatures2[0][3] = targetFeatures[7];
         rightTargetFeatures[0] = targetFeatures[4];
         rightTargetFeatures[1] = targetFeatures[5];
         rightTargetFeatures[2] = targetFeatures[6];
@@ -3609,26 +3609,26 @@ void makeSmokeRows(Snoid *snoid, short n)
                     if (i == chosen && randomBetween(0, 100) > 70 && !once) {
                         once = 1;
                         if (!leftTargetFeatures[i])
-                            g_4b27ca[row][i] = targetFeatures[i] + 1;
+                            rowFeatures[row][i] = targetFeatures[i] + 1;
                         else
-                            g_4b27ca[row][i] = leftTargetFeatures[i] + 1;
-                        if (g_4b27ca[row][i] > 5)
-                            g_4b27ca[row][i] = 1;
+                            rowFeatures[row][i] = leftTargetFeatures[i] + 1;
+                        if (rowFeatures[row][i] > 5)
+                            rowFeatures[row][i] = 1;
                         if (!rightTargetFeatures[i])
-                            g_4b27ca[row][i] = targetFeatures[i + 4] + 1; /* sic: not g_4b2812 */
+                            rowFeatures[row][i] = targetFeatures[i + 4] + 1; /* sic: not rowFeatures2 */
                         else
-                            g_4b2812[row][i] = rightTargetFeatures[i] + 1;
-                        if (g_4b2812[row][i] > 5)
-                            g_4b2812[row][i] = 1;
-                        g_4b285a[row][i] = g_4b27ca[row][i];
+                            rowFeatures2[row][i] = rightTargetFeatures[i] + 1;
+                        if (rowFeatures2[row][i] > 5)
+                            rowFeatures2[row][i] = 1;
+                        rowChanges[row][i] = rowFeatures[row][i];
                     } else if (randomBetween(0, 100) > 40 || i == 3 && count == 0) {
-                        g_4b27ca[row][i] = values[pick];
-                        g_4b2812[row][i] = values[pick];
-                        g_4b285a[row][i] = 0;
+                        rowFeatures[row][i] = values[pick];
+                        rowFeatures2[row][i] = values[pick];
+                        rowChanges[row][i] = 0;
                     }
-                    if (g_4b27ca[row][i]) {
-                        leftTargetFeatures[i] = g_4b27ca[row][i];
-                        rightTargetFeatures[i] = g_4b2812[row][i];
+                    if (rowFeatures[row][i]) {
+                        leftTargetFeatures[i] = rowFeatures[row][i];
+                        rightTargetFeatures[i] = rowFeatures2[row][i];
                         count++;
                         for (j = pick; j < last + 1; j++)
                             values[j] = values[j + 1];
@@ -3660,71 +3660,71 @@ void makeSmokeRows(Snoid *snoid, short n)
                             once = 1;
                             if (row == 3) {
                                 if (leftFeatureMarks[i]) {
-                                    g_4b27ca[row][i] = leftFeatureMarks[i];
-                                    g_4b2812[row][i] = rightFeatureMarks[i];
+                                    rowFeatures[row][i] = leftFeatureMarks[i];
+                                    rowFeatures2[row][i] = rightFeatureMarks[i];
                                 } else {
-                                    g_4b27ca[row][i] = targetFeatures[i];
-                                    g_4b2812[row][i] = targetFeatures[i + 4];
+                                    rowFeatures[row][i] = targetFeatures[i];
+                                    rowFeatures2[row][i] = targetFeatures[i + 4];
                                 }
-                            } else if (g_4b285a[row - 1][i]) {
-                                g_4b27ca[row][i] = leftFeatureMarks[i] - 1;
-                                if (g_4b27ca[row][i] < 1)
-                                    g_4b27ca[row][i] = 5;
-                                g_4b2812[row][i] = rightFeatureMarks[i] - 1;
-                                if (g_4b2812[row][i] < 1)
-                                    g_4b2812[row][i] = 5;
-                            } else if (g_4b27ca[row - 1][i]) {
-                                g_4b27ca[row][i] = values[pick];
-                                g_4b2812[row][i] = values[pick];
+                            } else if (rowChanges[row - 1][i]) {
+                                rowFeatures[row][i] = leftFeatureMarks[i] - 1;
+                                if (rowFeatures[row][i] < 1)
+                                    rowFeatures[row][i] = 5;
+                                rowFeatures2[row][i] = rightFeatureMarks[i] - 1;
+                                if (rowFeatures2[row][i] < 1)
+                                    rowFeatures2[row][i] = 5;
+                            } else if (rowFeatures[row - 1][i]) {
+                                rowFeatures[row][i] = values[pick];
+                                rowFeatures2[row][i] = values[pick];
                             } else if (leftFeatureMarks[i]) {
-                                g_4b27ca[row][i] = leftFeatureMarks[i];
-                                g_4b2812[row][i] = rightFeatureMarks[i];
+                                rowFeatures[row][i] = leftFeatureMarks[i];
+                                rowFeatures2[row][i] = rightFeatureMarks[i];
                             } else {
-                                g_4b27ca[row][i] = targetFeatures[i];
-                                g_4b2812[row][i] = targetFeatures[i + 4];
+                                rowFeatures[row][i] = targetFeatures[i];
+                                rowFeatures2[row][i] = targetFeatures[i + 4];
                             }
-                            g_4b285a[row][i] = g_4b27ca[row][i];
+                            rowChanges[row][i] = rowFeatures[row][i];
                         } else if (row == 3) {
-                            if (!g_4b285a[2][i] && g_4b27ca[2][i]) {
-                                g_4b27ca[row][i] = leftFeatureMarks[i];
-                                g_4b2812[row][i] = rightFeatureMarks[i];
-                            } else if (!g_4b285a[1][i] && g_4b27ca[1][i]) {
-                                g_4b27ca[row][i] = leftFeatureMarks[i];
-                                g_4b2812[row][i] = rightFeatureMarks[i];
+                            if (!rowChanges[2][i] && rowFeatures[2][i]) {
+                                rowFeatures[row][i] = leftFeatureMarks[i];
+                                rowFeatures2[row][i] = rightFeatureMarks[i];
+                            } else if (!rowChanges[1][i] && rowFeatures[1][i]) {
+                                rowFeatures[row][i] = leftFeatureMarks[i];
+                                rowFeatures2[row][i] = rightFeatureMarks[i];
                             } else {
-                                g_4b27ca[row][i] = 0;
-                                g_4b2812[row][i] = 0;
+                                rowFeatures[row][i] = 0;
+                                rowFeatures2[row][i] = 0;
                             }
-                            g_4b285a[row][i] = 0;
-                        } else if (g_4b285a[row - 1][i]) {
+                            rowChanges[row][i] = 0;
+                        } else if (rowChanges[row - 1][i]) {
                             if (!once) {
-                                g_4b27ca[row][i] = leftFeatureMarks[i] - 1;
-                                if (g_4b27ca[row][i] < 1)
-                                    g_4b27ca[row][i] = 5;
-                                g_4b2812[row][i] = rightFeatureMarks[i] - 1;
-                                if (g_4b2812[row][i] < 1)
-                                    g_4b2812[row][i] = 5;
+                                rowFeatures[row][i] = leftFeatureMarks[i] - 1;
+                                if (rowFeatures[row][i] < 1)
+                                    rowFeatures[row][i] = 5;
+                                rowFeatures2[row][i] = rightFeatureMarks[i] - 1;
+                                if (rowFeatures2[row][i] < 1)
+                                    rowFeatures2[row][i] = 5;
                                 once = 1;
-                                g_4b285a[row][i] = g_4b27ca[row][i];
+                                rowChanges[row][i] = rowFeatures[row][i];
                             } else {
-                                g_4b285a[row][i] = 0;
+                                rowChanges[row][i] = 0;
                             }
-                        } else if (g_4b27ca[row - 1][i]) {
-                            g_4b27ca[row][i] = values[pick];
-                            g_4b2812[row][i] = values[pick];
-                            g_4b285a[row][i] = 0;
-                        } else if (!g_4b285a[2][i] && g_4b27ca[2][i] || !g_4b285a[1][i] && g_4b27ca[1][i]) {
-                            g_4b27ca[row][i] = leftFeatureMarks[i];
-                            g_4b2812[row][i] = rightFeatureMarks[i];
-                            g_4b285a[row][i] = 0;
+                        } else if (rowFeatures[row - 1][i]) {
+                            rowFeatures[row][i] = values[pick];
+                            rowFeatures2[row][i] = values[pick];
+                            rowChanges[row][i] = 0;
+                        } else if (!rowChanges[2][i] && rowFeatures[2][i] || !rowChanges[1][i] && rowFeatures[1][i]) {
+                            rowFeatures[row][i] = leftFeatureMarks[i];
+                            rowFeatures2[row][i] = rightFeatureMarks[i];
+                            rowChanges[row][i] = 0;
                         } else {
-                            g_4b27ca[row][i] = 0;
-                            g_4b2812[row][i] = 0;
-                            g_4b285a[row][i] = 0;
+                            rowFeatures[row][i] = 0;
+                            rowFeatures2[row][i] = 0;
+                            rowChanges[row][i] = 0;
                         }
-                        if (g_4b27ca[row][i]) {
-                            leftFeatureMarks[i] = g_4b27ca[row][i];
-                            rightFeatureMarks[i] = g_4b2812[row][i];
+                        if (rowFeatures[row][i]) {
+                            leftFeatureMarks[i] = rowFeatures[row][i];
+                            rightFeatureMarks[i] = rowFeatures2[row][i];
                             count++;
                             for (j = pick; j < last + 1; j++)
                                 values[j] = values[j + 1];
@@ -3735,38 +3735,38 @@ void makeSmokeRows(Snoid *snoid, short n)
         }
         row = 7;
         for (i = 0; i < 4; i++)
-            if (g_4b285a[4][i]) {
-                g_4b27ca[row][i] = g_4b27ca[4][i] - 1;
-                if (g_4b27ca[row][i] < 1)
-                    g_4b27ca[row][i] = 5;
-            } else if (g_4b27ca[4][i]) {
-                g_4b27ca[row][i] = randomBetween(1, 5);
-            } else if (g_4b285a[3][i]) {
-                g_4b27ca[row][i] = g_4b27ca[3][i] - 1;
-                if (g_4b27ca[row][i] < 1)
-                    g_4b27ca[row][i] = 5;
-            } else if (g_4b27ca[3][i]) {
-                g_4b27ca[row][i] = randomBetween(1, 5);
+            if (rowChanges[4][i]) {
+                rowFeatures[row][i] = rowFeatures[4][i] - 1;
+                if (rowFeatures[row][i] < 1)
+                    rowFeatures[row][i] = 5;
+            } else if (rowFeatures[4][i]) {
+                rowFeatures[row][i] = randomBetween(1, 5);
+            } else if (rowChanges[3][i]) {
+                rowFeatures[row][i] = rowFeatures[3][i] - 1;
+                if (rowFeatures[row][i] < 1)
+                    rowFeatures[row][i] = 5;
+            } else if (rowFeatures[3][i]) {
+                rowFeatures[row][i] = randomBetween(1, 5);
             } else {
-                g_4b27ca[row][i] = leftFeatureMarks[i];
+                rowFeatures[row][i] = leftFeatureMarks[i];
             }
         if (targetFeatures[4]) {
             row = 8;
             for (i = 0; i < 4; i++)
-                if (g_4b285a[4][i]) {
-                    g_4b2812[row][i] = g_4b2812[4][i] - 1;
-                    if (g_4b2812[row][i] < 1)
-                        g_4b2812[row][i] = 5;
-                } else if (g_4b2812[4][i]) {
-                    g_4b2812[row][i] = randomBetween(1, 5);
-                } else if (g_4b285a[3][i]) {
-                    g_4b2812[row][i] = g_4b2812[3][i] - 1;
-                    if (g_4b2812[row][i] < 1)
-                        g_4b2812[row][i] = 5;
-                } else if (g_4b2812[3][i]) {
-                    g_4b2812[row][i] = randomBetween(1, 5);
+                if (rowChanges[4][i]) {
+                    rowFeatures2[row][i] = rowFeatures2[4][i] - 1;
+                    if (rowFeatures2[row][i] < 1)
+                        rowFeatures2[row][i] = 5;
+                } else if (rowFeatures2[4][i]) {
+                    rowFeatures2[row][i] = randomBetween(1, 5);
+                } else if (rowChanges[3][i]) {
+                    rowFeatures2[row][i] = rowFeatures2[3][i] - 1;
+                    if (rowFeatures2[row][i] < 1)
+                        rowFeatures2[row][i] = 5;
+                } else if (rowFeatures2[3][i]) {
+                    rowFeatures2[row][i] = randomBetween(1, 5);
                 } else {
-                    g_4b2812[row][i] = rightFeatureMarks[i];
+                    rowFeatures2[row][i] = rightFeatureMarks[i];
                 }
         }
         if (smokeLevel == 3) {
@@ -3780,13 +3780,13 @@ void makeSmokeRows(Snoid *snoid, short n)
                     if (count < 2) {
                         pick = randomBetween(1, last);
                         if (i == chosen && randomBetween(0, 100) > 70) {
-                            g_4b27ca[row][i] = values[pick];
-                            g_4b285a[row][i] = values[pick];
+                            rowFeatures[row][i] = values[pick];
+                            rowChanges[row][i] = values[pick];
                         } else if (randomBetween(0, 100) > 40 || i == 3 && count == 0) {
-                            g_4b27ca[row][i] = values[pick];
-                            g_4b285a[row][i] = 0;
+                            rowFeatures[row][i] = values[pick];
+                            rowChanges[row][i] = 0;
                         }
-                        if (g_4b27ca[row][i]) {
+                        if (rowFeatures[row][i]) {
                             count++;
                             for (j = pick; j < last + 1; j++)
                                 values[j] = values[j + 1];
@@ -3799,45 +3799,45 @@ void makeSmokeRows(Snoid *snoid, short n)
                 row2 = 5;
                 row = randomBetween(1, 2);
                 for (i = 0; i < 4; i++)
-                    if (g_4b285a[row][i]) {
-                        g_4b27ca[row2][i] = g_4b27ca[row][i];
-                        g_4b285a[row2][i] = g_4b27ca[row][i];
-                    } else if (g_4b27ca[row][i]) {
-                        g_4b27ca[row2][i] = g_4b27ca[row][i];
-                        g_4b27ca[row2][i]++;
-                        if (g_4b27ca[row2][i] > 5)
-                            g_4b27ca[row2][i] = 1;
-                        g_4b285a[row2][i] = 0;
+                    if (rowChanges[row][i]) {
+                        rowFeatures[row2][i] = rowFeatures[row][i];
+                        rowChanges[row2][i] = rowFeatures[row][i];
+                    } else if (rowFeatures[row][i]) {
+                        rowFeatures[row2][i] = rowFeatures[row][i];
+                        rowFeatures[row2][i]++;
+                        if (rowFeatures[row2][i] > 5)
+                            rowFeatures[row2][i] = 1;
+                        rowChanges[row2][i] = 0;
                     }
                 row2 = 6;
                 randomBetween(3, 4);
                 chosen = randomBetween(0, 3);
                 for (i = 0; i < 4; i++)
                     if (i == chosen) {
-                        g_4b27ca[row2][i] = randomBetween(1, 5);
-                        g_4b285a[row2][i] = 0;
+                        rowFeatures[row2][i] = randomBetween(1, 5);
+                        rowChanges[row2][i] = 0;
                     }
             } else {
                 row2 = 6;
                 row = randomBetween(3, 4);
                 for (i = 0; i < 4; i++)
-                    if (g_4b285a[row][i]) {
-                        g_4b27ca[row2][i] = g_4b27ca[row][i];
-                        g_4b285a[row2][i] = g_4b27ca[row][i];
-                    } else if (g_4b27ca[row][i]) {
-                        g_4b27ca[row2][i] = g_4b27ca[row][i];
-                        g_4b27ca[row2][i]++;
-                        if (g_4b27ca[row2][i] > 5)
-                            g_4b27ca[row2][i] = 1;
-                        g_4b285a[row2][i] = 0;
+                    if (rowChanges[row][i]) {
+                        rowFeatures[row2][i] = rowFeatures[row][i];
+                        rowChanges[row2][i] = rowFeatures[row][i];
+                    } else if (rowFeatures[row][i]) {
+                        rowFeatures[row2][i] = rowFeatures[row][i];
+                        rowFeatures[row2][i]++;
+                        if (rowFeatures[row2][i] > 5)
+                            rowFeatures[row2][i] = 1;
+                        rowChanges[row2][i] = 0;
                     }
                 row2 = 5;
                 randomBetween(1, 2);
                 chosen = randomBetween(0, 3);
                 for (i = 0; i < 4; i++)
                     if (i == chosen) {
-                        g_4b27ca[row2][i] = randomBetween(1, 5);
-                        g_4b285a[row2][i] = 0;
+                        rowFeatures[row2][i] = randomBetween(1, 5);
+                        rowChanges[row2][i] = 0;
                     }
             }
         }
@@ -3846,13 +3846,13 @@ void makeSmokeRows(Snoid *snoid, short n)
     for (i = 0; i < 4; i++) {
         if (n == 8) {
             if (targetFeatures[4])
-                snoid->features[i] = g_4b2812[n][i];
+                snoid->features[i] = rowFeatures2[n][i];
             else
                 snoid->features[i] = 0;
         } else {
-            snoid->features[i] = g_4b27ca[n][i];
+            snoid->features[i] = rowFeatures[n][i];
         }
-        if (g_4b285a[n][i])
+        if (rowChanges[n][i])
             count = i + 1;
     }
     if (count) {
@@ -4693,7 +4693,7 @@ void smokeClicked(short action)
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
-                                        *(Point *)&moved->body.x = g_4a4560[rightRow][placed];
+                                        *(Point *)&moved->body.x = rightRowPlaces[rightRow][placed];
                                         moved->unknownF4 = 4;
                                         placed++;
                                     }
@@ -4716,7 +4716,7 @@ void smokeClicked(short action)
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
-                                        *(Point *)&moved->body.x = g_4a453c[leftRow][placed];
+                                        *(Point *)&moved->body.x = leftRowPlaces[leftRow][placed];
                                         moved->unknownF4 = 4;
                                         placed++;
                                     }
@@ -4747,7 +4747,7 @@ void smokeClicked(short action)
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
-                                        *(Point *)&moved->body.x = g_4a453c[leftRow][placed];
+                                        *(Point *)&moved->body.x = leftRowPlaces[leftRow][placed];
                                         moved->unknownF4 = 4;
                                         placed++;
                                     }
@@ -4768,7 +4768,7 @@ void smokeClicked(short action)
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
-                                        *(Point *)&moved->body.x = g_4a4560[rightRow][placed];
+                                        *(Point *)&moved->body.x = rightRowPlaces[rightRow][placed];
                                         moved->unknownF4 = 4;
                                         placed++;
                                     }

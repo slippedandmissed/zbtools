@@ -21,16 +21,16 @@
 /* @zoombi32 0x00456c00 */
 void resetSnoids()
 {
-    g_4b7564 = g_4b7558 = 0;
+    noPaths = levelJustRaised = 0;
     arrivalHook = 0;
     practiceLevel = 0;
-    g_4b7562 = g_4b7566 = dragInProgress = 0;
-    g_4b7552 = 0;
-    g_4b7554 = 1;
-    g_4b755e = 15;
-    g_4b7560 = 1;
+    skipJourneyMap = hideArrivedPlaced = dragInProgress = 0;
+    keepDragPose = 0;
+    claimOnArrival = 1;
+    placeSnapRadius = 15;
+    placesClaimable = 1;
     setSnoidMode(1);
-    g_4b7556 = 0;
+    dragInPlace = 0;
 }
 
 /* Opens the sound files (with `files`), else loads the Zoombinis' images,
@@ -253,7 +253,7 @@ void freeSnoidScripts()
     for (short i = 0; i < 110; i++)
         freeResource(&snoidScriptResources[i]);
     snoidScriptGroups = 0;
-    g_4b7564 = 0;
+    noPaths = 0;
 }
 
 /* Draws a Zoombini's cels. */
@@ -546,13 +546,13 @@ void updateSnoidView(View *view, short region)
                 snoidsOnTheirWay--;
                 snoidsArrived++;
             }
-            if (g_4b7566 && snoid->unknownF7 == 2)
+            if (hideArrivedPlaced && snoid->unknownF7 == 2)
                 view->flags |= 0x4000000;
-            rect.left = snoid->body.x - g_4b755e;
-            rect.right = snoid->body.x + g_4b755e;
-            rect.top = snoid->body.y - g_4b755e;
-            rect.bottom = snoid->body.y + g_4b755e;
-            if (g_4b7554) {
+            rect.left = snoid->body.x - placeSnapRadius;
+            rect.right = snoid->body.x + placeSnapRadius;
+            rect.top = snoid->body.y - placeSnapRadius;
+            rect.bottom = snoid->body.y + placeSnapRadius;
+            if (claimOnArrival) {
                 found = 0;
                 for (i = 0; !found && i < placedViewCount; i++)
                     if (!placeClaims[i] && ptInRect(&rect, placedViewPoints[i])) {
@@ -852,7 +852,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
     snoidIdleDelay = hit = prevId = 0;
     heldPlace = placeHeld = 0;
     id = view->id;
-    if (g_4b7556)
+    if (dragInPlace)
         prevId = view->prev->id;
     if ((dragged = removeView(id, 0)) == 0)
         return 0;
@@ -871,16 +871,16 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
     snoid->unknownF8 = 0;
     start = *(Point *)&snoid->body.x;
     unionRgnRect(removedRgn, &snoid->body.bounds);
-    if (!g_4b7552)
+    if (!keepDragPose)
         setSnoidAction(snoid, 5, 0);
     unionRgnRect(currentViewRgn, &snoid->body.bounds);
     last = current;
     dx = current.x - start.x;
     dy = current.y - start.y;
-    rect.left = start.x - g_4b755e;
-    rect.right = start.x + g_4b755e;
-    rect.top = start.y - g_4b755e;
-    rect.bottom = start.y + g_4b755e;
+    rect.left = start.x - placeSnapRadius;
+    rect.right = start.x + placeSnapRadius;
+    rect.top = start.y - placeSnapRadius;
+    rect.bottom = start.y + placeSnapRadius;
     found = 0;
     {
         short i;
@@ -913,7 +913,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
             if (snoid->unknownF2)
                 snoid->unknownF2 = 0;
         }
-        if (!g_4b7556) {
+        if (!dragInPlace) {
             dragX = current.x - dx;
             if (dragX < limits.left)
                 dragX = limits.left;
@@ -937,17 +937,17 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
             moved = 1;
         }
         last = current;
-        if (placedViewCount && (moved || g_4b754c)) {
+        if (placedViewCount && (moved || endDragNow)) {
             short i;
 
             moved = 0;
-            rect.left = snoid->body.x - g_4b755e;
-            rect.right = snoid->body.x + g_4b755e;
-            rect.top = snoid->body.y - g_4b755e;
-            rect.bottom = snoid->body.y + g_4b755e;
+            rect.left = snoid->body.x - placeSnapRadius;
+            rect.right = snoid->body.x + placeSnapRadius;
+            rect.top = snoid->body.y - placeSnapRadius;
+            rect.bottom = snoid->body.y + placeSnapRadius;
             found = 0;
-            if (!g_4b754c) {
-                for (i = 0; !found && i < placedViewCount && g_4b7560; i++)
+            if (!endDragNow) {
+                for (i = 0; !found && i < placedViewCount && placesClaimable; i++)
                     if (!placeClaims[i] && ptInRect(&rect, placedViewPoints[i])) {
                         if ((placed = findView(placedViews[i])) != 0) {
                             found = 1;
@@ -978,7 +978,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
         mainLoopEvents();
         resetViewClock();
     }
-    if (target && !g_4b7556) {
+    if (target && !dragInPlace) {
         placeClaims[which] = id;
         heldPlace = which;
         placeHeld = id;
@@ -997,7 +997,7 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
     }
     area = dragged->body.bounds;
     unionRgnRect(removedRgn, &area);
-    if (!g_4b7556) {
+    if (!dragInPlace) {
         if (target)
             *(Point *)&snoid->targetX = placedViewPoints[which];
         else if (currentScene == 6)
@@ -1007,8 +1007,8 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
     }
     snoid->unknownF8 = 1;
     unionRgnRect(removedRgn, &snoid->body.bounds);
-    if (!g_4b7552) {
-        if (g_4b7556) {
+    if (!keepDragPose) {
+        if (dragInPlace) {
             snoid->unknownF2 = 0;
             setSnoidAction(snoid, 0, 0);
         } else {
@@ -1019,10 +1019,10 @@ short dragSnoid(View *view, Point where, const ShortRect *bounds, void (*track)(
     dragged->flags = savedFlags;
     dragged->interval = savedInterval;
     snoidIdleDelay = savedBlink;
-    if (g_4b7556)
+    if (dragInPlace)
         moveView(id, 1, prevId);
-    g_4b7556 = 0;
-    g_4b754c = 0;
+    dragInPlace = 0;
+    endDragNow = 0;
     dragInProgress = 0;
     return hit;
 }
@@ -1151,7 +1151,7 @@ void freePaths()
     freeResource(&pathNodesResource);
     paths = 0;
     pathNodes = 0;
-    g_4a4b9c = 0;
+    nextPathToDraw = 0;
 }
 
 /* @zoombi32 0x00459c02 */
@@ -1285,10 +1285,10 @@ short nearPlacedView(Point where)
 {
     ShortRect rect;
 
-    rect.left = where.x - g_4b755e;
-    rect.right = where.x + g_4b755e;
-    rect.top = where.y - g_4b755e;
-    rect.bottom = where.y + g_4b755e;
+    rect.left = where.x - placeSnapRadius;
+    rect.right = where.x + placeSnapRadius;
+    rect.top = where.y - placeSnapRadius;
+    rect.bottom = where.y + placeSnapRadius;
     for (short i = 0; i < placedViewCount; i++)
         if (ptInRect(&rect, placedViewPoints[i]))
             return 1;
@@ -1623,7 +1623,7 @@ void choosePath(Snoid *snoid, Point *target)
     long dy;
     long distance;
 
-    if (!paths || !pathNodes || g_4b7564) {
+    if (!paths || !pathNodes || noPaths) {
         *(Point *)&snoid->body.unknownAa = *(Point *)&snoid->targetX;
         return;
     }
@@ -1685,7 +1685,7 @@ short stepAlongPath(Snoid *snoid)
     short steps;
 
     moving = 0;
-    if (paths && pathNodes && !g_4b7564) {
+    if (paths && pathNodes && !noPaths) {
         short arrived;
 
         if (snoid->unknownEa >= 0) {
@@ -1969,8 +1969,8 @@ void setSnoidAction(Snoid *snoid, short action, Point *where)
                 which = 4;
             else
                 which = 5;
-            g_4b7bda = ++g_4b7bda % 32;
-            if (!g_4b7bda)
+            ambientCounter = ++ambientCounter % 32;
+            if (!ambientCounter)
                 for (sound = 100; sound <= 424; sound++)
                     unloadSoundNow(sound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
             queueViewSound(snoidSound(snoid, which), 0);
@@ -2123,8 +2123,8 @@ void enterSnoids(short dy)
 
     x = -50;
     snoidsArrived = snoidsOnTheirWay = 0;
-    if (*(short *)(gameState + 0x20) || g_4b7562) {
-        g_4b7562 = 0;
+    if (*(short *)(gameState + 0x20) || skipJourneyMap) {
+        skipJourneyMap = 0;
         staggerDue = 0;
     } else {
         staggerDue = 1;
@@ -2152,10 +2152,10 @@ void enterSnoids(short dy)
                     short found;
                     short j;
 
-                    rect.left = snoid->body.x - g_4b755e;
-                    rect.right = snoid->body.x + g_4b755e;
-                    rect.top = snoid->body.y - g_4b755e;
-                    rect.bottom = snoid->body.y + g_4b755e;
+                    rect.left = snoid->body.x - placeSnapRadius;
+                    rect.right = snoid->body.x + placeSnapRadius;
+                    rect.top = snoid->body.y - placeSnapRadius;
+                    rect.bottom = snoid->body.y + placeSnapRadius;
                     found = 0;
                     for (j = 0; !found && j < placedViewCount; j++)
                         if (!placeClaims[j] && ptInRect(&rect, placedViewPoints[j])) {
@@ -2346,21 +2346,21 @@ void drawPaths()
             drawText(Rect(rect), 0x22, text, 0xffff);
         }
         setForeColor(saved);
-        if (g_4a4b9c >= pathCount)
-            g_4a4b9c = 0;
-        saved = setForeColor(Color(g_4a4b9c + 0x21));
-        node = list->nodes[g_4a4b9c][0] - 1;
+        if (nextPathToDraw >= pathCount)
+            nextPathToDraw = 0;
+        saved = setForeColor(Color(nextPathToDraw + 0x21));
+        node = list->nodes[nextPathToDraw][0] - 1;
         moveTo(nodes->nodes[node].x, nodes->nodes[node].y);
         rect.left = nodes->nodes[node].x - 10;
         rect.top = nodes->nodes[node].y - 10;
         rect.right = rect.left + 20;
         rect.bottom = rect.top + 20;
         for (i = 1; i < 24; i++) {
-            char next = list->nodes[g_4a4b9c][i];
+            char next = list->nodes[nextPathToDraw][i];
 
             if (next) {
                 lineTo(nodes->nodes[next - 1].x, nodes->nodes[next - 1].y);
-                fillPortRect(Rect(rect), Color(g_4a4b9c + 0x21), 0);
+                fillPortRect(Rect(rect), Color(nextPathToDraw + 0x21), 0);
                 savedLabel = setForeColor(Color(0xb));
                 frameRect(Rect(rect));
                 intToDecimal(node + 1, text);
@@ -2373,7 +2373,7 @@ void drawPaths()
                 rect.bottom = rect.top + 20;
                 node = next - 1;
             } else {
-                fillPortRect(Rect(rect), Color(g_4a4b9c + 0x21), 0);
+                fillPortRect(Rect(rect), Color(nextPathToDraw + 0x21), 0);
                 savedLabel = setForeColor(Color(0xb));
                 frameRect(Rect(rect));
                 intToDecimal(node + 1, text);
@@ -2383,7 +2383,7 @@ void drawPaths()
             }
         }
         showRect(&gameRect);
-        g_4a4b9c++;
+        nextPathToDraw++;
         setForeColor(saved);
     }
 }
@@ -2435,9 +2435,9 @@ short settleSnoid(View *view)
 short keepDragging()
 {
     if (!dragging) {
-        g_4b754c = 0;
-    } else if (g_4b754c == 1) {
-        g_4b754c = 2;
+        endDragNow = 0;
+    } else if (endDragNow == 1) {
+        endDragNow = 2;
         if (dragging) {
             dragging = 0;
             if (hideDragCursor)
@@ -2457,7 +2457,7 @@ short keepDragging()
     } else {
         short down = isButtonStillDown(buttonDown);
 
-        if (g_4b7556 && !down) {
+        if (dragInPlace && !down) {
             dragging = 0;
             if (hideDragCursor)
                 showCursor();
@@ -2866,7 +2866,7 @@ void recordParty(short ending, short all)
     View *view;
 
     if (!all) {
-        g_4b7554 = 1;
+        claimOnArrival = 1;
         setSnoidMode(1);
     }
     if (viewsLocked)
@@ -2924,7 +2924,7 @@ void recordParty(short ending, short all)
     all = savedAll;
     lost = party()->count - countPresentTravellers();
     group = sceneGroup(&last);
-    g_4b7558 = 0;
+    levelJustRaised = 0;
     if (group && !all) {
         short scene = currentScene - 7;
 
@@ -3038,7 +3038,7 @@ void recordParty(short ending, short all)
                 }
             if (last && puzzleLevels()[group] < 3) {
                 puzzleLevels()[group]++;
-                g_4b7558 = 1;
+                levelJustRaised = 1;
             }
         }
     }

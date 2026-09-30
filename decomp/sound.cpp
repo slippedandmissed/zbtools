@@ -43,7 +43,7 @@ unsigned short loadSoundByKey(short key, long type)
 
 /*
  * Loads the sound with a key (of a type), finding its resource first unless
- * g_4aa428 is set: the key if it's loaded, 0 if sound is off, else -1. Sounds
+ * checkSoundLoaded is set: the key if it's loaded, 0 if sound is off, else -1. Sounds
  * no larger than largestLoadedSound are loaded by loadSoundByKey.
  */
 /* @zoombi32 0x00411382 */
@@ -52,7 +52,7 @@ unsigned short findAndLoadSound(short key, long type)
     SoundEntry *entry;
     unsigned short result;
 
-    if (g_4aa428)
+    if (checkSoundLoaded)
         return loadSoundByKey(key, type);
     result = 0xffff;
     if (soundAtMost(1))
@@ -132,7 +132,7 @@ SoundEntry *findOrAddSound(short key, long type)
 
     if (!entry) {
         entry = addSound(key, type);
-        if (!entry && !g_4aa42a)
+        if (!entry && !quietSoundErrors)
             reportSoundError(key, type, 0, 0);
     }
     return entry;
@@ -194,7 +194,7 @@ void setSoundType(SoundEntry **entry, short key, long type)
         kind = 0;
     else if (type == RESOURCE_TYPE('M', 'I', 'D', 'I') || type == RESOURCE_TYPE('t', 'M', 'I', 'D'))
         kind = 1;
-    else if (!g_4aa42a)
+    else if (!quietSoundErrors)
         reportSoundError(key, type, 0, msgUnknownChunk);
     else
         removeSound(entry);
@@ -214,7 +214,7 @@ short loadSound(SoundEntry *entry)
             mainLoopEvents();
         } else
             entry->handle = newSound(usedResourceHandle(entry->unknownA));
-        if (!entry->handle && !g_4aa42a)
+        if (!entry->handle && !quietSoundErrors)
             reportSoundError(0, 0, entry, msgUnableToCreate);
     }
     return entry->handle != 0;
@@ -249,7 +249,7 @@ short prepareSound(SoundEntry *entry, short channel)
     do {
         answer = IDOK;
         if (openSound(entry->handle, 0xffff)) {
-            if (!g_4aa42a)
+            if (!quietSoundErrors)
                 reportSoundError(0, 0, entry, msgUnableToPrepare);
             if (soundErrorsIgnored)
                 return 0;
@@ -293,7 +293,7 @@ short startSound(SoundEntry *entry, short channel)
     currentChannel[type] = 0;
     if (playSound(entry->handle, soundNoticeCallback,
                   ((unsigned long)(unsigned short)type << 16) + (unsigned short)channel)) {
-        if (g_4aa42a)
+        if (quietSoundErrors)
             soundChannels[type][channel].playing = 0;
         else
             reportSoundError(0, 0, entry, msgUnableToStart);
@@ -372,7 +372,7 @@ short playSoundOn(short key, long type, short channel)
         if (!prepareSound(entry, channel))
             return 0;
         if (seekSound(entry->handle, 0)) {
-            if (g_4aa42a)
+            if (quietSoundErrors)
                 return 0;
             reportSoundError(0, 0, entry, msgSeekError);
         }
@@ -434,7 +434,7 @@ void soundNoticeCallback(long, SoundNotice *notice, long cookie)
     case 1:
         soundChannels[type][channel].playing = 0;
         currentChannel[type] = -1;
-        if (notice->unknown4 && !g_4aa42a)
+        if (notice->unknown4 && !quietSoundErrors)
             ;
         break;
     case 0:

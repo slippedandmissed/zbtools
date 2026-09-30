@@ -180,7 +180,7 @@ void gameKey(unsigned short key)
                 queueViewSound(0, 0);
                 message = 1;
             } else {
-                stopSounds(g_4a7d42, RESOURCE_TYPE(0, 'S', 'N', 'D'));
+                stopSounds(currentDialogSound, RESOURCE_TYPE(0, 'S', 'N', 'D'));
                 message = 2;
             }
             break;
@@ -361,7 +361,7 @@ short setCursorMode(long mode)
 
     if (changed) {
         if (cursorMode == 1)
-            g_4b80d4 = lastEventTime = clockTime();
+            nextCursorFrameTime = lastEventTime = clockTime();
         discardEvents(3);
         if (!mode)
             setCursorShape(0);

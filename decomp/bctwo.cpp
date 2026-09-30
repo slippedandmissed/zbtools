@@ -109,7 +109,7 @@ void openCamp2()
             party()->unknown2 = 1;
         }
     } else
-        g_4b7562 = 1;
+        skipJourneyMap = 1;
     makePartySnoids(1);
     enterSnoids(-20);
     updateViews();

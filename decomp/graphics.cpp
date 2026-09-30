@@ -24,7 +24,7 @@ void initGraphics(DisplayMode *mode, short depth)
     short width, height;
     short i;
 
-    g_4aa7ce = depth;
+    staticColorsSetting = depth;
     width = mode->width;
     height = mode->height;
     checkDisplayMode(mode);

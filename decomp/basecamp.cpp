@@ -642,11 +642,11 @@ void enterCamp()
     addView(0x1000, drawSceneButtons1, updateCampButtons, 0, 0, 0, 0, 0);
     for (short i = 0; i < 16; i++)
         placedViews[i] = addView(0x108a000, drawCels, runViewScript, i + 0x4b0, 7, &places[i], 0, 0);
-    g_4ab530[0] = addView(0x1180000, drawCels, runViewScript, 0x452, 6, 0, 0, 0);
-    g_4ab530[1] = addView(0x1180000, drawCels, runViewScript, 0x454, 6, 0, 0, 0);
-    g_4ab530[2] = addView(0x180000, drawCels, runViewScript, 0x455, 6, 0, 0, 0);
-    g_4ab530[3] = addView(0x50180000, drawCels, runViewScript, 0x456, 6, 0, 0, 0);
-    g_4ab530[4] = addView(0x1101000, drawCels, runViewScript, 0x453, 6, 0, 0, 0);
+    camp1ThingViews[0] = addView(0x1180000, drawCels, runViewScript, 0x452, 6, 0, 0, 0);
+    camp1ThingViews[1] = addView(0x1180000, drawCels, runViewScript, 0x454, 6, 0, 0, 0);
+    camp1ThingViews[2] = addView(0x180000, drawCels, runViewScript, 0x455, 6, 0, 0, 0);
+    camp1ThingViews[3] = addView(0x50180000, drawCels, runViewScript, 0x456, 6, 0, 0, 0);
+    camp1ThingViews[4] = addView(0x1101000, drawCels, runViewScript, 0x453, 6, 0, 0, 0);
     for (short k = 0x457; k <= 0x45b; k++) {
         View *view = findView(addView(0x20000, drawCels, runViewScript, k, 0, 0, 0, 0));
         if (view) {
@@ -689,7 +689,7 @@ void enterCamp()
             party()->unknown2 = 1;
         }
     } else {
-        g_4b7562 = 1;
+        skipJourneyMap = 1;
     }
     makePartySnoids(1);
     enterSnoids(-20);
@@ -1111,7 +1111,7 @@ void campMouse(short action)
                 loadViewSounds(view->id, 1);
             } else {
                 for (i = 0; i < 5; i++)
-                    if (ptInRect(&g_4a0a34[i], where) && (view = findView(g_4ab530[i])) != 0
+                    if (ptInRect(&camp1ThingRects[i], where) && (view = findView(camp1ThingViews[i])) != 0
                         && !view->body.running) {
                         setViewScript(view, 0, 1);
                         loadViewSounds(view->id, 1);
