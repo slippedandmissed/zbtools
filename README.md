@@ -12,7 +12,11 @@ Every function, global, source module and most struct fields now has a descripti
 
 The game's resources are in `assets/`, converted from its Mohawk archives to modern formats: 1,333 sounds as WAV, about 10,000 images as PNG, the music as MIDI, and its animation scripts, palettes and tables as TOML. `uv run assets pack` turns them back into archives identical, byte for byte, to the disc's.
 
-The code doesn't build into a working executable yet. Every global the headers declare is defined, with the original's initial values (`uv run define-data`, checked by `uv run match-data`); the link is next (see the [roadmap](#roadmap)).
+Every global the headers declare is defined, with the original's initial values (`uv run define-data`). 69% of the original's initialised data is placed and identical, byte for byte, in the compiled objects, and every reference to data in the decompiled functions points where the original's does (`uv run match-data`).
+
+The code doesn't build into a working executable yet: linking it is next (see the [roadmap](#roadmap)).
+
+The original game is playable from its disc image in the scripted Windows 98 VM.
 
 ## Setup
 
@@ -275,7 +279,7 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Extract the disc and the Windows 95 build (`uv run extract-game`)
 - [x] Scripted Windows 98 VM (`uv run vm install` / `run` / `reset`)
 - [x] Scripted QuickTime and game install in the VM (`uv run vm install-game`); game reaches its title screen
-- [ ] Game verified playable in the VM (sound, music, movies)
+- [x] Game verified playable in the VM, from its disc image
 - [x] Mohawk archive extractor and packer, reproducing the disc's archives exactly (`uv run assets`)
 - [x] Convert the resources to modern formats (sounds, images, scripts, palettes, MIDI) and back, exactly
 - [x] Borland C++ 4.5 and 4.52 toolchains running under Wine (`uv run toolchain`)
@@ -287,8 +291,8 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Settle the compiler: Borland C++ 4.5 (4.52 is identical) with default options
 - [x] Decompile the game and the engine, function by function (every function written)
 - [ ] Byte-match the remaining near-misses, where practical
-- [ ] Define the game's initialised data and resources, and check them against the original
-- [ ] Link the decompiled code with TLINK32 into a working `zoombi32.exe`, and test it in the VM
+- [x] Define the game's globals with their initial values, and check them, and the code's references to them, against the original (`uv run define-data`, `uv run match-data`)
+- [ ] Link the decompiled code and its resources (the icon) with TLINK32 into a working `zoombi32.exe`, and test it in the VM
 - [ ] Port to a modern platform layer
 
 ## Legal
