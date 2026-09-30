@@ -301,6 +301,7 @@
 0x004184b7 fn_4184b7
 0x004184cd returnToCamp
 0x00418698 resetScene5
+0x004186dc openScene5
 0x00418d40 closeScene5
 0x00418e62 scene5Frame
 0x00418fa7 scene5Clicked

@@ -8,6 +8,7 @@
 #include "debug.h"
 #include "e2memory.h"
 #include "features.h"
+#include "focus.h"
 #include "graphics.h"
 #include "module_4623b8.h"
 #include "net.h"
@@ -26,6 +27,159 @@ void resetScene5()
     g_4ab64a = 0;
     g_4ab666 = 1;
     g_4ab67e = 0;
+}
+
+/* Opens scene 5, the camp: the book of the Zoombinis waiting there (kept
+   at +0x3688 in the game's state), the Zoombinis back at the camp and the
+   party (which joins the book when it doesn't carry on), and a line by
+   the camp's hint. */
+/* @zoombi32 0x004186dc */
+void openScene5()
+{
+    short choices;
+    short saved;
+    short highest;
+    Point places[16] = {{490, 372}, {458, 359}, {450, 384}, {412, 376}, {393, 398}, {365, 386},
+                        {348, 405}, {321, 389}, {304, 410}, {278, 397}, {264, 417}, {234, 400},
+                        {218, 420}, {197, 398}, {177, 418}, {152, 403}};
+    short n; /* the loop, then the Zoombinis chosen, then the hint */
+    short m; /* whether the party fitted, then the line to say */
+
+    g_4ab660 = 0;
+    resetScene5();
+    saved = g_4b87fe;
+    g_4b87fe = 0;
+    g_4afb32 = 1;
+    addSoundRange(20000, 29999, 1);
+    addSoundRange(2000, 2099, 0);
+    addSoundRange(6000, 6099, 1);
+    g_4ab64c = (CampEntries *)(g_4a4ba0 + 0x3688);
+    g_4ab640 = g_4ab64c->row;
+    g_4ab646 = g_4ab64c->count;
+    g_4ab648 = fn_419f1a();
+    fn_419e49(-1);
+    openGameFile(&g_4ab658, "bctwo.mhk");
+    fn_46be2e(g_4ab658);
+    loadPaths(1000);
+    loadDragCursors(10000);
+    loadTerrain(100);
+    drawBackdrop(5000);
+    loadFeatureGroup(6000, 0, 0);
+    loadFeatureGroup(7000, 1, 0);
+    loadScripts(6000, 14);
+    addScripts(7000, 16, 0);
+    fn_46c011(&g_4a0ac0, 8000, 0, 1);
+    fn_46c011(&g_4a0ac4, 9000, 0, 1);
+    g_4ab650 = addView(0xc000, fn_419c3a, fn_419a59, 0, 6, 0, 0, 0);
+    addView(0x9000, fn_419853, 0, 0, 0, 0, 0, 0);
+    addView(0x1000, fn_41983f, fn_419867, 0, 0, 0, 0, 0);
+    for (n = 0; n < 16; n++)
+        placedViews[n] = addView(0x108a000, drawCels, runViewScript, n + 7000, 7, &places[n], 0, 0);
+    g_4ab66a[9] = addView(0x5188000, drawCels, runViewScript, 6000, 6, 0, 0, 0);
+    g_4ab66a[0] = addView(0x188000, drawCels, runViewScript, 6005, 6, 0, 0, 0);
+    g_4ab66a[1] = addView(0x188000, drawCels, runViewScript, 6011, 6, 0, 0, 0);
+    g_4ab66a[2] = addView(0x1188000, drawCels, runViewScript, 6010, 6, 0, 0, 0);
+    g_4ab66a[3] = addView(0x4188000, drawCels, runViewScript, 6002, 6, 0, 0, 0);
+    g_4ab66a[4] = addView(0x4180000, drawCels, runViewScript, 6004, 6, 0, 0, 0);
+    g_4ab66a[5] = addView(0x1188000, drawCels, runViewScript, 6009, 6, 0, 0, 0);
+    g_4ab66a[6] = addView(0x5188000, drawCels, runViewScript, 6006, 6, 0, 0, 0);
+    g_4ab66a[7] = addView(0x5188000, drawCels, runViewScript, 6007, 6, 0, 0, 0);
+    g_4ab66a[8] = addView(0x5188000, drawCels, runViewScript, 6008, 6, 0, 0, 0);
+    fn_4148da(10, 236);
+    setViewPlaces(16, places, 1);
+    if (party()->count)
+        makePartySnoids(0);
+    n = countChosenSnoids();
+    *(short *)(g_4a4ba0 + 0x4c) += n;
+    *party() = waitingParties()[2];
+    waitingParties()[2].count = 0;
+    waitingParties()[2].unknown2 = 1;
+    waitingParties()[2].unknown4 = 1;
+    if (n) {
+        if (!party()->unknown2 && fn_4572bf()) {
+            highest = g_4ab648;
+            m = fn_41a23b();
+            g_4ab646 += fn_4572bf();
+            g_4ab648 = fn_419f1a();
+            fn_419e49(-1);
+            if (m) {
+                g_4ab640 = (highest + 1) / 5 % g_4ab642;
+                fn_419e49(-1);
+            }
+            party()->unknown2 = 1;
+        }
+    } else
+        g_4b7562 = 1;
+    makePartySnoids(1);
+    enterSnoids(-20);
+    updateViews();
+    if (n)
+        staggerSnoids(45, 30);
+    g_4ab67e = *(short *)(g_4a4ba0 + 0x48) >= 625
+               && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c)
+                          + waitingParties()[0].count
+                      < 16;
+    if (g_4ab67e) {
+        short count = countChosenSnoids();
+
+        g_4ab65c = count
+                   && *(short *)(g_4a4ba0 + 0x4a) + *(short *)(g_4a4ba0 + 0x4c)
+                              + waitingParties()[0].count
+                          <= count;
+        g_4ab65e = g_4ab65c;
+    } else
+        g_4ab65e = g_4ab65c = countChosenSnoids() >= 16;
+    setGroupLists(campGroups, 2, (short)0xc000);
+    highlightItemAt(1, 1);
+    fn_4196b1(0, 0, 0, 0);
+    showRect(&g_4aa7b8);
+    fadeInViews();
+    g_4ab660 = 1;
+    m = 0;
+    n = -1;
+    if (g_4b0d4c) {
+        n = campHint((short *)(g_4a4ba0 + 0x3e));
+        g_4b0d4c = 0;
+    }
+    if (n == 2 && !*(short *)(g_4a4ba0 + 0x40) && *(short *)(g_4a4ba0 + 0x4c) <= 16) {
+        n = 1;
+        *(short *)(g_4a4ba0 + 0x3e) &= 0xcfff;
+    }
+    choices = 3;
+    if (*(short *)(g_4a4ba0 + 0x3e) & 0x3000)
+        choices = 4;
+    switch (n) {
+    case 0:
+        switch (randomBetween(1, choices)) {
+        case 1:
+            m = 20084;
+            break;
+        case 2:
+            m = 20085;
+            break;
+        case 3:
+            m = 20082;
+            break;
+        case 4:
+            m = 20083;
+            break;
+        }
+        break;
+    case 1:
+        m = 20082;
+        break;
+    case 2:
+    case 12:
+        m = 20083;
+        break;
+    case 5:
+        m = 20082;
+        break;
+    }
+    resetViewClock();
+    g_4b87fe = saved;
+    if (m)
+        queueViewSound(m, 0);
 }
 
 /* Closes scene 5: the party stays at the camp (all of it when leaving
