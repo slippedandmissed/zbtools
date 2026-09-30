@@ -6,7 +6,7 @@
 #ifndef MAZE_H
 #define MAZE_H
 
-extern short valueCounts[21];
+extern short valueCounts[21]; /* @data 0x4aff9a */
 void mazeNoDraw(View *);
 void mazeNoUpdate(View *, short);
 int valueLess50(long, short value);
@@ -33,8 +33,8 @@ void drawMazeButtons(View *);
 void updateMazeButtons(View *, short region);
 void closeMaze();
 short mazeKey(unsigned short key);
-extern short *mazeHotSpotsX; /* hot spots: x */
-extern short *mazeHotSpotsY; /* and y */
+extern short *mazeHotSpotsX; /* @data 0x4afbe8: hot spots: x */
+extern short *mazeHotSpotsY; /* @data 0x4afbec: and y */
 void startPairedSnoidScript(View *view, short group, ViewNotify, char unknownF8);
 void startPairedSnoidPoseScript(View *view, short group, ViewNotify, char unknownF8);
 void startPairedSnoid14003(View *view, short group, ViewNotify, char unknownF8);
@@ -42,23 +42,23 @@ void placeOnHotSpot35(View *view);
 void placeOnHotSpot25(View *view);
 extern short g_4b0a0a;
 extern short g_4b0a0c;
-extern short emptyValues[21];
-extern short emptyValues2[21];
-extern short emptyValueList[21];
-extern short emptyValueList2[21];
-extern short emptyValueCount;
-extern short anyEmptyValue;
-extern short emptyValueCount2;
-extern short anyEmptyValue2;
+extern short emptyValues[21]; /* @data 0x4affc4 */
+extern short emptyValues2[21]; /* @data 0x4affee */
+extern short emptyValueList[21]; /* @data 0x4b0018 */
+extern short emptyValueList2[21]; /* @data 0x4b0042 */
+extern short emptyValueCount; /* @data 0x4b00c6 */
+extern short anyEmptyValue; /* @data 0x4b00c8 */
+extern short emptyValueCount2; /* @data 0x4b00ca */
+extern short anyEmptyValue2; /* @data 0x4b00cc */
 void mazeArrivalHook(short id);
 void listEmptyValues();
 short packEmptyValues();
 void listEmptyValues2();
 short packEmptyValues2();
 void listAllValues();
-extern short valueKinds[21];
-extern short featureOffsets[4];
-extern short featureRowCount;
+extern short valueKinds[21]; /* @data 0x4a263c */
+extern short featureOffsets[4]; /* @data 0x4a2634 */
+extern short featureRowCount; /* @data 0x4afc36 */
 short largestOfKind(short kind, short low, short high);
 short smallestFrom(short least);
 short largestBetween(short low, short high);
@@ -111,13 +111,13 @@ extern short g_4b08b4;
 extern short g_4b0cfe;
 extern short g_4b0d0e;
 extern short g_4b0d10[11]; /* each line's value */
-extern short mazeSequence[20]; /* the maze's sequence of values */
+extern short mazeSequence[20]; /* @data 0x4b0096: the maze's sequence of values */
 extern short g_4b00c2;
 void addMazeSnoidView(Snoid *snoid);
 short takeRareRow(short exclude, short whole);
 extern short g_4b0980[];
 extern short g_4b0a02;
-extern short sequenceLength; /* how many values in mazeSequence */
+extern short sequenceLength; /* @data 0x4b00be: how many values in mazeSequence */
 extern short g_4b00c0;
 extern short g_4a2666[];
 void addMazeSnoids(short count);

@@ -28,7 +28,7 @@ extern short bookSlots; /* @data 0x4ab644 */
 extern short bookCount; /* @data 0x4ab646 */
 extern short bookHighest; /* @data 0x4ab648 */
 extern short g_4ab64a; /* @data 0x4ab64a */
-extern CampEntries *bookEntries;
+extern CampEntries *bookEntries; /* @data 0x4ab64c */
 extern short bookView; /* @data 0x4ab650 */
 extern short g_4ab652; /* @data 0x4ab652 */
 extern long g_4ab654; /* @data 0x4ab654 */

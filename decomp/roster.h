@@ -12,7 +12,7 @@ void saveRoster();
 int cheerNotify(View *, short value);
 void cavesNoDraw(View *);
 void cavesNoUpdate(View *, short);
-extern long glyphShape;
+extern long glyphShape; /* @data 0x4a0fd4 */
 extern ShortRect g_4a11ac;
 extern Point g_4ab8e0;
 void freeGlyphShape();
@@ -22,7 +22,7 @@ void updateGlyphArea(View *view, short region);
 void claimSpot(short id, short n);
 extern char *rosterError; /* @data 0x4aba80 */
 extern Point *g_4ab8e4;
-extern short frameView;
+extern short frameView; /* @data 0x4ab9f8 */
 extern short g_4aba78[2];
 extern long g_4aba70[2];
 void reportRosterError(const char *message);
@@ -37,26 +37,26 @@ extern long g_4aba7c; /* the roster file */
 void updateCavesButtons(View *, short region);
 void applyPlayerSettings();
 short openRosterFile(const char *path, short mode);
-extern short firstFrame; /* the first of the frames showFrame shows */
-extern short finalFrame; /* their number */
-extern short currentFrame; /* the frame shown */
+extern short firstFrame; /* @data 0x4a1000: the first of the frames showFrame shows */
+extern short finalFrame; /* @data 0x4a1002: their number */
+extern short currentFrame; /* @data 0x4a1004: the frame shown */
 extern SceneButton cavesButtons[2]; /* @data 0x4a1024: buttons 1 and 2 */
 extern ImageBank *g_4a1020;
 extern short g_4a1282[6];
 extern short g_4a128e[6];
 extern short g_4a129a[6];
 extern short g_4a12a6[6];
-extern short spotSnoids[21];
+extern short spotSnoids[21]; /* @data 0x4ab8ec */
 void drawCavesButton(short which, short lit, short show);
 void drawFeatureImage(short kind, short n, ShortRect rect);
 void sendReadyOff(short x, short y, long interval);
-extern short cavesOpen; /* the roster screen is open */
+extern short cavesOpen; /* @data 0x4a0fec: the roster screen is open */
 extern long g_4a0fd0;
 extern long g_4ab83c;
-extern short cavesLevel;
+extern short cavesLevel; /* @data 0x4ab878 */
 extern short g_4a0ff4;
 extern short caveFeatures[2]; /* @data 0x4ab87a: the features (0-3) the roster asks about */
-extern short chosenCount;
+extern short chosenCount; /* @data 0x4a1014 */
 void drawCavesButtons(View *);
 void closeCaves();
 void countByCaveFeatures();

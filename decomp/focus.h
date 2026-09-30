@@ -6,26 +6,26 @@
 #ifndef FOCUS_H
 #define FOCUS_H
 
-extern GroupList *groupLists;
-extern short keyboardMoved;
+extern GroupList *groupLists; /* @data 0x4a01ac */
+extern short keyboardMoved; /* @data 0x4a01b0 */
 extern InputItem *highlightedItem; /* @data 0x4aa484 */
-extern unsigned short inputFlags;
-extern unsigned char inputFlagsHigh;
-extern short groupListCount; /* how many lists groupLists has */
-extern GroupList *currentList;
-extern Group *currentGroup;
-extern InputItem *currentItem;
-extern Cursor searchCursor;
+extern unsigned short inputFlags; /* @data 0x4aa48a */
+extern unsigned char inputFlagsHigh; /* @data 0x4aa48b */
+extern short groupListCount; /* @data 0x4aa48c: how many lists groupLists has */
+extern GroupList *currentList; /* @data 0x4aa490 */
+extern Group *currentGroup; /* @data 0x4aa494 */
+extern InputItem *currentItem; /* @data 0x4aa498 */
+extern Cursor searchCursor; /* @data 0x4aa49c */
 extern InputItem *enteredItem; /* @data 0x4aa4a8 */
-extern short searchKind;
-extern Point *searchPoint;
-extern InputItem *searchItem;
-extern short searchColumn;
-extern short searchRow;
-extern short searchKey;
-extern unsigned short searchFlags;
-extern short inputMode;
-extern short hovering;
+extern short searchKind; /* @data 0x4aa4ac */
+extern Point *searchPoint; /* @data 0x4aa4b0 */
+extern InputItem *searchItem; /* @data 0x4aa4b4 */
+extern short searchColumn; /* @data 0x4aa4b8 */
+extern short searchRow; /* @data 0x4aa4ba */
+extern short searchKey; /* @data 0x4aa4bc */
+extern unsigned short searchFlags; /* @data 0x4aa4be */
+extern short inputMode; /* @data 0x4aa4c0 */
+extern short hovering; /* @data 0x4aa4c2 */
 short callItemHandler(void (*callback)(InputItem *item));
 short itemAvailable(InputItem *item);
 short listsAvailable();

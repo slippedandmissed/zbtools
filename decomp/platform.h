@@ -7,7 +7,7 @@
 #define PLATFORM_H
 
 extern short g_4a4ad6;
-extern Callback aboutHook;
+extern Callback aboutHook; /* @data 0x4a4a14 */
 extern long g_4a4a18;
 extern long g_4a4a1c;
 extern char minimumOfText[]; /* @data 0x4a4a20 */

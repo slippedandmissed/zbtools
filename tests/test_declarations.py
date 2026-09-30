@@ -7,6 +7,7 @@ from zbtools.declarations import (
     headers,
     prototypes_in,
     structs_as_c,
+    unaddressed_globals,
 )
 
 HEADER = """
@@ -136,3 +137,13 @@ def test_globals_declared_twice() -> None:
 
 def test_decomp_declares_each_global_once() -> None:
     assert globals_declared_twice([path.read_text() for path in headers()]) == []
+
+
+def test_marker_notes_and_multidimensional_arrays() -> None:
+    text = "extern short a[2][3]; /* @data 0x401000: a note */\nextern long b; /* a note */\n"
+    assert globals_in(text) == [Global(0x401000, "a", "short", True)]
+    assert unaddressed_globals(text) == ["b"]
+
+
+def test_decomp_gives_every_global_an_address() -> None:
+    assert [name for path in headers() for name in unaddressed_globals(path.read_text())] == []

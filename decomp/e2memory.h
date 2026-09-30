@@ -6,7 +6,7 @@
 #ifndef E2MEMORY_H
 #define E2MEMORY_H
 
-extern short freeAtOnce; /* 1: e2memory's frees free at once, else mark purgeable */
+extern short freeAtOnce; /* @data 0x4b99d4: 1: e2memory's frees free at once, else mark purgeable */
 extern unsigned long memoryPeak; /* @data 0x4b99c4: e2memory's use, most and now */
 extern unsigned long memoryInUse; /* @data 0x4b99c8 */
 extern unsigned long memoryPeak2; /* @data 0x4b99cc */

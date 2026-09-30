@@ -33,11 +33,12 @@ def headers() -> list[Path]:
     return [HEADER, *sorted(p for p in paths.DECOMP_DIR.glob("*.h") if p != HEADER)]
 
 
-_EXTERN = re.compile(r"^extern\s+([^;]*?)\s*\b(\w+)\s*(\[[^\]]*\])?\s*;(.*)$")
+_EXTERN = re.compile(r"^extern\s+([^;]*?)\s*\b(\w+)\s*((?:\[[^\]]*\]\s*)*);(.*)$")
 # `extern void (*g_4aa4c4)(Point *where);`: a function pointer.
 _EXTERN_FUNCTION_POINTER = re.compile(r"^extern\s+[^;(]*\(\s*\*\s*(\w+)\s*\)\s*\([^;]*\)\s*;(.*)$")
 _ADDRESS_NAME = re.compile(r"^g_([0-9a-fA-F]{6,8})$")
-_DATA_MARKER = re.compile(r"/\*\s*@data\s+(0x[0-9a-fA-F]+)\s*\*/")
+# `/* @data 0x4a7f58 */`, or with a note: `/* @data 0x4a7f58: the mouse is present */`.
+_DATA_MARKER = re.compile(r"/\*\s*@data\s+(0x[0-9a-fA-F]+)\s*(?::.*?)?\*/")
 _STRUCT = re.compile(r"^struct\s+(\w+)\s*\n\{.*?\n\};", re.MULTILINE | re.DOTALL)
 # `typedef Chunk **Block;`: a typedef that isn't a function pointer.
 _TYPEDEF = re.compile(r"^typedef\s+[^;(]*;", re.MULTILINE)
@@ -67,7 +68,7 @@ def globals_in(text: str) -> list[Global]:
         pointer = _EXTERN_FUNCTION_POINTER.match(line.strip())
         declaration = _EXTERN.match(line.strip())
         if pointer:
-            type_, name, array, rest = "void *", pointer.group(1), None, pointer.group(2)
+            type_, name, array, rest = "void *", pointer.group(1), "", pointer.group(2)
         elif declaration:
             type_, name, array, rest = declaration.groups()
         else:
@@ -84,8 +85,14 @@ def globals_in(text: str) -> list[Global]:
         else:
             continue
         type_ = _CONST.sub("", type_)  # Ghidra's types have no const
-        found.append(Global(address, name, aliases.get(type_, type_), array is not None))
+        found.append(Global(address, name, aliases.get(type_, type_), bool(array)))
     return found
+
+
+def unaddressed_globals(text: str) -> list[str]:
+    """The globals declared with neither an address name nor an @data marker."""
+    addressed = {g.name for g in globals_in(text)}
+    return [name for name in extern_names_in(text) if name not in addressed]
 
 
 def extern_names_in(text: str) -> list[str]:

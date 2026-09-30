@@ -8,12 +8,12 @@
 
 extern unsigned long starvationLimit; /* @data 0x4a07c8: longest gap between main loop passes */
 extern char msgStarvation[]; /* @data 0x4a07cc */
-extern Callback frameHook;
+extern Callback frameHook; /* @data 0x4a07c4 */
 extern unsigned long clockStoppedAt; /* @data 0x4ab484 */
 extern unsigned long clockOffset; /* @data 0x4ab488 */
 extern unsigned long timers[4]; /* @data 0x4ab48c: when each expires */
-extern short starvationChecking;
-extern short starvationPaused;
+extern short starvationChecking; /* @data 0x4ab49c */
+extern short starvationPaused; /* @data 0x4ab49e */
 extern unsigned long lastCheck; /* @data 0x4ab4a0 */
 extern unsigned long thisCheck; /* @data 0x4ab4a4 */
 void enterGameDirectory();
