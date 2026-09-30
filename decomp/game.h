@@ -58,6 +58,11 @@ extern long g_4b278c;
 extern ImageBank *g_4b2634;
 void fn_44f180(View *, short region);
 void fn_44f1f2();
+void scene17Frame();
+extern short g_4a4842; /* @data 0x4a4842: in scene17Frame */
+extern ShortRect g_4a4750; /* @data 0x4a4750 */
+extern short g_4b2728; /* @data 0x4b2728 */
+extern short g_4b279a; /* @data 0x4b279a: the group the leaders move in */
 void fn_4541bf(View *view);
 short fn_454c10();
 extern PlacedSnoid g_4b2544[];
@@ -188,7 +193,7 @@ extern short g_4b2750;
 extern short g_4b2752;
 extern short g_4b274e;
 extern long g_4b2758;
-extern long g_4b275c;
+extern unsigned long g_4b275c; /* @data 0x4b275c: slots used (allocateSlot) */
 extern short g_4b2760;
 extern short g_4b2762;
 extern long g_4b2764;

@@ -18,6 +18,7 @@
 #include "graphics.h"
 #include "loading.h"
 #include "module_4623b8.h"
+#include "net.h"
 #include "os_manager.h"
 #include "platform.h"
 #include "random.h"
@@ -688,6 +689,220 @@ void fn_44f1f2()
         fadeOutViews();
         fn_4624fc();
     }
+}
+
+/* Scene 17's frame: leaves for the scene due; else runs the queued
+   steps (g_4b2644, g_4b2746-g_4b2750: the views to start and move, the
+   next Zoombini across, g_4b266c of g_4b262e), and every 30 ticks
+   while g_4b2762 has an idle Zoombini of the party fidget. */
+/* @zoombi32 0x0044f25d */
+void scene17Frame()
+{
+    View *view;
+    short i;
+    short j;
+    short done;
+
+    if (g_4a4842 || !g_4b2790)
+        return;
+    g_4a4842 = 1;
+    updateViews();
+    if (g_4b0d52) {
+        if (isSoundPlaying(996, RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
+            g_4a4842 = 0;
+            return;
+        }
+        if (!g_4b9688 || g_4b9688 == 3) {
+            if (g_4b9688 == 3)
+                chooseSnoids(0, 0);
+            if (viewsLocked || !g_4b755a || g_4b755c >= 1) {
+                g_4b0d50 = g_4b0d52;
+                g_4b0d52 = 0;
+                fn_46be2e(0);
+                fn_44f1f2();
+                g_4a4842 = 0;
+                return;
+            }
+        } else if (g_4b9688 == 2) {
+            g_4b9688 = 0;
+            g_4b0d52 = 0;
+        }
+    }
+    if (g_4b9684) {
+        playAmbientSound();
+        g_4a4842 = 0;
+        return;
+    }
+    if (g_4b2644) {
+        g_4b2644 = 0;
+        view = findView(g_4b258c);
+        if (view) {
+            view->flags = 0x4188000;
+            setViewScript(view, 11017, 1);
+        }
+    }
+    if (g_4b2746) {
+        g_4b2746 = 0;
+        moveView(g_4b25ac, 0, g_4b2598);
+        if (g_4b26b2)
+            moveView(g_4b26b2, 1, g_4b25ac);
+    }
+    if (g_4b2748) {
+        g_4b2748 = 0;
+        view = findView(g_4b2594);
+        if (view) {
+            setViewScript(view, g_4b2730, 0);
+            g_4b2752 = 1;
+            g_4b2754 = 2;
+            fn_45062d(11003);
+            g_4a483c = 1;
+        }
+    }
+    if (g_4b274a) {
+        g_4b274a = 0;
+        if (g_4b2630 == 1 || g_4b2630 == 2) {
+            g_4b2752 = 0;
+            fn_4506a9(11002);
+        } else if (g_4b2630 == 3) {
+            g_4b2752 = 1;
+            g_4b2754 = 2;
+            fn_45062d(11003);
+        }
+    }
+    if (g_4b2736) {
+        g_4b2736 = 0;
+        g_4b25b4[g_4b266c] = addView(0x4180000, drawCels, runViewScript, 11071 - g_4b266c, 6, 0, 0, 0);
+        if (!g_4b273c && g_4b26b2) {
+            g_4b25dc[g_4b266c] = g_4b26b2;
+            view = findView(g_4b26b2);
+            if (view) {
+                Snoid *snoid;
+
+                view->flags = 0x4000001;
+                snoid = viewSnoid(view);
+                snoid->unknownF7 = 1;
+                if (g_4b2670 > 2)
+                    startSnoidScript(viewSnoid(view), snoid->features[3] + 12044, 0, 0);
+            }
+            g_4b2670++;
+            if (g_4b2670 == 1) {
+                g_4b2792 = 1;
+                unionRgnRect(removedRgn, &g_4a4750);
+            }
+        }
+        if (!g_4b266c) {
+            moveView(g_4b25b4[g_4b266c], 0, g_4b2598);
+            moveView(g_4b26b2, 1, g_4b25b4[g_4b266c]);
+        } else {
+            moveView(g_4b25b4[g_4b266c], 0, g_4b25b4[g_4b266c - 1]);
+            moveView(g_4b26b2, 1, g_4b25b4[g_4b266c]);
+        }
+        g_4b266c++;
+        if (g_4b266c == g_4b262e) {
+            short chosen = countChosenSnoids();
+
+            if (chosen == g_4b262e) {
+                g_4b2762 = 1;
+                queueViewSound(randomBetween(20055, 20063), 0);
+            } else if (chosen < g_4b262e) {
+                if (randomBetween(0, 4) > g_4b2630 - 1
+                    || (*(short *)(g_4a4ba0 + 0x42) & 0xfff) <= 3)
+                    queueViewSound(randomBetween(20045, 20048), 0);
+            }
+        }
+        g_4b26b2 = 0;
+        if (g_4b2630 == 1 || g_4b2630 == 2) {
+            view = findView(g_4b25a4);
+            if (view) {
+                ViewCel *cels = view->body.cels;
+
+                cels[0].image = 0;
+                view->flags = 0x4108000;
+                setViewScript(view, 11032, 1);
+            }
+        } else {
+            g_4b2734++;
+            if (g_4b2742)
+                view = findView(g_4b25a6);
+            else
+                view = findView(g_4b25a4);
+            if (view) {
+                setViewScript(view, g_4b2728, 1);
+                view->notify = fn_45174e;
+            }
+        }
+        if (g_4b2630 == 1 || g_4b2630 == 2)
+            g_4b26b0 = 0;
+        if (g_4b2630 < 4 || g_4b2630 == 4 && g_4b2744 == 1) {
+            if (g_4b2630 == 4 || g_4b2630 == 3)
+                g_4b273a = fn_452035();
+            else
+                g_4b273a = fn_451f4e();
+            if (g_4b273a && g_4b266c <= g_4b262e && g_4b2630 < 4) {
+                g_4b2754 = 1;
+                fn_45062d(11005);
+            } else {
+                g_4b2754 = 0;
+                fn_4506a9(11004);
+            }
+        }
+    }
+    if (g_4b2750) {
+        g_4b2750 = 0;
+        for (i = 0; i < 3; i++) {
+            view = findView(g_4b25b4[i]);
+            if (view) {
+                setViewScript(view, i + 11072, 1);
+                view->notify = fn_45174e;
+                if (!i) {
+                    groupViews(g_4b25b4[i], g_4b25b4[i], 0, 0, 0, 0);
+                    g_4b279a = view->body.group;
+                } else
+                    view->body.group = g_4b279a;
+                view = findView(g_4b25dc[i]);
+                if (view) {
+                    startSnoidScript(viewSnoid(view), i + 12041, 0, 0);
+                    view->body.group = g_4b279a;
+                }
+            }
+        }
+    }
+    if (g_4b2762 && g_4b2760 < g_4b262e - 1) {
+        if (clockTime() - g_4b2758 > 30) {
+            done = 0;
+            g_4b2758 = clockTime();
+            for (j = 0; j < g_4b262e && !done; j++) {
+                short n = allocateSlot(&g_4b275c, g_4b262e - 1, 0);
+
+                if (partyViews[n] && partyViews[n] != g_4b25dc[0] && partyViews[n] != g_4b25dc[1]
+                    && partyViews[n] != g_4b25dc[2]) {
+                    view = idleSnoidView(partyViews[n]);
+                    if (view && view->body.running) {
+                        Snoid *snoid = viewSnoid(view);
+
+                        startSnoidScript(viewSnoid(view), snoid->features[3] + 12044, 0, 0);
+                        if (!g_4b2760)
+                            g_4b2760 = 4;
+                        else
+                            g_4b2760++;
+                        done = 1;
+                    }
+                } else if (g_4b262e < 5) {
+                    view = idleSnoidView(partyViews[3]);
+                    if (view && view->body.running) {
+                        Snoid *snoid = viewSnoid(view);
+
+                        startSnoidScript(viewSnoid(view), snoid->features[3] + 12044, 0, 0);
+                    }
+                    g_4b2760 = 4;
+                    done = 1;
+                }
+            }
+        }
+    } else if (g_4b2760 >= g_4b262e - 1)
+        g_4b2760 = g_4b2762 = g_4b2758 = g_4b275c = 0;
+    playAmbientSound();
+    g_4a4842 = 0;
 }
 
 /* A view's drawing: its cels from the bank g_4b2634, while it runs and
