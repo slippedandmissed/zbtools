@@ -24,6 +24,9 @@ GAME32_DIR = BUILD_DIR / "zoombi32"
 # Mohawk archives `uv run assets pack` builds from them, laid out as on the disc.
 ASSETS_DIR = REPO_ROOT / "assets"
 PACKED_ASSETS_DIR = BUILD_DIR / "assets"
+# The files the game's installer puts next to zoombi32.exe (and its font), kept
+# as they are in assets/ (`uv run assets extract`).
+INSTALLED_ASSETS = ASSETS_DIR / "zoombi32" / "installed"
 # What converting resources back computes slowly (LZSS-compressed images).
 ASSETS_CACHE = BUILD_DIR / "assets-cache"
 

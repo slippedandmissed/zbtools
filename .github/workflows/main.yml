@@ -11,10 +11,11 @@ concurrency:
 permissions:
   contents: read
 
-# Both jobs need the game CD (and the report the Borland C++ 4.5 CD, Ghidra and
-# a JDK), which are bring-your-own and never in the repository, so they run on
-# a self-hosted runner with them in data/ (plus 7-Zip, Wine and JDK 21), and
-# only once the repository variable GAME_DATA_RUNNER is set to "true".
+# The report needs the game CD, the Borland C++ 4.5 CD, Ghidra and a JDK: the
+# CDs are bring-your-own and never in the repository, so it runs on a
+# self-hosted runner with them in data/ (plus 7-Zip, Wine and JDK 21), and only
+# once the repository variable GAME_DATA_RUNNER is set to "true". The
+# deployment needs only the repository (the game's resources are in assets/).
 jobs:
   report:
     if: vars.GAME_DATA_RUNNER == 'true'
@@ -41,15 +42,18 @@ jobs:
           retention-days: 14
 
   deploy:
-    if: vars.GAME_DATA_RUNNER == 'true'
-    runs-on: [self-hosted, zbtools-data]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Bring-your-own files
-        run: ln -sfn "$ZBTOOLS_DATA" data
       - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
       - run: uv sync --locked
-      - run: uv run extract-game
+      - uses: actions/cache@v4
+        with:
+          path: build/emsdk
+          # The SDK version is pinned in port.py.
+          key: emsdk-${{ hashFiles('src/zbtools/port.py') }}
       - run: uv run port setup
       - run: uv run port build web
       # build/port/site/: the page and the game's data, every file under
