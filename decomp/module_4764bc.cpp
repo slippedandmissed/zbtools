@@ -358,7 +358,7 @@ unsigned short soundFlags(long handle)
     }
     setSoundError(0);
     return (object->isOpen ? 1 : 0) | (object->playing ? 2 : 0) | (object->started ? 4 : 0)
-           | (object->endingLoop ? 8 : 0) | (object->unknown20 ? 0x10 : 0);
+           | (object->endingLoop ? 8 : 0) | (object->looping ? 0x10 : 0);
 }
 
 /* @zoombi32 0x00476ca3 */

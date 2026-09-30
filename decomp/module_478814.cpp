@@ -144,7 +144,7 @@ void resetChannel(MidiMap *map, int channel)
         while (map->notes[channel][key]) {
             midiOutShortMsg(map->device->out, (mapped | 0x80) + (key << 8));
             map->notes[channel][key]--;
-            map->device->unknown90--;
+            map->device->playingCount--;
         }
 }
 
@@ -176,7 +176,7 @@ short mapShortMsg(MidiMap *map, unsigned long message)
             message = message & 0xff00ffff | (unsigned long)velocity << 16;
         }
         map->notes[channel][key]++;
-        map->device->unknown90++;
+        map->device->playingCount++;
         break;
     case 0x80:
     noteOff:
@@ -191,7 +191,7 @@ short mapShortMsg(MidiMap *map, unsigned long message)
                 message = message & 0xff00ffff | (unsigned long)velocity << 16;
         }
         map->notes[channel][key]--;
-        map->device->unknown90--;
+        map->device->playingCount--;
         break;
     }
     mapped = map->device->channels[channel];
@@ -349,7 +349,7 @@ audioObj *__cdecl newMidiSound(short data)
     }
     midi->seek(0);
     midi->seek(-1);
-    midi->unknown20 = midi->loopEnd != 0;
+    midi->looping = midi->loopEnd != 0;
     midi->seek(0);
     midi->resetLoop();
     return midi;
@@ -707,7 +707,7 @@ void midiStep(void *data)
             midi->timer = 0;
             midi->started = 0;
             notice.what = 1;
-            notice.unknown4 = error;
+            notice.value = error;
             notifySound(midi, &notice);
         }
     }
@@ -748,11 +748,11 @@ long __cdecl midiObj::dispatch(MidiTrack *track, short play, short notify)
             switch (type) {
             case 7:
                 notice.what = 0;
-                notice.unknown4 = length > 0xffff ? (unsigned short)0xffff : (unsigned short)length;
+                notice.value = length > 0xffff ? (unsigned short)0xffff : (unsigned short)length;
                 notice.data = (char *)p;
                 if (play)
                     notifySound(this, &notice);
-                if (findText && findLength <= notice.unknown4)
+                if (findText && findLength <= notice.value)
                     found |= !memicmp(findText, notice.data, findLength);
                 break;
             case 0x2f:

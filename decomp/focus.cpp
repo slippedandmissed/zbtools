@@ -1020,14 +1020,14 @@ void loadInputState(InputState *state, short all)
     if (all) {
         searchKind = state->search;
         searchPoint = state->point;
-        searchItem = state->unknown1E;
-        searchColumn = state->unknown22;
-        searchRow = state->unknown24;
-        searchKey = state->unknown26;
-        searchFlags = state->unknown28;
+        searchItem = state->searchItem;
+        searchColumn = state->searchColumn;
+        searchRow = state->searchRow;
+        searchKey = state->searchKey;
+        searchFlags = state->searchFlags;
         inputMode = state->mode;
-        keyboardMoved = state->unknown2C;
-        hovering = state->unknown2E;
+        keyboardMoved = state->keyboardMoved;
+        hovering = state->hovering;
     }
 }
 
@@ -1044,14 +1044,14 @@ void saveInputState(InputState *state, short all)
     if (all) {
         state->search = searchKind;
         state->point = searchPoint;
-        state->unknown1E = searchItem;
-        state->unknown22 = searchColumn;
-        state->unknown24 = searchRow;
-        state->unknown26 = searchKey;
-        state->unknown28 = searchFlags;
+        state->searchItem = searchItem;
+        state->searchColumn = searchColumn;
+        state->searchRow = searchRow;
+        state->searchKey = searchKey;
+        state->searchFlags = searchFlags;
         state->mode = inputMode;
-        state->unknown2C = keyboardMoved;
-        state->unknown2E = hovering;
+        state->keyboardMoved = keyboardMoved;
+        state->hovering = hovering;
     }
 }
 

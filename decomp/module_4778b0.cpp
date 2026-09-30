@@ -519,10 +519,10 @@ short midiMapReset(long handle)
         return MMSYSERR_INVALHANDLE;
     if (map->minimal)
         return MMSYSERR_NOTSUPPORTED;
-    playing = map->device->unknown90;
+    playing = map->device->playingCount;
     for (channel = 0; channel < 16; channel++)
         resetChannel(map, channel);
-    if (playing > 0 && !map->device->unknown90 && midiMapState.hardReset)
+    if (playing > 0 && !map->device->playingCount && midiMapState.hardReset)
         midiOutReset(map->device->out);
     return 0;
 }

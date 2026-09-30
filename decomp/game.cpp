@@ -2209,7 +2209,7 @@ void advanceLeftFeatures()
                 if (snoid->features[snoid->pose - 1] > 5)
                     snoid->features[snoid->pose - 1] = 1;
                 featureSlots[i + 1][snoid->pose - 1] = snoid->features[snoid->pose - 1];
-                view->unknown1e = snoid->features[snoid->pose - 1];
+                view->tag = snoid->features[snoid->pose - 1];
                 snoid->idleTicks = 0;
             }
         }
@@ -2253,7 +2253,7 @@ void advanceRightFeatures()
                 if (snoid->features[snoid->pose - 1] > 5)
                     snoid->features[snoid->pose - 1] = 1;
                 featureSlots[i + 1][snoid->pose - 1] = snoid->features[snoid->pose - 1];
-                view->unknown1e = snoid->features[snoid->pose - 1];
+                view->tag = snoid->features[snoid->pose - 1];
                 snoid->idleTicks = 0;
             }
         }
@@ -3277,7 +3277,7 @@ short addSmokeSnoidView(Snoid *snoid)
     view = findView(id);
     if (view) {
         layOutSmokeSnoid(snoid);
-        view->unknown1e = 0;
+        view->tag = 0;
         view->nextUpdate = 0;
         view->body.frameOffset = 0;
         view->flags = 0x4000002;
@@ -3308,11 +3308,11 @@ void updateSmokeSnoid(View *view, short region)
             if (snoid->pose > 0)
                 features[snoid->pose - 1] = snoid->idleTicks;
             snoid->action = 4;
-        } else if (view->unknown1e && clockTime() >= view->body.frameOffset) {
+        } else if (view->tag && clockTime() >= view->body.frameOffset) {
             view->body.frameOffset = clockTime() + 30;
             features = snoid->features;
             if (snoid->pose > 0 && !features[snoid->pose - 1])
-                features[snoid->pose - 1] = view->unknown1e;
+                features[snoid->pose - 1] = view->tag;
             else if (snoid->pose > 0)
                 features[snoid->pose - 1] = 0;
             snoid->action = 4;
@@ -4673,7 +4673,7 @@ void smokeClicked(short action)
                     snoid->angle = 7;
                     if (snoid->pose) {
                         snoid->idleTicks = 1;
-                        view->unknown1e = 0;
+                        view->tag = 0;
                     }
                     for (m = 0; m < 6; m++)
                         if (slotViews[m + 1] == view->id) {
@@ -4785,7 +4785,7 @@ void smokeClicked(short action)
                         snoid->action = 4;
                         if (snoid->pose) {
                             snoid->idleTicks = 1;
-                            view->unknown1e = 0;
+                            view->tag = 0;
                         }
                     }
                     k = rowViewCount;

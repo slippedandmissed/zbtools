@@ -60,17 +60,17 @@ unsigned short findAndLoadSound(short key, long type)
     if ((entry = findOrAddSound(key, type)) != 0) {
         if (entry->handle)
             return key;
-        if (!(entry->unknownA = findMapResource(type, key, 1))) {
+        if (!(entry->resource = findMapResource(type, key, 1))) {
             if (reportMissingSounds)
                 reportSoundError(key, type, 0, 0);
             removeSound(&entry);
             loadFailed = 0;
         } else {
             entry->type = 0;
-            if (resourceSize(entry->unknownA) <= largestLoadedSound)
+            if (resourceSize(entry->resource) <= largestLoadedSound)
                 return loadSoundByKey(key, type);
-            if (!entry->unknown2 && !resourceHandle(entry->unknownA))
-                entry->unknown2 = 1;
+            if (!entry->streamed && !resourceHandle(entry->resource))
+                entry->streamed = 1;
             if (loadSound(entry))
                 result = key;
         }
@@ -87,7 +87,7 @@ void unloadSound(short key, long type)
     if ((entry = findSound(key, type)) != 0) {
         stopSounds(key, type);
         disposeSoundHandle(entry);
-        purgeGameResource(&entry->unknownA);
+        purgeGameResource(&entry->resource);
         if (getFreeAtOnce() == 1)
             removeSound(&entry);
     }
@@ -116,11 +116,11 @@ SoundEntry *getSound(short key, long type)
         return 0;
     if (entry->handle)
         return entry;
-    loadResourceAs(&entry->unknownA, type, key, textSound, reportMissingSounds);
-    if (!entry->unknownA)
+    loadResourceAs(&entry->resource, type, key, textSound, reportMissingSounds);
+    if (!entry->resource)
         removeSound(&entry);
     else
-        setSoundType(&entry, key, swapLong(*(long *)(resourceData(entry->unknownA) + 8)));
+        setSoundType(&entry, key, swapLong(*(long *)(resourceData(entry->resource) + 8)));
     return entry;
 }
 
@@ -172,7 +172,7 @@ void removeSound(SoundEntry **entry)
     SoundEntry *next;
 
     disposeSoundHandle(*entry);
-    freeResource(&(*entry)->unknownA);
+    freeResource(&(*entry)->resource);
     for (link = &soundEntries; *link != *entry; link = &(*link)->next)
         ;
     next = (*link)->next;
@@ -208,12 +208,12 @@ short loadSound(SoundEntry *entry)
     if (soundAtMost(2))
         return 0;
     if (!entry->handle) {
-        if (entry->unknown2) {
+        if (entry->streamed) {
             checkStarvationKeepingFlags();
-            entry->handle = newStreamedSound(entry->unknownA, streamedSoundArg);
+            entry->handle = newStreamedSound(entry->resource, streamedSoundArg);
             mainLoopEvents();
         } else
-            entry->handle = newSound(usedResourceHandle(entry->unknownA));
+            entry->handle = newSound(usedResourceHandle(entry->resource));
         if (!entry->handle && !quietSoundErrors)
             reportSoundError(0, 0, entry, msgUnableToCreate);
     }
@@ -434,7 +434,7 @@ void soundNoticeCallback(long, SoundNotice *notice, long cookie)
     case 1:
         soundChannels[type][channel].playing = 0;
         currentChannel[type] = -1;
-        if (notice->unknown4 && !quietSoundErrors)
+        if (notice->value && !quietSoundErrors)
             ;
         break;
     case 0:

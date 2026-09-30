@@ -319,7 +319,7 @@ struct ViewBody
     ShortRect bounds; /* +0x9e: where it was drawn */
     short x; /* +0xa6: where it stands */
     short y;
-    short waypointX;
+    short waypointX; /* +0xaa: where it's walking to next */
     short waypointY;
     short group; /* +0xae: views moving together (1-16) */
     short running; /* +0xb0: its script runs */
@@ -354,22 +354,23 @@ struct Snoid
         long zoombini; /* +0xbc: its features, together (0: none) */
         char features[4]; /* hair, eyes, nose, feet (1-5) */
     };
-    short drawnFacing;
-    short layers[16];
+    short drawnFacing; /* +0xc0: the facing layers is set up for (-1: none) */
+    short layers[16]; /* +0xc2: the images of its features' layers */
     Point home; /* +0xe2 */
     short targetX; /* +0xe6 */
     short targetY;
-    char pathIndex;
-    char path;
-    short stepX;
+    char pathIndex; /* +0xea: the node it's walking to on its path (from 1) */
+    char path; /* +0xeb: the path it walks */
+    short stepX; /* +0xec: its step as it walks */
     short stepY;
-    char pathDirection;
-    char angle;
-    unsigned short facingLeft; /* +0xf2: facing left */
-    char action; /* +0xf4: what it is doing */
-    short pose; /* +0xf5 */
-    char chosen;
-    char idleTicks; /* +0xf8: random (0-64) when made */
+    char pathDirection; /* +0xf0: which way along the path (1, -1) */
+    char angle; /* +0xf1: how far it's turned toward the viewer (0-2) */
+    unsigned short facingLeft; /* +0xf2 */
+    char action; /* +0xf4: what it is doing (setSnoidAction; 8, 9: a script) */
+    short pose; /* +0xf5: its heading while walking; idle, a variation; for
+                   action 3, the features to show changed */
+    char chosen; /* +0xf7: in the party (listChosenSnoids); 2: arrived */
+    char idleTicks; /* +0xf8: counts up while idle (random 0-64 when made) */
     char name[10]; /* +0xf9 */
 };
 
@@ -378,7 +379,7 @@ struct SoundChannels
 {
     short active;
     short sounds[32];
-    char unknown42[32];
+    char streamed[32];
     char state[32];
 };
 
@@ -411,12 +412,12 @@ struct DriftingBody
     ViewCel cels[6];
     short unknown24;
     short unknown26;
-    short unknown28;
+    short burstFrame; /* +0x28: counts its bursting's frames (12 on) */
     short x; /* +0x2a */
     short y;
     short dx; /* +0x2e */
     short dy;
-    short unknown32;
+    short heading;
 };
 
 struct View;
@@ -437,13 +438,13 @@ struct View
     short region; /* +0x18: its shape, if not its bounds */
     short id; /* +0x1a */
     short kind; /* +0x1c: its script's id */
-    short unknown1e;
+    short tag; /* +0x1e: a word for its scene's use (a button pressed, a feature, a place...) */
     unsigned long flags; /* +0x20 */
     unsigned long nextUpdate; /* +0x24 */
     unsigned long interval; /* +0x28 */
     char changed; /* +0x2c */
     char reset; /* +0x2d */
-    char unknown2e;
+    char scriptSet; /* +0x2e: setViewScript has set its script since the last reset */
     char notifyEnd; /* +0x2f: tell notify when the script ends */
     ViewBody body; /* +0x30; a Zoombini's view has a Snoid here (flag 1) */
 };
@@ -657,14 +658,14 @@ struct InputState
     Point cursorC;
     short search; /* what matchItem looks for (0-7) */
     Point *point;
-    InputItem *unknown1E;
-    short unknown22;
-    short unknown24;
-    short unknown26;
-    unsigned short unknown28;
+    InputItem *searchItem;
+    short searchColumn;
+    short searchRow;
+    short searchKey;
+    unsigned short searchFlags;
     short mode;
-    short unknown2C;
-    short unknown2E;
+    short keyboardMoved;
+    short hovering;
 };
 
 typedef short (*KeyCallback)(unsigned short key);
@@ -704,10 +705,10 @@ struct MemoryInfo
 struct SoundEntry
 {
     short type; /* 0 a wave, 1 MIDI (see soundTypes) */
-    short unknown2; /* which way loadSound loads it */
+    short streamed; /* which way loadSound loads it */
     short key;
     long handle; /* the engine's */
-    long unknownA; /* its resource, for loadSound */
+    long resource; /* its resource, for loadSound */
     SoundEntry *next;
 };
 
@@ -724,7 +725,7 @@ struct SoundNotice
 {
     unsigned short what; /* 0 a value (in data), 1 finished */
     short unknown2;
-    unsigned short unknown4; /* the value's length; an error */
+    unsigned short value; /* the value's length; an error */
     short unknown6;
     char *data;
 };
@@ -2529,7 +2530,7 @@ public:
     long rate; /* speed (MIDI: tempo scale) */
     long volume; /* MIDI: the velocity curve */
     long duration; /* ms (MIDI: ticks) */
-    short unknown20;
+    short looping;
     short endingLoop;
     short active; /* sounds are on (the application is active) */
     short playing;
@@ -2635,7 +2636,7 @@ struct MidiDevice
     unsigned short users;
     short unknown8A;
     HMIDIOUT out;
-    unsigned short unknown90;
+    unsigned short playingCount;
     short unknown92;
     MidiMap *maps; /* a ring */
 };
@@ -3872,7 +3873,7 @@ struct ShownPizza
 {
     short view;
     short set; /* its toppings, a bit each */
-    short unknown4;
+    short place;
     short script;
 };
 extern short toppingsDx; /* @data 0x4b1666 */

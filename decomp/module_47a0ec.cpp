@@ -164,7 +164,7 @@ audioObj *__cdecl newWaveSound(short data)
     resizePtr(wave, wave->blockCount * sizeof(WaveBlock) + 0xb8);
     wave->seek(0);
     wave->duration = fixedMul(wave->sampleCount, wave->msPerSample);
-    wave->unknown20 = wave->loops > 0;
+    wave->looping = wave->loops > 0;
     wave->resetLoop();
     return wave;
 }
@@ -496,7 +496,7 @@ void waveBlockDone(void *data)
         unsigned char *cue = block->cue;
         if (cue) {
             notice.what = 0;
-            notice.unknown4 = cue[4];
+            notice.value = cue[4];
             notice.data = (char *)cue + 5;
             notifySound(wave, &notice);
         }
@@ -514,7 +514,7 @@ void waveBlockDone(void *data)
             wave->started = 0;
             wave->start = wave->sampleCount;
             notice.what = 1;
-            notice.unknown4 = 0;
+            notice.value = 0;
             notifySound(wave, &notice);
         }
     }

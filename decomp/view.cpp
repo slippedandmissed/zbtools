@@ -312,7 +312,7 @@ void initView(View *view, View *prev, View *next, short id)
     view->region = 0;
     view->id = id;
     view->kind = 0;
-    view->unknown1e = 0;
+    view->tag = 0;
     view->body.script = 0;
     view->body.scriptGroup = 0;
     view->body.cels[0].image = 0;
@@ -322,7 +322,7 @@ void initView(View *view, View *prev, View *next, short id)
     view->body.running = 1;
     view->flags = 0;
     view->reset = 1;
-    view->unknown2e = 0;
+    view->scriptSet = 0;
     view->changed = 1;
     view->notifyEnd = 0;
     view->nextUpdate = 0;
@@ -725,14 +725,14 @@ void setViewScript(View *view, short script, short running)
     }
     if (!script)
         script = view->kind;
-    if ((view->flags & 0x40000) && (view->unknown2e || !view->reset)) {
-        if (view->unknown1e)
+    if ((view->flags & 0x40000) && (view->scriptSet || !view->reset)) {
+        if (view->tag)
             return;
         if (view->flags & 0x2000000) {
             view->flags &= 0xfdffffff;
-            view->unknown1e = -view->kind;
+            view->tag = -view->kind;
         } else {
-            view->unknown1e = view->kind;
+            view->tag = view->kind;
         }
     }
     if (script != view->kind || view->reset) {
@@ -756,7 +756,7 @@ void setViewScript(View *view, short script, short running)
         view->changed = 1;
         view->reset = view->body.lastFrame < 1;
         view->reset = 0;
-        view->unknown2e = 1;
+        view->scriptSet = 1;
         if (view->flags & 0x800000) {
             view->body.waypointX = data[1];
             view->body.waypointY = data[2];
@@ -1143,16 +1143,16 @@ void pickViewSounds(SoundChannels *channels)
                     bestRank = rank;
                     best = channels->sounds[i];
                     keep[i] = 1;
-                    if (value && !channels->unknown42[i])
-                        channels->unknown42[i] = 1;
+                    if (value && !channels->streamed[i])
+                        channels->streamed[i] = 1;
                 }
             } else {
                 keep[i] = 1;
                 best = channels->sounds[i];
                 bestIndex = i;
                 bestRank = rank;
-                if (value && !channels->unknown42[i])
-                    channels->unknown42[i] = 1;
+                if (value && !channels->streamed[i])
+                    channels->streamed[i] = 1;
             }
         }
     }
@@ -1360,7 +1360,7 @@ short playViewSounds(SoundChannels *channels, short played, short pick)
                     state = channels->state[i];
                     channels->state[i] = 0;
                     if (isSoundPlaying(channels->sounds[i], RESOURCE_TYPE(0, 'S', 'N', 'D'))) {
-                        channels->state[i] = channels->unknown42[i] + 1;
+                        channels->state[i] = channels->streamed[i] + 1;
                     } else if (state) {
                         unloadSound(channels->sounds[i], RESOURCE_TYPE(0, 'S', 'N', 'D'));
                         channels->sounds[i] = 0;
@@ -1380,9 +1380,9 @@ short playViewSounds(SoundChannels *channels, short played, short pick)
                         setCurrentMap(soundsMap);
                     } else if (channels->sounds[i] >= 20000) {
                         setCurrentMap(soundsMap);
-                        channels->unknown42[i] = 1;
+                        channels->streamed[i] = 1;
                     }
-                    if (channels->unknown42[i]) {
+                    if (channels->streamed[i]) {
                         short ok;
 
                         last = channels->sounds[i];
@@ -1415,7 +1415,7 @@ short playViewSounds(SoundChannels *channels, short played, short pick)
                 for (to = i = 0; i < 32; i++)
                     if (channels->sounds[i] && to != i) {
                         channels->sounds[to] = channels->sounds[i];
-                        channels->unknown42[to] = channels->unknown42[i];
+                        channels->streamed[to] = channels->streamed[i];
                         channels->state[to] = channels->state[i];
                         to++;
                         channels->sounds[i] = 0;

@@ -1565,7 +1565,7 @@ void showFourPizzas(short a, short b, short c, short d)
     recordPizzaTried();
     lastShownPizza++;
     shownPizzas[lastShownPizza].set = triedPizzas[lastTriedPizza];
-    shownPizzas[lastShownPizza].unknown4 = 4;
+    shownPizzas[lastShownPizza].place = 4;
     pizzaScriptStep++;
     shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, pizzaScriptStep + 12041, 6, 0, 0, 0);
     shownPizzas[lastShownPizza].script = pizzaScriptStep + 12025;
@@ -1577,7 +1577,7 @@ void showFourPizzas(short a, short b, short c, short d)
     recordPizzaTried();
     lastShownPizza++;
     shownPizzas[lastShownPizza].set = triedPizzas[lastTriedPizza];
-    shownPizzas[lastShownPizza].unknown4 = 4;
+    shownPizzas[lastShownPizza].place = 4;
     pizzaScriptStep++;
     shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, pizzaScriptStep + 12041, 6, 0, 0, 0);
     shownPizzas[lastShownPizza].script = pizzaScriptStep + 12025;
@@ -1589,7 +1589,7 @@ void showFourPizzas(short a, short b, short c, short d)
     recordPizzaTried();
     lastShownPizza++;
     shownPizzas[lastShownPizza].set = triedPizzas[lastTriedPizza];
-    shownPizzas[lastShownPizza].unknown4 = 4;
+    shownPizzas[lastShownPizza].place = 4;
     pizzaScriptStep++;
     shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, pizzaScriptStep + 12041, 6, 0, 0, 0);
     shownPizzas[lastShownPizza].script = pizzaScriptStep + 12025;
@@ -1601,7 +1601,7 @@ void showFourPizzas(short a, short b, short c, short d)
     recordPizzaTried();
     lastShownPizza++;
     shownPizzas[lastShownPizza].set = triedPizzas[lastTriedPizza];
-    shownPizzas[lastShownPizza].unknown4 = 4;
+    shownPizzas[lastShownPizza].place = 4;
     pizzaScriptStep++;
     shownPizzas[lastShownPizza].view = addView(0x4108000, drawCels, runViewScript, pizzaScriptStep + 12041, 0, 0, 0, 0);
     shownPizzas[lastShownPizza].script = pizzaScriptStep + 12025;
@@ -1759,7 +1759,7 @@ void showJudgedPizza()
 
     lastShownPizza++;
     shownPizzas[lastShownPizza].set = triedPizzas[lastTriedPizza];
-    shownPizzas[lastShownPizza].unknown4 = judgedPizzaPlace;
+    shownPizzas[lastShownPizza].place = judgedPizzaPlace;
     behind = 0;
     switch (judgedPizzaPlace) {
     case 4:
@@ -1796,7 +1796,7 @@ void showJudgedPizza()
         if (behind)
             moveView(shownPizzas[lastShownPizza].view, 1, behind);
         arnoPile[arnoPileTop] = shownPizzas[lastShownPizza].view;
-        shownPizzas[lastShownPizza].unknown4 = 5;
+        shownPizzas[lastShownPizza].place = 5;
         break;
     case 6:
         if (++willaPileTop > 2)
@@ -1810,7 +1810,7 @@ void showJudgedPizza()
         if (behind)
             moveView(shownPizzas[lastShownPizza].view, 1, behind);
         willaPile[willaPileTop] = shownPizzas[lastShownPizza].view;
-        shownPizzas[lastShownPizza].unknown4 = 6;
+        shownPizzas[lastShownPizza].place = 6;
         break;
     case 7:
         if (++shylerPileTop > 2)
@@ -1824,15 +1824,15 @@ void showJudgedPizza()
         if (behind)
             moveView(shownPizzas[lastShownPizza].view, 1, behind);
         shylerPile[shylerPileTop] = shownPizzas[lastShownPizza].view;
-        shownPizzas[lastShownPizza].unknown4 = 7;
+        shownPizzas[lastShownPizza].place = 7;
         break;
     }
     view->notifyEnd = 1;
     view->notify = pizzaDoneNotify;
     orderPizzaViews();
-    if (shownPizzas[lastShownPizza].unknown4 == 4) {
+    if (shownPizzas[lastShownPizza].place == 4) {
         moveView(shownPizzas[lastShownPizza].view, 1, pizzaAnchorView);
-    } else if (shownPizzas[lastShownPizza].unknown4 == 6 && willaPile[1]) {
+    } else if (shownPizzas[lastShownPizza].place == 6 && willaPile[1]) {
         moveView(willaPile[1], 0, willaView);
         moveView(willaPile[0], 0, willaPile[1]);
     }

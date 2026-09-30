@@ -246,7 +246,7 @@ audioObj *__cdecl newStreamedWave(long resource, long file, long preloadMs)
     wave->maxQueued = wave->sampleRate * 3;
     wave->seek(0);
     wave->duration = fixedMul(wave->sampleCount, wave->msPerSample);
-    wave->unknown20 = wave->loops > 0;
+    wave->looping = wave->loops > 0;
     wave->resetLoop();
     if (preloadMs) {
         wave->preloadSamples = fixedMul(preloadMs, wave->samplesPerMs);
@@ -527,11 +527,11 @@ short __cdecl wavestreamObj::stream()
             freeBuffer(buffer);
         failed:
             notice.what = 1;
-            notice.unknown4 = sound.error;
+            notice.value = sound.error;
             haltDevice();
             started = 0;
             notifySound(this, &notice);
-            sound.error = notice.unknown4;
+            sound.error = notice.value;
             goto done;
         }
         readPosition += buffer->length;
@@ -779,7 +779,7 @@ void streamBufferDone(void *data)
         unsigned char *cue = buffer->cue;
         if (cue) {
             notice.what = 0;
-            notice.unknown4 = cue[4];
+            notice.value = cue[4];
             notice.data = (char *)cue + 5;
             notifySound(wave, &notice);
         }
@@ -803,7 +803,7 @@ void streamBufferDone(void *data)
         wave->started = 0;
         wave->start = wave->sampleCount;
         notice.what = 1;
-        notice.unknown4 = 0;
+        notice.value = 0;
         notifySound(wave, &notice);
     }
 }

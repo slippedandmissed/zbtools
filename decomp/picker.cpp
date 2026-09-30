@@ -562,7 +562,7 @@ short fireShot()
     view = findView(id);
     if (view) {
         body = (DriftingBody *)&view->body;
-        body->unknown28 = 0;
+        body->burstFrame = 0;
         body->x = x;
         body->y = y;
         body->dx = dx;
@@ -904,8 +904,8 @@ void placeShot(View *view)
     short i;
 
     body = (DriftingBody *)&view->body;
-    body->unknown28++;
-    if (body->unknown28 > 15) {
+    body->burstFrame++;
+    if (body->burstFrame > 15) {
         body->cels[0].image = 0;
         if (!firstShotStopped) {
             view->body.running = 0;
@@ -923,18 +923,18 @@ void placeShot(View *view)
         body->y = -10;
     else if (body->y < -10)
         body->y = 490;
-    if (body->unknown28 >= 13) {
-        body->cels[0].image = body->unknown28 + 12;
-        body->unknown28++;
+    if (body->burstFrame >= 13) {
+        body->cels[0].image = body->burstFrame + 12;
+        body->burstFrame++;
     }
-    hit = !(unsigned short)(body->unknown28 < 13);
+    hit = !(unsigned short)(body->burstFrame < 13);
     for (i = 0; !hit && !targetHit && i < 6; i++) {
         if (!targetBounds[i])
             continue;
         target = *targetBounds[i];
         if (!sectRect(&target, &view->body.bounds))
             continue;
-        body->unknown28 = 12;
+        body->burstFrame = 12;
         targetHit = i + 1;
         hit = 1;
         queueViewSound(3000, 0);
@@ -1175,12 +1175,12 @@ short startTarget(short kind, short preset)
     view = findView(targetViews[slot]);
     if (view) {
         body = (DriftingBody *)&view->body;
-        body->unknown28 = 0;
+        body->burstFrame = 0;
         body->x = x;
         body->y = y;
         body->dx = dx;
         body->dy = dy;
-        body->unknown32 = direction;
+        body->heading = direction;
         view->placed = driftView;
         targetBounds[slot] = &view->body.bounds;
         targetsOut++;
@@ -1330,7 +1330,7 @@ void updateCursorView(View *view, short region)
         view->changed = 1;
         if (view->reset) {
             setViewScript(view, view->kind, 1);
-            view->unknown2e = 0;
+            view->scriptSet = 0;
         } else {
             unionRgnRect(region, &view->body.bounds);
         }
@@ -1771,12 +1771,12 @@ void targetsFrame()
                             turn = 1;
                             split = 7;
                         }
-                        splitDirection = (turn + body->unknown32) & 7;
+                        splitDirection = (turn + body->heading) & 7;
                         startTarget(size - 1, 1);
-                        splitDirection = (body->unknown32 + split) & 7;
+                        splitDirection = (body->heading + split) & 7;
                         startTarget(size - 1, 1);
                         if (size == 1 && randomBetween(1, 100) <= 33) {
-                            splitDirection = (body->unknown32 + 4) & 7;
+                            splitDirection = (body->heading + 4) & 7;
                             startTarget(--size, 1);
                         }
                     }

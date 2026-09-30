@@ -26,35 +26,35 @@
 struct LillyActor
 {
     ViewBody body;
-    short unknownBc;
-    short unknownBe;
-    short unknownC0;
-    char unknownC2;
+    short unusedBc;
+    short startIndex;
+    short kind;
+    char onBoard;
     char column; /* +0xc3 */
     char row; /* +0xc4 */
-    char unknownC5;
-    char unknownC6;
-    char unknownC7;
-    char unknownC8;
+    char fromColumn;
+    char fromRow;
+    char planColumn;
+    char planRow;
     short startX; /* +0xc9 */
     short startY;
     short targetX; /* +0xcd */
     short targetY;
     short stepX; /* +0xd1 */
     short stepY;
-    char unknownD5;
-    char unknownD6;
-    short unknownD7;
-    short unknownD9; /* +0xd9 */
-    char unknownDb;
-    short unknownDc;
-    char unknownDe;
-    char unknownDf;
-    char unknownE0; /* +0xe0: added to its second part's image */
-    char unknownE1;
-    char unknownE2;
-    char unknownE3; /* +0xe3: added to its third part's image */
-    short unknownE4;
+    char direction;
+    char reach;
+    short planStep;
+    short nextScript; /* +0xd9 */
+    char landings;
+    short unusedDc;
+    char attribute;
+    char attributeValue;
+    char imageOffset; /* +0xe0: added to its second part's image */
+    char padView;
+    char unusedE2;
+    char thirdImageOffset; /* +0xe3: added to its third part's image */
+    short unusedE4;
     char unknownE6[12];
     short grid[12][13]; /* +0xf2 */
 };
@@ -429,7 +429,7 @@ void lillyNotify49(View *view, short event)
         actor->body.y = body->cels[0].y;
         actor->body.waypointX = body->cels[0].x;
         actor->body.waypointY = body->cels[0].y;
-        actor->unknownC2 = 0;
+        actor->onBoard = 0;
         view->flags = 0x980002;
         landedJumper = view->id;
         break;
@@ -615,7 +615,7 @@ void checkLillyArrivals()
         if (view) {
             LillyActor *actor = (LillyActor *)&view->body;
 
-            if (actor->unknownC2 && actor->unknownD6 == 11) {
+            if (actor->onBoard && actor->reach == 11) {
                 count++;
                 short *parts = (short *)&view->body;
                 View *rider = findView(parts[13]);
@@ -654,7 +654,7 @@ void updateSquareHighlight(View *view, short region)
 }
 
 /* Places a lilly actor's cels by their hot spots, its second part's image
-   offset by unknownE0. */
+   offset by imageOffset. */
 /* @zoombi32 0x0042f3ed */
 void placeActorCels(View *view)
 {
@@ -666,7 +666,7 @@ void placeActorCels(View *view)
     *cel++ -= actorHotSpotsX[image];
     *cel++ -= actorHotSpotsY[image];
     if (*cel > 0) {
-        *cel += actor->unknownE0;
+        *cel += actor->imageOffset;
         image = *cel++;
         *cel++ -= actorHotSpotsX[image];
         *cel++ -= actorHotSpotsY[image];
@@ -678,7 +678,7 @@ void placeActorCels(View *view)
     }
 }
 
-/* The same, the second part's image offset by unknownE0 - 7. */
+/* The same, the second part's image offset by imageOffset - 7. */
 /* @zoombi32 0x0042f336 */
 void placeActorCelsLow(View *view)
 {
@@ -690,7 +690,7 @@ void placeActorCelsLow(View *view)
     *cel++ -= actorHotSpotsX[image];
     *cel++ -= actorHotSpotsY[image];
     if (*cel > 0) {
-        *cel = actor->unknownE0 + *cel - 7;
+        *cel = actor->imageOffset + *cel - 7;
         image = *cel++;
         *cel++ -= actorHotSpotsX[image];
         *cel++ -= actorHotSpotsY[image];
@@ -702,8 +702,8 @@ void placeActorCelsLow(View *view)
     }
 }
 
-/* The same for three parts, the second and third offset by unknownE0 and
-   unknownE3. */
+/* The same for three parts, the second and third offset by imageOffset and
+   thirdImageOffset. */
 /* @zoombi32 0x0042f192 */
 void placeActorCels3(View *view)
 {
@@ -717,12 +717,12 @@ void placeActorCels3(View *view)
         *cel++ -= actorHotSpotsY[image];
     }
     if (*cel > 0) {
-        *cel += actor->unknownE0;
+        *cel += actor->imageOffset;
         image = *cel++;
         *cel++ -= actorHotSpotsX[image];
         *cel++ -= actorHotSpotsY[image];
         if (*cel > 0) {
-            *cel += actor->unknownE3;
+            *cel += actor->thirdImageOffset;
             image = *cel++;
             *cel++ -= actorHotSpotsX[image];
             *cel++ -= actorHotSpotsY[image];
@@ -850,7 +850,7 @@ void drawNumberBox(ShortRect rect, short number)
 }
 
 /* Places a lilly actor's cels by their hot spots: its parts showing image
-   0x110 are offset by unknownE0, and all but the first are hidden while
+   0x110 are offset by imageOffset, and all but the first are hidden while
    its ninth cel's x is set. */
 /* @zoombi32 0x0042f24c */
 void placeActorCelsHidden(View *view)
@@ -867,7 +867,7 @@ void placeActorCelsHidden(View *view)
     }
     while (*cel) {
         if (*cel == 0x110 && shown) {
-            *cel += actor->unknownE0;
+            *cel += actor->imageOffset;
             image = *cel++;
             *cel++ -= actorHotSpotsX[image];
             *cel++ -= actorHotSpotsY[image];
@@ -1108,9 +1108,9 @@ short moveActorDown(View *view)
     }
     if (!blocked) {
         if (!lillyBoard[row][column].attributes[0]) {
-            actor->unknownDe = lillyStarts[0].attribute;
-            actor->unknownDf = lillyBoard[row][column].attributes[actor->unknownDe];
-            actor->unknownE0 = squareSetC[attributeImageIndex[actor->unknownDe]] + actor->unknownDf;
+            actor->attribute = lillyStarts[0].attribute;
+            actor->attributeValue = lillyBoard[row][column].attributes[actor->attribute];
+            actor->imageOffset = squareSetC[attributeImageIndex[actor->attribute]] + actor->attributeValue;
             actor->grid[row][column] = 1;
             body[26] = 1;
         } else if (squareClaims[row][column] != 1 && !squareClaims[row][column]) {
@@ -1118,9 +1118,9 @@ short moveActorDown(View *view)
         }
     }
     if (blocked)
-        return actor->unknownD9 = 10069;
+        return actor->nextScript = 10069;
     lillyBoard[row][column].attributes[0] = 1;
-    return actor->unknownD9 = 10073;
+    return actor->nextScript = 10073;
 }
 
 /* Shows which features (H, E, N, F) the puzzle's rows and columns (and
@@ -1194,24 +1194,24 @@ short addLillyActor(short value)
 {
     LillyActor actor;
 
-    actor.unknownE3 = 0;
-    actor.unknownE4 = 0;
-    actor.unknownE2 = 0;
+    actor.thirdImageOffset = 0;
+    actor.unusedE4 = 0;
+    actor.unusedE2 = 0;
     actor.column = 0;
     actor.row = 0;
-    actor.unknownC5 = 0;
-    actor.unknownC6 = 0;
-    actor.unknownC7 = 0;
-    actor.unknownC8 = 0;
-    actor.unknownD5 = 2;
-    actor.unknownBc = 0;
-    actor.unknownBe = value;
-    actor.unknownC0 = 1;
-    actor.unknownDc = 0;
-    actor.unknownDb = 0;
-    actor.unknownC2 = 0;
-    actor.unknownD7 = 0;
-    actor.unknownD6 = 11;
+    actor.fromColumn = 0;
+    actor.fromRow = 0;
+    actor.planColumn = 0;
+    actor.planRow = 0;
+    actor.direction = 2;
+    actor.unusedBc = 0;
+    actor.startIndex = value;
+    actor.kind = 1;
+    actor.unusedDc = 0;
+    actor.landings = 0;
+    actor.onBoard = 0;
+    actor.planStep = 0;
+    actor.reach = 11;
     actor.body.celsEnd = 0;
     actor.body.script = 0;
     actor.body.scriptGroup = 0;
@@ -1226,8 +1226,8 @@ short addLillyActor(short value)
     for (short row = 0; row < 12; row++)
         for (short column = 0; column < 12; column++)
             actor.grid[row][column] = 0;
-    actor.unknownD9 = 63;
-    actor.unknownBe = value;
+    actor.nextScript = 63;
+    actor.startIndex = value;
     short id = addView(0x980002, drawCels, runViewScript, 10067, 8, &actor, randomBetween(4, 7), 0);
     View *view = findView(id);
 
@@ -1256,9 +1256,9 @@ void lillyNotify30(View *view, short event)
         firstArrivals++;
         if (firstArrivals == 1)
             lillyGoReady = 1;
-        actor->unknownDb++;
-        actor->unknownD6 = 0;
-        if (actor->unknownDb == 2) {
+        actor->landings++;
+        actor->reach = 0;
+        if (actor->landings == 2) {
             landerQueue[landerQueueCount] = view->id;
             landerQueueCount++;
         } else {
@@ -1267,8 +1267,8 @@ void lillyNotify30(View *view, short event)
         }
         lillyBoard[actor->row][actor->column].attributes[0] = 0;
         body->cels[2].image = 0;
-        moveView(actor->unknownE1, 0, lillyLayerView3);
-        View *other = findView(actor->unknownE1);
+        moveView(actor->padView, 0, lillyLayerView3);
+        View *other = findView(actor->padView);
 
         if (other) {
             other->body.running = 1;
@@ -1462,7 +1462,7 @@ void placeJumper(View *view)
         image = *cel++;
         *cel++ -= actorHotSpotsX[image];
         *cel++ -= actorHotSpotsY[image];
-        *cel += actor->unknownE0;
+        *cel += actor->imageOffset;
         image = *cel++;
         *cel++ -= actorHotSpotsX[image];
         *cel -= actorHotSpotsY[image];
@@ -1473,7 +1473,7 @@ void placeJumper(View *view)
         image = *cel++;
         *cel++ = actor->body.x + actor->stepX - actorHotSpotsX[image];
         *cel++ = actor->body.y + actor->stepY - actorHotSpotsY[image];
-        *cel += actor->unknownE0;
+        *cel += actor->imageOffset;
         image = *cel++;
         *cel++ = actor->body.x + actor->stepX - actorHotSpotsX[image];
         *cel = actor->body.y + actor->stepY - actorHotSpotsY[image];
@@ -1489,7 +1489,7 @@ void placeJumper(View *view)
         image = *cel++;
         *cel++ = actor->targetX - actorHotSpotsX[image];
         *cel++ = actor->targetY - actorHotSpotsY[image];
-        *cel += actor->unknownE0;
+        *cel += actor->imageOffset;
         image = *cel++;
         *cel++ = actor->targetX - actorHotSpotsX[image];
         *cel = actor->targetY - actorHotSpotsY[image];
@@ -1649,7 +1649,7 @@ void layOutLillyView(View *view, short region)
 
 /*
  * Follows the rising numbers in an actor's grid from where it is (clearing
- * them as it goes) until it reaches `limit` across (unknownC0 0) or down
+ * them as it goes) until it reaches `limit` across (kind 0) or down
  * (1), or 200 steps.
  */
 /* Not exact: register allocation (the original keeps `actor` in esi and
@@ -1667,10 +1667,10 @@ void followGrid(LillyActor *actor, short limit)
     short steps;
     char direction;
 
-    if (!actor->unknownC0) {
-        actor->grid[actor->unknownC8][actor->unknownC7] = 0;
-        x = actor->unknownC7;
-        y = actor->unknownC8;
+    if (!actor->kind) {
+        actor->grid[actor->planRow][actor->planColumn] = 0;
+        x = actor->planColumn;
+        y = actor->planRow;
     } else {
         actor->grid[actor->row][actor->column] = 0;
         x = actor->column;
@@ -1679,7 +1679,7 @@ void followGrid(LillyActor *actor, short limit)
     steps = 0;
     bestX = x;
     bestY = y;
-    if (!actor->unknownC0)
+    if (!actor->kind)
         reach = actor->column;
     else
         reach = actor->row;
@@ -1731,9 +1731,9 @@ void followGrid(LillyActor *actor, short limit)
                 best = value;
                 bestX = c;
                 bestY = r;
-                if (!actor->unknownC0 && c > reach)
+                if (!actor->kind && c > reach)
                     reach = c;
-                else if (actor->unknownC0 == 1 && r > reach)
+                else if (actor->kind == 1 && r > reach)
                     reach = r;
             }
         }
@@ -1744,7 +1744,7 @@ void followGrid(LillyActor *actor, short limit)
     }
 }
 
-/* The same, jumping to its place in jumpPlaces (by unknownBe). */
+/* The same, jumping to its place in jumpPlaces (by startIndex). */
 /* @zoombi32 0x0042ab6f */
 void placeJumperAt(View *view)
 {
@@ -1754,8 +1754,8 @@ void placeJumperAt(View *view)
 
     switch (actor->body.frame) {
     case 0:
-        actor->targetX = jumpPlaces[actor->unknownBe].x;
-        actor->targetY = jumpPlaces[actor->unknownBe].y;
+        actor->targetX = jumpPlaces[actor->startIndex].x;
+        actor->targetY = jumpPlaces[actor->startIndex].y;
         actor->stepX = (actor->targetX - actor->body.x) / 3;
         actor->stepY = (actor->targetY - actor->body.y) / 3;
         /* fall through */
@@ -1765,7 +1765,7 @@ void placeJumperAt(View *view)
         image = *cel++;
         *cel++ -= actorHotSpotsX[image];
         *cel++ -= actorHotSpotsY[image];
-        *cel += actor->unknownE0;
+        *cel += actor->imageOffset;
         image = *cel++;
         *cel++ -= actorHotSpotsX[image];
         *cel -= actorHotSpotsY[image];
@@ -1776,7 +1776,7 @@ void placeJumperAt(View *view)
         image = *cel++;
         *cel++ = actor->body.x + actor->stepX - actorHotSpotsX[image];
         *cel++ = actor->body.y + actor->stepY - actorHotSpotsY[image];
-        *cel += actor->unknownE0;
+        *cel += actor->imageOffset;
         image = *cel++;
         *cel++ = actor->body.x + actor->stepX - actorHotSpotsX[image];
         *cel = actor->body.y + actor->stepY - actorHotSpotsY[image];
@@ -1792,7 +1792,7 @@ void placeJumperAt(View *view)
         image = *cel++;
         *cel++ = actor->targetX - actorHotSpotsX[image];
         *cel++ = actor->targetY - actorHotSpotsY[image];
-        *cel += actor->unknownE0;
+        *cel += actor->imageOffset;
         image = *cel++;
         *cel++ = actor->targetX - actorHotSpotsX[image];
         *cel = actor->targetY - actorHotSpotsY[image];
@@ -1812,25 +1812,25 @@ void addLillyActors()
     for (i = 0; i < actorDealLast + 1; i++)
         actorDealOrder[i] = i;
     for (i = 0; i < actorCount; i++) {
-        actor.unknownBc = 0;
-        actor.unknownBe = i;
-        actor.unknownC0 = 0;
+        actor.unusedBc = 0;
+        actor.startIndex = i;
+        actor.kind = 0;
         actor.column = 0;
         actor.row = 0;
-        actor.unknownC5 = 0;
-        actor.unknownC6 = 0;
-        actor.unknownC7 = 0;
-        actor.unknownC8 = 0;
-        actor.unknownD7 = 0;
-        actor.unknownD5 = 1;
-        actor.unknownD6 = 11;
-        actor.unknownDc = 0;
-        actor.unknownDb = 0;
-        actor.unknownC2 = 0;
-        actor.unknownE1 = 0;
-        actor.unknownE2 = 0;
-        actor.unknownE3 = 0;
-        actor.unknownE4 = 0;
+        actor.fromColumn = 0;
+        actor.fromRow = 0;
+        actor.planColumn = 0;
+        actor.planRow = 0;
+        actor.planStep = 0;
+        actor.direction = 1;
+        actor.reach = 11;
+        actor.unusedDc = 0;
+        actor.landings = 0;
+        actor.onBoard = 0;
+        actor.padView = 0;
+        actor.unusedE2 = 0;
+        actor.thirdImageOffset = 0;
+        actor.unusedE4 = 0;
         actor.body.celsEnd = 0;
         actor.body.running = 1;
         actor.startX = 0;
@@ -1846,11 +1846,11 @@ void addLillyActors()
                 actor.grid[row][column] = 0;
         short k = randomBetween(0, actorDealLast);
 
-        actor.unknownDe = actorDealKinds[actorDealOrder[k]];
-        actor.unknownDf = actorDealValues[actorDealOrder[k]];
-        actor.unknownE0 = actorDealOrder[k];
-        dealtKinds[i] = actor.unknownDe;
-        dealtValues[i] = actor.unknownDf;
+        actor.attribute = actorDealKinds[actorDealOrder[k]];
+        actor.attributeValue = actorDealValues[actorDealOrder[k]];
+        actor.imageOffset = actorDealOrder[k];
+        dealtKinds[i] = actor.attribute;
+        dealtValues[i] = actor.attributeValue;
         for (; k < actorDealLast + 1; k++)
             actorDealOrder[k] = actorDealOrder[k + 1];
         actorDealLast--;
@@ -1889,7 +1889,7 @@ void placeLander(View *view)
         image = *cel++;
         *cel++ -= actorHotSpotsX[image];
         *cel++ -= actorHotSpotsY[image];
-        *cel += actor->unknownE0;
+        *cel += actor->imageOffset;
         image = *cel++;
         *cel++ -= actorHotSpotsX[image];
         *cel -= actorHotSpotsY[image];
@@ -1900,7 +1900,7 @@ void placeLander(View *view)
         image = *cel++;
         *cel++ = actor->body.x + actor->stepX - actorHotSpotsX[image];
         *cel++ = actor->body.y + actor->stepY - actorHotSpotsY[image];
-        *cel += actor->unknownE0;
+        *cel += actor->imageOffset;
         image = *cel++;
         *cel++ = actor->body.x + actor->stepX - actorHotSpotsX[image];
         *cel = actor->body.y + actor->stepY - actorHotSpotsY[image];
@@ -1917,7 +1917,7 @@ void placeLander(View *view)
         *cel++ = actor->targetX - actorHotSpotsX[image];
         *cel++ = actor->targetY - actorHotSpotsY[image];
         if (*cel == 0x5b) {
-            *cel += actor->unknownE0;
+            *cel += actor->imageOffset;
             image = *cel++;
             *cel++ = actor->targetX - actorHotSpotsX[image];
             *cel++ = actor->targetY - actorHotSpotsY[image];
@@ -1989,8 +1989,8 @@ short pickNextSquare(View *view)
             break;
         }
         if (open && !lillyBoard[r - 1][c].attributes[0]
-            && lillyBoard[r - 1][c].attributes[actor->unknownDe] == actor->unknownDf
-            && layerSearches[actor->unknownDf].steps[r][c] < layerSearches[actor->unknownDf].steps[actor->row + 1][actor->column]) {
+            && lillyBoard[r - 1][c].attributes[actor->attribute] == actor->attributeValue
+            && layerSearches[actor->attributeValue].steps[r][c] < layerSearches[actor->attributeValue].steps[actor->row + 1][actor->column]) {
             best = direction;
             bestColumn = c;
             bestRow = r - 1;
@@ -1999,30 +1999,30 @@ short pickNextSquare(View *view)
         direction++;
     }
     if (done)
-        return actor->unknownD9 = 10069;
+        return actor->nextScript = 10069;
     switch (best) {
     case 0:
-        actor->unknownD5 = 0;
+        actor->direction = 0;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
-        return actor->unknownD9 = 10071;
+        return actor->nextScript = 10071;
     case 1:
-        actor->unknownD5 = 1;
+        actor->direction = 1;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
-        return actor->unknownD9 = 10077;
+        return actor->nextScript = 10077;
     case 2:
-        actor->unknownD5 = 2;
+        actor->direction = 2;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
-        return actor->unknownD9 = 10073;
+        return actor->nextScript = 10073;
     case 3:
-        actor->unknownD5 = 3;
+        actor->direction = 3;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
-        return actor->unknownD9 = 10075;
+        return actor->nextScript = 10075;
     }
     return 0;
 }
 
 /* A hopping lilly actor's script events: 11 sets off for the next square
-   (unknownD5: 0 up, 1 right, 2 down, 3 left), 12 puts it halfway, 13-14
+   (direction: 0 up, 1 right, 2 down, 3 left), 12 puts it halfway, 13-14
    there, 10 and 15 end the hop. */
 /* @zoombi32 0x00429d94 */
 void hopNotify(View *view, short event)
@@ -2032,9 +2032,9 @@ void hopNotify(View *view, short event)
 
     switch (event) {
     case 11:
-        actor->unknownC5 = actor->column;
-        actor->unknownC6 = actor->row;
-        switch (actor->unknownD5) {
+        actor->fromColumn = actor->column;
+        actor->fromRow = actor->row;
+        switch (actor->direction) {
         case 0:
             actor->targetX = rowLeft[--actor->row + 1] + actor->column * 35;
             break;
@@ -2052,7 +2052,7 @@ void hopNotify(View *view, short event)
         *(Point *)&actor->startX = *(Point *)&actor->body.x;
         break;
     case 12:
-        switch (actor->unknownD5) {
+        switch (actor->direction) {
         case 0:
         case 2:
             while (*cel++) {
@@ -2068,11 +2068,11 @@ void hopNotify(View *view, short event)
             }
             break;
         }
-        lillyBoard[actor->unknownC6][actor->unknownC5].attributes[0] = 0;
+        lillyBoard[actor->fromRow][actor->fromColumn].attributes[0] = 0;
         break;
     case 13:
     case 14:
-        switch (actor->unknownD5) {
+        switch (actor->direction) {
         case 0:
         case 2:
             while (*cel++) {
@@ -2136,7 +2136,7 @@ short pickLeastVisited(LillyActor *actor)
         actor->grid[actor->row][actor->column] = 1;
     }
     current = value;
-    direction = actor->unknownD5;
+    direction = actor->direction;
     blocked = 0;
     tries = 0;
     best = 5;
@@ -2181,17 +2181,17 @@ short pickLeastVisited(LillyActor *actor)
         }
         if (open) {
             if (!lillyBoard[r][c].attributes[0]) {
-                switch (actor->unknownDe) {
+                switch (actor->attribute) {
                 case 1:
-                    if (lillyBoard[r][c].attributes[1] != actor->unknownDf)
+                    if (lillyBoard[r][c].attributes[1] != actor->attributeValue)
                         open = 0;
                     break;
                 case 2:
-                    if (lillyBoard[r][c].attributes[2] != actor->unknownDf)
+                    if (lillyBoard[r][c].attributes[2] != actor->attributeValue)
                         open = 0;
                     break;
                 case 3:
-                    if (lillyBoard[r][c].attributes[3] != actor->unknownDf)
+                    if (lillyBoard[r][c].attributes[3] != actor->attributeValue)
                         open = 0;
                     break;
                 }
@@ -2220,33 +2220,33 @@ short pickLeastVisited(LillyActor *actor)
     }
     switch (best) {
     case 0:
-        actor->unknownD5 = 0;
-        actor->unknownD9 = hopDirections[0][actor->unknownD5];
+        actor->direction = 0;
+        actor->nextScript = hopDirections[0][actor->direction];
         actor->grid[actor->row - 1][actor->column] = current + 1;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
-        return actor->unknownD9;
+        return actor->nextScript;
     case 1:
-        actor->unknownD5 = 1;
-        actor->unknownD9 = hopDirections[1][actor->unknownD5];
+        actor->direction = 1;
+        actor->nextScript = hopDirections[1][actor->direction];
         actor->grid[actor->row][actor->column + 1] = current + 1;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
-        return actor->unknownD9;
+        return actor->nextScript;
     case 2:
-        actor->unknownD5 = 2;
-        actor->unknownD9 = hopDirections[2][actor->unknownD5];
+        actor->direction = 2;
+        actor->nextScript = hopDirections[2][actor->direction];
         actor->grid[actor->row + 1][actor->column] = current + 1;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
-        return actor->unknownD9;
+        return actor->nextScript;
     case 3:
-        actor->unknownD5 = 3;
-        actor->unknownD9 = hopDirections[3][actor->unknownD5];
+        actor->direction = 3;
+        actor->nextScript = hopDirections[3][actor->direction];
         actor->grid[actor->row][actor->column - 1] = current + 1;
         lillyBoard[bestRow][bestColumn].attributes[0] = 1;
-        return actor->unknownD9;
+        return actor->nextScript;
     case 4:
-        actor->unknownD5 = 1;
-        actor->unknownD9 = 10031;
-        return actor->unknownD9;
+        actor->direction = 1;
+        actor->nextScript = 10031;
+        return actor->nextScript;
     default:
         return 0;
     }
@@ -2254,7 +2254,7 @@ short pickLeastVisited(LillyActor *actor)
 }
 
 /*
- * Plans a lilly actor's way across (unknownC0 0) or down (1) to `limit`,
+ * Plans a lilly actor's way across (kind 0) or down (1) to `limit`,
  * numbering the squares it would visit in its grid: from each square, the
  * least visited neighbour that's free and of its kind, trying directions
  * from the last one taken; at most 200 steps. How far it got.
@@ -2275,22 +2275,22 @@ short planWay(LillyActor *actor, short limit)
     short reach;
     short heading;
 
-    if (!actor->unknownC0)
+    if (!actor->kind)
         reach = actor->column;
     else
         reach = actor->row;
-    if (actor->unknownD6 == 11) {
+    if (actor->reach == 11) {
         column = actor->column;
         row = actor->row;
     } else {
-        column = actor->unknownC7;
-        row = actor->unknownC8;
+        column = actor->planColumn;
+        row = actor->planRow;
     }
     bestColumn = column;
     bestRow = row;
-    heading = actor->unknownD5;
-    actor->grid[row][column] = actor->unknownD7;
-    value = actor->unknownD7;
+    heading = actor->direction;
+    actor->grid[row][column] = actor->planStep;
+    value = actor->planStep;
     count = value;
     steps = 0;
     while (steps < 200 && reach < limit) {
@@ -2314,7 +2314,7 @@ short planWay(LillyActor *actor, short limit)
                 if (c > 11) {
                     c--;
                     open = 0;
-                    if (!actor->unknownC0)
+                    if (!actor->kind)
                         reach = c;
                 }
                 break;
@@ -2323,7 +2323,7 @@ short planWay(LillyActor *actor, short limit)
                 if (r > 11) {
                     r--;
                     open = 0;
-                    if (actor->unknownC0 == 1)
+                    if (actor->kind == 1)
                         reach = r;
                 }
                 break;
@@ -2336,17 +2336,17 @@ short planWay(LillyActor *actor, short limit)
                 break;
             }
             if (open) {
-                switch (actor->unknownDe) {
+                switch (actor->attribute) {
                 case 1:
-                    if (lillyBoard[r][c].attributes[1] != actor->unknownDf)
+                    if (lillyBoard[r][c].attributes[1] != actor->attributeValue)
                         open = 0;
                     break;
                 case 2:
-                    if (lillyBoard[r][c].attributes[2] != actor->unknownDf)
+                    if (lillyBoard[r][c].attributes[2] != actor->attributeValue)
                         open = 0;
                     break;
                 case 3:
-                    if (lillyBoard[r][c].attributes[3] != actor->unknownDf)
+                    if (lillyBoard[r][c].attributes[3] != actor->attributeValue)
                         open = 0;
                     break;
                 }
@@ -2358,19 +2358,19 @@ short planWay(LillyActor *actor, short limit)
                 value = actor->grid[r][c];
                 bestColumn = c;
                 bestRow = r;
-                if (!actor->unknownC0) {
+                if (!actor->kind) {
                     if (c > reach)
                         reach = c;
-                    if (c < actor->unknownC7) {
-                        actor->unknownC7 = c;
-                        actor->unknownC8 = r;
+                    if (c < actor->planColumn) {
+                        actor->planColumn = c;
+                        actor->planRow = r;
                     }
                 } else {
                     if (r > reach)
                         reach = r;
-                    if (r < actor->unknownC8) {
-                        actor->unknownC7 = c;
-                        actor->unknownC8 = r;
+                    if (r < actor->planRow) {
+                        actor->planColumn = c;
+                        actor->planRow = r;
                     }
                 }
             }
@@ -2387,12 +2387,12 @@ short planWay(LillyActor *actor, short limit)
         count = value;
         steps++;
     }
-    actor->unknownD7 = actor->grid[row][column];
-    return actor->unknownD6 = reach;
+    actor->planStep = actor->grid[row][column];
+    return actor->reach = reach;
 }
 
 /* Places a hopping lilly actor's cels through its hop (by frame), its
-   parts showing image 0x110 offset by unknownE0 and the rest hidden while
+   parts showing image 0x110 offset by imageOffset and the rest hidden while
    its ninth cel's x is set. */
 /* @zoombi32 0x0042a163 */
 void placeHopper(View *view)
@@ -2406,9 +2406,9 @@ void placeHopper(View *view)
 
     switch (actor->body.frame) {
     case 0:
-        actor->unknownC5 = actor->column;
-        actor->unknownC6 = actor->row;
-        switch (actor->unknownD9) {
+        actor->fromColumn = actor->column;
+        actor->fromRow = actor->row;
+        switch (actor->nextScript) {
         case 10071:
             actor->targetX = rowLeft[--actor->row + 1] + actor->column * 35;
             break;
@@ -2440,7 +2440,7 @@ void placeHopper(View *view)
         x = actor->targetX;
         y = actor->targetY;
         if (!cel[25])
-            lillyBoard[actor->unknownC6][actor->unknownC5].attributes[0] = 0;
+            lillyBoard[actor->fromRow][actor->fromColumn].attributes[0] = 0;
         break;
     case 7:
         if (cel[26])
@@ -2462,7 +2462,7 @@ void placeHopper(View *view)
         *cel++ = y - actorHotSpotsY[image];
     }
     if (*cel == 0x110 && shown) {
-        *cel += actor->unknownE0;
+        *cel += actor->imageOffset;
         image = *cel++;
         *cel++ = x - actorHotSpotsX[image];
         *cel++ = y - actorHotSpotsY[image];
@@ -2889,14 +2889,14 @@ void startPlan(LillyActor *actor)
     for (short row = 0; row < 12; row++)
         for (short column = 0; column < 12; column++)
             actor->grid[row][column] = 0;
-    actor->unknownC7 = actor->column;
-    actor->unknownC8 = actor->row;
-    actor->unknownD6 = 11;
-    actor->unknownD7 = 1;
-    planWay(actor, actor->unknownD6);
-    planWay(actor, actor->unknownD6);
-    followGrid(actor, actor->unknownD6);
-    actor->grid[actor->row][actor->column] = actor->unknownD7;
+    actor->planColumn = actor->column;
+    actor->planRow = actor->row;
+    actor->reach = 11;
+    actor->planStep = 1;
+    planWay(actor, actor->reach);
+    planWay(actor, actor->reach);
+    followGrid(actor, actor->reach);
+    actor->grid[actor->row][actor->column] = actor->planStep;
 }
 
 /* Closes the other puzzle. */
@@ -3370,11 +3370,11 @@ void swapSquares()
 
         if (view) {
             actor = (LillyActor *)&view->body;
-            if (actor->unknownC2) {
+            if (actor->onBoard) {
                 actor->grid[flashRow][flashColumn] = 0;
                 actor->grid[swapRow][swapColumn] = 0;
-                if (lillyBoard[flashRow][flashColumn].attributes[actor->unknownDe] == actor->unknownDf
-                    || lillyBoard[swapRow][swapColumn].attributes[actor->unknownDe] == actor->unknownDf)
+                if (lillyBoard[flashRow][flashColumn].attributes[actor->attribute] == actor->attributeValue
+                    || lillyBoard[swapRow][swapColumn].attributes[actor->attribute] == actor->attributeValue)
                     startPlan(actor);
             }
         }
@@ -3386,14 +3386,14 @@ void swapSquares()
 
         if (view) {
             actor = (LillyActor *)&view->body;
-            if (actor->unknownC2) {
+            if (actor->onBoard) {
                 actor->grid[flashRow][flashColumn] = 0;
                 actor->grid[swapRow][swapColumn] = 0;
-                if (lillyBoard[flashRow][flashColumn].attributes[actor->unknownDe] == actor->unknownDf
-                    || lillyBoard[swapRow][swapColumn].attributes[actor->unknownDe] == actor->unknownDf) {
+                if (lillyBoard[flashRow][flashColumn].attributes[actor->attribute] == actor->attributeValue
+                    || lillyBoard[swapRow][swapColumn].attributes[actor->attribute] == actor->attributeValue) {
                     startPlan(actor);
-                    layers[actor->unknownDf].attribute = actor->unknownDe;
-                    layers[actor->unknownDf].layer = actor->unknownDf;
+                    layers[actor->attributeValue].attribute = actor->attribute;
+                    layers[actor->attributeValue].layer = actor->attributeValue;
                 }
             }
         }
@@ -3967,15 +3967,15 @@ void otherClick(short action)
         view = viewAt(where, 0x980002, 1);
         if (view && !swapPending) {
             actor = (LillyActor *)&view->body;
-            if ((snoidsOnTheirWay <= 0 || (snoidsOnTheirWay > 0 && actor->unknownC0 == 2)) && !actor->unknownC2
-                && actor->unknownC0 != 1) {
+            if ((snoidsOnTheirWay <= 0 || (snoidsOnTheirWay > 0 && actor->kind == 2)) && !actor->onBoard
+                && actor->kind != 1) {
                 dragLillyPiece(view, where);
                 actor = (LillyActor *)&view->body;
                 cel = (short *)&view->body;
 
                 bank = groupBanks[view->body.scriptGroup];
                 claimedRow = lillyClaimIndex();
-                if (!actor->unknownC0 && claimedRow >= 0 && claimedRow <= 11) {
+                if (!actor->kind && claimedRow >= 0 && claimedRow <= 11) {
                     unionRgnRect(removedRgn, &actor->body.bounds);
                     actor->body.bounds.left = 0;
                     actor->body.bounds.right = 0;
@@ -3999,7 +3999,7 @@ void otherClick(short action)
                     view->changed = 1;
                     releaseLillyClaim();
                     lillyBoard[claimedRow][0].attributes[0] = 1;
-                    actor->unknownC2 = 1;
+                    actor->onBoard = 1;
                     actor->column = 0;
                     actor->row = claimedRow;
                     startPlan(actor);
@@ -4013,16 +4013,16 @@ void otherClick(short action)
                         setViewScript(other, cel[12] + 10109, 1);
                         other->placed = placeByHotSpot;
                         other->notify = lillyActorNotify;
-                        actor->unknownE1 = snoidPadViews[padsPlaced];
+                        actor->padView = snoidPadViews[padsPlaced];
                         padsPlaced++;
-                        actor->unknownE3 = *(char *)&cel[10];
+                        actor->thirdImageOffset = *(char *)&cel[10];
                     }
                     if (padsPlaced == lillyPartySize) {
                         if (swapToolStage == 6)
                             checkLillyArrivals();
                         snoidsOnTheirWay = 1;
                     }
-                } else if (!actor->unknownC0) {
+                } else if (!actor->kind) {
                     *(Point *)&actor->body.x = jumpPlaces[cel[20]];
                     setViewScript(view, cel[20] + 10043, 1);
                     view->nextUpdate = 0;
@@ -4036,7 +4036,7 @@ void otherClick(short action)
 }
 
 /*
- * Drags a piece of the other puzzle: a new piece (unknownC0 0) onto a row
+ * Drags a piece of the other puzzle: a new piece (kind 0) onto a row
  * of the board's left edge, lighting up the marker there; the swapping
  * tool (else) to two squares in turn, whose contents it then swaps.
  */
@@ -4081,7 +4081,7 @@ void dragLillyPiece(View *piece, Point where0)
         view->nextUpdate = 0;
         view->interval = 3;
         actor = (LillyActor *)&view->body;
-        if (!actor->unknownC0) {
+        if (!actor->kind) {
             cancel = 0;
             lillyDragState = 1;
             actor->body.waypointX = (actor->body.bounds.right - actor->body.bounds.left) / 2 + view->body.cels[0].x;
@@ -4101,7 +4101,7 @@ void dragLillyPiece(View *piece, Point where0)
         body = &view->body;
         bank = groupBanks[view->body.scriptGroup];
         while (lillyDragState) {
-            if (!actor->unknownC0)
+            if (!actor->kind)
                 lillyDragState = keepDragging();
             getCursorPosition(&where);
             short value = where.x;
@@ -4116,21 +4116,21 @@ void dragLillyPiece(View *piece, Point where0)
             view->body.frame = 0;
             view->body.frameOffset = 1;
             view->changed = 1;
-            if (!actor->unknownC0) {
+            if (!actor->kind) {
                 found = 0;
                 for (column = 0; column < placedViewCount; column++)
                     if (ptInRect(&rowEntryRects[column], where) && !lillyBoard[column][0].attributes[0]) {
-                        switch (actor->unknownDe) {
+                        switch (actor->attribute) {
                         case 1:
-                            if (lillyBoard[column][0].attributes[1] == actor->unknownDf)
+                            if (lillyBoard[column][0].attributes[1] == actor->attributeValue)
                                 found = 1;
                             break;
                         case 2:
-                            if (lillyBoard[column][0].attributes[2] == actor->unknownDf)
+                            if (lillyBoard[column][0].attributes[2] == actor->attributeValue)
                                 found = 1;
                             break;
                         case 3:
-                            if (lillyBoard[column][0].attributes[3] == actor->unknownDf)
+                            if (lillyBoard[column][0].attributes[3] == actor->attributeValue)
                                 found = 1;
                             break;
                         }
@@ -4676,8 +4676,8 @@ void openLilly()
         lillyLayerViews[i - 14000] = addView(0x4000000, drawCels, runViewScript, i, 0, 0, 0, 0);
     if (lillyLevel > 1) {
         lillyView11000 = addView(0x180000, drawCels, runViewScript, 11000, 5, 0, 0, 0);
-        actor.unknownC2 = 0;
-        actor.unknownC0 = 2;
+        actor.onBoard = 0;
+        actor.kind = 2;
         swapToolView = addView(0x4180002, drawCels, runViewScript, swapToolStage + 10078, 6, &actor, 0, 0);
         swapStep = 4;
         other = findView(swapToolView);
@@ -4823,7 +4823,7 @@ void lillyFrame()
             view = findView(event44Views[--event44Count]);
             if (view) {
                 actor = (LillyActor *)&view->body;
-                if (actor->unknownDe == 3) {
+                if (actor->attribute == 3) {
                     setViewScript(view, randomBetween(0, 2) * 2 + 10061, 1);
                     view->placed = placeActorCelsLow;
                     view->notify = lillyNotify60;
@@ -4928,15 +4928,15 @@ void lillyFrame()
 
                                     actor->column = column;
                                     actor->row = row;
-                                    actor->unknownBe = nextStart;
-                                    actor->unknownDe = lillyStarts[0].attribute;
-                                    actor->unknownDf = lillyBoard[actor->row][actor->column].attributes[actor->unknownDe];
-                                    actor->unknownE0 = squareSetC[attributeImageIndex[actor->unknownDe]] + actor->unknownDf;
+                                    actor->startIndex = nextStart;
+                                    actor->attribute = lillyStarts[0].attribute;
+                                    actor->attributeValue = lillyBoard[actor->row][actor->column].attributes[actor->attribute];
+                                    actor->imageOffset = squareSetC[attributeImageIndex[actor->attribute]] + actor->attributeValue;
                                     parts[25] = 0;
                                     parts[26] = 0;
                                     startPlan(actor);
                                     lillyBoard[actor->row][actor->column].attributes[0] = 1;
-                                    actor->unknownC2 = 1;
+                                    actor->onBoard = 1;
                                     actor->body.running = 1;
                                     actor->grid[actor->row][actor->column] = 1;
                                     actor->body.x = rowLeft[actor->row + 1] + actor->column * 35 + 2;
@@ -4960,7 +4960,7 @@ void lillyFrame()
                                     parts[26] = 0;
                                     actor->column = column;
                                     actor->row = row;
-                                    actor->unknownC2 = 1;
+                                    actor->onBoard = 1;
                                     actor->body.running = 1;
                                     actor->grid[actor->row][actor->column] = 1;
                                     actor->body.x = rowLeft[actor->row + 1] + actor->column * 35 + 2;
@@ -4997,9 +4997,9 @@ void lillyFrame()
                                     setViewScript(view, script, 1);
                                     view->placed = placeActorCelsHidden;
                                     view->notify = lillyNotify70;
-                                    actor->unknownC2 = 0;
+                                    actor->onBoard = 0;
                                 } else if (script) {
-                                    switch (actor->unknownD5) {
+                                    switch (actor->direction) {
                                     case 0:
                                         moveView(view->id, 0, rowAnchorViews[actor->row]);
                                         break;

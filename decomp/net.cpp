@@ -1136,7 +1136,7 @@ void flyMarker(short n)
         View *view = findView(markerViews[markerCount]);
 
         if (view) {
-            view->unknown1e = n;
+            view->tag = n;
             markerMoved++;
             view->placed = markerPlaced;
             view->interval = 3;
@@ -1153,7 +1153,7 @@ void updateFlyingMarker(View *view, short region)
     if (++markerStep > 5 || *(short *)(gameState + 0x20)) {
         markerStep = 0;
         view->update = runViewScript;
-        landMarker(view->unknown1e);
+        landMarker(view->tag);
     } else {
         markerX -= markerDx;
         markerY -= markerDy;

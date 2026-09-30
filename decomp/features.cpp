@@ -131,7 +131,7 @@ void queueViewSound(short sound, char streamed)
         if (!channels->sounds[i]) {
             channels->active = 1;
             channels->sounds[i] = sound;
-            channels->unknown42[i] = streamed;
+            channels->streamed[i] = streamed;
             channels->state[i] = 0;
             return;
         }
@@ -243,7 +243,7 @@ void runViewScript(View *view, short region)
     reset = view->reset;
     if (reset) {
         setViewScript(view, view->kind, 1);
-        view->unknown2e = 0;
+        view->scriptSet = 0;
         if (view->body.lastFrame < 1 || (view->flags & 0x80000) || (view->flags & 0x20000))
             view->body.running = 0;
         if (view->flags & 0x1000000) {
@@ -270,9 +270,9 @@ void runViewScript(View *view, short region)
 
             if (view->flags & 0x40000) {
                 ended = 1;
-                if (view->unknown1e) {
-                    dx = view->unknown1e;
-                    view->unknown1e = 0;
+                if (view->tag) {
+                    dx = view->tag;
+                    view->tag = 0;
                     if (dx < 0) {
                         dx = -dx;
                         setViewScript(view, dx, 1);
@@ -280,7 +280,7 @@ void runViewScript(View *view, short region)
                     } else {
                         setViewScript(view, dx, 1);
                     }
-                    view->unknown1e = 0;
+                    view->tag = 0;
                     if (view->flags & 0x2000)
                         view->body.running = 0;
                 }
@@ -311,10 +311,10 @@ void runViewScript(View *view, short region)
         } else if (view->flags & 0x2000000) {
             view->body.frame = randomBetween(0, view->body.lastFrame);
             view->body.frameOffset = scriptFrameOffset(scripts[view->body.script], &view->body.frame, 0);
-        } else if (!view->unknown2e) {
+        } else if (!view->scriptSet) {
             view->body.frame++;
         } else {
-            view->unknown2e = 0;
+            view->scriptSet = 0;
         }
         if (view->flags & 0x20000)
             view->body.running = 0;
@@ -461,7 +461,7 @@ void runViewCels(View *view, short region)
         view->nextUpdate = updateTime + view->interval;
         if (view->reset) {
             setViewScript(view, view->kind, 1);
-            view->unknown2e = 0;
+            view->scriptSet = 0;
             view->changed = 1;
         } else if (!(view->flags & 0x4000)) {
             unionRgnRect(region, &view->body.bounds);
@@ -1255,17 +1255,17 @@ void placeDialogButton(View *view)
             queueViewSound(999, 0);
             waitForEventFor(0, 2, 0, 1);
         }
-        view->unknown1e = dialogPressed;
+        view->tag = dialogPressed;
         buttonPressed[dialogPressed - 1] = 1;
         view->changed = 1;
         dialogPressed = -1;
         view->nextUpdate = clockTime() + 2;
-    } else if (view->unknown1e && view->nextUpdate) {
+    } else if (view->tag && view->nextUpdate) {
         if (clockTime() > view->nextUpdate || clockTime() < view->nextUpdate - 2) {
-            buttonPressed[view->unknown1e - 1] = 0;
+            buttonPressed[view->tag - 1] = 0;
             view->nextUpdate = 0;
             view->changed = 1;
-            switch (view->unknown1e) {
+            switch (view->tag) {
             case 1:
                 askNewGame();
                 break;
@@ -1302,7 +1302,7 @@ void placeDialogButton(View *view)
                 showDialog(5, 0, 0, 0);
                 break;
             }
-            dialogPressed = view->unknown1e = 0;
+            dialogPressed = view->tag = 0;
         }
     }
     while (*cel) {
@@ -1687,17 +1687,17 @@ void placeDialogList(View *view)
             queueViewSound(999, 0);
             waitForEventFor(0, 2, 0, 1);
         }
-        view->unknown1e = dialogPressed;
+        view->tag = dialogPressed;
         buttonPressed[dialogPressed - 1] = 1;
         view->changed = 1;
         dialogPressed = -1;
         view->nextUpdate = clockTime() + 2;
-    } else if (view->unknown1e && view->nextUpdate) {
+    } else if (view->tag && view->nextUpdate) {
         if (clockTime() > view->nextUpdate || clockTime() < view->nextUpdate - 2) {
-            buttonPressed[view->unknown1e - 1] = 0;
+            buttonPressed[view->tag - 1] = 0;
             view->nextUpdate = 0;
             view->changed = 1;
-            switch (view->unknown1e) {
+            switch (view->tag) {
             case 11:
                 if (firstGameShown > 0) {
                     firstGameShown -= 8;
@@ -1889,7 +1889,7 @@ void placeDialogList(View *view)
                 }
                 break;
             }
-            dialogPressed = view->unknown1e = 0;
+            dialogPressed = view->tag = 0;
         }
     }
     while (*cel) {

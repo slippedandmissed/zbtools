@@ -1046,9 +1046,9 @@ void showNameTag(const char *text, unsigned long duration, short large)
             view->update = updateNameTag;
             view->body.frameOffset = 0;
             if (large)
-                view->unknown1e = 1;
+                view->tag = 1;
             else
-                view->unknown1e = 0;
+                view->tag = 0;
             view->flags |= 0x4001000;
             if (duration)
                 { duration += clockTime(); view->body.frameOffset = duration; }
@@ -1081,7 +1081,7 @@ void drawNameTag(View *view)
 
     if (view->body.running) {
         saved = setForeColor(Color(0x2d));
-        if (view->unknown1e) {
+        if (view->tag) {
             rect = largeNameTagRect;
             image = 2;
         } else {
@@ -1114,7 +1114,7 @@ void updateNameTag(View *view, short region)
         if (view->reset) {
             ShortRect rect;
 
-            if (view->unknown1e)
+            if (view->tag)
                 rect = largeNameTagRect;
             else
                 rect = nameTagRect;
