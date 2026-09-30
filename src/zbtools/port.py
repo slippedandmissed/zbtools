@@ -27,7 +27,8 @@ from typing import Annotated, NamedTuple
 
 import typer
 
-from zbtools import assets, download, paths
+from zbtools import assets, download, exe_resources, paths
+from zbtools.formats import icon
 
 # The pinned Emscripten SDK: emsdk's release tarball, which installs the SDK
 # of the same version (its own downloads are pinned by emsdk's manifest).
@@ -58,6 +59,11 @@ _CFG = "[INSTALL]\r\nINSTALLFROMDIR=D:\\\r\nINSTALLTODIR=C:\\ZOOMBI32\\\r\n"
 _INSTALLED_FILES = ("MIDIMAP.DAT", "mohawk.w32", "ReadMe.txt", "Zoombini.who")
 _FONT = "CORNER.TTF"
 WEB_PAGE = "zoombinis.html"
+# The site's page (the web build's, renamed so a host serves it at /), and the
+# program's icon as its favicon and as a PNG for the page to show.
+SITE_PAGE = "index.html"
+SITE_FAVICON = "favicon.ico"
+SITE_ICON = "icon.png"
 WEB_DATA = "zoombinis-data"
 WEB_CONFIG = "zoombinis-config.js"
 
@@ -202,8 +208,12 @@ def game_arguments(c: str, d: str, soundfont: str) -> list[str]:
 # Hosts cap the size of a file (Cloudflare Pages at 25 MiB): the site's files
 # stay under this.
 SITE_FILE_LIMIT = 24 * 1024 * 1024
-# The page's files the web build makes, which the site serves as they are.
-_WEB_PROGRAM = (WEB_PAGE, "zoombinis.js", "zoombinis.wasm")
+# The page's files the web build makes, which the site serves under these names.
+_WEB_PROGRAM = {
+    WEB_PAGE: SITE_PAGE,
+    "zoombinis.js": "zoombinis.js",
+    "zoombinis.wasm": "zoombinis.wasm",
+}
 
 
 class SitePiece(NamedTuple):
@@ -260,7 +270,8 @@ def _page_files(c: Path, data: Path, soundfont: Path) -> list[tuple[Path, str, i
 def package_web() -> Path:
     """Builds the web page and packs the game for it into build/port/site/,
     holding only what a web server needs, each file under SITE_FILE_LIMIT:
-    the page (zoombinis.html, .js, .wasm), zoombinis-config.js (the game's
+    the page (index.html, zoombinis.js, .wasm), its icon (favicon.ico and
+    icon.png, from assets/zoombi32/), zoombinis-config.js (the game's
     drives and the SoundFont), and the page's file system in
     zoombinis-data-<n>.data packages, loaded by zoombinis-data.js. D:'s
     archives are packed from assets/; the movies are left out, since the port
@@ -278,8 +289,11 @@ def package_web() -> Path:
     for directory in (site, staging):
         shutil.rmtree(directory, ignore_errors=True)
         directory.mkdir(parents=True)
-    for name in _WEB_PROGRAM:
-        shutil.copyfile(web / name, site / name)
+    for name, published in _WEB_PROGRAM.items():
+        shutil.copyfile(web / name, site / published)
+    images = exe_resources.app_icon()
+    (site / SITE_FAVICON).write_bytes(icon.ico_file(images))
+    icon.save_png(images[0], site / SITE_ICON)
     setup_emsdk()
     packager = _emscripten_dir() / "tools" / "file_packager.py"
     loaders = []
@@ -385,11 +399,11 @@ def serve(
 ) -> None:
     """Serve the site on localhost (after `package`)."""
     out = paths.PORT_SITE_DIR
-    if not (out / WEB_PAGE).exists() or not (out / f"{WEB_DATA}.js").exists():
+    if not (out / SITE_PAGE).exists() or not (out / f"{WEB_DATA}.js").exists():
         _fail(PortError("package it first: uv run port package"))
     handler = partial(_Handler, directory=str(out))
     server = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
-    print(f"Serving http://127.0.0.1:{port}/{WEB_PAGE} (Ctrl-C to stop)")
+    print(f"Serving http://127.0.0.1:{port}/ (Ctrl-C to stop)")
     with contextlib.suppress(KeyboardInterrupt):
         server.serve_forever()
 

@@ -87,6 +87,12 @@ def _icons(directory: Path, group: IconGroup) -> list[tuple[int, icon.Icon]]:
     return [(i, icon.load_png(directory / _ICON_DIR / f"{i}{icon.SUFFIX}")) for i in group.icons]
 
 
+def app_icon(directory: Path = ASSETS) -> list[icon.Icon]:
+    """The program's icon (the first icon group): its images, largest first."""
+    images = [image for _, image in _icons(directory, read_manifest(directory).icon_groups[0])]
+    return sorted(images, key=lambda image: -image.width * image.height)
+
+
 def load(directory: Path = ASSETS) -> list[PeResource]:
     """The resources, rebuilt from assets/."""
     found = []

@@ -4,29 +4,80 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zoombinis</title>
+<meta name="description" content="Logical Journey of the Zoombinis, decompiled and rebuilt to run in the browser.">
+<!-- The program's icon, which `uv run port package` writes from assets/zoombi32/. -->
+<link rel="icon" href="favicon.ico" sizes="16x16 32x32">
 <style>
-  :root { --bg: #000; --fg: #c8c8c8; --accent: #ffd34d; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg);
-               font: 16px/1.4 system-ui, sans-serif; overflow: hidden; }
+  :root {
+    --bg: #0d1330; --bg-deep: #070a1c; --card: rgba(255, 255, 255, 0.06);
+    --line: rgba(255, 255, 255, 0.12); --fg: #e8ebf7; --muted: #a3abcc;
+    --accent: #ffd34d; --accent-ink: #231a00; --link: #8fd3ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg-deep); color: var(--fg);
+               font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
   #canvas { position: absolute; inset: 0; margin: auto; display: block;
             width: min(100vw, calc(100vh * 4 / 3)); height: min(100vh, calc(100vw * 3 / 4));
             image-rendering: pixelated; outline: none; cursor: none; }
-  #overlay { position: absolute; inset: 0; display: flex; align-items: center;
-             justify-content: center; flex-direction: column; gap: 12px; text-align: center;
-             padding: 16px; background: var(--bg); }
-  #overlay button { font: inherit; font-size: 20px; padding: 12px 28px; border-radius: 8px;
-                    border: 2px solid var(--accent); background: transparent;
-                    color: var(--accent); cursor: pointer; }
-  #overlay button:disabled { opacity: 0.4; cursor: default; }
-  #status { min-height: 1.4em; }
+  #overlay { position: absolute; inset: 0; overflow-y: auto; display: flex;
+             padding: 24px 16px;
+             background: radial-gradient(ellipse at 50% 0%, #243a8c 0%, var(--bg) 45%, var(--bg-deep) 100%); }
+  .card { margin: auto; width: 100%; max-width: 560px; padding: 32px 28px;
+          background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45); text-align: center; }
+  .icon { width: 96px; height: 96px; image-rendering: pixelated; }
+  h1 { margin: 12px 0 4px; font-size: clamp(24px, 6vw, 34px); line-height: 1.15;
+       letter-spacing: -0.01em; }
+  .subtitle { margin: 0 0 20px; color: var(--muted); }
+  .about { margin: 0 0 12px; text-align: left; }
+  .about a, .links a { color: var(--link); }
+  #start { margin: 16px 0 8px; font: inherit; font-size: 22px; font-weight: 700;
+           padding: 14px 56px; border: 0; border-radius: 999px; cursor: pointer;
+           background: var(--accent); color: var(--accent-ink);
+           box-shadow: 0 6px 0 #b8901a, 0 10px 24px rgba(255, 211, 77, 0.25);
+           transition: transform 80ms, box-shadow 80ms; }
+  #start:hover { filter: brightness(1.06); }
+  #start:active { transform: translateY(4px); box-shadow: 0 2px 0 #b8901a; }
+  #start:focus-visible { outline: 3px solid var(--link); outline-offset: 4px; }
+  #start:disabled { opacity: 0.6; cursor: default; transform: none; }
+  #status { min-height: 1.5em; color: var(--muted); font-size: 14px; }
+  .links { margin: 20px 0 0; font-size: 15px; }
+  .disclaimer { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--line);
+                color: var(--muted); font-size: 13px; text-align: left; }
+  noscript { display: block; margin-top: 12px; color: var(--accent); }
 </style>
 </head>
 <body>
 <canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
 <div id="overlay">
-  <div><strong>Logical Journey of the Zoombinis</strong></div>
-  <div id="status">Loading…</div>
-  <button id="start">Start</button>
+  <main class="card">
+    <img class="icon" src="icon.png" alt="" width="96" height="96">
+    <h1>Logical Journey of the Zoombinis</h1>
+    <p class="subtitle">The 1996 game, decompiled and rebuilt for the web</p>
+    <p class="about">
+      This is <em>zbtools</em>, a project to decompile the Windows release of
+      <em>Logical Journey of the Zoombinis</em> back into C++, function by function,
+      so that it builds and runs on modern systems. Here the decompiled game runs
+      in your browser, compiled to WebAssembly on a small stand-in for Windows
+      built on SDL.
+    </p>
+    <p class="about">
+      It's a work in progress: the intro movie doesn't play yet, and you may meet
+      bugs. Your progress is saved in this browser.
+    </p>
+    <button id="start">Play</button>
+    <div id="status" role="status">Loading…</div>
+    <noscript>The game needs JavaScript.</noscript>
+    <p class="links">
+      <a href="https://github.com/slippedandmissed/zbtools">Source code and project on GitHub</a>
+    </p>
+    <p class="disclaimer">
+      This is an unofficial fan project. It is not affiliated with, endorsed by or
+      connected to the official game, its creators or its publishers, including
+      TERC and Broderbund. <em>Zoombinis</em> and all related names and artwork belong
+      to their respective owners.
+    </p>
+  </main>
 </div>
 <script>
   // ?noalert: message boxes go to the console instead of blocking the page
@@ -45,7 +96,7 @@
   var overlay = document.getElementById('overlay');
   var statusLine = document.getElementById('status');
   var startButton = document.getElementById('start');
-  // Start may be clicked before the game is ready: pre.js starts it then.
+  // Play may be clicked before the game is ready: pre.js starts it then.
   window.zbStartClicked = false;
   startButton.onclick = function () {
     window.zbStartClicked = true;
@@ -67,6 +118,7 @@
     },
     onAbort: function (what) {
       overlay.style.display = 'flex';
+      startButton.hidden = true;
       statusLine.textContent = 'The game stopped: ' + what;
     },
   };
