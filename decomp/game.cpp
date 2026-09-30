@@ -31,7 +31,7 @@
 /*
  * The game's part of each pass of the main loop (WinMain registers it with
  * setFrameHook; mainLoopEvents calls it): runs the current scene's frame
- * function, and every 12 ticks steps through g_4a4976 (setCursorMode; an
+ * function, and every 12 ticks steps through cursorAnimation (setCursorMode; an
  * animated cursor?).
  */
 /* @zoombi32 0x00454f61 */
@@ -51,10 +51,10 @@ void gameFrame()
         unsigned long now = clockTime();
         if (now >= g_4b80d4) {
             g_4b80d4 = now + 12;
-            if (g_4b2aee >= 12)
-                g_4b2aee = 0;
-            setCursorMode(g_4a4976[g_4b2aee]);
-            g_4b2aee++;
+            if (cursorFrame >= 12)
+                cursorFrame = 0;
+            setCursorMode(cursorAnimation[cursorFrame]);
+            cursorFrame++;
         }
     }
 }
@@ -122,7 +122,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, in
     setFatalHook(shutDownGame);
     setClickHook(refreshCursor);
     setAboutHook(showAboutBox);
-    g_4b2aec = addModifierKeys(0) != 0x800;
+    startedWithoutModifier = addModifierKeys(0) != 0x800;
 
     if (osStartup(instance, osBuffer, sizeof osBuffer))
         fatalError(msgInitOs);
@@ -611,9 +611,9 @@ void emptySlotView(short n)
     View *view;
 
     if (n == 0 || n == 1)
-        view = findView(g_4b26a6[n]);
+        view = findView(slotPairViews[n]);
     else if (n == 7 || n == 8)
-        view = findView(g_4b26ba[n]);
+        view = findView(rowViews[n]);
     if (view) {
         view->changed = 1;
         Snoid *snoid = viewSnoid(view);
@@ -626,7 +626,7 @@ void emptySlotView(short n)
     }
 }
 
-/* Stops and empties the two Zoombini views g_4b26ac. */
+/* Stops and empties the two Zoombini views comparedViews. */
 /* @zoombi32 0x004512ac */
 void emptyPairViews()
 {
@@ -635,7 +635,7 @@ void emptyPairViews()
     View *view;
 
     for (i = 0; i < 2; i++) {
-        view = findView(g_4b26ac[i]);
+        view = findView(comparedViews[i]);
         if (view) {
             view->body.running = 0;
             view->changed = 1;
@@ -650,23 +650,23 @@ void emptyPairViews()
     }
 }
 
-/* A view's update: adds buttons 2 (when g_4b2792 changes) and 1 (the
+/* A view's update: adds buttons 2 (when smokeGoReady changes) and 1 (the
    first time) to the region to redraw. */
 /* @zoombi32 0x0044f180 */
 void updateSmokeButtons(View *, short region)
 {
-    if (g_4b2792) {
+    if (smokeGoReady) {
         if (!g_4a483e) {
             g_4a483e = 1;
-            unionRgnRect(region, &g_4a4708[2].rect);
+            unionRgnRect(region, &smokeButtons[2].rect);
         }
     } else if (g_4a483e) {
         g_4a483e = 0;
-        unionRgnRect(region, &g_4a4708[2].rect);
+        unionRgnRect(region, &smokeButtons[2].rect);
     }
     if (!g_4a4840) {
         g_4a4840 = 1;
-        unionRgnRect(region, &g_4a4708[1].rect);
+        unionRgnRect(region, &smokeButtons[1].rect);
     }
 }
 
@@ -680,12 +680,12 @@ void closeSmoke()
 
         clearViews();
         unloadSounds();
-        freeResource(&g_4a47c8);
-        freeResource(&g_4b2638);
-        freeResource(&g_4b2650);
-        freeResource(&g_4b2654);
+        freeResource(&smokeButtonResource);
+        freeResource(&smokeImagesResource);
+        freeResource(&smokeHotSpotsXResource);
+        freeResource(&smokeHotSpotsYResource);
         setFreeAtOnce(saved);
-        closeGameFile(&g_4b278c);
+        closeGameFile(&smokeFile);
         fadeOutViews();
         showBusyCursor();
     }
@@ -693,7 +693,7 @@ void closeSmoke()
 
 /* Scene 17's frame: leaves for the scene due; else runs the queued
    steps (g_4b2644, g_4b2746-g_4b2750: the views to start and move, the
-   next Zoombini across, g_4b266c of g_4b262e), and every 30 ticks
+   next Zoombini across, crossedCount of crossingCount), and every 30 ticks
    while g_4b2762 has an idle Zoombini of the party fidget. */
 /* @zoombi32 0x0044f25d */
 void smokeFrame()
@@ -760,10 +760,10 @@ void smokeFrame()
     }
     if (g_4b274a) {
         g_4b274a = 0;
-        if (g_4b2630 == 1 || g_4b2630 == 2) {
+        if (smokeLevel == 1 || smokeLevel == 2) {
             g_4b2752 = 0;
             dimDealButton(11002);
-        } else if (g_4b2630 == 3) {
+        } else if (smokeLevel == 3) {
             g_4b2752 = 1;
             dealButtonState = 2;
             lightDealButton(11003);
@@ -771,9 +771,9 @@ void smokeFrame()
     }
     if (g_4b2736) {
         g_4b2736 = 0;
-        g_4b25b4[g_4b266c] = addView(0x4180000, drawCels, runViewScript, 11071 - g_4b266c, 6, 0, 0, 0);
+        g_4b25b4[crossedCount] = addView(0x4180000, drawCels, runViewScript, 11071 - crossedCount, 6, 0, 0, 0);
         if (!g_4b273c && g_4b26b2) {
-            g_4b25dc[g_4b266c] = g_4b26b2;
+            g_4b25dc[crossedCount] = g_4b26b2;
             view = findView(g_4b26b2);
             if (view) {
                 Snoid *snoid;
@@ -786,32 +786,32 @@ void smokeFrame()
             }
             g_4b2670++;
             if (g_4b2670 == 1) {
-                g_4b2792 = 1;
+                smokeGoReady = 1;
                 unionRgnRect(removedRgn, &g_4a4750);
             }
         }
-        if (!g_4b266c) {
-            moveView(g_4b25b4[g_4b266c], 0, g_4b2598);
-            moveView(g_4b26b2, 1, g_4b25b4[g_4b266c]);
+        if (!crossedCount) {
+            moveView(g_4b25b4[crossedCount], 0, g_4b2598);
+            moveView(g_4b26b2, 1, g_4b25b4[crossedCount]);
         } else {
-            moveView(g_4b25b4[g_4b266c], 0, g_4b25b4[g_4b266c - 1]);
-            moveView(g_4b26b2, 1, g_4b25b4[g_4b266c]);
+            moveView(g_4b25b4[crossedCount], 0, g_4b25b4[crossedCount - 1]);
+            moveView(g_4b26b2, 1, g_4b25b4[crossedCount]);
         }
-        g_4b266c++;
-        if (g_4b266c == g_4b262e) {
+        crossedCount++;
+        if (crossedCount == crossingCount) {
             short chosen = countChosenSnoids();
 
-            if (chosen == g_4b262e) {
+            if (chosen == crossingCount) {
                 g_4b2762 = 1;
                 queueViewSound(randomBetween(20055, 20063), 0);
-            } else if (chosen < g_4b262e) {
-                if (randomBetween(0, 4) > g_4b2630 - 1
+            } else if (chosen < crossingCount) {
+                if (randomBetween(0, 4) > smokeLevel - 1
                     || (*(short *)(gameState + 0x42) & 0xfff) <= 3)
                     queueViewSound(randomBetween(20045, 20048), 0);
             }
         }
         g_4b26b2 = 0;
-        if (g_4b2630 == 1 || g_4b2630 == 2) {
+        if (smokeLevel == 1 || smokeLevel == 2) {
             view = findView(g_4b25a4);
             if (view) {
                 ViewCel *cels = view->body.cels;
@@ -821,7 +821,7 @@ void smokeFrame()
                 setViewScript(view, 11032, 1);
             }
         } else {
-            g_4b2734++;
+            nextCrossing++;
             if (g_4b2742)
                 view = findView(g_4b25a6);
             else
@@ -831,14 +831,14 @@ void smokeFrame()
                 view->notify = smokeViewNotify;
             }
         }
-        if (g_4b2630 == 1 || g_4b2630 == 2)
+        if (smokeLevel == 1 || smokeLevel == 2)
             g_4b26b0 = 0;
-        if (g_4b2630 < 4 || g_4b2630 == 4 && g_4b2744 == 1) {
-            if (g_4b2630 == 4 || g_4b2630 == 3)
+        if (smokeLevel < 4 || smokeLevel == 4 && g_4b2744 == 1) {
+            if (smokeLevel == 4 || smokeLevel == 3)
                 g_4b273a = takeNextTwoFeatures();
             else
                 g_4b273a = takeRandomFeatures();
-            if (g_4b273a && g_4b266c <= g_4b262e && g_4b2630 < 4) {
+            if (g_4b273a && crossedCount <= crossingCount && smokeLevel < 4) {
                 dealButtonState = 1;
                 lightDealButton(11005);
             } else {
@@ -867,12 +867,12 @@ void smokeFrame()
             }
         }
     }
-    if (g_4b2762 && g_4b2760 < g_4b262e - 1) {
+    if (g_4b2762 && g_4b2760 < crossingCount - 1) {
         if (clockTime() - g_4b2758 > 30) {
             done = 0;
             g_4b2758 = clockTime();
-            for (j = 0; j < g_4b262e && !done; j++) {
-                short n = allocateSlot(&g_4b275c, g_4b262e - 1, 0);
+            for (j = 0; j < crossingCount && !done; j++) {
+                short n = allocateSlot(&g_4b275c, crossingCount - 1, 0);
 
                 if (partyViews[n] && partyViews[n] != g_4b25dc[0] && partyViews[n] != g_4b25dc[1]
                     && partyViews[n] != g_4b25dc[2]) {
@@ -887,7 +887,7 @@ void smokeFrame()
                             g_4b2760++;
                         done = 1;
                     }
-                } else if (g_4b262e < 5) {
+                } else if (crossingCount < 5) {
                     view = idleSnoidView(partyViews[3]);
                     if (view && view->body.running) {
                         Snoid *snoid = viewSnoid(view);
@@ -899,7 +899,7 @@ void smokeFrame()
                 }
             }
         }
-    } else if (g_4b2760 >= g_4b262e - 1)
+    } else if (g_4b2760 >= crossingCount - 1)
         g_4b2760 = g_4b2762 = g_4b2758 = g_4b275c = 0;
     playAmbientSound();
     inSmokeFrame = 0;
@@ -1018,7 +1018,7 @@ void stopMovie(short shutdown)
         movieShowing = 0;
         qtim_31(currentMovie, 0);
         qtim_07(currentMovie);
-        setPort(g_4b2ae4);
+        setPort(portBeforeMovie);
     }
     if (shutdown && quickTimeReady) {
         quickTimeReady = 0;
@@ -1032,7 +1032,7 @@ void stopMovie(short shutdown)
 }
 
 /* Copies the features of the Zoombini in view `id` to one of the slot
-   views (0 and 1, or 7 and 8); for any but slot 0, while g_4b2630 is
+   views (0 and 1, or 7 and 8); for any but slot 0, while smokeLevel is
    below 3, the Zoombini's view also stops and moves to the slot view's
    place in the list (moveView). */
 /* @zoombi32 0x00450c24 */
@@ -1047,16 +1047,16 @@ void copyToSlotView(short id, short n)
     features = fromSnoid->features;
     switch (n) {
     case 0:
-        to = findView(g_4b26a6[0]);
+        to = findView(slotPairViews[0]);
         break;
     case 1:
-        to = findView(g_4b26a6[1]);
+        to = findView(slotPairViews[1]);
         break;
     case 7:
-        to = findView(g_4b26ba[7]);
+        to = findView(rowViews[7]);
         break;
     case 8:
-        to = findView(g_4b26ba[8]);
+        to = findView(rowViews[8]);
         break;
     }
     if (to) {
@@ -1069,7 +1069,7 @@ void copyToSlotView(short id, short n)
         copy[2] = features[2];
         copy[3] = features[3];
         snoid->unknownF4 = 4;
-        if (n && g_4b2630 < 3) {
+        if (n && smokeLevel < 3) {
             from->changed = 1;
             from->body.running = 0;
             moveView(from->id, 0, to->id);
@@ -1077,7 +1077,7 @@ void copyToSlotView(short id, short n)
     }
 }
 
-/* Records the features of the Zoombinis in the views g_4b2776[1-3] as
+/* Records the features of the Zoombinis in the views slotViews[1-3] as
    slots 1-3's (none if a view is gone). */
 /* @zoombi32 0x00450d5d */
 void recordLeftSlots()
@@ -1086,7 +1086,7 @@ void recordLeftSlots()
     View *view;
 
     for (i = 1; i < 4; i++) {
-        view = findView(g_4b2776[i]);
+        view = findView(slotViews[i]);
         if (view) {
             Snoid *snoid = viewSnoid(view);
 
@@ -1111,7 +1111,7 @@ void recordRightSlots()
     View *view;
 
     for (i = 4; i < 7; i++) {
-        view = findView(g_4b2776[i]);
+        view = findView(slotViews[i]);
         if (view) {
             Snoid *snoid = viewSnoid(view);
 
@@ -1129,7 +1129,7 @@ void recordRightSlots()
 }
 
 /* Copies the features of the Zoombinis in the next two views of
-   g_4b2604 (from g_4b2734, up to g_4b262e) into g_4b263c; returns how many
+   crossingViews (from nextCrossing, up to crossingCount) into targetFeatures; returns how many
    there were. */
 /* @zoombi32 0x00452035 */
 short takeNextTwoFeatures()
@@ -1137,41 +1137,41 @@ short takeNextTwoFeatures()
     short count = 0;
     View *view;
 
-    if (g_4b2734 < g_4b262e) {
+    if (nextCrossing < crossingCount) {
         count++;
-        view = findView(g_4b2604[g_4b2734]);
+        view = findView(crossingViews[nextCrossing]);
         if (view) {
             Snoid *snoid = viewSnoid(view);
             char *features = snoid->features;
 
-            g_4b263c[0] = features[0];
-            g_4b263c[1] = features[1];
-            g_4b263c[2] = features[2];
-            g_4b263c[3] = features[3];
+            targetFeatures[0] = features[0];
+            targetFeatures[1] = features[1];
+            targetFeatures[2] = features[2];
+            targetFeatures[3] = features[3];
         }
-        if (g_4b2734 + 1 < g_4b262e) {
+        if (nextCrossing + 1 < crossingCount) {
             count++;
-            view = findView(g_4b2604[g_4b2734 + 1]);
+            view = findView(crossingViews[nextCrossing + 1]);
             if (view) {
                 Snoid *snoid = viewSnoid(view);
                 char *features = snoid->features;
 
-                g_4b263c[4] = features[0];
-                g_4b263c[5] = features[1];
-                g_4b263c[6] = features[2];
-                g_4b263c[7] = features[3];
+                targetFeatures[4] = features[0];
+                targetFeatures[5] = features[1];
+                targetFeatures[6] = features[2];
+                targetFeatures[7] = features[3];
             }
         } else {
-            g_4b263c[4] = 0;
-            g_4b263c[5] = 0;
-            g_4b263c[6] = 0;
-            g_4b263c[7] = 0;
+            targetFeatures[4] = 0;
+            targetFeatures[5] = 0;
+            targetFeatures[6] = 0;
+            targetFeatures[7] = 0;
         }
     }
     return count;
 }
 
-/* Starts view g_4b25ac's script (11036 on, by g_4b266c) and, with it, the
+/* Starts view g_4b25ac's script (11036 on, by crossedCount) and, with it, the
    Zoombini in view g_4b26b2 (script 12020 on, from g_4a44ac), grouping
    them. */
 /* @zoombi32 0x0045162e */
@@ -1182,7 +1182,7 @@ void startNextCrossing(short)
 
     view = findView(g_4b25ac);
     if (view) {
-        setViewScript(view, g_4b266c + 11036, 1);
+        setViewScript(view, crossedCount + 11036, 1);
         view->notify = smokeViewNotify;
         moveView(view->id, 0, g_4b25ae);
     }
@@ -1192,7 +1192,7 @@ void startNextCrossing(short)
 
         snoid->unknownF2 = 1;
         *(Point *)&snoid->body.x = g_4a44ac;
-        startSnoidScript(viewSnoid(other), g_4b266c + 12020, 0, 0);
+        startSnoidScript(viewSnoid(other), crossedCount + 12020, 0, 0);
         other->notify = smokeViewNotify;
         moveView(other->id, 1, view->id);
     }
@@ -1912,8 +1912,8 @@ short shareFeature(short first, short second)
     return 0;
 }
 
-/* Picks a random Zoombini of the views g_4b2604 and copies its features
-   into g_4b263c, and from g_4b2630 3 on, the next one's after it; returns
+/* Picks a random Zoombini of the views crossingViews and copies its features
+   into targetFeatures, and from smokeLevel 3 on, the next one's after it; returns
    how many views there were. */
 /* @zoombi32 0x00451f4e */
 short takeRandomFeatures()
@@ -1923,9 +1923,9 @@ short takeRandomFeatures()
     short ids[22];
     View *view;
 
-    for (i = 0, count = 0; i < g_4b262e; i++)
-        if (g_4b2604[i])
-            ids[count++] = g_4b2604[i];
+    for (i = 0, count = 0; i < crossingCount; i++)
+        if (crossingViews[i])
+            ids[count++] = crossingViews[i];
     if (count) {
         i = randomBetween(0, count - 1);
         view = findView(ids[i]);
@@ -1933,12 +1933,12 @@ short takeRandomFeatures()
             Snoid *snoid = viewSnoid(view);
             char *features = snoid->features;
 
-            g_4b263c[0] = features[0];
-            g_4b263c[1] = features[1];
-            g_4b263c[2] = features[2];
-            g_4b263c[3] = features[3];
+            targetFeatures[0] = features[0];
+            targetFeatures[1] = features[1];
+            targetFeatures[2] = features[2];
+            targetFeatures[3] = features[3];
         }
-        if (g_4b2630 >= 3 && count > 1) {
+        if (smokeLevel >= 3 && count > 1) {
             i++;
             if (i == count)
                 i = 0;
@@ -1947,27 +1947,27 @@ short takeRandomFeatures()
                 Snoid *snoid = viewSnoid(view);
                 char *features = snoid->features;
 
-                g_4b263c[4] = features[0];
-                g_4b263c[5] = features[1];
-                g_4b263c[6] = features[2];
-                g_4b263c[7] = features[3];
+                targetFeatures[4] = features[0];
+                targetFeatures[5] = features[1];
+                targetFeatures[6] = features[2];
+                targetFeatures[7] = features[3];
             }
         } else {
-            g_4b263c[4] = 0;
-            g_4b263c[5] = 0;
-            g_4b263c[6] = 0;
-            g_4b263c[7] = 0;
+            targetFeatures[4] = 0;
+            targetFeatures[5] = 0;
+            targetFeatures[6] = 0;
+            targetFeatures[7] = 0;
         }
     }
     return count;
 }
 
 /* The cheat's message: "You have entered the psychedelic ZB Zone!", in a
-   box at g_4a447a. */
+   box at zoneMessageRect. */
 /* @zoombi32 0x0044dcdc */
 void showZoneMessage()
 {
-    ShortRect rect = g_4a447a;
+    ShortRect rect = zoneMessageRect;
     Color saved;
     char text[64];
 
@@ -1981,7 +1981,7 @@ void showZoneMessage()
 }
 
 /* Draws button 1 (image 5 or 6) or 2 (2 or 3, or 1 or 2 without
-   g_4b2792), lit or not, and with `show` shows it. */
+   smokeGoReady), lit or not, and with `show` shows it. */
 /* @zoombi32 0x0044f066 */
 void drawSmokeButton(short which, short lit, short show)
 {
@@ -1995,7 +1995,7 @@ void drawSmokeButton(short which, short lit, short show)
         break;
     case 2:
         image = 2;
-        if (!g_4b2792) {
+        if (!smokeGoReady) {
             lit = 0;
             image = 1;
         }
@@ -2004,19 +2004,19 @@ void drawSmokeButton(short which, short lit, short show)
     if (image) {
         if (lit)
             image++;
-        handle = usedResourceHandle(g_4a47c8);
+        handle = usedResourceHandle(smokeButtonResource);
         lockHandle(handle);
         bank = (ImageBank *)handleData(handle);
         unsigned short *data = (unsigned short *)(swapLong(bank->offsets[image]) + (char *)bank);
 
-        drawImageData(data, g_4a4708[which].rect.left, g_4a4708[which].rect.top, 8);
+        drawImageData(data, smokeButtons[which].rect.left, smokeButtons[which].rect.top, 8);
         unlockHandle(handle);
         if (show)
-            showRect(&g_4a4708[which].rect);
+            showRect(&smokeButtons[which].rect);
     }
 }
 
-/* Gives the Zoombinis in the views g_4b26ac the features set in slots 0-3
+/* Gives the Zoombinis in the views comparedViews the features set in slots 0-3
    and 7-4 (in that order, so later slots win), and returns 2 if the two
    then differ, else 0. */
 /* @zoombi32 0x004513ac */
@@ -2028,7 +2028,7 @@ short applySlotFeatures()
     View *view;
     short result;
 
-    view = findView(g_4b26ac[0]);
+    view = findView(comparedViews[0]);
     if (view) {
         view->body.running = 1;
         Snoid *snoid = (Snoid *)&view->body;
@@ -2046,7 +2046,7 @@ short applySlotFeatures()
                 first[3] = featureSlots[i][3];
         }
     }
-    view = findView(g_4b26ac[1]);
+    view = findView(comparedViews[1]);
     if (view) {
         view->body.running = 1;
         Snoid *snoid = (Snoid *)&view->body;
@@ -2092,7 +2092,7 @@ void startNextMove()
         view = findView(g_4b25a6);
     if (view) {
         view->flags = 0x5188000;
-        if (g_4b2630 == 1 || g_4b2630 == 2) {
+        if (smokeLevel == 1 || smokeLevel == 2) {
             setViewScript(view, g_4b2724[0], 0);
         } else {
             g_4b2742 = !g_4b2742;
@@ -2117,9 +2117,9 @@ void startNextMove()
         groupViews(first->id, second->id, 0, 0, 0, 0);
 }
 
-/* Gives the eight Zoombinis in the views g_4b2672 random features at their
-   places (g_4a44cc), except that one of the first `count`, at random, gets
-   the features set in g_4b263c. */
+/* Gives the eight Zoombinis in the views randomViews random features at their
+   places (randomPlaces), except that one of the first `count`, at random, gets
+   the features set in targetFeatures. */
 /* @zoombi32 0x004520ec */
 void dealRandomFeatures(short count)
 {
@@ -2136,32 +2136,32 @@ void dealRandomFeatures(short count)
         else
             chosen = randomBetween(0, count - 1);
         for (i = 0; i < 8; i++) {
-            view = findView(g_4b2672[i]);
+            view = findView(randomViews[i]);
             if (view) {
                 view->body.running = 1;
                 view->changed = 1;
                 snoid = (Snoid *)&view->body;
                 snoid->unknownF4 = 4;
-                *(Point *)&snoid->body.x = g_4a44cc[i];
+                *(Point *)&snoid->body.x = randomPlaces[i];
                 features = snoid->features;
                 for (j = 0; j < 4; j++)
                     features[j] = randomBetween(1, 4);
                 snoid->unknownF1 = 1;
                 if (i == chosen) {
-                    if (g_4b263c[0])
-                        features[0] = g_4b263c[0];
+                    if (targetFeatures[0])
+                        features[0] = targetFeatures[0];
                     else
                         features[0] = randomBetween(1, 4);
-                    if (g_4b263c[1])
-                        features[1] = g_4b263c[1];
+                    if (targetFeatures[1])
+                        features[1] = targetFeatures[1];
                     else
                         features[1] = randomBetween(1, 4);
-                    if (g_4b263c[2])
-                        features[2] = g_4b263c[2];
+                    if (targetFeatures[2])
+                        features[2] = targetFeatures[2];
                     else
                         features[2] = randomBetween(1, 4);
-                    if (g_4b263c[3])
-                        features[3] = g_4b263c[3];
+                    if (targetFeatures[3])
+                        features[3] = targetFeatures[3];
                     else
                         features[3] = randomBetween(1, 4);
                 }
@@ -2171,7 +2171,7 @@ void dealRandomFeatures(short count)
 }
 
 /* Moves on the one feature (unknownF5) of the Zoombinis in the views
-   g_4b2776[1-3] that change it: each takes the next value after its slot's (or
+   slotViews[1-3] that change it: each takes the next value after its slot's (or
    an earlier slot's, if its is unset), wrapping 5 round to 1, and records
    it in the next slot. */
 /* @zoombi32 0x00450e87 */
@@ -2182,7 +2182,7 @@ void advanceLeftFeatures()
     Snoid *snoid;
 
     for (i = 0; i < 3; i++) {
-        view = findView(g_4b2776[i + 1]);
+        view = findView(slotViews[i + 1]);
         if (view) {
             snoid = (Snoid *)&view->body;
             snoid->unknownF4 = 4;
@@ -2216,7 +2216,7 @@ void advanceLeftFeatures()
     }
 }
 
-/* The same from the other side: the views g_4b2776[6-4], from slots 7-5,
+/* The same from the other side: the views slotViews[6-4], from slots 7-5,
    recording in slots 6-4. */
 /* @zoombi32 0x00451020 */
 void advanceRightFeatures()
@@ -2226,7 +2226,7 @@ void advanceRightFeatures()
     Snoid *snoid;
 
     for (i = 5; i > 2; i--) {
-        view = findView(g_4b2776[i + 1]);
+        view = findView(slotViews[i + 1]);
         if (view) {
             snoid = (Snoid *)&view->body;
             snoid->unknownF4 = 4;
@@ -2279,7 +2279,7 @@ short smokeKey(unsigned short key)
         return 0;
     switch (key) {
     case 'L':
-        level[6] = digits[g_4b2630];
+        level[6] = digits[smokeLevel];
         strcpy(text, level);
         show = 1;
         key = 1;
@@ -2564,7 +2564,7 @@ short playMovie(const char *path)
     failed = 1;
     currentMovie = loadMovie(path);
     if (currentMovie) {
-        g_4b2ae4 = getPort();
+        portBeforeMovie = getPort();
         setPort(screenPort);
         qtim_0f(currentMovie, &bounds);
         OffsetRect(&bounds, -bounds.left, -bounds.top);
@@ -2779,7 +2779,7 @@ void settleCells()
 
 /*
  * Drags a Zoombini (from `where`), snapping it to the spot it's over: with
- * g_4b2630 below 3, the one spot g_4a4534 (4) unless g_4b2704; otherwise
+ * smokeLevel below 3, the one spot g_4a4534 (4) unless g_4b2704; otherwise
  * one of the three spots in row leftRow of g_4a4584 (0-2) or row rightRow
  * of g_4a45cc (3-5). Returns the spot it was over when released (-1:
  * none).
@@ -2813,14 +2813,14 @@ short dragSnoidToSpot(View *view, Point where)
     current = where;
     dx = 0;
     dy = 0;
-    if (g_4b2630 == 3 || g_4b2630 == 4)
+    if (smokeLevel == 3 || smokeLevel == 4)
         startRowViews();
     else if (!g_4b26b0)
         startView11076();
     while (keepDragging()) {
         getCursorPosition(&current);
         spot = -1;
-        if (g_4b2630 < 3) {
+        if (smokeLevel < 3) {
             if (ptInRect(&g_4a4534, current) && !g_4b2704) {
                 spot = 4;
                 current.x = g_4a4528.x;
@@ -3131,9 +3131,9 @@ void layOutSmokeSnoid(Snoid *snoid)
  * Gives a Zoombini (for slot n, 0-3) one or two random features, drawing
  * features (g_4b27ac) and values (g_4b27b6) without repeats: for slots 0
  * and 1 values unlike the ones already chosen (g_4b279c), recorded in slot
- * n + 1; for 2 and 3, mostly the chosen ones (else those set in g_4b263c),
- * recorded in slot n + 2 and g_4b27a4. Then updates g_4b263c, and places
- * the Zoombini at g_4a4514[n].
+ * n + 1; for 2 and 3, mostly the chosen ones (else those set in targetFeatures),
+ * recorded in slot n + 2 and g_4b27a4. Then updates targetFeatures, and places
+ * the Zoombini at dealtPlaces[n].
  */
 /* @zoombi32 0x00452258 */
 void giveSlotFeatures(Snoid *snoid, short n)
@@ -3188,9 +3188,9 @@ void giveSlotFeatures(Snoid *snoid, short n)
                     left--;
                 }
             } else {
-                snoid->features[k] = g_4b263c[k];
-                featureSlots[n + 2][k] = g_4b263c[k];
-                g_4b27a4[k] = g_4b263c[k];
+                snoid->features[k] = targetFeatures[k];
+                featureSlots[n + 2][k] = targetFeatures[k];
+                g_4b27a4[k] = targetFeatures[k];
                 left--;
             }
             break;
@@ -3205,9 +3205,9 @@ void giveSlotFeatures(Snoid *snoid, short n)
                     left--;
                 }
             } else {
-                snoid->features[k] = g_4b263c[k];
-                featureSlots[n + 2][k] = g_4b263c[k];
-                g_4b27a4[k] = g_4b263c[k];
+                snoid->features[k] = targetFeatures[k];
+                featureSlots[n + 2][k] = targetFeatures[k];
+                g_4b27a4[k] = targetFeatures[k];
                 left--;
             }
             break;
@@ -3220,13 +3220,13 @@ void giveSlotFeatures(Snoid *snoid, short n)
         g_4b27c4--;
     }
     if (g_4b279c[0])
-        g_4b263c[0] = g_4b279c[0];
+        targetFeatures[0] = g_4b279c[0];
     if (g_4b279c[1])
-        g_4b263c[1] = g_4b279c[1];
+        targetFeatures[1] = g_4b279c[1];
     if (g_4b279c[2])
-        g_4b263c[2] = g_4b279c[2];
+        targetFeatures[2] = g_4b279c[2];
     if (g_4b279c[3])
-        g_4b263c[3] = g_4b279c[3];
+        targetFeatures[3] = g_4b279c[3];
     if (n == 3) {
         for (j = 5; j > 3; j--) {
             if (featureSlots[j][0])
@@ -3238,20 +3238,20 @@ void giveSlotFeatures(Snoid *snoid, short n)
             if (featureSlots[j][3])
                 g_4b27a4[3] = featureSlots[j][3];
         }
-        if (g_4b263c[0] == g_4b27a4[0])
-            g_4b263c[0] = 0;
-        if (g_4b263c[1] == g_4b27a4[1])
-            g_4b263c[1] = 0;
-        if (g_4b263c[2] == g_4b27a4[2])
-            g_4b263c[2] = 0;
-        if (g_4b263c[3] == g_4b27a4[3])
-            g_4b263c[3] = 0;
+        if (targetFeatures[0] == g_4b27a4[0])
+            targetFeatures[0] = 0;
+        if (targetFeatures[1] == g_4b27a4[1])
+            targetFeatures[1] = 0;
+        if (targetFeatures[2] == g_4b27a4[2])
+            targetFeatures[2] = 0;
+        if (targetFeatures[3] == g_4b27a4[3])
+            targetFeatures[3] = 0;
     }
-    *(Point *)&snoid->body.x = g_4a4514[n];
+    *(Point *)&snoid->body.x = dealtPlaces[n];
     snoid->unknownF4 = 4;
 }
 
-/* Deals features to the four Zoombinis in the views g_4b269a. */
+/* Deals features to the four Zoombinis in the views dealtViews. */
 /* @zoombi32 0x0045222d */
 void dealFeatures()
 {
@@ -3259,7 +3259,7 @@ void dealFeatures()
     View *view;
 
     for (i = 0; i < 4; i++) {
-        view = findView(g_4b269a[i]);
+        view = findView(dealtViews[i]);
         if (view)
             giveSlotFeatures((Snoid *)&view->body, i);
     }
@@ -3365,7 +3365,7 @@ void smokeViewNotify(View *view, short event)
         setPairFeatures();
         break;
     case 3:
-        if (g_4b2630 > 0 && g_4b2630 < 4)
+        if (smokeLevel > 0 && smokeLevel < 4)
             g_4b274a = 1;
         break;
     case 4:
@@ -3385,13 +3385,13 @@ void smokeViewNotify(View *view, short event)
         }
         break;
     case 16:
-        other = findView(g_4b26ac[0]);
+        other = findView(comparedViews[0]);
         if (other) {
             other->nextUpdate = 0;
             first = (Snoid *)&other->body;
             first->unknownF4 = 4;
         }
-        other = findView(g_4b26ac[1]);
+        other = findView(comparedViews[1]);
         if (other) {
             other->nextUpdate = 0;
             second = (Snoid *)&other->body;
@@ -3408,10 +3408,10 @@ void smokeViewNotify(View *view, short event)
         break;
     case 17:
         if (g_4b26b2) {
-            for (i = 0; i < g_4b262e; i++)
-                if (g_4b2604[i] == g_4b26b2 && g_4b2630 != 4) {
-                    g_4b2604[i] = 0;
-                    i = g_4b262e;
+            for (i = 0; i < crossingCount; i++)
+                if (crossingViews[i] == g_4b26b2 && smokeLevel != 4) {
+                    crossingViews[i] = 0;
+                    i = crossingCount;
                 }
             if (g_4b273c)
                 g_4b26b2 = 0;
@@ -3419,16 +3419,16 @@ void smokeViewNotify(View *view, short event)
         startNextCrossing(view->body.group);
         break;
     case 30:
-        if (g_4b2604[g_4b2734] && g_4b2734 < g_4b262e) {
-            other = findView(g_4b2604[g_4b2734]);
+        if (crossingViews[nextCrossing] && nextCrossing < crossingCount) {
+            other = findView(crossingViews[nextCrossing]);
             if (other) {
                 other->body.running = 0;
-                g_4b26b2 = g_4b2604[g_4b2734];
+                g_4b26b2 = crossingViews[nextCrossing];
                 Snoid *snoid = (Snoid *)&other->body;
 
                 *(Point *)&snoid->body.x = g_4a44b0;
-                startSmokeSnoidScript(g_4b2604[g_4b2734], g_4b272a, view->body.group, smokeViewNotify, 0);
-                moveView(g_4b2604[g_4b2734], 1, view->id);
+                startSmokeSnoidScript(crossingViews[nextCrossing], g_4b272a, view->body.group, smokeViewNotify, 0);
+                moveView(crossingViews[nextCrossing], 1, view->id);
             }
         }
         break;
@@ -3442,15 +3442,15 @@ void smokeViewNotify(View *view, short event)
         }
         break;
     case 35:
-        if (g_4b2604[g_4b2734 + 1] && g_4b2734 + 1 < g_4b262e) {
-            other = findView(g_4b2604[g_4b2734 + 1]);
+        if (crossingViews[nextCrossing + 1] && nextCrossing + 1 < crossingCount) {
+            other = findView(crossingViews[nextCrossing + 1]);
             if (other) {
                 other->body.running = 0;
                 Snoid *snoid = (Snoid *)&other->body;
 
                 *(Point *)&snoid->body.x = g_4a44b0;
-                startSmokeSnoidScript(g_4b2604[g_4b2734 + 1], g_4b272c, view->body.group, smokeViewNotify, 0);
-                moveView(g_4b2604[g_4b2734 + 1], 1, view->id);
+                startSmokeSnoidScript(crossingViews[nextCrossing + 1], g_4b272c, view->body.group, smokeViewNotify, 0);
+                moveView(crossingViews[nextCrossing + 1], 1, view->id);
             }
         }
         break;
@@ -3462,10 +3462,10 @@ void smokeViewNotify(View *view, short event)
         }
         break;
     case 37:
-        if (g_4b2604[g_4b2734] && g_4b2734 < g_4b262e) {
-            g_4b26b2 = g_4b2604[g_4b2734];
-            startSmokeSnoidScript(g_4b2604[g_4b2734], g_4b272e, view->body.group, smokeViewNotify, 0);
-            moveView(g_4b2604[g_4b2734], 1, view->id);
+        if (crossingViews[nextCrossing] && nextCrossing < crossingCount) {
+            g_4b26b2 = crossingViews[nextCrossing];
+            startSmokeSnoidScript(crossingViews[nextCrossing], g_4b272e, view->body.group, smokeViewNotify, 0);
+            moveView(crossingViews[nextCrossing], 1, view->id);
         }
         if (g_4b2742) {
             other = findView(g_4b25a4);
@@ -3490,7 +3490,7 @@ void smokeViewNotify(View *view, short event)
         }
         break;
     case 38:
-        if (g_4b2630 == 4) {
+        if (smokeLevel == 4) {
             if (g_4b2744 == 3) {
                 if (g_4b26b2) {
                     copyToSlotView(g_4b26b2, 0);
@@ -3498,14 +3498,14 @@ void smokeViewNotify(View *view, short event)
                     recordLeftSlots();
                     advanceLeftFeatures();
                     emptyPairViews();
-                    other = findView(g_4b26ba[7]);
+                    other = findView(rowViews[7]);
                     if (other) {
                         first = (Snoid *)&other->body;
                         ViewBody *body = &first->body;
 
                         body->cels[0].image = 0;
                     }
-                    if (g_4b2604[g_4b2734]) {
+                    if (crossingViews[nextCrossing]) {
                         other = findView(g_4b2594);
                         if (other) {
                             setViewScript(other, g_4b2730, 1);
@@ -3514,7 +3514,7 @@ void smokeViewNotify(View *view, short event)
                         }
                     }
                 }
-            } else if (g_4b2744 == 1 && g_4b273a && g_4b266c <= g_4b262e) {
+            } else if (g_4b2744 == 1 && g_4b273a && crossedCount <= crossingCount) {
                 dealButtonState = 1;
                 lightDealButton(11005);
             }
@@ -3536,8 +3536,8 @@ void smokeViewNotify(View *view, short event)
 /*
  * Makes the scene's puzzle (with n 1) and gives the Zoombini for row n its
  * features. The rows (g_4b27ca, with the second set in g_4b2812) are built
- * from the features set in g_4b263c: rows 1 and 2 change one or two
- * features at random, rows 3 and 4 (at g_4b2630 3 and 4) follow on from
+ * from the features set in targetFeatures: rows 1 and 2 change one or two
+ * features at random, rows 3 and 4 (at smokeLevel 3 and 4) follow on from
  * them, row 7 (and 8, for the second set) from rows 3 and 4, and rows 5
  * and 6 differ by level. g_4b285a marks the features a row changes; the
  * Zoombini's first such feature is the one it changes (unknownF5).
@@ -3580,22 +3580,22 @@ void makeSmokeRows(Snoid *snoid, short n)
         g_4b28ba[1] = 0;
         g_4b28ba[2] = 0;
         g_4b28ba[3] = 0;
-        g_4b27ca[0][0] = g_4b263c[0];
-        g_4b27ca[0][1] = g_4b263c[1];
-        g_4b27ca[0][2] = g_4b263c[2];
-        g_4b27ca[0][3] = g_4b263c[3];
-        g_4b28a2[0] = g_4b263c[0];
-        g_4b28a2[1] = g_4b263c[1];
-        g_4b28a2[2] = g_4b263c[2];
-        g_4b28a2[3] = g_4b263c[3];
-        g_4b2812[0][0] = g_4b263c[4];
-        g_4b2812[0][1] = g_4b263c[5];
-        g_4b2812[0][2] = g_4b263c[6];
-        g_4b2812[0][3] = g_4b263c[7];
-        g_4b28aa[0] = g_4b263c[4];
-        g_4b28aa[1] = g_4b263c[5];
-        g_4b28aa[2] = g_4b263c[6];
-        g_4b28aa[3] = g_4b263c[7];
+        g_4b27ca[0][0] = targetFeatures[0];
+        g_4b27ca[0][1] = targetFeatures[1];
+        g_4b27ca[0][2] = targetFeatures[2];
+        g_4b27ca[0][3] = targetFeatures[3];
+        g_4b28a2[0] = targetFeatures[0];
+        g_4b28a2[1] = targetFeatures[1];
+        g_4b28a2[2] = targetFeatures[2];
+        g_4b28a2[3] = targetFeatures[3];
+        g_4b2812[0][0] = targetFeatures[4];
+        g_4b2812[0][1] = targetFeatures[5];
+        g_4b2812[0][2] = targetFeatures[6];
+        g_4b2812[0][3] = targetFeatures[7];
+        g_4b28aa[0] = targetFeatures[4];
+        g_4b28aa[1] = targetFeatures[5];
+        g_4b28aa[2] = targetFeatures[6];
+        g_4b28aa[3] = targetFeatures[7];
         for (row = 1; row < 3; row++) {
             for (j = 0; j < 8; j++)
                 values[j] = j;
@@ -3609,13 +3609,13 @@ void makeSmokeRows(Snoid *snoid, short n)
                     if (i == chosen && randomBetween(0, 100) > 70 && !once) {
                         once = 1;
                         if (!g_4b28a2[i])
-                            g_4b27ca[row][i] = g_4b263c[i] + 1;
+                            g_4b27ca[row][i] = targetFeatures[i] + 1;
                         else
                             g_4b27ca[row][i] = g_4b28a2[i] + 1;
                         if (g_4b27ca[row][i] > 5)
                             g_4b27ca[row][i] = 1;
                         if (!g_4b28aa[i])
-                            g_4b27ca[row][i] = g_4b263c[i + 4] + 1; /* sic: not g_4b2812 */
+                            g_4b27ca[row][i] = targetFeatures[i + 4] + 1; /* sic: not g_4b2812 */
                         else
                             g_4b2812[row][i] = g_4b28aa[i] + 1;
                         if (g_4b2812[row][i] > 5)
@@ -3637,7 +3637,7 @@ void makeSmokeRows(Snoid *snoid, short n)
                 }
         }
         limit = 2;
-        if (g_4b2630 == 4 || g_4b2630 == 3) {
+        if (smokeLevel == 4 || smokeLevel == 3) {
             g_4b28b2[0] = g_4b28a2[0];
             g_4b28b2[1] = g_4b28a2[1];
             g_4b28b2[2] = g_4b28a2[2];
@@ -3663,8 +3663,8 @@ void makeSmokeRows(Snoid *snoid, short n)
                                     g_4b27ca[row][i] = g_4b28b2[i];
                                     g_4b2812[row][i] = g_4b28ba[i];
                                 } else {
-                                    g_4b27ca[row][i] = g_4b263c[i];
-                                    g_4b2812[row][i] = g_4b263c[i + 4];
+                                    g_4b27ca[row][i] = targetFeatures[i];
+                                    g_4b2812[row][i] = targetFeatures[i + 4];
                                 }
                             } else if (g_4b285a[row - 1][i]) {
                                 g_4b27ca[row][i] = g_4b28b2[i] - 1;
@@ -3680,8 +3680,8 @@ void makeSmokeRows(Snoid *snoid, short n)
                                 g_4b27ca[row][i] = g_4b28b2[i];
                                 g_4b2812[row][i] = g_4b28ba[i];
                             } else {
-                                g_4b27ca[row][i] = g_4b263c[i];
-                                g_4b2812[row][i] = g_4b263c[i + 4];
+                                g_4b27ca[row][i] = targetFeatures[i];
+                                g_4b2812[row][i] = targetFeatures[i + 4];
                             }
                             g_4b285a[row][i] = g_4b27ca[row][i];
                         } else if (row == 3) {
@@ -3750,7 +3750,7 @@ void makeSmokeRows(Snoid *snoid, short n)
             } else {
                 g_4b27ca[row][i] = g_4b28b2[i];
             }
-        if (g_4b263c[4]) {
+        if (targetFeatures[4]) {
             row = 8;
             for (i = 0; i < 4; i++)
                 if (g_4b285a[4][i]) {
@@ -3769,7 +3769,7 @@ void makeSmokeRows(Snoid *snoid, short n)
                     g_4b2812[row][i] = g_4b28ba[i];
                 }
         }
-        if (g_4b2630 == 3) {
+        if (smokeLevel == 3) {
             for (row = 5; row < 7; row++) {
                 for (j = 0; j < 8; j++)
                     values[j] = j;
@@ -3794,7 +3794,7 @@ void makeSmokeRows(Snoid *snoid, short n)
                         }
                     }
             }
-        } else if (g_4b2630 == 4) {
+        } else if (smokeLevel == 4) {
             if (randomBetween(0, 1)) {
                 row2 = 5;
                 row = randomBetween(1, 2);
@@ -3845,7 +3845,7 @@ void makeSmokeRows(Snoid *snoid, short n)
     count = 0;
     for (i = 0; i < 4; i++) {
         if (n == 8) {
-            if (g_4b263c[4])
+            if (targetFeatures[4])
                 snoid->features[i] = g_4b2812[n][i];
             else
                 snoid->features[i] = 0;
@@ -3879,26 +3879,26 @@ void setOutSmokeSnoids()
 
     for (i = 0; i < 8; i++) {
         values[i] = i;
-        g_4b2768[i] = i;
+        rowPlaceOrder[i] = i;
     }
     if (!cheatMode) {
         last = 6;
         for (i = 1; i < 7; i++) {
             pick = randomBetween(1, last);
-            g_4b2768[i] = values[pick];
+            rowPlaceOrder[i] = values[pick];
             for (; pick < last + 1; pick++)
                 values[pick] = values[pick + 1];
             last--;
         }
     }
     for (i = 1; i < g_4b2662; i++) {
-        view = findView(g_4b26ba[i]);
+        view = findView(rowViews[i]);
         if (view) {
             snoid = (Snoid *)&view->body;
             makeSmokeRows(snoid, i);
             if (i < 7) {
                 snoid->unknownF1 = 7;
-                *(Point *)&snoid->body.x = g_4a44f0[g_4b2768[i]];
+                *(Point *)&snoid->body.x = rowPlaces[rowPlaceOrder[i]];
             } else if (i == 7) {
                 snoid->unknownF1 = 0;
                 *(Point *)&snoid->body.x = g_4a4528;
@@ -3910,18 +3910,18 @@ void setOutSmokeSnoids()
             snoid->unknownF4 = 4;
         }
     }
-    copyToSlotView(g_4b26ba[7], 7);
-    recordSlotFeatures(g_4b26ba[7], 7);
-    g_4b26b2 = g_4b2604[g_4b2734];
+    copyToSlotView(rowViews[7], 7);
+    recordSlotFeatures(rowViews[7], 7);
+    g_4b26b2 = crossingViews[nextCrossing];
     copyToSlotView(g_4b26b2, 0);
     recordSlotFeatures(g_4b26b2, 0);
     rightRow = 0;
     leftRow = 0;
-    fillMemory(&g_4b2776[1], 0, 12);
+    fillMemory(&slotViews[1], 0, 12);
 }
 
 /* Adds `count` Zoombini views of one kind to the scene (1: random ones at
-   g_4a44cc, one of them with the features set in g_4b263c; 2: dealt ones;
+   randomPlaces, one of them with the features set in targetFeatures; 2: dealt ones;
    3: the puzzle's rows; 4 and 5: empty ones), recording them in that
    kind's list. */
 /* @zoombi32 0x00452857 */
@@ -3941,22 +3941,22 @@ void addSmokeSnoids(short kind, short count)
             for (j = 0; j < 4; j++)
                 made->features[j] = randomBetween(1, 5);
             made->unknownF1 = 1;
-            *(Point *)&made->body.x = g_4a44cc[i];
+            *(Point *)&made->body.x = randomPlaces[i];
             if (i == chosen) {
-                if (g_4b263c[0])
-                    made->features[0] = g_4b263c[0];
+                if (targetFeatures[0])
+                    made->features[0] = targetFeatures[0];
                 else
                     made->features[0] = randomBetween(1, 5);
-                if (g_4b263c[1])
-                    made->features[1] = g_4b263c[1];
+                if (targetFeatures[1])
+                    made->features[1] = targetFeatures[1];
                 else
                     made->features[1] = randomBetween(1, 5);
-                if (g_4b263c[2])
-                    made->features[2] = g_4b263c[2];
+                if (targetFeatures[2])
+                    made->features[2] = targetFeatures[2];
                 else
                     made->features[2] = randomBetween(1, 5);
-                if (g_4b263c[3])
-                    made->features[3] = g_4b263c[3];
+                if (targetFeatures[3])
+                    made->features[3] = targetFeatures[3];
                 else
                     made->features[3] = randomBetween(1, 5);
             }
@@ -3978,7 +3978,7 @@ void addSmokeSnoids(short kind, short count)
                 made->unknownF1 = 5;
             if (i + 1 == 8)
                 made->unknownF1 = 3;
-            *(Point *)&made->body.x = g_4a44f0[i + 1];
+            *(Point *)&made->body.x = rowPlaces[i + 1];
             made->unknownF4 = 4;
             break;
         case 4:
@@ -4044,34 +4044,34 @@ void addSmokeSnoids(short kind, short count)
                 view->flags = 0x4000002;
             switch (kind) {
             case 1:
-                g_4b2672[g_4b2660] = j;
+                randomViews[g_4b2660] = j;
                 g_4b2660++;
                 moveView(j, 0, g_4b258e);
                 break;
             case 2:
-                g_4b269a[g_4b2664] = j;
+                dealtViews[g_4b2664] = j;
                 g_4b2664++;
                 moveView(j, 1, g_4b2590);
                 break;
             case 3:
-                g_4b26ba[g_4b2662] = j;
+                rowViews[g_4b2662] = j;
                 g_4b2662++;
                 moveView(j, 0, g_4b258e);
-                if (g_4b2662 == 8 && g_4b2630 >= 3) {
-                    copyToSlotView(g_4b26ba[7], 7);
-                    recordSlotFeatures(g_4b26ba[7], 7);
+                if (g_4b2662 == 8 && smokeLevel >= 3) {
+                    copyToSlotView(rowViews[7], 7);
+                    recordSlotFeatures(rowViews[7], 7);
                     g_4b26b0 = 1;
                 }
-                if (g_4b2662 == 9 && g_4b2630 >= 3)
-                    copyToSlotView(g_4b26ba[8], 8);
+                if (g_4b2662 == 9 && smokeLevel >= 3)
+                    copyToSlotView(rowViews[8], 8);
                 break;
             case 4:
-                g_4b26a6[g_4b2666] = j;
+                slotPairViews[g_4b2666] = j;
                 g_4b2666++;
                 moveView(j, 1, g_4b258e);
                 break;
             case 5:
-                g_4b26ac[g_4b2668] = j;
+                comparedViews[g_4b2668] = j;
                 g_4b2668++;
                 moveView(j, 1, g_4b258c);
                 if (view) {
@@ -4115,7 +4115,7 @@ void addLevelSnoids(short level)
 }
 
 /* The notify of view g_4b2594's scripts (level 4): 17 and 18 step view
-   g_4b26ba[8]'s Zoombini back along g_4a4524 (18 also empties it and
+   rowViews[8]'s Zoombini back along g_4a4524 (18 also empties it and
    moves the features along); 19 sets out the Zoombinis again. */
 /* @zoombi32 0x00451e5d */
 void stepBackNotify(View *, short event)
@@ -4124,7 +4124,7 @@ void stepBackNotify(View *, short event)
 
     switch (event) {
     case 17:
-        view = findView(g_4b26ba[8]);
+        view = findView(rowViews[8]);
         if (view) {
             Snoid *snoid = (Snoid *)&view->body;
 
@@ -4135,7 +4135,7 @@ void stepBackNotify(View *, short event)
         }
         break;
     case 18:
-        view = findView(g_4b26ba[8]);
+        view = findView(rowViews[8]);
         if (view) {
             Snoid *snoid = (Snoid *)&view->body;
             ViewBody *body = &snoid->body;
@@ -4145,7 +4145,7 @@ void stepBackNotify(View *, short event)
             *(Point *)&snoid->body.x = g_4a4524[g_4b2744];
             snoid->unknownF1 = 5;
             snoid->unknownF4 = 4;
-            recordSlotFeatures(g_4b26ba[8], 7);
+            recordSlotFeatures(rowViews[8], 7);
         }
         recordLeftSlots();
         advanceLeftFeatures();
@@ -4163,7 +4163,7 @@ void stepBackNotify(View *, short event)
 }
 
 /* Starts a round: empties the slot views, and deals new Zoombinis for the
-   level (g_4b2630). */
+   level (smokeLevel). */
 /* Not exact: at level 4 the original keeps `snoid` in edx and `body` in
    eax; this has them the other way round. */
 /* @zoombi32 0x004507e0 */
@@ -4174,13 +4174,13 @@ short startRound()
     ViewBody *body;
 
     emptySlotView(0);
-    if (g_4b2630 == 1 || g_4b2630 == 2)
+    if (smokeLevel == 1 || smokeLevel == 2)
         emptySlotView(1);
     else
         emptySlotView(7);
     emptyPairViews();
     clearFeatureSlots();
-    switch (g_4b2630) {
+    switch (smokeLevel) {
     case 1:
         dealRandomFeatures(g_4b273a);
         break;
@@ -4192,7 +4192,7 @@ short startRound()
         setOutSmokeSnoids();
         break;
     case 4:
-        view = findView(g_4b26ba[7]);
+        view = findView(rowViews[7]);
         if (view) {
             snoid = (Snoid *)&view->body;
             body = &snoid->body;
@@ -4200,7 +4200,7 @@ short startRound()
             body->cels[0].image = 0;
             snoid->unknownF4 = 2;
         }
-        view = findView(g_4b26ba[8]);
+        view = findView(rowViews[8]);
         if (view) {
             snoid = (Snoid *)&view->body;
             body = &snoid->body;
@@ -4241,20 +4241,20 @@ void openSmoke()
 
     sceneDue = 0;
     smokeOpen = 0;
-    g_4b2792 = 0;
+    smokeGoReady = 0;
     g_4b2788 = 0;
     g_4b26b0 = 0;
     g_4b26b2 = 0;
     g_4b266e = 1;
     dealButtonState = 2;
-    g_4b262e = 0;
+    crossingCount = 0;
     leftRow = 0;
     rightRow = 0;
     g_4b2664 = 0;
     g_4b2666 = 0;
     g_4b2668 = 0;
-    g_4b266c = 0;
-    g_4b2734 = 0;
+    crossedCount = 0;
+    nextCrossing = 0;
     g_4b2742 = 0;
     g_4b2744 = 3;
     g_4b264c = 0;
@@ -4279,19 +4279,19 @@ void openSmoke()
     soundOn = 0;
     g_4b2794 = g_4a47cc;
     for (i = 0; i < 8; i++)
-        g_4b2768[i] = i;
-    fillMemory(&g_4b2776[1], 0, 12);
+        rowPlaceOrder[i] = i;
+    fillMemory(&slotViews[1], 0, 12);
     fillMemory(&g_4b258a, 0, 42);
     fillMemory(g_4b25b4, 0, 40);
     fillMemory(g_4b25dc, 0, 40);
-    fillMemory(g_4b2604, 0, 42);
-    fillMemory(g_4b26ba, 0, 18);
-    g_4b2630 = sceneLevel() + 1;
-    if (g_4b2630 > 4)
-        g_4b2630 = 4;
+    fillMemory(crossingViews, 0, 42);
+    fillMemory(rowViews, 0, 18);
+    smokeLevel = sceneLevel() + 1;
+    if (smokeLevel > 4)
+        smokeLevel = 4;
     g_4b273e = 0;
     g_4b2740 = 0;
-    if (g_4b2630 == 1 || g_4b2630 == 2) {
+    if (smokeLevel == 1 || smokeLevel == 2) {
         scripts[0] = 11024;
         scripts[1] = 11025;
         scripts[2] = 11026;
@@ -4318,30 +4318,30 @@ void openSmoke()
         g_4b272c = 12039;
         g_4b272e = 12040;
     }
-    if (g_4b2630 != 4) {
+    if (smokeLevel != 4) {
         g_4b2730 = 11013;
         g_4b2732 = 0;
     } else {
         g_4b2730 = 11011;
         g_4b2732 = 11012;
     }
-    openGameFile(&g_4b278c, "Smoke.MHK");
-    setCurrentMap(g_4b278c);
+    openGameFile(&smokeFile, "Smoke.MHK");
+    setCurrentMap(smokeFile);
     loadTerrain(100);
     drawBackdrop(5000);
     loadFeatureGroup(11000, 0, 0);
     loadScripts(11000, 78);
     loadSnoidScripts(11999, 1, 0);
     addSnoidScripts(12000, 50, 0);
-    loadShape(&g_4a47c8, 6000, "Map/Go Buttons");
+    loadShape(&smokeButtonResource, 6000, "Map/Go Buttons");
     g_4b2594 = addView(0x4188000, drawCels, runViewScript, g_4b2730, 10, 0, 0, 0);
-    if (g_4b2630 == 1 || g_4b2630 == 2)
+    if (smokeLevel == 1 || smokeLevel == 2)
         view11076 = addView(0x5188000, drawCels, runViewScript, 11076, 10, 0, 0, 0);
     leftRowView = addView(0x5188000, drawCels, runViewScript, 11006, 10, 0, 0, 0);
     rightRowView = addView(0x5188000, drawCels, runViewScript, 11007, 10, 0, 0, 0);
     g_4b258c = addView(0x5188000, drawCels, runViewScript, scripts[g_4b273e], 6, 0, 0, 0);
     g_4b25a4 = addView(0x4108000, drawCels, runViewScript, others[0], 6, 0, 0, 0);
-    if (g_4b2630 == 3 || g_4b2630 == 4)
+    if (smokeLevel == 3 || smokeLevel == 4)
         g_4b25a6 = addView(0x4108000, drawCels, runViewScript, others[1], 6, 0, 0, 0);
     {
         View *added = findView(g_4b25a4);
@@ -4358,9 +4358,9 @@ void openSmoke()
     dealButtonView = addView(0x4180000, drawCels, runViewScript, 11002, 5, 0, 0, 0);
     g_4b2598 = addView(0x4100000, drawCels, runViewScript, 11077, 0, 0, 0, 0);
     addView(0x1000, drawSmokeButtons, updateSmokeButtons, 0, 0, 0, 0, 0);
-    smokeImages = loadImageBank(10000, &g_4b2638);
-    smokeHotSpotsX = loadShortTable(10000, &g_4b2650);
-    smokeHotSpotsY = loadShortTable(10001, &g_4b2654);
+    smokeImages = loadImageBank(10000, &smokeImagesResource);
+    smokeHotSpotsX = loadShortTable(10000, &smokeHotSpotsXResource);
+    smokeHotSpotsY = loadShortTable(10001, &smokeHotSpotsYResource);
     setViewPlaces(20, g_4a47ec, 1);
     makePartySnoids(0);
     g_4b2660 = 0;
@@ -4368,34 +4368,34 @@ void openSmoke()
     g_4b2664 = 0;
     g_4b2666 = 0;
     g_4b2668 = 0;
-    g_4b262e = listChosenSnoids()->count;
+    crossingCount = listChosenSnoids()->count;
     count = 0;
-    if (g_4b262e > 0) {
+    if (crossingCount > 0) {
         j = 0;
         i = 0;
-        pick = randomBetween(0, g_4b262e - 1);
+        pick = randomBetween(0, crossingCount - 1);
         for (view = viewListEnd(1); view; view = view->next)
             if (view->flags == 1) {
-                g_4b2604[i] = view->id;
+                crossingViews[i] = view->id;
                 i++;
                 Snoid *snoid = (Snoid *)&view->body;
 
-                if (g_4b2630 < 3) {
+                if (smokeLevel < 3) {
                     if (!pick) {
-                        g_4b263c[j * 4] = snoid->features[0];
-                        g_4b263c[j * 4 + 1] = snoid->features[1];
-                        g_4b263c[j * 4 + 2] = snoid->features[2];
-                        g_4b263c[j * 4 + 3] = snoid->features[3];
+                        targetFeatures[j * 4] = snoid->features[0];
+                        targetFeatures[j * 4 + 1] = snoid->features[1];
+                        targetFeatures[j * 4 + 2] = snoid->features[2];
+                        targetFeatures[j * 4 + 3] = snoid->features[3];
                     }
                     pick--;
                     count++;
-                    if (count == g_4b262e - 1 || count == g_4b262e) {
+                    if (count == crossingCount - 1 || count == crossingCount) {
                         snoid = (Snoid *)&view->body;
                         snoid->unknownF1 = 0;
                         setSnoidAction((Snoid *)&view->body, 7, 0);
                         view->body.y = 79;
                         ((Snoid *)&view->body)->targetY = 79;
-                        if (count == g_4b262e) {
+                        if (count == crossingCount) {
                             view->body.x = 45;
                             ((Snoid *)&view->body)->targetX = 160;
                         } else {
@@ -4406,17 +4406,17 @@ void openSmoke()
                 } else {
                     view->body.running = 0;
                     if (j < 2) {
-                        g_4b263c[j * 4] = snoid->features[0];
-                        g_4b263c[j * 4 + 1] = snoid->features[1];
-                        g_4b263c[j * 4 + 2] = snoid->features[2];
-                        g_4b263c[j * 4 + 3] = snoid->features[3];
+                        targetFeatures[j * 4] = snoid->features[0];
+                        targetFeatures[j * 4 + 1] = snoid->features[1];
+                        targetFeatures[j * 4 + 2] = snoid->features[2];
+                        targetFeatures[j * 4 + 3] = snoid->features[3];
                         j++;
                     }
                 }
             }
-        addLevelSnoids(g_4b2630);
+        addLevelSnoids(smokeLevel);
     }
-    if (g_4b2630 < 3)
+    if (smokeLevel < 3)
         placedViews[0] = addView(0x108a000, drawCels, runViewScript, 11001, 7, &g_4a44b4, 0, 0);
     fadeOutViews();
     copyPaletteRange(10, 236);
@@ -4442,7 +4442,7 @@ void openSmoke()
     smokeOpen = 1;
     addSoundRange(996, 997, 0);
     addSoundRange(20000, 29999, 1);
-    if (g_4b2630 != 3) {
+    if (smokeLevel != 3) {
         addSoundRange(11008, 11009, 0);
         addSoundRange(11001, 11001, 0);
         addSoundRange(11013, 11013, 0);
@@ -4476,7 +4476,7 @@ void openSmoke()
     queueViewSound(sceneLevel() + 30030, 0);
     campHint((short *)(gameState + 0x42));
     hintSound = randomBetween(20066, 20067);
-    if (g_4b2630 == 3 || g_4b2630 == 4) {
+    if (smokeLevel == 3 || smokeLevel == 4) {
         g_4b2752 = 1;
         lightDealButton(11003);
     }
@@ -4488,7 +4488,7 @@ void openSmoke()
  * one; otherwise it drags the party's Zoombinis to and from the scene's
  * slots and snaps them into place, and (levels 1 and 2) the Zoombinis it
  * deals into the machine's slot, or (levels 3 and 4) the rows' Zoombinis
- * into the two lines of slots (g_4b2776).
+ * into the two lines of slots (slotViews).
  */
 /* @zoombi32 0x0044fa57 */
 void smokeClicked(short action)
@@ -4524,7 +4524,7 @@ void smokeClicked(short action)
         askKeepParty();
         break;
     case 2:
-        if (g_4b2792) {
+        if (smokeGoReady) {
             queueViewSound(0, 0);
             drawSmokeButton(action, 1, 1);
             waitForEventFor(0, 2, 0, 1);
@@ -4536,7 +4536,7 @@ void smokeClicked(short action)
         }
         break;
     case 3:
-        if (snoidsOnTheirWay > 0 || g_4b266c >= g_4b262e)
+        if (snoidsOnTheirWay > 0 || crossedCount >= crossingCount)
             break;
         getCursorPosition(&where);
         if (dealButtonState == 1) {
@@ -4562,10 +4562,10 @@ void smokeClicked(short action)
         view = viewAt(where, 1, 1);
         if (view) {
             ok = 1;
-            for (k = 0; k < g_4b262e; k++)
-                if (g_4b25dc[k] == view->id || g_4b2630 >= 3) {
+            for (k = 0; k < crossingCount; k++)
+                if (g_4b25dc[k] == view->id || smokeLevel >= 3) {
                     ok = 0;
-                    k = g_4b262e;
+                    k = crossingCount;
                 }
             if (ok && view->body.running) {
                 g_4b2794 = *(long *)&view->body.x;
@@ -4608,7 +4608,7 @@ void smokeClicked(short action)
         view = viewAt(where, 2, 1);
         if (!view)
             break;
-        switch (g_4b2630) {
+        switch (smokeLevel) {
         case 1:
         case 2:
             if (ptInRect(&g_4a4534, where)) {
@@ -4617,7 +4617,7 @@ void smokeClicked(short action)
                     dimDealButton(11002);
                     clearFeatureSlot(7);
                     emptySlotView(1);
-                    view = findView(g_4b2672[g_4b26b0 - 1]);
+                    view = findView(randomViews[g_4b26b0 - 1]);
                     if (g_4b26b0) {
                         view->changed = 1;
                         view->body.running = 1;
@@ -4631,14 +4631,14 @@ void smokeClicked(short action)
                     } else {
                         g_4b26b0 = action;
                         snoid = (Snoid *)&view->body;
-                        *(Point *)&snoid->body.x = g_4a44cc[g_4b26b0 - 1];
+                        *(Point *)&snoid->body.x = randomPlaces[g_4b26b0 - 1];
                         snoid->unknownF4 = 4;
                         g_4b26b0 = 0;
                     }
                 }
             } else {
                 for (k = 0; k < g_4b2660; k++)
-                    if (g_4b2672[k] == view->id) {
+                    if (randomViews[k] == view->id) {
                         if (dragSnoidToSpot(view, where) == 4) {
                             if (!g_4b26b0) {
                                 g_4b26b0 = k + 1;
@@ -4646,12 +4646,12 @@ void smokeClicked(short action)
                                 recordSlotFeatures(view->id, 7);
                             } else {
                                 snoid = (Snoid *)&view->body;
-                                *(Point *)&snoid->body.x = g_4a44cc[k];
+                                *(Point *)&snoid->body.x = randomPlaces[k];
                                 snoid->unknownF4 = 4;
                             }
                         } else {
                             snoid = (Snoid *)&view->body;
-                            *(Point *)&snoid->body.x = g_4a44cc[k];
+                            *(Point *)&snoid->body.x = randomPlaces[k];
                             snoid->unknownF4 = 4;
                         }
                         k = g_4b2660;
@@ -4666,7 +4666,7 @@ void smokeClicked(short action)
         case 3:
         case 4:
             for (k = 1; k < g_4b2662 && k < 7; k++)
-                if (g_4b26ba[k] == view->id) {
+                if (rowViews[k] == view->id) {
                     pressDealButton(11002, 0);
                     g_4b2752 = 0;
                     snoid = (Snoid *)&view->body;
@@ -4676,20 +4676,20 @@ void smokeClicked(short action)
                         view->unknown1e = 0;
                     }
                     for (m = 0; m < 6; m++)
-                        if (g_4b2776[m + 1] == view->id) {
+                        if (slotViews[m + 1] == view->id) {
                             placed = 0;
-                            g_4b2776[m + 1] = 0;
+                            slotViews[m + 1] = 0;
                             if (m > 2) {
                                 for (action = m; action <= 5; action++)
                                     if (action < 5)
-                                        g_4b2776[action + 1] = g_4b2776[action + 2];
+                                        slotViews[action + 1] = slotViews[action + 2];
                                     else
-                                        g_4b2776[action + 1] = 0;
+                                        slotViews[action + 1] = 0;
                                 rightRow -= 2;
                                 if (rightRow < 0)
                                     rightRow = 0;
                                 for (action = 3; action <= 5; action++) {
-                                    other = findView(g_4b2776[action + 1]);
+                                    other = findView(slotViews[action + 1]);
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
@@ -4705,14 +4705,14 @@ void smokeClicked(short action)
                             } else {
                                 for (action = m; action <= 2; action++)
                                     if (action < 2)
-                                        g_4b2776[action + 1] = g_4b2776[action + 2];
+                                        slotViews[action + 1] = slotViews[action + 2];
                                     else
-                                        g_4b2776[action + 1] = 0;
+                                        slotViews[action + 1] = 0;
                                 leftRow -= 2;
                                 if (leftRow < 0)
                                     leftRow = 0;
                                 for (action = 0; action < 3; action++) {
-                                    other = findView(g_4b2776[action + 1]);
+                                    other = findView(slotViews[action + 1]);
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
@@ -4737,13 +4737,13 @@ void smokeClicked(short action)
                             placed = 0;
                             if (result < 3) {
                                 snoid->unknownF1 = 0;
-                                if (g_4b2776[result + 1])
+                                if (slotViews[result + 1])
                                     for (action = leftRow; action >= result; action--)
                                         if (action > 0)
-                                            g_4b2776[action + 1] = g_4b2776[action];
-                                g_4b2776[result + 1] = view->id;
+                                            slotViews[action + 1] = slotViews[action];
+                                slotViews[result + 1] = view->id;
                                 for (action = 0; action <= 2; action++) {
-                                    other = findView(g_4b2776[action + 1]);
+                                    other = findView(slotViews[action + 1]);
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
@@ -4753,18 +4753,18 @@ void smokeClicked(short action)
                                     }
                                 }
                                 leftRow++;
-                                g_4b2776[result + 1] = view->id;
+                                slotViews[result + 1] = view->id;
                                 recordLeftSlots();
                                 advanceLeftFeatures();
                             } else {
                                 snoid->unknownF1 = 2;
-                                if (g_4b2776[result + 1])
+                                if (slotViews[result + 1])
                                     for (action = rightRow + 3; action >= result; action--)
                                         if (action > 3)
-                                            g_4b2776[action + 1] = g_4b2776[action];
-                                g_4b2776[result + 1] = view->id;
+                                            slotViews[action + 1] = slotViews[action];
+                                slotViews[result + 1] = view->id;
                                 for (action = 3; action <= 5; action++) {
-                                    other = findView(g_4b2776[action + 1]);
+                                    other = findView(slotViews[action + 1]);
                                     if (other) {
                                         Snoid *moved = (Snoid *)&other->body;
 
@@ -4774,14 +4774,14 @@ void smokeClicked(short action)
                                     }
                                 }
                                 rightRow++;
-                                g_4b2776[result + 1] = view->id;
+                                slotViews[result + 1] = view->id;
                                 recordRightSlots();
                                 advanceRightFeatures();
                             }
                         }
                     } else {
                         snoid = (Snoid *)&view->body;
-                        *(Point *)&snoid->body.x = g_4a44f0[g_4b2768[k]];
+                        *(Point *)&snoid->body.x = rowPlaces[rowPlaceOrder[k]];
                         snoid->unknownF4 = 4;
                         if (snoid->unknownF5) {
                             snoid->unknownF8 = 1;

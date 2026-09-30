@@ -3766,7 +3766,7 @@ long __cdecl qtim_31(long movie, long);
 long __cdecl qtim_37(long controller);
 long __cdecl qtim_5e();
 void __cdecl QTTerminate();
-extern short g_4b266c;
+extern short crossedCount;
 extern short sharedFeature;
 long __cdecl cmgr_05(long controller, long *flags);
 long __cdecl cmgr_09(long controller);
