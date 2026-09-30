@@ -914,6 +914,144 @@ void fn_45162e(short)
         groupViews(view->id, view->id, 0, 0, 0, 0);
 }
 
+/* Starts the hex grid at the cell after `cell`: puts the first of the
+   party on it (the next one alike to the one before it), then grows the
+   grid from there (fn_44ce56) and from the 13 cells of g_4a4418 while
+   fn_44d102 allows. `cell` is reused for the search and fn_44ce56's
+   result, as in the original. */
+/* @zoombi32 0x0044cc51 */
+void fn_44cc51(short cell)
+{
+    short order[13] = {55, 40, 76, 23, 95, 42, 78, 38, 74, 21, 93, 19, 91};
+    short i = 0;
+    short at;
+
+    fn_449c18();
+    at = ++cell;
+    g_4b1aea[at].state = 507;
+    if (g_4b2414 == 1) {
+        g_4b1aea[at].snoid = partyViews[0];
+        g_4b2544[0].snoid = partyViews[0];
+        g_4b2430[0] = -1;
+        return;
+    }
+    for (cell = 0; cell < g_4b2414; cell++)
+        if (fn_44cd71(cell, cell + 1)) {
+            g_4b1aea[at].snoid = partyViews[g_4b2430[cell + 1]];
+            g_4b2430[cell + 1] = -1;
+            break;
+        }
+    cell = fn_44ce56(at);
+    if (!cell) {
+        at += 2;
+        cell = fn_44ce56(at);
+        if (!cell) {
+            at += 2;
+            fn_44ce56(at);
+        }
+    } else if (cell && cell != -1)
+        fn_44ce56(cell);
+    do {
+        if (++i >= 13)
+            break;
+        at = order[i];
+        fn_44ce56(at);
+    } while (fn_44d102());
+}
+
+/* Grows the grid from `cell`: when it isn't taken (507), first from a
+   taken cell two steps away in direction 5 or 3; then (for cells 55, 57
+   and 59) in direction 4, and towards the cells two steps away in
+   directions 5 and 3 when they are open (506), linking the Zoombini two
+   cells on (fn_449f96). Returns -1 when it can't, the cell two on when a
+   step fails, else 0. */
+/* Not exact: the original keeps `n` in edi (and far5 and far3 on the
+   stack); here n stays in eax and far5 gets edi. */
+/* @zoombi32 0x0044ce56 */
+short fn_44ce56(short cell)
+{
+    short n;
+    short far5; /* two steps away in direction 5 */
+    short far3; /* and in direction 3 */
+    short target;
+
+    if (!fn_44d102())
+        return -1;
+    if (g_4b1aea[cell].state != 507) {
+        short a = g_4b1aea[cell].links[5];
+        short b;
+
+        a = g_4b1aea[a].links[5];
+        b = g_4b1aea[cell].links[3];
+        b = g_4b1aea[b].links[3];
+
+        if (a != -1 && g_4b1aea[a].state == 507) {
+            n = fn_44d3b8(a, 2);
+            if (n == -1)
+                return -1;
+        } else if (b != -1 && g_4b1aea[b].state == 507) {
+            n = fn_44d3b8(b, 0);
+            if (n == -1)
+                return -1;
+        } else
+            return -1;
+    }
+    {
+        short next = g_4b1aea[cell].links[5];
+
+        far5 = -1;
+        if (next != -1)
+            far5 = g_4b1aea[next].links[5];
+    }
+    {
+        short next = g_4b1aea[cell].links[3];
+
+        far3 = -1;
+        if (next != -1)
+            far3 = g_4b1aea[next].links[3];
+    }
+    target = 0;
+    if (cell == 55 || cell == 59 || cell == 57)
+        target = cell + 2;
+    if (target) {
+        n = fn_44d3b8(cell, 4);
+        if (n == -1) {
+            g_4b2524 = -1;
+            return -1;
+        }
+    }
+    target = cell + 2;
+    if (far5 != -1 && g_4b1aea[far5].state == 506) {
+        if (!fn_44d102())
+            return -1;
+        n = fn_44d3b8(cell, 5);
+        if (n == -1) {
+            g_4b1aea[far5].state = 501;
+            return g_4b2524 = target;
+        }
+    }
+    if (g_4b1aea[target].state == 507) {
+        n = fn_449f96(target, far5);
+        if (n)
+            g_4b1aea[g_4b1aea[far5].links[3]].snoid = n;
+    }
+    if (far3 != -1 && g_4b1aea[far3].state == 506) {
+        if (!fn_44d102())
+            return -1;
+        n = fn_44d3b8(cell, 3);
+        if (n == -1) {
+            g_4b1aea[far3].state = 501;
+            return g_4b2524 = target;
+        }
+        if (g_4b1aea[target].state == 507) {
+            n = fn_449f96(target, far3);
+            if (n)
+                g_4b1aea[g_4b1aea[far3].links[5]].snoid = n;
+        }
+    }
+    return 0;
+}
+
 /* Whether two of the Zoombinis (g_4b2430) share a feature; g_4b2516 is
    set to the first they share (0-3). */
 /* @zoombi32 0x0044cd71 */
