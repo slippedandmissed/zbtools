@@ -965,6 +965,7 @@
 0x004624fc fn_4624fc
 0x0046251c setCursorMode
 0x0046258a fn_46258a
+0x004625b8 fn_4625b8
 0x00462749 debugMessage
 0x0046310c initViews
 0x004632af closeViews

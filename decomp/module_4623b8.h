@@ -6,6 +6,7 @@
 #ifndef MODULE_4623B8_H
 #define MODULE_4623B8_H
 
+extern char aboutText[]; /* @data 0x4a5156: "Logical Journey of the Zoombinis\rVersion 1.0..." */
 extern short g_4a79c0;
 extern unsigned long g_4a79c8;
 extern unsigned long g_4b80d8;

@@ -7,6 +7,7 @@
 #include "events.h"
 #include "features.h"
 #include "focus.h"
+#include "game.h"
 #include "graphics.h"
 #include "module_4623b8.h"
 #include "net.h"
@@ -137,6 +138,40 @@ void fn_46258a()
         return;
     }
     setCursorShape((const MacCursor *)handleData(g_4b80c4[g_4b80d2]));
+}
+
+/* Shows the about box (the title, version and copyright, in a framed
+   white box in the middle of the game's area) until a key or click. */
+/* @zoombi32 0x004625b8 */
+void fn_4625b8()
+{
+    ShortRect rect;
+    ShortRect inner;
+    Color saved;
+    Font *font;
+    basePort *port;
+
+    rect.left = (gameRect.right - 340) >> 1;
+    rect.right = rect.left + 340;
+    rect.top = (gameRect.bottom - 152) >> 1;
+    rect.bottom = rect.top + 152;
+    port = getPort();
+    setPort(screenPort);
+    font = setFont(fonts[1]);
+    saved = getForeColor();
+    setForeColor(Color(RGBColor(0, 0, 0)));
+    fillPortRect(Rect(rect), Color(RGBColor(0xff, 0xff, 0xff)), 0);
+    frameRect(Rect(rect));
+    inner = rect;
+    insetRect(&inner, 9, 9);
+    drawText(Rect(inner), 0x22, aboutText, 0xffff);
+    while (!isEventWaiting(3, 0))
+        ;
+    discardEvents(3);
+    setForeColor(saved);
+    setFont(font);
+    setPort(port);
+    showRect(&rect);
 }
 
 /* A mouse button pressed at `where`: goes to the dialog while one is up,

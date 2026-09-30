@@ -586,6 +586,14 @@ public:
     __cdecl RGBColor(unsigned char red, unsigned char green, unsigned char blue,
                      unsigned char kind); /* 0x48c4ac */
     __cdecl RGBColor(const Color &color); /* 0x488a64 */
+    /* An RGB colour, built in place (as the game's code does). */
+    RGBColor(unsigned char red, unsigned char green, unsigned char blue)
+    {
+        bytes.red = red;
+        bytes.green = green;
+        bytes.blue = blue;
+        bytes.kind = 0;
+    }
 };
 
 /* An item (0x24 bytes). */
