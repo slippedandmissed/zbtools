@@ -1,0 +1,4 @@
+# A table of words.
+words = [
+    0, 22, 45, 68, 91, 116,
+]

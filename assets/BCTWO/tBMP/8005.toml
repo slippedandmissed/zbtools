@@ -1,0 +1,6 @@
+# One image, 8005.png.
+compressed = true
+bank = false
+images = [
+    { packed = true, tail = "8c42" },
+]

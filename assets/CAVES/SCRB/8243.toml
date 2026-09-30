@@ -1,0 +1,19 @@
+# A feature script: its frames, each the cels drawn ([image, x, y], from the view's
+# bank; image 0 draws nothing), the event it tells the view's owner of, and a
+# sound to play.
+frames = [
+    { cels = [[173, 353, 338]] },
+    { cels = [] },
+    { cels = [] },
+    { cels = [] },
+    { cels = [] },
+    { cels = [[83, 370, 278], [173, 353, 338]] },
+    { cels = [[173, 353, 338]] },
+    { cels = [] },
+    { cels = [] },
+    { cels = [] },
+    { cels = [] },
+    { cels = [] },
+    { cels = [] },
+    { cels = [] },
+]

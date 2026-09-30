@@ -1,0 +1,6 @@
+# A bank of 1 images, in 11800/<n>.png.
+compressed = true
+bank = true
+images = [
+    { packed = true },
+]

@@ -1,0 +1,32 @@
+# A bank of 27 images, in 4100/<n>.png.
+compressed = true
+bank = true
+images = [
+    { packed = true, tail = "8e3c00" },
+    { packed = true, tail = "505000" },
+    { packed = false },
+    { packed = false },
+    { packed = true, tail = "646400" },
+    { packed = true, tail = "02fe000000" },
+    { packed = true, tail = "83d700" },
+    { packed = true, tail = "dd34000000" },
+    { packed = true, tail = "80e20000" },
+    { packed = true, tail = "779a000000" },
+    { packed = true, tail = "e4a800" },
+    { packed = true, tail = "d654000000" },
+    { packed = true, tail = "d68f" },
+    { packed = true, tail = "3c60000000" },
+    { packed = true, tail = "b36000" },
+    { packed = true, tail = "53d6000000" },
+    { packed = true, tail = "36b80000" },
+    { packed = true, tail = "cefd000000" },
+    { packed = true, tail = "8e8100" },
+    { packed = true, tail = "2fc7000000" },
+    { packed = true, tail = "591c" },
+    { packed = true, tail = "cfb8000000" },
+    { packed = true, tail = "9a5a00" },
+    { packed = true, tail = "c0c0000000" },
+    { packed = true, tail = "5c5c" },
+    { packed = true, tail = "e0e0000000" },
+    { packed = true, tail = "c24300" },
+]

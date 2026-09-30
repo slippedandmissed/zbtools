@@ -1,0 +1,9 @@
+# A bank of 4 images, in 2200/<n>.png.
+compressed = true
+bank = true
+images = [
+    { packed = false },
+    { packed = false },
+    { packed = false },
+    { packed = false },
+]

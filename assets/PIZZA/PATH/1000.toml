@@ -1,0 +1,4 @@
+# The paths Zoombinis walk: the nodes each joins (up to 24).
+paths = [
+    [1, 2, 3, 4, 5],
+]

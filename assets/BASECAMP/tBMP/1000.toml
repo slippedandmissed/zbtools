@@ -1,0 +1,6 @@
+# One image, 1000.png.
+compressed = true
+bank = false
+images = [
+    { packed = true, tail = "df18" },
+]

@@ -1,0 +1,11 @@
+# A bank of 6 images, in 1100/<n>.png.
+compressed = true
+bank = true
+images = [
+    { packed = true, tail = "2804" },
+    { packed = true, tail = "24250000" },
+    { packed = true, tail = "a681" },
+    { packed = true, tail = "2524000000" },
+    { packed = true, tail = "272b00" },
+    { packed = true, tail = "25250000" },
+]

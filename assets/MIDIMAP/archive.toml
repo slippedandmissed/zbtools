@@ -1,0 +1,7 @@
+# Packed into MIDIMAP.DAT by `uv run assets pack`: its resources, in the
+# order their data is stored, each in <type>/<id>.<extension>.
+path = "MIDIMAP.DAT"
+resources = [
+    { type = "SYSX", id = 1 },
+    { type = "SYSX", id = 65535 },
+]

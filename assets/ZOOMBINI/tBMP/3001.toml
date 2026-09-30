@@ -1,0 +1,7 @@
+# A bank of 2 images, in 3001/<n>.png.
+compressed = true
+bank = true
+images = [
+    { packed = true },
+    { packed = true, tail = "8586000000" },
+]

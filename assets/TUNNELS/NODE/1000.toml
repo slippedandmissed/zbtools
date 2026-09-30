@@ -1,0 +1,4 @@
+# The points Zoombinis' paths join, [x, y], numbered from 1.
+nodes = [
+    [287, 87], [430, 83], [304, 238], [494, 228], [536, 80], [670, 30],
+]

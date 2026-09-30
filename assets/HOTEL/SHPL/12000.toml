@@ -1,0 +1,11 @@
+# A shape list: its shapes are tBMP resources first_shape on, and it sets
+# the palette's colours.
+first_shape = 12000
+shapes = 1
+
+[palette]
+first = 255  # the first colour's index
+flags = 0  # every colour's (1: PC_RESERVED)
+colours = [
+    "#000000",
+]

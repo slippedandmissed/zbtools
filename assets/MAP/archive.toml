@@ -1,0 +1,14 @@
+# Packed into DATA/MAP.MHK by `uv run assets pack`: its resources, in the
+# order their data is stored, each in <type>/<id>.<extension>.
+path = "DATA/MAP.MHK"
+resources = [
+    { type = "SHPL", id = 300 },
+    { type = "tBMP", id = 300 },
+    { type = "tBMP", id = 1000 },
+    { type = "SCRB", id = 1000 },
+    { type = "SCRB", id = 1001 },
+    { type = "SCRB", id = 1002 },
+    { type = "SCRB", id = 1003 },
+    { type = "SCRB", id = 1004 },
+    { type = "SCRB", id = 1005 },
+]

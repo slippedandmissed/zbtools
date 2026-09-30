@@ -1,0 +1,6 @@
+# One image, 8002.png.
+compressed = true
+bank = false
+images = [
+    { packed = true },
+]

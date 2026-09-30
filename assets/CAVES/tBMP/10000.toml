@@ -1,0 +1,25 @@
+# A bank of 20 images, in 10000/<n>.png.
+compressed = true
+bank = true
+images = [
+    { packed = true },
+    { packed = true, tail = "8e82000000" },
+    { packed = true, tail = "6b6b" },
+    { packed = false },
+    { packed = true, tail = "382d00" },
+    { packed = false },
+    { packed = false },
+    { packed = true },
+    { packed = true },
+    { packed = true, tail = "4a39000000" },
+    { packed = false },
+    { packed = false },
+    { packed = false },
+    { packed = false },
+    { packed = false },
+    { packed = true, tail = "00050000" },
+    { packed = true, tail = "2f400000" },
+    { packed = true, tail = "27ff" },
+    { packed = true, tail = "2c44000000" },
+    { packed = true, tail = "363e00" },
+]

@@ -1,0 +1,6 @@
+# One image, 5000.png.
+compressed = false
+bank = false
+images = [
+    { packed = true, tail = "db6d" },
+]

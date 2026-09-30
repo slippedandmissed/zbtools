@@ -1,0 +1,23 @@
+# Packed into DATA/MIDIMPC.MHK by `uv run assets pack`: its resources, in the
+# order their data is stored, each in <type>/<id>.<extension>.
+path = "DATA/MIDIMPC.MHK"
+resources = [
+    { type = "tMID", id = 30000, purgeable = true },
+    { type = "tMID", id = 30001, purgeable = true },
+    { type = "tMID", id = 30020, purgeable = true },
+    { type = "tMID", id = 30021, purgeable = true },
+    { type = "tMID", id = 30022, purgeable = true },
+    { type = "tMID", id = 30023, purgeable = true },
+    { type = "tMID", id = 30025, purgeable = true },
+    { type = "tMID", id = 30026, purgeable = true },
+    { type = "tMID", id = 30027, purgeable = true },
+    { type = "tMID", id = 30028, purgeable = true },
+    { type = "tMID", id = 30030, purgeable = true },
+    { type = "tMID", id = 30031, purgeable = true },
+    { type = "tMID", id = 30032, purgeable = true },
+    { type = "tMID", id = 30033, purgeable = true },
+    { type = "tMID", id = 30035, purgeable = true },
+    { type = "tMID", id = 30036, purgeable = true },
+    { type = "tMID", id = 30037, purgeable = true },
+    { type = "tMID", id = 30038, purgeable = true },
+]

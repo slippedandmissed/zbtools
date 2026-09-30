@@ -1,0 +1,6 @@
+# One image, 9014.png.
+compressed = true
+bank = false
+images = [
+    { packed = false },
+]

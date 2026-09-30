@@ -1,0 +1,12 @@
+# A Zoombini's script: its frames, each the cels drawn ([image, x, y], from the view's
+# bank; image 0 draws nothing), the event it tells the view's owner of, and a
+# sound to play.
+facing = 0
+frames = [
+    { cels = [[4, 0, 9], [7, 1, 7], [2, 3, 7], [2, 4, 7], [8, 2, 7]] },
+    { cels = [[5, 3, -3], [4, 4, -8], [2, 3, -8], [2, 4, -8], [2, 5, -9]] },
+    { cels = [[6, 6, -5], [4, 7, -10], [2, 6, -10], [2, 7, -10], [6, 8, -10]] },
+    { cels = [[7, 7, -5], [4, 8, -9], [2, 8, -9], [2, 9, -9], [5, 9, -9]] },
+    { cels = [[8, 8, 0], [5, 9, -4], [2, 9, -4], [2, 10, -4], [6, 10, -3]] },
+    { cels = [[9, 6, 11], [6, 7, 8], [2, 8, 8], [2, 9, 8], [2, 8, 8]] },
+]
