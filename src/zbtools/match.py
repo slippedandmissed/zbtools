@@ -423,6 +423,7 @@ def cache_key(release: str, source: Path, flags: str) -> str:
 class Compiled:
     obj: omf.ObjectFile
     cached: bool  # reused from build/match-cache rather than compiled
+    path: Path  # the object file, in build/match-cache
 
 
 def compile_source(release: str, source: Path, flags: str, *, use_cache: bool = True) -> Compiled:
@@ -435,7 +436,7 @@ def compile_source(release: str, source: Path, flags: str, *, use_cache: bool = 
     obj_path, key_path = cache_dir / f"{name}.obj", cache_dir / f"{name}.key"
     key = cache_key(release, source, flags)
     if use_cache and obj_path.exists() and key_path.exists() and key_path.read_text() == key:
-        return Compiled(omf.read(obj_path.read_bytes()), cached=True)
+        return Compiled(omf.read(obj_path.read_bytes()), cached=True, path=obj_path)
     key_path.unlink(missing_ok=True)
     obj_path.unlink(missing_ok=True)
     # -I: the source's own directory, so it can include headers next to it.
@@ -455,7 +456,7 @@ def compile_source(release: str, source: Path, flags: str, *, use_cache: bool = 
     if result.returncode != 0 or not obj_path.exists():
         raise RuntimeError(f"compiling {source.name} failed:\n{result.stdout}{result.stderr}")
     key_path.write_text(key)
-    return Compiled(omf.read(obj_path.read_bytes()), cached=False)
+    return Compiled(omf.read(obj_path.read_bytes()), cached=False, path=obj_path)
 
 
 def _alignment_keys(

@@ -36,6 +36,9 @@ RUNTIME_SYMBOLS = SYMBOLS_DIR / "runtime.json"
 CLASSES = SYMBOLS_DIR / "classes.json"
 # The progress report `uv run report` writes (local only: it contains disassembly).
 REPORT_DIR = BUILD_DIR / "report"
+# The rebuilt game (`uv run build`): zoombi32.exe, its map, and what went into it.
+REBUILD_DIR = BUILD_DIR / "rebuild"
+GLUE_DIR = REPO_ROOT / "glue"
 REPORT = REPORT_DIR / "index.html"
 # Objects `uv run match` compiles, kept to reuse while their sources don't
 # change: one directory per release.
@@ -71,6 +74,8 @@ WIN98_GAME_PARTIAL = VM_DIR / "win98-game.partial.qcow2"
 WIN98_OVERLAY = VM_DIR / "win98.qcow2"
 # CD image that `vm install-game` builds to install QuickTime and the game.
 VM_TOOLS_ISO = VM_DIR / "tools.iso"
+# The floppy `vm run --exe` carries an executable into the VM on.
+VM_EXE_FLOPPY = VM_DIR / "exe.img"
 WIN98_SETUP_FLOPPY = VM_DIR / "win98-setup.img"
 # QMP sockets: one for the command that started the VM, one for other commands
 # (a QMP socket serves one client at a time).
@@ -94,6 +99,7 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
         WIN98_GAME_PARTIAL,
         WIN98_SETUP_FLOPPY,
         VM_TOOLS_ISO,
+        VM_EXE_FLOPPY,
         VM_QMP,
         VM_QMP_CONTROL,
         VM_SCREEN_CHECK,
@@ -110,6 +116,7 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "ghidra-project": [GHIDRA_PROJECT_DIR, GHIDRA_FUNCTIONS],
     "ghidra": [GHIDRA_DIR],
     "report": [REPORT_DIR],
+    "rebuild": [REBUILD_DIR],
     "packed-assets": [PACKED_ASSETS_DIR],
     "assets-cache": [ASSETS_CACHE],
     "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
@@ -122,6 +129,7 @@ CLEAN_DEFAULT: list[str] = [
     "vm-state",
     "toolchain",
     "report",
+    "rebuild",
     "packed-assets",
     "assets-cache",
     "python",

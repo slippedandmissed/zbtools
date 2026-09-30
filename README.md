@@ -14,7 +14,7 @@ The game's resources are in `assets/`, converted from its Mohawk archives to mod
 
 Every global the headers declare is defined, with the original's initial values (`uv run define-data`). 69% of the original's initialised data is placed and identical, byte for byte, in the compiled objects, and every reference to data in the decompiled functions points where the original's does (`uv run match-data`).
 
-The code doesn't build into a working executable yet: linking it is next (see the [roadmap](#roadmap)).
+The decompiled code builds into a `zoombi32.exe` (`uv run build`), linked by the original's linker in the original's order, that starts in the VM and runs as far as Zoombini Isle. It has the original's icon, from `assets/zoombi32/`. Apple's QuickTime glue isn't available, so a stand-in plays no movies. Playing it through is next (see the [roadmap](#roadmap)).
 
 The original game is playable from its disc image in the scripted Windows 98 VM.
 
@@ -201,9 +201,25 @@ The game's resources are kept as source, like the decompiled code, in `assets/` 
 | `SCRB`, `SCRS` | the scripts animating features and Zoombinis | TOML: frames of cels (`[image, x, y]`), events and sounds |
 | `SHPL`, `tPAL` | shape lists and palettes | TOML, colours as `#rrggbb` |
 | `CURS` | cursors | Windows cursor (`.cur`) |
+| `ICON` (`assets/zoombi32/`) | the executable's icon (its two sizes) | indexed PNG, with `resources.toml` naming the icon group |
 | `REGS`, `NODE`, `PATH`, `SYSX` | tables: offsets, the paths Zoombinis walk, MIDI messages | TOML |
 
 Edit a resource and `pack` builds the archives with the change; `verify` names the resources that differ from the disc's. An image's pixel values are what the game draws: its PNG's palette is only for viewing, and colours are changed in the palette resources. Packing re-creates Broderbund's own compression, so unedited resources pack to exactly the original bytes; it caches compressed images in `build/assets-cache/` (compressing them all takes about two minutes of CPU time). `pack` needs only `assets/`, so it works from a fresh clone; `extract` and `verify` need the disc (`uv run extract-game` first), and `extract` won't overwrite archives already in `assets/` unless given `--force`. A resource a format can't convert exactly would be kept as it is (`.bin`); none of the game's are.
+
+The executable's own resources, its icon, are in `assets/zoombi32/` too: `extract` writes them, `verify` checks them against `zoombi32.exe`'s, and `uv run build` compiles them into the rebuilt executable. The icon's PNGs can be edited like any other image; each must stay 16 colours (plus transparency), as Windows 95 icons are.
+
+### Building the game
+
+```sh
+uv run build                                          # build/rebuild/zoombi32.exe
+uv run vm run --exe build/rebuild/zoombi32.exe        # run it in the VM
+uv run vm run --exe build/rebuild/zoombi32.exe --trace build/vm/trace.log
+uv run trace build/vm/trace.log                       # the functions the traced run was in, last
+```
+
+`build` compiles `decomp/` and `glue/` (reusing `match`'s objects), compiles the icon with BRCC32, and links everything with TLINK32 1.50, the original's linker, in the original's order: Borland's startup code, each source in the order of its code in the original, then the runtime library and the Windows imports. It writes `build/rebuild/zoombi32.exe` and a map of where everything went (`zoombi32.map`). `glue/` holds code standing in for what the game links but we don't have: QuickTime for Windows' SDK glue (`glue/quicktime.cpp`), which reports QuickTime present but opens no movie, so the game skips its movies.
+
+`vm run --exe` carries an executable into the VM on a floppy, copies it into the game's directory as `REBUILT.EXE` (the original stays) and starts it. With `--trace`, QEMU logs every block of that executable's code it runs, from when it starts, until the log reaches 500 MB or two minutes have passed; `uv run trace` names the functions from the map, and after a crash the last of them is where it happened.
 
 ### Cleaning up
 
@@ -226,12 +242,13 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `ghidra-project` | the Ghidra project, **including any work done in Ghidra's GUI**, and its function list | `uv run ghidra setup` |
 | `ghidra` | all of Ghidra: the download, native build and project | `uv run ghidra setup` (downloads ~540 MB) |
 | `report` | `build/report/` | `uv run report` |
+| `rebuild` | the rebuilt executable and what went into it (`build/rebuild/`) | `uv run build` |
 | `packed-assets` | the archives `assets pack` built (`build/assets/`) | `uv run assets pack` |
 | `assets-cache` | compressed images, reused while unchanged (`build/assets-cache/`) | automatically by `uv run assets pack` or `verify` |
 | `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
 | `all` | all of the above plus anything else in `build/` | |
 
-With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `packed-assets`, `assets-cache` and `python`: everything that's cheap to rebuild, keeping the VM installs and the Wine download. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
+With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `rebuild`, `packed-assets`, `assets-cache` and `python`: everything that's cheap to rebuild, keeping the VM installs and the Wine download. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
 
 ## Development
 
@@ -292,7 +309,9 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Decompile the game and the engine, function by function (every function written)
 - [ ] Byte-match the remaining near-misses, where practical
 - [x] Define the game's globals with their initial values, and check them, and the code's references to them, against the original (`uv run define-data`, `uv run match-data`)
-- [ ] Link the decompiled code and its resources (the icon) with TLINK32 into a working `zoombi32.exe`, and test it in the VM
+- [x] Link the decompiled code and its resources (the icon) with TLINK32 into a `zoombi32.exe` that runs in the VM (`uv run build`, `uv run vm run --exe`)
+- [ ] Play the rebuilt game through in the VM, fixing what differs from the original
+- [ ] Replace the QuickTime stand-in with working glue, so the rebuilt game plays its movies
 - [ ] Port to a modern platform layer
 
 ## Legal

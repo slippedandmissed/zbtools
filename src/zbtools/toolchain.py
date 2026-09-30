@@ -62,6 +62,12 @@ def _windows_root(release: str) -> str:
     return f"{RELEASES[release].drive}\\{RELEASES[release].root}"
 
 
+def library_path(release: str, name: str) -> str:
+    """A file in a release's LIB directory (C0W32.OBJ, CW32.LIB), as the
+    Borland tools see it."""
+    return f"{_windows_root(release)}\\LIB\\{name}"
+
+
 def windows_path(path: Path) -> str:
     """A host path as Wine sees it: under R: if it's in the repository, else
     under Z:, where Wine maps the host's root directory."""

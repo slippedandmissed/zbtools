@@ -24,6 +24,9 @@ short useDirectSound = 0;
 short wavebufCache = 0;
 HINSTANCE directSoundLibrary = 0;
 
+long(WINAPI *directSoundCreate)(GUID *guid, IDirectSound **sound, void *outer);
+long(WINAPI *directSoundEnumerate)(DSENUMCALLBACK callback, void *context);
+
 /* @zoombi32 0x0047af1c */
 __cdecl wavebuf::~wavebuf()
 {

@@ -199,11 +199,14 @@ short Drive::use(long id)
 
 /* Locks the media in the drive, or unlocks it (removable drives, on
    Windows 95; never while the application is inactive). */
-/* Not exact: the original keeps `unlock` at ebp-2, BCC32 4.5 at ebp-1. */
 /* @zoombi32 0x00483028 */
 void Drive::setLocked(short on)
 {
-    unsigned char unlock; /* the IOCTL's parameter */
+    /* The IOCTL's parameter block (MediaLockBlock): 2 bytes, as the call
+       writes the second (the number of locks). A short, which BCC32 keeps in
+       the frame where the original has it (a struct or array gets a larger
+       slot). */
+    unsigned short block;
     DWORD returned;
     BOOL ok;
     DiocRegisters regs;
@@ -212,12 +215,12 @@ void Drive::setLocked(short on)
     if (!files.active)
         on = 0;
     if (type == 1 && !systemState.windowsNT && on != locked) {
-        unlock = on ? 0 : 1;
+        ((MediaLockBlock *)&block)->operation = on ? 0 : 1;
         memset(&regs, 0, sizeof regs);
         regs.eax = 0x440d;
         regs.ebx = drive;
         regs.ecx = 0x848;
-        regs.edx = (DWORD)&unlock;
+        regs.edx = (DWORD)&block;
         regs.flags = 1;
         device = CreateFile("\\\\.\\VWIN32", 0, 0, 0, 0, FILE_FLAG_DELETE_ON_CLOSE, 0);
         ok = DeviceIoControl(device, 1, &regs, sizeof regs, &regs, sizeof regs, &returned, 0);

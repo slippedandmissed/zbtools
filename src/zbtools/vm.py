@@ -24,6 +24,7 @@ from pydantic import BaseModel, ConfigDict
 from qemu.qmp import ConnectError, Message, QMPClient, QMPError, Runstate
 
 from zbtools import env, game_install, host, paths, screen
+from zbtools.exe import Executable
 
 FLOPPY_SIZE = 1474560
 
@@ -245,10 +246,12 @@ type BootDevice = Literal["a", "c", "d"]
 
 def qemu_command(
     disk: Path,
+    *,
     cdrom: Path | None = None,
     floppy: Path | None = None,
     boot_once: BootDevice | None = None,
     headless: bool = False,
+    log_range: tuple[int, int] | None = None,
 ) -> list[str]:
     cmd = [
         host.qemu_system(),
@@ -265,6 +268,8 @@ def qemu_command(
     if floppy:
         cmd += ["-drive", f"file={floppy},format=raw,if=floppy,index=0"]
     cmd += ["-boot", f"order=c,once={boot_once}" if boot_once else "order=c"]
+    if log_range:  # only log code in this range, when logging is switched on
+        cmd += ["-dfilter", f"{log_range[0]:#x}..{log_range[1] - 1:#x}"]
     return cmd
 
 
@@ -398,7 +403,7 @@ async def screenshot(qmp: QMPClient, path: Path) -> Image.Image:
 # QEMU key names for characters that aren't themselves key names.
 _KEYS = {
     " ": "spc", "\\": "backslash", ".": "dot", ":": "shift-semicolon", "/": "slash",
-    ",": "comma", "-": "minus", "_": "shift-minus", "=": "equal",
+    ",": "comma", "-": "minus", "_": "shift-minus", "=": "equal", '"': "shift-apostrophe",
 }  # fmt: skip
 
 
@@ -433,10 +438,9 @@ async def when_screen(
 
 
 async def run_in_guest(qmp: QMPClient, command: str) -> None:
-    """Run a command through the Start menu's Run box."""
-    await press(qmp, "ctrl-esc")
-    await asyncio.sleep(1.5)
-    await press(qmp, "r")
+    """Run a command through the Run box (Windows+R: Ctrl+Esc, then R, finds the
+    Recycle Bin instead when the Start menu is slow to open)."""
+    await press(qmp, "meta_l-r")
     await asyncio.sleep(2.5)
     await type_text(qmp, command)
     await press(qmp, "ret")
@@ -607,16 +611,98 @@ def install_game(
     print("Next: `uv run vm run`, then type `zoombi32` in the Start menu's Run box.")
 
 
+# What `vm run --exe` names the executable it brings, in the game's directory.
+EXE_NAME = "REBUILT.EXE"
+# `vm run --trace` stops logging at whichever comes first.
+TRACE_LIMIT_BYTES = 500_000_000
+TRACE_LIMIT_SECONDS = 120
+
+
+async def _stop_trace(qmp: QMPClient, trace: Path) -> None:
+    """Switch QEMU's log off once it has grown too big, or run too long."""
+    started = time.monotonic()
+    while time.monotonic() - started < TRACE_LIMIT_SECONDS:
+        await asyncio.sleep(2)
+        if trace.exists() and trace.stat().st_size > TRACE_LIMIT_BYTES:
+            break
+    await qmp.execute("human-monitor-command", {"command-line": "log none"})
+    size = trace.stat().st_size if trace.exists() else 0
+    print(f"  Stopped tracing: {size / 1_000_000:.1f} MB in {trace}", flush=True)
+
+
+def exe_floppy(exe: Path, image: Path) -> None:
+    """A floppy image holding an executable, as EXE_NAME."""
+    image.unlink(missing_ok=True)
+    _mtools("mformat", image, "-C", "-f", "1440", "::")
+    _mtools("mcopy", image, str(exe), f"::/{EXE_NAME}")
+
+
 @app.command()
 def run(
     cdrom: Annotated[Path, typer.Option(help="Disc image in the CD drive")] = paths.GAME_ISO,
+    exe: Annotated[
+        Path | None,
+        typer.Option(
+            help="An executable to run in the game's place (e.g. build/rebuild/zoombi32.exe, "
+            f"from `uv run build`): copied into the game's directory as {EXE_NAME} and started"
+        ),
+    ] = None,
+    trace: Annotated[
+        Path | None,
+        typer.Option(
+            help="With --exe: log every block of the executable's code QEMU runs, from starting "
+            f"it, into this file (stopping after {TRACE_LIMIT_SECONDS} s or "
+            f"{TRACE_LIMIT_BYTES // 1_000_000} MB)"
+        ),
+    ] = None,
     headless: Annotated[bool, typer.Option("--headless", help="Don't open a VM window")] = False,
 ) -> None:
     """Boot the VM with the game disc in the CD drive."""
     if vm_running():
         sys.exit("error: the VM is already running")
     ensure_overlay()
-    run_qemu(qemu_command(paths.WIN98_OVERLAY, cdrom=cdrom, headless=headless))
+    if exe is None:
+        if trace is not None:
+            sys.exit("error: --trace needs --exe (it logs from starting the executable)")
+        run_qemu(qemu_command(paths.WIN98_OVERLAY, cdrom=cdrom, headless=headless))
+        return
+    if not exe.is_file():
+        sys.exit(f"error: {exe} not found (run `uv run build`)")
+    if not paths.WIN98_GAME.exists():
+        sys.exit("error: the game isn't installed yet; run `uv run vm install-game` first")
+    exe_floppy(exe, paths.VM_EXE_FLOPPY)
+    target = rf"{game_install.INSTALL_DIR}\{EXE_NAME}"
+
+    async def start_exe(qmp: QMPClient) -> None:
+        await asyncio.sleep(15)  # let Explorer finish starting up
+        await run_in_guest(qmp, rf'command /c copy a:\{EXE_NAME} "{target}"')
+        await asyncio.sleep(8)
+        if trace is not None:
+            trace.unlink(missing_ok=True)
+            # QEMU's log of each translated block it runs; `nochain` logs every
+            # run of a block, not just the first of a chain.
+            for command in (f"logfile {trace.resolve()}", "log exec,nochain"):
+                await qmp.execute("human-monitor-command", {"command-line": command})
+        await run_in_guest(qmp, f'"{target}"')
+        print(f"  Started {exe.name} in the VM, as {target}", flush=True)
+        if trace is not None:
+            await _stop_trace(qmp, trace)
+
+    async def at_desktop(qmp: QMPClient) -> None:
+        await when_screen(qmp, screen.is_idle_desktop, start_exe)
+
+    cmd = qemu_command(
+        paths.WIN98_OVERLAY,
+        cdrom=cdrom,
+        floppy=paths.VM_EXE_FLOPPY,
+        headless=headless,
+        log_range=Executable(exe).code_range if trace else None,
+    )
+    try:
+        run_qemu(cmd, tasks=[at_desktop])
+    finally:
+        paths.VM_EXE_FLOPPY.unlink(missing_ok=True)
+        paths.VM_SCREEN_CHECK.unlink(missing_ok=True)
 
 
 @app.command()

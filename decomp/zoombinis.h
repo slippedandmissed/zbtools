@@ -2251,6 +2251,14 @@ struct DiskInfo
     char fileSystem[0x40];
 };
 
+/* The parameter block of DOS IOCTL 440Dh, 0848h (lock or unlock removable
+   media): the operation, and the number of locks, which the call returns. */
+struct MediaLockBlock
+{
+    unsigned char operation; /* 0: lock, 1: unlock */
+    unsigned char locks;
+};
+
 /* VWIN32's DeviceIoControl registers (for its DOS IOCTL call, 1). */
 struct DiocRegisters
 {

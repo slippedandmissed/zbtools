@@ -8,6 +8,10 @@ type has one (zbtools.formats), else as it is (.bin); only ever one copy.
 `extract` writes them from the disc, `pack` builds the archives from them into
 build/assets/ (laid out as on the disc), and `verify` checks that packing
 reproduces the disc's archives byte for byte.
+
+The executable's own resources (its icon) go in assets/zoombi32/ the same
+way (exe_resources.py): `extract` writes them and `verify` checks them; `uv
+run build` compiles them into the rebuilt executable.
 """
 
 import re
@@ -22,7 +26,8 @@ from typing import Annotated
 import typer
 from pydantic import BaseModel, ConfigDict
 
-from zbtools import mohawk, paths
+from zbtools import exe_resources, mohawk, paths
+from zbtools.exe import Executable
 from zbtools.formats import FORMATS, Raw, Unconvertible
 from zbtools.formats.base import RAW_SUFFIX
 
@@ -194,6 +199,7 @@ def _verify(directory: Path, disc_dir: Path) -> list[str]:
 app = typer.Typer(add_completion=False, help=__doc__)
 
 DiscOption = Annotated[Path, typer.Option(help="The extracted disc (uv run extract-game)")]
+ExeOption = Annotated[Path, typer.Option(help="The game's executable (uv run extract-game)")]
 AssetsOption = Annotated[Path, typer.Option(help="The converted resources")]
 
 
@@ -201,21 +207,28 @@ AssetsOption = Annotated[Path, typer.Option(help="The converted resources")]
 def extract(
     disc_dir: DiscOption = paths.DISC_DIR,
     assets_dir: AssetsOption = paths.ASSETS_DIR,
+    exe: ExeOption = paths.GAME32_DIR / "zoombi32.exe",
     force: Annotated[
         bool, typer.Option(help="Replace archives already in assets/, discarding edits")
     ] = False,
 ) -> None:
-    """Extract the disc's archives into assets/, converting their resources."""
-    if not disc_dir.is_dir():
-        raise typer.BadParameter(f"{disc_dir} not found (run `uv run extract-game`)")
+    """Extract the disc's archives and the executable's resources into assets/,
+    converting them."""
+    if not disc_dir.is_dir() or not exe.is_file():
+        raise typer.BadParameter(f"{disc_dir} or {exe} not found (run `uv run extract-game`)")
     archives = list(disc_archives(disc_dir))
-    existing = [a for a in archives if (assets_dir / a.stem).exists()]
+    exe_dir = assets_dir / exe_resources.ASSETS.name
+    existing = [a.stem for a in archives if (assets_dir / a.stem).exists()]
+    existing += [exe_dir.name] if exe_dir.exists() else []
     if existing and not force:
-        names = ", ".join(a.stem for a in existing)
+        names = ", ".join(existing)
         raise typer.BadParameter(f"already in {assets_dir}: {names} (--force replaces them)")
     with ProcessPoolExecutor() as pool:
         for line in pool.map(partial(_extract, disc_dir=disc_dir, assets_dir=assets_dir), archives):
             print(line)
+    shutil.rmtree(exe_dir, ignore_errors=True)
+    count = exe_resources.extract(Executable(exe), exe_dir)
+    print(f"{exe.name}: {count} resources")
 
 
 @app.command()
@@ -235,8 +248,10 @@ def pack(
 def verify(
     disc_dir: DiscOption = paths.DISC_DIR,
     assets_dir: AssetsOption = paths.ASSETS_DIR,
+    exe: ExeOption = paths.GAME32_DIR / "zoombi32.exe",
 ) -> None:
-    """Check that packing assets/ reproduces the disc's archives exactly."""
+    """Check that packing assets/ reproduces the disc's archives, and the
+    executable's resources, exactly."""
     directories = asset_archives(assets_dir)
     failed = 0
     with ProcessPoolExecutor() as pool:
@@ -248,5 +263,11 @@ def verify(
                 print("\n".join(report))
             else:
                 print(f"{directory.name}: identical")
+    report = exe_resources.verify(Executable(exe), assets_dir / exe_resources.ASSETS.name)
+    if report:
+        failed += 1
+        print("\n".join([f"{exe.name} resources: differ", *report]))
+    else:
+        print(f"{exe.name} resources: identical")
     if failed:
         raise typer.Exit(1)

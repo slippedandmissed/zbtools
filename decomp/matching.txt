@@ -1559,6 +1559,7 @@
 0x00482bbc Drive::eject
 0x00482cb3 Drive::init
 0x00482f2c Drive::use
+0x00483028 Drive::setLocked
 0x00483102 Drive::lock
 0x00483127 Drive::readInfo
 0x00483420 fileMissing

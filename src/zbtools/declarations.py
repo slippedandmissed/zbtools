@@ -38,7 +38,7 @@ _EXTERN = re.compile(r"^extern\s+([^;]*?)\s*\b(\w+)\s*((?:\[[^\]]*\]\s*)*);(.*)$
 # `extern void (*g_4aa4c4)(Point *where);`: a function pointer; or
 # `extern short (*grid1)[12];`: a pointer to an array. Both are passed on as `void *`.
 _EXTERN_FUNCTION_POINTER = re.compile(
-    r"^extern\s+[^;(]*\(\s*\*\s*(\w+)\s*\)\s*(?:\([^;]*\)|\[[^\]]*\])\s*;(.*)$"
+    r"^extern\s+[^;(]*\(\s*(?:\w+\s+)?\*\s*(\w+)\s*\)\s*(?:\([^;]*\)|\[[^\]]*\])\s*;(.*)$"
 )
 _ADDRESS_NAME = re.compile(r"^g_([0-9a-fA-F]{6,8})$")
 # `/* @data 0x4a7f58 */`, or with a note: `/* @data 0x4a7f58: the mouse is present */`.
@@ -49,7 +49,9 @@ _TYPEDEF = re.compile(r"^typedef\s+[^;(]*;", re.MULTILINE)
 # `class basePort;` or `class Palette\n{`: a C++ class, declared or defined.
 _CLASS = re.compile(r"^class\s+(\w+)\b", re.MULTILINE)
 # `typedef void (*Callback)();`: a function pointer type, passed on as a pointer.
-_FUNCTION_POINTER = re.compile(r"^typedef\s[^;(]*\(\s*\*\s*(\w+)\s*\)[^;]*;", re.MULTILINE)
+_FUNCTION_POINTER = re.compile(
+    r"^typedef\s[^;(]*\(\s*(?:\w+\s+)?\*\s*(\w+)\s*\)[^;]*;", re.MULTILINE
+)
 _CONST = re.compile(r"\bconst\s+")
 # Borland types that aren't C builtins, as the builtins they are.
 _ALIASES = {"time_t": "long"}

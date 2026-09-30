@@ -1,0 +1,7 @@
+# Compiled into zoombi32.exe by `uv run build`: its icon groups, each a list of
+# icon images in ICON/<id>.png.
+
+[[icon_groups]]
+name = "APPICON"
+language = 0
+icons = [1, 2]

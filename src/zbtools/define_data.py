@@ -116,7 +116,9 @@ def _strip_comments(text: str) -> str:
 
 
 # `void (*name)(Point *where)` or `short (*grid)[12]`: a pointer, however declared.
-_FUNCTION_POINTER = re.compile(r"^(?P<base>[^()]*?)\(\s*\*\s*(?P<name>\w+)\s*\)\s*[(\[].*$", re.S)
+_FUNCTION_POINTER = re.compile(
+    r"^(?P<base>[^()]*?)\(\s*(?:\w+\s+)?\*\s*(?P<name>\w+)\s*\)\s*[(\[].*$", re.S
+)
 _DECLARATOR = re.compile(r"^(?P<stars>[\s*]*)(?P<name>\w+)\s*(?P<dims>(?:\[[^\]]*\]\s*)*)$")
 
 
@@ -245,7 +247,9 @@ def _defined_names() -> set[str]:
         re.M,
     )
     # `void (*hook)(short active) = 0;` or `short (*grid)[12];`
-    pointer = re.compile(r"^(?!extern\b|typedef\b)[A-Za-z_][^;(=\n]*\(\s*\*\s*(\w+)\s*\)", re.M)
+    pointer = re.compile(
+        r"^(?!extern\b|typedef\b)[A-Za-z_][^;(=\n]*\(\s*(?:\w+\s+)?\*\s*(\w+)\s*\)", re.M
+    )
     found: set[str] = set()
     for source in match.decomp_sources():
         text = _strip_comments(source.read_text())
@@ -649,7 +653,7 @@ def _definition_text(g: Global, value: str | None, length: int | None) -> str:
 def _definition_start(name: str) -> re.Pattern[str]:
     return re.compile(
         rf"^(?!extern\b)[A-Za-z_][^;(=\n]*?(?:\b{name}\s*(?:\[[^\]]*\]\s*)*(?:=|;)"
-        rf"|\(\s*\*\s*{name}\s*\))",
+        rf"|\(\s*(?:\w+\s+)?\*\s*{name}\s*\))",
         re.MULTILINE,
     )
 
