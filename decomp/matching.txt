@@ -428,8 +428,8 @@
 0x004249e1 updateHotelButtons
 0x00424a53 closeHotel
 0x00424b2d hotelFrame
-0x00425dde setUpLillyPuzzle
-0x00426230 lillyClick
+0x00425dde setUpHotelPuzzle
+0x00426230 hotelClicked
 0x00426831 hotelKey
 0x00426aff fitsRoom
 0x00426c33 darkenPalette
@@ -451,7 +451,7 @@
 0x00428c28 drawLillyButtons
 0x00428c45 updateLillyButtons
 0x00428cb7 closeLilly
-0x00429943 otherClick
+0x00429943 lillyClicked
 0x00429d94 hopNotify
 0x0042a077 lillyNotify70
 0x0042a163 placeHopper

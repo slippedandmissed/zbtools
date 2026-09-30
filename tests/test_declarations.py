@@ -143,6 +143,10 @@ def test_marker_notes_and_multidimensional_arrays() -> None:
     text = "extern short a[2][3]; /* @data 0x401000: a note */\nextern long b; /* a note */\n"
     assert globals_in(text) == [Global(0x401000, "a", "short", True)]
     assert unaddressed_globals(text) == ["b"]
+    assert unaddressed_globals("extern short (*grid)[12];\n") == ["grid"]
+    assert globals_in("extern short (*grid)[12]; /* @data 0x401000 */\n") == [
+        Global(0x401000, "grid", "void *", False)
+    ]
 
 
 def test_decomp_gives_every_global_an_address() -> None:

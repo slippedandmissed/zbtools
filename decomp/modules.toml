@@ -102,8 +102,13 @@ note = "the Fleens (scene 13): opens 'Fleens.MHK' (0x421841)"
 
 [[module]]
 start = 0x424274
+name = "hotel"
+note = "'Hotel.MHK', 'id=%u'; its data (0x4a1764-0x4a1b1c, 0x4abdc0-0x4ac91c) comes before lilly's, and neither half's code uses the other's (no padding: it ends aligned)"
+
+[[module]]
+start = 0x4281b0
 name = "lilly"
-note = "'Lilly.MHK'; 46 KB, so probably several modules"
+note = "'Lilly.MHK'; its data from 0x4a1b1c (lillyLevel) and 0x4ac91c"
 
 [[module]]
 start = 0x42f920

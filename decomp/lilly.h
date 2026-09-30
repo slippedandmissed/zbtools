@@ -8,7 +8,6 @@
 
 extern short lillyStage; /* @data 0x4af350 */
 extern short lillyClaim; /* @data 0x4af35a */
-void roomViewNotify(View *view, short event);
 void lillyNoDraw(View *);
 void lillyNoUpdate(View *, short);
 void setLillyStage(short value);
@@ -17,61 +16,34 @@ void releaseLillyClaim();
 void freeResourcePair(long *resources);
 short lillyKey(unsigned short event);
 void freeLockedResource(long *resource, short *handle);
-short footSound(View *view, short which);
 void updateLillyBackdrop(View *view, short region);
-void startView9002(short n);
-void startView9007(short n);
 void loadTablePair(long *resources, short id, short **first, short **second);
-void deleteHotelTalker();
 void placeByHotSpot(View *view);
 void freeLockedResources(long *resources, short *handles, short count);
 void hopperNotify(View *view, short event);
 void placeActorCels3(View *view);
-void setRowAndColumn(short b, short a, short n);
-void setRowLayerColumn(short a, short b, short c, short n);
 extern ShortRect lillyArea; /* @data 0x4a1dfc */
-void startRoomAnimations();
 void setLillyLevel(short level);
-void updateHotelButtons(View *view, short region);
 void updateLillyButtons(View *view, short region);
 void lillyActorNotify(View *view, short event);
 void loadLockedTable(long *resource, short *handle, short id, short **locked);
-extern short roomsFilled; /* @data 0x4ac0e4 */
-extern short roomDoorViews[]; /* @data 0x4abfc0 */
-extern short roomAnimStage; /* @data 0x4ac0d6 */
 extern short unusedLillyLevel; /* @data 0x4ac91e */
 extern short lillyLevelParam; /* @data 0x4ac920 */
 extern short startCount; /* @data 0x4af0f8 */
-extern short hotelGoReady; /* @data 0x4abec2 */
-extern short hotelButton2Lit; /* @data 0x4a1aac */
-extern short hotelButton1Drawn; /* @data 0x4a1aae */
 void lillyNotify60(View *view, short event);
 void lillyNotify49(View *view, short event);
-void startSnoidInRoom(short id);
-void hotelSnoidNotify(View *view, short event);
 void showViewOnSquare(short id, short row, short column);
 void updateMarkerView(View *view, short region);
-void drawHotelButton(short which, short lit, short show);
 extern short event60Views[20]; /* @data 0x4acdf4 */
 extern short event60Count; /* @data 0x4ace1c */
 extern short jumperBusy; /* @data 0x4acfee */
 extern short landedJumper; /* @data 0x4acfe8 */
-extern short hotelLevel; /* @data 0x4ac0d8 */
-extern short hotelRoom; /* @data 0x4ac0ec */
-extern short roomColumnViews[]; /* @data 0x4abec6 */
-extern short roomGroup; /* @data 0x4ac0d0 */
 extern ShortRect markerArea; /* @data 0x4a1e32 */
-extern ImageBank *hotelButtonImages; /* @data 0x4a1a18 */
 void drawLillyButton(short which, short lit, short show);
-void drawRoomView(View *view);
-void startRoomColumnViews();
 void checkLillyArrivals();
 void updateSquareHighlight(View *view, short region);
 extern SceneButton lillyButtons[3]; /* @data 0x4a1b28 */
 extern ImageBank *lillyButtonImages; /* @data 0x4a1d68 */
-extern ImageBank *roomImages; /* @data 0x4ac178 */
-extern ImageBank *roomImages3d; /* @data 0x4ac17c */
-extern short roomCount; /* @data 0x4ac0ee */
 extern short padsArrived; /* @data 0x4af0ea */
 extern short actorCount; /* @data 0x4af102 */
 extern short actorViews[]; /* @data 0x4aed64 */
@@ -85,36 +57,13 @@ void placeActorCelsLow(View *view);
 void lillyNotify54(View *view, short event);
 void loadLillyScripts(long *resources, short *handles, short count);
 extern short landerBusy; /* @data 0x4acff0 */
-void darkenPalette();
 void lillyNotify44(View *view, short event);
-void countFeatureValues();
 void drawNumberBox(ShortRect rect, short number);
 void placeActorCelsHidden(View *view);
-void drawIdBox(short id);
 void mirrorGrid(short (*grid)[12], short how);
-void clearWay(short x);
-extern ShortRect viewIdBoxRect; /* @data 0x4a1ae6 */
-short fitsRoom(short a, short b, short n);
-short fitsRoom3d(short a, short b, short c, short n);
-void sendSnoidToRoom(short id);
-void addLillyViews();
-void drawHotelButtons(View *);
 void drawLillyButtons(View *);
 void flashSquare(View *view);
-short hotelKey(unsigned short key);
 void closeLilly();
-extern short hotelFacing; /* @data 0x4ac13e */
-extern short hotelWalker; /* @data 0x4ac136 */
-extern short snoidRejected; /* @data 0x4ac0ce */
-void closeHotel();
-void hotelFrame();
-extern short inHotelFrame; /* @data 0x4a1ab0 */
-extern unsigned long hotelIdleSince; /* @data 0x4ac140 */
-extern ShortRect hotelBlankRect1; /* @data 0x4a19e4 */
-extern ShortRect hotelBlankRect2; /* @data 0x4a19ec */
-extern ShortRect hotelBlankRect3; /* @data 0x4a19f4 */
-extern ShortRect hotelBlankRect4; /* @data 0x4a19fc */
-extern Point lillyPlaces[16]; /* @data 0x4a1a1c */
 extern short lillyOpen; /* @data 0x4af368 */
 extern long unusedLillyResource; /* @data 0x4a1b48 */
 extern long lillyImagesResource; /* @data 0x4a1b44 */
@@ -131,57 +80,14 @@ extern long grid3Resource; /* @data 0x4ac9a4 */
 extern short grid3Handle; /* @data 0x4ac9ac */
 extern long lillyButtonResource; /* @data 0x4a1be8 */
 extern long lillyFile; /* @data 0x4af364 */
-extern short hotelOpen; /* @data 0x4abec0 */
-extern long hotelButtonResource; /* @data 0x4ac144 */
-extern long roomImagesResource; /* @data 0x4ac148 */
-extern long hotelPlaceXResource; /* @data 0x4ac14c */
-extern long hotelPlaceYResource; /* @data 0x4ac150 */
-extern long roomViewXResource; /* @data 0x4ac154 */
-extern long roomViewYResource; /* @data 0x4ac158 */
-extern long roomColumnXResource; /* @data 0x4ac160 */
-extern long roomColumnYResource; /* @data 0x4ac164 */
-extern long layerRowXResource; /* @data 0x4ac168 */
-extern long layerRowYResource; /* @data 0x4ac16c */
-extern long lillyViewHotXResource; /* @data 0x4ac170 */
-extern long lillyViewHotYResource; /* @data 0x4ac174 */
-extern long hotelFile; /* @data 0x4abebc */
-extern short debugTalkerScript1; /* @data 0x4ac0c4 */
-extern short debugTalkerScript2; /* @data 0x4ac0c6 */
-extern short guideStep; /* @data 0x4ac0fe */
-extern short guideLastStep; /* @data 0x4ac100 */
-extern short savedGuideStep; /* @data 0x4ac102 */
-extern short savedGuideLastStep; /* @data 0x4ac104 */
-extern short guideView; /* @data 0x4ac0fa */
-extern PALETTEENTRY savedPalette[]; /* @data 0x4ac51c */
 extern short flashCount; /* @data 0x4af352 */
 extern short flashRow; /* @data 0x4af34a */
 extern short flashColumn; /* @data 0x4af348 */
 extern char flashFrame; /* @data 0x4a1e3a */
-extern short *roomViewX; /* @data 0x4ac188 */
-extern short *roomViewY; /* @data 0x4ac18c */
-extern short *layerRowX; /* @data 0x4ac198 */
-extern short *layerRowY; /* @data 0x4ac19c */
-extern short roomViews[25]; /* @data 0x4ac216 */
-extern short roomViewScripts[]; /* @data 0x4ac10e */
-extern short roomAnchorView; /* @data 0x4ac0bc */
-extern Point roomPlaces[25]; /* @data 0x4a1788 */
-extern Point roomPlaces3d[25]; /* @data 0x4a17f0 */
-extern short standX; /* @data 0x4ac510 */
-extern short standY; /* @data 0x4ac512 */
-extern short roomOccupancy[25]; /* @data 0x4abdc0 */
-extern ShortRect standArea; /* @data 0x4ac514 */
-extern short *roomColumnX; /* @data 0x4ac190 */
-extern short *roomColumnY; /* @data 0x4ac194 */
-extern short roomColumnDx[5]; /* @data 0x4a1a04 */
-extern short roomColumnDy[5]; /* @data 0x4a1a0e */
-extern short arrivingSnoid; /* @data 0x4ac0ea */
-extern short arrivingGroup; /* @data 0x4ac0f8 */
 void placeViewOnSquare(short id, short row, short column);
-extern short hotelAnyFits; /* @data 0x4abec4 */
 extern short *squareHotSpotsX; /* @data 0x4ac948 */
 extern short *squareHotSpotsY; /* @data 0x4ac94c */
 void drawSquareImage(short row, short column, char offset);
-void drawFeatureLabels();
 short addLillyActor(short value);
 void drawSquare(short row, short column);
 void drawBoard(View *);
@@ -203,7 +109,6 @@ extern short dealtKinds[12]; /* @data 0x4ac95a */
 extern short dealtValues[12]; /* @data 0x4ac972 */
 extern Point jumpPlaces[]; /* @data 0x4a1ca4 */
 void dealSquares();
-void layOutLillyView(View *view, short region);
 extern short squareSetA[12]; /* @data 0x4a1e3c */
 extern short squareSetB[12]; /* @data 0x4a1e56 */
 extern short *squareSets[3]; /* @data 0x4af5b0 */
@@ -217,17 +122,12 @@ extern short squareSetA5[6]; /* @data 0x4af5f2 */
 extern short squareSetB5[6]; /* @data 0x4af5fe */
 extern short squareSetC5[6]; /* @data 0x4af60a */
 extern LillyDeal squareDeals[13]; /* @data 0x4af616 */
-extern short *lillyViewHotX; /* @data 0x4ac1a0 */
-extern short *lillyViewHotY; /* @data 0x4ac1a4 */
 void searchStep(short attribute, short layer, short row, short column);
 void searchLayer(short attribute, short layer);
 void swapSquares();
 void flashSwap(View *view);
 void lillyViewNotify3(View *view, short event);
-void setUpLillyPuzzle();
-void lillyClick(short action);
-void openHotel();
-void otherClick(short action);
+void lillyClicked(short action);
 extern short cursorSquareView; /* @data 0x4af33c */
 extern short lillyDragState; /* @data 0x4af664 */
 extern ShortRect rowEntryRects[12]; /* @data 0x4a1cd8 */
@@ -241,26 +141,6 @@ extern short claimedRow; /* @data 0x4af332 */
 extern short rowAnchorViews[]; /* @data 0x4aed22 */
 extern short padsPlaced; /* @data 0x4af0ec */
 extern short swapToolStage; /* @data 0x4ac922 */
-extern short talkerPending; /* @data 0x4ac0c0 */
-extern short talkerStage; /* @data 0x4ac0be */
-extern short talkerDoneGroup; /* @data 0x4ac0f6 */
-extern short guideStepGroup; /* @data 0x4ac0fc */
-extern short guideRemarkGroup; /* @data 0x4ac0f0 */
-extern short unusedHotel1; /* @data 0x4ac138 */
-extern short hotelLabelView; /* @data 0x4ac0c8 */
-extern short view11800; /* @data 0x4ac0ca */
-extern GroupList hotelGroups[1]; /* @data 0x4a1764 */
-extern short talkerStarted; /* @data 0x4ac13a */
-extern short skipGuide; /* @data 0x4ac13c */
-extern short roundResetGroup; /* @data 0x4ac0f2 */
-extern short talkerGroup; /* @data 0x4ac0f4 */
-extern short hotelFails; /* @data 0x4ac0e6 */
-extern short snoidArriving; /* @data 0x4ac0dc */
-extern short heldRoomPlace; /* @data 0x4ac0d4 */
-extern short firstPlacementFree; /* @data 0x4ac0da */
-extern short droppedSnoid; /* @data 0x4ac504 */
-extern short *hotelPlaceX; /* @data 0x4ac180 */
-extern short *hotelPlaceY; /* @data 0x4ac184 */
 extern short snoidPadViews[]; /* @data 0x4aed3a */
 extern short event4Pad; /* @data 0x4af33a */
 extern short swapToolView; /* @data 0x4af354 */
@@ -290,9 +170,6 @@ extern short jumperQueue[]; /* @data 0x4acda0 */
 extern short jumperQueueCount; /* @data 0x4acdc8 */
 extern short lillyLayerView3; /* @data 0x4aed14 */
 void turnGrid(short (*grid)[12], short how);
-extern short rowSortFeature; /* @data 0x4ac0de */
-extern short columnSortFeature; /* @data 0x4ac0e0 */
-extern short layerSortFeature; /* @data 0x4ac0e2 */
 short moveActorDown(View *view);
 extern short squareImageBase[]; /* @data 0x4a1e20 */
 extern ImageBank *lillyImages; /* @data 0x4af5a0 */
@@ -339,9 +216,9 @@ extern short valueUses[12]; /* @data 0x4a1ec6 */
 extern short rowValueUsed[14]; /* @data 0x4a1ede */
 extern short columnValueUsed[14]; /* @data 0x4a1efa */
 extern short levelLeftOut[]; /* @data 0x4a1e84 */
-extern short (*grid1)[12];
-extern short (*grid2)[12];
-extern short (*grid3)[12];
+extern short (*grid1)[12]; /* @data 0x4ac9b0 */
+extern short (*grid2)[12]; /* @data 0x4ac9b4 */
+extern short (*grid3)[12]; /* @data 0x4ac9b8 */
 extern short rowColumnAllowed[12]; /* @data 0x4a1eae */
 extern short overlayImageBase[]; /* @data 0x4a1e70 */
 extern short squareSetC[]; /* @data 0x4a1b1e */
@@ -355,21 +232,12 @@ extern short actorsOut[]; /* @data 0x4aeea0 */
 extern short actorsOutCount; /* @data 0x4af0e6 */
 extern short event44Views[20]; /* @data 0x4ace1e */
 extern short event44Count; /* @data 0x4ace46 */
-extern short hotelValueCounts[4]; /* @data 0x4ac106 */
-extern ChosenSnoids *hotelChosen; /* @data 0x4ac508 */
-extern short hotelPartySize; /* @data 0x4ac0e8 */
 extern short finishedLander; /* @data 0x4acff2 */
 extern short lillyGoReady; /* @data 0x4af36a */
 extern short lillyButton2Lit; /* @data 0x4a1d6c */
 extern short lillyButton1Drawn; /* @data 0x4a1d6e */
 extern short event2Views[20]; /* @data 0x4ace72 */
 extern short event2Count; /* @data 0x4ace9a */
-extern short hotelTalkerView; /* @data 0x4ac0ba */
-extern short roomRowValues[25]; /* @data 0x4ac1a8 */
-extern short roomLayerValues[25]; /* @data 0x4ac1da */
-extern short roomColumnValues[25]; /* @data 0x4ac20c */
-extern short room9002Views[]; /* @data 0x4ac310 */
-extern short room9007Views[]; /* @data 0x4ac40a */
 extern short *actorHotSpotsX; /* @data 0x4ac950 */
 
 #endif
