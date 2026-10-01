@@ -108,13 +108,30 @@ jobs:
         if: failure()
         run: |
           set +e
-          echo "== toolchain setup again"; uv run toolchain setup 2>&1 | tail -5
-          export WINEPREFIX="$GITHUB_WORKSPACE/build/wine/prefix" WINEDEBUG=-all WINEPATH='T:\\BC45\\BIN'
-          cd build/toolchain/check/4.5; rm -f hello.exe
-          U="$GITHUB_WORKSPACE/build/toolchain/4.5/BC45/BIN/BCC32.EXE"
-          echo "== V1: program as a unix path"; wine "$U" -WC hello.c 2>&1 | tail -3; ls hello.exe; rm -f hello.exe
-          echo "== V2: unix path, DLL overrides"; WINEDLLOVERRIDES="mscoree,mshtml=" wine "$U" -WC hello.c 2>&1 | tail -3; ls hello.exe; rm -f hello.exe
-          echo "== V3: T: path, output to files"; wine 'T:\\BC45\\BIN\\BCC32.EXE' -WC hello.c >out.txt 2>err.txt; cat out.txt err.txt | tail -3; ls hello.exe; rm -f hello.exe
-          echo "== V4: unix path, output to files"; wine "$U" -WC hello.c >out.txt 2>err.txt; cat out.txt err.txt | tail -3; ls hello.exe
+          uv run python - <<'PY'
+          import os, subprocess
+          from zbtools import host, paths, toolchain
+
+          wd = paths.TOOLCHAIN_DIR / "check" / "4.5"
+          exe = str(toolchain.root_dir("4.5") / "BIN" / "BCC32.EXE")
+          wine = str(host.wine_bin_dir() / "wine")
+
+          def attempt(label: str, env: dict[str, str]) -> bool:
+              (wd / "HELLO.EXE").unlink(missing_ok=True)
+              r = subprocess.run([wine, exe, "-WC", "hello.c"], cwd=wd, env=env, capture_output=True, text=True)
+              ok = (wd / "HELLO.EXE").exists()
+              print(f"{label}: {'OK' if ok else 'FAILED'} rc={r.returncode}", flush=True)
+              return ok
+
+          full = toolchain._wine_env(r"T:\BC45\BIN")
+          print("env keys:", sorted(full), flush=True)
+          minimal = {k: v for k, v in full.items() if k.startswith("WINE") or k in ("PATH", "HOME", "LANG")}
+          attempt("minimal env", minimal)
+          attempt("full env", full)
+          for key in sorted(set(full) - set(minimal)):
+              trimmed = {k: v for k, v in full.items() if k != key}
+              if attempt(f"full env without {key}", trimmed):
+                  print("  -> removing", key, "makes it pass:", repr(full[key])[:200], flush=True)
+          PY
       - run: uv run match
       - run: uv run match-data -q
