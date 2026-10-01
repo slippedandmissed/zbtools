@@ -111,7 +111,23 @@
     style.setProperty('--h', (fitW * 3 / 4 / baseRatio) + 'px');
   }
   fitCanvas();
-  window.addEventListener('resize', fitCanvas);
+  // Firefox can fire `resize` for a zoom before devicePixelRatio has caught up
+  // (Chrome updates both together), which sizes the canvas from the old ratio and
+  // leaves it stale: re-fit when the ratio itself changes, and once more a frame
+  // after each resize.
+  window.addEventListener('resize', function () {
+    fitCanvas();
+    requestAnimationFrame(fitCanvas);
+  });
+  (function watchRatio() {
+    var query = window.matchMedia('(resolution: ' + (window.devicePixelRatio || 1) + 'dppx)');
+    var changed = function () {
+      query.removeEventListener('change', changed);
+      fitCanvas();
+      watchRatio();
+    };
+    query.addEventListener('change', changed);
+  })();
   var overlay = document.getElementById('overlay');
   var statusLine = document.getElementById('status');
   var startButton = document.getElementById('start');
