@@ -63,7 +63,7 @@ from zbtools.exe import Executable, Instruction, disassemble
 # is given: most of the game's code was compiled with -p (Pascal calling
 # convention by default) and -k- (no stack frame unless needed), otherwise BCC32's
 # defaults (no optimisation, register variables, byte alignment). The support
-# library just below the runtime used -p alone. See docs/findings.md.
+# library just below the runtime used -p alone. See docs/src/concepts/compiler.md.
 DEFAULT_FLAGS = "-p -k-"
 _FLAGS = re.compile(r"/\*\s*@flags\s+(.*?)\s*\*/")
 # Release used unless a file says otherwise (/* @release ... */) or --release is

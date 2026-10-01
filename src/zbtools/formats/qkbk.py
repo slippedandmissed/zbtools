@@ -1,7 +1,7 @@
 """QkBk, Broderbund's video codec (`qb32.qtc`): a movie frame is a scene, not
 pixels. Sprites from a library of bitmaps are placed on a background, in 256
 colours; the codec composites them, so a frame that changes nothing is 420
-bytes. (The layout below was read from the codec; `docs/findings.md` has the
+bytes. (The layout below was read from the codec; `docs/src/formats/movies.md` has the
 evidence.) Everything is big-endian.
 
 A frame (one QuickTime sample):

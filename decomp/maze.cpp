@@ -729,7 +729,7 @@ void listAllValues()
 /* The index (1-19) of the largest value in valueCounts between `low` and
    `high` whose kind (valueKinds) is `kind`'s. */
 /* Not exact: BCC caches valueCounts's address in a register here, where the
-   original keeps the parameters in registers instead (see findings.md on
+   original keeps the parameters in registers instead (see docs/src/concepts/bcc32-quirks.md on
    address caching). */
 /* @zoombi32 0x004381da */
 short largestOfKind(short kind, short low, short high)
@@ -761,7 +761,7 @@ short smallestFrom(short least)
 /* The index (1-20) of the largest value in valueCounts between `low` and
    `high`. */
 /* Not exact: BCC caches valueCounts's address in a register here, where the
-   original keeps the parameters in registers instead (see findings.md on
+   original keeps the parameters in registers instead (see docs/src/concepts/bcc32-quirks.md on
    address caching). */
 /* @zoombi32 0x00437b23 */
 short largestBetween(short low, short high)
@@ -1792,7 +1792,7 @@ short takeCommonestValue(short low, short high)
    taken only in the copy (takenRowsCopy), and taking the rows into the
    copy alone. */
 /* Not exact: BCC caches featureRows's address in esi, where the original
-   keeps `column` there (see findings.md on address caching). */
+   keeps `column` there (see docs/src/concepts/bcc32-quirks.md on address caching). */
 /* @zoombi32 0x00437ea2 */
 short takeCommonestValueCopy(short low, short high)
 {

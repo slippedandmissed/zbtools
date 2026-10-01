@@ -1,0 +1,16 @@
+/* Screenshot placeholders: `> 📷 **Screenshot: `id`** ...` blockquotes (see
+   "Screenshots" in the appendix). Until the image exists, the placeholder
+   stands out so it isn't missed. */
+.content blockquote:has(> p > strong:first-child) {
+  border-inline-start: 4px solid var(--quote-border);
+}
+.content blockquote.screenshot,
+.content blockquote:has(> p:first-child > strong > code) {
+  background: var(--quote-bg);
+}
+.content img.screenshot {
+  max-width: 640px;
+  width: 100%;
+  border: 1px solid var(--table-border-color);
+  image-rendering: pixelated;
+}

@@ -11,7 +11,7 @@ Until the DLL is loaded the pointer holds a fallback that calls QTInitialize
 and retries. The DLLs export nothing that maps selectors to API names (and the
 Win16 build imports QuickTime by ordinal), so stubs are named by selector
 (`qtim_39`) until the game's use of them shows which API they are. See
-docs/findings.md.
+docs/src/formats/quicktime-glue.md.
 """
 
 from dataclasses import dataclass

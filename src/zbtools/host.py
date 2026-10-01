@@ -42,6 +42,10 @@ _INSTALL_HINTS: dict[str, dict[str, str]] = {
         "Linux": "sudo apt install build-essential           # Debian/Ubuntu\n"
         "  sudo dnf group install development-tools   # Fedora",
     },
+    "mdBook": {
+        "Darwin": "brew install mdbook",
+        "Linux": "cargo install mdbook   # or a release from https://github.com/rust-lang/mdBook/releases",
+    },
     "Wine": {
         "Linux": "sudo apt install wine   # Debian/Ubuntu\n  sudo dnf install wine   # Fedora",
     },

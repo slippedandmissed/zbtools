@@ -53,7 +53,7 @@ TARGETS = ("web", "headless", "native")
 PROGRAM = r"C:\ZOOMBI32\ZOOMBI32.EXE"
 CD_LABEL = "ZOOMBINIS"
 CD_SERIAL = 0x1996_0101
-# What the game's installer would have written (see docs/findings.md).
+# What the game's installer would have written (see docs/src/formats/install-config.md).
 _CFG = "[INSTALL]\r\nINSTALLFROMDIR=D:\\\r\nINSTALLTODIR=C:\\ZOOMBI32\\\r\n"
 _FONT = "CORNER.TTF"
 WEB_PAGE = "zoombinis.html"

@@ -3,7 +3,7 @@ zoombi32.exe: class names, sizes, base classes, destructors, vtables (with
 their virtual methods) and constructors.
 
 Borland's 32-bit type descriptor layout (worked out from the runtime library's
-own descriptors, see docs/findings.md):
+own descriptors, see docs/src/reference/runtime-and-rtti.md):
 
     +0x00  object size
     +0x04  flags (0x0001: a class; 0x0002: more fields follow)

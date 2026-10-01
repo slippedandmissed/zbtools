@@ -13,7 +13,7 @@
  * (any case).
  *
  * Not exact: the original keeps `value` in ebx and the literals' base in esi
- * (see docs/findings.md on the engine's register allocation).
+ * (see docs/src/concepts/compiler.md on the engine's register allocation).
  */
 /* @zoombi32 0x004809f8 */
 short getIniBool(fileSpec *file, const char *section, const char *key, short *value)
