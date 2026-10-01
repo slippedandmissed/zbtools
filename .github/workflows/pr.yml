@@ -108,12 +108,26 @@ jobs:
         if: failure()
         run: |
           set +e
-          wine --version; dpkg -l | grep -i wine | head
-          ls -la build/toolchain/4.5/BC45/BIN | head -20; cat build/toolchain/4.5/BC45/BIN/*.CFG
-          ls -la build/wine/prefix/dosdevices 2>/dev/null || find build -maxdepth 3 -name dosdevices
-          cd build/toolchain/check/4.5
-          export WINEPREFIX=$(find "$GITHUB_WORKSPACE/build" -maxdepth 3 -name system.reg -printf '%h' | head -1)
-          echo prefix=$WINEPREFIX
-          WINEDEBUG=err+all,warn+file,+process WINEPATH='T:\BC45\BIN' wine 'T:\BC45\BIN\BCC32.EXE' -WC hello.c 2>&1 | tail -60
+          export WINEPREFIX="$GITHUB_WORKSPACE/build/wine/prefix" WINEDEBUG=-all
+          cd build/toolchain/check/4.5; ls
+          B='T:\BC45\BIN'; L='T:\BC45\LIB'
+          echo "locale: LANG=$LANG LC_ALL=$LC_ALL"; locale
+          echo "== drives"; wine cmd /c "vol T:" 2>&1; wine cmd /c "dir $L\\import32.lib" 2>&1 | tail -5
+          echo "== A: tlink32 by hand, everything absolute"
+          WINEPATH=$B wine "$B\\TLINK32.EXE" -Tpe -ap -c "-L$L" "$L\\c0x32.obj" hello.obj,hello.exe,,"$L\\import32.lib" "$L\\cw32.lib" 2>&1; echo "rc=$?"; ls hello.exe
+          rm -f hello.exe
+          echo "== B: tlink32 by hand, library names only"
+          WINEPATH=$B wine "$B\\TLINK32.EXE" -Tpe -ap -c "-L$L" c0x32.obj hello.obj,hello.exe,,import32.lib cw32.lib 2>&1; echo "rc=$?"; ls hello.exe
+          rm -f hello.exe
+          echo "== C: bcc32 -WC with LC_ALL=C.UTF-8"
+          LC_ALL=C.UTF-8 WINEPATH=$B wine "$B\\BCC32.EXE" -WC hello.c 2>&1; echo "rc=$?"; ls hello.exe
+          rm -f hello.exe
+          echo "== D: bcc32 -WC, -L/-I on the command line"
+          WINEPATH=$B wine "$B\\BCC32.EXE" -WC "-L$L" "-IT:\\BC45\\INCLUDE" hello.c 2>&1; echo "rc=$?"; ls hello.exe
+          rm -f hello.exe
+          echo "== E: bcc32 -WC with Z: paths"
+          Z=$(echo "$GITHUB_WORKSPACE/build/toolchain/4.5/BC45" | sed 's|/|\\|g')
+          WINEPATH="Z:$Z\\BIN" wine "Z:$Z\\BIN\\BCC32.EXE" -WC "-LZ:$Z\\LIB" "-IZ:$Z\\INCLUDE" hello.c 2>&1; echo "rc=$?"; ls hello.exe
+          echo "== turboc.\$ln"; cat 'turboc.$ln' 2>/dev/null
       - run: uv run match
       - run: uv run match-data -q
