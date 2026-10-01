@@ -83,6 +83,7 @@
 - [QuickTime in the port](port/quicktime.md)
 - [The web build and packaging](port/web.md)
 - [Debugging the port](port/debugging.md)
+- [Debug tools](port/debug-tools.md)
 - [Quirks](port/quirks.md)
 
 # Appendix

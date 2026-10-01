@@ -63,8 +63,8 @@ Use PNG, at the game's native 640×480 where you can, named `<id>.png`.
 | `mirror-grid` | [gameplay/group4](../gameplay/group4.md) | The hex grid of Zoombinis filling in, neighbours sharing features. | at higher levels. |
 | `bubble-overview` | [gameplay/group4](../gameplay/group4.md) | The dark chasm with the Zoombinis' bubbles rising over it. | complete the Mirror Machine. |
 | `bubble-lines` | [gameplay/group4](../gameplay/group4.md) | The squares and lines the sequence is set on. | at higher levels. |
-| `hidden-catch` | [gameplay/hidden](../gameplay/hidden.md) | The hidden catching game. | on the map, type the cheat code that `isCheat(0x469110d3, 0x1e1c32f2)` tests for, then click hotspot 9. |
-| `hidden-targets` | [gameplay/hidden](../gameplay/hidden.md) | The hidden targets game. | on the map, enter the code that `isCheat(0xc07a877d, 0xedfa7273)` tests for, then click hotspot 8. |
+| `hidden-catch` | [gameplay/hidden](../gameplay/hidden.md) | The hidden catching game. | on the map, type the cheat code that `isCheat(0x469110d3, 0x1e1c32f2)` tests for, then click hotspot 9 (or, in the port's [debug tools](../port/debug-tools.md), `scene 19`). |
+| `hidden-targets` | [gameplay/hidden](../gameplay/hidden.md) | The hidden targets game. | on the map, enter the code that `isCheat(0xc07a877d, 0xedfa7273)` tests for, then click hotspot 8 (or `scene 20`). |
 | `journey-overview` | [gameplay/index](../gameplay/index.md) | The map screen with all sixteen hotspots visible and the map's text box showing "choose a level". | from the map (scene 1), in practice mode. |
 | `isle-overview` | [gameplay/isle](../gameplay/isle.md) | Zoombini Isle: the panel of feature buttons (four rows of five) at lower left, the Zoombini being made in the middle, and the queue of finished Zoombinis waiting along the shore. | start a new game; you arrive here after the logo. |
 | `isle-feature-panel` | [gameplay/isle](../gameplay/isle.md) | Close-up of the feature panel: hair, eyes, nose and feet choices (5 each) and the seven panel buttons below it. | same scene, crop to the panel (`isleButtons`, x 3-198, y 304-478). |

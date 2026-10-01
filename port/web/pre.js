@@ -12,6 +12,19 @@ Module.arguments = (Module.zbArguments || []).slice();
 // ?screenshot: the game's screen, as /screenshot.bmp (for testing).
 if (typeof location !== 'undefined' && /[?&]screenshot\b/.test(location.search))
   Module.arguments.push('--screenshot', '/screenshot.bmp');
+// ?cmd=...: debug commands to run at start (repeatable; see the handbook's
+// "Debug tools"; builds without them ignore it), and zbDebug("...") runs
+// more from the console.
+if (typeof location !== 'undefined')
+  new URLSearchParams(location.search).getAll('cmd').forEach(function (cmd) {
+    Module.arguments.push('--cmd', cmd);
+  });
+window.zbDebug = function (commands) {
+  if (Module.ccall && Module._zbDebugRun)
+    Module.ccall('zbDebugRun', null, ['string'], [commands]);
+  else
+    console.warn('zbDebug: this build has no debug tools (or the game has not started)');
+};
 Module.preRun = Module.preRun || [];
 Module.preRun.push(function () {
   addRunDependency('zb-drive-c');

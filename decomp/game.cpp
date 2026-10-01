@@ -319,6 +319,10 @@ unsigned long nextCursorFrameTime;
 /* @zoombi32 0x00454f61 */
 void gameFrame()
 {
+#ifdef ZB_DEBUG
+    extern void zbDebugFrame(); /* the port's debug tooling (port/debug/) */
+    zbDebugFrame();
+#endif
     if (currentScene != -1 && scenes[currentScene]->frame) {
         basePort *saved = getPort();
         setPort(workPort);
