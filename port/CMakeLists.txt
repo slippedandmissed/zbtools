@@ -151,9 +151,6 @@ if(EMSCRIPTEN AND ZB_HEADLESS)
         -sSTACK_SIZE=1048576 -sINITIAL_MEMORY=134217728 -sALLOW_MEMORY_GROWTH
         -sENVIRONMENT=node -sNODERAWFS -sEXIT_RUNTIME=1)
 elseif(EMSCRIPTEN)
-    if(ZB_DEBUG)
-        target_link_options(zoombinis PRIVATE "-sEXPORTED_FUNCTIONS=_main,_zbDebugRun")
-    endif()
     # Asyncify lets the game's blocking loops (and its fibers) give the
     # browser its turn: see host/emscripten.cpp.
     set_target_properties(zoombinis PROPERTIES SUFFIX ".html")
@@ -161,7 +158,7 @@ elseif(EMSCRIPTEN)
         -sASYNCIFY -sASYNCIFY_STACK_SIZE=262144
         -sSTACK_SIZE=1048576 -sINITIAL_MEMORY=134217728 -sALLOW_MEMORY_GROWTH
         -sFORCE_FILESYSTEM -lidbfs.js
-        -sEXPORTED_RUNTIME_METHODS=FS,IDBFS,addRunDependency,removeRunDependency,ccall
+        -sEXPORTED_RUNTIME_METHODS=FS,IDBFS,addRunDependency,removeRunDependency
         -sEXIT_RUNTIME=1
         --shell-file "${CMAKE_CURRENT_SOURCE_DIR}/web/shell.html"
         --pre-js "${CMAKE_CURRENT_SOURCE_DIR}/web/pre.js")

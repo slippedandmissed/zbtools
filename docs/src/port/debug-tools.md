@@ -14,7 +14,7 @@ Commands are separated by `;` or newlines (`#` starts a comment) and queued to r
 | --- | --- |
 | command line | `zoombinis --cmd "scene 9; party 8"` (repeatable), `--script commands.txt` |
 | `uv run port run` | `--cmd`, `--script`, with `--headless`, `--screenshot`, `--seconds` |
-| browser | `?cmd=scene%209` in the URL (repeatable); `zbDebug("scene 9")` in the console |
+| browser | `?cmd=scene%209` in the URL (repeatable); `zbDebug("scene 9")` in the console (it queues the text and returns; the game picks it up on its next frame) |
 
 ```sh
 uv run port run --headless --seconds 30 --screenshot build/port/shot.bmp \
@@ -71,10 +71,10 @@ The puzzles are described in [Gameplay and the code](../gameplay/index.md), and 
 | Command | Does |
 | --- | --- |
 | `debug on\|off` | turns the game's debugging keys on or off ([below](#debug-keys)) |
-| `scene N [map]` | go to scene N (0-21), skipping the journey map unless `map`; holds up the commands after it until N is open |
+| `scene N [map]` | leave the current scene (the way the game does, closing it) and open scene N (0-21), skipping the journey map unless `map`; holds up the commands after it until N is open |
 | `level G L` | group G (1-4) is at level L (1-4): its three puzzles now play at that level |
 | `practice L` | practice mode at level L (1-4); 0 leaves it |
-| `party N` | the party that sets out: N Zoombinis (up to 16), all on board, each a different kind, named `Debug0`, `Debug1`, … |
+| `party N` | the party that sets out: N Zoombinis (up to 16), all on board, each a different kind, named `Debug0`, `Debug1`, …. It is made again on every later `scene`, as leaving a scene can empty it |
 | `unlock` | sets the camps' unlock bits, so the map's camp hotspots can be chosen |
 | `records N` | the first N of the town's 16 monument records are completed journeys; the rest are cleared |
 | `state get OFFSET [SIZE]`, `state set OFFSET VALUE [SIZE]` | read or write 1, 2 or 4 bytes (default 1) of `gameState` at a byte offset, for what has no command ([layout](../codebase/game-state.md)); numbers can be decimal or `0x` hex |
