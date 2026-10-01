@@ -218,7 +218,7 @@ short setAttributes(const char *path, DWORD attributes)
 }
 
 /* @zoombi32 0x00483b2e */
-short fileInUse(long volume, const char *path, DWORD attributes)
+short fileInUse(LONG_PTR volume, const char *path, DWORD attributes)
 {
     Volume *on = volumeOf(volume);
 
@@ -243,7 +243,7 @@ short fileInUse(long volume, const char *path, DWORD attributes)
 }
 
 /* @zoombi32 0x00483c8a */
-FileRecord *findOpenFile(long volume, const char *path)
+FileRecord *findOpenFile(LONG_PTR volume, const char *path)
 {
     Volume *on = volumeOf(volume);
     FileRecord *file;
@@ -332,7 +332,7 @@ short FileRecord::open(const fileSpec &spec, unsigned short mode)
     DWORD access;
     DWORD share;
     DWORD creation;
-    long id;
+    LONG_PTR id;
 
     if (!(mode & 3))
         mode |= 1;

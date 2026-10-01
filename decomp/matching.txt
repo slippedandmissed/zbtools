@@ -129,7 +129,6 @@
 0x00413be4 numberAllItems
 0x00413c24 joinText
 0x00413c6d freeText
-0x00413c7c formatJoined
 0x00413d33 reportJoinedError
 0x00413dc0 queuedEvents
 0x00413dd7 postEvent

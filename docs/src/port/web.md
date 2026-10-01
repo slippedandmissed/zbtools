@@ -37,4 +37,4 @@ Upload `build/port/site/` as it is to any static host. CI deploys it to Cloudfla
 
 ## Native and headless
 
-`uv run port build native` needs a 32-bit SDL2 (the system's, or a pinned release built from source by CMake). `uv run port run` lays out the drives from `build/port/data/` (C:) and the packed archives (D:), then runs either build.
+`uv run port build native` needs SDL2 (the system's, or a pinned release built from source by CMake). `uv run port run` lays out the drives from `build/port/data/` (C:) and the packed archives (D:), then runs either build.

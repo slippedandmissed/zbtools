@@ -294,8 +294,8 @@ char moduleFileName[256];
 char rosterDirectory[256];
 short movieShowing;
 short introPending;
-long currentMovie;
-long movieController;
+LONG_PTR currentMovie;
+LONG_PTR movieController;
 unsigned short instanceAtom;
 basePort *portBeforeMovie;
 short quickTimeReady;
@@ -1274,11 +1274,11 @@ void standPlacedSnoids()
 
 /* Loads a QuickTime movie from a file (0: failed). */
 /* @zoombi32 0x004552fd */
-long loadMovie(const char *path)
+LONG_PTR loadMovie(const char *path)
 {
-    long movie;
+    LONG_PTR movie;
     long id;
-    long file;
+    LONG_PTR file;
     long error;
 
     error = qtim_2c(path, &file, 0);

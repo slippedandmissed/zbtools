@@ -1013,7 +1013,7 @@ void showDialog(short kind, const char *text, const char *button2, const char *b
                 script = 4;
             else
                 script = 7;
-            savedGameList = (SavedGameList *)newPtr(0x646);
+            savedGameList = (SavedGameList *)newPtr(sizeof(SavedGameList));
             if (!savedGameList)
                 reportRosterError("Out of Memory.");
             readWriteSavedGames(savedGameList, 2);

@@ -408,7 +408,7 @@ short writeMapHeader(ResourceMap *map)
     unsigned short compacted;
     unsigned long total;
     unsigned long size;
-    long saved;
+    LONG_PTR saved;
     Directory *directory;
     MohawkHeader header;
     unsigned long end;

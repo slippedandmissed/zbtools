@@ -13,7 +13,7 @@ TimerState timerState;
 
 /* The multimedia timer's callback: runs the event's call under the lock. */
 /* @zoombi32 0x00492fc8 */
-void CALLBACK timerCallback(UINT, UINT, DWORD data, DWORD, DWORD)
+void CALLBACK timerCallback(UINT, UINT, DWORD_PTR data, DWORD_PTR, DWORD_PTR)
 {
     deferCall(&timerState.lock, (Deferred *)data);
 }
@@ -122,7 +122,7 @@ unsigned short startTimer(TimerEvent *event)
     event->due = now + delay;
     event->oneShot = event->remaining != event->period || event->remaining != event->interval
                      || delay != event->interval;
-    event->id = timeSetEvent(delay, 0, timerCallback, (DWORD)&event->call,
+    event->id = timeSetEvent(delay, 0, timerCallback, (DWORD_PTR)&event->call,
                              event->oneShot ? TIME_ONESHOT : TIME_PERIODIC);
     return !event->id;
 }
@@ -134,7 +134,7 @@ short setTimerError(short error)
 }
 
 /* @zoombi32 0x00493242 */
-long timerId(TimerEvent *event)
+LONG_PTR timerId(TimerEvent *event)
 {
-    return (long)event;
+    return (LONG_PTR)event;
 }

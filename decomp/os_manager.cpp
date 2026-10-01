@@ -61,7 +61,7 @@ long atomicDecrement(long *value)
 /* @zoombi32-functional 0x0046daac */
 void *atomicExchange(void **target, void *value)
 {
-    return (void *)InterlockedExchange((long *)target, (long)value);
+    return (void *)InterlockedExchange((LONG_PTR *)target, (LONG_PTR)value);
 }
 
 /* Adds one to *value and returns the result. */
@@ -74,7 +74,7 @@ long atomicIncrement(long *value)
 /* A timer calling `proc` every `interval` ms (-1: at every chance), with
    `data`; 0 on failure. */
 /* @zoombi32 0x0046daca */
-long newTimer(void (*proc)(long timer, long data), long data, long interval)
+LONG_PTR newTimer(void (*proc)(LONG_PTR timer, LONG_PTR data), LONG_PTR data, long interval)
 {
     OsTimer *timer;
 
@@ -126,7 +126,7 @@ void __cdecl debugPrintf(const char *format, ...)
 }
 
 /* @zoombi32 0x0046dbc2 */
-void deleteTimer(long handle)
+void deleteTimer(LONG_PTR handle)
 {
     OsTimer *timer;
 
@@ -406,7 +406,7 @@ ActivateHook setActivateHook(ActivateHook hook)
 }
 
 /* @zoombi32 0x0046e0ec */
-HINSTANCE osInstance(long)
+HINSTANCE osInstance(LONG_PTR)
 {
     return os.instance;
 }
@@ -415,7 +415,7 @@ HINSTANCE osInstance(long)
    never). Not exact: the original adds with `lea` where BCC32 4.5 moves and
    adds. */
 /* @zoombi32 0x0046e0f8 */
-void setTimerInterval(long handle, long interval)
+void setTimerInterval(LONG_PTR handle, long interval)
 {
     OsTimer *timer;
 
@@ -471,13 +471,13 @@ short setOsError(short error)
 }
 
 /* @zoombi32 0x0046e1f8 */
-long timerHandle(OsTimer *timer)
+LONG_PTR timerHandle(OsTimer *timer)
 {
-    return (long)timer;
+    return (LONG_PTR)timer;
 }
 
 /* @zoombi32 0x0046e202 */
-OsTimer *timerOf(long handle)
+OsTimer *timerOf(LONG_PTR handle)
 {
     OsTimer *timer = (OsTimer *)handle;
 

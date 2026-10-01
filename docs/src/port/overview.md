@@ -1,13 +1,13 @@
 # The port: overview
 
-`port/` builds **the decompiled game, unchanged** (`decomp/` and `glue/`), for a modern system with CMake and SDL2: WebAssembly in a browser (the main target), headless under Node (for testing), and 32-bit native.
+`port/` builds **the decompiled game, unchanged** (`decomp/` and `glue/`), for a modern system with CMake and SDL2: WebAssembly in a browser (the main target), headless under Node (for testing), and native builds (32- and 64-bit).
 
 ```text
    decomp/*.cpp  ─┐                                     ┌─ web      Emscripten + Asyncify  ─▶ zoombinis.html/.js/.wasm
    glue/ or       ├─▶ library "game" ─┐                 │
    port/glue/*   ─┘   (clang, with    ├─▶ zoombinis ────┼─ headless same wasm under Node, no screen or sound
                        prelude.h)     │                 │
-   port/miniwin/ ──▶ library "miniwin"┤                 └─ native   SDL2 from the system (32-bit only)
+   port/miniwin/ ──▶ library "miniwin"┤                 └─ native   SDL2 from the system
    port/host/    ──▶ library "host" ──┘
    port/main.cpp ──▶ the entry point: sets up the drives, then calls the game's WinMain
 ```
@@ -56,9 +56,19 @@ All are fetched at pinned versions and checksums (`port.py`, `port/CMakeLists.tx
 
 ## Limits
 
-- **32-bit only.** The decompiled code assumes 4-byte `long`s and pointers (it keeps pointers in `long`s in places), so CMake refuses a 64-bit native target unless `-DZB_ALLOW_64BIT=ON` (the game then won't work). WebAssembly is 32-bit. Untangling this is a roadmap item.
+- **Only the 64-bit Linux build has been run so far** (the intro, every scene, headless under valgrind and a scene sweep); the macOS, Windows and 32-bit native builds should work but aren't tried. See [64-bit targets](#64-bit-targets).
 - The game assumes Windows 95 behaviour in places; miniwin reproduces it where relied on (see [Quirks](quirks.md)).
 
 ## Status
 
 The game starts and reaches Zoombini Isle (the scene most exercised); music plays through the synthesizer; sound effects are mixed but not yet checked by ear; the intro movie plays from its converted scene with its sound.
+
+## 64-bit targets
+
+The game was compiled for 32-bit Windows and the decompilation keeps that dialect, so a 64-bit build needs care in three places (none is meant to change what BCC32 generates, which `uv run match` checks):
+
+- **Pointers in integers say `LONG_PTR`.** The engine hands out handles that are pointers (files, volumes, timers, threads, sounds, MIDI maps, movies) and passes callback arguments as integers. Those are typed `LONG_PTR` (`UINT_PTR`, `DWORD_PTR` for unsigned ones), as Win32 does; `decomp/zoombinis.h` makes them `long` for Borland C++ 4.5, which lacks the types, and `miniwin/types.h` makes them `long` or `intptr_t` for the port, so a pointer is never cut short and nothing else changes. A handle that is really a number (a resource map's, a memory handle's) stays `long`.
+- **The game's `long` stays 32 bits.** On targets where `long` is 64 bits, `miniwin/prelude.h` ends with `#define long int`, after everything the system and miniwin declare has been read, so only the game's code sees it. Its structures keep their sizes, and its `%ld` formats (the text functions in `miniwin/borland.cpp`) read `int`s. Windows and WebAssembly don't need it: `long` is already 32 bits there.
+- **No sizes written as numbers.** Structures that hold pointers are bigger, so an allocation of `0xec` bytes or a `memset` of 9 corrupts the heap on a 64-bit target. The code says what it means (`sizeof(View)`, `offsetof(FileName, path) + 1`) with the same value on 32 bits. Valgrind and a sweep of every scene (`scene N; wait 6000`, screenshots) find the rest: a crash or a heap error on opening a scene is usually one of these.
+
+`va_list` isn't a pointer on 64-bit targets either: `va_copy` copies one (the decompilation defines it for Borland, which lacks it), and `formatJoined`, which made a `va_list` out of an array, passes the parts as arguments (functional, not byte-exact).

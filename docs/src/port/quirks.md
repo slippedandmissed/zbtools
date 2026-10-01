@@ -12,6 +12,6 @@ Things that look odd and aren't bugs.
 - **The intro movie is not QuickTime** ([QuickTime in the port](quicktime.md)); `qtim_*` selectors the game never calls aren't implemented.
 - **Saved games live in IndexedDB** in the browser (`C:`), and in `build/port/data/c/` for native/headless builds (removed only by `uv run clean port-data`).
 - **MIDI** goes to a General MIDI synthesizer, not a Windows MIDI device: the game's MIDI map picks that profile ("unknown device (port)").
-- **32-bit only.** See [Overview](overview.md#limits).
+- **64-bit targets** need the care described in [Overview](overview.md#64-bit-targets).
 
 - **The decompilation must not rely on where the compiler put data.** In the original's layout objects sit next to each other, so a pointer written as `&array[19]` (one past the end) could name the next object; in the port it names whatever follows, and the wasm build traps on the first call through it ("null function or function signature mismatch"). `netGroupList` did this to Mudball Wall's input group (`g_4a2e22`, which follows `acrossSpots`): name the object instead. `uv run match-data` still checks it sits at the same address. A scene that crashes on opening is quickly found by visiting each in turn with the [debug tools](debug-tools.md): `party 8; scene 3; wait 3000; assert scene 3; scene 4; …`.

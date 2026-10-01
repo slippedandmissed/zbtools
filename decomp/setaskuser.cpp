@@ -7,9 +7,9 @@
 #include "zoombinis.h"
 
 /* @zoombi32 0x004850d4 */
-long setAskUser(long handler)
+LONG_PTR setAskUser(LONG_PTR handler)
 {
-    long previous = (long)files.askUser;
+    LONG_PTR previous = (LONG_PTR)files.askUser;
 
     files.askUser = (short (*)(void *))handler;
     return previous;

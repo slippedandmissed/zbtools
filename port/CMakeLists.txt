@@ -23,16 +23,12 @@ endif()
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
 
-# The decompiled code assumes Borland's 32-bit data model: long and pointers
-# are 4 bytes, and it keeps pointers in longs. Until that's untangled, only
-# 32-bit targets build (WebAssembly, and 32-bit x86 Windows or Linux).
-option(ZB_ALLOW_64BIT "Build for a 64-bit target anyway (the game won't work)" OFF)
-if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4 AND NOT ZB_ALLOW_64BIT)
-    message(FATAL_ERROR
-        "The port needs a 32-bit target (pointers here are ${CMAKE_SIZEOF_VOID_P} bytes): "
-        "the decompiled code assumes 4-byte longs and pointers. Build for WebAssembly "
-        "(uv run port build), or a 32-bit native target, or pass -DZB_ALLOW_64BIT=ON.")
-endif()
+# The decompiled code is Borland's 32-bit dialect: its longs are 32 bits, and
+# where a pointer has to live in an integer it says LONG_PTR (decomp/zoombinis.h).
+# On a target whose long is 64 bits (Linux, macOS) miniwin/prelude.h makes the
+# game's `long` an int, so its structures keep the original's sizes (see "The
+# port" in the handbook); everywhere else (WebAssembly, 32-bit and 64-bit
+# Windows) long is already 32 bits.
 
 include(FetchContent)
 

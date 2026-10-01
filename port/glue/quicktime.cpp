@@ -376,10 +376,10 @@ long __cdecl qtim_0c()
 }
 
 /* OpenMovieFile: the movie's scene file. */
-long __cdecl qtim_2c(const char *path, long *file, long)
+long __cdecl qtim_2c(const char *path, LONG_PTR *file, long)
 {
     MovieScene *scene = loadScene(path);
-    *file = (long)scene;
+    *file = (LONG_PTR)scene;
     lastError = scene ? 0 : fileNotFound;
     return lastError;
 }
@@ -393,13 +393,13 @@ long __cdecl qtim_5e()
 }
 
 /* CloseMovieFile: the movie made from it keeps the scene. */
-long __cdecl qtim_02(long)
+long __cdecl qtim_02(LONG_PTR)
 {
     return 0;
 }
 
 /* DisposeMovie. */
-long __cdecl qtim_07(long movie)
+long __cdecl qtim_07(LONG_PTR movie)
 {
     if (player && player->scene == (MovieScene *)movie)
         attach(player, 0);
@@ -408,7 +408,7 @@ long __cdecl qtim_07(long movie)
 }
 
 /* GetMovieBox: from 0, 0. */
-long __cdecl qtim_0f(long movie, RECT *box)
+long __cdecl qtim_0f(LONG_PTR movie, RECT *box)
 {
     MovieScene *scene = (MovieScene *)movie;
     box->left = box->top = 0;
@@ -418,20 +418,20 @@ long __cdecl qtim_0f(long movie, RECT *box)
 }
 
 /* NewMovieFromFile: the movie is the scene. */
-long __cdecl qtim_2a(long *movie, long file, long *, long, long, long)
+long __cdecl qtim_2a(LONG_PTR *movie, LONG_PTR file, long *, long, long, long)
 {
     *movie = file;
     lastError = file ? 0 : badMovie;
     return lastError;
 }
 
-long __cdecl qtim_2f(long, long, long)
+long __cdecl qtim_2f(LONG_PTR, long, long)
 {
     return 0;
 }
 
 /* SetMovieActive: inactive stops it. */
-long __cdecl qtim_31(long movie, long active)
+long __cdecl qtim_31(LONG_PTR movie, long active)
 {
     if (!active && player && player->scene == (MovieScene *)movie)
         stopPlaying(player);
@@ -439,7 +439,7 @@ long __cdecl qtim_31(long movie, long active)
 }
 
 /* DisposeMovieController. */
-long __cdecl qtim_37(long controller)
+long __cdecl qtim_37(LONG_PTR controller)
 {
     MoviePlayer *p = (MoviePlayer *)controller;
     if (p) {
@@ -452,7 +452,7 @@ long __cdecl qtim_37(long controller)
 }
 
 /* NewMovieController: drawn in the window at the bounds. */
-long __cdecl qtim_38(long movie, RECT *bounds, long, HWND window)
+LONG_PTR __cdecl qtim_38(LONG_PTR movie, RECT *bounds, long, HWND window)
 {
     MoviePlayer *p = (MoviePlayer *)calloc(1, sizeof *p);
     p->window = window;
@@ -460,7 +460,7 @@ long __cdecl qtim_38(long movie, RECT *bounds, long, HWND window)
     p->y = bounds->top;
     attach(p, (MovieScene *)movie);
     player = p;
-    return (long)p;
+    return (LONG_PTR)p;
 }
 
 /* MoviesTask. */
@@ -469,7 +469,7 @@ long __cdecl qtim_62(long, long)
     return 0;
 }
 
-long __cdecl cmgr_00(long controller, HWND window, long)
+long __cdecl cmgr_00(LONG_PTR controller, HWND window, long)
 {
     MoviePlayer *p = (MoviePlayer *)controller;
     if (p)
@@ -478,7 +478,7 @@ long __cdecl cmgr_00(long controller, HWND window, long)
 }
 
 /* MCDoAction: play starts the movie (and its sound) from the start. */
-long __cdecl cmgr_01(long controller, long action, long parameters)
+long __cdecl cmgr_01(LONG_PTR controller, long action, long parameters)
 {
     MoviePlayer *p = (MoviePlayer *)controller;
     if (p && p->scene && action == actionPlay && parameters && !p->started) {
@@ -491,7 +491,7 @@ long __cdecl cmgr_01(long controller, long action, long parameters)
 }
 
 /* MCGetControllerInfo: whether it's playing. */
-long __cdecl cmgr_05(long controller, long *flags)
+long __cdecl cmgr_05(LONG_PTR controller, long *flags)
 {
     MoviePlayer *p = (MoviePlayer *)controller;
     *flags = p && p->playing ? controllerPlaying : 0;
@@ -499,7 +499,7 @@ long __cdecl cmgr_05(long controller, long *flags)
 }
 
 /* MCIdle: draws the frame that's due, and ends the movie after its last. */
-long __cdecl cmgr_09(long controller)
+long __cdecl cmgr_09(LONG_PTR controller)
 {
     MoviePlayer *p = (MoviePlayer *)controller;
     int frame;
@@ -526,13 +526,13 @@ long __cdecl cmgr_09(long controller)
 }
 
 /* MCIsPlayerEvent: no event is the movie's. */
-long __cdecl cmgr_0b(long, HWND, UINT, WPARAM, LPARAM)
+long __cdecl cmgr_0b(LONG_PTR, HWND, UINT, WPARAM, LPARAM)
 {
     return 0;
 }
 
 /* MCSetMovie: a new movie, drawn at `where`. */
-long __cdecl cmgr_0d(long controller, long movie, HWND window, POINT where)
+long __cdecl cmgr_0d(LONG_PTR controller, LONG_PTR movie, HWND window, POINT where)
 {
     MoviePlayer *p = (MoviePlayer *)controller;
     if (p) {
@@ -545,7 +545,7 @@ long __cdecl cmgr_0d(long controller, long movie, HWND window, POINT where)
 }
 
 /* MCSetControllerBoundsRect. */
-long __cdecl cmgr_0e(long controller, RECT *bounds, long, long)
+long __cdecl cmgr_0e(LONG_PTR controller, RECT *bounds, long, long)
 {
     MoviePlayer *p = (MoviePlayer *)controller;
     if (p) {

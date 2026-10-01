@@ -9,7 +9,7 @@
 /* @zoombi32 0x00484e9c */
 short setCurrentDirectory(const fileSpec *spec)
 {
-    long volume;
+    LONG_PTR volume;
     DWORD attributes;
     char path[0x100];
 
@@ -25,7 +25,7 @@ short setCurrentDirectory(const fileSpec *spec)
 }
 
 /* @zoombi32 0x00484f3c */
-short setFileSize(long handle, unsigned long size)
+short setFileSize(LONG_PTR handle, unsigned long size)
 {
     FileRecord *file = fileOf(handle, 0);
     short error;

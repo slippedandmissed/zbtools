@@ -444,6 +444,15 @@ LONG InterlockedExchange(LONG *target, LONG value)
     return previous;
 }
 
+#if INTPTR_MAX > 0x7fffffffL
+LONG_PTR InterlockedExchange(LONG_PTR *target, LONG_PTR value)
+{
+    LONG_PTR previous = *target;
+    *target = value;
+    return previous;
+}
+#endif
+
 /* Time. The clock starts at a minute, as if Windows had been up that long
    (so no time the game computes is 0, which it takes for "none"). */
 

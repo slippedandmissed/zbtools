@@ -445,7 +445,7 @@ short findChannel(short type)
 /* The engine's notice about a sound (the cookie holds its type and
    channel). The empty `if` is as in the original (compiled-out debug code?). */
 /* @zoombi32 0x00411d2c */
-void soundNoticeCallback(long, SoundNotice *notice, long cookie)
+void soundNoticeCallback(LONG_PTR, SoundNotice *notice, LONG_PTR cookie)
 {
     short type = (unsigned long)cookie >> 16;
     short channel = cookie;

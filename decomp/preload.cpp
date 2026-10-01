@@ -378,7 +378,7 @@ void insertPreload(ResourceMap *map, PreloadRequest *request)
 /* Not exact: the original stores the callback through a copy of `request` in eax
    (perhaps an inline helper); BCC32 4.5 stores through esi. */
 /* @zoombi32 0x00490edf */
-PreloadRequest *startPreload(long id, PreloadProc callback, long data)
+PreloadRequest *startPreload(long id, PreloadProc callback, LONG_PTR data)
 {
     ResourceMap *map;
     FileTableEntry *entry;
@@ -428,7 +428,7 @@ void *defaultPreloadProc(long event, long id, short *handle)
 
     findEntry(id, &map, &entry);
     lockHandle(id);
-    request = (PreloadRequest *)((char *)handle - 0x14);
+    request = (PreloadRequest *)((char *)handle - offsetof(PreloadRequest, data));
     buffer = 0;
     switch (event) {
     case PRELOAD_GET_BUFFER:
@@ -479,7 +479,7 @@ void *defaultPreloadProc(long event, long id, short *handle)
    `proc`; started at once (if the resource is loaded) or on the preload
    thread (for files that can be read in the background). */
 /* @zoombi32 0x0049117e */
-PreloadRequest *newPreloadRequest(long id, PreloadProc proc, long data, unsigned long length,
+PreloadRequest *newPreloadRequest(long id, PreloadProc proc, LONG_PTR data, unsigned long length,
                                   unsigned long offset)
 {
     ResourceMap *map;
@@ -495,10 +495,10 @@ PreloadRequest *newPreloadRequest(long id, PreloadProc proc, long data, unsigned
     unsigned long size = makeLong(entry->sizeLow, entry->sizeHigh);
     if (offset > size || length + offset > size)
         setResourceError(0x28a0);
-    else if ((request = (PreloadRequest *)malloc(0x38)) == 0)
+    else if ((request = (PreloadRequest *)malloc(sizeof(PreloadRequest))) == 0)
         setResourceError(memError());
     else {
-        memset(request, 0, 0x38);
+        memset(request, 0, sizeof(PreloadRequest));
         request->tag = 0x52515271;
         request->id = id;
         request->proc = proc;
@@ -575,7 +575,7 @@ void seekPreloads(ResourceMap *map, unsigned long position)
 /* The preload thread: runs preloads on files that can be read in the
    background while there are any. */
 /* @zoombi32 0x0049138e */
-void preloadThread(long)
+void preloadThread(LONG_PTR)
 {
     short handle;
     ResourceMap *map;
@@ -604,7 +604,7 @@ void preloadThread(long)
         setThreadPriority(resources.preloadThread, 1);
         yieldThread(0);
     }
-    long thread = resources.preloadThread;
+    LONG_PTR thread = resources.preloadThread;
     resources.preloadThread = 0;
     deleteSync(thread);
 }

@@ -7,10 +7,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <stddef.h>
 #include "zoombinis.h"
 
 /* @zoombi32 0x00484b50 */
-long openFile(fileSpec *spec, short mode)
+LONG_PTR openFile(fileSpec *spec, short mode)
 {
     FileRecord *file = new FileRecord;
 
@@ -23,7 +24,7 @@ long openFile(fileSpec *spec, short mode)
         return 0;
     }
     {
-        FileRecord *smaller = (FileRecord *)realloc(file, strlen(file->path) + 0x1d);
+        FileRecord *smaller = (FileRecord *)realloc(file, offsetof(FileRecord, path) + strlen(file->path) + 1);
         if (smaller) {
             file = smaller;
             files.files = file;
@@ -31,7 +32,7 @@ long openFile(fileSpec *spec, short mode)
                 file->next->prev = file;
         }
     }
-    return (long)file;
+    return (LONG_PTR)file;
 }
 
 /* @zoombi32 0x00484bdc */

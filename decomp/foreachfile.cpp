@@ -15,7 +15,7 @@
 /* @zoombi32 0x004831bc */
 short forEachDirectory(FileCallback callback, void *data)
 {
-    long volume;
+    LONG_PTR volume;
     char path[0x100];
     WIN32_FIND_DATA found;
     DWORD error;
@@ -52,7 +52,7 @@ short forEachDirectory(FileCallback callback, void *data)
 /* @zoombi32 0x00483310 */
 short forEachFile(FileCallback callback, void *data)
 {
-    long volume;
+    LONG_PTR volume;
     char buffer[0x100];
     WIN32_FIND_DATA found;
     HANDLE find;
@@ -86,7 +86,7 @@ short forEachFile(FileCallback callback, void *data)
 /* @zoombi32 0x00483420 */
 short fileMissing(const fileSpec &spec)
 {
-    long volume;
+    LONG_PTR volume;
     DWORD attributes;
     char path[0x100];
 

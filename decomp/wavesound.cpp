@@ -156,12 +156,12 @@ audioObj *__cdecl newWaveSound(short data)
     }
     count = wave->cues ? byteSwapShort(*(unsigned short *)(wave->cues + 8)) : 0;
     count += wave->loops ? 3 : 1;
-    if ((wave = (waveObj *)resizePtr(wave, count * sizeof(WaveBlock) + 0xb8)) == 0) {
+    if ((wave = (waveObj *)resizePtr(wave, count * sizeof(WaveBlock) + offsetof(waveObj, blocks))) == 0) {
         setSoundError(memError());
         goto fail;
     }
     wave->buildBlocks();
-    resizePtr(wave, wave->blockCount * sizeof(WaveBlock) + 0xb8);
+    resizePtr(wave, wave->blockCount * sizeof(WaveBlock) + offsetof(waveObj, blocks));
     wave->seek(0);
     wave->duration = fixedMul(wave->sampleCount, wave->msPerSample);
     wave->looping = wave->loops > 0;
@@ -187,7 +187,7 @@ short __cdecl waveObj::openDevice()
     format.wf.nAvgBytesPerSec = sampleRate * blockAlign;
     format.wf.nBlockAlign = blockAlign;
     format.wBitsPerSample = bitsPerSample;
-    switch (openWaveOutDevice(&wave, device, &format, (long)waveCallback, (long)this,
+    switch (openWaveOutDevice(&wave, device, &format, (LONG_PTR)waveCallback, (LONG_PTR)this,
                               CALLBACK_FUNCTION)) {
     case MMSYSERR_ALLOCATED:
         return setSoundError(0x29cd);
@@ -255,7 +255,7 @@ short __cdecl waveObj::startDevice(short paused)
             block->header.dwFlags |= WHDR_DONE;
             continue;
         }
-        block->header.dwUser = (DWORD)block;
+        block->header.dwUser = (DWORD_PTR)block;
         block->header.dwFlags = 0;
         if (loopBlock && loopBlock->header.dwLoops > 1) {
             if (block == loopBlock)
@@ -329,7 +329,7 @@ void __cdecl waveObj::unprepare()
 }
 
 /* @zoombi32 0x0047aab6 */
-long __cdecl waveObj::deviceHandle()
+LONG_PTR __cdecl waveObj::deviceHandle()
 {
     return wave;
 }
@@ -459,7 +459,7 @@ short __cdecl waveObj::setText(const char *text, unsigned short length)
 
 /* Not exact: the original keeps `this` in ebx; BCC32 4.5 uses eax. */
 /* @zoombi32 0x0047ada8 */
-short __cdecl waveObj::play(SoundNotify proc, long data)
+short __cdecl waveObj::play(SoundNotify proc, LONG_PTR data)
 {
     if (start < sampleCount)
         return audioObj::play(proc, data);
@@ -469,7 +469,7 @@ short __cdecl waveObj::play(SoundNotify proc, long data)
 /* The wave device's callback: passes finished blocks to waveBlockDone under
    the sound's lock. */
 /* @zoombi32 0x0047ae14 */
-void CALLBACK waveCallback(long, unsigned short message, DWORD instance, DWORD header, DWORD)
+void CALLBACK waveCallback(LONG_PTR, unsigned short message, DWORD_PTR instance, DWORD_PTR header, DWORD_PTR)
 {
     HINSTANCE saved = osInstance(0);
     WaveBlock *block;
@@ -480,7 +480,7 @@ void CALLBACK waveCallback(long, unsigned short message, DWORD instance, DWORD h
         if (!wave->resetting && (block = (WaveBlock *)done->dwUser) != 0)
             deferCall(&wave->lock, &block->call);
     }
-    osInstance((long)saved);
+    osInstance((LONG_PTR)saved);
 }
 
 /* A block has played: reports its cue point, notes the end of the loop,

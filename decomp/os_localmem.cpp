@@ -74,7 +74,7 @@ void setLocalMemError(short value)
 /* @zoombi32 0x0046da46 */
 int isAlignedPointer(void *pointer)
 {
-    if (!pointer || ((unsigned long)pointer & 3))
+    if (!pointer || ((UINT_PTR)pointer & 3))
         return 0;
     return 1;
 }

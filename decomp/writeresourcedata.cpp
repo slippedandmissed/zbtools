@@ -144,7 +144,7 @@ long resourceMapHandle(long id)
 
 /* A map's data, from its handle; 0 if it isn't one. */
 /* @zoombi32 0x00492d87 */
-ResourceMap *resourceMap(long handle)
+ResourceMap *resourceMap(LONG_PTR handle)
 {
     ResourceMap *map;
 

@@ -8,7 +8,7 @@
 
 /* A sound from a Mohawk MIDI or WAVE file in a handle; 0 on error. */
 /* @zoombi32 0x00477794 */
-long newSound(short data)
+LONG_PTR newSound(short data)
 {
     unsigned long *header;
     audioObj *object;
@@ -38,5 +38,5 @@ long newSound(short data)
         object->prev = 0;
         sound.objects = object;
     }
-    return (long)object;
+    return (LONG_PTR)object;
 }

@@ -6,7 +6,7 @@
 #ifndef OS_CONTEXTS_H
 #define OS_CONTEXTS_H
 
-short initContext(Context *context, void (*proc)(long), long argument,
+short initContext(Context *context, void (*proc)(LONG_PTR), LONG_PTR argument,
                   unsigned short stackSize); /* 0x46f5c0 */
 short freeContext(Context *context); /* 0x46f68f */
 void resumeContext(Context *context); /* 0x46f6c9 */

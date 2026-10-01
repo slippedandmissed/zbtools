@@ -39,7 +39,7 @@ short setSoundsActive(short active)
         for (object = sound.objects; object; object = object->next)
             object->activate(0);
         if (sound.cacheMidiDevice && sound.midiCache) {
-            midiMapClose((long)sound.midiCache);
+            midiMapClose((LONG_PTR)sound.midiCache);
             sound.midiCache = 0;
         }
         if (sound.cacheWaveDevice && sound.waveCache) {
@@ -76,7 +76,7 @@ short setSoundsActive(short active)
 
 /* Frees a sound (it must be closed). */
 /* @zoombi32 0x00476622 */
-short disposeSound(long handle)
+short disposeSound(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -99,8 +99,8 @@ short disposeSound(long handle)
 /* Calls `proc` for each open sound of a kind on a device (0xffff: the
    default one) until it returns non-zero. */
 /* @zoombi32 0x00476698 */
-short forEachSound(long kind, unsigned short device, short (*proc)(audioObj *object, long data),
-                   long data)
+short forEachSound(long kind, unsigned short device, short (*proc)(audioObj *object, LONG_PTR data),
+                   LONG_PTR data)
 {
     audioObj *object;
 
@@ -264,7 +264,7 @@ short findIniEntry(fileSpec *file, const char *section, char *entry, unsigned sh
 
 /* A sound's device; 0xffff on error (or if it isn't open). */
 /* @zoombi32 0x00476ade */
-unsigned short soundDevice(long handle)
+unsigned short soundDevice(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -281,7 +281,7 @@ unsigned short soundDevice(long handle)
 }
 
 /* @zoombi32 0x00476b27 */
-long soundDeviceHandle(long handle)
+LONG_PTR soundDeviceHandle(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -302,7 +302,7 @@ long soundDeviceHandle(long handle)
 }
 
 /* @zoombi32 0x00476b84 */
-long soundDuration(long handle)
+long soundDuration(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -321,7 +321,7 @@ short soundError()
 }
 
 /* @zoombi32 0x00476bc2 */
-long soundRate(long handle)
+long soundRate(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -334,7 +334,7 @@ long soundRate(long handle)
 }
 
 /* @zoombi32 0x00476bf1 */
-long soundPosition(long handle)
+long soundPosition(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -348,7 +348,7 @@ long soundPosition(long handle)
 
 /* A sound's state: 1 open, 2 playing, 4 started, 8 and 0x10 unknown. */
 /* @zoombi32 0x00476c25 */
-unsigned short soundFlags(long handle)
+unsigned short soundFlags(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -362,7 +362,7 @@ unsigned short soundFlags(long handle)
 }
 
 /* @zoombi32 0x00476ca3 */
-long soundKind(long handle)
+long soundKind(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -375,7 +375,7 @@ long soundKind(long handle)
 }
 
 /* @zoombi32 0x00476cd3 */
-long soundVolume(long handle)
+long soundVolume(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -426,7 +426,7 @@ short initSound()
 
 /* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x00476e1f */
-short pauseSound(long handle)
+short pauseSound(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -444,7 +444,7 @@ short pauseSound(long handle)
 /* Not exact: the original keeps `object` in eax and `device` in ebx; BCC32
    4.5 gives them ebx and esi. */
 /* @zoombi32 0x00476e72 */
-short openSound(long handle, unsigned short device)
+short openSound(LONG_PTR handle, unsigned short device)
 {
     audioObj *object;
 
@@ -479,10 +479,10 @@ void closeSounds()
         object->stop();
         if (object->isOpen)
             object->close();
-        disposeSound((long)object);
+        disposeSound((LONG_PTR)object);
     }
     if (sound.midiCache)
-        midiMapClose((long)sound.midiCache);
+        midiMapClose((LONG_PTR)sound.midiCache);
     if (sound.waveCache)
         wavebufClose(sound.waveCache);
     sound.ready = 0;
@@ -491,7 +491,7 @@ void closeSounds()
 
 /* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x00476f50 */
-short endSoundLoop(long handle)
+short endSoundLoop(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -507,7 +507,7 @@ short endSoundLoop(long handle)
 
 /* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x00476fa3 */
-short resumeSound(long handle)
+short resumeSound(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -522,7 +522,7 @@ short resumeSound(long handle)
 }
 
 /* @zoombi32 0x00476ff6 */
-short seekSound(long handle, long position)
+short seekSound(LONG_PTR handle, long position)
 {
     audioObj *object;
     short error;
@@ -541,7 +541,7 @@ short seekSound(long handle, long position)
 
 /* Sets a sound's text (0xffff: NUL-terminated). */
 /* @zoombi32 0x00477064 */
-short setSoundText(long handle, const char *text, unsigned short length)
+short setSoundText(LONG_PTR handle, const char *text, unsigned short length)
 {
     audioObj *object;
 
@@ -556,7 +556,7 @@ short setSoundText(long handle, const char *text, unsigned short length)
 
 /* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x004770d4 */
-short setSoundRate(long handle, long rate)
+short setSoundRate(LONG_PTR handle, long rate)
 {
     audioObj *object;
 
@@ -567,7 +567,7 @@ short setSoundRate(long handle, long rate)
 
 /* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x004770ff */
-short setSoundVolume(long handle, long volume)
+short setSoundVolume(LONG_PTR handle, long volume)
 {
     audioObj *object;
 
@@ -578,7 +578,7 @@ short setSoundVolume(long handle, long volume)
 
 /* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x0047712a */
-short playSound(long handle, SoundNotify notify, long cookie)
+short playSound(LONG_PTR handle, SoundNotify notify, LONG_PTR cookie)
 {
     audioObj *object;
 
@@ -597,7 +597,7 @@ short playSound(long handle, SoundNotify notify, long cookie)
 
 /* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x004771a4 */
-short stopSound(long handle)
+short stopSound(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -611,7 +611,7 @@ short stopSound(long handle)
 
 /* Not exact: the original keeps `object` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x004771e4 */
-short closeSound(long handle)
+short closeSound(LONG_PTR handle)
 {
     audioObj *object;
 
@@ -641,7 +641,7 @@ unsigned short setMidiDevice(unsigned short device)
     sound.midiDevice = device;
     if (sound.cacheMidiDevice && previous != device) {
         if (sound.midiCache) {
-            midiMapClose((long)sound.midiCache);
+            midiMapClose((LONG_PTR)sound.midiCache);
             sound.midiCache = 0;
         }
         if (sound.active)
@@ -686,7 +686,7 @@ unsigned short setWaveDevice(unsigned short device)
 /* Opens a wave device for PCM whose rate the device may not take:
    [Audio.WaveRateTranslations] maps a rate to one to use instead. */
 /* @zoombi32 0x0047739b */
-unsigned short openWaveOutDevice(long *out, unsigned short device, PCMWAVEFORMAT *format, long a, long b,
+unsigned short openWaveOutDevice(LONG_PTR *out, unsigned short device, PCMWAVEFORMAT *format, LONG_PTR a, LONG_PTR b,
                         long flags)
 {
     char key[8];
@@ -785,7 +785,7 @@ short __cdecl audioObj::setVolume(long level)
 
 /* Starts the sound, telling `notify`. */
 /* @zoombi32 0x00477673 */
-short __cdecl audioObj::play(SoundNotify proc, long data)
+short __cdecl audioObj::play(SoundNotify proc, LONG_PTR data)
 {
     SoundNotice notice;
 
@@ -829,7 +829,7 @@ void __cdecl audioObj::close()
 }
 
 /* @zoombi32 0x00477763 */
-audioObj *audioObject(long handle)
+audioObj *audioObject(LONG_PTR handle)
 {
     audioObj *object = (audioObj *)handle;
 

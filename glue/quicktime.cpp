@@ -153,7 +153,7 @@ long __cdecl qtim_37(long)
     QTIM_STUB(0x37);
 }
 
-long __cdecl qtim_38(long, RECT *, long, HWND)
+LONG_PTR __cdecl qtim_38(long, RECT *, long, HWND)
 {
     QTIM_STUB(0x38);
 }

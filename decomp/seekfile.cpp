@@ -11,7 +11,7 @@
 /* Not exact: the original keeps the file in ebx, the position in esi and
    the offset in edi; BCC32 4.5 rotates them. */
 /* @zoombi32 0x00484dc4 */
-unsigned long seekFile(long handle, unsigned long offset, long whence)
+unsigned long seekFile(LONG_PTR handle, unsigned long offset, long whence)
 {
     FileRecord *file;
     unsigned long at;

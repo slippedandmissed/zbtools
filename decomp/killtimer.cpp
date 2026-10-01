@@ -10,7 +10,7 @@
 /* Stops a timer. If its call is waiting to run under the lock, it's freed
    when it does. */
 /* @zoombi32 0x00492ec0 */
-short killTimer(long timer)
+short killTimer(LONG_PTR timer)
 {
     TimerEvent *event;
     short error;
@@ -52,7 +52,7 @@ void freeTimer(TimerEvent *event)
 
 /* A timer's event; 0 if it isn't one. */
 /* @zoombi32 0x00492f81 */
-TimerEvent *timerEvent(long timer)
+TimerEvent *timerEvent(LONG_PTR timer)
 {
     TimerEvent *event = (TimerEvent *)timer;
 

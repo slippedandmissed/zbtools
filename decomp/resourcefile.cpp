@@ -15,7 +15,7 @@
    at the first problem (a resource in use or locked); with it, it carries
    on and returns the last error. */
 /* @zoombi32 0x0048f660 */
-short closeResourceFile(long handle, short compact, short force)
+short closeResourceFile(LONG_PTR handle, short compact, short force)
 {
     ResourceMap *map;
     short error;

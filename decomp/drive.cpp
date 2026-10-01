@@ -140,7 +140,7 @@ short Drive::init(long index)
             regs.eax = 0x440d;
             regs.ebx = drive;
             regs.ecx = 0x86f;
-            regs.edx = (DWORD)mapInfo;
+            regs.edx = (DWORD)(DWORD_PTR)mapInfo; /* (Windows 95's, where pointers are 32 bits) */
             regs.flags = 1;
             device = CreateFile("\\\\.\\VWIN32", 0, 0, 0, 0, FILE_FLAG_DELETE_ON_CLOSE, 0);
             ok = DeviceIoControl(device, 1, &regs, sizeof regs, &regs, sizeof regs, &returned, 0);
@@ -164,7 +164,7 @@ short Drive::init(long index)
 
 /* Makes sure the volume `id` is in the drive, asking for it if need be. */
 /* @zoombi32 0x00482f2c */
-short Drive::use(long id)
+short Drive::use(LONG_PTR id)
 {
     DiskInfo info;
     FileRequest request;
@@ -220,7 +220,7 @@ void Drive::setLocked(short on)
         regs.eax = 0x440d;
         regs.ebx = drive;
         regs.ecx = 0x848;
-        regs.edx = (DWORD)&block;
+        regs.edx = (DWORD)(DWORD_PTR)&block;
         regs.flags = 1;
         device = CreateFile("\\\\.\\VWIN32", 0, 0, 0, 0, FILE_FLAG_DELETE_ON_CLOSE, 0);
         ok = DeviceIoControl(device, 1, &regs, sizeof regs, &regs, sizeof regs, &returned, 0);

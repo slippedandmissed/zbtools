@@ -12,7 +12,7 @@
 /* Holds the file (for a sequence of calls), waiting up to `timeout` ms;
    0x283d if that runs out. */
 /* @zoombi32 0x004860cc */
-short lockFile(long handle, long timeout)
+short lockFile(LONG_PTR handle, long timeout)
 {
     FileRecord *file = fileOf(handle, 0);
 
@@ -27,7 +27,7 @@ short lockFile(long handle, long timeout)
 /* Writes *size bytes; *size is set to how many were written (0x283f if
    fewer). */
 /* @zoombi32 0x0048610c */
-short writeFile(long handle, const void *buffer, long *size)
+short writeFile(LONG_PTR handle, const void *buffer, long *size)
 {
     long wanted = *size;
     FileRecord *file;
@@ -57,7 +57,7 @@ short setFileError(short error)
 }
 
 /* @zoombi32 0x00486240 */
-FileRecord *fileOf(long handle, short kind)
+FileRecord *fileOf(LONG_PTR handle, short kind)
 {
     FileRecord *file = (FileRecord *)handle;
 

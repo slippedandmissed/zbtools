@@ -196,7 +196,7 @@ short __cdecl wavebufWO::readDeviceInfo(const char *key)
 }
 
 /* @zoombi32 0x0047b360 */
-void CALLBACK wavebufWOCallback(HWAVEOUT, UINT message, DWORD instance, DWORD header, DWORD)
+void CALLBACK wavebufWOCallback(HWAVEOUT, UINT message, DWORD_PTR instance, DWORD_PTR header, DWORD_PTR)
 {
     if (message == WOM_DONE) {
         wavebufWO *wo = (wavebufWO *)instance;
@@ -292,7 +292,7 @@ short __cdecl wavebufWO::lockBuffer(unsigned long at, void **first, unsigned lon
 }
 
 /* @zoombi32 0x0047b580 */
-short __cdecl wavebufWO::open(PCMWAVEFORMAT *format, WavebufNotify notify, long data)
+short __cdecl wavebufWO::open(PCMWAVEFORMAT *format, WavebufNotify notify, LONG_PTR data)
 {
     unsigned long i;
     short error;
@@ -301,10 +301,10 @@ short __cdecl wavebufWO::open(PCMWAVEFORMAT *format, WavebufNotify notify, long 
 
     if (isOpen)
         return MMSYSERR_ERROR;
-    if ((error = waveOutOpen(&wave, device, (WAVEFORMAT *)format, (DWORD)wavebufWOCallback,
-                             (DWORD)this, CALLBACK_FUNCTION)) != 0)
+    if ((error = waveOutOpen(&wave, device, (WAVEFORMAT *)format, (DWORD_PTR)wavebufWOCallback,
+                             (DWORD_PTR)this, CALLBACK_FUNCTION)) != 0)
         return error;
-    if ((thread = createThread(wavebufWOThread, (long)this, 0x1000, 1)) == 0) {
+    if ((thread = createThread(wavebufWOThread, (LONG_PTR)this, 0x1000, 1)) == 0) {
         error = MMSYSERR_ERROR;
     closeWave:
         waveOutClose(wave);
@@ -383,7 +383,7 @@ short __cdecl wavebufWO::start()
 
 /* Keeps the ring written ahead of the device. */
 /* @zoombi32 0x0047b856 */
-void wavebufWOThread(long data)
+void wavebufWOThread(LONG_PTR data)
 {
     wavebufWO *wo = (wavebufWO *)data;
 
@@ -422,7 +422,7 @@ short __cdecl wavebufWO::fill(unsigned long minimum)
             break;
         header->dwFlags &= ~WHDR_DONE;
         header->dwBytesRecorded = written + blockSamples;
-        header->dwUser = (DWORD)this;
+        header->dwUser = (DWORD_PTR)this;
         waveOutWrite(wave, header, sizeof *header);
         written += blockSamples;
     }
@@ -618,7 +618,7 @@ short __cdecl wavebufDS::lockBuffer(unsigned long at, void **first, unsigned lon
 }
 
 /* @zoombi32 0x0047bf02 */
-short __cdecl wavebufDS::open(PCMWAVEFORMAT *format, WavebufNotify notify, long data)
+short __cdecl wavebufDS::open(PCMWAVEFORMAT *format, WavebufNotify notify, LONG_PTR data)
 {
     DWORD id;
     DSBUFFERDESC desc;
@@ -769,7 +769,7 @@ void __cdecl wavebufDS::operator delete(void *block)
 }
 
 /* @zoombi32 0x0047c3b4 */
-unsigned short wavebufBreakLoop(long handle)
+unsigned short wavebufBreakLoop(LONG_PTR handle)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -779,7 +779,7 @@ unsigned short wavebufBreakLoop(long handle)
 }
 
 /* @zoombi32 0x0047c3d4 */
-unsigned short wavebufClose(long handle)
+unsigned short wavebufClose(LONG_PTR handle)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -795,7 +795,7 @@ unsigned short wavebufClose(long handle)
 }
 
 /* @zoombi32 0x0047c40d */
-unsigned short wavebufGetLevels(long handle, unsigned long *levels)
+unsigned short wavebufGetLevels(LONG_PTR handle, unsigned long *levels)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -847,7 +847,7 @@ unsigned short wavebufGetDevCaps(unsigned short device, WmxCaps *caps, unsigned 
 }
 
 /* @zoombi32 0x0047c56e */
-unsigned short wavebufGetID(long handle, unsigned short *id)
+unsigned short wavebufGetID(LONG_PTR handle, unsigned short *id)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -857,7 +857,7 @@ unsigned short wavebufGetID(long handle, unsigned short *id)
 }
 
 /* @zoombi32 0x0047c593 */
-unsigned short wavebufGetPitch(long handle, unsigned long *pitch)
+unsigned short wavebufGetPitch(LONG_PTR handle, unsigned long *pitch)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -867,7 +867,7 @@ unsigned short wavebufGetPitch(long handle, unsigned long *pitch)
 }
 
 /* @zoombi32 0x0047c5b8 */
-unsigned short wavebufGetPlaybackRate(long handle, unsigned long *rate)
+unsigned short wavebufGetPlaybackRate(LONG_PTR handle, unsigned long *rate)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -877,7 +877,7 @@ unsigned short wavebufGetPlaybackRate(long handle, unsigned long *rate)
 }
 
 /* @zoombi32 0x0047c5dd */
-unsigned short wavebufGetPosition(long handle, MMTIME *time, unsigned short size)
+unsigned short wavebufGetPosition(LONG_PTR handle, MMTIME *time, unsigned short size)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -887,7 +887,7 @@ unsigned short wavebufGetPosition(long handle, MMTIME *time, unsigned short size
 }
 
 /* @zoombi32 0x0047c607 */
-unsigned short wavebufGetVolume(long handle, unsigned long *volume)
+unsigned short wavebufGetVolume(LONG_PTR handle, unsigned long *volume)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -940,8 +940,8 @@ short __cdecl initWaveMix()
 /* waveOutOpen: through WaveMix when it's enabled and the format is 8- or
    16-bit PCM, else straight to waveOut. */
 /* @zoombi32 0x0047c712 */
-unsigned short wavebufOpen(long *handle, unsigned short device, PCMWAVEFORMAT *format,
-                           long callback, long instance, unsigned long flags)
+unsigned short wavebufOpen(LONG_PTR *handle, unsigned short device, PCMWAVEFORMAT *format,
+                           LONG_PTR callback, LONG_PTR instance, unsigned long flags)
 {
     short error;
     wmxDevice *mixer;
@@ -962,7 +962,7 @@ direct:
             if ((result = wave->open(device, flags)) != 0)
                 delete wave;
             else
-                *handle = (long)wave;
+                *handle = (LONG_PTR)wave;
         } else
             result = MMSYSERR_NOMEM;
         return result;
@@ -995,17 +995,17 @@ mix:
     object = flags & 0x80000000 ? new wmxObject(mixer, format, callback, instance, flags)
                                 : new wmxMixer(mixer, format, callback, instance, flags);
     if (object)
-        object->notify(WOM_OPEN, (long)object, 0);
+        object->notify(WOM_OPEN, (LONG_PTR)object, 0);
     else {
         delete mixer;
         return MMSYSERR_NOMEM;
     }
-    *handle = (long)object;
+    *handle = (LONG_PTR)object;
     return 0;
 }
 
 /* @zoombi32 0x0047c94b */
-unsigned short wavebufPause(long handle)
+unsigned short wavebufPause(LONG_PTR handle)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -1015,7 +1015,7 @@ unsigned short wavebufPause(long handle)
 }
 
 /* @zoombi32 0x0047c96b */
-unsigned short wavebufPrepareHeader(long handle, WAVEHDR *header, unsigned short size)
+unsigned short wavebufPrepareHeader(LONG_PTR handle, WAVEHDR *header, unsigned short size)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -1036,7 +1036,7 @@ void __cdecl closeWaveMix()
 }
 
 /* @zoombi32 0x0047c9c8 */
-unsigned short wavebufReset(long handle)
+unsigned short wavebufReset(LONG_PTR handle)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -1046,7 +1046,7 @@ unsigned short wavebufReset(long handle)
 }
 
 /* @zoombi32 0x0047c9e8 */
-unsigned short wavebufRestart(long handle)
+unsigned short wavebufRestart(LONG_PTR handle)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -1056,7 +1056,7 @@ unsigned short wavebufRestart(long handle)
 }
 
 /* @zoombi32 0x0047ca08 */
-unsigned short wavebufSetLevels(long handle, unsigned long levels)
+unsigned short wavebufSetLevels(LONG_PTR handle, unsigned long levels)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -1066,7 +1066,7 @@ unsigned short wavebufSetLevels(long handle, unsigned long levels)
 }
 
 /* @zoombi32 0x0047ca2d */
-unsigned short wavebufSetPitch(long handle, unsigned long pitch)
+unsigned short wavebufSetPitch(LONG_PTR handle, unsigned long pitch)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -1076,7 +1076,7 @@ unsigned short wavebufSetPitch(long handle, unsigned long pitch)
 }
 
 /* @zoombi32 0x0047ca52 */
-unsigned short wavebufSetPlaybackRate(long handle, unsigned long rate)
+unsigned short wavebufSetPlaybackRate(LONG_PTR handle, unsigned long rate)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -1086,7 +1086,7 @@ unsigned short wavebufSetPlaybackRate(long handle, unsigned long rate)
 }
 
 /* @zoombi32 0x0047ca77 */
-unsigned short wavebufSetVolume(long handle, unsigned long volume)
+unsigned short wavebufSetVolume(LONG_PTR handle, unsigned long volume)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -1096,7 +1096,7 @@ unsigned short wavebufSetVolume(long handle, unsigned long volume)
 }
 
 /* @zoombi32 0x0047ca9c */
-unsigned short wavebufUnprepareHeader(long handle, WAVEHDR *header, unsigned short size)
+unsigned short wavebufUnprepareHeader(LONG_PTR handle, WAVEHDR *header, unsigned short size)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -1106,7 +1106,7 @@ unsigned short wavebufUnprepareHeader(long handle, WAVEHDR *header, unsigned sho
 }
 
 /* @zoombi32 0x0047cac6 */
-unsigned short wavebufWrite(long handle, WAVEHDR *header, unsigned short size)
+unsigned short wavebufWrite(LONG_PTR handle, WAVEHDR *header, unsigned short size)
 {
     wmxObject *object = wmxObjectOf(handle);
 
@@ -1117,7 +1117,7 @@ unsigned short wavebufWrite(long handle, WAVEHDR *header, unsigned short size)
 
 /* The WaveMix object a handle stands for; 0 if it isn't one. */
 /* @zoombi32 0x0047caf0 */
-wmxObject *wmxObjectOf(long handle)
+wmxObject *wmxObjectOf(LONG_PTR handle)
 {
     wmxObject *object = (wmxObject *)handle;
 

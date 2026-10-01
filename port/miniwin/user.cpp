@@ -404,14 +404,14 @@ LONG_PTR SetWindowLongPtr(HWND hwnd, int index, LONG_PTR value)
     return previous;
 }
 
-LONG GetWindowLong(HWND hwnd, int index)
+LONG_PTR GetWindowLong(HWND hwnd, int index)
 {
-    return (LONG)GetWindowLongPtr(hwnd, index);
+    return GetWindowLongPtr(hwnd, index);
 }
 
-LONG SetWindowLong(HWND hwnd, int index, LONG value)
+LONG_PTR SetWindowLong(HWND hwnd, int index, LONG_PTR value)
 {
-    return (LONG)SetWindowLongPtr(hwnd, index, value);
+    return SetWindowLongPtr(hwnd, index, value);
 }
 
 int GetWindowText(HWND hwnd, LPSTR text, int size)

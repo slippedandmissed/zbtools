@@ -8,7 +8,7 @@
 
 /* Where resource `id`'s data is: its file, offset and size. */
 /* @zoombi32 0x0048fec0 */
-short getResourceInfo(long id, long *file, unsigned long *offset, unsigned long *size)
+short getResourceInfo(long id, LONG_PTR *file, unsigned long *offset, unsigned long *size)
 {
     ResourceMap *map;
     FileTableEntry *entry;

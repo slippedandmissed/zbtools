@@ -11,7 +11,7 @@
 /* A timer calling `proc` after `delay` ms and then every `period` ms (0:
    once); 0 on error. */
 /* @zoombi32 0x00492dc4 */
-long newTimer(unsigned long delay, unsigned long period, TimerProc proc, long data)
+LONG_PTR newTimer(unsigned long delay, unsigned long period, TimerProc proc, LONG_PTR data)
 {
     TimerEvent *event;
 

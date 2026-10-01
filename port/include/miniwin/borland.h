@@ -7,6 +7,7 @@
 #ifndef MINIWIN_BORLAND_H
 #define MINIWIN_BORLAND_H
 
+#include <stdarg.h>
 #include <stdio.h>
 
 /* Borland declares these structures globally, where the C library's time()
@@ -45,6 +46,14 @@ int strnicmp(const char *a, const char *b, size_t n);
 int memicmp(const void *a, const void *b, size_t n);
 char *strupr(char *s);
 char *strlwr(char *s);
+
+/* The text functions with Borland's long (32 bits) in their formats: where
+   long is 64 bits, `%ld` is `%d` (prelude.h redirects the game's calls here). */
+int bcSprintf(char *buffer, const char *format, ...);
+int bcVsprintf(char *buffer, const char *format, va_list args);
+int bcFprintf(FILE *file, const char *format, ...);
+int bcPrintf(const char *format, ...);
+int bcSscanf(const char *text, const char *format, ...);
 
 } /* namespace miniwin */
 
