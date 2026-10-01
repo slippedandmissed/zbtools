@@ -1,5 +1,5 @@
 # Functions that match zoombi32.exe byte for byte, by address. Written by
-# `uv run match --update` (the pre-commit hook runs it); `uv run match` fails
+# `uv run match --update` (run after changing decomp/); `uv run match` fails
 # if one of them stops matching.
 0x0041008c freeAnim
 0x004100e5 stepAnim

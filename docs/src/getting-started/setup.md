@@ -95,5 +95,5 @@ uv run book screenshots  # which screenshot placeholders still lack an image
 ```sh
 uv run lint         # ruff, ruff format, strict mypy, pytest
 uv run lint --fix   # apply fixes and formatting first
-uv run pre-commit install   # once: runs lint, and `match --update` when decomp/ changes
+uv run pre-commit install   # once: runs lint when Python code changes
 ```
