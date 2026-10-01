@@ -53,24 +53,27 @@ MATCH_CACHE = BUILD_DIR / "match-cache"
 # the game's drives laid out for it (C: holds what the native build saves).
 PORT_SOURCE_DIR = REPO_ROOT / "port"
 PORT_DIR = BUILD_DIR / "port"
-PORT_WEB_DIR = PORT_DIR / "web"
-PORT_NATIVE_DIR = PORT_DIR / "native"
-PORT_HEADLESS_DIR = PORT_DIR / "headless"
-PORT_WIN32_DIR = PORT_DIR / "win32"
-PORT_WIN64_DIR = PORT_DIR / "win64"
-PORT_LINUX_X64_DIR = PORT_DIR / "linux-x64"
-PORT_LINUX_ARM64_DIR = PORT_DIR / "linux-arm64"
+# The targets `uv run port` builds for, each in build/port/<target>/.
+PORT_TARGETS = (
+    "macos_universal",
+    "windows_x86",
+    "windows_x64",
+    "linux_x64",
+    "linux_arm64",
+    "browser_wasm",
+    "headless_wasm",
+)
+PORT_BUILD_DIRS = [PORT_DIR / name for name in PORT_TARGETS]
 PORT_DATA_DIR = PORT_DIR / "data"
-# The web build and the game's data, ready to host (`uv run port package`),
-# and what's made on the way.
-PORT_SITE_DIR = PORT_DIR / "site"
-PORT_SITE_STAGING = PORT_DIR / "site-staging"
-# The native build packaged for players (`uv run port bundle`), and what's made on the way.
+# What `uv run port package` makes: the site for hosting (dist/browser_wasm/) and the
+# players' packages (dist/zoombinis-<version>-<target>/ and its archive), and what's
+# made on the way.
 PORT_DIST_DIR = PORT_DIR / "dist"
+PORT_SITE_DIR = PORT_DIST_DIR / "browser_wasm"
 PORT_DIST_STAGING = PORT_DIR / "dist-staging"
 # The Emscripten SDK the web build uses (`uv run port setup`).
 EMSDK_DIR = BUILD_DIR / "emsdk"
-# llvm-mingw, which builds the Windows targets (`uv run port setup-windows`).
+# llvm-mingw, which builds the Windows targets (`uv run port setup windows_x64`).
 MINGW_DIR = BUILD_DIR / "llvm-mingw"
 # The General MIDI SoundFont the port plays the music with.
 SOUNDFONT_DIR = BUILD_DIR / "soundfont"
@@ -160,19 +163,7 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "packed-assets": [PACKED_ASSETS_DIR],
     "assets-cache": [ASSETS_CACHE],
     "movie-frames": [MOVIE_FRAMES_DIR],
-    "port": [
-        PORT_WEB_DIR,
-        PORT_NATIVE_DIR,
-        PORT_HEADLESS_DIR,
-        PORT_WIN32_DIR,
-        PORT_WIN64_DIR,
-        PORT_LINUX_X64_DIR,
-        PORT_LINUX_ARM64_DIR,
-        PORT_SITE_DIR,
-        PORT_SITE_STAGING,
-        PORT_DIST_DIR,
-        PORT_DIST_STAGING,
-    ],
+    "port": [*PORT_BUILD_DIRS, PORT_DIST_DIR, PORT_DIST_STAGING],
     # The native build's saved games live here: only removed when asked for.
     "port-data": [PORT_DATA_DIR],
     "emsdk": [EMSDK_DIR],

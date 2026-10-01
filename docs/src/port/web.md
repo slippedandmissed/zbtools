@@ -12,11 +12,11 @@ Query switches: `?noalert` sends the game's message boxes to the console instead
 
 ## Build flags (`port/CMakeLists.txt`)
 
-`-sASYNCIFY -sASYNCIFY_STACK_SIZE=262144 -sSTACK_SIZE=1048576 -sINITIAL_MEMORY=134217728 -sALLOW_MEMORY_GROWTH -sFORCE_FILESYSTEM -lidbfs.js -sEXIT_RUNTIME=1`. The headless target uses the same Asyncify settings with `-sENVIRONMENT=node -sNODERAWFS`.
+`-sASYNCIFY -sASYNCIFY_STACK_SIZE=262144 -sSTACK_SIZE=1048576 -sINITIAL_MEMORY=134217728 -sALLOW_MEMORY_GROWTH -sFORCE_FILESYSTEM -lidbfs.js -sEXIT_RUNTIME=1`. The `headless_wasm` target uses the same Asyncify settings with `-sENVIRONMENT=node -sNODERAWFS`.
 
-## `uv run port package`
+## `uv run port package browser_wasm`
 
-Builds the web page and writes everything a static host needs, and nothing else, to `build/port/site/`:
+Builds the web page and writes everything a static host needs, and nothing else, to `build/port/dist/browser_wasm/`:
 
 | Piece | Notes |
 | --- | --- |
@@ -33,8 +33,8 @@ The browser keeps the packages in IndexedDB, so a return visit doesn't download 
 
 ## Hosting
 
-Upload `build/port/site/` as it is to any static host. CI deploys it to Cloudflare Pages on pushes to `main` (`wrangler-action`, secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, variable `CLOUDFLARE_PAGES_PROJECT`); the book is separate.
+Upload `build/port/dist/browser_wasm/` as it is to any static host. CI deploys it to Cloudflare Pages on pushes to `main` (`wrangler-action`, secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, variable `CLOUDFLARE_PAGES_PROJECT`); the book is separate.
 
-## Native and headless
+## Headless
 
-`uv run port build native` needs SDL2 (the system's, or a pinned release built from source by CMake). `uv run port run` lays out the drives from `build/port/data/` (C:) and the packed archives (D:), then runs either build.
+`uv run port run headless_wasm` builds the headless target and runs it under Node, on the drives laid out from `build/port/data/` (C:) and the packed archives (D:). The player builds for each platform are in [Native builds](native.md).

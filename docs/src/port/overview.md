@@ -33,14 +33,14 @@ A source in `port/decomp/` or `port/glue/` *replaces* the same-named file in `de
 ## Commands
 
 ```sh
-uv run port setup                 # the pinned Emscripten SDK (~1.8 GB) into build/emsdk/, and the SoundFont
-uv run port build [web|headless|native] [--debug]
-uv run port package               # the site: build/port/site/
-uv run port serve [--port 8000]   # then http://127.0.0.1:8000/
-uv run port run [--headless] [--seconds N] [--screenshot F.bmp] [--click MS:X,Y]… [--record F.wav]
+uv run port setup   [TARGET]   # what the target needs (the Emscripten SDK, llvm-mingw, Docker), and the SoundFont
+uv run port build   [TARGET] [--debug]   # build/port/<target>/, with the debug tools
+uv run port package [TARGET]   # build without them and pack with the game: build/port/dist/
+uv run port run     [TARGET] [--seconds N] [--screenshot F.bmp] [--click MS:X,Y]… [--record F.wav]
+uv run port serve [--port 8000]   # the browser_wasm site, at http://127.0.0.1:8000/
 ```
 
-`build` defaults to `web`. Plain CMake works too: `emcmake cmake -S port -B build/port/web && cmake --build build/port/web`.
+A **target** is a platform and architecture: `macos_universal`, `windows_x86`, `windows_x64`, `linux_x64`, `linux_arm64`, `browser_wasm` (the page) and `headless_wasm` (the same WebAssembly under Node, with no screen or sound, for testing). The default is the machine's own (`macos_universal` on a Mac, the Linux architecture on Linux), and any target builds from any host. `build` makes the program in `build/port/<target>/`, `package` builds it without the debug tools and packs it with the game's data for players (a `.dmg`, `.zip` or `.tar.gz`, or for `browser_wasm` the site), and `run` runs the machine's own target or `headless_wasm`. See [Native builds](native.md) and [The web build](web.md). Plain CMake works too: `emcmake cmake -S port -B build/port/browser_wasm && cmake --build build/port/browser_wasm`.
 
 ## Third-party pieces
 

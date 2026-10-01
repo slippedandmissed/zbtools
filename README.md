@@ -32,9 +32,11 @@ Supported hosts: macOS on Apple Silicon (tested) and Linux (should work, unteste
 **Without any game files** you can build and run the port, and use the assets:
 
 ```sh
-uv run port setup                 # the pinned Emscripten SDK (~1.8 GB) and the SoundFont
-uv run port package               # the site: build/port/site/
+uv run port setup browser_wasm    # the pinned Emscripten SDK (~1.8 GB) and the SoundFont
+uv run port package browser_wasm  # the site: build/port/dist/browser_wasm/
 uv run port serve                 # then open http://127.0.0.1:8000/
+uv run port package               # a package for players, for this machine (a Mac: .dmg; Linux: .tar.gz)
+uv run port package windows_x64   # or any target, from any host (see `uv run port --help`)
 uv run assets pack                # assets/ back into Mohawk archives, in build/assets/
 ```
 

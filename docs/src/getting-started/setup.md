@@ -66,8 +66,8 @@ uv run report --open         # progress report (contains disassembly: keep it lo
 ```sh
 uv run build                                    # build/rebuild/zoombi32.exe
 uv run vm run --exe build/rebuild/zoombi32.exe  # run it in the VM
-uv run port setup && uv run port build          # the WebAssembly port
-uv run port package && uv run port serve        # then http://127.0.0.1:8000/
+uv run port run                                 # the port, on this machine (see `uv run port --help` for targets)
+uv run port package browser_wasm && uv run port serve   # the web page: http://127.0.0.1:8000/
 ```
 
 ## 7. Resources

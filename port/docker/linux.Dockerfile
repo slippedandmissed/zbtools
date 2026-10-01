@@ -1,4 +1,4 @@
-# The Linux build environment (`uv run port build linux-x64|linux-arm64`): the
+# The Linux build environment (`uv run port build linux_x64|linux_arm64`): the
 # compiler, CMake and the libraries SDL2 is built against. Ubuntu 22.04 because
 # the program links glibc dynamically, so it runs on that glibc (2.35) and
 # newer, which covers current Ubuntu, Debian, Fedora and SteamOS. SDL2 itself is

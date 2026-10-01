@@ -1,8 +1,8 @@
 # Cross-compiling for Windows with llvm-mingw (clang and mingw-w64), which has
-# builds for Linux, macOS and Windows hosts. `uv run port build win32|win64`
+# builds for Linux, macOS and Windows hosts. `uv run port build windows_x86|windows_x64`
 # puts its bin/ directory on the PATH and passes the architecture:
 #
-#   cmake -S port -B build/port/win64 -DCMAKE_TOOLCHAIN_FILE=port/toolchains/mingw.cmake \
+#   cmake -S port -B build/port/windows_x64 -DCMAKE_TOOLCHAIN_FILE=port/toolchains/mingw.cmake \
 #         -DZB_MINGW_ARCH=x86_64
 #
 # ZB_MINGW_ARCH is i686 (32-bit Windows, which runs on 64-bit Windows too) or

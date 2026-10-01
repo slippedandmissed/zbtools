@@ -48,8 +48,8 @@ jobs:
           path: build/emsdk
           # The SDK version is pinned in port.py.
           key: emsdk-${{ hashFiles('src/zbtools/port.py') }}
-      - run: uv run port setup
-      - run: uv run port build web
+      - run: uv run port setup browser_wasm
+      - run: uv run port build browser_wasm
 
   # Every function recorded in decomp/matching.txt still matches the original
   # byte for byte, and the game's data still matches. This needs the game CD

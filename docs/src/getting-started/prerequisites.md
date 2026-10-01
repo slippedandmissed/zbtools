@@ -13,7 +13,7 @@ Supported hosts: **macOS on Apple Silicon** (tested) and **Linux** (should work,
 | Ghidra | JDK 21 | `brew install openjdk@21`, or `openjdk-21-jdk` / `java-21-openjdk-devel` |
 | Ghidra's native decompiler where there's no prebuilt one (Apple Silicon) | a C/C++ compiler and `make` | `xcode-select --install`, or `build-essential` |
 | the Borland compiler | Wine | macOS: downloaded for you into `build/wine/` (needs [Rosetta 2](https://support.apple.com/en-us/102527)); Linux: the `wine` package |
-| the port | the Emscripten SDK | downloaded for you by `uv run port setup` (~1.8 GB) |
+| the port | the Emscripten SDK | downloaded for you by `uv run port setup browser_wasm` (~1.8 GB); the other targets need llvm-mingw (Windows, downloaded) or Docker (Linux) |
 | this book | [mdBook](https://rust-lang.github.io/mdBook/) | `brew install mdbook` or `cargo install mdbook` |
 
 You don't need most of this for every task. Working only with `assets/` or the port needs just `uv` (and the Emscripten SDK for the port); the matcher needs Wine, 7-Zip and the Borland CD; the VM needs QEMU and a Windows CD.
@@ -41,4 +41,4 @@ WINDOWS_PRODUCT_KEY=XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
 
 ## What works from a fresh clone
 
-No bring-your-own files are needed for `uv run assets pack`, `uv run port setup/build/package/serve`, `uv run lint` and this book. The resources and the installed game's few files are committed under `assets/`, which is why the port builds without the disc.
+No bring-your-own files are needed for `uv run assets pack`, `uv run port setup/build/package/run/serve`, `uv run lint` and this book. The resources and the installed game's few files are committed under `assets/`, which is why the port builds without the disc.

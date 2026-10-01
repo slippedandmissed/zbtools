@@ -4,8 +4,8 @@
 #
 # Normally driven by `uv run port build`, but plain CMake works too:
 #
-#   emcmake cmake -S port -B build/port/web && cmake --build build/port/web
-#   cmake -S port -B build/port/native && cmake --build build/port/native
+#   emcmake cmake -S port -B build/port/browser_wasm && cmake --build build/port/browser_wasm
+#   cmake -S port -B build/port/macos_universal && cmake --build build/port/macos_universal
 #
 # A source in port/decomp/ replaces decomp/'s file of the same name (for a
 # module whose portable version has to differ from the matching one); none

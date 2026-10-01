@@ -1,18 +1,25 @@
 r"""The port: the decompiled game built for modern systems (port/).
 
-`setup` installs the pinned Emscripten SDK into build/emsdk/ and the SoundFont
-the music plays with (GeneralUser GS) into build/soundfont/. `build` compiles
-the game for a target with CMake (port/CMakeLists.txt): `web` (WebAssembly,
-the default) into build/port/web/, or `native` into build/port/native/.
-`package` builds the web page and packs the game for it into build/port/site/:
-only the files a web server needs, each small enough for hosts that cap file
-sizes, ready to upload. `serve` serves the site locally; `run` runs the native
-(or headless) build on the drives.
+A *target* is a platform and architecture to build for: `macos_universal`,
+`windows_x86`, `windows_x64`, `linux_x64`, `linux_arm64`, `browser_wasm` (the
+game in a web page) and `headless_wasm` (the same under Node, with no screen or
+sound, for testing). Every command takes one, and defaults to the machine's own
+(`macos_universal` on a Mac, `linux_x64` or `linux_arm64` on Linux), so any
+target builds from any host: Windows with llvm-mingw, Linux in a container
+(Docker), the WebAssembly ones with the Emscripten SDK, macOS with Xcode.
+
+`setup` installs what a target needs (and the SoundFont the music plays with).
+`build` compiles it with CMake (port/CMakeLists.txt) into build/port/<target>/,
+with the debug tools. `package` builds it without them and packs it with the
+game's data into build/port/dist/: for players (`zoombinis-<version>-<target>`:
+a directory and its .zip, .tar.gz or .dmg), or for `browser_wasm` the site, only
+the files a web server needs, each small enough for hosts that cap file sizes.
+`run` runs a build on this machine (the machine's own, or `headless_wasm`) on
+the game's drives; `serve` serves the site locally.
 
 The game's drives: C: (the installed game, and what it saves) is laid out in
-build/port/data/c/ from build/zoombi32/ (`uv run extract-game`); D:'s
-archives come from assets/ (packed by `uv run assets pack`) for the site, and
-from the extracted disc (build/disc/) for `run`.
+build/port/data/c/ from assets/zoombi32/installed/; D:'s archives come from
+assets/ (packed by `uv run assets pack`).
 """
 
 import contextlib
@@ -23,9 +30,10 @@ import platform
 import shutil
 import subprocess
 import sys
+from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
-from typing import Annotated, NamedTuple
+from typing import Annotated, Literal, NamedTuple
 
 import typer
 
@@ -51,17 +59,74 @@ SOUNDFONT = paths.SOUNDFONT_DIR / "GeneralUser-GS.sf2"
 # Where the web build finds it.
 _WEB_SOUNDFONT = "/soundfont/GeneralUser-GS.sf2"
 
-TARGETS = ("web", "headless", "native", "win32", "win64", "linux-x64", "linux-arm64")
-# Linux targets (built in a container): Docker's platform, and what the package is called.
-LINUX_TARGETS = {"linux-x64": ("linux/amd64", "x64"), "linux-arm64": ("linux/arm64", "arm64")}
+
+@dataclass(frozen=True)
+class Target:
+    """A platform and architecture to build for."""
+
+    name: str
+    # How it's built: Xcode on a Mac, llvm-mingw, a Docker container, or Emscripten.
+    toolchain: Literal["xcode", "mingw", "container", "emscripten"]
+    # llvm-mingw's architecture, or Docker's platform; empty for the others.
+    architecture: str = ""
+
+    @property
+    def is_site(self) -> bool:
+        return self.name == "browser_wasm"
+
+    @property
+    def is_windows(self) -> bool:
+        return self.toolchain == "mingw"
+
+    @property
+    def program(self) -> str:
+        """The file the build makes."""
+        return {
+            "browser_wasm": WEB_PAGE,
+            "headless_wasm": "zoombinis.js",
+            "windows_x86": "zoombinis.exe",
+            "windows_x64": "zoombinis.exe",
+        }.get(self.name, "zoombinis")
+
+
+TARGETS: dict[str, Target] = {
+    t.name: t
+    for t in (
+        Target("macos_universal", "xcode"),
+        Target("windows_x86", "mingw", "i686"),
+        Target("windows_x64", "mingw", "x86_64"),
+        Target("linux_x64", "container", "linux/amd64"),
+        Target("linux_arm64", "container", "linux/arm64"),
+        Target("browser_wasm", "emscripten"),
+        Target("headless_wasm", "emscripten"),
+    )
+}
 _LINUX_DOCKERFILE = paths.PORT_SOURCE_DIR / "docker" / "linux.Dockerfile"
-# Windows targets: llvm-mingw's architecture, and what the package is called.
-WINDOWS_TARGETS = {"win32": ("i686", "x86"), "win64": ("x86_64", "x64")}
+
+
+def host_target() -> Target:
+    """The target for this machine: a Mac's universal build, or Linux's own architecture."""
+    machine = platform.machine().lower()
+    if host.SYSTEM == "Darwin":
+        return TARGETS["macos_universal"]
+    if host.SYSTEM == "Linux":
+        return TARGETS["linux_arm64" if machine in ("arm64", "aarch64") else "linux_x64"]
+    raise PortError(f"no target for {host.SYSTEM}: name one")
+
+
+def target_named(name: str | None) -> Target:
+    """The target called `name`, or this machine's."""
+    if name is None:
+        return host_target()
+    if name not in TARGETS:
+        raise PortError(f"no target {name!r}: the targets are {', '.join(TARGETS)}")
+    return TARGETS[name]
+
 
 # llvm-mingw (clang and mingw-w64: https://github.com/mstorsjo/llvm-mingw), which
 # builds for Windows from macOS, Linux or Windows. Its releases by host: the
 # platform in the file name, and the SHA-256 to pin (empty until pinned: run
-# `uv run port setup-windows`, which says what the download hashes to, and check
+# `uv run port setup windows_x64`, which says what the download hashes to, and check
 # that against the release page). ZB_MINGW_DIR names an existing installation instead.
 _MINGW_VERSION = "20250114"
 _MINGW_HOSTS: dict[tuple[str, str], tuple[str, str]] = {
@@ -102,15 +167,8 @@ class PortError(RuntimeError):
     pass
 
 
-def build_dir(target: str) -> Path:
-    return {
-        "web": paths.PORT_WEB_DIR,
-        "headless": paths.PORT_HEADLESS_DIR,
-        "win32": paths.PORT_WIN32_DIR,
-        "win64": paths.PORT_WIN64_DIR,
-        "linux-x64": paths.PORT_LINUX_X64_DIR,
-        "linux-arm64": paths.PORT_LINUX_ARM64_DIR,
-    }.get(target, paths.PORT_NATIVE_DIR)
+def build_dir(target: Target) -> Path:
+    return paths.PORT_DIR / target.name
 
 
 def _emsdk_ready() -> bool:
@@ -205,19 +263,17 @@ def _tool(name: str) -> str:
     return found
 
 
-def _build_linux(target: str, build_type: str, debug_tools: bool) -> Path:
-    """Builds a Linux target in a container (port/docker/linux.Dockerfile), from
-    any host: the repository is mounted in it and the build directory is in
-    build/port/. The program."""
-    platform_name = LINUX_TARGETS[target][0]
+def _build_in_container(target: Target, build_type: str, debug_tools: bool) -> None:
+    """Builds a Linux target in a container (port/docker/linux.Dockerfile): the
+    repository is mounted in it, and the build directory is in build/port/."""
     docker = host.docker()
-    image = f"zbtools-port-{target}"
+    image = f"zbtools-port-{target.name}"
     subprocess.run(
         [
             docker,
             "build",
             "--platform",
-            platform_name,
+            target.architecture,
             "-t",
             image,
             "-f",
@@ -245,7 +301,7 @@ def _build_linux(target: str, build_type: str, debug_tools: bool) -> Path:
             "run",
             "--rm",
             "--platform",
-            platform_name,
+            target.architecture,
             *user,
             "-v",
             f"{paths.REPO_ROOT}:/src",
@@ -256,16 +312,27 @@ def _build_linux(target: str, build_type: str, debug_tools: bool) -> Path:
         ],
         check=True,
     )
-    return out / "zoombinis"
 
 
-def build(target: str, build_type: str = "RelWithDebInfo", debug_tools: bool = True) -> Path:
+def setup(target: Target, force: bool = False) -> None:
+    """Installs what building `target` needs, and the SoundFont."""
+    if target.toolchain == "emscripten":
+        setup_emsdk(force)
+    elif target.toolchain == "mingw":
+        setup_mingw(force)
+    elif target.toolchain == "container":
+        host.docker()  # (the image is built when the target is)
+    setup_soundfont(force)
+
+
+def build(target: Target, build_type: str = "RelWithDebInfo", debug_tools: bool = True) -> Path:
     """Configures (the first time, or when the build type or the debug tools
     change) and builds the target; the program. `debug_tools` builds
-    port/debug/ in (CMake's ZB_DEBUG); the published site is built without."""
-    if target in LINUX_TARGETS:
-        return _build_linux(target, build_type, debug_tools)
+    port/debug/ in (CMake's ZB_DEBUG); packages are built without."""
     out = build_dir(target)
+    if target.toolchain == "container":
+        _build_in_container(target, build_type, debug_tools)
+        return out / target.program
     env = dict(os.environ)
     configure = [
         _tool("cmake"),
@@ -279,25 +346,26 @@ def build(target: str, build_type: str = "RelWithDebInfo", debug_tools: bool = T
         f"-DCMAKE_BUILD_TYPE={build_type}",
         f"-DZB_DEBUG={'ON' if debug_tools else 'OFF'}",
     ]
-    if target in ("web", "headless"):
+    if target.toolchain == "emscripten":
         setup_emsdk()
         env = _emsdk_env()
         toolchain = _emscripten_dir() / "cmake" / "Modules" / "Platform" / "Emscripten.cmake"
         configure.append(f"-DCMAKE_TOOLCHAIN_FILE={toolchain}")
-        configure.append(f"-DZB_HEADLESS={'ON' if target == 'headless' else 'OFF'}")
-    if target in WINDOWS_TARGETS:
+        configure.append(f"-DZB_HEADLESS={'ON' if target.name == 'headless_wasm' else 'OFF'}")
+    elif target.toolchain == "mingw":
         env = _mingw_env()
-        architecture, _ = WINDOWS_TARGETS[target]
         # The program's icon, for its .exe (port/CMakeLists.txt makes the resource).
         ico = paths.PORT_DIR / "zoombinis.ico"
         ico.parent.mkdir(parents=True, exist_ok=True)
         ico.write_bytes(icon.ico_file(exe_resources.app_icon()))
         configure += [
             f"-DCMAKE_TOOLCHAIN_FILE={paths.PORT_SOURCE_DIR / 'toolchains' / 'mingw.cmake'}",
-            f"-DZB_MINGW_ARCH={architecture}",
+            f"-DZB_MINGW_ARCH={target.architecture}",
             f"-DZB_WINDOWS_ICON={ico}",
         ]
-    if target == "native" and host.SYSTEM == "Darwin":
+    elif target.toolchain == "xcode":
+        if host.SYSTEM != "Darwin":
+            raise PortError("macos_universal builds on a Mac (it needs Xcode)")
         # One program for Apple silicon and Intel Macs.
         configure += [
             "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
@@ -310,16 +378,14 @@ def build(target: str, build_type: str = "RelWithDebInfo", debug_tools: bool = T
     ):
         subprocess.run(configure, check=True, env=env)
     subprocess.run([_tool("cmake"), "--build", str(out)], check=True, env=env)
-    program = "zoombinis.exe" if target in WINDOWS_TARGETS else "zoombinis"
-    return out / {"web": WEB_PAGE, "headless": "zoombinis.js"}.get(target, program)
+    return out / target.program
 
 
-def package_native(target: str = "native", debug_tools: bool = False) -> Path:
-    """Builds the program for `target` (native, win32, win64, linux-x64 or
-    linux-arm64) and packs it with the game for players into build/port/dist/
-    (see bundle.py): on macOS Zoombinis.app (signed ad hoc) in a .dmg, for Windows
-    a directory in a .zip, elsewhere a directory in a .tar.gz. The path of the
-    archive."""
+def package_player(target: Target, debug_tools: bool = False) -> Path:
+    """Builds the program for `target` and packs it with the game for players
+    into build/port/dist/ (see bundle.py): `zoombinis-<version>-<target>/` and its
+    archive, which is the path: a .dmg holding Zoombinis.app (signed ad hoc) for
+    macOS, a .zip for Windows, a .tar.gz for Linux."""
     program = build(target, "RelWithDebInfo", debug_tools)
     for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
         print(line)
@@ -337,26 +403,31 @@ def package_native(target: str = "native", debug_tools: bool = False) -> Path:
     )
     shutil.copyfile(soundfont, game / soundfont.name)
     version = importlib.metadata.version("zbtools")
+    name = f"{bundle.APP_NAME.lower()}-{version}-{target.name}"
     dist = paths.PORT_DIST_DIR
     dist.mkdir(parents=True, exist_ok=True)
-    images = exe_resources.app_icon()
-    if target in WINDOWS_TARGETS:
-        name = f"{bundle.APP_NAME.lower()}-{version}-windows-{WINDOWS_TARGETS[target][1]}"
-        directory = bundle.assemble_directory(dist / name, program, game)
-        return bundle.make_archive(directory, dist / f"{name}.zip")
-    if target in LINUX_TARGETS:
-        name = f"{bundle.APP_NAME.lower()}-{version}-linux-{LINUX_TARGETS[target][1]}"
-        directory = bundle.assemble_directory(dist / name, program, game)
-        return bundle.make_archive(directory, dist / f"{name}.tar.gz")
-    if bundle.is_macos():
-        app = bundle.assemble_app(
-            dist / f"{bundle.APP_NAME}.app", program, game, images[0], version
-        )
+    if target.toolchain == "xcode":
+        directory = dist / name
+        shutil.rmtree(directory, ignore_errors=True)
+        directory.mkdir()
+        app = directory / f"{bundle.APP_NAME}.app"
+        bundle.assemble_app(app, program, game, exe_resources.app_icon()[0], version)
         bundle.sign_ad_hoc(app)
-        return bundle.make_dmg(app, dist / f"{bundle.APP_NAME}-{version}-macos.dmg")
-    name = f"{bundle.APP_NAME.lower()}-{version}-{host.SYSTEM.lower()}-{platform.machine().lower()}"
+        return bundle.make_dmg(app, dist / f"{name}.dmg")
     directory = bundle.assemble_directory(dist / name, program, game)
-    return bundle.make_archive(directory, dist / f"{name}.tar.gz")
+    return bundle.make_archive(
+        directory, dist / f"{name}{'.zip' if target.is_windows else '.tar.gz'}"
+    )
+
+
+def package(target: Target, debug_tools: bool = False) -> Path:
+    """Packs `target` for distribution: the site for `browser_wasm`, else a
+    package for players."""
+    if target.is_site:
+        return package_web(debug_tools)
+    if target.name == "headless_wasm":
+        raise PortError("headless_wasm is for testing: there is nothing to package")
+    return package_player(target, debug_tools)
 
 
 def _cache_value(out: Path, name: str) -> str | None:
@@ -513,8 +584,9 @@ def package_web(debug_tools: bool = False) -> Path:
     archives are packed from assets/, and the intro movie as a scene file
     (formats/scene.py; the .MOV files are left out: the port can't play QkBk).
     The debug tools are left out unless `debug_tools` (a development site)."""
-    web = build_dir("web")
-    build("web", _build_type(web) or "RelWithDebInfo", debug_tools)
+    browser = TARGETS["browser_wasm"]
+    web = build_dir(browser)
+    build(browser, _build_type(web) or "RelWithDebInfo", debug_tools)
     for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
         print(line)
     for line in pack_scenes(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
@@ -524,7 +596,7 @@ def package_web(debug_tools: bool = False) -> Path:
     pieces = site_pieces(
         _page_files(c, paths.PACKED_ASSETS_DIR / "DATA", soundfont), SITE_FILE_LIMIT
     )
-    site, staging = paths.PORT_SITE_DIR, paths.PORT_SITE_STAGING
+    site, staging = paths.PORT_SITE_DIR, paths.PORT_DIST_STAGING
     for directory in (site, staging):
         shutil.rmtree(directory, ignore_errors=True)
         directory.mkdir(parents=True)
@@ -590,84 +662,71 @@ class _Handler(http.server.SimpleHTTPRequestHandler):
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
+TargetArgument = Annotated[
+    str | None,
+    typer.Argument(help=f"One of {', '.join(TARGETS)}; the default is this machine's"),
+]
+DebugToolsOption = Annotated[
+    bool, typer.Option(help="Build the debug tools in (port/debug/)", show_default=False)
+]
+
 
 def _fail(error: Exception) -> None:
     print(f"error: {error}")
     raise typer.Exit(1)
 
 
-@app.command()
-def setup(force: Annotated[bool, typer.Option(help="Reinstall")] = False) -> None:
-    """Install the pinned Emscripten SDK into build/emsdk/, and the SoundFont
-    into build/soundfont/."""
-    setup_emsdk(force)
-    print(f"Emscripten {EMSDK_VERSION} is in {paths.EMSDK_DIR.relative_to(paths.REPO_ROOT)}")
-    soundfont = setup_soundfont(force)
-    print(f"The SoundFont is {soundfont.relative_to(paths.REPO_ROOT)}")
-
-
-@app.command(name="setup-windows")
-def setup_windows(force: Annotated[bool, typer.Option(help="Reinstall")] = False) -> None:
-    """Install llvm-mingw (the Windows cross-compiler) into build/llvm-mingw/."""
+def _target(name: str | None) -> Target:
     try:
-        directory = setup_mingw(force)
+        return target_named(name)
     except PortError as e:
         _fail(e)
-    print(f"llvm-mingw is in {directory}")
+        raise  # (unreachable: _fail exits)
+
+
+@app.command(name="setup")
+def setup_command(
+    target: TargetArgument = None,
+    force: Annotated[bool, typer.Option(help="Reinstall")] = False,
+) -> None:
+    """Install what a target needs (the Emscripten SDK for the WebAssembly ones,
+    llvm-mingw for Windows, Docker is checked for Linux) and the SoundFont."""
+    chosen = _target(target)
+    try:
+        setup(chosen, force)
+    except (PortError, subprocess.CalledProcessError) as e:
+        _fail(e)
+    print(f"Ready to build {chosen.name}")
 
 
 @app.command(name="build")
 def build_command(
-    target: Annotated[
-        str, typer.Argument(help="web, headless, native, win32, win64, linux-x64 or linux-arm64")
-    ] = "web",
+    target: TargetArgument = None,
     debug: Annotated[bool, typer.Option(help="Build without optimisation")] = False,
-    debug_tools: Annotated[
-        bool, typer.Option(help="Build the debug tools in (port/debug/)")
-    ] = True,
+    debug_tools: DebugToolsOption = True,
 ) -> None:
-    """Build the port for a target."""
-    if target not in TARGETS:
-        raise typer.BadParameter(f"the targets are {', '.join(TARGETS)}")
+    """Build the port for a target, into build/port/<target>/ (with the debug
+    tools; `package` builds without)."""
+    chosen = _target(target)
     try:
-        program = build(target, "Debug" if debug else "RelWithDebInfo", debug_tools)
+        program = build(chosen, "Debug" if debug else "RelWithDebInfo", debug_tools)
     except (PortError, subprocess.CalledProcessError) as e:
         _fail(e)
     print(f"Built {program.relative_to(paths.REPO_ROOT)}")
 
 
-@app.command()
-def package(
-    debug_tools: Annotated[
-        bool, typer.Option(help="Build the debug tools in (a development site)")
-    ] = False,
+@app.command(name="package")
+def package_command(
+    target: TargetArgument = None,
+    debug_tools: DebugToolsOption = False,
 ) -> None:
-    """Build the web page and pack the game for it into build/port/site/:
-    everything a web server needs, and nothing else."""
+    """Build a target and pack it with the game, into build/port/dist/: a
+    package for players (a .dmg for macOS, a .zip for Windows, a .tar.gz for
+    Linux), or for browser_wasm the site, everything a web server needs and
+    nothing else."""
+    chosen = _target(target)
     try:
-        out = package_web(debug_tools)
-    except (PortError, subprocess.CalledProcessError) as e:
-        _fail(e)
-    print(f"The site is in {out.relative_to(paths.REPO_ROOT)}")
-
-
-@app.command(name="bundle")
-def bundle_command(
-    target: Annotated[
-        str, typer.Argument(help="native, win32, win64, linux-x64 or linux-arm64")
-    ] = "native",
-    debug_tools: Annotated[
-        bool, typer.Option(help="Build the debug tools in (port/debug/)")
-    ] = False,
-) -> None:
-    """Build the program and pack it with the game for players, into
-    build/port/dist/: Zoombinis.app in a .dmg on macOS, a directory in a .zip for
-    Windows (win32 or win64) and a .tar.gz for Linux (linux-x64 or linux-arm64,
-    built in a container), each from any host."""
-    if target not in ("native", *WINDOWS_TARGETS, *LINUX_TARGETS):
-        raise typer.BadParameter("the targets are native, win32, win64, linux-x64, linux-arm64")
-    try:
-        out = package_native(target, debug_tools)
+        out = package(chosen, debug_tools)
     except (PortError, subprocess.CalledProcessError) as e:
         _fail(e)
     print(f"Packaged {out.relative_to(paths.REPO_ROOT)}")
@@ -677,10 +736,10 @@ def bundle_command(
 def serve(
     port: Annotated[int, typer.Option(help="The port to serve on")] = 8000,
 ) -> None:
-    """Serve the site on localhost (after `package`)."""
+    """Serve the browser_wasm site on localhost (after `package browser_wasm`)."""
     out = paths.PORT_SITE_DIR
     if not (out / SITE_PAGE).exists() or not (out / f"{WEB_DATA}.js").exists():
-        _fail(PortError("package it first: uv run port package"))
+        _fail(PortError("package it first: uv run port package browser_wasm"))
     handler = partial(_Handler, directory=str(out))
     server = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
     print(f"Serving http://127.0.0.1:{port}/ (Ctrl-C to stop)")
@@ -688,11 +747,35 @@ def serve(
         server.serve_forever()
 
 
+def _test_arguments(
+    *,
+    record: Path | None,
+    screenshot: Path | None,
+    seconds: float | None,
+    click: list[str] | None,
+    cmd: list[str] | None,
+    script: Path | None,
+) -> list[str]:
+    """The program's options for scripted runs (see main.cpp)."""
+    arguments: list[str] = []
+    if record:
+        arguments += ["--record", str(record.resolve())]
+    if screenshot:
+        arguments += ["--screenshot", str(screenshot.resolve())]
+    if seconds:
+        arguments += ["--run-for", str(int(seconds * 1000))]
+    for spec in click or []:
+        arguments += ["--click", spec]
+    for commands in cmd or []:
+        arguments += ["--cmd", commands]
+    if script:
+        arguments += ["--script", str(script.resolve())]
+    return arguments
+
+
 @app.command()
 def run(  # noqa: PLR0917 (a CLI's options)
-    headless: Annotated[
-        bool, typer.Option(help="Run the headless build under Node (for testing)")
-    ] = False,
+    target: TargetArgument = None,
     screenshot: Annotated[
         Path | None, typer.Option(help="Write the screen to this BMP about once a second")
     ] = None,
@@ -715,12 +798,16 @@ def run(  # noqa: PLR0917 (a CLI's options)
         Path | None, typer.Option(help="A file of debug commands, one per line")
     ] = None,
 ) -> None:
-    """Run the native build (or the headless one) on the game's drives (packed from
-    assets/, as `package` does)."""
-    target = "headless" if headless else "native"
-    program = build(target) if headless else build_dir("native") / "zoombinis"
-    if not program.exists():
-        _fail(PortError("build it first: uv run port build native"))
+    """Build a target (with the debug tools) and run it on the game's drives
+    (packed from assets/). The target is this machine's, or headless_wasm (under
+    Node: no window, for testing)."""
+    chosen = _target(target)
+    if chosen != host_target() and chosen.name != "headless_wasm":
+        _fail(PortError(f"{chosen.name} doesn't run on this machine: see `package`"))
+    try:
+        program = build(chosen)
+    except (PortError, subprocess.CalledProcessError) as e:
+        _fail(e)
     for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
         print(line)
     for line in pack_scenes(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
@@ -733,19 +820,10 @@ def run(  # noqa: PLR0917 (a CLI's options)
     arguments = game_arguments(
         str(c.resolve()), str(paths.PACKED_ASSETS_DIR.resolve()), str(soundfont.resolve())
     )
-    if record:
-        arguments += ["--record", str(record.resolve())]
-    if screenshot:
-        arguments += ["--screenshot", str(screenshot.resolve())]
-    if seconds:
-        arguments += ["--run-for", str(int(seconds * 1000))]
-    for spec in click or []:
-        arguments += ["--click", spec]
-    for commands in cmd or []:
-        arguments += ["--cmd", commands]
-    if script:
-        arguments += ["--script", str(script.resolve())]
-    if headless:
+    arguments += _test_arguments(
+        record=record, screenshot=screenshot, seconds=seconds, click=click, cmd=cmd, script=script
+    )
+    if chosen.name == "headless_wasm":
         node = sorted((paths.EMSDK_DIR / "node").glob("*/bin/node"))
         command = [str(node[-1]), str(program), *arguments]
     else:

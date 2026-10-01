@@ -14,13 +14,13 @@ Ids are lower-case words with hyphens, unique across the book. The table below i
 
 | From | How |
 | --- | --- |
-| the port in a browser | `uv run port package && uv run port serve`, play, and use the browser's screenshot tool on the canvas (the game's area is 640×480 and scales in whole multiples) or open the page with `?screenshot` and read `/screenshot.bmp` from the page's file system |
-| the headless port | `uv run port run --headless --seconds 60 --click 12000:320,240 --screenshot build/port/shot.bmp`: scripted clicks (`--click MS:X,Y`, or `:press`/`:move`/`:release` to drag) reach a scene without a window; the BMP is the 640×480 screen. Convert to PNG with any tool |
+| the port in a browser | `uv run port package browser_wasm && uv run port serve`, play, and use the browser's screenshot tool on the canvas (the game's area is 640×480 and scales in whole multiples) or open the page with `?screenshot` and read `/screenshot.bmp` from the page's file system |
+| the headless port | `uv run port run headless_wasm --seconds 60 --click 12000:320,240 --screenshot build/port/shot.bmp`: scripted clicks (`--click MS:X,Y`, or `:press`/`:move`/`:release` to drag) reach a scene without a window; the BMP is the 640×480 screen. Convert to PNG with any tool |
 | the original, in the VM | `uv run vm run`, play, `uv run vm screenshot` (a PNG of the VM's screen): useful for comparing the port with the original |
 | movies | `uv run assets frames LOGO025 1 701` draws frames of the converted intro as PNGs in `build/movie-frames/` |
 | backdrops and art | the images in `assets/<ARCHIVE>/tBMP/` are the game's own pictures (scene backdrops are the 640×480 ones, `5000.png` and nearby); use them for a clean, UI-free view |
 
-Reaching a given scene quickly: from Zoombini Isle, make a party and set out; the map's practice mode (Ctrl-P, then `1`-`4`) opens every place at the chosen level without touching a real journey; and `uv run port run --headless` with `--click` can script the whole route. Hidden scenes need the cheat codes described in [Hidden scenes](../gameplay/hidden.md).
+Reaching a given scene quickly: from Zoombini Isle, make a party and set out; the map's practice mode (Ctrl-P, then `1`-`4`) opens every place at the chosen level without touching a real journey; and `uv run port run headless_wasm` with `--click` can script the whole route. Hidden scenes need the cheat codes described in [Hidden scenes](../gameplay/hidden.md).
 
 Use PNG, at the game's native 640×480 where you can, named `<id>.png`.
 

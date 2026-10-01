@@ -54,16 +54,15 @@ jobs:
           path: build/emsdk
           # The SDK version is pinned in port.py.
           key: emsdk-${{ hashFiles('src/zbtools/port.py') }}
-      - run: uv run port setup
-      - run: uv run port build web
-      # build/port/site/: the page and the game's data, every file under
+      - run: uv run port setup browser_wasm
+      # build/port/dist/browser_wasm/: the page and the game's data, every file under
       # Cloudflare Pages' 25 MiB limit.
-      - run: uv run port package
+      - run: uv run port package browser_wasm
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build/port/site --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
+          command: pages deploy build/port/dist/browser_wasm --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
 
   # The handbook (docs/), built with mdBook into build/book/ (see docs/book.toml).
   deploy-docs:
