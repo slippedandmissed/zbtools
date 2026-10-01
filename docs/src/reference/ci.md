@@ -17,7 +17,7 @@ Workflows are in `.github/workflows/`.
   - deploys the `browser_wasm` site it built to Cloudflare Pages with `wrangler-action`. Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; variable `CLOUDFLARE_PAGES_PROJECT`;
   - creates a GitHub release, `v<version>-build.<run number>`, with the package of every player target attached (macOS, Windows x86 and x64, Linux x64 and arm64) and generated notes. The web page and `headless_wasm` aren't released: one is deployed, the other is the testing build.
 - Deploys this handbook (`mdbook build docs`, output `build/book/`) to a second Cloudflare Pages project, with the same two secrets and the variable `CLOUDFLARE_DOCS_PAGES_PROJECT`.
-- Runs `uv run report` on the self-hosted runner and uploads it as an artifact. The report contains the game's disassembly, so keep the repository private.
+- Runs `uv run report` on the self-hosted runner, which checks that the tools still work. The report contains the game's disassembly and the repository is public (anyone signed in to GitHub can download Actions artifacts), so it is not uploaded: read it on the runner, in `build/report/`.
 
 ## `package.yml`
 
@@ -28,7 +28,7 @@ A reusable workflow (called by both of the above; it needs only the repository, 
 | `players` | `macos_universal` | `macos-14` | smoke test: the packaged program runs for 8 seconds with SDL's dummy video and audio |
 | | `windows_x86`, `windows_x64` | Ubuntu | cross-compiled with llvm-mingw (cached); not run (that would need Wine) |
 | | `linux_x64` | Ubuntu | built in the container; same smoke test as macOS |
-| | `linux_arm64` | Ubuntu, under QEMU | slow (the container runs emulated); `ubuntu-24.04-arm` is native, but hosted arm64 runners aren't available to private repositories |
+| | `linux_arm64` | `ubuntu-24.04-arm` | a native arm64 runner (free for public repositories), so the container runs without emulation; same smoke test as the others |
 | `browser` | `browser_wasm` | Ubuntu | the site, uploaded as `site-browser_wasm` |
 | `headless` | `headless_wasm` | Ubuntu | built only: it is the testing build |
 

@@ -31,15 +31,11 @@ jobs:
       - run: uv run ghidra setup
       - run: uv run runtime-symbols
       - run: uv run classes
+      # The report contains the game's disassembly, and this repository is public
+      # (anyone signed in to GitHub can download its Actions artifacts): so it is
+      # built here, which checks that the tools still run, and read on the runner
+      # (build/report/), never uploaded.
       - run: uv run report
-      # The report contains the game's disassembly: anyone who can read this
-      # repository's Actions artifacts can download it, so keep the repository
-      # private (or drop this step and read the report on the runner).
-      - uses: actions/upload-artifact@v4
-        with:
-          name: report
-          path: build/report/
-          retention-days: 14
 
   # Every target, built once (package.yml): the web page is deployed and the
   # packages for players are released from its artifacts.

@@ -20,7 +20,7 @@ jobs:
   players:
     name: ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 120
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -35,10 +35,9 @@ jobs:
             os: ubuntu-latest
           - target: linux_x64
             os: ubuntu-latest
-          # (arm64 runs under QEMU: slow, but hosted arm64 runners aren't
-          # available to private repositories. `ubuntu-24.04-arm` would be native.)
+          # (a native arm64 runner: the container needs no emulation)
           - target: linux_arm64
-            os: ubuntu-latest
+            os: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -51,17 +50,12 @@ jobs:
           path: build/llvm-mingw
           # The release is pinned in port.py.
           key: llvm-mingw-${{ hashFiles('src/zbtools/port.py') }}
-      - uses: docker/setup-qemu-action@v3
-        if: matrix.target == 'linux_arm64'
-        with:
-          platforms: arm64
       - run: uv run port package ${{ matrix.target }}
       # The package itself starts and plays for a few seconds, with SDL's dummy
       # video and audio (so it needs no screen): this is the "installed game"
-      # mode, which finds its data beside the program. (Windows would need Wine,
-      # and arm64 is emulated.)
+      # mode, which finds its data beside the program. (Windows would need Wine.)
       - name: Smoke test
-        if: matrix.target == 'macos_universal' || matrix.target == 'linux_x64'
+        if: matrix.target == 'macos_universal' || startsWith(matrix.target, 'linux_')
         env:
           SDL_VIDEODRIVER: dummy
           SDL_AUDIODRIVER: dummy
