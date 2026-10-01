@@ -155,6 +155,15 @@ _TYPE_WORDS = frozenset(
 )
 
 
+# The pointer-sized integer types of decomp/zoombinis.h: `long` for Borland C++ 4.5, which
+# mangles the type they stand for.
+_TYPE_ALIASES: dict[str, list[str]] = {
+    "LONG_PTR": ["long"],
+    "UINT_PTR": ["unsigned", "long"],
+    "DWORD_PTR": ["unsigned", "long"],
+}
+
+
 def parameter_types(parameters: str) -> str:
     """A parameter list's types, as the demangler writes them without spaces
     (`const Color &color, short n` gives `constColor&,short`)."""
@@ -163,6 +172,7 @@ def parameter_types(parameters: str) -> str:
         tokens = re.findall(r"[A-Za-z_]\w*|[*&]", parameter)
         if len(tokens) > 1 and tokens[-1][0].isalpha() and tokens[-1] not in _TYPE_WORDS:
             tokens = tokens[:-1]
+        tokens = [word for token in tokens for word in _TYPE_ALIASES.get(token, [token])]
         types.append("".join(tokens))
     return "" if types == ["void"] else ",".join(t for t in types if t)
 
