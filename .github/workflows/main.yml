@@ -11,37 +11,41 @@ concurrency:
 permissions:
   contents: read
 
-# The report needs the game CD, the Borland C++ 4.5 CD, Ghidra and a JDK: the
-# CDs are bring-your-own and never in the repository, so it runs on a
-# self-hosted runner with them in data/ (plus 7-Zip, Wine and JDK 21), and only
-# once the repository variable GAME_DATA_RUNNER is set to "true". The
-# deployment needs only the repository (the game's resources are in assets/).
+# The progress report job is disabled (commented out below) until two problems
+# are solved:
+#
+# - It needs the gitignored bring-your-own files (the game CD and the Borland
+#   C++ 4.5 CD in data/, plus Ghidra, a JDK, 7-Zip and Wine), which GitHub's
+#   runners don't have and the repository can't hold. The version below ran on
+#   a self-hosted runner that did.
+# - The report contains the game's disassembly, and this repository is public:
+#   anyone signed in to GitHub can download its Actions artifacts. Modify the
+#   report so it doesn't include the game's disassembly before enabling the
+#   upload step.
+#
+# The deployment and the release need only the repository (the game's resources
+# are in assets/).
 jobs:
-  report:
-    if: vars.GAME_DATA_RUNNER == 'true'
-    runs-on: [self-hosted, zbtools-data]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Bring-your-own files
-        run: ln -sfn "$ZBTOOLS_DATA" data
-      - uses: astral-sh/setup-uv@v6
-      - run: uv sync --locked
-      - run: uv run extract-game
-      - run: uv run toolchain setup
-      - run: uv run ghidra setup
-      - run: uv run runtime-symbols
-      - run: uv run classes
-      - run: uv run report
-      # Modify the report so it doesn't include the game's disassembly before
-      # enabling this step: this repository is public, and anyone signed in to
-      # GitHub can download its Actions artifacts. Until then the report is only
-      # built here (which checks that the tools still run) and read on the runner,
-      # in build/report/.
-      # - uses: actions/upload-artifact@v4
-      #   with:
-      #     name: report
-      #     path: build/report/
-      #     retention-days: 14
+  # report:
+  #   if: vars.GAME_DATA_RUNNER == 'true'
+  #   runs-on: [self-hosted, zbtools-data]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Bring-your-own files
+  #       run: ln -sfn "$ZBTOOLS_DATA" data
+  #     - uses: astral-sh/setup-uv@v6
+  #     - run: uv sync --locked
+  #     - run: uv run extract-game
+  #     - run: uv run toolchain setup
+  #     - run: uv run ghidra setup
+  #     - run: uv run runtime-symbols
+  #     - run: uv run classes
+  #     - run: uv run report
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: report
+  #         path: build/report/
+  #         retention-days: 14
 
   # Every target, built once (package.yml): the web page is deployed and the
   # packages for players are released from its artifacts.
