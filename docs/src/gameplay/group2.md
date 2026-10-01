@@ -10,8 +10,10 @@ Chosen at Shelter Rock (button 1 → scene 10). Chained: Captain Cajun's Ferrybo
 > *The river with Captain Cajun's ferry, the landing places and the Zoombinis waiting on the bank.*
 > *Capture:* from Shelter Rock, set out with button 1.
 
+![The ferry mid-river carrying Zoombinis, with Captain Cajun at the helm.](../images/ferry-crossing.png)
+
 > 📷 **Screenshot: `ferry-crossing`**
-> *The ferry mid-river carrying Zoombinis, with Captain Cajun at the helm.*
+> *The ferry loaded with Zoombinis and moving off, Captain Cajun at the helm at the right edge.*
 > *Capture:* place some Zoombinis on the ferry's seats and let it cross.
 
 | | |
@@ -76,8 +78,10 @@ The module is 46 KB, the biggest puzzle (its boundary with `hotel` is found from
 > *The cliff of stones with the Zoombinis waiting at the bottom and the cells above.*
 > *Capture:* complete the toads.
 
+![A path of lit stones between Zoombinis that share a feature.](../images/stonerise-lit-path.png)
+
 > 📷 **Screenshot: `stonerise-lit-path`**
-> *A path of lit stones between Zoombinis that share a feature.*
+> *Zoombinis placed on the hexes, with the red stones lit between them.*
 > *Capture:* place Zoombinis in adjacent cells.
 
 | | |

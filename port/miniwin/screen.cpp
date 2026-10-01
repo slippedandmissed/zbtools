@@ -128,7 +128,7 @@ static void put32(std::vector<uint8_t> &out, unsigned long v)
     put16(out, (unsigned)(v >> 16));
 }
 
-static void writeScreenshot()
+static void writeScreenshotTo(const std::string &path)
 {
     std::vector<uint8_t> out;
     unsigned long pixels = SCREEN_WIDTH * SCREEN_HEIGHT;
@@ -158,11 +158,28 @@ static void writeScreenshot()
     }
     for (int y = SCREEN_HEIGHT - 1; y >= 0; y--)
         out.insert(out.end(), screenBitmap->row(y), screenBitmap->row(y) + SCREEN_WIDTH);
-    FILE *file = ::fopen(screenshotPath.c_str(), "wb");
+    FILE *file = ::fopen(path.c_str(), "wb");
     if (!file)
         return;
     fwrite(out.data(), 1, out.size(), file);
     fclose(file);
+}
+
+static void writeScreenshot()
+{
+    writeScreenshotTo(screenshotPath);
+}
+
+/* Writes the screen now, as NAME.bmp in the directory of the screenshot path (for the debug
+   tools' `screenshot`); whether it could. */
+bool saveScreenshot(const char *name)
+{
+    size_t slash = screenshotPath.find_last_of("/\\");
+    if (screenshotPath.empty())
+        return false;
+    writeScreenshotTo((slash == std::string::npos ? std::string() : screenshotPath.substr(0, slash + 1))
+                      + name + ".bmp");
+    return true;
 }
 
 void presentIfDue(bool force)

@@ -115,3 +115,27 @@ commands = "party 8; scene 9; wait 3000; transitions off; scene 4 map; wait 4000
 [journey-population-sign]
 commands = "party 8; scene 18; wait 3000; transitions off; scene 6 map; wait 4000; quit"
 
+# The code machine's head shows what was picked on the panel below it: a shape, then a colour.
+[mudball-codes]
+commands = "set clickToDragOption 0; set dragClicks 0; seed 3; party 8; scene 15; wait 7000; click 540 415; wait 600; click 490 440; wait 600; click 565 415; wait 1500; quit"
+
+# Playing the puzzles (see the handbook's "Playing a puzzle"): sticky mouse off, then real drags
+# to each puzzle's drop spots (`places`), and a picture a moment after the game reacts.
+[cliffs-sneeze]
+commands = "set clickToDragOption 0; set dragClicks 0; seed 7; party 8; scene 7; wait 6000; drag zoombini 0 place 1; wait 1500; drag zoombini 1 place 2; wait 1500; drag zoombini 2 place 1; wait 1500; drag zoombini 3 place 2; wait 2800; screenshot cliffs-sneeze; quit"
+
+[ferry-crossing]
+commands = "set clickToDragOption 0; set dragClicks 0; seed 7; party 8; scene 10; wait 7000; drag zoombini 0 place 2; wait 1000; drag zoombini 1 place 3; wait 1000; drag zoombini 2 place 4; wait 1000; click 618 458; wait 2400; screenshot ferry-crossing; quit"
+
+[stonerise-lit-path]
+commands = "set clickToDragOption 0; set dragClicks 0; seed 7; party 8; scene 12; wait 7000; drag zoombini 0 place 1; wait 1200; drag zoombini 1 place 2; wait 1200; drag zoombini 2 place 3; wait 1200; drag zoombini 3 place 4; wait 1200; drag zoombini 4 place 5; wait 1200; drag zoombini 5 place 6; wait 1500; drag zoombini 6 place 7; wait 1500; drag zoombini 7 place 8; wait 2000; screenshot stonerise-lit-path; quit"
+
+[fleens-pick]
+commands = "set clickToDragOption 0; set dragClicks 0; seed 7; party 8; scene 13; wait 7000; drag zoombini 0 place 1; wait 2500; drag zoombini 1 place 1; wait 5500; screenshot fleens-pick; quit"
+
+[hotel-rooms]
+commands = "set clickToDragOption 0; set dragClicks 0; seed 7; level 3 3; party 8; scene 14; wait 8000; drag zoombini 0 place 3; wait 1500; drag zoombini 1 place 8; wait 1500; drag zoombini 2 place 13; wait 2500; screenshot hotel-rooms; quit"
+
+[lion-places]
+commands = "set clickToDragOption 0; set dragClicks 0; seed 7; party 8; scene 16; wait 7000; drag zoombini 0 place 8; wait 1500; drag zoombini 1 place 11; wait 1500; drag zoombini 2 place 14; wait 1500; drag zoombini 3 place 17; wait 2000; screenshot lion-places; quit"
+

@@ -10,8 +10,10 @@ Reached from Zoombini Isle (`isleButtonClicked` button 6 sets `sceneDue = 7`) an
 > *The cliffs: two bridges, upper and lower, with Zoombinis waiting at the left and the buttons at lower right.*
 > *Capture:* start a new game, make a party, click button 6, wait for the journey.
 
+![A Zoombini turned back by a sneezing cliff.](../images/cliffs-sneeze.png)
+
 > 📷 **Screenshot: `cliffs-sneeze`**
-> *A Zoombini turned back by a sneezing cliff.*
+> *The cliff sneezes: a Zoombini sent the wrong way, and the upper bridge thrown up into the air.*
 > *Capture:* send a Zoombini across the wrong bridge.
 
 | | |

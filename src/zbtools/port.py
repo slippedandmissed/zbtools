@@ -27,7 +27,7 @@ from typing import Annotated, NamedTuple
 
 import typer
 
-from zbtools import assets, download, exe_resources, movies, paths
+from zbtools import assets, debug_globals, download, exe_resources, movies, paths
 from zbtools.formats import icon
 
 # The pinned Emscripten SDK: emsdk's release tarball, which installs the SDK
@@ -161,6 +161,10 @@ def build(target: str, build_type: str = "RelWithDebInfo", debug_tools: bool = T
         or _cache_value(out, "ZB_DEBUG") != ("ON" if debug_tools else "OFF")
     ):
         subprocess.run(configure, check=True, env=env)
+    if debug_tools and debug_globals.write():
+        # (The table is only found when it exists, so a build made before it did needs the
+        # debug tools' source recompiled.)
+        (paths.PORT_SOURCE_DIR / "debug" / "zbdebug.cpp").touch()
     subprocess.run([_tool("cmake"), "--build", str(out)], check=True, env=env)
     return out / {"web": WEB_PAGE, "headless": "zoombinis.js"}.get(target, "zoombinis")
 

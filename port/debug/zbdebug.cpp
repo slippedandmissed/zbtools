@@ -26,6 +26,7 @@
 #include "snoids.h"
 #include "view.h"
 
+#include <algorithm>
 #include <deque>
 #include <string>
 #include <utility>
@@ -50,10 +51,31 @@ EM_JS(int, takePageCommands, (char *buffer, int size), {
 });
 #endif
 
-/* miniwin's scripted click (port/miniwin/screen.cpp); with `at` 0 it happens now. */
+/* miniwin's scripted click and screenshot (port/miniwin/screen.cpp); with `at` 0 a click happens now. */
 namespace miniwin {
 void scriptClick(DWORD at, int x, int y, int action);
+bool saveScreenshot(const char *name);
 }
+
+/* The game's integer globals by name (build/port/generated/debug_globals.inc, from
+   zbtools.debug_globals): the address, the size of an element and whether it is signed, and the
+   array's dimensions (none for a scalar) with their lengths. */
+struct DebugGlobal
+{
+    const char *name;
+    void *address;
+    int size;
+    int isSigned;
+    int dimensions;
+    int first;
+    int second;
+};
+
+#if defined(__has_include) && __has_include("debug_globals.inc")
+#include "debug_globals.inc"
+#else
+static const DebugGlobal debugGlobals[] = {{0, 0, 0, 0, 0, 0, 0}}; /* (not generated) */
+#endif
 
 namespace {
 
@@ -125,7 +147,163 @@ bool stateAccess(long offset, long size, bool write, long *value)
     return true;
 }
 
-/* Names a value `assert` and `get` can read: a field of the game, or state:<offset>[:<size>]. */
+/* A global (or an element of an array one: name[3], name[1][2]) found in the table. */
+struct Located
+{
+    void *at;
+    int size;
+    bool isSigned;
+};
+
+bool locate(const std::string &text, Located *found)
+{
+    size_t bracket = text.find('[');
+    std::string base = text.substr(0, bracket);
+    long index[2] = {0, 0};
+    int count = 0;
+
+    while (bracket != std::string::npos) {
+        size_t close = text.find(']', bracket);
+        if (close == std::string::npos || count == 2
+            || !number(text.substr(bracket + 1, close - bracket - 1), &index[count]))
+            return false;
+        count++;
+        bracket = close + 1 == text.size() ? std::string::npos : close + 1;
+        if (bracket != std::string::npos && text[bracket] != '[')
+            return false;
+    }
+    for (const DebugGlobal &g : debugGlobals) {
+        if (!g.name || base != g.name)
+            continue;
+        if (count != g.dimensions || (count >= 1 && (index[0] < 0 || index[0] >= g.first))
+            || (count == 2 && (index[1] < 0 || index[1] >= g.second)))
+            return false;
+        long element = count == 2 ? index[0] * g.second + index[1] : index[0];
+        found->at = (char *)g.address + element * g.size;
+        found->size = g.size;
+        found->isSigned = g.isSigned != 0;
+        return true;
+    }
+    return false;
+}
+
+long readAt(const Located &where)
+{
+    switch (where.size) {
+    case 1:
+        return where.isSigned ? *(signed char *)where.at : *(unsigned char *)where.at;
+    case 2:
+        return where.isSigned ? *(short *)where.at : *(unsigned short *)where.at;
+    default:
+        return *(long *)where.at;
+    }
+}
+
+void writeAt(const Located &where, long value)
+{
+    switch (where.size) {
+    case 1:
+        *(char *)where.at = (char)value;
+        break;
+    case 2:
+        *(short *)where.at = (short)value;
+        break;
+    default:
+        *(long *)where.at = value;
+        break;
+    }
+}
+
+bool setGlobal(const std::string &name, long value)
+{
+    Located where;
+
+    if (!locate(name, &where))
+        return false;
+    writeAt(where, value);
+    return true;
+}
+
+/* The party's Zoombini views in the order they were made (the party's order). */
+std::vector<View *> zoombiniViews()
+{
+    std::vector<View *> found;
+
+    for (View *view = nextActorView(1); view; view = nextActorView(0))
+        found.push_back(view);
+    std::sort(found.begin(), found.end(), [](View *a, View *b) { return a->id < b->id; });
+    return found;
+}
+
+/* The middle of Zoombini n's picture on the screen (where it stands, if it hasn't been drawn). */
+bool zoombiniPoint(long n, long *x, long *y)
+{
+    std::vector<View *> views = zoombiniViews();
+
+    if (n < 0 || n >= (long)views.size())
+        return false;
+    const ShortRect &bounds = views[n]->body.bounds;
+    if (bounds.right > bounds.left) {
+        *x = (bounds.left + bounds.right) / 2;
+        *y = (bounds.top + bounds.bottom) / 2;
+    } else {
+        *x = viewSnoid(views[n])->body.x;
+        *y = viewSnoid(views[n])->body.y;
+    }
+    return true;
+}
+
+/* The point a Zoombini stands on (its feet), and the middle of its picture, which a drag grabs. */
+bool zoombiniStands(long n, long *standX, long *standY)
+{
+    std::vector<View *> views = zoombiniViews();
+
+    if (n < 0 || n >= (long)views.size())
+        return false;
+    *standX = viewSnoid(views[n])->body.x;
+    *standY = viewSnoid(views[n])->body.y;
+    return true;
+}
+
+/* Puts commands at the front of the queue, to run next. */
+void runNext(const std::vector<std::string> &commands)
+{
+    for (size_t i = commands.size(); i > 0; i--)
+        pending.push_front(commands[i - 1]);
+}
+
+/* A drag as the steps `click` makes: press, three moves with a pause each, release. */
+std::vector<std::string> dragSteps(long x1, long y1, long x2, long y2)
+{
+    std::vector<std::string> steps = {"click " + std::to_string(x1) + " " + std::to_string(y1) + " press",
+                                      "wait 300"};
+
+    for (int i = 1; i <= 3; i++) {
+        steps.push_back("click " + std::to_string(x1 + (x2 - x1) * i / 3) + " "
+                        + std::to_string(y1 + (y2 - y1) * i / 3) + " move");
+        steps.push_back("wait 250");
+    }
+    /* (The last pause matters: the game's drag loop must see the pointer there before the release.) */
+    steps.push_back("click " + std::to_string(x2) + " " + std::to_string(y2) + " release");
+    return steps;
+}
+
+struct Condition
+{
+    bool active;
+    std::string name;
+    std::string op;
+    long value;
+} condition; /* `wait until`: the commands after it wait for this */
+
+bool compares(long a, const std::string &op, long b)
+{
+    return op == "==" ? a == b : op == "!=" ? a != b : op == "<" ? a < b : op == ">" ? a > b
+           : op == "<=" ? a <= b : a >= b;
+}
+
+/* Names a value `assert`, `get` and `wait until` can read: a field of the game below, state:<offset>[:<size>], or any
+   global in the table (`bridgeLevel`, `acrossSpots`-like `name[3]`). */
 bool lookup(const std::string &name, long *value)
 {
     if (name == "scene")
@@ -160,8 +338,13 @@ bool lookup(const std::string &name, long *value)
             rest = rest.substr(0, colon);
         }
         return number(rest, &offset) && stateAccess(offset, size, false, value);
-    } else
-        return false;
+    } else {
+        Located where;
+
+        if (!locate(name, &where))
+            return false;
+        *value = readAt(where);
+    }
     return true;
 }
 
@@ -364,6 +547,66 @@ void run(const std::string &line)
     } else if (command == "cheatcode" && n == 3 && number(w[1], &a) && number(w[2], &b)) {
         cheatHash = a;
         cheatCode = b;
+    } else if (command == "set" && n == 3 && number(w[2], &a)) {
+        if (!setGlobal(w[1], a))
+            return fail(line, "unknown global");
+    } else if (command == "seed" && n == 2 && number(w[1], &a)) {
+        /* The game's random numbers, from a seed (it seeds them from the time otherwise). */
+        if (!setGlobal("randomSeed", a) || !setGlobal("seedPending", 0))
+            return fail(line, "no random seed in the table");
+    } else if (command == "wait" && n == 5 && w[1] == "until" && number(w[4], &a)
+               && (w[3] == "==" || w[3] == "!=" || w[3] == "<" || w[3] == ">" || w[3] == "<="
+                   || w[3] == ">=")) {
+        condition = {true, w[2], w[3], a};
+    } else if (command == "screenshot" && n == 2) {
+        if (!miniwin::saveScreenshot(w[1].c_str()))
+            return fail(line, "no --screenshot path to save beside");
+    } else if (command == "zoombinis" && n == 1) {
+        std::vector<View *> views = zoombiniViews();
+
+        for (size_t i = 0; i < views.size(); i++) {
+            long x = 0, y = 0;
+            Snoid *snoid = viewSnoid(views[i]);
+
+            zoombiniPoint((long)i, &x, &y);
+            say("zoombini %d: at %ld,%ld  hair %d eyes %d nose %d feet %d  %s  chosen %d action %d", (int)i, x,
+                y, snoid->features[0], snoid->features[1], snoid->features[2], snoid->features[3],
+                snoid->name, snoid->chosen, snoid->action);
+        }
+    } else if (command == "click" && n == 3 && w[1] == "zoombini" && number(w[2], &a)) {
+        if (!zoombiniPoint(a, &b, &c))
+            return fail(line, "no such Zoombini");
+        runNext({"click " + std::to_string(b) + " " + std::to_string(c)});
+    } else if (command == "drag" && n == 5 && w[1] == "zoombini" && number(w[2], &a) && number(w[3], &b)
+               && number(w[4], &c)) {
+        /* Brings the Zoombini's feet to (b, c): the grab is at its middle, and the game puts the
+           feet where the pointer is, less that offset. */
+        long x, y, standX, standY;
+
+        if (!zoombiniPoint(a, &x, &y) || !zoombiniStands(a, &standX, &standY))
+            return fail(line, "no such Zoombini");
+        runNext(dragSteps(x, y, b + x - standX, c + y - standY));
+    } else if (command == "drag" && n == 5 && w[1] == "zoombini" && number(w[2], &a) && w[3] == "place"
+               && number(w[4], &b)) {
+        long x, y, standX, standY;
+
+        if (b < 1 || b > placedViewCount)
+            return fail(line, "no such place (see `places`)");
+        if (!zoombiniPoint(a, &x, &y) || !zoombiniStands(a, &standX, &standY))
+            return fail(line, "no such Zoombini");
+        runNext(dragSteps(x, y, placedViewPoints[b - 1].x + x - standX, placedViewPoints[b - 1].y + y - standY));
+    } else if (command == "places" && n == 1) {
+        for (short i = 0; i < placedViewCount; i++)
+            say("place %d: %d,%d%s", i + 1, placedViewPoints[i].x, placedViewPoints[i].y,
+                placeClaims[i] ? " (claimed)" : "");
+        for (short i = 0; i < viewPlaceCount; i++)
+            say("spot %d: %d,%d", i + 1, viewPlaces[i].x, viewPlaces[i].y);
+    } else if (command == "drag" && n == 5) {
+        long x2, y2;
+
+        if (!number(w[1], &a) || !number(w[2], &b) || !number(w[3], &x2) || !number(w[4], &y2))
+            return fail(line, "bad drag");
+        runNext(dragSteps(a, b, x2, y2));
     } else if (command == "click" && n >= 3 && n <= 4 && number(w[1], &a) && number(w[2], &b)
                && (n == 3 || w[3] == "press" || w[3] == "move" || w[3] == "release")) {
         /* 0: a click, 1: press, 2: move, 3: release (as --click's actions) */
@@ -470,6 +713,18 @@ void zbDebugFrame()
             if (currentScene != waitingForScene)
                 return;
             waitingForScene = -2;
+        }
+        if (condition.active) {
+            long now;
+
+            if (!lookup(condition.name, &now)) {
+                say("error: wait until: unknown name %s", condition.name.c_str());
+                assertionsFailed++;
+                condition.active = false;
+            } else if (!compares(now, condition.op, condition.value))
+                return;
+            else
+                condition.active = false;
         }
         if (pending.empty() || sceneChanged)
             return; /* (a new scene gets a pass of its own before the next command) */
