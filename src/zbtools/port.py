@@ -17,7 +17,9 @@ from the extracted disc (build/disc/) for `run`.
 
 import contextlib
 import http.server
+import importlib.metadata
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -27,7 +29,7 @@ from typing import Annotated, NamedTuple
 
 import typer
 
-from zbtools import assets, download, exe_resources, movies, paths
+from zbtools import assets, bundle, download, exe_resources, host, movies, paths
 from zbtools.formats import icon
 
 # The pinned Emscripten SDK: emsdk's release tarball, which installs the SDK
@@ -155,6 +157,12 @@ def build(target: str, build_type: str = "RelWithDebInfo", debug_tools: bool = T
         toolchain = _emscripten_dir() / "cmake" / "Modules" / "Platform" / "Emscripten.cmake"
         configure.append(f"-DCMAKE_TOOLCHAIN_FILE={toolchain}")
         configure.append(f"-DZB_HEADLESS={'ON' if target == 'headless' else 'OFF'}")
+    if target == "native" and host.SYSTEM == "Darwin":
+        # One program for Apple silicon and Intel Macs.
+        configure += [
+            "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
+            f"-DCMAKE_OSX_DEPLOYMENT_TARGET={bundle.MACOS_MINIMUM}",
+        ]
     if (
         not (out / "build.ninja").exists()
         or _build_type(out) != build_type
@@ -163,6 +171,41 @@ def build(target: str, build_type: str = "RelWithDebInfo", debug_tools: bool = T
         subprocess.run(configure, check=True, env=env)
     subprocess.run([_tool("cmake"), "--build", str(out)], check=True, env=env)
     return out / {"web": WEB_PAGE, "headless": "zoombinis.js"}.get(target, "zoombinis")
+
+
+def package_native(debug_tools: bool = False) -> Path:
+    """Builds the native program and packs it with the game for players into
+    build/port/dist/ (see bundle.py): on macOS Zoombinis.app (signed ad hoc) in
+    a .dmg, elsewhere a directory in an archive. The path of the archive."""
+    program = build("native", "RelWithDebInfo", debug_tools)
+    for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
+        print(line)
+    for line in pack_scenes(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
+        print(line)
+    soundfont = setup_soundfont()
+    game = paths.PORT_DIST_STAGING / "game"
+    shutil.rmtree(paths.PORT_DIST_STAGING, ignore_errors=True)
+    lay_out_drives(c=game / "C")
+    # (the .MOV files aren't played: the port plays the movie from its scene file)
+    shutil.copytree(
+        paths.PACKED_ASSETS_DIR / "DATA",
+        game / "D" / "DATA",
+        ignore=shutil.ignore_patterns("*.MOV", "*.mov"),
+    )
+    shutil.copyfile(soundfont, game / soundfont.name)
+    version = importlib.metadata.version("zbtools")
+    dist = paths.PORT_DIST_DIR
+    dist.mkdir(parents=True, exist_ok=True)
+    images = exe_resources.app_icon()
+    if bundle.is_macos():
+        app = bundle.assemble_app(
+            dist / f"{bundle.APP_NAME}.app", program, game, images[0], version
+        )
+        bundle.sign_ad_hoc(app)
+        return bundle.make_dmg(app, dist / f"{bundle.APP_NAME}-{version}-macos.dmg")
+    name = f"{bundle.APP_NAME.lower()}-{version}-{host.SYSTEM.lower()}-{platform.machine().lower()}"
+    directory = bundle.assemble_directory(dist / name, program, game)
+    return bundle.make_archive(directory, dist / f"{name}.tar.gz")
 
 
 def _cache_value(out: Path, name: str) -> str | None:
@@ -181,21 +224,23 @@ def _build_type(out: Path) -> str | None:
 
 
 def lay_out_drives(
-    installed: Path = paths.INSTALLED_ASSETS, packed: Path = paths.PACKED_ASSETS_DIR
+    installed: Path = paths.INSTALLED_ASSETS,
+    packed: Path = paths.PACKED_ASSETS_DIR,
+    c: Path | None = None,
 ) -> Path:
     r"""C: in build/port/data/c/: the game installed in C:\ZOOMBI32 (what it
     reads of it, and the configuration its installer would have written) and
     its font in C:\WINDOWS\FONTS. The installed files are assets/'s
     (`assets.INSTALLED_FILES`, and MIDIMAP.DAT, which `assets pack` builds),
     so nothing here needs the game's disc. What the game has saved there is
-    kept."""
+    kept. `c` is where to lay it out (build/port/data/c/ by default)."""
     midimap = packed / "MIDIMAP.DAT"
     if not (installed / _FONT).is_file():
         raise PortError(f"{installed} not found: run `uv run assets extract`")
     if not midimap.is_file():
         raise PortError(f"{midimap} not found: run `uv run assets pack`")
     files = assets.load_installed(installed)
-    c = paths.PORT_DATA_DIR / "c"
+    c = c or paths.PORT_DATA_DIR / "c"
     target_dir = c / "ZOOMBI32"
     target_dir.mkdir(parents=True, exist_ok=True)
     fonts = c / "WINDOWS" / "FONTS"
@@ -441,6 +486,22 @@ def package(
     except (PortError, subprocess.CalledProcessError) as e:
         _fail(e)
     print(f"The site is in {out.relative_to(paths.REPO_ROOT)}")
+
+
+@app.command(name="bundle")
+def bundle_command(
+    debug_tools: Annotated[
+        bool, typer.Option(help="Build the debug tools in (port/debug/)")
+    ] = False,
+) -> None:
+    """Build the native program and pack it with the game for players, into
+    build/port/dist/: Zoombinis.app in a .dmg on macOS, a directory in a
+    .tar.gz elsewhere."""
+    try:
+        out = package_native(debug_tools)
+    except (PortError, subprocess.CalledProcessError) as e:
+        _fail(e)
+    print(f"Packaged {out.relative_to(paths.REPO_ROOT)}")
 
 
 @app.command()

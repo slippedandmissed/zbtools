@@ -51,7 +51,18 @@ if(EMSCRIPTEN)
     target_compile_options(SDL2::SDL2 INTERFACE -sUSE_SDL=2)
     target_link_options(SDL2::SDL2 INTERFACE -sUSE_SDL=2)
 else()
-    find_package(SDL2 CONFIG QUIET)
+    # A macOS build is universal (arm64 and x86_64), which a package manager's
+    # SDL2 (for the host's architecture only) can't be: build the pinned release
+    # there, unless asked to use the system's.
+    if(APPLE)
+        set(ZB_SYSTEM_SDL_DEFAULT OFF)
+    else()
+        set(ZB_SYSTEM_SDL_DEFAULT ON)
+    endif()
+    option(ZB_SYSTEM_SDL "Use the system's SDL2 if there is one" ${ZB_SYSTEM_SDL_DEFAULT})
+    if(ZB_SYSTEM_SDL)
+        find_package(SDL2 CONFIG QUIET)
+    endif()
     if(NOT TARGET SDL2::SDL2)
         FetchContent_Declare(SDL2
             URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-2.32.10.tar.gz

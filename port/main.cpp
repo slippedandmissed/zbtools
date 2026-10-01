@@ -2,6 +2,7 @@
  * The port's entry point: sets up miniwin's drives from the command line,
  * then runs the game's WinMain.
  *
+ *   zoombinis [--data <directory>]
  *   zoombinis --drive C=<directory> --cdrom D=<directory>[,<label>[,<serial>]]
  *             [--program <Windows path of the program>] [--screenshot <file.bmp>]
  *             [--run-for <milliseconds>] [--click <ms>:<x>,<y>[:press|move|release]]...
@@ -9,7 +10,11 @@
  *             [--cmd <debug commands>]... [--script <file>]   (ZB_DEBUG builds)
  *             [-- <game command line>]
  *
- * C: holds the installed game (and what it saves), D: the CD; `uv run port`
+ * Without --drive the game is a packaged one: its data directory (--data, else
+ * `game/` beside the program, which in a macOS bundle is Contents/Resources/game)
+ * holds C/ (what the installer would have written), D/ (the CD) and a SoundFont;
+ * C: is a copy of C/ in the player's own directory (where saved games go), made
+ * the first time. Otherwise C: holds the installed game (and what it saves), D: the CD; `uv run port`
  * lays C: out from the user's copy of the game (build/port/data/c/).
  * --screenshot writes the screen to a BMP about once a second (for a headless
  * build, which has no window); --run-for quits after a while and --click
@@ -24,10 +29,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include <SDL.h>
 
 #include "miniwin/internal.h"
 
@@ -39,7 +47,7 @@ extern "C" void zbDebugRun(const char *commands); /* port/debug/zbdebug.cpp */
 
 static void usage()
 {
-    fprintf(stderr, "usage: zoombinis --drive C=<directory> --cdrom D=<directory>[,<label>[,<serial>]]\n"
+    fprintf(stderr, "usage: zoombinis [--data <directory>]\n       zoombinis --drive C=<directory> --cdrom D=<directory>[,<label>[,<serial>]]\n"
                     "                 [--program <path>] [-- <command line>]\n");
     exit(2);
 }
@@ -63,12 +71,45 @@ static void addDriveArgument(const char *argument, bool cdrom)
     miniwin::addDrive(text[0], path.c_str(), label.c_str(), (DWORD)strtoul(serial.c_str(), 0, 0), cdrom);
 }
 
+/* The packaged game's drives (see the top of this file): C: in the player's
+   preferences directory, seeded from `data`/C, and D: `data`/D. The SoundFont
+   in `data`, if there is one, is `soundFont`. False if `data` isn't one. */
+static bool useInstalledGame(const std::string &data, std::string &soundFont)
+{
+    namespace fs = std::filesystem;
+    std::error_code error;
+    fs::path from = fs::path(data) / "C", cd = fs::path(data) / "D";
+
+    if (!fs::is_directory(from, error) || !fs::is_directory(cd, error))
+        return false;
+    char *preferences = SDL_GetPrefPath("zoombinis", "Zoombinis");
+    if (!preferences) {
+        fprintf(stderr, "no directory to keep saved games in: %s\n", SDL_GetError());
+        return false;
+    }
+    fs::path c = fs::path(preferences) / "C";
+    SDL_free(preferences);
+    /* What's there stays (the saved games); what isn't is copied. */
+    fs::copy(from, c, fs::copy_options::recursive | fs::copy_options::skip_existing, error);
+    if (error) {
+        fprintf(stderr, "cannot copy %s to %s: %s\n", from.c_str(), c.c_str(), error.message().c_str());
+        return false;
+    }
+    miniwin::addDrive('C', c.string().c_str(), "DISK", 0, false);
+    miniwin::addDrive('D', cd.string().c_str(), "ZOOMBINIS", 0x19960101, true);
+    for (const auto &entry : fs::directory_iterator(data, error))
+        if (entry.path().extension() == ".sf2")
+            soundFont = entry.path().string();
+    return true;
+}
+
 int main(int argc, char **argv)
 {
     std::string commandLine;
     bool drives = false;
     unsigned long runFor = 0;
     const char *soundFont = 0;
+    std::string dataDirectory, installedSoundFont;
     struct Click
     {
         unsigned long at;
@@ -83,6 +124,8 @@ int main(int argc, char **argv)
             drives = true;
         } else if (!strcmp(argv[i], "--cdrom") && i + 1 < argc)
             addDriveArgument(argv[++i], true);
+        else if (!strcmp(argv[i], "--data") && i + 1 < argc)
+            dataDirectory = argv[++i];
         else if (!strcmp(argv[i], "--screenshot") && i + 1 < argc)
             miniwin::setScreenshotPath(argv[++i]);
         else if (!strcmp(argv[i], "--click") && i + 1 < argc) {
@@ -126,8 +169,16 @@ int main(int argc, char **argv)
         } else
             usage();
     }
-    if (!drives)
-        usage();
+    if (!drives) {
+        if (dataDirectory.empty()) {
+            const char *base = SDL_GetBasePath(); /* the bundle's Resources on macOS */
+            dataDirectory = std::string(base ? base : "") + "game";
+        }
+        if (!useInstalledGame(dataDirectory, installedSoundFont))
+            usage();
+        if (!soundFont && !installedSoundFont.empty())
+            soundFont = installedSoundFont.c_str();
+    }
     if (!miniwin::initialize("Logical Journey of the Zoombinis"))
         return 1;
     if (soundFont)

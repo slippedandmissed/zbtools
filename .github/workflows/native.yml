@@ -1,0 +1,31 @@
+name: Native
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # The macOS application (universal: Apple silicon and Intel), signed ad hoc.
+  # Needs only the source: the game's data is in assets/.
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run port bundle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zoombinis-macos
+          path: build/port/dist/*.dmg
+          retention-days: 14
