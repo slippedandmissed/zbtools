@@ -186,6 +186,12 @@ def run_tool(
     return wine(exe, args, cwd, capture, path=f"{_windows_root(release)}\\BIN")
 
 
+def _output_file(directory: Path, name: str) -> Path | None:
+    """A file a Borland tool wrote, whatever the case of its name (the tools name an output
+    after the source file's case, and a case-sensitive file system keeps the difference)."""
+    return next((p for p in directory.iterdir() if p.name.lower() == name.lower()), None)
+
+
 def check_release(release: str) -> bool:
     """Compile, link and run a small program; print what happened."""
     workdir = paths.TOOLCHAIN_DIR / "check" / release
@@ -194,11 +200,12 @@ def check_release(release: str) -> bool:
     (workdir / "hello.c").write_bytes(_dos_text(_CHECK_SOURCE))
 
     compiled = run_tool(release, "BCC32", ["-WC", "hello.c"], workdir)
-    if compiled.returncode != 0 or not (workdir / "HELLO.EXE").exists():
+    program, obj_file = _output_file(workdir, "hello.exe"), _output_file(workdir, "hello.obj")
+    if compiled.returncode != 0 or program is None or obj_file is None:
         print(f"Borland C++ {release}: compile/link FAILED\n{compiled.stdout}{compiled.stderr}")
         return False
-    obj = (workdir / "HELLO.OBJ").read_bytes()
-    ran = wine(workdir / "HELLO.EXE", [], workdir)
+    obj = obj_file.read_bytes()
+    ran = wine(program, [], workdir)
     output = ran.stdout.strip()
     ok = ran.returncode == 0 and "2 + 2 = 4" in output
     status = "ok" if ok else "FAILED"

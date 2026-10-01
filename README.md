@@ -52,7 +52,7 @@ uv run assets pack                # assets/ back into Mohawk archives, in build/
 uv run extract-game          # the disc and the Windows 95 build into build/
 uv run toolchain setup       # Borland C++ under Wine
 uv run match                 # compare every decompiled function with the original, byte for byte
-uv run report --open         # progress report (contains disassembly: keep it local)
+uv run report --open         # progress report (contains disassembly: keep it local; --no-embed-binary leaves it out)
 ```
 
 The handbook's [Prerequisites](docs/src/getting-started/prerequisites.md) and [Setup](docs/src/getting-started/setup.md) chapters cover everything else: Ghidra, the Windows 98 VM, the rebuild, cleaning up.

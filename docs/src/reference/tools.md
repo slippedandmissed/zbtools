@@ -16,7 +16,7 @@ Every tool is a module in `src/zbtools/` exposing a Typer `app`, registered in `
 | `define-data` | `define_data.py` | define declared-but-undefined globals with the original's initial values |
 | `near-misses` | `near_misses.py` | classify functions that don't match ([Near-misses](../concepts/near-misses.md)) |
 | `worklist` | `worklist.py` | what's ready to decompile next |
-| `report` | `report.py` | HTML progress report in `build/report/` (Jinja2 templates in `src/zbtools/templates/`). **Contains disassembly: never publish.** |
+| `report` | `report.py` | HTML progress report in `build/report/` (Jinja2 templates in `src/zbtools/templates/`). **Contains disassembly: never publish**, unless built with `--no-embed-binary`, which leaves the original's instructions out (only offsets remain) so the report is safe to distribute. |
 | `modules` | `modules.py` | the module map and its evidence ([Modules](../concepts/modules.md)) |
 | `includes` | `includes.py` | set each source's module-header includes |
 | `assets` | `assets.py` | `extract`, `pack`, `verify`, `frames` ([Formats](../formats/mohawk.md)) |

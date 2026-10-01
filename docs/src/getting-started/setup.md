@@ -58,7 +58,7 @@ The VM's disk is a stack of read-only layers: the Windows install (`win98-base.q
 uv run match                 # every marked function against the original, byte for byte
 uv run match-data -q         # data and data references
 uv run near-misses           # review what doesn't match
-uv run report --open         # progress report (contains disassembly: keep it local)
+uv run report --open         # progress report (contains disassembly: keep it local; --no-embed-binary leaves it out)
 ```
 
 ## 6. Build and run

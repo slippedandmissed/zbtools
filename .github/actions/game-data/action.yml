@@ -1,0 +1,48 @@
+name: Game data
+description: >
+  Brings the bring-your-own files that match and report need (the game CD and the Borland C++ 4.5
+  CD) into data/, from a private Cloud Storage bucket, and installs the tools that read them. Uses
+  Workload Identity Federation: the job needs `permissions: id-token: write`, and GitHub does not
+  give that to pull requests from forks, so don't run this for them.
+
+runs:
+  using: composite
+  steps:
+    # The ISOs are cached so most runs don't download them (the cache is private to this
+    # repository; bump the version in the key to fetch again).
+    - id: cache
+      uses: actions/cache@v4
+      with:
+        path: data
+        key: game-data-v1
+
+    - if: steps.cache.outputs.cache-hit != 'true'
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: projects/789054733323/locations/global/workloadIdentityPools/github/providers/github-actions
+        service_account: ci-data-reader@zbtools-ci-2610.iam.gserviceaccount.com
+
+    - if: steps.cache.outputs.cache-hit != 'true'
+      uses: google-github-actions/setup-gcloud@v2
+
+    - if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        mkdir -p data
+        gcloud storage cp \
+          "gs://zbtools-ci-2610-data/Logical Journey of the Zoombinis.iso" \
+          "gs://zbtools-ci-2610-data/Borland C++ 4.5.iso" \
+          data/
+
+    # 7-Zip reads the ISOs; Wine runs Borland's 32-bit command-line tools (WineHQ's stable
+    # release, the version the macOS build pins; Ubuntu's own 9.0 was not tried once the real
+    # problem, a case-sensitive file name in `toolchain setup`, was found); the JDK is for Ghidra.
+    - shell: bash
+      run: |
+        sudo mkdir -pm755 /etc/apt/keyrings
+        sudo wget -q -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+        sudo wget -q -NP /etc/apt/sources.list.d/ "https://dl.winehq.org/wine-builds/ubuntu/dists/$(lsb_release -cs)/winehq-$(lsb_release -cs).sources"
+        sudo dpkg --add-architecture i386
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends 7zip openjdk-21-jdk-headless winehq-stable
+        wine --version
