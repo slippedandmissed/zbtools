@@ -65,6 +65,7 @@ PORT_TARGETS = (
 )
 PORT_BUILD_DIRS = [PORT_DIR / name for name in PORT_TARGETS]
 PORT_DATA_DIR = PORT_DIR / "data"
+PORT_GENERATED_DIR = PORT_DIR / "generated"
 # What `uv run port package` makes: the site for hosting (dist/browser_wasm/) and the
 # players' packages (dist/zoombinis-<version>-<target>/ and its archive), and what's
 # made on the way.
@@ -163,7 +164,7 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     "packed-assets": [PACKED_ASSETS_DIR],
     "assets-cache": [ASSETS_CACHE],
     "movie-frames": [MOVIE_FRAMES_DIR],
-    "port": [*PORT_BUILD_DIRS, PORT_DIST_DIR, PORT_DIST_STAGING],
+    "port": [*PORT_BUILD_DIRS, PORT_GENERATED_DIR, PORT_DIST_DIR, PORT_DIST_STAGING],
     # The native build's saved games live here: only removed when asked for.
     "port-data": [PORT_DATA_DIR],
     "emsdk": [EMSDK_DIR],

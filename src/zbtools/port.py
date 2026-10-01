@@ -37,7 +37,7 @@ from typing import Annotated, Literal, NamedTuple
 
 import typer
 
-from zbtools import assets, bundle, download, exe_resources, host, movies, paths
+from zbtools import assets, bundle, debug_globals, download, exe_resources, host, movies, paths
 from zbtools.formats import icon
 
 # The pinned Emscripten SDK: emsdk's release tarball, which installs the SDK
@@ -330,6 +330,10 @@ def build(target: Target, build_type: str = "RelWithDebInfo", debug_tools: bool 
     change) and builds the target; the program. `debug_tools` builds
     port/debug/ in (CMake's ZB_DEBUG); packages are built without."""
     out = build_dir(target)
+    if debug_tools and debug_globals.write():
+        # (The table is only found when it exists, so a build made before it did needs the
+        # debug tools' source recompiled.)
+        (paths.PORT_SOURCE_DIR / "debug" / "zbdebug.cpp").touch()
     if target.toolchain == "container":
         _build_in_container(target, build_type, debug_tools)
         return out / target.program

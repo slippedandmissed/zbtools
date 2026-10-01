@@ -39,6 +39,9 @@ class Recipe(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     commands: str  # debug commands; they end with `quit`, which saves the last frame
+    # More pictures from the same run, each taken with `screenshot ID` in the commands (the
+    # recipe's own picture is the last frame, unless the commands take `screenshot <its id>`).
+    also: list[str] = []
     seconds: float = 60  # the longest the game may run (a safety net)
     crop: tuple[int, int, int, int] | None = (
         None  # (left, top, right, bottom) of the 640x480 screen
@@ -100,16 +103,19 @@ def capture(id_: str, recipe: Recipe, setup: Setup) -> str:
         ]
         if problems:
             return "; ".join(problems[:2])
-        if not bmp.exists():
-            return "no screen was written"
-        with Image.open(bmp) as screen:
-            picture = screen.convert("RGB")
-            if recipe.crop:
-                picture = picture.crop(recipe.crop)
-            # (The screen has at most 256 colours, so a palette keeps it exactly, much smaller.)
-            picture.convert("P", palette=Image.Palette.ADAPTIVE, colors=256).save(
-                setup.images / f"{id_}.png", optimize=True
-            )
+        for name in [id_, *recipe.also]:
+            taken = Path(work) / f"{name}.bmp"
+            source = taken if taken.exists() else bmp
+            if not source.exists() or (name != id_ and not taken.exists()):
+                return f"no picture for {name} (the commands need `screenshot {name}`)"
+            with Image.open(source) as screen:
+                picture = screen.convert("RGB")
+                if recipe.crop and name == id_:
+                    picture = picture.crop(recipe.crop)
+                # (The screen has at most 256 colours, so a palette keeps it exactly, much smaller.)
+                picture.convert("P", palette=Image.Palette.ADAPTIVE, colors=256).save(
+                    setup.images / f"{name}.png", optimize=True
+                )
     return ""
 
 

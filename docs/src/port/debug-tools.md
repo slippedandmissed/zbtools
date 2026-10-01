@@ -81,9 +81,18 @@ The puzzles are described in [Gameplay and the code](../gameplay/index.md), and 
 | `state get OFFSET [SIZE]`, `state set OFFSET VALUE [SIZE]` | read or write 1, 2 or 4 bytes (default 1) of `gameState` at a byte offset, for what has no command ([layout](../codebase/game-state.md)); numbers can be decimal or `0x` hex. Nothing checks the values: one the game doesn't expect (such as a camp nibble above 1) can crash it |
 | `cheatcode HASH CODE` | set the game's cheat tracker (`cheatHash`, `cheatCode`) to those values, so that the next `isCheat(HASH, CODE)` test passes. This suits tests made when a hotspot is clicked (the map's hidden scenes, though `scene 19` and `20` are simpler); a key typed afterwards shifts the tracker, so it can't trigger the key-driven ones |
 | `click X Y [press\|move\|release]` | click the mouse at a point of the screen now, or only press, move or release the button (a drag is `click X Y press; wait 300; click X2 Y2 move; wait 300; click X2 Y2 release`) |
+| `zoombinis` | list the party's Zoombini views in the order they were made (the party's order): where each one is, its features, name and state. The numbers below are these indexes, from 0 |
+| `click zoombini N` | click the middle of Zoombini N's picture |
+| `drag zoombini N X Y` | drag Zoombini N so that its feet end at (X, Y): the grab is at its middle and the game puts the feet where the pointer is, less that offset, so X, Y is where it should *stand* |
+| `drag zoombini N place K` | the same, to the K-th (from 1) of the scene's placed points (`places`): where a puzzle's drop spots are (a bridge's start, a seat, a room's door) |
+| `drag X1 Y1 X2 Y2` | a drag from one point to another (press, three moves with a pause each, release) |
+| `places` | list the scene's placed points (where a dragged Zoombini can be claimed: `placedViewPoints`, with which are taken) and its standing spots (`viewPlaces`) |
 | `key CODE` | gives the game the key CODE as if typed: ASCII for characters (`key 0x4e` is `N`), 1-26 for Ctrl-A to Ctrl-Z. The cheat tracker sees it too: `key 1; key 109; key 105; key 100; key 105; key 32` types the real code `Ctrl-A midi ` (the game's MIDI test) |
 | `roster save`, `roster load` | write `gameState` to the current saved game, or read it back |
 | `wait MS`, `wait scene N` | hold up the commands after, see [Waiting](#concepts) |
+| `set NAME VALUE`, `seed N` | write a game global by name (below); `seed` seeds the game's random numbers (`randomSeed`), which it otherwise takes from the time |
+| `wait until NAME OP VALUE` | hold up the commands after until the value passes the test (`==`, `!=`, `<`, `>`, `<=`, `>=`): `wait until crossingUnderway == 1` |
+| `screenshot NAME` | write the screen now as `NAME.bmp` beside the `--screenshot` path (with `uv run shots`, a recipe's `also` pictures) |
 | `get NAME`, `assert NAME VALUE` | print or check a value; the names are `scene`, `pending` (the scene about to open, -1 if none), `practice`, `party` (the count), `debug`, `dialog` (non-zero while a dialog is up), `transitions`, `due` (the scene the current one is about to leave for), `clock` and `viewclock` (the game's clock in 60ths of a second, and the time since the last input), `level1`-`level4` (1-4) and `state:OFFSET[:SIZE]` |
 | `paldiff` | print which entries of the scene's own palette (`loadedPalette`) differ from the one the screen fades to (`targetPalette`): none when a scene's colours are right; for finding scenes that don't copy their palette |
 | `dump`, `help`, `quit` | print the main state, list the commands, exit (status 1 if any assertion or command failed) |
@@ -115,3 +124,16 @@ With `debug on` the game's own debugging keys work (`mainloop.cpp:gameKey`), and
 - On the web, C: is persisted in IndexedDB: a command that changes the state, and any scene the game then enters, can end up saved over the player's roster. Use a private window for experiments.
 - `scene N` skips the game's own setup of that scene; give it a party (`party`) and levels (`level`) first, and note that `#` comments run to the end of a `;`-separated command, not the line.
 - The commands were written without a runtime to hand: if one misbehaves, fix it here and in this table.
+
+## Game globals by name
+
+`get`, `set`, `assert` and `wait until` also take the name of any integer global (`char`, `short`, `int` or `long`, signed or not, alone or as an array of one or two dimensions: `name[3]`, `name[1][2]`) that `decomp/`'s headers declare and a source defines: `get bridgeLevel`, `get queuedCount`, `wait until sentBackCount >= 1`, `set clickToDragOption 0`. The table is generated from the headers by `zbtools.debug_globals` (`uv run port build` writes `build/port/generated/debug_globals.inc`), so a renamed global keeps working and a new one appears; structs, pointers and anything else aren't in it. Reading a puzzle's own variables is how a script waits for the game rather than for a time, and how to find out what a puzzle thinks is happening.
+
+## Playing a puzzle
+
+A puzzle is played with drags, and a few things about the game's own input matter:
+
+- **Turn "sticky mouse" off** (`set clickToDragOption 0; set dragClicks 0`, the options' Ctrl-J): with it on (the default) the game treats a release as "pick up" and waits for a second click to drop, so a scripted drag would hang.
+- **Aim by where the Zoombini stands.** The game claims a drop spot when the Zoombini's *feet* are within `placeSnapRadius` of it, which is why `drag zoombini N place K` and `drag zoombini N X Y` work in feet, not pointer, coordinates.
+- **Pause before the release** (the built-in drags do): the game's drag loop has to see the pointer at the end before the button goes up.
+- **Wait for the game, not the clock**: `wait until crossingUnderway == 1`, `wait until placeHeld == 0` and the like. While a drag or a click handler runs, the game runs its own loops, and the commands go on in them.
