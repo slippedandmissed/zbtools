@@ -2932,6 +2932,51 @@ void startSnoidScript(Snoid *snoid, short id, Point *anchor, char idleTicks)
     unionRgnRect(removedRgn, &snoid->body.bounds);
 }
 
+#ifdef ZB_PERFECT_CLEARS_PER_LEVEL
+/*
+ * Not in the original, which raises a group's level on every perfect clear.
+ * Counts one for `group` and tells whether ZB_PERFECT_CLEARS_PER_LEVEL have
+ * now been made, so that the level goes up (the count then starts again).
+ * The count is kept in bits 14-15 of the visit counter of the group's last
+ * scene (Pizza Pass, Stone Rise, Mudball Wall, Bubblewonder Abyss), which
+ * campHint leaves alone: saved games keep their layout, and old ones start
+ * at 0.
+ */
+static_assert(ZB_PERFECT_CLEARS_PER_LEVEL >= 1 && ZB_PERFECT_CLEARS_PER_LEVEL <= 4,
+              "the count has two bits");
+
+static unsigned short *perfectClearWord(short group)
+{
+    static const short offsets[5] = {0, 0x2e, 0x36, 0x3c, 0x44};
+
+    return (unsigned short *)(gameState + offsets[group]);
+}
+
+short perfectClears(short group)
+{
+    return *perfectClearWord(group) >> 14;
+}
+
+void setPerfectClears(short group, short count)
+{
+    unsigned short *word = perfectClearWord(group);
+
+    *word = (*word & 0x3fff) | (unsigned short)(count << 14);
+}
+
+static short countPerfectClear(short group)
+{
+    short count = perfectClears(group) + 1;
+
+    if (count >= ZB_PERFECT_CLEARS_PER_LEVEL) {
+        setPerfectClears(group, 0);
+        return 1;
+    }
+    setPerfectClears(group, count);
+    return 0;
+}
+#endif
+
 /*
  * Records the party as a scene ends: the Zoombinis on screen (the chosen
  * first; all count as on board if `all`) become the party. In a puzzle
@@ -3127,7 +3172,11 @@ void recordParty(short ending, short all)
                     recordLevels()[i] = puzzleLevels()[group] + 1;
                     i = 16;
                 }
+#ifdef ZB_PERFECT_CLEARS_PER_LEVEL
+            if (last && puzzleLevels()[group] < 3 && countPerfectClear(group)) {
+#else
             if (last && puzzleLevels()[group] < 3) {
+#endif
                 puzzleLevels()[group]++;
                 levelJustRaised = 1;
             }

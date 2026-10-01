@@ -142,3 +142,7 @@ seed = 7
 seconds = 150
 commands = "party 8; scene 11; wait 7000; drag 19 346 126 282; wait 900; drag 48 178 146 136; wait 900; drag 68 119 108 369; wait 900; drag 45 364 148 108; wait 900; drag 49 328 134 224; wait 900; drag 54 263 151 79; wait 900; drag 41 290 141 195; wait 900; drag 60 206 144 166; wait 900; assert padsPlaced 8; click 618 458; wait until padsArrived >= 1; wait 1500; screenshot on-the-far-bank; wait 14000; assert jumperBusy 0; assert jumper2Busy 0; assert landerBusy 0; assert event44Count 0; assert event60Count 0; screenshot back-on-the-near-bank"
 
+[perfect-clears]
+description = "Three flawless trips through Pizza Pass raise group 1's level (the port's rule; the original needs one); a trip that loses Zoombinis counts for nothing"
+commands = "party 4; scene 9; wait 8000; state set 0x54 1 2; set pizzaGoReady 1; click 620 458; wait scene 4; wait 1000; assert clears1 1; assert level1 1; party 4; scene 9; wait 5000; scene 4; wait 2000; assert clears1 1; assert level1 1; party 4; scene 9; wait 8000; state set 0x54 1 2; set pizzaGoReady 1; click 620 458; wait scene 4; wait 1000; assert clears1 2; assert level1 1; scene 1; wait 3000; screenshot two-clears; party 4; scene 9; wait 8000; state set 0x54 1 2; set pizzaGoReady 1; click 620 458; wait scene 4; wait 1000; assert clears1 0; assert level1 2; scene 1; wait 3000; screenshot three-clears"
+seconds = 240
