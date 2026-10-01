@@ -4,17 +4,23 @@ Where the game begins: the player builds the Zoombinis who will make the journey
 
 ## On screen
 
+![Zoombini Isle: the panel of feature buttons (four rows of five) at lower left, the Zoombini being made in the middle, and the queue of finished Zoombinis waiting along the shore.](../images/isle-overview.png)
+
 > 📷 **Screenshot: `isle-overview`**
 > *Zoombini Isle: the panel of feature buttons (four rows of five) at lower left, the Zoombini being made in the middle, and the queue of finished Zoombinis waiting along the shore.*
 > *Capture:* start a new game; you arrive here after the logo.
+
+![Close-up of the feature panel: hair, eyes, nose and feet choices (5 each) and the seven panel buttons below it.](../images/isle-feature-panel.png)
 
 > 📷 **Screenshot: `isle-feature-panel`**
 > *Close-up of the feature panel: hair, eyes, nose and feet choices (5 each) and the seven panel buttons below it.*
 > *Capture:* same scene, crop to the panel (`isleButtons`, x 3-198, y 304-478).
 
+![A party of Zoombinis walking off toward the map after the player clicks the "send off" button.](../images/isle-sending-off.png)
+
 > 📷 **Screenshot: `isle-sending-off`**
-> *A party of Zoombinis walking off toward the map after the player clicks the "send off" button.*
-> *Capture:* make at least the minimum party, click button 6.
+> *A Zoombini boarding the ship, up its ladder, after the player clicks the "go" button with sixteen Zoombinis chosen (the rest follow one at a time).*
+> *Capture:* make sixteen Zoombinis, click button 6.
 
 ## Scene facts
 

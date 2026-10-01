@@ -7,9 +7,13 @@
 - **Scene 19 / 21 — catching** (`openCatch`, `catchFrame`, `catchClicked`; `Picker.MHK`): set up for "9 throws of 99" with Zoombinis crossing (`catchCrossers`, `nextCatchSendTime`) and a score of how many are caught (`caughtNotify`, `placeCatchScore`).
 - **Scene 20 — targets** (`openTargets`, `targetsFrame`, `targetsClicked`): targets that burst when hit (`fireShot`, `placeShot`, `startTarget`, `burstNotify`, `bigTargetOut`, `placeTargetScore`, `driftView`).
 
+![The hidden catching game.](../images/hidden-catch.png)
+
 > 📷 **Screenshot: `hidden-catch`**
 > *The hidden catching game.*
 > *Capture:* on the map, type the cheat code that `isCheat(0x469110d3, 0x1e1c32f2)` tests for, then click hotspot 9 (or, in the port's [debug tools](../port/debug-tools.md), `scene 19`).
+
+![The hidden targets game.](../images/hidden-targets.png)
 
 > 📷 **Screenshot: `hidden-targets`**
 > *The hidden targets game.*

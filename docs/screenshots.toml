@@ -1,0 +1,117 @@
+# Recipes for `uv run shots` (src/zbtools/shots.py): for each screenshot placeholder, the
+# debug commands (handbook, "Debug tools") that take the headless port to the moment; `quit`
+# ends the run and the last frame is the picture. `seconds` is a safety limit, `crop` the part
+# of the 640x480 screen to keep.
+#
+# Handy: `party N` makes a party that sets out; `scene N` goes to a scene (`scene N map` by the
+# journey scene); the screen's buttons are at x 618 (map y 415, go y 458); a drag is
+# `click X Y press; wait 300; click X2 Y2 move; wait 250; click X2 Y2 release`.
+
+[camp1-overview]
+commands = "party 16; scene 4; wait 8000; quit"
+
+[camp1-drag]
+commands = "party 16; scene 4; wait 8000; click 261 368 press; wait 300; click 267 329 move; wait 250; click 280 289 move; wait 250; click 300 250 move; wait 600; quit"
+
+[camp2-book]
+commands = "party 16; scene 5; wait 8000; quit"
+
+[cliffs-overview]
+commands = "party 8; scene 7; wait 8000; quit"
+
+[caves-overview]
+commands = "party 8; scene 8; wait 8000; quit"
+
+[pizza-overview]
+commands = "party 8; scene 9; wait 8000; quit"
+
+[ferry-overview]
+commands = "party 8; scene 10; wait 8000; quit"
+
+[toads-overview]
+commands = "party 8; scene 11; wait 8000; quit"
+
+[stonerise-overview]
+commands = "party 8; scene 12; wait 8000; quit"
+
+[fleens-overview]
+commands = "party 8; scene 13; wait 8000; quit"
+
+[hotel-overview]
+commands = "level 3 3; party 8; scene 14; wait 9000; quit"
+
+[mudball-overview]
+commands = "party 8; scene 15; wait 8000; quit"
+
+[lion-overview]
+commands = "party 8; scene 16; wait 8000; quit"
+
+[mirror-overview]
+commands = "party 8; scene 17; wait 8000; quit"
+
+[bubble-overview]
+commands = "party 8; scene 18; wait 8000; quit"
+
+[hidden-catch]
+commands = "party 8; scene 19; wait 12000; quit"
+
+[hidden-targets]
+commands = "party 8; scene 20; wait 12000; quit"
+
+[journey-overview]
+commands = "practice 1; scene 1; wait 6000; quit"
+
+[isle-overview]
+commands = "debug on; scene 3; wait 6000; click 25 323; wait 250; click 25 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 65 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 105 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 145 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 185 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 65 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 105 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 145 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 185 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 25 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 105 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 145 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 185 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 25 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 65 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 145 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; wait 6000; quit"
+seconds = 150
+
+[isle-feature-panel]
+commands = "debug on; scene 3; wait 6000; click 25 323; wait 250; click 25 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 65 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 105 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 145 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 185 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 65 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 105 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 145 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 185 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 25 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 105 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 145 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 185 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 25 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 65 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 145 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; wait 3000; quit"
+seconds = 150
+crop = [0, 300, 210, 480]
+
+[isle-sending-off]
+commands = "debug on; scene 3; wait 6000; click 25 323; wait 250; click 25 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 65 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 105 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 145 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 185 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 65 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 105 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 145 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 185 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 25 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 105 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 145 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 185 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 25 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 65 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 145 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; wait 3000; click 618 458; wait 4500; quit"
+seconds = 150
+
+[map-overview]
+commands = "scene 1; wait 6000; quit"
+
+[start-logo]
+commands = "wait 3000; quit"
+
+[dialog-keep-party]
+commands = "party 8; scene 7; wait 8000; click 618 415; wait 2500; quit"
+
+[dialog-options]
+commands = "scene 1; wait 4000; key 63; wait 3000; quit"
+
+[town-overview]
+commands = "records 16; scene 6; wait 8000; quit"
+
+[pizza-trolls]
+commands = "level 1 3; party 8; scene 9; wait 8000; debug on; key 82; key 79; key 68; key 112; wait 2500; quit"
+
+[mirror-grid]
+commands = "level 4 4; party 8; scene 17; wait 9000; quit"
+
+[bubble-lines]
+commands = "level 4 4; party 8; scene 18; wait 9000; quit"
+
+[map-practice-levels]
+commands = "debug on; practice 1; scene 1; wait 4000; key 43; wait 400; key 43; wait 400; key 43; wait 1500; quit"
+
+[dialog-games]
+commands = "scene 1; wait 4000; key 19; wait 2000; quit"
+
+[town-clock]
+commands = "records 16; scene 6; wait 8000; click 632 200; wait 1800; click 632 200; wait 1800; quit"
+
+# (`scene N map` goes by the journey scene, 2, only between groups, and with "transitions" off;
+# the journey stays up for its narration, so a few seconds in is mid-journey.)
+[journey-travel]
+commands = "party 8; scene 9; wait 3000; transitions off; scene 4 map; wait 4000; quit"
+
+[journey-population-sign]
+commands = "party 8; scene 18; wait 3000; transitions off; scene 6 map; wait 4000; quit"
+

@@ -8,7 +8,7 @@ The port can be built with a small command interpreter (`port/debug/zbdebug.cpp`
 
 ## Giving commands
 
-Commands are separated by `;` or newlines (`#` starts a comment) and queued to run when the game is at rest: active, no dialog, no scene change pending. "At rest" also means that none of a scene's own callbacks (`open`, `close`, `frame`, `key`) is running: they often run the main loop themselves while they wait for a sound or an animation, which calls the frame hook again from inside them, and a command run there would change the scene under them. `zbdebug.cpp` wraps each scene's callbacks to count them (before the game starts). A command that changes the scene holds up the ones after it until the new scene is open. The game starts in scene 0 (the intro), so a first command like `scene 1` waits until the intro's frames run.
+Commands are separated by `;` or newlines (`#` starts a comment) and queued to run when the game is at rest: active, no dialog, no scene change pending. "At rest" also means that none of a scene's own callbacks (`open`, `close`, `frame`, `key`) is running: they often run the main loop themselves while they wait for a sound or an animation, which calls the frame hook again from inside them, and a command run there would change the scene under them. `zbdebug.cpp` wraps each scene's callbacks to count them (before the game starts). A command that changes the scene holds up the ones after it until the scene it entered is open. The game starts in scene 0 (the intro), so a first command like `scene 1` waits until the intro's frames run.
 
 | Where | How |
 | --- | --- |
@@ -35,7 +35,7 @@ The commands name things from the game's own structure; this is what they are (t
 - **Journey map.** Between most scenes the game shows the party travelling over the map (scene 2). `scene N` skips it unless given `map`.
 - **Camps and their "unlock bits".** Shelter Rock (4), Shade Tree (5) and Zoombiniville (6) can be visited from the map only after the group before them has been cleared. The game remembers this as bits in `gameState`: for each group, one bit per level it has been left at. Shelter Rock opens on `gameState[0x50] & 0xf` (group 1), Shade Tree on `0x52` (the low nibble is group 2, the high nibble group 3) and Zoombiniville on `0x51` (group 4). The map reads such a nibble as a *level number* while the group is still at level 1, so only 0 (not cleared) and 1 (cleared) are valid there: a nibble of 15 makes the map index past its four levels' views and crash (`openMap`, in `runViewScript`). `unlock` therefore sets only the lowest bit of each group's nibble (`0x50` and `0x51` to 1, `0x52` to `0x11`), as the game's own debug key `@` does, so every camp can be chosen on the map. It doesn't change the levels or the records.
 - **Records.** Zoombiniville's monuments (scene 6) each commemorate one journey the player completed: a date, a group and a level. `gameState` holds up to 16 of them, and the town draws one monument per record. The game adds one when the last puzzle of a group is cleared at a level it hasn't recorded yet. `records N` makes the first N slots (in order: group 1 at levels 1-4, then group 2, and so on) into completed journeys dated 1 January 1996, and clears the rest, so `records 0` empties the town and `records 16` fills it.
-- **Waiting.** Commands run in order, but only when the game is at rest (running, no dialog, no scene change under way). `scene N` also holds up the commands after it until scene N has opened (it may pass through the journey map first). `wait scene N` holds them until scene N is the current scene, which is for changes that something else makes: a `--click`, a `key`, a puzzle finishing. It continues at once if the game is already in N, and the rest of the queue stalls if N never comes. `wait MS` holds them for that many milliseconds. A `wait` after `scene` is what gives a scene time to start and draw before a `--screenshot` or `assert`.
+- **Waiting.** Commands run in order, but only when the game is at rest (running, no dialog, no scene change under way). `scene N` also holds up the commands after it until the scene it entered has opened: scene N, or with `map` the journey scene (2) on the way, which stays up until its narration has played (about twenty seconds in the headless port); follow it with `wait scene N` to wait for N itself. `wait scene N` holds them until scene N is the current scene, which is for changes that something else makes: a `--click`, a `key`, a puzzle finishing. It continues at once if the game is already in N, and the rest of the queue stalls if N never comes. `wait MS` holds them for that many milliseconds. A `wait` after `scene` is what gives a scene time to start and draw before a `--screenshot` or `assert`.
 - **Debug mode.** `debug on` turns on the game's own debugging keys (below), the ones its hashed cheat enables.
 
 ## Scenes
@@ -71,22 +71,24 @@ The puzzles are described in [Gameplay and the code](../gameplay/index.md), and 
 | Command | Does |
 | --- | --- |
 | `debug on\|off` | turns the game's debugging keys on or off ([below](#debug-keys)) |
-| `scene N [map]` | leave the current scene (the way the game does, closing it) and open scene N (0-21), skipping the journey map unless `map`; holds up the commands after it until N is open |
+| `transitions on\|off` | the options' "transitions" (Ctrl-T): the game starts with it on, and **off** is what shows the journey screen (scene 2) between scenes |
+| `scene N [map]` | leave the current scene (the way the game does, closing it) and open scene N (0-21), skipping the journey map unless `map` (which goes by the journey scene, 2, if the game shows one between the two); holds up the commands after it until the scene entered is open |
 | `level G L` | group G (1-4) is at level L (1-4): its three puzzles now play at that level |
 | `practice L` | practice mode at level L (1-4); 0 leaves it |
-| `party N` | the party that sets out: N Zoombinis (up to 16), all on board, each a different kind, named `Debug0`, `Debug1`, …. It is made again on every later `scene`, as leaving a scene can empty it |
+| `party N` | the party that sets out: N Zoombinis (up to 16), all on board, each a different kind, with names made the way the game makes them. It is made again on every later `scene`, as leaving a scene can empty it |
 | `unlock` | marks every group as cleared (the lowest unlock bit of each), so the map's camp hotspots can be chosen |
 | `records N` | the first N of the town's 16 monument records are completed journeys; the rest are cleared |
 | `state get OFFSET [SIZE]`, `state set OFFSET VALUE [SIZE]` | read or write 1, 2 or 4 bytes (default 1) of `gameState` at a byte offset, for what has no command ([layout](../codebase/game-state.md)); numbers can be decimal or `0x` hex. Nothing checks the values: one the game doesn't expect (such as a camp nibble above 1) can crash it |
 | `cheatcode HASH CODE` | set the game's cheat tracker (`cheatHash`, `cheatCode`) to those values, so that the next `isCheat(HASH, CODE)` test passes. This suits tests made when a hotspot is clicked (the map's hidden scenes, though `scene 19` and `20` are simpler); a key typed afterwards shifts the tracker, so it can't trigger the key-driven ones |
+| `click X Y [press\|move\|release]` | click the mouse at a point of the screen now, or only press, move or release the button (a drag is `click X Y press; wait 300; click X2 Y2 move; wait 300; click X2 Y2 release`) |
 | `key CODE` | gives the game the key CODE as if typed: ASCII for characters (`key 0x4e` is `N`), 1-26 for Ctrl-A to Ctrl-Z. The cheat tracker sees it too: `key 1; key 109; key 105; key 100; key 105; key 32` types the real code `Ctrl-A midi ` (the game's MIDI test) |
 | `roster save`, `roster load` | write `gameState` to the current saved game, or read it back |
 | `wait MS`, `wait scene N` | hold up the commands after, see [Waiting](#concepts) |
-| `get NAME`, `assert NAME VALUE` | print or check a value; the names are `scene`, `pending` (the scene about to open, -1 if none), `practice`, `party` (the count), `debug`, `dialog` (non-zero while a dialog is up), `level1`-`level4` (1-4) and `state:OFFSET[:SIZE]` |
+| `get NAME`, `assert NAME VALUE` | print or check a value; the names are `scene`, `pending` (the scene about to open, -1 if none), `practice`, `party` (the count), `debug`, `dialog` (non-zero while a dialog is up), `transitions`, `due` (the scene the current one is about to leave for), `clock` and `viewclock` (the game's clock in 60ths of a second, and the time since the last input), `level1`-`level4` (1-4) and `state:OFFSET[:SIZE]` |
 | `paldiff` | print which entries of the scene's own palette (`loadedPalette`) differ from the one the screen fades to (`targetPalette`): none when a scene's colours are right; for finding scenes that don't copy their palette |
 | `dump`, `help`, `quit` | print the main state, list the commands, exit (status 1 if any assertion or command failed) |
 
-Mouse input stays with `--click`.
+`click` and `--click` are the mouse: `click X Y` (on the 640×480 screen) clicks now, and `press`, `move` and `release` after it make a drag with `wait`s between; `--click MS:X,Y` does the same at a time after the start.
 
 ### Examples
 

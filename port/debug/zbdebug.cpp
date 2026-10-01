@@ -19,10 +19,12 @@
 
 #include "zoombinis.h"
 #include "basecamp.h"
+#include "debug.h"
 #include "mainloop.h"
 #include "net.h"
 #include "roster.h"
 #include "snoids.h"
+#include "view.h"
 
 #include <deque>
 #include <string>
@@ -47,6 +49,11 @@ EM_JS(int, takePageCommands, (char *buffer, int size), {
     return 1;
 });
 #endif
+
+/* miniwin's scripted click (port/miniwin/screen.cpp); with `at` 0 it happens now. */
+namespace miniwin {
+void scriptClick(DWORD at, int x, int y, int action);
+}
 
 namespace {
 
@@ -127,6 +134,14 @@ bool lookup(const std::string &name, long *value)
         *value = pendingScene;
     else if (name == "practice")
         *value = practiceLevel;
+    else if (name == "due")
+        *value = sceneDue;
+    else if (name == "clock")
+        *value = (long)clockTime();
+    else if (name == "viewclock")
+        *value = (long)viewClock();
+    else if (name == "transitions")
+        *value = transitionsOn;
     else if (name == "party")
         *value = party()->count;
     else if (name == "debug")
@@ -238,7 +253,7 @@ void makeParty(long n)
         traveller->features[2] = nose + 1;
         traveller->features[3] = feet + 1;
         traveller->onboard = 1;
-        sprintf(traveller->name, "Debug%ld", i);
+        makeName(traveller->name, sizeof traveller->name);
         zoombiniCounts()[hair][eyes][nose][feet] = 1;
     }
 }
@@ -254,9 +269,12 @@ void changeScene(short scene, bool viaMap)
     if (debugPartyCount >= 0)
         makeParty(debugPartyCount);
     skipJourneyMap = !viaMap;
+    resetViewClock(); /* (the journey scene leaves once the clock, idle time, passes 300 ticks) */
     pendingScene = scene;
-    waitingForScene = scene;
     enterNextScene();
+    /* The scene entered: `scene` itself, or with `map` the journey scene (2) on the way, which
+       lasts as long as its narration; `wait scene N` waits for the destination. */
+    waitingForScene = currentScene;
     sceneChanged = true;
 }
 
@@ -275,7 +293,7 @@ void fillRecords(long count)
 
 void help()
 {
-    say("commands: debug on|off | scene N [map] | level G L | practice L (0 off) | party N"
+    say("commands: debug on|off | transitions on|off | scene N [map] | level G L | practice L (0 off) | party N"
         " | unlock | records N | state get|set OFFSET [VALUE] [SIZE] | cheatcode HASH CODE"
         " | paldiff | key CODE | roster save | roster load | wait MS | wait scene N | get NAME"
         " | assert NAME VALUE | dump | quit | help");
@@ -308,6 +326,9 @@ void run(const std::string &line)
     if (command == "debug" && n == 2) {
         debugMessagesOn = w[1] == "on";
         debugMode = debugMessagesOn;
+    } else if (command == "transitions" && n == 2 && (w[1] == "on" || w[1] == "off")) {
+        /* The options' "transitions" (Ctrl-T): off shows the journey screen between scenes. */
+        transitionsOn = w[1] == "on";
     } else if (command == "scene" && n >= 2 && number(w[1], &a) && a >= 0 && a <= 21) {
         changeScene((short)a, n >= 3 && w[2] == "map");
     } else if (command == "level" && n == 3 && number(w[1], &a) && number(w[2], &b) && a >= 1 && a <= 4
@@ -343,6 +364,11 @@ void run(const std::string &line)
     } else if (command == "cheatcode" && n == 3 && number(w[1], &a) && number(w[2], &b)) {
         cheatHash = a;
         cheatCode = b;
+    } else if (command == "click" && n >= 3 && n <= 4 && number(w[1], &a) && number(w[2], &b)
+               && (n == 3 || w[3] == "press" || w[3] == "move" || w[3] == "release")) {
+        /* 0: a click, 1: press, 2: move, 3: release (as --click's actions) */
+        int action = n == 3 ? 0 : w[3] == "press" ? 1 : w[3] == "move" ? 2 : 3;
+        miniwin::scriptClick(0, (int)a, (int)b, action);
     } else if (command == "key" && n == 2 && number(w[1], &a)) {
         gameKey((unsigned short)a);
     } else if (command == "roster" && n == 2 && w[1] == "save") {
