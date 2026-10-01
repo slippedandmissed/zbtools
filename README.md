@@ -14,7 +14,7 @@ A nostalgic game from my childhood, and my latest attempt at getting it decompil
 
 The target is the 1996 Windows release by Broderbund. The disc ships two builds of the game; this project targets the **32-bit Windows 95 build** (`zoombi32.exe`, a PE32 executable built with Borland C++ 4.5). Its assets are Mohawk archives, the container format of Myst and Living Books.
 
-- **Play it:** the decompiled game runs in your browser as WebAssembly at **[zoombinis.online](https://zoombinis.online)**. It starts, reaches Zoombini Isle and plays its music, sound effects and intro movie. It is an unofficial fan project, not affiliated with the game's creators or publishers.
+- **Play it:** the decompiled game runs in your browser as WebAssembly at **[zoombinis.online](https://zoombinis.online)**. It's a complete port, though not yet fully tested, so you may encounter bugs. It is an unofficial fan project, not affiliated with the game's creators or publishers.
 - **Read about it:** the **[handbook](https://docs.zoombinis.online)** explains how everything works: the tools, the file formats, the decompiled code and engine, the port, and a walk through the game that links each screen and puzzle to the code behind it. Its source is in [`docs/`](docs/src/introduction.md).
 
 ## Status
