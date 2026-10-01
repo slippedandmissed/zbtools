@@ -91,7 +91,10 @@ Development checks: `uv run lint` (ruff, strict mypy, pytest), also run as a pre
 - [x] Reverse-engineer Broderbund's `QkBk` video codec, and convert the movies to a modern format and back, exactly (`uv run assets`, `uv run movie-check`)
 - [x] Replace the QuickTime stand-in with working glue, so the rebuilt game plays its intro movie in the VM
 - [x] Play the intro movie in the port, from its modern format (`port/glue/quicktime.cpp`)
-- [x] Port to a modern platform layer: SDL2 and a Win32 subset, running the decompiled game as WebAssembly, natively and headless, with the intro movie, sound and music (`uv run port`)
+- [x] Port to WebAssembly: SDL2 and a Win32 subset (*miniwin*) running the decompiled game in a browser, with the intro movie, sound and music (`uv run port`)
+- [ ] Port to Windows (native)
+- [ ] Port to macOS (native)
+- [ ] Port to Linux (native)
 - [ ] Play the port through every puzzle, fixing what differs from the original
 - [ ] Make the decompiled code 64-bit clean (pointers are kept in `long`s in places), so the port can build natively on 64-bit hosts
 
