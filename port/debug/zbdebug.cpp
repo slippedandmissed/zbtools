@@ -347,6 +347,10 @@ bool lookup(const std::string &name, long *value)
         *value = dialogFlags;
     else if (name.compare(0, 5, "level") == 0 && name.size() == 6 && name[5] >= '1' && name[5] <= '4')
         *value = puzzleLevels()[name[5] - '0'] + 1;
+#ifdef ZB_PERFECT_CLEARS_PER_LEVEL
+    else if (name.compare(0, 6, "clears") == 0 && name.size() == 7 && name[6] >= '1' && name[6] <= '4')
+        *value = perfectClears(name[6] - '0');
+#endif
     else if (name.compare(0, 6, "state:") == 0) {
         long offset, size = 1;
         std::string rest = name.substr(6);
@@ -495,7 +499,7 @@ void fillRecords(long count)
 
 void help()
 {
-    say("commands: debug on|off | transitions on|off | scene N [map] | level G L | practice L (0 off) | party N"
+    say("commands: debug on|off | transitions on|off | scene N [map] | level G L | clears G [N] | practice L (0 off) | party N"
         " | unlock | records N | state get|set OFFSET [VALUE] [SIZE] | cheatcode HASH CODE"
         " | paldiff | key CODE | roster save | roster load | wait MS | wait scene N | get NAME"
         " | assert NAME VALUE | dump | quit | help");
@@ -536,6 +540,16 @@ void run(const std::string &line)
     } else if (command == "level" && n == 3 && number(w[1], &a) && number(w[2], &b) && a >= 1 && a <= 4
                && b >= 1 && b <= 4) {
         puzzleLevels()[a] = (short)(b - 1);
+    } else if (command == "clears" && (n == 2 || n == 3) && number(w[1], &a) && a >= 1 && a <= 4) {
+#ifdef ZB_PERFECT_CLEARS_PER_LEVEL
+        if (n == 3 && number(w[2], &b) && b >= 0 && b <= 3)
+            setPerfectClears((short)a, (short)b);
+        else if (n == 3)
+            return fail(line, "bad count");
+        say("clears[%ld] = %d", a, perfectClears((short)a));
+#else
+        return fail(line, "built without ZB_PERFECT_CLEARS_PER_LEVEL");
+#endif
     } else if (command == "practice" && n == 2 && number(w[1], &a) && a >= 0 && a <= 4) {
         practiceLevel = (short)a;
     } else if (command == "party" && n == 2 && number(w[1], &a)) {

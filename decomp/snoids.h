@@ -12,6 +12,10 @@ extern short placeHeld; /* @data 0x4b7b3a */
 extern SnoidArrived arrivalHook; /* @data 0x4b7b68: told when a Zoombini arrives */
 void showNameTag(const char *text, unsigned long duration, short large); /* 0x4589ce */
 void recordParty(short ending, short all);
+#ifdef ZB_PERFECT_CLEARS_PER_LEVEL
+short perfectClears(short group); /* the port's: perfect clears made towards the group's next level */
+void setPerfectClears(short group, short count);
+#endif
 void freePaths();
 /* snoids */
 void resetSnoids(); /* 0x456c00 */

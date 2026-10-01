@@ -124,6 +124,15 @@ if(ZB_DEBUG)
     target_compile_definitions(game PRIVATE ZB_DEBUG)
 endif()
 
+# ZB_PERFECT_CLEARS_PER_LEVEL: how many perfect clears of a group (nobody lost in any of its
+# three puzzles) raise its level. The original raises it on the first, which players find a
+# difficulty spike; the port asks for three by default. 1 is the original's behaviour. The
+# count is kept in spare bits of a saved-game word (see recordParty in decomp/snoids.cpp).
+set(ZB_PERFECT_CLEARS_PER_LEVEL 3 CACHE STRING "Perfect clears per level increase (1-4; 1 = original)")
+if(ZB_PERFECT_CLEARS_PER_LEVEL GREATER 1)
+    target_compile_definitions(game PRIVATE ZB_PERFECT_CLEARS_PER_LEVEL=${ZB_PERFECT_CLEARS_PER_LEVEL})
+endif()
+
 # miniwin: the Win32 API over SDL2.
 file(GLOB MINIWIN_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/miniwin/*.cpp")
 add_library(miniwin STATIC ${MINIWIN_SOURCES})
