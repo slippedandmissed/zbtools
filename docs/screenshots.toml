@@ -139,3 +139,24 @@ commands = "set clickToDragOption 0; set dragClicks 0; seed 7; level 3 3; party 
 [lion-places]
 commands = "set clickToDragOption 0; set dragClicks 0; seed 7; party 8; scene 16; wait 7000; drag zoombini 0 place 8; wait 1500; drag zoombini 1 place 11; wait 1500; drag zoombini 2 place 14; wait 1500; drag zoombini 3 place 17; wait 2000; screenshot lion-places; quit"
 
+# Toads: a piece (a toad at the left) goes into a row whose left lily pad has the same
+# attribute value. `toads` lists the pieces (position, attribute, value) and the rows (entry
+# point, attributes) for the seed; these eight were matched by hand from it. Then "go", and a
+# Zoombini rides a toad across the pads.
+[toads-hop]
+commands = "set clickToDragOption 0; set dragClicks 0; seed 7; party 8; scene 11; wait 7000; drag 19 346 126 282; wait 900; drag 48 178 146 136; wait 900; drag 68 119 108 369; wait 900; drag 45 364 148 108; wait 900; drag 49 328 134 224; wait 900; drag 54 263 151 79; wait 900; drag 41 290 141 195; wait 900; drag 60 206 144 166; wait 900; click 618 458; wait 4000; screenshot toads-hop; quit"
+seconds = 90
+
+# A guard speaks when a Zoombini goes to a door (here the first).
+[caves-remark]
+commands = "set clickToDragOption 0; set dragClicks 0; seed 7; party 8; scene 8; wait 5000; drag zoombini 0 place 1; wait 4500; screenshot caves-remark; quit"
+
+# A topping is picked on the panel (button 4), then the Zoombini at the pizza spot (place 1) carries
+# the pizza to the trolls (button 3, the oven), and the first troll turns it down.
+[pizza-yuck]
+commands = "set clickToDragOption 0; set dragClicks 0; seed 7; party 8; scene 9; wait 8000; drag zoombini 0 place 1; wait 1500; click 60 197; wait 600; click 76 127; wait 8000; screenshot pizza-yuck; quit"
+
+# A hotspot is found when the pointer is on it (`monuments` lists them): move there, then click.
+[town-monument]
+commands = "records 16; scene 6; wait 8000; click 270 360 move; wait 600; click 270 360; wait 2500; screenshot town-monument; quit"
+

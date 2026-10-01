@@ -44,8 +44,10 @@ Chosen at Shelter Rock (button 1 → scene 10). Chained: Captain Cajun's Ferrybo
 > *The river with the grid of lily pads and toads.*
 > *Capture:* complete the ferry.
 
+![A Zoombini riding a toad across the lily pads, with the pieces already placed in their rows at the left.](../images/toads-hop.png)
+
 > 📷 **Screenshot: `toads-hop`**
-> *A Zoombini hopping across lily pads.*
+> *A Zoombini riding a toad across the lily pads, with the pieces already placed in their rows at the left.*
 > *Capture:* start the crossing once the board is set.
 
 | | |

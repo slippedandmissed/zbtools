@@ -44,14 +44,14 @@ Use PNG, at the game's native 640×480 where you can, named `<id>.png`.
 | `cliffs-overview` | [gameplay/group1](../gameplay/group1.md) | The cliffs: two bridges, upper and lower, with Zoombinis waiting at the left and the buttons at lower right. | start a new game, make a party, click button 6, wait for the journey. |
 | `cliffs-sneeze` | [gameplay/group1](../gameplay/group1.md) | The cliff sneezes: a Zoombini sent the wrong way, and the upper bridge thrown up into the air. | send a Zoombini across the wrong bridge. |
 | `caves-overview` | [gameplay/group1](../gameplay/group1.md) | The caves: four doors in the rock face, the characters at them, and Zoombinis queuing. | complete Allergic Cliffs. |
-| `caves-remark` | [gameplay/group1](../gameplay/group1.md) | A guard speaking one of its remarks. | wait on the screen. |
+| `caves-remark` | [gameplay/group1](../gameplay/group1.md) | A guard speaking, its mouth open, as a Zoombini goes to its door. | wait on the screen. |
 | `pizza-overview` | [gameplay/group1](../gameplay/group1.md) | Pizza Pass: the pizza being assembled in the middle with the topping buttons to its left, and the trolls waiting. | complete Stone Cold Caves. |
 | `pizza-trolls` | [gameplay/group1](../gameplay/group1.md) | The three trolls on their rocks (Arno at left, then Willa and Shyler), each with the pizza it has been served. | higher levels have more trolls. |
-| `pizza-yuck` | [gameplay/group1](../gameplay/group1.md) | A troll reacting to a pizza it dislikes. | serve a pizza with a topping the troll doesn't want. |
+| `pizza-yuck` | [gameplay/group1](../gameplay/group1.md) | A troll turning down the pizza it was served, slumped beside it on its rock. | serve a pizza with a topping the troll doesn't want. |
 | `ferry-overview` | [gameplay/group2](../gameplay/group2.md) | The river with Captain Cajun's ferry, the landing places and the Zoombinis waiting on the bank. | from Shelter Rock, set out with button 1. |
 | `ferry-crossing` | [gameplay/group2](../gameplay/group2.md) | The ferry loaded with Zoombinis and moving off, Captain Cajun at the helm at the right edge. | place some Zoombinis on the ferry's seats and let it cross. |
 | `toads-overview` | [gameplay/group2](../gameplay/group2.md) | The river with the grid of lily pads and toads. | complete the ferry. |
-| `toads-hop` | [gameplay/group2](../gameplay/group2.md) | A Zoombini hopping across lily pads. | start the crossing once the board is set. |
+| `toads-hop` | [gameplay/group2](../gameplay/group2.md) | A Zoombini riding a toad across the lily pads, with the pieces already placed in their rows at the left. | start the crossing once the board is set. |
 | `stonerise-overview` | [gameplay/group2](../gameplay/group2.md) | The cliff of stones with the Zoombinis waiting at the bottom and the cells above. | complete the toads. |
 | `stonerise-lit-path` | [gameplay/group2](../gameplay/group2.md) | Zoombinis placed on the hexes, with the red stones lit between them. | place Zoombinis in adjacent cells. |
 | `fleens-overview` | [gameplay/group3](../gameplay/group3.md) | The Fleens scene: a row of Fleens (small creatures) beside a line of Zoombinis. | from Shelter Rock, set out with button 2. |
