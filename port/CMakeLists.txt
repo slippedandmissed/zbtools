@@ -105,7 +105,11 @@ option(ZB_DEBUG "Build the debug tooling" ON)
 if(ZB_DEBUG)
     set(DEBUG_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/debug/zbdebug.cpp")
     # (-iquote: decomp/ has headers named like system ones, e.g. features.h.)
-    set_source_files_properties("${DEBUG_SOURCE}" PROPERTIES COMPILE_OPTIONS "-iquote;${REPO_ROOT}/decomp")
+    # (The globals the debug commands read by name: written by `uv run port build`; without it
+    # the table is empty.)
+    set(ZB_DEBUG_GENERATED_DIR "${CMAKE_BINARY_DIR}/../generated" CACHE PATH "Where debug_globals.inc is")
+    set_source_files_properties("${DEBUG_SOURCE}" PROPERTIES COMPILE_OPTIONS
+        "-iquote;${REPO_ROOT}/decomp;-iquote;${ZB_DEBUG_GENERATED_DIR}")
     target_sources(game PRIVATE "${DEBUG_SOURCE}")
     target_compile_definitions(game PRIVATE ZB_DEBUG)
 endif()
