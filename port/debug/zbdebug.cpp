@@ -26,6 +26,7 @@
 
 #include <deque>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifdef __EMSCRIPTEN__
@@ -55,6 +56,7 @@ bool waitingForTime;
 short waitingForScene = -2; /* -2: not waiting */
 short assertionsFailed;
 long debugPartyCount = -1; /* the last `party N`: -1 if none */
+int busy; /* how many scene callbacks (open, close, frame, key) are running */
 bool sceneChanged; /* a command changed the scene this pass */
 
 std::vector<std::string> words(const std::string &line)
@@ -148,6 +150,72 @@ bool lookup(const std::string &name, long *value)
     return true;
 }
 
+
+/*
+ * A scene's open, close, frame and key callbacks can run the main loop
+ * themselves while they wait (for a sound, an animation, a click), which calls
+ * the frame hook again from inside them. A command run there would change the
+ * scene under the callback that's running (closing a scene half-way through
+ * opening it). So each scene's callbacks are wrapped to count themselves, and
+ * commands wait until none is running.
+ */
+Scene original[22];
+
+template <int N> void openScene()
+{
+    busy++;
+    original[N].open();
+    busy--;
+}
+template <int N> void closeScene()
+{
+    busy++;
+    original[N].close();
+    busy--;
+}
+template <int N> void frameScene()
+{
+    busy++;
+    original[N].frame();
+    busy--;
+}
+template <int N> short keyScene(unsigned short key)
+{
+    busy++;
+    short handled = original[N].key(key);
+    busy--;
+    return handled;
+}
+
+template <int N> void wrapScene()
+{
+    Scene *scene = scenes[N];
+
+    for (int i = 0; i < N; i++)
+        if (scenes[i] == scene)
+            return; /* (scenes 19 and 21 are one) */
+    original[N] = *scene;
+    if (scene->open)
+        scene->open = openScene<N>;
+    if (scene->close)
+        scene->close = closeScene<N>;
+    if (scene->frame)
+        scene->frame = frameScene<N>;
+    if (scene->key)
+        scene->key = keyScene<N>;
+}
+
+template <int... N> void wrapScenes(std::integer_sequence<int, N...>)
+{
+    (wrapScene<N>(), ...);
+}
+
+/* (Done before the game starts, so no callback is already running.) */
+struct SceneWrapper
+{
+    SceneWrapper() { wrapScenes(std::make_integer_sequence<int, 22>()); }
+} sceneWrapper;
+
 /* A party of n Zoombinis, all on board, each of a different kind (hair, eyes, nose and feet in turn). */
 void makeParty(long n)
 {
@@ -162,14 +230,16 @@ void makeParty(long n)
         long kind = i * 37 % 625; /* spread over the 625 kinds */
 
         memset(traveller, 0, sizeof *traveller);
-        traveller->features[0] = (char)(kind / 125 % 5);
-        traveller->features[1] = (char)(kind / 25 % 5);
-        traveller->features[2] = (char)(kind / 5 % 5);
-        traveller->features[3] = (char)(kind % 5);
+        /* Features are 1-5 in a Traveller, 0-4 as the counts' indexes. */
+        char hair = (char)(kind / 125 % 5), eyes = (char)(kind / 25 % 5), nose = (char)(kind / 5 % 5),
+             feet = (char)(kind % 5);
+        traveller->features[0] = hair + 1;
+        traveller->features[1] = eyes + 1;
+        traveller->features[2] = nose + 1;
+        traveller->features[3] = feet + 1;
         traveller->onboard = 1;
         sprintf(traveller->name, "Debug%ld", i);
-        zoombiniCounts()[(int)traveller->features[0]][(int)traveller->features[1]]
-                        [(int)traveller->features[2]][(int)traveller->features[3]] = 1;
+        zoombiniCounts()[hair][eyes][nose][feet] = 1;
     }
 }
 
@@ -339,7 +409,7 @@ void zbDebugFrame()
         return;
     sceneChanged = false;
     for (;;) {
-        if (!gameActive || dialogFlags || currentScene == -1 || pendingScene != -1)
+        if (busy || !gameActive || dialogFlags || currentScene == -1 || pendingScene != -1)
             return;
         if (waitingForTime) {
             if ((LONG)(GetTickCount() - waitUntil) < 0)

@@ -8,7 +8,7 @@ The port can be built with a small command interpreter (`port/debug/zbdebug.cpp`
 
 ## Giving commands
 
-Commands are separated by `;` or newlines (`#` starts a comment) and queued to run when the game is at rest: active, no dialog, no scene change pending. A command that changes the scene holds up the ones after it until the new scene is open. The game starts in scene 0 (the intro), so a first command like `scene 1` waits until the intro's frames run.
+Commands are separated by `;` or newlines (`#` starts a comment) and queued to run when the game is at rest: active, no dialog, no scene change pending. "At rest" also means that none of a scene's own callbacks (`open`, `close`, `frame`, `key`) is running: they often run the main loop themselves while they wait for a sound or an animation, which calls the frame hook again from inside them, and a command run there would change the scene under them. `zbdebug.cpp` wraps each scene's callbacks to count them (before the game starts). A command that changes the scene holds up the ones after it until the new scene is open. The game starts in scene 0 (the intro), so a first command like `scene 1` waits until the intro's frames run.
 
 | Where | How |
 | --- | --- |
