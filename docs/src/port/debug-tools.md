@@ -83,6 +83,7 @@ The puzzles are described in [Gameplay and the code](../gameplay/index.md), and 
 | `roster save`, `roster load` | write `gameState` to the current saved game, or read it back |
 | `wait MS`, `wait scene N` | hold up the commands after, see [Waiting](#concepts) |
 | `get NAME`, `assert NAME VALUE` | print or check a value; the names are `scene`, `pending` (the scene about to open, -1 if none), `practice`, `party` (the count), `debug`, `dialog` (non-zero while a dialog is up), `level1`-`level4` (1-4) and `state:OFFSET[:SIZE]` |
+| `paldiff` | print which entries of the scene's own palette (`loadedPalette`) differ from the one the screen fades to (`targetPalette`): none when a scene's colours are right; for finding scenes that don't copy their palette |
 | `dump`, `help`, `quit` | print the main state, list the commands, exit (status 1 if any assertion or command failed) |
 
 Mouse input stays with `--click`.

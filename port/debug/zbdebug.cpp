@@ -277,7 +277,7 @@ void help()
 {
     say("commands: debug on|off | scene N [map] | level G L | practice L (0 off) | party N"
         " | unlock | records N | state get|set OFFSET [VALUE] [SIZE] | cheatcode HASH CODE"
-        " | key CODE | roster save | roster load | wait MS | wait scene N | get NAME"
+        " | paldiff | key CODE | roster save | roster load | wait MS | wait scene N | get NAME"
         " | assert NAME VALUE | dump | quit | help");
 }
 
@@ -365,6 +365,27 @@ void run(const std::string &line)
             say("assertion failed: %s is %ld, not %ld", w[1].c_str(), a, b);
             assertionsFailed++;
         }
+    } else if (command == "paldiff") {
+        /* The entries of loadedPalette (what the scene's images were made for) that differ
+           from targetPalette (what fadeInViews shows), as ranges. */
+        std::string ranges;
+        long start = -1, total = 0;
+        for (long i = 0; i <= 256; i++) {
+            bool differs = i < 256
+                           && (loadedPalette[i].peRed != targetPalette[i].peRed
+                               || loadedPalette[i].peGreen != targetPalette[i].peGreen
+                               || loadedPalette[i].peBlue != targetPalette[i].peBlue);
+            if (differs) {
+                total++;
+                if (start < 0)
+                    start = i;
+            } else if (start >= 0) {
+                ranges += " " + std::to_string(start) + "-" + std::to_string(i - 1);
+                start = -1;
+            }
+        }
+        say("palette: %ld entries of loadedPalette differ from targetPalette:%s", total,
+            ranges.empty() ? " none" : ranges.c_str());
     } else if (command == "dump") {
         dump();
     } else if (command == "quit") {

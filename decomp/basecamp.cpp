@@ -689,7 +689,7 @@ void enterCamp()
     addScripts(0x4b0, 0x10, 0);
     campFrameImages = loadImageBank(2000, &campFrameResource);
     campButtonImages = loadImageBank(0x834, &campButtonsResource);
-    copyPaletteRange(0xec, 10);
+    copyPaletteRange(10, 236);
     campView = addView(0xc000, drawCamp, scrollCamp, 0, 6, 0, 0, 0);
     addView(0x9000, drawSceneButtons2, 0, 0, 0, 0, 0, 0);
     addView(0x1000, drawSceneButtons1, updateCampButtons, 0, 0, 0, 0, 0);
