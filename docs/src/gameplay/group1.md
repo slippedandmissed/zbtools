@@ -51,8 +51,10 @@ Reached from Zoombini Isle (`isleButtonClicked` button 6 sets `sceneDue = 7`) an
 > *The caves: four doors in the rock face, the characters at them, and Zoombinis queuing.*
 > *Capture:* complete Allergic Cliffs.
 
+![A guard speaking, its mouth open, as a Zoombini goes to its door.](../images/caves-remark.png)
+
 > 📷 **Screenshot: `caves-remark`**
-> *A guard speaking one of its remarks.*
+> *A guard speaking, its mouth open, as a Zoombini goes to its door.*
 > *Capture:* wait on the screen.
 
 | | |
@@ -89,8 +91,10 @@ Reached from Zoombini Isle (`isleButtonClicked` button 6 sets `sceneDue = 7`) an
 > *The three trolls on their rocks (Arno at left, then Willa and Shyler), each with the pizza it has been served.*
 > *Capture:* higher levels have more trolls.
 
+![A troll turning down the pizza it was served, slumped beside it on its rock.](../images/pizza-yuck.png)
+
 > 📷 **Screenshot: `pizza-yuck`**
-> *A troll reacting to a pizza it dislikes.*
+> *A troll turning down the pizza it was served, slumped beside it on its rock.*
 > *Capture:* serve a pizza with a topping the troll doesn't want.
 
 | | |

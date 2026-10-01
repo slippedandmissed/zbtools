@@ -24,6 +24,8 @@
 #include "net.h"
 #include "roster.h"
 #include "snoids.h"
+#include "lilly.h"
+#include "town.h"
 #include "view.h"
 
 #include <algorithm>
@@ -595,6 +597,31 @@ void run(const std::string &line)
         if (!zoombiniPoint(a, &x, &y) || !zoombiniStands(a, &standX, &standY))
             return fail(line, "no such Zoombini");
         runNext(dragSteps(x, y, placedViewPoints[b - 1].x + x - standX, placedViewPoints[b - 1].y + y - standY));
+    } else if (command == "toads" && n == 1) {
+        /* Toads' pieces (kind 0) and the rows they can go to, for scripting scene 11: a piece goes
+           into a row whose left cell has the same attribute value (the piece's attribute 1-3
+           picks which of the cell's attributes); the layout is lilly.cpp's LillyActor. */
+        for (View *view = viewListEnd(1); view; view = view->next) {
+            const unsigned char *body = (const unsigned char *)&view->body;
+
+            if ((view->flags & 0x980002) != 0x980002)
+                continue;
+            say("piece: view %d at %d,%d kind %d attribute %d value %d onboard %d", view->id,
+                (view->body.bounds.left + view->body.bounds.right) / 2,
+                (view->body.bounds.top + view->body.bounds.bottom) / 2, *(short *)(body + 0xc0), body[0xde],
+                body[0xdf], body[0xc2]);
+        }
+        for (int row = 0; row < 12; row++)
+            say("row %d: entry %d,%d taken %d attributes %d %d %d", row, (rowEntryRects[row].left + rowEntryRects[row].right) / 2,
+                (rowEntryRects[row].top + rowEntryRects[row].bottom) / 2, lillyBoard[row][0].attributes[0],
+                lillyBoard[row][0].attributes[1], lillyBoard[row][0].attributes[2],
+                lillyBoard[row][0].attributes[3]);
+    } else if (command == "monuments" && n == 1) {
+        /* Zoombiniville's record hotspots on the screen shown (scene 6): a click needs the pointer
+           moved onto one first (`click X Y move`, a short `wait`), as the town notices it in its frame. */
+        for (short i = 0; i < recordHotspotCount; i++)
+            say("hotspot %d: %d,%d to %d,%d (record %d)", i, recordHotspots[i].left, recordHotspots[i].top,
+                recordHotspots[i].right, recordHotspots[i].bottom, recordHotspotNumbers[i] + 1);
     } else if (command == "places" && n == 1) {
         for (short i = 0; i < placedViewCount; i++)
             say("place %d: %d,%d%s", i + 1, placedViewPoints[i].x, placedViewPoints[i].y,

@@ -86,6 +86,7 @@ The puzzles are described in [Gameplay and the code](../gameplay/index.md), and 
 | `drag zoombini N X Y` | drag Zoombini N so that its feet end at (X, Y): the grab is at its middle and the game puts the feet where the pointer is, less that offset, so X, Y is where it should *stand* |
 | `drag zoombini N place K` | the same, to the K-th (from 1) of the scene's placed points (`places`): where a puzzle's drop spots are (a bridge's start, a seat, a room's door) |
 | `drag X1 Y1 X2 Y2` | a drag from one point to another (press, three moves with a pause each, release) |
+| `toads` | in Toads (scene 11): list the pieces at the left (position, attribute and value) and the board's rows (entry point, left pad's attributes): a piece goes into a row where the pad's attribute (1-3) has its value |
 | `places` | list the scene's placed points (where a dragged Zoombini can be claimed: `placedViewPoints`, with which are taken) and its standing spots (`viewPlaces`) |
 | `key CODE` | gives the game the key CODE as if typed: ASCII for characters (`key 0x4e` is `N`), 1-26 for Ctrl-A to Ctrl-Z. The cheat tracker sees it too: `key 1; key 109; key 105; key 100; key 105; key 32` types the real code `Ctrl-A midi ` (the game's MIDI test) |
 | `roster save`, `roster load` | write `gameState` to the current saved game, or read it back |
