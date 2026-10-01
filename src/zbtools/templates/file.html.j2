@@ -9,6 +9,7 @@
     {% if group.release != default_release %}<span>Borland C++ {{ group.release }}</span>{% endif %}
     {% if group.discrepancies %}<span class="badge">{{ group.discrepancies }} to check</span>{% endif %}
   </p>
+  {% if not embed_binary %}<p class="muted">The original's instructions are left out of this report (<span class="mono">--no-embed-binary</span>): its column shows only offsets, and rows that differ are highlighted.</p>{% endif %}
   <div class="toolbar"><button type="button" data-open="1">Expand all</button><button type="button" data-open="0">Collapse all</button></div>
   {% for d in group.details %}
   <details class="fn" id="fn-{{ '%x' % d.address }}">

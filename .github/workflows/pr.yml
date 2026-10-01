@@ -84,19 +84,23 @@ jobs:
 
   # Every function recorded in decomp/matching.txt still matches the original
   # byte for byte, and the game's data still matches. This needs the game CD
-  # and the Borland C++ 4.5 CD (bring-your-own, never in the repository), so it
-  # runs on a self-hosted runner that has them in data/ (plus 7-Zip and Wine),
-  # and only once the repository variable GAME_DATA_RUNNER is set to "true".
+  # and the Borland C++ 4.5 CD (bring-your-own, never in the repository): the
+  # game-data action fetches them from a private bucket with Workload Identity
+  # Federation, which GitHub doesn't offer pull requests from forks, so for those
+  # the job is skipped (a maintainer can push the branch to this repository).
   regressions:
-    if: vars.GAME_DATA_RUNNER == 'true'
-    runs-on: [self-hosted, zbtools-data]
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
-      - name: Bring-your-own files
-        run: |
-          # data/ is gitignored, so it lives on the runner, beside the checkout.
-          ln -sfn "$ZBTOOLS_DATA" data
+      - uses: ./.github/actions/game-data
       - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
       - run: uv sync --locked
       - run: uv run extract-game
       - run: uv run toolchain setup

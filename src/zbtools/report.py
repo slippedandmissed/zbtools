@@ -135,10 +135,16 @@ class Names:
         return self.by_upper.get(name.upper(), name) if target.isupper() else name
 
 
-def _original_asm(ins: Instruction | None, base: int, size: int, names: Names) -> AsmLine | None:
-    """An instruction of the original, naming the function it branches to."""
+def _original_asm(
+    ins: Instruction | None, base: int, size: int, names: Names, embed: bool = True
+) -> AsmLine | None:
+    """An instruction of the original, naming the function it branches to. Without `embed`
+    only its offset is kept (so the rows still line up and show where the code differs):
+    nothing of the original's bytes, instructions or branch targets."""
     if ins is None:
         return None
+    if not embed:
+        return AsmLine(f"{ins.address - base:04x}", "", "", None)
     branch = _BRANCH.match(ins.text)
     target = int(branch.group(1), 16) if branch else None
     outside = target is not None and not base <= target < base + size
@@ -161,7 +167,11 @@ def _compiled_asm(
 
 
 def _detail(
-    function: inventory.Function, checked: match.Checked, found: match.Outcome, names: Names
+    function: inventory.Function,
+    checked: match.Checked,
+    found: match.Outcome,
+    names: Names,
+    embed: bool = True,
 ) -> Detail:
     result = checked.result
     rows, percent = [], None
@@ -169,7 +179,7 @@ def _detail(
         base, size = result.target.address, len(result.original)
         rows = [
             DetailRow(
-                _original_asm(row.original, base, size, names),
+                _original_asm(row.original, base, size, names, embed),
                 _compiled_asm(row.compiled, base, result, names),
                 row.same,
             )
@@ -246,8 +256,9 @@ def _groups(details: list[Detail]) -> list[SourceGroup]:
     return [SourceGroup(file, group[0].release, group) for file, group in by_file.items()]
 
 
-def build() -> dict[str, str]:
-    """The report's files, by path relative to its root."""
+def build(embed_binary: bool = True) -> dict[str, str]:
+    """The report's files, by path relative to its root. Without `embed_binary` it holds
+    nothing of the original's code (see `_original_asm`), so it can be published."""
     exe = match.game_executable()
     data = match_data.check(match.decomp_sources(), exe)
     functions = inventory.load(exe)
@@ -257,7 +268,9 @@ def build() -> dict[str, str]:
     baseline = match.load_baseline()
     details = sorted(
         (
-            _detail(by_address[c.target.address], c, match.outcome(c, baseline), names)
+            _detail(
+                by_address[c.target.address], c, match.outcome(c, baseline), names, embed_binary
+            )
             for c in checked
             if c.target.address in by_address
         ),
@@ -278,6 +291,7 @@ def build() -> dict[str, str]:
         "stats": _stats(functions),
         "pages": {d.address: g.page for g in groups for d in g.details},
         "Status": Status,
+        "embed_binary": embed_binary,
     }
     site = {
         "style.css": environment.get_template("style.css").render(),
@@ -311,9 +325,18 @@ def main(
     open_report: Annotated[
         bool, typer.Option("--open", help="Open the report in a web browser")
     ] = False,
+    embed_binary: Annotated[
+        bool,
+        typer.Option(
+            "--embed-binary/--no-embed-binary",
+            help="Include the original's disassembly (the default). Without it the report has "
+            "none of the game's code, only offsets, our own source and what it compiles to, "
+            "and is safe to distribute",
+        ),
+    ] = True,
 ) -> None:
     match.require_toolchain()
-    site = build()
+    site = build(embed_binary)
     shutil.rmtree(paths.REPORT_DIR, ignore_errors=True)  # drop pages of removed files
     for name, text in site.items():
         path = paths.REPORT_DIR / name
