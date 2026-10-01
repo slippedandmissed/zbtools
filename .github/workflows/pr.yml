@@ -104,5 +104,16 @@ jobs:
       - run: uv sync --locked
       - run: uv run extract-game
       - run: uv run toolchain setup
+      - name: DEBUG toolchain failure
+        if: failure()
+        run: |
+          set +e
+          wine --version; dpkg -l | grep -i wine | head
+          ls -la build/toolchain/4.5/BC45/BIN | head -20; cat build/toolchain/4.5/BC45/BIN/*.CFG
+          ls -la build/wine/prefix/dosdevices 2>/dev/null || find build -maxdepth 3 -name dosdevices
+          cd build/toolchain/check/4.5
+          export WINEPREFIX=$(find "$GITHUB_WORKSPACE/build" -maxdepth 3 -name system.reg -printf '%h' | head -1)
+          echo prefix=$WINEPREFIX
+          WINEDEBUG=err+all,warn+file,+process WINEPATH='T:\BC45\BIN' wine 'T:\BC45\BIN\BCC32.EXE' -WC hello.c 2>&1 | tail -60
       - run: uv run match
       - run: uv run match-data -q
