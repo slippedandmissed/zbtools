@@ -27,7 +27,7 @@ from typing import Annotated, NamedTuple
 
 import typer
 
-from zbtools import assets, download, exe_resources, paths
+from zbtools import assets, download, exe_resources, movies, paths
 from zbtools.formats import icon
 
 # The pinned Emscripten SDK: emsdk's release tarball, which installs the SDK
@@ -199,6 +199,23 @@ def lay_out_drives(
     return c
 
 
+# The movie the game plays (Data\\Logo025.MOV): the port plays it from its scene
+# file, Data\\Logo025.SCN.
+MOVIES = ("LOGO025",)
+
+
+def pack_scenes(assets_dir: Path, packed: Path) -> list[str]:
+    """Writes the port's movies (`MOVIES`) as scene files into the packed
+    drive, beside where the .MOV would be; a line about each."""
+    lines = []
+    for name in MOVIES:
+        target, data = movies.port_scene(assets_dir / movies.DIRECTORY / name)
+        (packed / target).parent.mkdir(parents=True, exist_ok=True)
+        (packed / target).write_bytes(data)
+        lines.append(f"{target}: {len(data):,} bytes")
+    return lines
+
+
 def game_arguments(c: str, d: str, soundfont: str) -> list[str]:
     """The program's arguments: its drives, and the SoundFont."""
     return [
@@ -270,7 +287,7 @@ def _page_files(c: Path, data: Path, soundfont: Path) -> list[tuple[Path, str, i
     (pre.js copies them into IndexedDB), D:'s DATA directory as /d/DATA, and
     the SoundFont."""
     found = [(f, f"/c-default/{f.relative_to(c).as_posix()}") for f in sorted(c.rglob("*"))]
-    # (`uv run assets pack` also packs the movies, which the port can't play yet)
+    # (`uv run assets pack` also packs the .MOV files, which the port can't play: it has scenes)
     found += [
         (f, f"/d/DATA/{f.name}") for f in sorted(data.iterdir()) if f.suffix.lower() != ".mov"
     ]
@@ -285,11 +302,13 @@ def package_web() -> Path:
     icon.png, from assets/zoombi32/), zoombinis-config.js (the game's
     drives and the SoundFont), and the page's file system in
     zoombinis-data-<n>.data packages, loaded by zoombinis-data.js. D:'s
-    archives are packed from assets/; the movies are left out, since the port
-    can't play them yet."""
+    archives are packed from assets/, and the intro movie as a scene file
+    (formats/scene.py; the .MOV files are left out: the port can't play QkBk)."""
     web = build_dir("web")
     build("web", _build_type(web) or "RelWithDebInfo")
     for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
+        print(line)
+    for line in pack_scenes(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
         print(line)
     c = lay_out_drives()
     soundfont = setup_soundfont()
@@ -439,18 +458,23 @@ def run(
         Path | None, typer.Option(help="Write what's played to this WAV file")
     ] = None,
 ) -> None:
-    """Run the native build (or the headless one) on the game's drives."""
+    """Run the native build (or the headless one) on the game's drives (packed from
+    assets/, as `package` does)."""
     target = "headless" if headless else "native"
     program = build(target) if headless else build_dir("native") / "zoombinis"
     if not program.exists():
         _fail(PortError("build it first: uv run port build native"))
+    for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
+        print(line)
+    for line in pack_scenes(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
+        print(line)
     try:
         c = lay_out_drives()
     except PortError as e:
         _fail(e)
     soundfont = setup_soundfont()
     arguments = game_arguments(
-        str(c.resolve()), str(paths.DISC_DIR.resolve()), str(soundfont.resolve())
+        str(c.resolve()), str(paths.PACKED_ASSETS_DIR.resolve()), str(soundfont.resolve())
     )
     if record:
         arguments += ["--record", str(record.resolve())]

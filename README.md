@@ -18,7 +18,7 @@ The decompiled code builds into a `zoombi32.exe` (`uv run build`), linked by the
 
 The original game is playable from its disc image in the scripted Windows 98 VM.
 
-The decompiled game also runs in a web browser, as WebAssembly (`uv run port`, see [the port](#the-port-running-the-game-on-modern-systems)): it starts and reaches Zoombini Isle, where you can pick features for a Zoombini. The music plays through a General MIDI synthesizer, sound effects are mixed but not yet checked by ear, and movies don't play.
+The decompiled game also runs in a web browser, as WebAssembly (`uv run port`, see [the port](#the-port-running-the-game-on-modern-systems)): it starts and reaches Zoombini Isle, where you can pick features for a Zoombini. The music plays through a General MIDI synthesizer, sound effects are mixed but not yet checked by ear, and the intro movie plays (from its converted scene, with its sound).
 
 ## Setup
 
@@ -263,7 +263,7 @@ Borland C++'s dialect (byte packing, its runtime's extras) is handled by `port/i
 
 - **Targets:** `web` (WebAssembly, via Asyncify, which lets the game's blocking loops and fibers hand control back to the browser), `headless` (the same WebAssembly under Node, with no screen or sound, reading the drives' directories directly; `--screenshot` writes the screen to a BMP, `--record` writes what's played to a WAV file, and `--seconds` quits after a while), and `native` (SDL2 from the system, or a pinned release built from source).
 - **32-bit only for now:** the decompiled code assumes 4-byte `long`s and pointers, so CMake refuses 64-bit native targets. WebAssembly is 32-bit.
-- **Hosting it:** `package` builds the web page and writes everything a web server needs, and nothing else, to `build/port/site/`: the page (`index.html`, renamed from the build's `zoombinis.html`, with `zoombinis.js` and `.wasm`), its favicon (`favicon.ico`, and `icon.png` for the page to show, both from the executable's icon in `assets/zoombi32/`), `zoombinis-config.js` (the game's drives), and the game's files in `zoombinis-data-<n>.data` packages loaded by `zoombinis-data.js`. Upload the directory as it is to any static host. No file is over 24 MiB, for hosts that cap file sizes (Cloudflare Pages allows 25 MiB): files are grouped into packages under that, and a file bigger than that (the SoundFont) is split into parts that the page joins back together when it starts. The CD's `DATA/` is packed from `assets/` (as `uv run assets pack` does), leaving out the movies, which the port can't play yet; C: is laid out in `build/port/data/c/` from `assets/zoombi32/installed/` (and `MIDIMAP.DAT`, packed from `assets/`), so `package` needs only the repository. The browser keeps the packages in IndexedDB, so a return visit doesn't download them again.
+- **Hosting it:** `package` builds the web page and writes everything a web server needs, and nothing else, to `build/port/site/`: the page (`index.html`, renamed from the build's `zoombinis.html`, with `zoombinis.js` and `.wasm`), its favicon (`favicon.ico`, and `icon.png` for the page to show, both from the executable's icon in `assets/zoombi32/`), `zoombinis-config.js` (the game's drives), and the game's files in `zoombinis-data-<n>.data` packages loaded by `zoombinis-data.js`. Upload the directory as it is to any static host. No file is over 24 MiB, for hosts that cap file sizes (Cloudflare Pages allows 25 MiB): files are grouped into packages under that, and a file bigger than that (the SoundFont) is split into parts that the page joins back together when it starts. The CD's `DATA/` is packed from `assets/` (as `uv run assets pack` does), plus the intro movie as a scene file (`DATA/LOGO025.SCN`, which the port plays itself; the `.MOV` files are left out, as only QuickTime's codec decodes them); C: is laid out in `build/port/data/c/` from `assets/zoombi32/installed/` (and `MIDIMAP.DAT`, packed from `assets/`), so `package` needs only the repository. The browser keeps the packages in IndexedDB, so a return visit doesn't download them again.
 - **The page:** a splash page (`port/web/shell.html`) about the project, with a link to the repository, a disclaimer that it's unofficial, and a Play button. It keeps C: in the browser's IndexedDB, so saved games survive a reload. Clicking Play begins the game, and also lets the browser play sound. `?noalert` sends the game's message boxes to the console instead of an alert (for automated testing), and `?screenshot` writes `/screenshot.bmp` to the page's file system.
 
 ### Continuous integration
@@ -367,7 +367,7 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [ ] Play the rebuilt game through in the VM, fixing what differs from the original
 - [x] Reverse-engineer Broderbund's `QkBk` video codec, and convert the movies to a modern format and back, exactly (`uv run assets`; plan: [`docs/movies.md`](docs/movies.md))
 - [x] Replace the QuickTime stand-in with working glue, so the rebuilt game plays its intro movie in the VM (the packed movie is byte for byte the disc's, which the VM's game reads from its CD)
-- [ ] Play the intro movie in the port, from its modern format
+- [x] Play the intro movie in the port, from its modern format (`port/glue/quicktime.cpp`, replacing the QuickTime glue)
 - [ ] Port to a modern platform layer
 
 ## Legal

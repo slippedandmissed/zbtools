@@ -6,7 +6,7 @@ The goal: treat the movie like every other resource. `uv run assets` converts it
 
 ## Status
 
-Steps 1 to 6 are done: `uv run assets verify` rebuilds all four of the disc's movies from `assets/movies/` byte for byte. `QkBk` turned out to be a scene compositor (sprites from a cast of bitmaps, placed per frame), so the modern form is the scene: the frames' sprite tables as TOML, the bitmaps as indexed PNGs, the palettes as TOML, the sound as WAV, and the container's facts in a manifest (`formats/qkbk.py`, `formats/mov.py`, `movies.py`). Our drawing of every frame is checked against the original codec's (`uv run movie-check` runs `qb32.qtc` under emulation). What remains: step 7.
+Steps 1 to 7 are done: `uv run assets verify` rebuilds all four of the disc's movies from `assets/movies/` byte for byte. `QkBk` turned out to be a scene compositor (sprites from a cast of bitmaps, placed per frame), so the modern form is the scene: the frames' sprite tables as TOML, the bitmaps as indexed PNGs, the palettes as TOML, the sound as WAV, and the container's facts in a manifest (`formats/qkbk.py`, `formats/mov.py`, `movies.py`). Our drawing of every frame is checked against the original codec's (`uv run movie-check` runs `qb32.qtc` under emulation). The port plays the intro (step 7, `port/glue/quicktime.cpp`); nothing in this plan remains but checking it in a browser.
 
 ## Decisions
 
@@ -25,7 +25,7 @@ Steps 1 to 6 are done: `uv run assets verify` rebuilds all four of the disc's mo
 4. **Encoder (done):** the row encoder is inferred and exact on all 178,380 rows; frames are rebuilt from their fields, working out what can be (sprite sizes, each frame's bounds and changed rect), with the rest in TOML. Edited movies are valid `QkBk`: `movie-check` decodes them with the unmodified codec.
 5. **`uv run assets` (done):** extract, verify, pack, and `frames` to look. **First milestone: the disc's `Logo025.MOV` round-trips exactly**, and so do the other three.
 6. **Glue for the rebuild (done):** real QuickTime glue in `glue/quicktime.cpp` (the SDK's loader, re-created from the same library in `qb32.qtc`, and selector stubs written as raw bytes). The rebuilt game plays the intro through the VM's QuickTime, stalling on the same frame the original does (the VM's emulated sound or timing, not the glue). The game reads the movie from the CD (`D:\Data`, `INSTALLFROMDIR`), and the packed movie is byte for byte the disc's, so there's no need to deliver it another way.
-7. **Port playback:** bundle the modern form, and add a port glue that plays it (video into the screen port at the centred rectangle, audio through a waveOut-like stream on the same clock, "playing" reported until the end).
+7. **Port playback (done):** `uv run port package` (and `run`) writes `Data\Logo025.SCN`, a flat little-endian scene file (`formats/scene.py`: frames' sprites, the palettes, the bitmaps' run-length rows as the codec stores them, and the sound with its edit list applied), and `port/glue/quicktime.cpp` replaces the QuickTime glue (CMake lets `port/glue/` replace `glue/`'s file of the same name) with a player behind the same `qtim_*`/`cmgr_*` calls: it draws each due frame from scratch into a buffer and shows it with the palette realized as the codec does (`StretchDIBits` through an identity palette), plays the sound through `waveOut`, follows the wall clock, and reports "playing" (`cmgr_05`, flag 0x40) until its last frame. The headless build plays the whole intro, with its sound, and goes on to the Zoombini picker.
 
 ## Open questions
 

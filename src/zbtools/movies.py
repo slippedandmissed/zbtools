@@ -26,7 +26,7 @@ from pathlib import Path
 from PIL import Image
 from pydantic import BaseModel, ConfigDict
 
-from zbtools.formats import mov, qkbk, sound
+from zbtools.formats import mov, qkbk, scene, sound
 from zbtools.formats.base import Unconvertible
 
 DIRECTORY = "movies"  # in assets/
@@ -273,6 +273,22 @@ def pack_movie(directory: Path) -> tuple[Manifest, bytes]:
     manifest, scene = load_movie(directory)
     samples = qkbk.build_movie(scene)
     return manifest, mov.build(manifest.container, samples, read_sound(directory / SOUND))
+
+
+def port_scene(directory: Path) -> tuple[str, bytes]:
+    """A movie as the port plays it (formats/scene.py): its path on the disc
+    with the extension .SCN, and the file."""
+    manifest, movie = load_movie(directory)
+    c = manifest.container
+    track = scene.expand_edits(read_sound(directory / SOUND), c.audio_edits, c.timescale, c.rate)
+    data = scene.build(
+        movie,
+        size=(c.width, c.height),
+        milliseconds=c.frame_duration * 1000 // c.timescale,
+        rate=c.rate,
+        sound=track,
+    )
+    return str(Path(manifest.path).with_suffix(".SCN")), data
 
 
 def render_frames(directory: Path, numbers: list[int], out_dir: Path) -> list[Path]:
