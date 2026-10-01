@@ -152,7 +152,7 @@ char *formatTextV(long size, char *text, const char *format, va_list args)
     short i;
 
     lockedCount = 0;
-    formatArgs = args;
+    va_copy(formatArgs, args);
     end = formatString(size, text, format);
     for (i = 0; i < lockedCount; i++)
         unlockResource(lockedResources[i]);

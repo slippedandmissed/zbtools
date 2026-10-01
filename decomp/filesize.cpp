@@ -25,7 +25,7 @@ short directorySizeCallback(const char *name, void *data);
 /* @zoombi32 0x00484690 */
 long fileSize(const fileSpec &spec)
 {
-    long volume;
+    LONG_PTR volume;
     char path[0x100];
     WIN32_FIND_DATA found;
 

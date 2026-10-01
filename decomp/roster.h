@@ -33,7 +33,7 @@ void freeCaveResources();
 extern short cavesGoReady; /* @data 0x4a0fe8 */
 extern short cavesButton2Lit; /* @data 0x4a120a */
 extern short cavesButton1Drawn; /* @data 0x4a120c */
-extern long rosterFile; /* @data 0x4aba7c: the roster file */
+extern LONG_PTR rosterFile; /* @data 0x4aba7c: the roster file */
 void updateCavesButtons(View *, short region);
 void applyPlayerSettings();
 short openRosterFile(const char *path, short mode);

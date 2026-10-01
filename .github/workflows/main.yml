@@ -11,59 +11,91 @@ concurrency:
 permissions:
   contents: read
 
-# The report needs the game CD, the Borland C++ 4.5 CD, Ghidra and a JDK: the
-# CDs are bring-your-own and never in the repository, so it runs on a
-# self-hosted runner with them in data/ (plus 7-Zip, Wine and JDK 21), and only
-# once the repository variable GAME_DATA_RUNNER is set to "true". The
-# deployment needs only the repository (the game's resources are in assets/).
+# The progress report job is disabled (commented out below) until two problems
+# are solved:
+#
+# - It needs the gitignored bring-your-own files (the game CD and the Borland
+#   C++ 4.5 CD in data/, plus Ghidra, a JDK, 7-Zip and Wine), which GitHub's
+#   runners don't have and the repository can't hold. The version below ran on
+#   a self-hosted runner that did.
+# - The report contains the game's disassembly, and this repository is public:
+#   anyone signed in to GitHub can download its Actions artifacts. Modify the
+#   report so it doesn't include the game's disassembly before enabling the
+#   upload step.
+#
+# The deployment and the release need only the repository (the game's resources
+# are in assets/).
 jobs:
-  report:
-    if: vars.GAME_DATA_RUNNER == 'true'
-    runs-on: [self-hosted, zbtools-data]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Bring-your-own files
-        run: ln -sfn "$ZBTOOLS_DATA" data
-      - uses: astral-sh/setup-uv@v6
-      - run: uv sync --locked
-      - run: uv run extract-game
-      - run: uv run toolchain setup
-      - run: uv run ghidra setup
-      - run: uv run runtime-symbols
-      - run: uv run classes
-      - run: uv run report
-      # The report contains the game's disassembly: anyone who can read this
-      # repository's Actions artifacts can download it, so keep the repository
-      # private (or drop this step and read the report on the runner).
-      - uses: actions/upload-artifact@v4
-        with:
-          name: report
-          path: build/report/
-          retention-days: 14
+  # report:
+  #   if: vars.GAME_DATA_RUNNER == 'true'
+  #   runs-on: [self-hosted, zbtools-data]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Bring-your-own files
+  #       run: ln -sfn "$ZBTOOLS_DATA" data
+  #     - uses: astral-sh/setup-uv@v6
+  #     - run: uv sync --locked
+  #     - run: uv run extract-game
+  #     - run: uv run toolchain setup
+  #     - run: uv run ghidra setup
+  #     - run: uv run runtime-symbols
+  #     - run: uv run classes
+  #     - run: uv run report
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: report
+  #         path: build/report/
+  #         retention-days: 14
+
+  # Every target, built once (package.yml): the web page is deployed and the
+  # packages for players are released from its artifacts.
+  package:
+    uses: ./.github/workflows/package.yml
 
   deploy:
+    needs: package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/download-artifact@v4
         with:
-          enable-cache: true
-      - run: uv sync --locked
-      - uses: actions/cache@v4
-        with:
-          path: build/emsdk
-          # The SDK version is pinned in port.py.
-          key: emsdk-${{ hashFiles('src/zbtools/port.py') }}
-      - run: uv run port setup
-      - run: uv run port build web
-      # build/port/site/: the page and the game's data, every file under
-      # Cloudflare Pages' 25 MiB limit.
-      - run: uv run port package
+          name: site-browser_wasm
+          path: site
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build/port/site --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
+          command: pages deploy site --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
+
+  # A release with a package for every player target (macOS, Windows x86 and x64,
+  # Linux x64 and arm64), numbered by this workflow's run. The web page and the
+  # headless build are not released: one is deployed above, the other is for testing.
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: pyproject.toml
+          sparse-checkout-cone-mode: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: zoombinis-*
+          merge-multiple: true
+          path: packages
+      - name: Create the release
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -n 1)
+          tag="v${version}-build.${GITHUB_RUN_NUMBER}"
+          ls -l packages
+          gh release create "$tag" packages/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Build ${GITHUB_RUN_NUMBER} (${GITHUB_SHA::7})" \
+            --generate-notes
 
   # The handbook (docs/), built with mdBook into build/book/ (see docs/book.toml).
   deploy-docs:

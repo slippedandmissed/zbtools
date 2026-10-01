@@ -28,7 +28,7 @@ static char deviceInfoFormat[] = "%16s %[,;:] %d %[,;:] %d %[,;:] %d";
 /* midiOutCacheDrumPatches for a map (bank 0 only), keeping track of which
    drum patches it has cached; uncaching leaves those other maps use. */
 /* @zoombi32 0x004778b0 */
-short midiMapCacheDrumPatches(long handle, unsigned short patch, WORD *keys, unsigned short flags)
+short midiMapCacheDrumPatches(LONG_PTR handle, unsigned short patch, WORD *keys, unsigned short flags)
 {
     WORD cached[128];
     MidiDevice *device;
@@ -75,7 +75,7 @@ short midiMapCacheDrumPatches(long handle, unsigned short patch, WORD *keys, uns
 
 /* midiOutCachePatches for a map, likewise. */
 /* @zoombi32 0x00477a07 */
-short midiMapCachePatches(long handle, unsigned short bank, WORD *patches, unsigned short flags)
+short midiMapCachePatches(LONG_PTR handle, unsigned short bank, WORD *patches, unsigned short flags)
 {
     WORD cached[128];
     MidiDevice *device;
@@ -140,7 +140,7 @@ void fillVelocities(MidiMap *map, long table)
    it's the last map on it (sending the device's closing sysex first). */
 /* Not exact: `map` and `channel` swap registers (ebx and esi). */
 /* @zoombi32 0x00477b91 */
-short midiMapClose(long handle)
+short midiMapClose(LONG_PTR handle)
 {
     MidiHeader header;
     MidiMap *map;
@@ -307,7 +307,7 @@ short getDrumChannel(unsigned short id, unsigned short *channel)
 
 /* Not exact: the original keeps `map` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x00478036 */
-short midiMapDevice(long handle, unsigned short *id)
+short midiMapDevice(LONG_PTR handle, unsigned short *id)
 {
     MidiMap *map;
 
@@ -319,7 +319,7 @@ short midiMapDevice(long handle, unsigned short *id)
 
 /* Not exact: the original keeps `map` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x0047805e */
-short midiMapTarget(long handle, short *target)
+short midiMapTarget(LONG_PTR handle, short *target)
 {
     MidiMap *map;
 
@@ -331,7 +331,7 @@ short midiMapTarget(long handle, short *target)
 
 /* Not exact: the original keeps `map` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x00478086 */
-short midiMapTable(long handle, long *table)
+short midiMapTable(LONG_PTR handle, long *table)
 {
     MidiMap *map;
 
@@ -381,7 +381,7 @@ short setChannelMuted(unsigned short id, unsigned short channel, short muted)
 /* midiOutOpen for a map (without callbacks). The device is opened for its
    first map, and sent its reset sysex. */
 /* @zoombi32 0x0047818b */
-short midiMapOpen(MidiMap **out, unsigned short id, long callback, long instance, long flags)
+short midiMapOpen(MidiMap **out, unsigned short id, LONG_PTR callback, LONG_PTR instance, long flags)
 {
     MidiDevice *device;
     unsigned short size;
@@ -450,7 +450,7 @@ short midiMapOpen(MidiMap **out, unsigned short id, long callback, long instance
 }
 
 /* @zoombi32 0x004783e1 */
-short midiMapPrepareHeader(long handle, MidiHeader *header, unsigned short size)
+short midiMapPrepareHeader(LONG_PTR handle, MidiHeader *header, unsigned short size)
 {
     MidiMap *map;
 
@@ -471,8 +471,8 @@ void closeMidiMaps()
     if (state->ready) {
         while ((device = state->devices) != 0) {
             while (device->users) {
-                midiMapReset((long)device->maps);
-                midiMapClose((long)device->maps);
+                midiMapReset((LONG_PTR)device->maps);
+                midiMapClose((LONG_PTR)device->maps);
             }
             state->devices = device->next;
             disposePtr(device);
@@ -509,7 +509,7 @@ short setChannelMap(unsigned short id, unsigned short channel, unsigned short to
 /* midiOutReset for a map: resets its channels, and the device (if
    [MidiMap] fEnableHardReset) once that leaves nothing playing. */
 /* @zoombi32 0x004784ff */
-short midiMapReset(long handle)
+short midiMapReset(LONG_PTR handle)
 {
     MidiMap *map;
     unsigned short playing;
@@ -610,7 +610,7 @@ short setMutedChannels(unsigned short id, short *muted)
 
 /* Changes a map's velocity curve (0: none, resetting its channels). */
 /* @zoombi32 0x00478770 */
-short setMidiMapTable(long handle, long table)
+short setMidiMapTable(LONG_PTR handle, long table)
 {
     MidiMap *map;
     int channel;
@@ -632,7 +632,7 @@ short setMidiMapTable(long handle, long table)
 }
 
 /* @zoombi32 0x004787d1 */
-short midiMapUnprepareHeader(long handle, MidiHeader *header, unsigned short size)
+short midiMapUnprepareHeader(LONG_PTR handle, MidiHeader *header, unsigned short size)
 {
     MidiMap *map;
 

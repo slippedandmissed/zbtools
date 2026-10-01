@@ -34,22 +34,10 @@ jobs:
           echo "$PWD" >> "$GITHUB_PATH"
       - run: mdbook build docs
 
-  # The decompiled game compiles for WebAssembly. Needs only the source, not the game.
-  wasm:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-      - run: uv sync --locked
-      - uses: actions/cache@v4
-        with:
-          path: build/emsdk
-          # The SDK version is pinned in port.py.
-          key: emsdk-${{ hashFiles('src/zbtools/port.py') }}
-      - run: uv run port setup
-      - run: uv run port build web
+  # Every target builds and packages (package.yml): macOS, Windows (x86, x64), Linux
+  # (x64, arm64), the web page, and the headless test build. Needs only the source.
+  package:
+    uses: ./.github/workflows/package.yml
 
   # Every function recorded in decomp/matching.txt still matches the original
   # byte for byte, and the game's data still matches. This needs the game CD

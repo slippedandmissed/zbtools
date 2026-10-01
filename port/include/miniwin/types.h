@@ -78,9 +78,18 @@ typedef char CHAR;
 typedef short SHORT;
 typedef unsigned short USHORT;
 typedef unsigned char UCHAR;
+/* The pointer-sized integers: long wherever it is pointer-sized (as the
+   game's code and Borland's declare them, so that overloads and pointers to
+   them agree), else (64-bit Windows) a wider type. */
+#if LONG_MAX == INTPTR_MAX
+typedef unsigned long UINT_PTR;
+typedef long LONG_PTR;
+typedef unsigned long DWORD_PTR;
+#else
 typedef uintptr_t UINT_PTR;
 typedef intptr_t LONG_PTR;
 typedef uintptr_t DWORD_PTR;
+#endif
 typedef UINT_PTR WPARAM;
 typedef LONG_PTR LPARAM;
 typedef LONG_PTR LRESULT;

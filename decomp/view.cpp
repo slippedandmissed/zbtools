@@ -1768,12 +1768,12 @@ short addView(unsigned long flags, ViewDraw draw, ViewUpdate update, short kind,
                 if (flags & 0x8000)
                     backdropView = id;
                 {
-                    unsigned long size = 0xec;
+                    unsigned long size = sizeof(View);
 
                     if (flags & 1)
-                        size += 0x47;
+                        size += sizeof(Snoid) - sizeof(ViewBody);
                     else if (flags & 2)
-                        size += 0x16e;
+                        size += sizeof(LargeViewBody) - sizeof(ViewBody);
                     view = (View *)newPtr(size);
                 }
                 if (flags & 1)

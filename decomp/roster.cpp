@@ -134,7 +134,7 @@ short *caveRegs200;
 short *glyphRaise;
 long caveRegsResources[2];
 short caveRegsHandles[2];
-long rosterFile;
+LONG_PTR rosterFile;
 char *rosterError;
 short clickTime;
 

@@ -43,7 +43,7 @@ void stopOtherThreads()
 
 /* A thread running proc(argument) on a stack of its own, suspended. */
 /* @zoombi32 0x0046e302 */
-long createThread(void (*proc)(long), long argument, unsigned short stackSize,
+LONG_PTR createThread(void (*proc)(LONG_PTR), LONG_PTR argument, unsigned short stackSize,
                   unsigned short priority)
 {
     thread *t = new thread;
@@ -62,7 +62,7 @@ long createThread(void (*proc)(long), long argument, unsigned short stackSize,
 }
 
 /* @zoombi32 0x0046e380 */
-long newEvent(short set)
+LONG_PTR newEvent(short set)
 {
     event *e = new event;
 
@@ -74,7 +74,7 @@ long newEvent(short set)
 }
 
 /* @zoombi32 0x0046e3c8 */
-long newMutex(short free)
+LONG_PTR newMutex(short free)
 {
     mutex *m = new mutex;
 
@@ -111,7 +111,7 @@ void enableScheduling()
 /* Deletes a sync object; a thread deleting itself ends there. Not exact:
    the original keeps `object` in esi and `t` in ebx; BCC32 4.5 swaps them. */
 /* @zoombi32 0x0046e463 */
-short deleteSync(long handle)
+short deleteSync(LONG_PTR handle)
 {
     thread *t;
     sync *object;
@@ -162,7 +162,7 @@ void reschedule(unsigned long now)
 }
 
 /* @zoombi32 0x0046e5dc */
-long currentThread()
+LONG_PTR currentThread()
 {
     return syncHandle(threads.current);
 }
@@ -174,13 +174,13 @@ short threadError()
 }
 
 /* @zoombi32 0x0046e5f4 */
-long mainThread()
+LONG_PTR mainThread()
 {
     return syncHandle(threads.main);
 }
 
 /* @zoombi32 0x0046e605 */
-unsigned short threadPriority(long handle)
+unsigned short threadPriority(LONG_PTR handle)
 {
     thread *t = (thread *)syncOf(handle, 0);
 
@@ -205,8 +205,8 @@ short initThreads(char *stacks, char *end)
         return setThreadError(0x15e);
     memset(&threads, 0, sizeof(threads));
     threads.timeSlice = 20;
-    stacks = (char *)((unsigned long)(stacks + 3) & ~3);
-    end = (char *)((unsigned long)end & ~3);
+    stacks = (char *)((UINT_PTR)(stacks + 3) & ~3);
+    end = (char *)((UINT_PTR)end & ~3);
     threads.stacks = (long *)stacks;
     threads.stacksEnd = (long *)end;
     *threads.stacks = end - stacks;
@@ -224,7 +224,7 @@ short initThreads(char *stacks, char *end)
 /* The time-slice timer: switches threads when the slice is up (or an
    urgent thread may be waiting). */
 /* @zoombi32 0x0046e71a */
-void timesliceProc(long, long)
+void timesliceProc(LONG_PTR, LONG_PTR)
 {
     unsigned long now = currentTimeMs();
 
@@ -243,7 +243,7 @@ void stopThreads()
 }
 
 /* @zoombi32 0x0046e78c */
-void releaseMutex(long handle)
+void releaseMutex(LONG_PTR handle)
 {
     mutex *m = (mutex *)syncOf(handle, 0);
 
@@ -264,7 +264,7 @@ void releaseMutex(long handle)
 }
 
 /* @zoombi32 0x0046e7fd */
-void resetEvent(long handle)
+void resetEvent(LONG_PTR handle)
 {
     event *e = (event *)syncOf(handle, 0);
 
@@ -283,7 +283,7 @@ void resetEventCall(void *e)
 }
 
 /* @zoombi32 0x0046e857 */
-void resumeThread(long handle)
+void resumeThread(LONG_PTR handle)
 {
     thread *t = (thread *)syncOf(handle, 0);
 
@@ -382,7 +382,7 @@ short schedule(unsigned long now)
 }
 
 /* @zoombi32 0x0046ea83 */
-void setEvent(long handle)
+void setEvent(LONG_PTR handle)
 {
     event *e = (event *)syncOf(handle, 0);
 
@@ -401,7 +401,7 @@ void setEventCall(void *e)
 }
 
 /* @zoombi32 0x0046eadd */
-void setThreadPriority(long handle, unsigned short priority)
+void setThreadPriority(LONG_PTR handle, unsigned short priority)
 {
     thread *t = (thread *)syncOf(handle, 0);
 
@@ -441,7 +441,7 @@ void yieldThread(long ms)
 }
 
 /* @zoombi32 0x0046ebca */
-void suspendThread(long handle)
+void suspendThread(LONG_PTR handle)
 {
     thread *t = (thread *)syncOf(handle, 0);
 
@@ -477,7 +477,7 @@ void suspendThread(long handle)
 }
 
 /* @zoombi32 0x0046ecb2 */
-short waitSync(long handle, long timeout)
+short waitSync(LONG_PTR handle, long timeout)
 {
     sync *object = syncOf(handle, 0);
 
@@ -820,14 +820,14 @@ short __cdecl thread::wait(thread *waiter, unsigned long timeout)
 }
 
 /* @zoombi32 0x0046f43a */
-long __cdecl syncHandle(sync *object)
+LONG_PTR __cdecl syncHandle(sync *object)
 {
-    return (long)object;
+    return (LONG_PTR)object;
 }
 
 /* The sync object a handle is, if it is one (of the kind, unless 0). */
 /* @zoombi32 0x0046f442 */
-sync *__cdecl syncOf(long handle, long kind)
+sync *__cdecl syncOf(LONG_PTR handle, long kind)
 {
     sync *object = (sync *)handle;
 

@@ -21,7 +21,7 @@
                       └──────────▶ port/ (CMake, SDL2, miniwin) ◀──────┘
                                        │
                                        ▼
-                         WebAssembly site (build/port/site)
+                         WebAssembly site (build/port/dist/browser_wasm)
 ```
 
 There are four loops, and most work happens in one of them.

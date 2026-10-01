@@ -82,6 +82,7 @@
 - [Compiling Borland's dialect](port/borland-dialect.md)
 - [QuickTime in the port](port/quicktime.md)
 - [The web build and packaging](port/web.md)
+- [Native builds](port/native.md)
 - [Debugging the port](port/debugging.md)
 - [Debug tools](port/debug-tools.md)
 - [Quirks](port/quirks.md)

@@ -18,6 +18,6 @@ The consequence is that `-w` hides real warnings; the matcher, not the compiler,
 
 ## Things the dialect hides
 
-- **`long` is 4 bytes in the original.** The decompiled code keeps pointers in `long`s in places, which is why the port is [32-bit only](overview.md#limits). Typing those pointers as pointers (a standing rule for new code) is the way out.
+- **`long` is 4 bytes in the original.** The structures mirror the game's files and each other's sizes, and its arithmetic wraps at 32 bits. Where `long` is 64 bits (Linux, macOS) the prelude makes the game's `long` an `int`; see [64-bit targets](overview.md#64-bit-targets).
 - **The game's own placement `operator new`** (zeroing) is `audioObj`'s, because standard C++ reserves the global placement `operator new(size_t, void *)` and compilers skip replacements of it.
 - **`__emit__` and inline assembly** only exist in `glue/` (not built for the port; `port/glue/quicktime.cpp` replaces it).

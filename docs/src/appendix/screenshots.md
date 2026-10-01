@@ -14,16 +14,16 @@ Ids are lower-case words with hyphens, unique across the book. The table below i
 
 | From | How |
 | --- | --- |
-| `uv run shots` | **the way most of them are made**: the recipes in `docs/screenshots.toml` (debug commands that take the headless port to the moment, ending in `quit`, and an optional crop) are run several at a time, each on a fresh C: drive, and written to `docs/src/images/<id>.png`; the pictures are then embedded and the index below refreshed. `uv run shots ID...` redoes some. It needs the headless build (`uv run port build headless`). The [debug tools](../port/debug-tools.md) (`scene`, `level`, `party`, `click`, `key`, `wait`) do the reaching |
-| the port in a browser | `uv run port package && uv run port serve`, play, and use the browser's screenshot tool on the canvas (the game's area is 640×480 and scales in whole multiples) or open the page with `?screenshot` and read `/screenshot.bmp` from the page's file system |
-| the headless port | `uv run port run --headless --seconds 60 --click 12000:320,240 --screenshot build/port/shot.bmp`: scripted clicks (`--click MS:X,Y`, or `:press`/`:move`/`:release` to drag) reach a scene without a window; the BMP is the 640×480 screen. Convert to PNG with any tool |
+| `uv run shots` | **the way most of them are made**: the recipes in `docs/screenshots.toml` (debug commands that take the headless port to the moment, ending in `quit`, and an optional crop) are run several at a time, each on a fresh C: drive, and written to `docs/src/images/<id>.png`; the pictures are then embedded and the index below refreshed. `uv run shots ID...` redoes some. It needs the headless build (`uv run port build headless_wasm`). The [debug tools](../port/debug-tools.md) (`scene`, `level`, `party`, `click`, `key`, `wait`) do the reaching |
+| the port in a browser | `uv run port package browser_wasm && uv run port serve`, play, and use the browser's screenshot tool on the canvas (the game's area is 640×480 and scales in whole multiples) or open the page with `?screenshot` and read `/screenshot.bmp` from the page's file system |
+| the headless port | `uv run port run headless_wasm --seconds 60 --click 12000:320,240 --screenshot build/port/shot.bmp`: scripted clicks (`--click MS:X,Y`, or `:press`/`:move`/`:release` to drag) reach a scene without a window; the BMP is the 640×480 screen. Convert to PNG with any tool |
 | the original, in the VM | `uv run vm run`, play, `uv run vm screenshot` (a PNG of the VM's screen): useful for comparing the port with the original |
 | movies | `uv run assets frames LOGO025 1 701` draws frames of the converted intro as PNGs in `build/movie-frames/` |
 | backdrops and art | the images in `assets/<ARCHIVE>/tBMP/` are the game's own pictures (scene backdrops are the 640×480 ones, `5000.png` and nearby); use them for a clean, UI-free view |
 
 A recipe is not a replay of a play-through: it jumps to a scene with `scene N` and sets the state it needs (`party 8`, `level 3 3`, `records 16`); `click` and `key` do the rest. Reruns give equivalent pictures, not identical ones (names and idle animations are random). Moments that need real play (a Zoombini turned back by the cliffs, a room that stays dark) are not captured yet, and their placeholders stay.
 
-Reaching a given scene quickly: from Zoombini Isle, make a party and set out; the map's practice mode (Ctrl-P, then `1`-`4`) opens every place at the chosen level without touching a real journey; and `uv run port run --headless` with `--click` can script the whole route. Hidden scenes need the cheat codes described in [Hidden scenes](../gameplay/hidden.md).
+Reaching a given scene quickly: from Zoombini Isle, make a party and set out; the map's practice mode (Ctrl-P, then `1`-`4`) opens every place at the chosen level without touching a real journey; and `uv run port run headless_wasm` with `--click` can script the whole route. Hidden scenes need the cheat codes described in [Hidden scenes](../gameplay/hidden.md).
 
 Use PNG, at the game's native 640×480 where you can, named `<id>.png`.
 

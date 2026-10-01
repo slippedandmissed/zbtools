@@ -9,13 +9,3 @@ repos:
         pass_filenames: false
         # Run when Python code or its tool configuration changes.
         files: ^((src|tests)/.*\.py|pyproject\.toml|uv\.lock)$
-      - id: match
-        name: uv run match --update (record which decompiled functions match)
-        entry: uv run match --update --quiet
-        language: system
-        pass_filenames: false
-        # Run when decompiled code, its record or the matching tool changes.
-        # It fails if a recorded match regresses, and rewrites
-        # decomp/matching.txt when something new matches: add it and commit
-        # again. Needs the toolchain and the game (bring-your-own).
-        files: ^(decomp/|src/zbtools/(match|omf|toolchain)\.py$)

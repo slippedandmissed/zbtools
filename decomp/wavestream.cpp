@@ -17,17 +17,17 @@
 StreamBuffer *__cdecl wavestreamObj::newBuffer(unsigned long samples)
 {
     unsigned long size = blockAlign * samples;
-    StreamBuffer *buffer = (StreamBuffer *)newPtr(size + 0x60);
+    StreamBuffer *buffer = (StreamBuffer *)newPtr(size + offsetof(StreamBuffer, data));
 
     if (buffer) {
-        memset(buffer, 0, 0x64);
+        memset(buffer, 0, offsetof(StreamBuffer, data) + 4);
         buffer->sound = this;
         buffer->call.proc = streamBufferDone;
         buffer->call.data = buffer;
         buffer->capacity = samples;
         buffer->size = size;
         buffer->header.lpData = (LPSTR)buffer->data;
-        buffer->header.dwUser = (DWORD)buffer;
+        buffer->header.dwUser = (DWORD_PTR)buffer;
         setSoundError(0);
     } else
         setSoundError(memError());
@@ -118,7 +118,7 @@ void __cdecl wavestreamObj::unprepareBuffer(StreamBuffer *buffer)
    or (resource 0) the open file `file`; the first `preloadMs` ms read in
    now. 0 on error. */
 /* @zoombi32 0x0047cd5c */
-audioObj *__cdecl newStreamedWave(long resource, long file, long preloadMs)
+audioObj *__cdecl newStreamedWave(long resource, LONG_PTR file, long preloadMs)
 {
     unsigned long size;
     unsigned long chunk[2];
@@ -290,7 +290,7 @@ short __cdecl wavestreamObj::openDevice()
     format.wf.nAvgBytesPerSec = sampleRate * blockAlign;
     format.wf.nBlockAlign = blockAlign;
     format.wBitsPerSample = bitsPerSample;
-    switch (openWaveOutDevice(&wave, device, &format, (long)streamCallback, (long)this,
+    switch (openWaveOutDevice(&wave, device, &format, (LONG_PTR)streamCallback, (LONG_PTR)this,
                               CALLBACK_FUNCTION)) {
     case MMSYSERR_ALLOCATED:
         return setSoundError(0x29cd);
@@ -315,7 +315,7 @@ short __cdecl wavestreamObj::openDevice()
             unlockPtr(cues);
             goto fail;
         }
-        thread = createThread(streamThread, (long)this, 0x1000, 1);
+        thread = createThread(streamThread, (LONG_PTR)this, 0x1000, 1);
         if (!thread) {
             setSoundError(threadError());
             deleteSync(event);
@@ -344,7 +344,7 @@ short __cdecl wavestreamObj::setDeviceVolume(long level)
 /* @zoombi32 0x0047d43d */
 short __cdecl wavestreamObj::startDevice(short paused)
 {
-    long self;
+    LONG_PTR self;
     short priority;
 
     playing = paused;
@@ -565,7 +565,7 @@ done:
 }
 
 /* @zoombi32 0x0047dab4 */
-long __cdecl wavestreamObj::deviceHandle()
+LONG_PTR __cdecl wavestreamObj::deviceHandle()
 {
     return wave;
 }
@@ -607,7 +607,7 @@ long __cdecl wavestreamObj::position()
 /* The reading thread: each time its event is set, reads more (halting
    the sound, and itself, when it can't). */
 /* @zoombi32 0x0047db85 */
-void streamThread(long data)
+void streamThread(LONG_PTR data)
 {
     wavestreamObj *wave = (wavestreamObj *)data;
 
@@ -634,7 +634,7 @@ void __cdecl wavestreamObj::pause()
 
 /* Reads from the resource `resource`, or (resource 0) the file `file`. */
 /* @zoombi32 0x0047dc02 */
-short __cdecl readStream(long resource, long file, void *buffer, unsigned long *size,
+short __cdecl readStream(long resource, LONG_PTR file, void *buffer, unsigned long *size,
                          unsigned long offset)
 {
     if (resource)
@@ -726,7 +726,7 @@ short __cdecl wavestreamObj::setText(const char *text, unsigned short length)
 
 /* Not exact: the original keeps `this` in ebx; BCC32 4.5 uses eax. */
 /* @zoombi32 0x0047de63 */
-short __cdecl wavestreamObj::play(SoundNotify proc, long data)
+short __cdecl wavestreamObj::play(SoundNotify proc, LONG_PTR data)
 {
     if (start < sampleCount)
         return audioObj::play(proc, data);
@@ -749,7 +749,7 @@ void *__cdecl audioObj::operator new(size_t size, void *where)
 /* The wave device's callback: passes finished buffers to streamBufferDone
    under the sound's lock. */
 /* @zoombi32 0x0047df34 */
-void CALLBACK streamCallback(long, unsigned short message, DWORD instance, DWORD header, DWORD)
+void CALLBACK streamCallback(LONG_PTR, unsigned short message, DWORD_PTR instance, DWORD_PTR header, DWORD_PTR)
 {
     HINSTANCE saved = osInstance(0);
     StreamBuffer *buffer;
@@ -760,7 +760,7 @@ void CALLBACK streamCallback(long, unsigned short message, DWORD instance, DWORD
         if (!wave->resetting && (buffer = (StreamBuffer *)done->dwUser) != 0)
             deferCall(&wave->lock, &buffer->call);
     }
-    osInstance((long)saved);
+    osInstance((LONG_PTR)saved);
 }
 
 /* A buffer has played: wakes the thread, reports its cue point, counts
@@ -813,5 +813,5 @@ void streamBufferDone(void *data)
 void __cdecl notifySound(audioObj *object, SoundNotice *notice)
 {
     if (object->notify)
-        object->notify((long)object, notice, object->cookie);
+        object->notify((LONG_PTR)object, notice, object->cookie);
 }

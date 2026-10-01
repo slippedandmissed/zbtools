@@ -24,12 +24,12 @@
  * the thread its own way.
  */
 /* @zoombi32-functional 0x0046f5c0 */
-short initContext(Context *context, void (*proc)(long), long argument, unsigned short stackSize)
+short initContext(Context *context, void (*proc)(LONG_PTR), LONG_PTR argument, unsigned short stackSize)
 {
     unsigned long need;
     long *block;
     long *after;
-    long *top;
+    LONG_PTR *top;
 
     memset(context, 0, sizeof(Context));
     if (!proc)
@@ -55,11 +55,11 @@ short initContext(Context *context, void (*proc)(long), long argument, unsigned 
     }
     *block |= 1;
     context->stack = block + 1;
-    top = (long *)((char *)context->stack + stackSize - 4);
-    top[0] = argument;
-    top[-1] = (long)threadExit;
-    context->eip = (unsigned long)proc;
-    context->esp = (unsigned long)&top[-1];
+    top = (LONG_PTR *)((char *)context->stack + stackSize) - 2;
+    top[1] = argument;
+    top[0] = (LONG_PTR)threadExit;
+    context->eip = (UINT_PTR)proc;
+    context->esp = (UINT_PTR)top;
     return setThreadError(0);
 }
 
@@ -145,7 +145,7 @@ static void WINAPI startFiber(void *parameter)
     Context *context = (Context *)parameter;
 
     deleteDeadFiber();
-    ((void (*)(long))context->eip)(((long *)context->esp)[1]);
+    ((void (*)(LONG_PTR))context->eip)(((LONG_PTR *)context->esp)[1]);
     threadExit();
     for (;;)
         switchToFiber(fiberOf(&threads.main->context));

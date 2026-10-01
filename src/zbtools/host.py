@@ -46,6 +46,11 @@ _INSTALL_HINTS: dict[str, dict[str, str]] = {
         "Darwin": "brew install mdbook",
         "Linux": "cargo install mdbook   # or a release from https://github.com/rust-lang/mdBook/releases",
     },
+    "Docker": {
+        "Darwin": "brew install --cask docker   # Docker Desktop; start it once",
+        "Linux": "sudo apt install docker.io   # Debian/Ubuntu\n"
+        "  sudo dnf install docker   # Fedora",
+    },
     "Wine": {
         "Linux": "sudo apt install wine   # Debian/Ubuntu\n  sudo dnf install wine   # Fedora",
     },
@@ -62,6 +67,11 @@ def require(package: str, binary: str) -> str:
     if hint:
         msg += f" Install it with:\n  {hint}"
     sys.exit(msg)
+
+
+def docker() -> str:
+    """The Docker command line (the Linux builds run in a container)."""
+    return require("Docker", "docker")
 
 
 def qemu_system() -> str:

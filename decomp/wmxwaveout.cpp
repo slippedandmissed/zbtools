@@ -20,7 +20,7 @@ static void swapSamples(WAVEHDR *header)
 }
 
 /* @zoombi32 0x0047fd60 */
-__cdecl wmxWaveOut::wmxWaveOut(PCMWAVEFORMAT *format, long callback, long instance,
+__cdecl wmxWaveOut::wmxWaveOut(PCMWAVEFORMAT *format, LONG_PTR callback, LONG_PTR instance,
                                unsigned long flags)
     : wmxObject(0, format, callback, instance, flags)
 {
@@ -35,8 +35,8 @@ __cdecl wmxWaveOut::~wmxWaveOut()
 
 /* Passes waveOut's messages on to the object's callback. */
 /* @zoombi32 0x0047fdc2 */
-void CALLBACK wmxWaveOutCallback(HWAVEOUT, UINT message, DWORD instance, DWORD param1,
-                                 DWORD param2)
+void CALLBACK wmxWaveOutCallback(HWAVEOUT, UINT message, DWORD_PTR instance, DWORD_PTR param1,
+                                 DWORD_PTR param2)
 {
     ((wmxObject *)instance)->notify((unsigned short)message, param1, param2);
 }
@@ -45,7 +45,7 @@ void CALLBACK wmxWaveOutCallback(HWAVEOUT, UINT message, DWORD instance, DWORD p
 unsigned short wmxWaveOut::open(unsigned short device, unsigned long flags)
 {
     unsigned short error = waveOutOpen(&wave, device, (WAVEFORMAT *)&format,
-                                       (DWORD)wmxWaveOutCallback, (DWORD)this, flags);
+                                       (DWORD_PTR)wmxWaveOutCallback, (DWORD_PTR)this, flags);
 
     if (!error)
         waveOutGetDevCaps(device, &caps, sizeof caps);

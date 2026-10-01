@@ -8,7 +8,7 @@
 #include "zoombinis.h"
 
 /* @zoombi32 0x0048266c */
-short closeFile(long handle, short force)
+short closeFile(LONG_PTR handle, short force)
 {
     FileRecord *file = fileOf(handle, 0);
 
@@ -22,7 +22,7 @@ short closeFile(long handle, short force)
 /* @zoombi32 0x004826b4 */
 short createPath(const fileSpec &spec, unsigned short mode)
 {
-    long volume;
+    LONG_PTR volume;
     DWORD attributes;
     char path[0x100];
 
@@ -67,7 +67,7 @@ __cdecl asyncCreateDirectory::asyncCreateDirectory(const char *path, SECURITY_AT
 /* @zoombi32 0x00482920 */
 short deleteFile(const fileSpec &spec)
 {
-    long volume;
+    LONG_PTR volume;
     DWORD attributes;
     char path[0x100];
 

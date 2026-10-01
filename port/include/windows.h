@@ -102,6 +102,10 @@ void LeaveCriticalSection(LPCRITICAL_SECTION section);
 LONG InterlockedIncrement(LONG *value);
 LONG InterlockedDecrement(LONG *value);
 LONG InterlockedExchange(LONG *target, LONG value);
+#if INTPTR_MAX > 0x7fffffffL
+/* (The game swaps pointers with it.) */
+LONG_PTR InterlockedExchange(LONG_PTR *target, LONG_PTR value);
+#endif
 DWORD GetTickCount();
 void GetLocalTime(SYSTEMTIME *time);
 
@@ -122,8 +126,9 @@ HWND GetDesktopWindow();
 BOOL IsIconic(HWND window);
 BOOL GetClientRect(HWND window, LPRECT rect);
 BOOL GetWindowRect(HWND window, LPRECT rect);
-LONG GetWindowLong(HWND window, int index);
-LONG SetWindowLong(HWND window, int index, LONG value);
+/* (Pointer-sized, as the game keeps a window procedure in them.) */
+LONG_PTR GetWindowLong(HWND window, int index);
+LONG_PTR SetWindowLong(HWND window, int index, LONG_PTR value);
 LONG_PTR GetWindowLongPtr(HWND window, int index);
 LONG_PTR SetWindowLongPtr(HWND window, int index, LONG_PTR value);
 int GetWindowText(HWND window, LPSTR text, int size);

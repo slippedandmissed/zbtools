@@ -4,8 +4,8 @@
 #
 # Normally driven by `uv run port build`, but plain CMake works too:
 #
-#   emcmake cmake -S port -B build/port/web && cmake --build build/port/web
-#   cmake -S port -B build/port/native && cmake --build build/port/native
+#   emcmake cmake -S port -B build/port/browser_wasm && cmake --build build/port/browser_wasm
+#   cmake -S port -B build/port/macos_universal && cmake --build build/port/macos_universal
 #
 # A source in port/decomp/ replaces decomp/'s file of the same name (for a
 # module whose portable version has to differ from the matching one); none
@@ -23,16 +23,12 @@ endif()
 
 get_filename_component(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
 
-# The decompiled code assumes Borland's 32-bit data model: long and pointers
-# are 4 bytes, and it keeps pointers in longs. Until that's untangled, only
-# 32-bit targets build (WebAssembly, and 32-bit x86 Windows or Linux).
-option(ZB_ALLOW_64BIT "Build for a 64-bit target anyway (the game won't work)" OFF)
-if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4 AND NOT ZB_ALLOW_64BIT)
-    message(FATAL_ERROR
-        "The port needs a 32-bit target (pointers here are ${CMAKE_SIZEOF_VOID_P} bytes): "
-        "the decompiled code assumes 4-byte longs and pointers. Build for WebAssembly "
-        "(uv run port build), or a 32-bit native target, or pass -DZB_ALLOW_64BIT=ON.")
-endif()
+# The decompiled code is Borland's 32-bit dialect: its longs are 32 bits, and
+# where a pointer has to live in an integer it says LONG_PTR (decomp/zoombinis.h).
+# On a target whose long is 64 bits (Linux, macOS) miniwin/prelude.h makes the
+# game's `long` an int, so its structures keep the original's sizes (see "The
+# port" in the handbook); everywhere else (WebAssembly, 32-bit and 64-bit
+# Windows) long is already 32 bits.
 
 include(FetchContent)
 
@@ -55,7 +51,18 @@ if(EMSCRIPTEN)
     target_compile_options(SDL2::SDL2 INTERFACE -sUSE_SDL=2)
     target_link_options(SDL2::SDL2 INTERFACE -sUSE_SDL=2)
 else()
-    find_package(SDL2 CONFIG QUIET)
+    # A macOS build is universal (arm64 and x86_64), which a package manager's
+    # SDL2 (for the host's architecture only) can't be: build the pinned release
+    # there, unless asked to use the system's.
+    if(APPLE)
+        set(ZB_SYSTEM_SDL_DEFAULT OFF)
+    else()
+        set(ZB_SYSTEM_SDL_DEFAULT ON)
+    endif()
+    option(ZB_SYSTEM_SDL "Use the system's SDL2 if there is one" ${ZB_SYSTEM_SDL_DEFAULT})
+    if(ZB_SYSTEM_SDL)
+        find_package(SDL2 CONFIG QUIET)
+    endif()
     if(NOT TARGET SDL2::SDL2)
         FetchContent_Declare(SDL2
             URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-2.32.10.tar.gz
@@ -63,7 +70,10 @@ else()
         set(SDL_SHARED OFF CACHE BOOL "" FORCE)
         set(SDL_STATIC ON CACHE BOOL "" FORCE)
         FetchContent_MakeAvailable(SDL2)
-        add_library(SDL2::SDL2 ALIAS SDL2-static)
+        # (SDL 2.32 defines SDL2::SDL2 itself, as the static library when only that is built.)
+        if(NOT TARGET SDL2::SDL2)
+            add_library(SDL2::SDL2 ALIAS SDL2-static)
+        endif()
     endif()
 endif()
 
@@ -137,7 +147,20 @@ add_library(host STATIC ${HOST_SOURCES})
 target_include_directories(host PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(host PRIVATE SDL2::SDL2)
 
-add_executable(zoombinis main.cpp $<TARGET_OBJECTS:game>)
+# Windows: a program with a window and no console, unless it's a debugging build
+# (its debug commands and messages go to the console).
+# ZB_WINDOWS_ICON: an .ico for the program (uv run port makes one from the game's).
+set(ZB_RESOURCES "")
+if(WIN32 AND ZB_WINDOWS_ICON)
+    enable_language(RC)
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/zoombinis.rc" "1 ICON \"${ZB_WINDOWS_ICON}\"\n")
+    set(ZB_RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/zoombinis.rc")
+endif()
+if(WIN32 AND NOT ZB_DEBUG)
+    add_executable(zoombinis WIN32 main.cpp ${ZB_RESOURCES} $<TARGET_OBJECTS:game>)
+else()
+    add_executable(zoombinis main.cpp ${ZB_RESOURCES} $<TARGET_OBJECTS:game>)
+endif()
 target_include_directories(zoombinis PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(zoombinis PRIVATE miniwin host SDL2::SDL2)
 if(ZB_DEBUG)

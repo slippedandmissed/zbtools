@@ -8,13 +8,30 @@
 #ifndef ZOOMBINIS_H
 #define ZOOMBINIS_H
 
+#include <stddef.h>
 #include <windows.h>
 #include <mmsystem.h>
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
 
+/* C99's va_copy, which Borland C++ 4.5's <stdarg.h> lacks (there, a va_list is
+   a pointer, so copying it is an assignment). */
+#ifndef va_copy
+#define va_copy(dest, src) ((dest) = (src))
+#endif
+
 /* Types */
+
+/* Integers as wide as a pointer, for the handles and callback arguments the
+   engine passes pointers in (as Win32 does). Borland C++ 4.5 has no such
+   types, and its long is as wide as a pointer; elsewhere (64-bit builds) long
+   is not, so these are what keep a pointer from being cut short. */
+#ifdef __BORLANDC__
+typedef long LONG_PTR;
+typedef unsigned long UINT_PTR;
+typedef unsigned long DWORD_PTR;
+#endif
 
 /* Big-endian values (the Mac's byte order, as in the game's data) and back. */
 inline unsigned short swapShort(unsigned short value)
@@ -458,7 +475,7 @@ inline Snoid *viewSnoid(View *view)
 /* A Zoombini's view. */
 inline View *snoidView(Snoid *snoid)
 {
-    return (View *)((char *)snoid - 0x30);
+    return (View *)((char *)snoid - offsetof(View, body));
 }
 
 /* A button on a scene's screen (the camp's, the puzzles'; 0x24 bytes). */
@@ -707,7 +724,7 @@ struct SoundEntry
     short type; /* 0 a wave, 1 MIDI (see soundTypes) */
     short streamed; /* which way loadSound loads it */
     short key;
-    long handle; /* the engine's */
+    LONG_PTR handle; /* the engine's */
     long resource; /* its resource, for loadSound */
     SoundEntry *next;
 };
@@ -768,8 +785,8 @@ struct OsTimer
     long tag;
     OsTimer *prev;
     OsTimer *next;
-    void (*proc)(long timer, long data);
-    long data;
+    void (*proc)(LONG_PTR timer, LONG_PTR data);
+    LONG_PTR data;
     long interval; /* ms; 0 stopped, -1 every time */
     unsigned long due;
 };
@@ -790,7 +807,7 @@ struct OsState
     short unknown1E;
     unsigned long nextTimer; /* when the next timer is due (0: none) */
     OsTimer *timers;
-    UINT timerId; /* WM_TIMER's, while there are timers */
+    UINT_PTR timerId; /* WM_TIMER's, while there are timers */
 };
 
 /* The system, as osStartup found it (0x2c bytes). */
@@ -826,8 +843,8 @@ struct Context
     unsigned long edi;
     unsigned long esi;
     unsigned long ebp;
-    unsigned long esp;
-    unsigned long eip; /* where it resumes */
+    UINT_PTR esp;
+    UINT_PTR eip; /* where it resumes */
 };
 
 class sync
@@ -927,7 +944,7 @@ struct ThreadState
     thread *main; /* +0x24: the application thread's own */
     thread *current; /* +0x28 */
     sync *objects; /* +0x2c: every sync object */
-    long timer; /* +0x30: the time-slice timer, while two threads run */
+    LONG_PTR timer; /* +0x30: the time-slice timer, while two threads run */
     long *stacks; /* +0x34: blocks: a size (bit 0: used), then the stack */
     long *stacksEnd; /* +0x38 */
 };
@@ -940,15 +957,15 @@ public:
     __cdecl fileSpec(); /* 0x4850ec */
     __cdecl fileSpec(const char *path); /* 0x4850f8 */
     __cdecl fileSpec(const fileSpec &from); /* 0x485373 */
-    __cdecl fileSpec(long volume, const char *path); /* 0x485291 */
+    __cdecl fileSpec(LONG_PTR volume, const char *path); /* 0x485291 */
     __cdecl fileSpec(const fileSpec &directory, const char *name); /* 0x48518c */
     __cdecl ~fileSpec(); /* 0x48533e */
     fileSpec &__cdecl operator=(const fileSpec &from); /* 0x4853a2 */
     short __cdecl compare(const fileSpec &with) const; /* 0x4853f3: 0 if the same, else 0x2844 or an error */
     short __cdecl getPath(char *path) const; /* 0x4854c5 */
     /* The volume and full path, checking the volume is there. */
-    short __cdecl locate(long *volume, char *path) const; /* 0x4855c0 */
-    short __cdecl volume(long *volume) const; /* 0x485596 */
+    short __cdecl locate(LONG_PTR *volume, char *path) const; /* 0x4855c0 */
+    short __cdecl volume(LONG_PTR *volume) const; /* 0x485596 */
     short __cdecl fileName(char *name) const; /* 0x485485: the last part */
     /* The directory part, with forward slashes. */
     short __cdecl directory(char *path) const; /* 0x48550c */
@@ -963,14 +980,14 @@ struct FileName
 {
     short references;
     short unknown2;
-    long volume;
+    LONG_PTR volume;
     char path[0x100]; /* from the root (or share), shortened to fit */
 };
 
 /* Whether a name fits the volume's file system: long names on NTFS and
    HPFS; else 8.3, with more characters allowed on long-name FAT. -1 if
    the volume isn't known. */
-unsigned short __cdecl validName(const char *name, unsigned short length, long volume); /* 0x485a63 */
+unsigned short __cdecl validName(const char *name, unsigned short length, LONG_PTR volume); /* 0x485a63 */
 
 /* Globals, by address */
 
@@ -1113,8 +1130,8 @@ extern char installDir[256]; /* @data 0x4b1828 */
 extern char moduleFileName[256]; /* @data 0x4b28d4 */
 extern char rosterDirectory[]; /* @data 0x4b29d4 */
 extern short movieShowing; /* @data 0x4b2ad4 */
-extern long currentMovie; /* @data 0x4b2ad8 */
-extern long movieController; /* @data 0x4b2adc */
+extern LONG_PTR currentMovie; /* @data 0x4b2ad8 */
+extern LONG_PTR movieController; /* @data 0x4b2adc */
 extern short rosterReady; /* @data 0x4b2aea */
 extern HINSTANCE appInstance; /* @data 0x4b2af0 */
 extern HINSTANCE appPreviousInstance; /* @data 0x4b2af4 */
@@ -1148,7 +1165,7 @@ extern unsigned short showMemoryStats; /* @data 0x4a48e4: show the memory statis
 /* QuickTime (see quicktime.py) */
 long __cdecl QTInitialize(long *version);
 long qtim_0b();
-long __cdecl cmgr_0b(long, HWND window, UINT message, WPARAM wParam, LPARAM lParam);
+long __cdecl cmgr_0b(LONG_PTR, HWND window, UINT message, WPARAM wParam, LPARAM lParam);
 
 /* Engine functions whose calling conventions aren't known yet: these
    declarations produce the calls the game makes. */
@@ -1204,7 +1221,7 @@ short initResources();
 
 /* Reads `key` from `section` of the INI file `file` into buffer; non-zero if
    it couldn't. */
-short closeResourceFile(long map, short compact, short force);
+short closeResourceFile(LONG_PTR map, short compact, short force);
 
 /*
  * The Mohawk engine
@@ -1240,9 +1257,9 @@ extern IniState iniState; /* @data 0x4b9b58 */
 long fileSize(const fileSpec &file); /* 0x484690: a directory's is its files' total; -1 on error */
 short fileError(); /* 0x484670 */
 void programDirectory(fileSpec *directory); /* 0x484678 */
-long openFile(fileSpec *file, short mode); /* 0x484b50: a handle, 0 on error (modes: FileRecord::open) */
-short readFile(long file, void *buffer, long *size); /* 0x484c08 */
-short closeFile(long file, short force); /* 0x48266c: even if closing fails, with force */
+LONG_PTR openFile(fileSpec *file, short mode); /* 0x484b50: a handle, 0 on error (modes: FileRecord::open) */
+short readFile(LONG_PTR file, void *buffer, long *size); /* 0x484c08 */
+short closeFile(LONG_PTR file, short force); /* 0x48266c: even if closing fails, with force */
 short fileMissing(const fileSpec &file); /* 0x483420: 0 if it exists, else an error (0x2845 not found) */
 void currentDirectory(fileSpec *directory); /* 0x4845e4 */
 short setCurrentDirectory(const fileSpec *directory); /* 0x484e9c */
@@ -1929,7 +1946,7 @@ struct ResourceMap
     short prevPreload;
     unsigned short users;
     short unknownE;
-    long file;
+    LONG_PTR file;
     short async; /* reads can go on in the background */
     short readOnly;
     short directory; /* a Directory, in a handle */
@@ -1967,7 +1984,7 @@ struct PreloadRequest
     PreloadRequest *prev;
     long id;
     PreloadProc proc;
-    long data; /* the provider's; the default one keeps a handle here */
+    LONG_PTR data; /* the provider's; the default one keeps a handle here */
     char *buffer;
     unsigned long offset; /* in the resource */
     unsigned long length;
@@ -1976,7 +1993,7 @@ struct PreloadRequest
     short finished;
     unsigned short busy;
     PreloadProc callback; /* the default provider's caller's */
-    long callbackData;
+    LONG_PTR callbackData;
 };
 
 struct ResourceState
@@ -1994,7 +2011,7 @@ struct ResourceState
     unsigned short syncPreloads;
     unsigned short asyncPreloads;
     short preloadMap; /* the ring */
-    long preloadThread;
+    LONG_PTR preloadThread;
     long systemMap; /* SYSTEM.W32 or SYSTEM.MHK */
 };
 
@@ -2004,7 +2021,7 @@ extern ResourceState resources; /* @data 0x4b9d8c */
 long makeResourceId(short map, unsigned short index); /* 0x492a25 */
 unsigned long resourceIndex(long id);
 long resourceMapHandle(long id); /* the low word */
-ResourceMap *resourceMap(long handle);
+ResourceMap *resourceMap(LONG_PTR handle);
 short findEntry(long id, ResourceMap **map, FileTableEntry **entry);
 unsigned short __cdecl lowWord(unsigned long value);
 unsigned short __cdecl highWord(unsigned long value);
@@ -2016,7 +2033,7 @@ short writeResource(long id);
 long findResourceByHandle(short handle);
 short releaseResource(long id, short release);
 short resourceError();
-short getResourceInfo(long id, long *file, unsigned long *offset, unsigned long *size);
+short getResourceInfo(long id, LONG_PTR *file, unsigned long *offset, unsigned long *size);
 unsigned long resourceSize(long id);
 short loadResource(long id, short use);
 unsigned short resourceHandle(long id); /* 0 if not loaded, 0xffff on error */
@@ -2033,7 +2050,7 @@ void byteSwapDirectory(Directory *directory, short fromFile);
 void byteSwapFileTable(FileTable *table, short fromFile);
 /* Runs a map's preloads for up to `time` ms (0xffffffff: all of them). */
 unsigned short runMapPreloads(long map, unsigned long time);
-PreloadRequest *startPreload(long id, PreloadProc callback, long data);
+PreloadRequest *startPreload(long id, PreloadProc callback, LONG_PTR data);
 short disposePreload(PreloadRequest *request);
 short cancelPreloads(long id);
 unsigned short servicePreloads(unsigned long time);
@@ -2041,10 +2058,10 @@ unsigned short stepPreload(PreloadRequest *request, unsigned long time); /* 0xff
 PreloadRequest *findPreload(ResourceMap *map, long id, short idle);
 void insertPreload(ResourceMap *map, PreloadRequest *request);
 void *defaultPreloadProc(long event, long id, short *handle);
-PreloadRequest *newPreloadRequest(long id, PreloadProc proc, long data, unsigned long length,
+PreloadRequest *newPreloadRequest(long id, PreloadProc proc, LONG_PTR data, unsigned long length,
                                   unsigned long offset);
 void seekPreloads(ResourceMap *map, unsigned long position);
-void preloadThread(long);
+void preloadThread(LONG_PTR);
 PreloadRequest *checkRequest(PreloadRequest *request);
 void *callProvider(PreloadRequest *request, long event);
 long comparePreloads(PreloadRequest *a, PreloadRequest *b);
@@ -2056,7 +2073,7 @@ void closeResources();
 unsigned short setResourcePurgeable(long id, short purgeable);
 int __cdecl compareEntries(const void *a, const void *b); /* file-table entries, for qsort */
 long findResource(unsigned long type, unsigned short id, long map);
-short writeResourceMap(long handle);
+short writeResourceMap(LONG_PTR handle);
 short writeMapHeader(ResourceMap *map); /* 0x492483 */
 short writeResourceData(long id, const void *buffer, unsigned long length, unsigned long offset);
 short copyFileBytes(ResourceMap *map, unsigned long to, unsigned long from, unsigned long length);
@@ -2082,8 +2099,8 @@ public:
     HANDLE thread;
     DWORD threadId;
     HANDLE wake;
-    long done; /* an OS-layer event */
-    long caller; /* the waiting thread */
+    LONG_PTR done; /* an OS-layer event */
+    LONG_PTR caller; /* the waiting thread */
     void (*proc)(void *data);
     void *data;
 };
@@ -2278,7 +2295,7 @@ struct FileRequest
     short canAsk;
     short unknown6;
     long drive;
-    long volume;
+    LONG_PTR volume;
     char *message;
 };
 
@@ -2290,7 +2307,7 @@ public:
     void activate(short active); /* 0x482b80 */
     void eject(); /* 0x482bbc */
     short init(long index); /* 0x482cb3: 1 if there's no drive, or on error */
-    short use(long volume); /* 0x482f2c: makes sure the volume is in the drive */
+    short use(LONG_PTR volume); /* 0x482f2c: makes sure the volume is in the drive */
     void setLocked(short on); /* 0x483028: locks the media in (Windows 95) */
     void lock(short on); /* 0x483102: holds its mutex */
     short readInfo(DiskInfo *info); /* 0x483127 */
@@ -2304,8 +2321,8 @@ public:
     unsigned short remote : 1;
     unsigned short removable : 1;
     short locked; /* the media is locked in */
-    long volume; /* the volume in it, 0 if not known */
-    long mutex;
+    LONG_PTR volume; /* the volume in it, 0 if not known */
+    LONG_PTR mutex;
 };
 
 /* The drives, 'A' on. */
@@ -2333,7 +2350,7 @@ public:
     unsigned long tag;
     Volume *prev;
     Volume *next;
-    long id;
+    LONG_PTR id;
     DiskInfo info;
     char unknown80[4];
     unsigned long lastUsed;
@@ -2357,17 +2374,17 @@ public:
     FileRecord *next;
     FileRecord *prev;
     Volume *volume;
-    long mutex;
+    LONG_PTR mutex;
     unsigned short mode;
     short kind;
     HANDLE handle;
     char path[0x100]; /* shortened to fit once open */
 };
 
-Volume *volumeOf(long id); /* 0x485dc5: 0 if it isn't a volume */
+Volume *volumeOf(LONG_PTR id); /* 0x485dc5: 0 if it isn't a volume */
 /* The known volume with that label, in the drive (or any removable drive
    for a removable one) or on the share; 0 if none. */
-long findVolume(DiskInfo *info, long drive, const char *share); /* 0x485f2a */
+LONG_PTR findVolume(DiskInfo *info, long drive, const char *share); /* 0x485f2a */
 
 /* The file layer's state. */
 struct FileState
@@ -2403,17 +2420,17 @@ short askFileUser(FileRequest *request); /* 0x484365: 0 to give up */
 void filesActivated(short active); /* 0x483464: the activate hook */
 short __fastcall fileLayerVersion(); /* 0x483a22: 0x500, or 0 if not initialised */
 void __cdecl closeFiles(); /* 0x483a36 */
-FileRecord *findOpenFile(long volume, const char *path); /* 0x483c8a */
+FileRecord *findOpenFile(LONG_PTR volume, const char *path); /* 0x483c8a */
 short fileErrorOf(DWORD error); /* 0x483cfb: a Win32 error as the file layer's */
-long mountDrive(long number); /* 0x484a4c: finds the volume in a drive, 0 if none */
+LONG_PTR mountDrive(long number); /* 0x484a4c: finds the volume in a drive, 0 if none */
 short getAttributes(const char *path, DWORD *attributes); /* 0x483557 */
 short setAttributes(const char *path, DWORD attributes); /* 0x483ad5 */
 /* Whether a directory is one of the engine's or holds an open file, or a
    file is open. */
-short fileInUse(long volume, const char *path, DWORD attributes); /* 0x483b2e */
+short fileInUse(LONG_PTR volume, const char *path, DWORD attributes); /* 0x483b2e */
 /* Creates a file (mode 1) or directory (mode 2), hidden (4), read-only (8). */
 short createPath(const fileSpec &spec, unsigned short mode); /* 0x4826b4 */
-FileRecord *fileOf(long handle, short kind); /* 0x486240: 0 if it isn't an open file */
+FileRecord *fileOf(LONG_PTR handle, short kind); /* 0x486240: 0 if it isn't an open file */
 
 /* The files resources come from (the async file API) */
 struct VolumeInfo
@@ -2430,22 +2447,22 @@ struct VolumeInfo
     char *share;
 };
 
-short lockFile(long file, long timeout); /* 0x4860cc: 0, or 0x283d if it timed out */
-void unlockFile(long file); /* 0x484d98 */
-unsigned long seekFile(long file, unsigned long offset, long whence); /* 0x484dc4: -1 on error */
-short writeFile(long file, const void *buffer, long *size); /* 0x48610c */
-short setFileSize(long file, unsigned long size); /* 0x484f3c */
-unsigned long fileLength(long file); /* 0x4845fc */
-short fileSpecOf(long file, fileSpec *spec); /* 0x484934 */
-short volumeInfo(long volume, VolumeInfo *info); /* 0x4849ac */
-long setAskUser(long handler); /* 0x4850d4: sets FileState.askUser, returning the previous one */
+short lockFile(LONG_PTR file, long timeout); /* 0x4860cc: 0, or 0x283d if it timed out */
+void unlockFile(LONG_PTR file); /* 0x484d98 */
+unsigned long seekFile(LONG_PTR file, unsigned long offset, long whence); /* 0x484dc4: -1 on error */
+short writeFile(LONG_PTR file, const void *buffer, long *size); /* 0x48610c */
+short setFileSize(LONG_PTR file, unsigned long size); /* 0x484f3c */
+unsigned long fileLength(LONG_PTR file); /* 0x4845fc */
+short fileSpecOf(LONG_PTR file, fileSpec *spec); /* 0x484934 */
+short volumeInfo(LONG_PTR volume, VolumeInfo *info); /* 0x4849ac */
+LONG_PTR setAskUser(LONG_PTR handler); /* 0x4850d4: sets FileState.askUser, returning the previous one */
 
 /*
  * Timers: multimedia timer events ('TEvt'), whose procedures run under the
  * timers' lock. Delays longer than the timer device allows are counted down
  * in steps; periodic ones are rescheduled to catch up when late.
  */
-typedef void (*TimerProc)(long timer, long data);
+typedef void (*TimerProc)(LONG_PTR timer, LONG_PTR data);
 
 struct TimerEvent
 {
@@ -2457,7 +2474,7 @@ struct TimerEvent
     unsigned long remaining; /* until it fires */
     unsigned long period; /* 0: fire once */
     TimerProc proc;
-    long data;
+    LONG_PTR data;
     long unknown20;
     Deferred call; /* runs fireTimer under the lock */
     unsigned long id; /* the multimedia timer */
@@ -2480,13 +2497,13 @@ struct TimerState
 
 extern TimerState timerState; /* @data 0x4b9db0 */
 
-long newTimer(unsigned long delay, unsigned long period, TimerProc proc, long data); /* 0x492dc4 */
-short killTimer(long timer);
+LONG_PTR newTimer(unsigned long delay, unsigned long period, TimerProc proc, LONG_PTR data); /* 0x492dc4 */
+short killTimer(LONG_PTR timer);
 void freeTimer(TimerEvent *event);
-TimerEvent *timerEvent(long timer);
+TimerEvent *timerEvent(LONG_PTR timer);
 void lockTimers();
 void unlockTimers();
-void CALLBACK timerCallback(UINT id, UINT message, DWORD data, DWORD, DWORD);
+void CALLBACK timerCallback(UINT id, UINT message, DWORD_PTR data, DWORD_PTR, DWORD_PTR);
 void fireTimer(void *event);
 short timerError();
 short initTimers();
@@ -2494,7 +2511,7 @@ short timerBufferSize();
 void closeTimers();
 unsigned short startTimer(TimerEvent *event);
 short setTimerError(short error);
-long timerId(TimerEvent *event);
+LONG_PTR timerId(TimerEvent *event);
 
 /*
  * Sounds: MIDI and wave objects (audioObj, tagged 'AObj'), handed around
@@ -2503,7 +2520,7 @@ long timerId(TimerEvent *event);
  */
 
 /* Told when a sound starts (4) or stops (5), and of its progress. */
-typedef void (*SoundNotify)(long sound, SoundNotice *notice, long cookie);
+typedef void (*SoundNotify)(LONG_PTR sound, SoundNotice *notice, LONG_PTR cookie);
 
 class audioObj
 {
@@ -2516,7 +2533,7 @@ public:
     virtual short __cdecl startDevice(short playing) = 0;
     virtual void __cdecl haltDevice() = 0;
     virtual void __cdecl closeDevice() = 0;
-    virtual long __cdecl deviceHandle() = 0; /* its map or wave device */
+    virtual LONG_PTR __cdecl deviceHandle() = 0; /* its map or wave device */
     virtual long __cdecl position() = 0;
     virtual void __cdecl pause() = 0;
     virtual short __cdecl open(unsigned short device);
@@ -2527,7 +2544,7 @@ public:
     virtual short __cdecl setText(const char *text, unsigned short length) = 0;
     virtual short __cdecl setRate(long rate);
     virtual short __cdecl setVolume(long volume);
-    virtual short __cdecl play(SoundNotify notify, long cookie);
+    virtual short __cdecl play(SoundNotify notify, LONG_PTR cookie);
     virtual void __cdecl stop();
     virtual void __cdecl close();
 
@@ -2553,7 +2570,7 @@ public:
     unsigned short device;
     short unknown2E;
     SoundNotify notify;
-    long cookie;
+    LONG_PTR cookie;
     DeferLock lock;
 };
 
@@ -2569,7 +2586,7 @@ struct SoundState
     struct MidiMap *midiCache;
     unsigned short waveDevice;
     short cacheWaveDevice;
-    long waveCache;
+    LONG_PTR waveCache;
     short translateWaveRate; /* [Audio] fTranslateWaveRateOnError */
     short unknown1E;
 };
@@ -2577,45 +2594,45 @@ struct SoundState
 extern SoundState sound; /* @data 0x4b9b08 */
 
 short setSoundsActive(short active); /* 0x4764bc: non-zero on failure */
-short disposeSound(long sound);
-short forEachSound(long kind, unsigned short device, short (*proc)(audioObj *object, long data),
-                   long data);
+short disposeSound(LONG_PTR sound);
+short forEachSound(long kind, unsigned short device, short (*proc)(audioObj *object, LONG_PTR data),
+                   LONG_PTR data);
 void chooseMidiDevice();
 void chooseWaveDevice();
 short findIniEntry(fileSpec *file, const char *section, char *entry, unsigned short size,
                    const char *name, unsigned short version, unsigned short, unsigned short);
-unsigned short soundDevice(long sound);
-long soundDeviceHandle(long sound);
-long soundDuration(long sound);
+unsigned short soundDevice(LONG_PTR sound);
+LONG_PTR soundDeviceHandle(LONG_PTR sound);
+long soundDuration(LONG_PTR sound);
 short soundError(); /* 0x476bb4 */
-long soundRate(long sound);
-long soundPosition(long sound);
-unsigned short soundFlags(long sound);
-long soundKind(long sound);
-long soundVolume(long sound);
+long soundRate(LONG_PTR sound);
+long soundPosition(LONG_PTR sound);
+unsigned short soundFlags(LONG_PTR sound);
+long soundKind(LONG_PTR sound);
+long soundVolume(LONG_PTR sound);
 short initSound(); /* 0x476d0a */
-short pauseSound(long sound);
-short openSound(long sound, unsigned short device); /* 0xffff: the default device */
+short pauseSound(LONG_PTR sound);
+short openSound(LONG_PTR sound, unsigned short device); /* 0xffff: the default device */
 short soundBufferSize();
 void closeSounds();
-short endSoundLoop(long sound);
-short resumeSound(long sound);
-short seekSound(long sound, long position);
-short setSoundText(long sound, const char *text, unsigned short length);
-short setSoundRate(long sound, long rate);
-short setSoundVolume(long sound, long volume);
+short endSoundLoop(LONG_PTR sound);
+short resumeSound(LONG_PTR sound);
+short seekSound(LONG_PTR sound, long position);
+short setSoundText(LONG_PTR sound, const char *text, unsigned short length);
+short setSoundRate(LONG_PTR sound, long rate);
+short setSoundVolume(LONG_PTR sound, long volume);
 /* Starts a sound; its owner hears about it through `notify`. Non-zero on failure. */
-short playSound(long sound, SoundNotify notify, long cookie); /* 0x47712a */
-short stopSound(long sound);
-short closeSound(long sound);
+short playSound(LONG_PTR sound, SoundNotify notify, LONG_PTR cookie); /* 0x47712a */
+short stopSound(LONG_PTR sound);
+short closeSound(LONG_PTR sound);
 unsigned short setMidiDevice(unsigned short device); /* the previous one */
 unsigned short setWaveDevice(unsigned short device);
-unsigned short openWaveOutDevice(long *out, unsigned short device, PCMWAVEFORMAT *format, long, long,
+unsigned short openWaveOutDevice(LONG_PTR *out, unsigned short device, PCMWAVEFORMAT *format, LONG_PTR, LONG_PTR,
                         long flags);
-audioObj *audioObject(long sound); /* 0 if it isn't one */
+audioObj *audioObject(LONG_PTR sound); /* 0 if it isn't one */
 unsigned short __cdecl makeWord(unsigned char low, unsigned char high);
-long newSound(short data); /* from a Mohawk MIDI or WAVE in a handle */
-long newStreamedSound(long resource, long);
+LONG_PTR newSound(short data); /* from a Mohawk MIDI or WAVE in a handle */
+LONG_PTR newStreamedSound(long resource, long);
 short unsupportedMidiCall(short open); /* MMSYSERR_NOTSUPPORTED */
 unsigned short initMidi(); /* 0x47a07f */
 void closeMidi(); /* 0x47a0c0 */
@@ -2624,7 +2641,7 @@ short setSoundError(short error); /* 0x47de96 */
 void __cdecl notifySound(audioObj *object, SoundNotice *notice); /* 0x47e0d3 */
 audioObj *__cdecl newMidiSound(short data); /* 0x478f0b */
 audioObj *__cdecl newWaveSound(short data); /* 0x47a28d */
-audioObj *__cdecl newStreamedWave(long resource, long file, long preloadMs); /* 0x47cd5c */
+audioObj *__cdecl newStreamedWave(long resource, LONG_PTR file, long preloadMs); /* 0x47cd5c */
 
 /*
  * The MIDI mapper: midiOut-style calls on "maps", which share a device
@@ -2698,7 +2715,7 @@ public:
     virtual short __cdecl startDevice(short paused);
     virtual void __cdecl haltDevice();
     virtual void __cdecl closeDevice();
-    virtual long __cdecl deviceHandle();
+    virtual LONG_PTR __cdecl deviceHandle();
     virtual long __cdecl position();
     virtual void __cdecl pause();
     virtual void __cdecl endLoop();
@@ -2706,13 +2723,13 @@ public:
     virtual void __cdecl resume();
     virtual short __cdecl seek(long position);
     virtual short __cdecl setText(const char *text, unsigned short length);
-    virtual short __cdecl play(SoundNotify notify, long cookie);
+    virtual short __cdecl play(SoundNotify notify, LONG_PTR cookie);
 
     void __cdecl buildBlocks();
     void __cdecl unprepare();
     unsigned long __cdecl positionAt(unsigned long sample);
 
-    long wave;
+    LONG_PTR wave;
     short data; /* the file's handle */
     short unknown4E;
     unsigned long *file;
@@ -2778,7 +2795,7 @@ public:
     virtual short __cdecl startDevice(short paused);
     virtual void __cdecl haltDevice();
     virtual void __cdecl closeDevice();
-    virtual long __cdecl deviceHandle();
+    virtual LONG_PTR __cdecl deviceHandle();
     virtual long __cdecl position();
     virtual void __cdecl pause();
     virtual void __cdecl endLoop();
@@ -2786,7 +2803,7 @@ public:
     virtual void __cdecl resume();
     virtual short __cdecl seek(long position);
     virtual short __cdecl setText(const char *text, unsigned short length);
-    virtual short __cdecl play(SoundNotify notify, long cookie);
+    virtual short __cdecl play(SoundNotify notify, LONG_PTR cookie);
 
     StreamBuffer *__cdecl newBuffer(unsigned long samples);
     void __cdecl freeBuffer(StreamBuffer *buffer);
@@ -2797,14 +2814,14 @@ public:
     short __cdecl stream();
     unsigned long __cdecl positionAt(unsigned long sample);
 
-    long wave;
-    long file;
+    LONG_PTR wave;
+    LONG_PTR file;
     long resource; /* 0: the file is its own */
     unsigned char *cues; /* Cue#, byte-swapped */
     short streaming;
     short unknown5A;
-    long thread;
-    long event; /* wakes the thread */
+    LONG_PTR thread;
+    LONG_PTR event; /* wakes the thread */
     unsigned short queued;
     short unknown66;
     unsigned long queuedSamples;
@@ -2840,14 +2857,14 @@ public:
     unsigned long preloadSamples;
 };
 
-void streamThread(long wave); /* 0x47db85 */
-short __cdecl readStream(long resource, long file, void *buffer, unsigned long *size,
+void streamThread(LONG_PTR wave); /* 0x47db85 */
+short __cdecl readStream(long resource, LONG_PTR file, void *buffer, unsigned long *size,
                          unsigned long offset); /* 0x47dc02 */
-void CALLBACK streamCallback(long wave, unsigned short message, DWORD instance, DWORD header,
-                             DWORD); /* 0x47df34 */
+void CALLBACK streamCallback(LONG_PTR wave, unsigned short message, DWORD_PTR instance, DWORD_PTR header,
+                             DWORD_PTR); /* 0x47df34 */
 void streamBufferDone(void *buffer); /* 0x47df7a */
 void waveBlockDone(void *block); /* 0x47ae62 */
-void CALLBACK waveCallback(long wave, unsigned short message, DWORD instance, DWORD header, DWORD); /* 0x47ae14 */
+void CALLBACK waveCallback(LONG_PTR wave, unsigned short message, DWORD_PTR instance, DWORD_PTR header, DWORD_PTR); /* 0x47ae14 */
 /* DirectSound (loaded at run time from DSOUND.DLL, when [WaveMix]
    fEnableDirectSound is set): the parts WaveMix uses. BCC32 4.5 predates
    dsound.h. */
@@ -2931,7 +2948,7 @@ typedef BOOL(CALLBACK *DSENUMCALLBACK)(GUID *guid, const char *description, cons
    (wavebufWO) or a looping DirectSound buffer (wavebufDS). Positions count
    samples since opening. The owner is told (through a deferred call) when
    more can be written. */
-typedef void (*WavebufNotify)(long data, unsigned long played, unsigned long written);
+typedef void (*WavebufNotify)(LONG_PTR data, unsigned long played, unsigned long written);
 
 class wavebuf
 {
@@ -2945,7 +2962,7 @@ public:
        one or two pieces (the ring wraps). */
     virtual short __cdecl lockBuffer(unsigned long at, void **first, unsigned long *firstLength,
                                      void **second, unsigned long *secondLength) = 0;
-    virtual short __cdecl open(PCMWAVEFORMAT *format, WavebufNotify notify, long data) = 0;
+    virtual short __cdecl open(PCMWAVEFORMAT *format, WavebufNotify notify, LONG_PTR data) = 0;
     virtual void __cdecl formats(unsigned long *rate, unsigned long *formats) = 0;
     virtual short __cdecl start() = 0;
     virtual short __cdecl unlockBuffer() = 0;
@@ -2966,7 +2983,7 @@ public:
     virtual short __cdecl position(unsigned long *played, unsigned long *written);
     virtual short __cdecl lockBuffer(unsigned long at, void **first, unsigned long *firstLength,
                                      void **second, unsigned long *secondLength);
-    virtual short __cdecl open(PCMWAVEFORMAT *format, WavebufNotify notify, long data);
+    virtual short __cdecl open(PCMWAVEFORMAT *format, WavebufNotify notify, LONG_PTR data);
     virtual void __cdecl formats(unsigned long *rate, unsigned long *formats);
     virtual short __cdecl start();
     virtual short __cdecl unlockBuffer();
@@ -2992,11 +3009,11 @@ public:
     short unknown96;
     PCMWAVEFORMAT format;
     WavebufNotify notify;
-    long data;
+    LONG_PTR data;
     HWAVEOUT wave;
     WAVEHDR *headers;
     unsigned char *buffer;
-    long thread;
+    LONG_PTR thread;
     unsigned long locked;
     unsigned long totalSamples;
     short started;
@@ -3018,7 +3035,7 @@ public:
     virtual short __cdecl position(unsigned long *played, unsigned long *written);
     virtual short __cdecl lockBuffer(unsigned long at, void **first, unsigned long *firstLength,
                                      void **second, unsigned long *secondLength);
-    virtual short __cdecl open(PCMWAVEFORMAT *format, WavebufNotify notify, long data);
+    virtual short __cdecl open(PCMWAVEFORMAT *format, WavebufNotify notify, LONG_PTR data);
     virtual void __cdecl formats(unsigned long *rate, unsigned long *formats);
     virtual short __cdecl start();
     virtual short __cdecl unlockBuffer();
@@ -3041,7 +3058,7 @@ public:
     WAVEFORMATEX format;
     short facingLeft;
     WavebufNotify notify;
-    long data;
+    LONG_PTR data;
     IDirectSoundBuffer *buffer;
     unsigned long bufferSamples;
     HANDLE thread;
@@ -3065,11 +3082,11 @@ short __cdecl newWavebuf(unsigned short device, wavebuf **buffer); /* 0x47af3b *
 short __cdecl initWavebuf(); /* 0x47b000 */
 void __cdecl closeWavebuf(); /* 0x47b015 */
 void wavebufWONotify(void *data); /* 0x47b1d5 */
-void CALLBACK wavebufWOCallback(HWAVEOUT wave, UINT message, DWORD instance, DWORD header,
-                                DWORD); /* 0x47b360 */
+void CALLBACK wavebufWOCallback(HWAVEOUT wave, UINT message, DWORD_PTR instance, DWORD_PTR header,
+                                DWORD_PTR); /* 0x47b360 */
 void __fastcall forgetWavebufCache(); /* 0x47b46f */
 void __cdecl freeWavebufCache(); /* 0x47b7c2 */
-void wavebufWOThread(long data); /* 0x47b856 */
+void wavebufWOThread(LONG_PTR data); /* 0x47b856 */
 BOOL CALLBACK enumerateDirectSound(GUID *guid, const char *description, const char *module,
                                    void *context); /* 0x47b9d0 */
 void wavebufDSNotify(void *data); /* 0x47bb80 */
@@ -3094,7 +3111,7 @@ class wmxDevice;
 class wmxObject
 {
 public:
-    __cdecl wmxObject(wmxDevice *device, PCMWAVEFORMAT *format, long callback, long instance,
+    __cdecl wmxObject(wmxDevice *device, PCMWAVEFORMAT *format, LONG_PTR callback, LONG_PTR instance,
               unsigned long flags);
     virtual __cdecl ~wmxObject();
     /* Mixes (or with `first`, copies) `count` samples from `at` into `out`;
@@ -3123,15 +3140,15 @@ public:
 
     static void *__cdecl operator new(size_t size);
     static void __cdecl operator delete(void *block);
-    void notify(unsigned short message, long param1, long param2); /* 0x47f9f6 */
+    void notify(unsigned short message, LONG_PTR param1, LONG_PTR param2); /* 0x47f9f6 */
 
     unsigned long tag; /* 'WMix' */
     wmxObject *next; /* in wmx.objects */
     wmxObject *prev;
     wmxDevice *device;
     PCMWAVEFORMAT format;
-    long callback;
-    long instance;
+    LONG_PTR callback;
+    LONG_PTR instance;
     unsigned long flags;
     wmxObject *deviceNext; /* in device->objects */
     wmxObject *devicePrev;
@@ -3180,7 +3197,7 @@ struct WmxChannel
 class wmxMixer : public wmxObject
 {
 public:
-    __cdecl wmxMixer(wmxDevice *device, PCMWAVEFORMAT *format, long callback, long instance,
+    __cdecl wmxMixer(wmxDevice *device, PCMWAVEFORMAT *format, LONG_PTR callback, LONG_PTR instance,
                      unsigned long flags);
     virtual __cdecl ~wmxMixer();
     virtual short __cdecl mix(unsigned long at, void *out, unsigned long count, short first);
@@ -3230,7 +3247,7 @@ public:
 class wmxWaveOut : public wmxObject
 {
 public:
-    __cdecl wmxWaveOut(PCMWAVEFORMAT *format, long callback, long instance, unsigned long flags);
+    __cdecl wmxWaveOut(PCMWAVEFORMAT *format, LONG_PTR callback, LONG_PTR instance, unsigned long flags);
     virtual __cdecl ~wmxWaveOut();
     virtual unsigned short __cdecl breakLoop();
     virtual unsigned short __cdecl close();
@@ -3303,14 +3320,14 @@ struct WmxState
 extern WmxState wmx; /* @data 0x4b9b40 */
 
 void wmxDeviceFormats(wavebuf *buffer, unsigned long *rate, unsigned long *formats); /* 0x47e52b */
-void wmxDeviceNotify(long data, unsigned long played, unsigned long written); /* 0x47e163 */
-void CALLBACK wmxWaveOutCallback(HWAVEOUT wave, UINT message, DWORD instance, DWORD param1,
-                                 DWORD param2); /* 0x47fdc2 */
+void wmxDeviceNotify(LONG_PTR data, unsigned long played, unsigned long written); /* 0x47e163 */
+void CALLBACK wmxWaveOutCallback(HWAVEOUT wave, UINT message, DWORD_PTR instance, DWORD_PTR param1,
+                                 DWORD_PTR param2); /* 0x47fdc2 */
 /* An object's callback (CALLBACK_FUNCTION), with a word or a 32-bit message. */
-typedef void(CALLBACK *WmxShortCallback)(long handle, unsigned short message, long instance,
-                                         long param1, long param2);
-typedef void(CALLBACK *WmxCallback)(long handle, UINT message, long instance, long param1,
-                                    long param2);
+typedef void(CALLBACK *WmxShortCallback)(LONG_PTR handle, unsigned short message, LONG_PTR instance,
+                                         LONG_PTR param1, LONG_PTR param2);
+typedef void(CALLBACK *WmxCallback)(LONG_PTR handle, UINT message, LONG_PTR instance, LONG_PTR param1,
+                                    LONG_PTR param2);
 void mixByteIntoByte(unsigned char *out, const unsigned char *in, unsigned long count,
                      long outStride, long inStride, unsigned long step, long volume,
                      short identity, const unsigned char *table); /* 0x47fae8 */
@@ -3331,31 +3348,31 @@ void copyWordToWord(unsigned char *out, const unsigned char *in, unsigned long c
                     short identity, const unsigned char *table); /* 0x47fcad */
 void fillBytes(void *out, unsigned char value, unsigned long count); /* 0x47fd11 */
 void fillWords(void *out, unsigned short value, unsigned long count); /* 0x47fd3b */
-wmxObject *wmxObjectOf(long handle); /* 0x47caf0 */
+wmxObject *wmxObjectOf(LONG_PTR handle); /* 0x47caf0 */
 short __cdecl initWaveMix(); /* 0x47c62c */
 void __cdecl closeWaveMix(); /* 0x47c995 */
-unsigned short wavebufOpen(long *handle, unsigned short device, PCMWAVEFORMAT *format,
-                           long callback, long instance, unsigned long flags); /* 0x47c712 */
+unsigned short wavebufOpen(LONG_PTR *handle, unsigned short device, PCMWAVEFORMAT *format,
+                           LONG_PTR callback, LONG_PTR instance, unsigned long flags); /* 0x47c712 */
 unsigned short wavebufGetDevCaps(unsigned short device, WmxCaps *caps, unsigned short size); /* 0x47c432 */
 
-unsigned short wavebufBreakLoop(long handle); /* 0x47c3b4 */
-unsigned short wavebufClose(long handle); /* 0x47c3d4 */
-unsigned short wavebufGetLevels(long handle, unsigned long *levels); /* 0x47c40d */
-unsigned short wavebufGetID(long handle, unsigned short *id); /* 0x47c56e */
-unsigned short wavebufGetPitch(long handle, unsigned long *pitch); /* 0x47c593 */
-unsigned short wavebufGetPlaybackRate(long handle, unsigned long *rate); /* 0x47c5b8 */
-unsigned short wavebufGetPosition(long handle, MMTIME *time, unsigned short size); /* 0x47c5dd */
-unsigned short wavebufGetVolume(long handle, unsigned long *volume); /* 0x47c607 */
-unsigned short wavebufPause(long handle); /* 0x47c94b */
-unsigned short wavebufPrepareHeader(long handle, WAVEHDR *header, unsigned short size); /* 0x47c96b */
-unsigned short wavebufReset(long handle); /* 0x47c9c8 */
-unsigned short wavebufRestart(long handle); /* 0x47c9e8 */
-unsigned short wavebufSetLevels(long handle, unsigned long levels); /* 0x47ca08 */
-unsigned short wavebufSetPitch(long handle, unsigned long pitch); /* 0x47ca2d */
-unsigned short wavebufSetPlaybackRate(long handle, unsigned long rate); /* 0x47ca52 */
-unsigned short wavebufSetVolume(long handle, unsigned long volume); /* 0x47ca77 */
-unsigned short wavebufUnprepareHeader(long handle, WAVEHDR *header, unsigned short size); /* 0x47ca9c */
-unsigned short wavebufWrite(long handle, WAVEHDR *header, unsigned short size); /* 0x47cac6 */
+unsigned short wavebufBreakLoop(LONG_PTR handle); /* 0x47c3b4 */
+unsigned short wavebufClose(LONG_PTR handle); /* 0x47c3d4 */
+unsigned short wavebufGetLevels(LONG_PTR handle, unsigned long *levels); /* 0x47c40d */
+unsigned short wavebufGetID(LONG_PTR handle, unsigned short *id); /* 0x47c56e */
+unsigned short wavebufGetPitch(LONG_PTR handle, unsigned long *pitch); /* 0x47c593 */
+unsigned short wavebufGetPlaybackRate(LONG_PTR handle, unsigned long *rate); /* 0x47c5b8 */
+unsigned short wavebufGetPosition(LONG_PTR handle, MMTIME *time, unsigned short size); /* 0x47c5dd */
+unsigned short wavebufGetVolume(LONG_PTR handle, unsigned long *volume); /* 0x47c607 */
+unsigned short wavebufPause(LONG_PTR handle); /* 0x47c94b */
+unsigned short wavebufPrepareHeader(LONG_PTR handle, WAVEHDR *header, unsigned short size); /* 0x47c96b */
+unsigned short wavebufReset(LONG_PTR handle); /* 0x47c9c8 */
+unsigned short wavebufRestart(LONG_PTR handle); /* 0x47c9e8 */
+unsigned short wavebufSetLevels(LONG_PTR handle, unsigned long levels); /* 0x47ca08 */
+unsigned short wavebufSetPitch(LONG_PTR handle, unsigned long pitch); /* 0x47ca2d */
+unsigned short wavebufSetPlaybackRate(LONG_PTR handle, unsigned long rate); /* 0x47ca52 */
+unsigned short wavebufSetVolume(LONG_PTR handle, unsigned long volume); /* 0x47ca77 */
+unsigned short wavebufUnprepareHeader(LONG_PTR handle, WAVEHDR *header, unsigned short size); /* 0x47ca9c */
+unsigned short wavebufWrite(LONG_PTR handle, WAVEHDR *header, unsigned short size); /* 0x47cac6 */
 
 /* The engine uses Windows 95's MIDIHDR (0x40 bytes, with the streaming
    fields); Borland C++ 4.5's headers have the older one (0x1c). */
@@ -3394,7 +3411,7 @@ public:
     virtual short __cdecl startDevice(short playing);
     virtual void __cdecl haltDevice();
     virtual void __cdecl closeDevice();
-    virtual long __cdecl deviceHandle();
+    virtual LONG_PTR __cdecl deviceHandle();
     virtual long __cdecl position();
     virtual void __cdecl pause();
     virtual void __cdecl endLoop();
@@ -3402,7 +3419,7 @@ public:
     virtual void __cdecl resume();
     virtual short __cdecl seek(long position);
     virtual short __cdecl setText(const char *text, unsigned short length);
-    virtual short __cdecl play(SoundNotify notify, long cookie);
+    virtual short __cdecl play(SoundNotify notify, LONG_PTR cookie);
 
     short __cdecl cachePatches(short cache);
     void __cdecl advance(unsigned short ticks, short play, short notify);
@@ -3421,7 +3438,7 @@ public:
     unsigned char *patches; /* Prg# */
     MidiHeader header; /* the whole file, prepared */
     MidiHeader sysex; /* for sending sysex */
-    long timer;
+    LONG_PTR timer;
     unsigned long startTime;
     unsigned short step; /* ticks to the timer's next call */
     short unknown11E;
@@ -3466,38 +3483,38 @@ struct MidiMapState
 
 extern MidiMapState midiMapState; /* @data 0x4b9b28 */
 
-short midiMapCacheDrumPatches(long map, unsigned short patch, WORD *keys, unsigned short flags);
-short midiMapCachePatches(long map, unsigned short bank, WORD *patches, unsigned short flags);
+short midiMapCacheDrumPatches(LONG_PTR map, unsigned short patch, WORD *keys, unsigned short flags);
+short midiMapCachePatches(LONG_PTR map, unsigned short bank, WORD *patches, unsigned short flags);
 void fillVelocities(MidiMap *map, long table);
-short midiMapClose(long map);
+short midiMapClose(LONG_PTR map);
 short getChannelMap(unsigned short device, unsigned short *channels);
 short getMutedChannels(unsigned short device, short *muted);
 short getMidiDevCaps(unsigned short device, MIDIOUTCAPS *caps, unsigned short size);
 short findMidiDevice(unsigned short id, MidiDevice **device);
 short getDrumChannel(unsigned short device, unsigned short *channel);
-short midiMapDevice(long map, unsigned short *device);
-short midiMapTarget(long map, short *target);
-short midiMapTable(long map, long *table);
+short midiMapDevice(LONG_PTR map, unsigned short *device);
+short midiMapTarget(LONG_PTR map, short *target);
+short midiMapTable(LONG_PTR map, long *table);
 short initMidiMap();
 short setChannelMuted(unsigned short device, unsigned short channel, short muted);
-short midiMapOpen(MidiMap **map, unsigned short device, long callback, long instance, long flags);
-short midiMapPrepareHeader(long map, MidiHeader *header, unsigned short size);
+short midiMapOpen(MidiMap **map, unsigned short device, LONG_PTR callback, LONG_PTR instance, long flags);
+short midiMapPrepareHeader(LONG_PTR map, MidiHeader *header, unsigned short size);
 void closeMidiMaps();
 short setChannelMap(unsigned short device, unsigned short channel, unsigned short to);
-short midiMapReset(long map);
+short midiMapReset(LONG_PTR map);
 short loadTargetDevice(MidiDevice *device, short target);
 short setChannelMaps(unsigned short device, unsigned short *channels);
 short setMutedChannels(unsigned short device, short *muted);
-short setMidiMapTable(long map, long table);
-short midiMapUnprepareHeader(long map, MidiHeader *header, unsigned short size);
-MidiMap *midiMap(long map); /* 0x478d38: 0 if it isn't one */
+short setMidiMapTable(LONG_PTR map, long table);
+short midiMapUnprepareHeader(LONG_PTR map, MidiHeader *header, unsigned short size);
+MidiMap *midiMap(LONG_PTR map); /* 0x478d38: 0 if it isn't one */
 void resetChannel(MidiMap *map, int channel); /* 0x478b09 */
-short midiMapLongMsg(long map, MidiHeader *header, unsigned short size);
+short midiMapLongMsg(LONG_PTR map, MidiHeader *header, unsigned short size);
 short mapShortMsg(MidiMap *map, unsigned long message);
-short midiMapShortMsg(long map, unsigned long message);
+short midiMapShortMsg(LONG_PTR map, unsigned long message);
 unsigned long __cdecl readVarLen(unsigned char **p);
 void midiStep(void *sound);
-void midiTimer(long timer, long sound);
+void midiTimer(LONG_PTR timer, LONG_PTR sound);
 long makeFixed(short whole, unsigned short fraction); /* 0x48988a */
 short fixedToInt(long value); /* 0x48989e */
 unsigned short fixedFraction(long value); /* 0x4898ab */
@@ -3746,7 +3763,7 @@ extern short event3Count; /* @data 0x4acec4 */
 extern short *actorHotSpotsY; /* @data 0x4ac954 */
 extern short planQueue[20]; /* @data 0x4acd4c */
 extern short planQueueCount; /* @data 0x4acd74 */
-long newTimer(void (*proc)(long timer, long data), long data, long interval); /* 0x46daca */
+LONG_PTR newTimer(void (*proc)(LONG_PTR timer, LONG_PTR data), LONG_PTR data, long interval); /* 0x46daca */
 
 /* A cell of the game module's hexagonal board (117 of them). */
 struct HexCell
@@ -3771,27 +3788,27 @@ struct PlacedSnoid
     short snoid; /* its view */
 };
 extern short introPending; /* @data 0x4b2ad6 */
-long __cdecl qtim_02(long file);
-long __cdecl qtim_07(long movie);
+long __cdecl qtim_02(LONG_PTR file);
+long __cdecl qtim_07(LONG_PTR movie);
 long __cdecl qtim_0c();
-long __cdecl qtim_2a(long *movie, long file, long *id, long, long, long);
-long __cdecl qtim_2c(const char *path, long *file, long);
-long __cdecl qtim_31(long movie, long);
-long __cdecl qtim_37(long controller);
+long __cdecl qtim_2a(LONG_PTR *movie, LONG_PTR file, long *id, long, long, long);
+long __cdecl qtim_2c(const char *path, LONG_PTR *file, long);
+long __cdecl qtim_31(LONG_PTR movie, long);
+long __cdecl qtim_37(LONG_PTR controller);
 long __cdecl qtim_5e();
 void __cdecl QTTerminate();
 extern short crossedCount; /* @data 0x4b266c */
 extern short sharedFeature; /* @data 0x4b2516 */
-long __cdecl cmgr_05(long controller, long *flags);
-long __cdecl cmgr_09(long controller);
-long __cdecl qtim_0f(long movie, RECT *box);
-long __cdecl qtim_2f(long movie, long, long);
-long __cdecl qtim_38(long movie, RECT *bounds, long flags, HWND window);
+long __cdecl cmgr_05(LONG_PTR controller, long *flags);
+long __cdecl cmgr_09(LONG_PTR controller);
+long __cdecl qtim_0f(LONG_PTR movie, RECT *box);
+long __cdecl qtim_2f(LONG_PTR movie, long, long);
+LONG_PTR __cdecl qtim_38(LONG_PTR movie, RECT *bounds, long flags, HWND window);
 long __cdecl qtim_62(long, long);
-long __cdecl cmgr_00(long controller, HWND window, long);
-long __cdecl cmgr_01(long controller, long action, long parameters);
-long __cdecl cmgr_0d(long controller, long movie, HWND window, POINT where);
-long __cdecl cmgr_0e(long controller, RECT *bounds, long, long);
+long __cdecl cmgr_00(LONG_PTR controller, HWND window, long);
+long __cdecl cmgr_01(LONG_PTR controller, long action, long parameters);
+long __cdecl cmgr_0d(LONG_PTR controller, LONG_PTR movie, HWND window, POINT where);
+long __cdecl cmgr_0e(LONG_PTR controller, RECT *bounds, long, long);
 extern short startState; /* @data 0x4b2512 */
 extern ShortRect leftRowSpots[3][3]; /* @data 0x4a4584 */
 extern ShortRect rightRowSpots[3][3]; /* @data 0x4a45cc */

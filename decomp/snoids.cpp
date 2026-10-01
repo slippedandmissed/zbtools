@@ -1129,7 +1129,7 @@ void showNameTag(const char *text, unsigned long duration, short large)
 
     deleteView(-2);
     if (!dialogFlags) {
-        view = (View *)newPtr(0xec);
+        view = (View *)newPtr(sizeof(View));
         if (view) {
             initView(view, 0, 0, -2);
             strcpy((char *)&view->body, text);

@@ -7,7 +7,7 @@
 #include "zoombinis.h"
 
 /* @zoombi32 0x00484934 */
-short fileSpecOf(long handle, fileSpec *spec)
+short fileSpecOf(LONG_PTR handle, fileSpec *spec)
 {
     FileRecord *file = fileOf(handle, 0);
 

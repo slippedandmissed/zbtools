@@ -7,7 +7,7 @@
 #include "zoombinis.h"
 
 /* @zoombi32 0x004845fc */
-unsigned long fileLength(long handle)
+unsigned long fileLength(LONG_PTR handle)
 {
     FileRecord *file = fileOf(handle, 0);
 

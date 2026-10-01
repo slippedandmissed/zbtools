@@ -4,6 +4,7 @@
 
 /* @flags -p -x- */
 
+#include <stddef.h>
 #include "zoombinis.h"
 #include "e2memory.h"
 
@@ -53,8 +54,8 @@ long openResourceFile(const fileSpec &file, short readOnly)
         unlockHandle(handle);
         handle = map->next;
     }
-    long f;
-    long volume;
+    LONG_PTR f;
+    LONG_PTR volume;
     MohawkHeader header;
     VolumeInfo info;
     if (readOnly) {
@@ -104,7 +105,7 @@ long openResourceFile(const fileSpec &file, short readOnly)
         setResourceError(error);
         goto disposeDirectory;
     }
-    if ((handle = newHandle(header.fileTableSize + 0x3c)) == 0) {
+    if ((handle = newHandle(header.fileTableSize + offsetof(ResourceMap, fileTable))) == 0) {
         setResourceError(memError());
         goto disposeDirectory;
     }
@@ -121,7 +122,7 @@ long openResourceFile(const fileSpec &file, short readOnly)
         closeFile(f, 0);
         return 0;
     }
-    memset(map, 0, 0x3c);
+    memset(map, 0, offsetof(ResourceMap, fileTable));
     map->tag = 0x524d6170;
     map->users = 1;
     map->file = f;

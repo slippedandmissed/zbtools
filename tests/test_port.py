@@ -1,8 +1,9 @@
+import platform
 from pathlib import Path
 
 import pytest
 
-from zbtools import assets, paths, port
+from zbtools import assets, host, paths, port
 from zbtools.port import SitePiece, site_packages, site_pieces
 
 A, B, C = Path("a"), Path("b"), Path("c")
@@ -56,3 +57,28 @@ def test_drives_are_laid_out_from_assets(tmp_path: Path, monkeypatch: pytest.Mon
     assert (c / "ZOOMBI32" / "Zoombini.who").read_bytes() == b"not a roster"
     assert (c / "WINDOWS" / "FONTS" / "CORNER.TTF").read_bytes() == b"font"
     assert assets.verify_installed(game, installed) == []
+
+
+def test_targets_match_the_paths_that_clean_removes() -> None:
+    assert tuple(port.TARGETS) == paths.PORT_TARGETS
+
+
+def test_the_default_target_is_the_machines(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(host, "SYSTEM", "Darwin")
+    assert port.target_named(None).name == "macos_universal"
+    monkeypatch.setattr(host, "SYSTEM", "Linux")
+    monkeypatch.setattr(platform, "machine", lambda: "aarch64")
+    assert port.target_named(None).name == "linux_arm64"
+    monkeypatch.setattr(platform, "machine", lambda: "x86_64")
+    assert port.target_named(None).name == "linux_x64"
+
+
+def test_an_unknown_target_lists_the_known_ones() -> None:
+    with pytest.raises(port.PortError, match="windows_x64"):
+        port.target_named("win64")
+
+
+def test_each_target_names_its_program() -> None:
+    assert port.TARGETS["windows_x86"].program == "zoombinis.exe"
+    assert port.TARGETS["browser_wasm"].program == port.WEB_PAGE
+    assert port.TARGETS["linux_x64"].program == "zoombinis"

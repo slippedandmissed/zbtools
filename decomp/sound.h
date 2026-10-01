@@ -59,7 +59,7 @@ short loadSound(SoundEntry *entry);
 SoundEntry *getSound(short key, long type);
 short prepareSound(SoundEntry *entry, short channel);
 void stopSoundOnChannel(SoundEntry *entry, short channel);
-void soundNoticeCallback(long, SoundNotice *notice, long cookie);
+void soundNoticeCallback(LONG_PTR, SoundNotice *notice, LONG_PTR cookie);
 void resetSoundChannel(long type);
 short soundAtMost(short level);
 void disposeSoundHandle(SoundEntry *entry);

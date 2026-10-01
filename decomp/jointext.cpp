@@ -39,8 +39,12 @@ void freeText(void **block)
     freeAndClear(block);
 }
 
-/* Formats a joined text into joinedText, its parts separated by spaces. */
-/* @zoombi32 0x00413c7c */
+/* Formats a joined text into joinedText, its parts separated by spaces.
+   The original hands formatTextV the array of parts as the va_list (Borland's is
+   a pointer to the arguments); where a va_list is something else, the parts are
+   passed as the arguments (the unused ones are ignored), so this is functional,
+   not byte-exact. */
+/* @zoombi32-functional 0x00413c7c */
 void __cdecl formatJoined(const char *text)
 {
     const char *parts[10];
@@ -53,7 +57,10 @@ void __cdecl formatJoined(const char *text)
     strcpy(format, "%s");
     for (i = 1; i < count; i++)
         strcpy(&format[i * 3 - 1], " %s");
-    formatTextV(0x100, joinedText, format, (va_list)parts);
+    for (i = count; i < 10; i++)
+        parts[i] = emptyString;
+    formatText(0x100, joinedText, format, parts[0], parts[1], parts[2], parts[3], parts[4], parts[5],
+               parts[6], parts[7], parts[8], parts[9]);
 }
 
 /*

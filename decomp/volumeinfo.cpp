@@ -10,7 +10,7 @@
 #include "zoombinis.h"
 
 /* @zoombi32 0x004849ac */
-short volumeInfo(long id, VolumeInfo *info)
+short volumeInfo(LONG_PTR id, VolumeInfo *info)
 {
     Volume *volume = volumeOf(id);
 
@@ -34,7 +34,7 @@ short volumeInfo(long id, VolumeInfo *info)
 /* Reads the label of the disk in a drive and adds it as a volume (unless
    it's known already, or one is known to be in the drive). */
 /* @zoombi32 0x00484a4c */
-long mountDrive(long number)
+LONG_PTR mountDrive(long number)
 {
     DiskInfo info;
     Drive *drive = driveAt(number, 1);
@@ -52,7 +52,7 @@ long mountDrive(long number)
     if (drive->readInfo(&info))
         return 0;
     {
-        long id = findVolume(&info, number, 0);
+        LONG_PTR id = findVolume(&info, number, 0);
         if (id) {
             volumeOf(id)->mount();
             setFileError(0x284b);

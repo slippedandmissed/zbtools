@@ -81,7 +81,7 @@ short preferFirstFile(const char *first, const char *fallback)
     short useFirst = 0;
     fileSpec firstSpec(first);
     fileSpec fallbackSpec(fallback);
-    long file = openFile(&firstSpec, 1);
+    LONG_PTR file = openFile(&firstSpec, 1);
     if (file) {
         useFirst = 1;
         closeFile(file, 0);

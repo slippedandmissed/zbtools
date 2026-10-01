@@ -13,11 +13,11 @@ Commands are separated by `;` or newlines (`#` starts a comment) and queued to r
 | Where | How |
 | --- | --- |
 | command line | `zoombinis --cmd "scene 9; party 8"` (repeatable), `--script commands.txt` |
-| `uv run port run` | `--cmd`, `--script`, with `--headless`, `--screenshot`, `--seconds` |
+| `uv run port run` | `--cmd`, `--script`, with `headless_wasm` or this machine's target, `--screenshot`, `--seconds` |
 | browser | `?cmd=scene%209` in the URL (repeatable); `zbDebug("scene 9")` in the console (it queues the text and returns; the game picks it up on its next frame) |
 
 ```sh
-uv run port run --headless --seconds 30 --screenshot build/port/shot.bmp \
+uv run port run headless_wasm --seconds 30 --screenshot build/port/shot.bmp \
     --cmd "debug on; level 1 3; party 8; scene 9; wait 2000; assert scene 9; dump"
 ```
 

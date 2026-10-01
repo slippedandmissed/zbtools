@@ -26,13 +26,14 @@ uv run clean --dry-run          # show what would be removed
 | `packed-assets` | the archives `assets pack` built (`build/assets/`) | `uv run assets pack` |
 | `assets-cache` | compressed images (`build/assets-cache/`) | automatically by `uv run assets pack` or `verify` |
 | `movie-frames` | the frames `assets frames` drew (`build/movie-frames/`) | `uv run assets frames` |
-| `port` | the port's builds (`build/port/web/`, `native/`, `headless/`, `generated/`) and the site (`build/port/site/`) | `uv run port build`, `uv run port package` |
+| `port` | the port's builds (`build/port/<target>/`), what it generates for them (`build/port/generated/`) and its packages and site (`build/port/dist/`) | `uv run port build`, `uv run port package` |
 | `port-data` | the port's drives, **including what the native and headless builds saved** (`build/port/data/`) | `uv run port package` |
-| `emsdk` | the Emscripten SDK (`build/emsdk/`) | `uv run port setup` (downloads ~1 GB) |
+| `mingw` | llvm-mingw (`build/llvm-mingw/`) | `uv run port setup windows_x64` (downloads ~200 MB) |
+| `emsdk` | the Emscripten SDK (`build/emsdk/`) | `uv run port setup browser_wasm` (downloads ~1 GB) |
 | `soundfont` | the port's SoundFont (`build/soundfont/`) | `uv run port setup` (downloads 32 MB) |
 | `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
 | `all` | all of the above plus anything else in `build/` | |
 
-With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `rebuild`, `packed-assets`, `assets-cache`, `movie-frames`, `book`, `port` and `python`: everything cheap to rebuild, keeping the VM installs, the Wine, Emscripten and SoundFont downloads, and the port's saved games. `uv run clean all` gets back to a fresh clone.
+With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `rebuild`, `packed-assets`, `assets-cache`, `movie-frames`, `book`, `port` and `python`: everything cheap to rebuild, keeping the VM installs, the Wine, Emscripten, llvm-mingw and SoundFont downloads, and the port's saved games. `uv run clean all` gets back to a fresh clone.
 
 **Keep this table in sync with `paths.CLEAN_CATEGORIES`.** Every path a tool generates must belong to a category (categories may include others by name); add new ones to `CLEAN_DEFAULT` if they're cheap to rebuild.

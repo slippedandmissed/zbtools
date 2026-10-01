@@ -67,7 +67,7 @@ extern PlacedSnoid placedSnoids[]; /* @data 0x4b2544 */
 extern basePort *portBeforeMovie; /* @data 0x4b2ae4 */
 void standFilledCells();
 void standPlacedSnoids();
-long loadMovie(const char *path);
+LONG_PTR loadMovie(const char *path);
 void stopMovie(short shutdown);
 extern short smokeLevel; /* @data 0x4b2630 */
 extern short slotViews[6]; /* @data 0x4b2778 */

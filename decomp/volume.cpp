@@ -15,7 +15,7 @@
 __cdecl Volume::Volume(long number, DiskInfo *info)
 {
     tag = 0x566f6c6d;
-    id = (long)this;
+    id = (LONG_PTR)this;
     this->info = *info;
     drive = driveAt(number, 0);
     share = 0;
@@ -29,7 +29,7 @@ __cdecl Volume::Volume(long number, DiskInfo *info)
 __cdecl Volume::Volume(const char *share, DiskInfo *info)
 {
     tag = 0x566f6c6d;
-    id = (long)this;
+    id = (LONG_PTR)this;
     this->info = *info;
     drive = 0;
     this->share = strdup(share);
@@ -61,7 +61,7 @@ void Volume::touch(unsigned long time)
 /* Not exact: the original keeps the drive number in edi and `info` in esi;
    BCC32 4.5 allocates the registers differently. */
 /* @zoombi32 0x00485f2a */
-long findVolume(DiskInfo *info, long drive, const char *share)
+LONG_PTR findVolume(DiskInfo *info, long drive, const char *share)
 {
     Drive *in = driveAt(drive, 0);
     Volume *volume;

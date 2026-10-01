@@ -64,7 +64,7 @@ void initGraphics(DisplayMode *mode, short depth)
     sectRect(&shownGameRect, &screenRect);
     if (!allocateBlock((void **)&paletteEntries, 0x400))
         notEnoughNearMemory("initial RGB's");
-    memset(paletteEntries, 0, 4);
+    memset(paletteEntries, 0, sizeof *paletteEntries);
     for (i = 0; i < 0x100; i++)
         paletteEntries[i].peFlags = PC_RESERVED;
     if ((palette = newPalette(0x100, (ColorBytes *)paletteEntries)) == 0)

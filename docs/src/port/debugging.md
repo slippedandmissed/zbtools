@@ -3,9 +3,9 @@
 The **headless** build is the main tool: the same WebAssembly under Node, with no screen or sound, reading the drives' directories directly, so a whole run can be scripted and its output examined.
 
 ```sh
-uv run port run --headless --seconds 30 --screenshot build/port/shot.bmp
-uv run port run --headless --seconds 40 --click 12000:320,240 --click 14000:600,420 --screenshot build/port/shot.bmp
-uv run port run --headless --seconds 20 --record build/port/audio.wav
+uv run port run headless_wasm --seconds 30 --screenshot build/port/shot.bmp
+uv run port run headless_wasm --seconds 40 --click 12000:320,240 --click 14000:600,420 --screenshot build/port/shot.bmp
+uv run port run headless_wasm --seconds 20 --record build/port/audio.wav
 ```
 
 | Option | Does |

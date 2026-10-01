@@ -8,7 +8,7 @@
 
 /* Writes a map's modified resources back to its file, then its directory. */
 /* @zoombi32 0x004928e4 */
-short writeResourceMap(long handle)
+short writeResourceMap(LONG_PTR handle)
 {
     ResourceMap *map;
     unsigned short index;

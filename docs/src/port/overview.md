@@ -1,13 +1,13 @@
 # The port: overview
 
-`port/` builds **the decompiled game, unchanged** (`decomp/` and `glue/`), for a modern system with CMake and SDL2: WebAssembly in a browser (the main target), headless under Node (for testing), and 32-bit native.
+`port/` builds **the decompiled game, unchanged** (`decomp/` and `glue/`), for a modern system with CMake and SDL2: WebAssembly in a browser (the main target), headless under Node (for testing), and native builds (32- and 64-bit).
 
 ```text
    decomp/*.cpp  ─┐                                     ┌─ web      Emscripten + Asyncify  ─▶ zoombinis.html/.js/.wasm
    glue/ or       ├─▶ library "game" ─┐                 │
    port/glue/*   ─┘   (clang, with    ├─▶ zoombinis ────┼─ headless same wasm under Node, no screen or sound
                        prelude.h)     │                 │
-   port/miniwin/ ──▶ library "miniwin"┤                 └─ native   SDL2 from the system (32-bit only)
+   port/miniwin/ ──▶ library "miniwin"┤                 └─ native   SDL2 from the system
    port/host/    ──▶ library "host" ──┘
    port/main.cpp ──▶ the entry point: sets up the drives, then calls the game's WinMain
 ```
@@ -33,14 +33,14 @@ A source in `port/decomp/` or `port/glue/` *replaces* the same-named file in `de
 ## Commands
 
 ```sh
-uv run port setup                 # the pinned Emscripten SDK (~1.8 GB) into build/emsdk/, and the SoundFont
-uv run port build [web|headless|native] [--debug]
-uv run port package               # the site: build/port/site/
-uv run port serve [--port 8000]   # then http://127.0.0.1:8000/
-uv run port run [--headless] [--seconds N] [--screenshot F.bmp] [--click MS:X,Y]… [--record F.wav]
+uv run port setup   [TARGET]   # what the target needs (the Emscripten SDK, llvm-mingw, Docker), and the SoundFont
+uv run port build   [TARGET] [--debug]   # build/port/<target>/, with the debug tools
+uv run port package [TARGET]   # build without them and pack with the game: build/port/dist/
+uv run port run     [TARGET] [--seconds N] [--screenshot F.bmp] [--click MS:X,Y]… [--record F.wav]
+uv run port serve [--port 8000]   # the browser_wasm site, at http://127.0.0.1:8000/
 ```
 
-`build` defaults to `web`. Plain CMake works too: `emcmake cmake -S port -B build/port/web && cmake --build build/port/web`.
+A **target** is a platform and architecture: `macos_universal`, `windows_x86`, `windows_x64`, `linux_x64`, `linux_arm64`, `browser_wasm` (the page) and `headless_wasm` (the same WebAssembly under Node, with no screen or sound, for testing). The default is the machine's own (`macos_universal` on a Mac, the Linux architecture on Linux), and any target builds from any host. `build` makes the program in `build/port/<target>/`, `package` builds it without the debug tools and packs it with the game's data for players (a `.dmg`, `.zip` or `.tar.gz`, or for `browser_wasm` the site), and `run` runs the machine's own target or `headless_wasm`. See [Native builds](native.md) and [The web build](web.md). Plain CMake works too: `emcmake cmake -S port -B build/port/browser_wasm && cmake --build build/port/browser_wasm`.
 
 ## Third-party pieces
 
@@ -56,9 +56,19 @@ All are fetched at pinned versions and checksums (`port.py`, `port/CMakeLists.tx
 
 ## Limits
 
-- **32-bit only.** The decompiled code assumes 4-byte `long`s and pointers (it keeps pointers in `long`s in places), so CMake refuses a 64-bit native target unless `-DZB_ALLOW_64BIT=ON` (the game then won't work). WebAssembly is 32-bit. Untangling this is a roadmap item.
+- Run so far: the 64-bit Linux and macOS builds (every scene), and the 64-bit Windows build under Wine; the 32-bit Windows build is built but not run. See [Native builds](native.md).
 - The game assumes Windows 95 behaviour in places; miniwin reproduces it where relied on (see [Quirks](quirks.md)).
 
 ## Status
 
 The game starts and reaches Zoombini Isle (the scene most exercised); music plays through the synthesizer; sound effects are mixed but not yet checked by ear; the intro movie plays from its converted scene with its sound.
+
+## 64-bit targets
+
+The game was compiled for 32-bit Windows and the decompilation keeps that dialect, so a 64-bit build needs care in three places (none is meant to change what BCC32 generates, which `uv run match` checks):
+
+- **Pointers in integers say `LONG_PTR`.** The engine hands out handles that are pointers (files, volumes, timers, threads, sounds, MIDI maps, movies) and passes callback arguments as integers. Those are typed `LONG_PTR` (`UINT_PTR`, `DWORD_PTR` for unsigned ones), as Win32 does; `decomp/zoombinis.h` makes them `long` for Borland C++ 4.5, which lacks the types, and `miniwin/types.h` makes them `long` or `intptr_t` for the port, so a pointer is never cut short and nothing else changes. A handle that is really a number (a resource map's, a memory handle's) stays `long`.
+- **The game's `long` stays 32 bits.** On targets where `long` is 64 bits, `miniwin/prelude.h` ends with `#define long int`, after everything the system and miniwin declare has been read, so only the game's code sees it. Its structures keep their sizes, and its `%ld` formats (the text functions in `miniwin/borland.cpp`) read `int`s. Windows and WebAssembly don't need it: `long` is already 32 bits there.
+- **No sizes written as numbers.** Structures that hold pointers are bigger, so an allocation of `0xec` bytes or a `memset` of 9 corrupts the heap on a 64-bit target. The code says what it means (`sizeof(View)`, `offsetof(FileName, path) + 1`) with the same value on 32 bits. Valgrind and a sweep of every scene (`scene N; wait 6000`, screenshots) find the rest: a crash or a heap error on opening a scene is usually one of these.
+
+`va_list` isn't a pointer on 64-bit targets either: `va_copy` copies one (the decompilation defines it for Borland, which lacks it), and `formatJoined`, which made a `va_list` out of an array, passes the parts as arguments (functional, not byte-exact).

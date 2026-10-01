@@ -11,7 +11,7 @@ Methods are marked the same way (`void Widget::set(long v)`). The function is
 found in the compiled object by its demangled, qualified name.
 
 Whether a function matches is measured, not declared. decomp/matching.txt,
-written by `--update` (the pre-commit hook runs it), records which functions
+written by `--update` (run it after changing decomp/, and commit the file), records which functions
 match; `match` fails if one of them stops matching (a regression), and
 reports new matches. A function that is complete but deliberately not
 byte-exact is marked `/* @zoombi32-functional 0x... */`: decompiled code must
@@ -635,7 +635,7 @@ def check(
 BASELINE = paths.DECOMP_DIR / "matching.txt"
 _BASELINE_HEADER = """\
 # Functions that match zoombi32.exe byte for byte, by address. Written by
-# `uv run match --update` (the pre-commit hook runs it); `uv run match` fails
+# `uv run match --update` (run after changing decomp/); `uv run match` fails
 # if one of them stops matching.
 """
 

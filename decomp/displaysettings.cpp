@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #include "zoombinis.h"
 #include "game.h"
 #include "graphics.h"
@@ -356,12 +357,12 @@ short openGraphicsEngine(const DisplayMode *mode, short change)
             length = strlen(name);
             if (length <= 8) {
                 if (!getIniString(0, "Graphics.Decompressors", name, path, 256)
-                    && (unsigned long)(module = LoadLibrary(path)) >= 32) {
+                    && (UINT_PTR)(module = LoadLibrary(path)) >= 32) {
                     proc = GetProcAddress(module, "GFXXDECPROC");
                     if (proc) {
                         decompressor = (Decompressor *)malloc(sizeof(Decompressor));
                         if (decompressor) {
-                            memset(decompressor, 0, 4);
+                            memset(decompressor, 0, sizeof decompressor->next);
                             strcpy(decompressor->name, name);
                             decompressor->module = module;
                             decompressor->proc = proc;
@@ -382,7 +383,7 @@ short openGraphicsEngine(const DisplayMode *mode, short change)
     graphics.previousHook = setActivateHook(graphicsActivate);
     window = appWindowHandle();
     graphics.windowProc = (WNDPROC)GetWindowLong(window, GWL_WNDPROC);
-    SetWindowLong(window, GWL_WNDPROC, (LONG)graphicsWindowProc);
+    SetWindowLong(window, GWL_WNDPROC, (LONG_PTR)graphicsWindowProc);
     graphics.ready = 1;
     if (isAppActive())
         graphicsActivate(1);
@@ -440,7 +441,7 @@ short addFont(const char *name, void *directory)
                 deleteFile(fileSpec(path));
             return 0;
         }
-        font = (FontFile *)malloc(strlen(path) + 9);
+        font = (FontFile *)malloc(offsetof(FontFile, path) + strlen(path) + 1);
         if (font) {
             font->trueType = trueType;
             font->created = created;
@@ -503,7 +504,7 @@ void closeGraphicsEngine()
     HDC dc;
 
     state = &graphics;
-    SetWindowLong(appWindowHandle(), GWL_WNDPROC, (LONG)state->windowProc);
+    SetWindowLong(appWindowHandle(), GWL_WNDPROC, (LONG_PTR)state->windowProc);
     setActivateHook(state->previousHook);
     state->previousHook = 0;
     graphicsActivate(0);

@@ -38,7 +38,7 @@ __cdecl wmxDevice::~wmxDevice()
    written from `written`: the channels note what's played, and the device
    mixes on. */
 /* @zoombi32 0x0047e163 */
-void wmxDeviceNotify(long data, unsigned long played, unsigned long written)
+void wmxDeviceNotify(LONG_PTR data, unsigned long played, unsigned long written)
 {
     wmxDevice *device = (wmxDevice *)data;
     wmxObject *object;
@@ -148,7 +148,7 @@ unsigned short wmxDevice::open(unsigned short device)
     }
     format.wf.nSamplesPerSec *= rate;
     format.wf.nAvgBytesPerSec = format.wf.nBlockAlign * format.wf.nSamplesPerSec;
-    if ((error = buffer->open(&format, wmxDeviceNotify, (long)this)) != 0) {
+    if ((error = buffer->open(&format, wmxDeviceNotify, (LONG_PTR)this)) != 0) {
         delete buffer;
         return error;
     }
@@ -241,8 +241,8 @@ void __cdecl wmxDevice::operator delete(void *block)
 }
 
 /* @zoombi32 0x0047e600 */
-__cdecl wmxMixer::wmxMixer(wmxDevice *device, PCMWAVEFORMAT *format, long callback,
-                           long instance, unsigned long flags)
+__cdecl wmxMixer::wmxMixer(wmxDevice *device, PCMWAVEFORMAT *format, LONG_PTR callback,
+                           LONG_PTR instance, unsigned long flags)
     : wmxObject(device, format, callback, instance, flags)
 {
     queue = 0;
@@ -324,7 +324,7 @@ void wmxMixer::retire(WmxBlock *block)
         block->prev->next = block->next;
     else if ((queue = block->next) != 0)
         queue->prev = 0;
-    notify(WOM_DONE, (long)block->header, 0);
+    notify(WOM_DONE, (LONG_PTR)block->header, 0);
 }
 
 /* The block (from *block on) playing at `at`, and where the pass through it
@@ -378,7 +378,7 @@ short __cdecl wmxMixer::mix(unsigned long at, void *out, unsigned long count, sh
     while (count) {
         offset = at - start;
         n = block->length - offset;
-        in = (unsigned char *)fixedDiv(offset, step) + (long)block->header->lpData;
+        in = (unsigned char *)(LONG_PTR)fixedDiv(offset, step) + (LONG_PTR)block->header->lpData;
         if ((n = n < count ? n : count) != 0)
             for (i = 0; i < channels; i++) {
                 WmxChannel *channel = &this->channel[i];
@@ -572,7 +572,7 @@ void __cdecl wmxMixer::played(unsigned long at)
                 if (whole && pass > block->loopsDone || !whole && pass == block->loopsDone) {
                     block->loopsDone++;
                     if (!(flags & 0x40000000))
-                        notify(0x8000, (long)block->header, 0);
+                        notify(0x8000, (LONG_PTR)block->header, 0);
                     donePosition += block->samples;
                     position = donePosition;
                 }
@@ -969,8 +969,8 @@ unsigned short __cdecl wmxMixer::write(WAVEHDR *header, unsigned short size)
 }
 
 /* @zoombi32 0x0047f8b8 */
-__cdecl wmxObject::wmxObject(wmxDevice *device, PCMWAVEFORMAT *format, long callback,
-                             long instance, unsigned long flags)
+__cdecl wmxObject::wmxObject(wmxDevice *device, PCMWAVEFORMAT *format, LONG_PTR callback,
+                             LONG_PTR instance, unsigned long flags)
 {
     tag = 0x574d6978;
     this->format = *format;
@@ -1022,14 +1022,14 @@ __cdecl wmxObject::~wmxObject()
 /* Calls the owner's callback (a function: messages are words unless bit
    30 of the flags is set). */
 /* @zoombi32 0x0047f9f6 */
-void wmxObject::notify(unsigned short message, long param1, long param2)
+void wmxObject::notify(unsigned short message, LONG_PTR param1, LONG_PTR param2)
 {
     switch (flags & CALLBACK_TYPEMASK) {
     case CALLBACK_FUNCTION:
         if (flags & 0x40000000)
-            ((WmxCallback)callback)((long)this, message, instance, param1, param2);
+            ((WmxCallback)callback)((LONG_PTR)this, message, instance, param1, param2);
         else
-            ((WmxShortCallback)callback)((long)this, message, instance, param1, param2);
+            ((WmxShortCallback)callback)((LONG_PTR)this, message, instance, param1, param2);
         break;
     }
 }

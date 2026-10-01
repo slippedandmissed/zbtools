@@ -21,11 +21,11 @@ Font *newFont(const char *name, unsigned short size, unsigned short style)
     length = strlen(name);
     if (length > 31)
         length = 31;
-    if ((font = (Font *)malloc(length + 0x39)) == 0) {
+    if ((font = (Font *)malloc(sizeof(Font) + length + 1)) == 0) {
         setPortError(0x2a37);
         return 0;
     }
-    memset(font, 0, 0x38);
+    memset(font, 0, sizeof(Font));
     font->magic = 0x466f6e74L; /* 'Font' */
     memcpy(font->name, name, length);
     font->size = size;

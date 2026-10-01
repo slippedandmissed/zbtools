@@ -4,6 +4,7 @@
 
 /* @flags -p -x- */
 
+#include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -27,7 +28,7 @@ __cdecl fileSpec::fileSpec(const char *path)
     } else if ((name = (FileName *)malloc(sizeof(FileName))) == 0)
         setFileError(0x2846);
     else {
-        memset(name, 0, 9);
+        memset(name, 0, offsetof(FileName, path) + 1);
         name->references = 1;
         strcpy(name->path, path);
         if (canonicalize()) {
@@ -49,7 +50,7 @@ __cdecl fileSpec::fileSpec(const fileSpec &directory, const char *file)
     } else if ((name = (FileName *)malloc(sizeof(FileName))) == 0)
         setFileError(0x2846);
     else {
-        memset(name, 0, 9);
+        memset(name, 0, offsetof(FileName, path) + 1);
         name->references = 1;
         name->volume = directory.name->volume;
         memcpy(name->path, directory.name->path, length);
@@ -64,7 +65,7 @@ __cdecl fileSpec::fileSpec(const fileSpec &directory, const char *file)
 }
 
 /* @zoombi32 0x00485291 */
-__cdecl fileSpec::fileSpec(long volume, const char *path)
+__cdecl fileSpec::fileSpec(LONG_PTR volume, const char *path)
 {
     unsigned short length = path ? strlen(path) : 0;
 
@@ -74,7 +75,7 @@ __cdecl fileSpec::fileSpec(long volume, const char *path)
     } else if ((name = (FileName *)malloc(sizeof(FileName))) == 0)
         setFileError(0x2846);
     else {
-        memset(name, 0, 9);
+        memset(name, 0, offsetof(FileName, path) + 1);
         name->references = 1;
         name->volume = volume;
         strcpy(name->path, path);
@@ -177,7 +178,7 @@ short __cdecl fileSpec::directory(char *path) const
 }
 
 /* @zoombi32 0x00485596 */
-short __cdecl fileSpec::volume(long *volume) const
+short __cdecl fileSpec::volume(LONG_PTR *volume) const
 {
     if (!name)
         return setFileError(0x2843);
@@ -186,7 +187,7 @@ short __cdecl fileSpec::volume(long *volume) const
 }
 
 /* @zoombi32 0x004855c0 */
-short __cdecl fileSpec::locate(long *volume, char *path) const
+short __cdecl fileSpec::locate(LONG_PTR *volume, char *path) const
 {
     if (this->volume(volume) || getPath(path))
         return files.error;
@@ -299,7 +300,7 @@ short __cdecl fileSpec::canonicalize()
     }
     if (!at)
         strcpy(name->path + at++, "\\");
-    name = (FileName *)realloc(name, at + 9);
+    name = (FileName *)realloc(name, at + offsetof(FileName, path) + 1);
     return setFileError(0);
 }
 
@@ -307,7 +308,7 @@ short __cdecl fileSpec::canonicalize()
    length in edi and the index in esi; BCC32 4.5 allocates them
    differently. */
 /* @zoombi32 0x00485a63 */
-unsigned short __cdecl validName(const char *file, unsigned short length, long volume)
+unsigned short __cdecl validName(const char *file, unsigned short length, LONG_PTR volume)
 {
     short longNames;
     short inExtension;
@@ -432,7 +433,7 @@ long driveNumber(char letter)
 }
 
 /* @zoombi32 0x00485dc5 */
-Volume *volumeOf(long id)
+Volume *volumeOf(LONG_PTR id)
 {
     Volume *volume = (Volume *)id;
 

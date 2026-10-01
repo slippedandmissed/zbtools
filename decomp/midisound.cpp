@@ -23,7 +23,7 @@ static char loopEndMarker[] = "loop end";
 /* Not exact: the original keeps `other` in ebx (after `p`) and `channel` on the
    stack; BCC32 4.5 does the reverse. */
 /* @zoombi32 0x00478814 */
-short midiMapLongMsg(long handle, MidiHeader *header, unsigned short size)
+short midiMapLongMsg(LONG_PTR handle, MidiHeader *header, unsigned short size)
 {
     MidiMap *map;
     MidiDevice *device;
@@ -202,7 +202,7 @@ short mapShortMsg(MidiMap *map, unsigned long message)
 
 /* Not exact: the original keeps `map` in eax; BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x00478d09 */
-short midiMapShortMsg(long handle, unsigned long message)
+short midiMapShortMsg(LONG_PTR handle, unsigned long message)
 {
     MidiMap *map;
 
@@ -214,7 +214,7 @@ short midiMapShortMsg(long handle, unsigned long message)
 }
 
 /* @zoombi32 0x00478d38 */
-MidiMap *midiMap(long handle)
+MidiMap *midiMap(LONG_PTR handle)
 {
     MidiMap *map = (MidiMap *)handle;
 
@@ -245,7 +245,7 @@ short __cdecl midiObj::cachePatches(short cache)
         for (i = 0; i < byteSwapShort(*(unsigned short *)(keys + 8)); i++)
             cachedKeys[byteSwapShort(*(unsigned short *)(keys + i * 4 + 0xa)) & 0x7f] =
                 byteSwapShort(*(unsigned short *)(keys + i * 4 + 0xc)) & mask;
-        if ((error = midiMapCacheDrumPatches((long)map, 0, cachedKeys,
+        if ((error = midiMapCacheDrumPatches((LONG_PTR)map, 0, cachedKeys,
                                              cache ? MIDI_CACHE_ALL : MIDI_UNCACHE)) != 0
             && error != MMSYSERR_NOTSUPPORTED)
             return error;
@@ -256,10 +256,10 @@ short __cdecl midiObj::cachePatches(short cache)
             WORD banks = byteSwapShort(*(unsigned short *)(patches + i * 4 + 0xc));
             cachedPatches[byteSwapShort(*(unsigned short *)(patches + i * 4 + 0xa)) & 0x7f] = banks;
         }
-        if ((error = midiMapCachePatches((long)map, 0, cachedPatches,
+        if ((error = midiMapCachePatches((LONG_PTR)map, 0, cachedPatches,
                                          cache ? MIDI_CACHE_ALL : MIDI_UNCACHE)) != 0
             && error != MMSYSERR_NOTSUPPORTED && keys && cache == 1)
-            midiMapCacheDrumPatches((long)map, 0, cachedKeys, MIDI_UNCACHE);
+            midiMapCacheDrumPatches((LONG_PTR)map, 0, cachedKeys, MIDI_UNCACHE);
     }
     return error;
 }
@@ -299,7 +299,7 @@ audioObj *__cdecl newMidiSound(short data)
         setSoundError(0x29d1);
         return 0;
     }
-    if ((midi = (midiObj *)newPtr((unsigned short)(tracks * 16 + 0x184))) == 0) {
+    if ((midi = (midiObj *)newPtr((unsigned short)(tracks * sizeof(MidiTrack) + sizeof(midiObj) - sizeof(MidiTrack)))) == 0) {
         unlockHandle(data);
         setSoundError(memError());
         return 0;
@@ -374,15 +374,15 @@ short __cdecl midiObj::openDevice()
                                                                                          : 0x29cc);
     getMidiDevCaps(device, &caps, sizeof caps);
     if (cachePatches(1)) {
-        midiMapClose((long)map);
+        midiMapClose((LONG_PTR)map);
         return setSoundError(0x29cc);
     }
     memset(&header, 0, sizeof header);
     header.lpData = (LPSTR)file;
     header.dwBufferLength = fileSize;
-    if (midiMapPrepareHeader((long)map, &header, sizeof header)) {
+    if (midiMapPrepareHeader((LONG_PTR)map, &header, sizeof header)) {
         cachePatches(0);
-        midiMapClose((long)map);
+        midiMapClose((LONG_PTR)map);
         return setSoundError(0x29cc);
     }
     initLock(&lock, 0);
@@ -406,7 +406,7 @@ short __cdecl midiObj::setDeviceRate(long speed)
 /* @zoombi32 0x0047931d */
 short __cdecl midiObj::setDeviceVolume(long curve)
 {
-    return setSoundError(setMidiMapTable((long)map, curve) ? 0x29d3 : 0);
+    return setSoundError(setMidiMapTable((LONG_PTR)map, curve) ? 0x29d3 : 0);
 }
 
 /* Starts playing (after the setup section, first time round) on a timer. */
@@ -426,7 +426,7 @@ short __cdecl midiObj::startDevice(short paused)
         step = nextStep();
         interval = fixedMul(makeFixed(step, 0), tempoScale);
         startTime = timerTime();
-        timer = newTimer(fixedToInt(interval), 0, midiTimer, (long)this);
+        timer = newTimer(fixedToInt(interval), 0, midiTimer, (LONG_PTR)this);
     }
     return setSoundError(0);
 }
@@ -442,23 +442,23 @@ void __cdecl midiObj::haltDevice()
         advance(fixedDiv(timerTime() - startTime, tempoScale), 1, 1);
     } else
         unlockTimers();
-    midiMapReset((long)map);
+    midiMapReset((LONG_PTR)map);
 }
 
 /* @zoombi32 0x0047947d */
 void __cdecl midiObj::closeDevice()
 {
-    midiMapUnprepareHeader((long)map, &header, sizeof header);
+    midiMapUnprepareHeader((LONG_PTR)map, &header, sizeof header);
     cachePatches(0);
-    midiMapReset((long)map);
-    midiMapClose((long)map);
+    midiMapReset((LONG_PTR)map);
+    midiMapClose((LONG_PTR)map);
     removeLock(&lock);
 }
 
 /* @zoombi32 0x004794bd */
-long __cdecl midiObj::deviceHandle()
+LONG_PTR __cdecl midiObj::deviceHandle()
 {
-    return (long)map;
+    return (LONG_PTR)map;
 }
 
 /* @zoombi32 0x004794c8 */
@@ -510,7 +510,7 @@ void __cdecl midiObj::resume()
     step = nextStep();
     interval = fixedMul(makeFixed(step, 0), tempoScale);
     startTime = timerTime();
-    timer = newTimer(fixedToInt(interval), 0, midiTimer, (long)this);
+    timer = newTimer(fixedToInt(interval), 0, midiTimer, (LONG_PTR)this);
     playing = 0;
     started = 1;
     notice.what = 3;
@@ -540,7 +540,7 @@ short __cdecl midiObj::setText(const char *text, unsigned short size)
 
 /* Not exact: the original keeps `this` in ebx; BCC32 4.5 uses eax. */
 /* @zoombi32 0x004796bf */
-short __cdecl midiObj::play(SoundNotify proc, long data)
+short __cdecl midiObj::play(SoundNotify proc, LONG_PTR data)
 {
     if (finishedTracks < trackCount)
         return audioObj::play(proc, data);
@@ -701,7 +701,7 @@ void midiStep(void *data)
         if (makeFixed(1, 0) > midi->interval)
             midi->interval = makeFixed(1, 0);
         midi->startTime = timerTime();
-        midi->timer = newTimer(fixedToInt(midi->interval), 0, midiTimer, (long)data);
+        midi->timer = newTimer(fixedToInt(midi->interval), 0, midiTimer, (LONG_PTR)data);
         if (!midi->timer) {
             error = timerError();
             midi->timer = 0;
@@ -714,7 +714,7 @@ void midiStep(void *data)
 }
 
 /* @zoombi32 0x00479c17 */
-void midiTimer(long, long data)
+void midiTimer(LONG_PTR, LONG_PTR data)
 {
     midiObj *midi = (midiObj *)data;
 
@@ -798,7 +798,7 @@ long __cdecl midiObj::dispatch(MidiTrack *track, short play, short notify)
                 sysex.lpData = (LPSTR)start;
                 sysex.dwBufferLength = length + 1;
                 sysex.dwFlags = MHDR_PREPARED;
-                midiMapLongMsg((long)map, &sysex, sizeof sysex);
+                midiMapLongMsg((LONG_PTR)map, &sysex, sizeof sysex);
                 *start = saved;
             }
             p += length;
@@ -809,7 +809,7 @@ long __cdecl midiObj::dispatch(MidiTrack *track, short play, short notify)
                 sysex.lpData = (LPSTR)p;
                 sysex.dwBufferLength = length;
                 sysex.dwFlags = MHDR_PREPARED;
-                midiMapLongMsg((long)map, &sysex, sizeof sysex);
+                midiMapLongMsg((LONG_PTR)map, &sysex, sizeof sysex);
             }
             p += length;
         } else if (status > 0xf0) {
@@ -838,7 +838,7 @@ long __cdecl midiObj::dispatch(MidiTrack *track, short play, short notify)
                 break;
             }
             if (play)
-                midiMapShortMsg((long)map, message);
+                midiMapShortMsg((LONG_PTR)map, message);
         }
         track->delta += readVarLen(&p);
     } while (track->delta <= 0);

@@ -19,7 +19,7 @@ A function is *ready* when everything it calls directly is done (matched, identi
 4. Run `uv run match decomp/<module>.cpp`. A mismatch is shown as side-by-side disassembly.
 5. Iterate with [the field guide](bcc32-quirks.md) until it matches, or note in a comment what still differs ("Not exact: register allocation…").
 6. Name things as soon as their purpose is clear, and run `uv run ghidra label` so Ghidra shows the names.
-7. `uv run match --update` records matches in `decomp/matching.txt` (the pre-commit hook does this when `decomp/` changes; if it rewrites the file, add it and commit again). From then on a regression fails `uv run match`.
+7. `uv run match --update` records matches in `decomp/matching.txt` (run it after changing `decomp/` and commit the file). From then on a regression fails `uv run match`.
 
 ## Rules for the code
 

@@ -22,7 +22,7 @@ IniState iniState;
 short openIni(fileSpec *path)
 {
     char *text;
-    long file;
+    LONG_PTR file;
     unsigned long size;
     fileSpec *name;
     short handle;

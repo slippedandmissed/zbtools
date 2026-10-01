@@ -5,6 +5,8 @@
  */
 
 #include <ctype.h>
+#include <stdarg.h>
+#include <string>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +36,7 @@ static char *unsignedToText(unsigned long value, char *buffer, int radix, bool n
     return buffer;
 }
 
+#ifndef _WIN32 /* (Windows' C library has them all) */
 char *itoa(int value, char *buffer, int radix)
 {
     return ltoa(value, buffer, radix);
@@ -46,10 +49,14 @@ char *ltoa(long value, char *buffer, int radix)
     return unsignedToText((unsigned long)value, buffer, radix, false);
 }
 
+#endif
+
 char *ultoa(unsigned long value, char *buffer, int radix)
 {
     return unsignedToText(value, buffer, radix, false);
 }
+
+#ifndef _WIN32
 
 int strnicmp(const char *a, const char *b, size_t n)
 {
@@ -93,6 +100,7 @@ char *strlwr(char *s)
         *p = (char)tolower((unsigned char)*p);
     return s;
 }
+#endif
 
 void gettime(struct ::time *now)
 {
@@ -156,6 +164,81 @@ FILE *fopen(const char *path, const char *mode)
     if (!hostPath(path, host))
         return 0;
     return ::fopen(host.c_str(), mode);
+}
+
+/* A format with Borland's long taken as an int: the `l` before an integer
+   conversion goes. */
+static std::string intFormat(const char *format)
+{
+    std::string out;
+    for (const char *p = format; *p; p++) {
+        out += *p;
+        if (*p != '%')
+            continue;
+        if (p[1] == '%') {
+            out += *++p;
+            continue;
+        }
+        for (p++; *p && !isalpha((unsigned char)*p) && *p != '['; p++)
+            out += *p;
+        if (*p == 'l' && p[1] && strchr("diouxX", p[1]))
+            p++;
+        if (!*p)
+            break;
+        out += *p;
+        if (*p == '[') { /* a scan set, to its closing bracket */
+            if (p[1] == '^')
+                out += *++p;
+            if (p[1] == ']')
+                out += *++p;
+            while (p[1] && p[1] != ']')
+                out += *++p;
+            if (p[1])
+                out += *++p;
+        }
+    }
+    return out;
+}
+
+int bcVsprintf(char *buffer, const char *format, va_list args)
+{
+    return vsprintf(buffer, intFormat(format).c_str(), args);
+}
+
+int bcSprintf(char *buffer, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int n = bcVsprintf(buffer, format, args);
+    va_end(args);
+    return n;
+}
+
+int bcFprintf(FILE *file, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int n = vfprintf(file, intFormat(format).c_str(), args);
+    va_end(args);
+    return n;
+}
+
+int bcPrintf(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int n = vprintf(intFormat(format).c_str(), args);
+    va_end(args);
+    return n;
+}
+
+int bcSscanf(const char *text, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int n = vsscanf(text, intFormat(format).c_str(), args);
+    va_end(args);
+    return n;
 }
 
 } /* namespace miniwin */

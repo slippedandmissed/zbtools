@@ -11,7 +11,7 @@
 /* Reads up to *size bytes; *size is set to how many were read (0x283f if
    fewer). */
 /* @zoombi32 0x00484c08 */
-short readFile(long handle, void *buffer, long *size)
+short readFile(LONG_PTR handle, void *buffer, long *size)
 {
     long wanted = *size;
     FileRecord *file;
@@ -48,7 +48,7 @@ __cdecl asyncReadFile::asyncReadFile(HANDLE file, void *buffer, DWORD size, DWOR
 /* @zoombi32-implicit 0x00484d72 asyncReadFile::~asyncReadFile */
 
 /* @zoombi32 0x00484d98 */
-void unlockFile(long handle)
+void unlockFile(LONG_PTR handle)
 {
     FileRecord *file = fileOf(handle, 0);
 

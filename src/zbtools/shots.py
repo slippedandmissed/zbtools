@@ -7,7 +7,7 @@ optionally a crop. `uv run shots` runs the recipes (several at once, each on a
 fresh C: drive, so a recipe never sees what another saved) and writes
 docs/src/images/<id>.png, from the 640x480 screen the game was showing when
 its commands ended with `quit`. It needs the headless build
-(`uv run port build headless`); the game's pictures and sounds are packed from
+(`uv run port build headless_wasm`); the game's pictures and sounds are packed from
 assets/ as `uv run port run` does.
 
 The captures depend on timing (the game runs in real time and a few things in
@@ -131,10 +131,10 @@ def main(
     unknown = [i for i in chosen if i not in recipes]
     if unknown:
         raise typer.BadParameter(f"no recipe for: {', '.join(unknown)}")
-    program = port.build_dir("headless") / "zoombinis.js"
+    program = port.build_dir(port.TARGETS["headless_wasm"]) / port.TARGETS["headless_wasm"].program
     nodes = sorted((paths.EMSDK_DIR / "node").glob("*/bin/node"))
     if not program.exists() or not nodes:
-        print("build the headless port first: uv run port build headless")
+        print("build the headless port first: uv run port build headless_wasm")
         raise typer.Exit(1)
     for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
         print(line)

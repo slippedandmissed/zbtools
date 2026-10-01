@@ -10,9 +10,9 @@
 /* Not exact: the original keeps `object` in eax and `resource` in ebx; BCC32
    4.5 gives them ebx and esi. */
 /* @zoombi32 0x00477848 */
-long newStreamedSound(long resource, long unknown)
+LONG_PTR newStreamedSound(long resource, long unknown)
 {
-    long file;
+    LONG_PTR file;
     unsigned long offset;
     unsigned long size;
     audioObj *object;
@@ -27,5 +27,5 @@ long newStreamedSound(long resource, long unknown)
         object->prev = 0;
         sound.objects = object;
     }
-    return (long)object;
+    return (LONG_PTR)object;
 }
