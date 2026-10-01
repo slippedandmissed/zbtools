@@ -51,7 +51,10 @@ SOUNDFONT = paths.SOUNDFONT_DIR / "GeneralUser-GS.sf2"
 # Where the web build finds it.
 _WEB_SOUNDFONT = "/soundfont/GeneralUser-GS.sf2"
 
-TARGETS = ("web", "headless", "native", "win32", "win64")
+TARGETS = ("web", "headless", "native", "win32", "win64", "linux-x64", "linux-arm64")
+# Linux targets (built in a container): Docker's platform, and what the package is called.
+LINUX_TARGETS = {"linux-x64": ("linux/amd64", "x64"), "linux-arm64": ("linux/arm64", "arm64")}
+_LINUX_DOCKERFILE = paths.PORT_SOURCE_DIR / "docker" / "linux.Dockerfile"
 # Windows targets: llvm-mingw's architecture, and what the package is called.
 WINDOWS_TARGETS = {"win32": ("i686", "x86"), "win64": ("x86_64", "x64")}
 
@@ -105,6 +108,8 @@ def build_dir(target: str) -> Path:
         "headless": paths.PORT_HEADLESS_DIR,
         "win32": paths.PORT_WIN32_DIR,
         "win64": paths.PORT_WIN64_DIR,
+        "linux-x64": paths.PORT_LINUX_X64_DIR,
+        "linux-arm64": paths.PORT_LINUX_ARM64_DIR,
     }.get(target, paths.PORT_NATIVE_DIR)
 
 
@@ -200,10 +205,66 @@ def _tool(name: str) -> str:
     return found
 
 
+def _build_linux(target: str, build_type: str, debug_tools: bool) -> Path:
+    """Builds a Linux target in a container (port/docker/linux.Dockerfile), from
+    any host: the repository is mounted in it and the build directory is in
+    build/port/. The program."""
+    platform_name = LINUX_TARGETS[target][0]
+    docker = host.docker()
+    image = f"zbtools-port-{target}"
+    subprocess.run(
+        [
+            docker,
+            "build",
+            "--platform",
+            platform_name,
+            "-t",
+            image,
+            "-f",
+            str(_LINUX_DOCKERFILE),
+            str(_LINUX_DOCKERFILE.parent),
+        ],
+        check=True,
+    )
+    out = build_dir(target)
+    out.mkdir(parents=True, exist_ok=True)
+    # Inside, the repository is /src. SDL2 is built from source (statically: the
+    # program opens the system's X11, Wayland and audio libraries itself) and the
+    # C++ runtime is linked in, so the program depends on little but glibc.
+    work = f"/src/{out.relative_to(paths.REPO_ROOT).as_posix()}"
+    script = (
+        f"cmake -S /src/port -B {work} -G Ninja -DCMAKE_BUILD_TYPE={build_type}"
+        f" -DZB_DEBUG={'ON' if debug_tools else 'OFF'} -DZB_SYSTEM_SDL=OFF"
+        " -DCMAKE_EXE_LINKER_FLAGS='-static-libstdc++ -static-libgcc'"
+        f" && cmake --build {work}"
+    )
+    user = ["--user", f"{os.getuid()}:{os.getgid()}"] if host.SYSTEM == "Linux" else []
+    subprocess.run(
+        [
+            docker,
+            "run",
+            "--rm",
+            "--platform",
+            platform_name,
+            *user,
+            "-v",
+            f"{paths.REPO_ROOT}:/src",
+            image,
+            "sh",
+            "-c",
+            script,
+        ],
+        check=True,
+    )
+    return out / "zoombinis"
+
+
 def build(target: str, build_type: str = "RelWithDebInfo", debug_tools: bool = True) -> Path:
     """Configures (the first time, or when the build type or the debug tools
     change) and builds the target; the program. `debug_tools` builds
     port/debug/ in (CMake's ZB_DEBUG); the published site is built without."""
+    if target in LINUX_TARGETS:
+        return _build_linux(target, build_type, debug_tools)
     out = build_dir(target)
     env = dict(os.environ)
     configure = [
@@ -254,10 +315,11 @@ def build(target: str, build_type: str = "RelWithDebInfo", debug_tools: bool = T
 
 
 def package_native(target: str = "native", debug_tools: bool = False) -> Path:
-    """Builds the program for `target` (native, win32 or win64) and packs it with
-    the game for players into build/port/dist/ (see bundle.py): on macOS
-    Zoombinis.app (signed ad hoc) in a .dmg, for Windows a directory in a .zip,
-    elsewhere a directory in a .tar.gz. The path of the archive."""
+    """Builds the program for `target` (native, win32, win64, linux-x64 or
+    linux-arm64) and packs it with the game for players into build/port/dist/
+    (see bundle.py): on macOS Zoombinis.app (signed ad hoc) in a .dmg, for Windows
+    a directory in a .zip, elsewhere a directory in a .tar.gz. The path of the
+    archive."""
     program = build(target, "RelWithDebInfo", debug_tools)
     for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
         print(line)
@@ -282,6 +344,10 @@ def package_native(target: str = "native", debug_tools: bool = False) -> Path:
         name = f"{bundle.APP_NAME.lower()}-{version}-windows-{WINDOWS_TARGETS[target][1]}"
         directory = bundle.assemble_directory(dist / name, program, game)
         return bundle.make_archive(directory, dist / f"{name}.zip")
+    if target in LINUX_TARGETS:
+        name = f"{bundle.APP_NAME.lower()}-{version}-linux-{LINUX_TARGETS[target][1]}"
+        directory = bundle.assemble_directory(dist / name, program, game)
+        return bundle.make_archive(directory, dist / f"{name}.tar.gz")
     if bundle.is_macos():
         app = bundle.assemble_app(
             dist / f"{bundle.APP_NAME}.app", program, game, images[0], version
@@ -552,7 +618,9 @@ def setup_windows(force: Annotated[bool, typer.Option(help="Reinstall")] = False
 
 @app.command(name="build")
 def build_command(
-    target: Annotated[str, typer.Argument(help="web, headless, native, win32 or win64")] = "web",
+    target: Annotated[
+        str, typer.Argument(help="web, headless, native, win32, win64, linux-x64 or linux-arm64")
+    ] = "web",
     debug: Annotated[bool, typer.Option(help="Build without optimisation")] = False,
     debug_tools: Annotated[
         bool, typer.Option(help="Build the debug tools in (port/debug/)")
@@ -585,16 +653,19 @@ def package(
 
 @app.command(name="bundle")
 def bundle_command(
-    target: Annotated[str, typer.Argument(help="native, win32 or win64")] = "native",
+    target: Annotated[
+        str, typer.Argument(help="native, win32, win64, linux-x64 or linux-arm64")
+    ] = "native",
     debug_tools: Annotated[
         bool, typer.Option(help="Build the debug tools in (port/debug/)")
     ] = False,
 ) -> None:
     """Build the program and pack it with the game for players, into
     build/port/dist/: Zoombinis.app in a .dmg on macOS, a directory in a .zip for
-    Windows (win32 or win64, from any host), a .tar.gz elsewhere."""
-    if target not in ("native", *WINDOWS_TARGETS):
-        raise typer.BadParameter("the targets are native, win32 and win64")
+    Windows (win32 or win64) and a .tar.gz for Linux (linux-x64 or linux-arm64,
+    built in a container), each from any host."""
+    if target not in ("native", *WINDOWS_TARGETS, *LINUX_TARGETS):
+        raise typer.BadParameter("the targets are native, win32, win64, linux-x64, linux-arm64")
     try:
         out = package_native(target, debug_tools)
     except (PortError, subprocess.CalledProcessError) as e:

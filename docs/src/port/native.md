@@ -21,3 +21,13 @@ The `native` workflow builds and uploads the `.dmg` on every pull request.
 The Windows build is the game on `miniwin` like the others: miniwin implements the Win32 subset the game uses over SDL, so nothing here calls the host's Win32 API except the fibers (`port/host/windows.cpp`). Where Windows' C library already has Borland's `itoa`, `stricmp` and the like, miniwin doesn't define them.
 
 **Status.** The 64-bit program has been run under Wine (the intro and the map render); the 32-bit one is built but not run. The llvm-mingw release's checksums are not pinned yet (`_MINGW_HOSTS` in `port.py`): the first `setup-windows` prints what the download hashes to, which should be checked against the release page and pasted in.
+
+## Linux
+
+`uv run port bundle linux-x64` (or `linux-arm64`) builds in a container, so any host with Docker can make it (Docker Desktop on a Mac; `host.docker()` says how to install it), and writes `zoombinis-<version>-linux-x64.tar.gz` to `build/port/dist/`: `zoombinis` beside `game/`, like the Windows package. `port/docker/linux.Dockerfile` is the environment: Ubuntu 22.04 with clang and the libraries SDL2 is built against, and CMake from PyPI (the port needs 3.24; Ubuntu has 3.22). The repository is mounted at `/src` and the build goes in `build/port/linux-x64/` as for the other targets.
+
+Two choices keep the program portable. SDL2 is built from source and linked statically (`-DZB_SYSTEM_SDL=OFF`), and SDL opens X11, Wayland, PulseAudio and ALSA with `dlopen` when it starts, so none of them has to be installed to run (a desktop has them). The C++ runtime is linked in. What's left is glibc, which the program needs at the version it was built on or later: 2.35, which is Ubuntu 22.04, Debian 12, Fedora 36 and SteamOS 3 or newer. A build for another architecture than the host's runs under emulation (Docker Desktop does this with Rosetta or QEMU), so it is slow.
+
+Saved games go in `~/.local/share/zoombinis/Zoombinis/C` (SDL's preferences path).
+
+**Status.** The Linux program itself (built natively with the same options) has been run through every scene; the container image has not been built (the sandbox this was written in has no Docker daemon).

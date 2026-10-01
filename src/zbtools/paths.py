@@ -58,6 +58,8 @@ PORT_NATIVE_DIR = PORT_DIR / "native"
 PORT_HEADLESS_DIR = PORT_DIR / "headless"
 PORT_WIN32_DIR = PORT_DIR / "win32"
 PORT_WIN64_DIR = PORT_DIR / "win64"
+PORT_LINUX_X64_DIR = PORT_DIR / "linux-x64"
+PORT_LINUX_ARM64_DIR = PORT_DIR / "linux-arm64"
 PORT_DATA_DIR = PORT_DIR / "data"
 # The web build and the game's data, ready to host (`uv run port package`),
 # and what's made on the way.
@@ -164,6 +166,8 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
         PORT_HEADLESS_DIR,
         PORT_WIN32_DIR,
         PORT_WIN64_DIR,
+        PORT_LINUX_X64_DIR,
+        PORT_LINUX_ARM64_DIR,
         PORT_SITE_DIR,
         PORT_SITE_STAGING,
         PORT_DIST_DIR,

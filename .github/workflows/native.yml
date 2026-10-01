@@ -29,3 +29,26 @@ jobs:
           name: zoombinis-macos
           path: build/port/dist/*.dmg
           retention-days: 14
+
+  # Windows and Linux packages, cross-built on a Linux runner: llvm-mingw for
+  # Windows, a container for Linux (arm64 runs under emulation, which is slow).
+  cross:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [win32, win64, linux-x64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run port bundle ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zoombinis-${{ matrix.target }}
+          path: |
+            build/port/dist/*.zip
+            build/port/dist/*.tar.gz
+          retention-days: 14

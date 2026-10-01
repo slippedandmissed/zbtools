@@ -26,7 +26,7 @@ uv run clean --dry-run          # show what would be removed
 | `packed-assets` | the archives `assets pack` built (`build/assets/`) | `uv run assets pack` |
 | `assets-cache` | compressed images (`build/assets-cache/`) | automatically by `uv run assets pack` or `verify` |
 | `movie-frames` | the frames `assets frames` drew (`build/movie-frames/`) | `uv run assets frames` |
-| `port` | the port's builds (`build/port/web/`, `native/`, `headless/`, `win32/`, `win64/`), the site (`build/port/site/`) and the native packages (`build/port/dist/`) | `uv run port build`, `uv run port package`, `uv run port bundle` |
+| `port` | the port's builds (`build/port/web/`, `native/`, `headless/`, `win32/`, `win64/`, `linux-x64/`, `linux-arm64/`), the site (`build/port/site/`) and the native packages (`build/port/dist/`) | `uv run port build`, `uv run port package`, `uv run port bundle` |
 | `port-data` | the port's drives, **including what the native and headless builds saved** (`build/port/data/`) | `uv run port package` |
 | `mingw` | llvm-mingw (`build/llvm-mingw/`) | `uv run port setup-windows` (downloads ~200 MB) |
 | `emsdk` | the Emscripten SDK (`build/emsdk/`) | `uv run port setup` (downloads ~1 GB) |
