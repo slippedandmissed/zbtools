@@ -586,7 +586,7 @@ void drawPizzaButtonsView(View *)
 /* Brings the next of the party (nextZoombini) up to the pizza spot (pizzaSpot)
    when the last one's done (zoombiniDone), unless busy; counts in partyThrough
    once they've all been. */
-/* Not exact: BCC keeps nextZoombini's address in esi (see docs/findings.md on
+/* Not exact: BCC keeps nextZoombini's address in esi (see docs/src/concepts/bcc32-quirks.md on
    cached global addresses); the original addresses it directly. */
 /* @zoombi32 0x00445789 */
 void bringNextZoombini()

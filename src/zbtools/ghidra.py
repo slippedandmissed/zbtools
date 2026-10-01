@@ -218,7 +218,7 @@ def decompile(
 def codec() -> None:
     """Import the movies' video codec, qb32.qtc, into a Ghidra project of its own
     (build/ghidra/qb32/, analysed on first use) and write Ghidra's C for every
-    function in it to build/ghidra/qb32.c: the source of docs/findings.md's
+    function in it to build/ghidra/qb32.c: the source of docs/src/formats/movies.md's
     account of the QkBk format. It's the original's code: never commit it."""
     dll = paths.GAME32_DIR / CODEC_PROGRAM_NAME
     if not dll.exists():

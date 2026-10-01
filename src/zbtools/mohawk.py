@@ -3,7 +3,7 @@ resources, and writing that list back out byte for byte as the game's tools did.
 
 Hand-written: there is no maintained Python library for the format (ScummVM's
 `engines/mohawk/` reads it, in C++). The layout, as the engine's resource
-manager reads it (see docs/findings.md), all big-endian:
+manager reads it (see docs/src/codebase/engine-memory-resources.md), all big-endian:
 
 - a 0x1c-byte header: `MHWK`, the size of the rest of the file, `RSRC`,
   version 0x100, a flag set while the file may hold unused space, the file's

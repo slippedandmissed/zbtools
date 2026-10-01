@@ -40,6 +40,7 @@ RUNTIME_SYMBOLS = SYMBOLS_DIR / "runtime.json"
 CLASSES = SYMBOLS_DIR / "classes.json"
 # The progress report `uv run report` writes (local only: it contains disassembly).
 REPORT_DIR = BUILD_DIR / "report"
+BOOK_DIR = BUILD_DIR / "book"
 # The rebuilt game (`uv run build`): zoombi32.exe, its map, and what went into it.
 REBUILD_DIR = BUILD_DIR / "rebuild"
 GLUE_DIR = REPO_ROOT / "glue"
@@ -145,6 +146,7 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     ],
     "ghidra": [GHIDRA_DIR],
     "report": [REPORT_DIR],
+    "book": [BOOK_DIR],
     "rebuild": [REBUILD_DIR],
     "packed-assets": [PACKED_ASSETS_DIR],
     "assets-cache": [ASSETS_CACHE],
@@ -168,6 +170,7 @@ CLEAN_DEFAULT: list[str] = [
     "packed-assets",
     "assets-cache",
     "movie-frames",
+    "book",
     "port",
     "python",
 ]

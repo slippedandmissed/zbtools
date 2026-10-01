@@ -8,7 +8,7 @@ the tools CD carries the unpacked files and a batch file (ZBINST.BAT) that:
 1. runs the QuickTime for Windows installer, with its prompts turned off;
 2. copies the game into place and makes its files writable (it saves progress
    in Zoombini.who next to the exe), including the Zoombi32.CFG that the real
-   installer would have written (see docs/findings.md);
+   installer would have written (see docs/src/formats/install-config.md);
 3. installs the game's font and adds an App Paths entry, so the game can be
    started by typing `zoombi32` in the Start menu's Run box;
 4. powers the VM off, which is how `vm install-game` knows it has finished.
@@ -32,7 +32,7 @@ FONT_FILE = "CORNER.TTF"
 GAME_CD_DRIVE = "D:"
 
 # The game reads the CD and install locations from this INI file, which ships
-# empty and is filled in by the original installer (see docs/findings.md).
+# empty and is filled in by the original installer (see docs/src/formats/install-config.md).
 CFG_FILE = "ZOOMBI32.CFG"
 _CFG = f"""[INSTALL]
 INSTALLFROMDIR={GAME_CD_DRIVE}\\

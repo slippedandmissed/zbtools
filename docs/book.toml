@@ -1,0 +1,17 @@
+[book]
+title = "Logical Journey of the Zoombinis: Decompilation Handbook"
+authors = ["The zbtools contributors"]
+description = "How the decompilation of Logical Journey of the Zoombinis (Broderbund, 1996) works: the tools, the formats, the code, and the port."
+language = "en"
+src = "src"
+
+[build]
+# Generated output belongs in the gitignored build/ directory (`uv run clean book`).
+build-dir = "../build/book"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/slippedandmissed/zbtools"
+edit-url-template = "https://github.com/slippedandmissed/zbtools/edit/main/docs/{path}"
+additional-css = ["theme/zbtools.css"]

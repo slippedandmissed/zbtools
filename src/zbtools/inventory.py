@@ -1,7 +1,7 @@
 """Every function in zoombi32.exe, with where it is, what it calls and how far its
 decompilation has got. Shared by `uv run worklist` and `uv run report`.
 
-Regions, derived from the recovered symbols (see docs/findings.md):
+Regions, derived from the recovered symbols (see docs/src/concepts/binary-layout.md):
 
     startup  Borland's Win32 startup code (C0W32.OBJ), at the entry point
     game     the game's own code

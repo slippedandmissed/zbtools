@@ -20,6 +20,18 @@ The original game is playable from its disc image in the scripted Windows 98 VM.
 
 The decompiled game also runs in a web browser, as WebAssembly (`uv run port`, see [the port](#the-port-running-the-game-on-modern-systems)): it starts and reaches Zoombini Isle, where you can pick features for a Zoombini. The music plays through a General MIDI synthesizer, sound effects are mixed but not yet checked by ear, and the intro movie plays (from its converted scene, with its sound).
 
+## Documentation
+
+The project's handbook is an [mdBook](https://rust-lang.github.io/mdBook/) in `docs/`: the tools and workflow, every file format, a guide to the decompiled code and the engine, the port, and a walk through the game in play order that links each screen and puzzle to its code.
+
+```sh
+uv run book build        # renders it to build/book/ (needs mdbook: brew install mdbook, or cargo install mdbook)
+uv run book serve        # live-reloading server on http://localhost:3000
+uv run book screenshots  # which screenshot placeholders still lack an image
+```
+
+Start at `docs/src/introduction.md`. Screenshots are marked by placeholders in the chapters; see the book's *Screenshots* appendix for how to capture and add them.
+
 ## Setup
 
 Supported hosts: macOS on Apple Silicon (tested) and Linux (should work, untested).
@@ -45,7 +57,7 @@ The game's original files and Windows media aren't committed to this repository;
 | --- | --- |
 | `data/Logical Journey of the Zoombinis.iso` | The game CD, e.g. from [the Internet Archive](https://archive.org/details/logical-journey-of-the-zoombinis) |
 | `data/Windows 98 Second Edition.iso` | Windows 98 SE install CD, for the emulated PC |
-| `data/Borland C++ 4.5.iso` | Borland C++ 4.5 CD, for the compiler the game was built with. (4.52 generates identical code and also works, as `data/Borland C++ 4.52.iso`; see `docs/findings.md`) |
+| `data/Borland C++ 4.5.iso` | Borland C++ 4.5 CD, for the compiler the game was built with. (4.52 generates identical code and also works, as `data/Borland C++ 4.52.iso`; see the handbook's [compiler chapter](docs/src/concepts/compiler.md)) |
 | `data/Borland C++ 5.02.iso` | Optional: Borland C++ 5.02 CD, for comparing the Mohawk engine's code with a later compiler (`uv run match --release 5.02`, or `/* @release 5.02 */` in a file) |
 
 Then create a gitignored `.env` file in the repo root with your Windows product key:
@@ -118,7 +130,7 @@ uv run ghidra decompile 0x46be2e     # print Ghidra's C for one function
 uv run ghidra codec                  # the movies' video codec, qb32.qtc, in a project of its own
 ```
 
-`setup` downloads a pinned Ghidra release into `build/ghidra/` (building its native decompiler first if the release has none for your machine), imports `zoombi32.exe` into a project in `build/ghidra/project/`, runs Ghidra's auto-analysis and writes every function it found to `build/ghidra/functions.json`. Close the project in the GUI before running `decompile`, which opens it headlessly. `codec` imports `qb32.qtc` into `build/ghidra/qb32/` and writes Ghidra's C for all of it to `build/ghidra/qb32.c`, which is how the `QkBk` format was read (`docs/findings.md`); it's the original's code, so it isn't committed.
+`setup` downloads a pinned Ghidra release into `build/ghidra/` (building its native decompiler first if the release has none for your machine), imports `zoombi32.exe` into a project in `build/ghidra/project/`, runs Ghidra's auto-analysis and writes every function it found to `build/ghidra/functions.json`. Close the project in the GUI before running `decompile`, which opens it headlessly. `codec` imports `qb32.qtc` into `build/ghidra/qb32/` and writes Ghidra's C for all of it to `build/ghidra/qb32.c`, which is how the `QkBk` format was read ([movies chapter](docs/src/formats/movies.md)); it's the original's code, so it isn't committed.
 
 To name what the tools can recover: the Borland runtime-library functions (strcpy, memcpy, the C++ support code, ...), and the game's C++ classes, whose names, base classes, vtables, constructors and destructors survive in its RTTI:
 
@@ -291,6 +303,7 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `ghidra-project` | the Ghidra projects (the game's and the codec's), **including any work done in Ghidra's GUI**, and the function list and codec C | `uv run ghidra setup`, `uv run ghidra codec` |
 | `ghidra` | all of Ghidra: the download, native build and project | `uv run ghidra setup` (downloads ~540 MB) |
 | `report` | `build/report/` | `uv run report` |
+| `book` | the rendered handbook (`build/book/`) | `uv run book build` |
 | `rebuild` | the rebuilt executable and what went into it (`build/rebuild/`) | `uv run build` |
 | `packed-assets` | the archives `assets pack` built (`build/assets/`) | `uv run assets pack` |
 | `assets-cache` | compressed images, reused while unchanged (`build/assets-cache/`) | automatically by `uv run assets pack` or `verify` |
@@ -302,7 +315,7 @@ Deletes generated files by category, never touching `data/` or `.env`:
 | `python` | `.venv/`, `__pycache__` | automatically by `uv run` |
 | `all` | all of the above plus anything else in `build/` | |
 
-With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `rebuild`, `packed-assets`, `assets-cache`, `movie-frames`, `port` and `python`: everything that's cheap to rebuild, keeping the VM installs, the Wine, Emscripten and SoundFont downloads and the port's saved games. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
+With no arguments it removes `extracted`, `vm-state`, `toolchain`, `report`, `rebuild`, `packed-assets`, `assets-cache`, `movie-frames`, `book`, `port` and `python`: everything that's cheap to rebuild, keeping the VM installs, the Wine, Emscripten and SoundFont downloads and the port's saved games. `uv run clean all` gets back to a fresh clone. Use `--dry-run` to see what would be removed and `--list` to show the categories.
 
 ## Development
 

@@ -1,0 +1,7 @@
+# QuickTime for Windows glue
+
+## QuickTime for Windows glue (`0x46cca0`-`0x46d754`)
+
+Between the game's code and its support library sits the glue from Apple's QuickTime for Windows 2.x SDK, statically linked (`src/zbtools/quicktime.py`). It loads `QTIM32.DLL` (QuickTime) and `CMGR32.DLL` (its component manager) with `LoadLibrary` and fetches each one's single `_EntryPoint` (and `_CMgrInitialize`/`_CMgrTerminate`) with `GetProcAddress`; `QTIM32.DLL`'s file version is read through `version.dll`. Every API function is a hand-written assembly stub (16-bit register use gives it away) that loads a selector into `bx` and calls the dispatcher through a pointer: 102 QTIM stubs (13 bytes each, pointer at `0x4a7f84`) and 24 CMGR stubs (17 bytes, also setting `ax` = 1, pointer at `0x4a7f90`). Until a DLL is loaded its pointer holds a fallback (`0x46ce80`, `0x46cca0`) that calls `QTInitialize` and retries; `0x46d3dc` is `QTInitialize(long *version)` and `0x46d745` is `QTTerminate()`.
+
+Nothing maps selectors to API names: `QTIM32.DLL` exports only `_EntryPoint`, a few helpers (`Flip16`, `GetMemory`, ...) and unnamed ordinals, and the Win16 build imports `QTIM.DLL` by ordinal. So the stubs are named by selector (`qtim_39`) until the way the game uses one identifies it. The glue isn't Broderbund's code: the inventory puts it in its own `quicktime` region, as library code, and `uv run ghidra label` names it.

@@ -4,7 +4,7 @@
 # to a 4-byte boundary, so most module ends show as padding; a module whose
 # code is already aligned shows none, so a range here may still hold several
 # modules. `uv run modules` checks this map against the padding and prints the
-# evidence (strings, imports) for each range. See docs/findings.md.
+# evidence (strings, imports) for each range. See docs/src/concepts/modules.md.
 #
 # Each module runs from its start to the next one's. `name` is the file stem
 # its code goes in (decomp/<name>.cpp); modules whose purpose isn't clear yet

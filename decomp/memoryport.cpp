@@ -86,7 +86,7 @@ ShortRect *__cdecl setRect(ShortRect *rect, short left, short top, short right, 
 /* @zoombi32-implicit 0x0048c94f memoryPort::~memoryPort */
 
 /* Moves the current port's pen. Not exact: the original keeps `port` in eax
-   (see the open question in findings.md); BCC32 4.5 gives it ebx. */
+   (see docs/src/concepts/compiler.md on the engine's register allocation); BCC32 4.5 gives it ebx. */
 /* @zoombi32 0x0048c974 */
 short moveTo(short x, short y)
 {
