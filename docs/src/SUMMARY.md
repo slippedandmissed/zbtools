@@ -29,6 +29,8 @@
 - [Runtime symbols and C++ classes](reference/runtime-and-rtti.md)
 - [The Windows 98 VM](reference/vm.md)
 - [Python conventions](reference/python-conventions.md)
+- [Cleaning up](reference/cleaning.md)
+- [Continuous integration](reference/ci.md)
 
 # File formats
 

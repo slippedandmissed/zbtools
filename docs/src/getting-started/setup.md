@@ -88,7 +88,7 @@ uv run book screenshots  # which screenshot placeholders still lack an image
 
 ## Cleaning up
 
-`uv run clean [CATEGORY…]` deletes generated files by category and never touches `data/` or `.env`. With no arguments it removes everything cheap to rebuild and keeps the VM installs, the Wine, Emscripten and SoundFont downloads and the port's saved games. `--list` shows the categories; `--dry-run` shows what would go. The README's cleaning table lists them all.
+`uv run clean [CATEGORY…]` deletes generated files by category and never touches `data/` or `.env`. With no arguments it removes everything cheap to rebuild and keeps the VM installs, the Wine, Emscripten and SoundFont downloads and the port's saved games. `--list` shows the categories; `--dry-run` shows what would go. [Cleaning up](../reference/cleaning.md) lists them all.
 
 ## Development checks
 

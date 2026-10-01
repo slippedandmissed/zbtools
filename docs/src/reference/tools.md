@@ -48,7 +48,7 @@ Every tool is a module in `src/zbtools/` exposing a Typer `app`, registered in `
 
 ## Cleaning
 
-Every path a tool generates must belong to a `paths.CLEAN_CATEGORIES` entry (categories may include others by name); add new ones there, and to `CLEAN_DEFAULT` if cheap to rebuild, and keep the README's cleaning table in sync.
+Every path a tool generates must belong to a `paths.CLEAN_CATEGORIES` entry (categories may include others by name); add new ones there, and to `CLEAN_DEFAULT` if cheap to rebuild, and keep the cleaning table (docs/src/reference/cleaning.md) in sync.
 
 ## Where the work is cached
 

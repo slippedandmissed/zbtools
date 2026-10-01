@@ -42,6 +42,18 @@ uv run port run [--headless] [--seconds N] [--screenshot F.bmp] [--click MS:X,Y]
 
 `build` defaults to `web`. Plain CMake works too: `emcmake cmake -S port -B build/port/web && cmake --build build/port/web`.
 
+## Third-party pieces
+
+| Piece | Used for | Licence note |
+| --- | --- | --- |
+| SDL2 | window, input, audio | zlib |
+| stb_truetype | the game's font | public domain |
+| [TinySoundFont](https://github.com/schellingb/TinySoundFont) | the MIDI synthesizer | MIT |
+| [GeneralUser GS](https://www.schristiancollins.com/generaluser.php) (S. Christian Collins) | the General MIDI SoundFont, downloaded by `port setup` into `build/soundfont/` (32 MB) | free to use and redistribute in software |
+| Cornerstone (`CORNER.TTF`) | the game's font, in `assets/zoombi32/installed/` | free for personal use; replace it if you use the project commercially |
+
+All are fetched at pinned versions and checksums (`port.py`, `port/CMakeLists.txt`).
+
 ## Limits
 
 - **32-bit only.** The decompiled code assumes 4-byte `long`s and pointers (it keeps pointers in `long`s in places), so CMake refuses a 64-bit native target unless `-DZB_ALLOW_64BIT=ON` (the game then won't work). WebAssembly is 32-bit. Untangling this is a roadmap item.
