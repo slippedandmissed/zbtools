@@ -115,3 +115,7 @@ commands = "party 8; scene 9; wait 3000; transitions off; scene 4 map; wait 4000
 [journey-population-sign]
 commands = "party 8; scene 18; wait 3000; transitions off; scene 6 map; wait 4000; quit"
 
+# The code machine's head shows what was picked on the panel below it: a shape, then a colour.
+[mudball-codes]
+commands = "set clickToDragOption 0; set dragClicks 0; seed 3; party 8; scene 15; wait 7000; click 540 415; wait 600; click 490 440; wait 600; click 565 415; wait 1500; quit"
+

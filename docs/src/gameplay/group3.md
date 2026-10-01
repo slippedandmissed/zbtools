@@ -70,8 +70,10 @@ Chosen at Shelter Rock (button 2 → scene 13). Chained: Fleens! → Hotel Dimen
 > *The wall of 5×5 stones with a rope along its top and the pond below; a Zoombini on the rocks.*
 > *Capture:* complete the hotel.
 
+![The code machine on its rock after a shape and a colour were picked on the panel below it: its head shows the choice.](../images/mudball-codes.png)
+
 > 📷 **Screenshot: `mudball-codes`**
-> *The codes box showing the chosen row and column values.*
+> *The code machine on its rock after a shape and a colour were picked on the panel below it: its head shows the choice.*
 > *Capture:* click the controls to set a code.
 
 | | |

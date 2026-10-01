@@ -59,7 +59,7 @@ Use PNG, at the game's native 640×480 where you can, named `<id>.png`.
 | `hotel-overview` | [gameplay/group3](../gameplay/group3.md) | The hotel at a higher level: five columns of rooms with their ledges and some doors crossed out, a figure climbing the vine at right, and the Zoombinis arriving along the bottom. | complete the Fleens. |
 | `hotel-rooms` | [gameplay/group3](../gameplay/group3.md) | Zoombinis sent into rooms; a room that doesn't fit stays dark. | send a Zoombini to a room. |
 | `mudball-overview` | [gameplay/group3](../gameplay/group3.md) | The wall of 5×5 stones with a rope along its top and the pond below; a Zoombini on the rocks. | complete the hotel. |
-| `mudball-codes` | [gameplay/group3](../gameplay/group3.md) | The codes box showing the chosen row and column values. | click the controls to set a code. |
+| `mudball-codes` | [gameplay/group3](../gameplay/group3.md) | The code machine on its rock after a shape and a colour were picked on the panel below it: its head shows the choice. | click the controls to set a code. |
 | `lion-overview` | [gameplay/group4](../gameplay/group4.md) | The lair: the lion's paw over the golden stepping stones across the chasm, with Zoombinis at the left. | from Shade Tree, set out. |
 | `lion-places` | [gameplay/group4](../gameplay/group4.md) | Zoombinis standing on stones that match the feature the lion wants. | drag Zoombinis onto the stones. |
 | `mirror-overview` | [gameplay/group4](../gameplay/group4.md) | The mine: a boulder wedged overhead, wooden trestles and a rail track, with two rows of Zoombinis facing each other. | complete the Lion's Lair. |
