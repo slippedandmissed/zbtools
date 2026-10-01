@@ -1,0 +1,138 @@
+# Visual test cases (`uv run visual`; see the handbook's "Visual tests"): each is a debug-command script that plays
+# something and takes pictures with `screenshot NAME`, compared with tests/visual/baselines/<case>/<NAME>.png.
+# Every case starts by turning "sticky mouse" off and seeding the game's random numbers (`seed`).
+
+[scenes-camps-and-town]
+description = "Shelter Rock, Shade Tree, Zoombiniville, Zoombini Isle and the map, each entered from the last"
+commands = "party 16; scene 4; wait 5000; assert scene 4; screenshot camp-1; scene 5; wait 5000; assert scene 5; screenshot camp-2; scene 6; wait 5000; assert scene 6; screenshot town; scene 3; wait 5000; assert scene 3; screenshot isle; scene 1; wait 5000; assert scene 1; screenshot map"
+
+[scenes-group-1]
+description = "The three puzzles of group 1 open: Allergic Cliffs, Stone Cold Caves, Pizza Pass"
+commands = "party 8; scene 7; wait 5000; assert scene 7; screenshot cliffs; scene 8; wait 5000; assert scene 8; screenshot caves; scene 9; wait 5000; assert scene 9; screenshot pizza"
+
+[scenes-group-2]
+description = "The three puzzles of group 2 open: the ferry, the toads, Stone Rise"
+commands = "party 8; scene 10; wait 5000; assert scene 10; screenshot ferry; scene 11; wait 5000; assert scene 11; screenshot toads; scene 12; wait 5000; assert scene 12; screenshot stone-rise"
+
+[scenes-group-3]
+description = "The three puzzles of group 3 open: Fleens, Hotel Dimensia, Mudball Wall"
+commands = "party 8; scene 13; wait 5000; assert scene 13; screenshot fleens; scene 14; wait 5000; assert scene 14; screenshot hotel; scene 15; wait 5000; assert scene 15; screenshot mudball"
+
+[scenes-group-4]
+description = "The three puzzles of group 4 open: the Lion's Lair, the Mirror Machine, Bubblewonder Abyss"
+commands = "party 8; scene 16; wait 5000; assert scene 16; screenshot lion; scene 17; wait 5000; assert scene 17; screenshot mirror; scene 18; wait 5000; assert scene 18; screenshot bubble"
+
+[scenes-hidden]
+description = "The two hidden mini-games open (scenes 19 and 20)"
+commands = "party 8; scene 19; wait 5000; assert scene 19; screenshot catch; scene 20; wait 5000; assert scene 20; screenshot targets"
+
+[intro-logo]
+description = "The intro movie's first seconds"
+commands = "wait 3000; screenshot logo"
+
+[high-levels]
+description = "The group 4 puzzles and the hotel at their highest level (the rules change with the level)"
+commands = "level 3 4; level 4 4; party 8; scene 14; wait 6000; screenshot hotel-level-4; scene 17; wait 6000; screenshot mirror-level-4; scene 18; wait 6000; screenshot bubble-level-4"
+
+[map-practice]
+description = "The map in practice mode: the level list and the practice party size"
+commands = "debug on; practice 1; scene 1; wait 4000; screenshot practice-1; key 43; wait 400; key 43; wait 400; key 43; wait 1500; screenshot practice-party-larger"
+
+[isle-make-party-and-send]
+description = "Sixteen Zoombinis are made on the isle; the go button sends them to the ship"
+commands = "debug on; scene 3; wait 6000; click 25 323; wait 250; click 25 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 65 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 105 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 145 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 185 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 65 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 105 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 145 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 185 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 25 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 105 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 145 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 185 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 25 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 65 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 145 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; wait 3000; screenshot party-made; click 618 458; wait 4500; screenshot boarding"
+seconds = 150
+
+[camp-drag]
+description = "A Zoombini is picked up in Shelter Rock and dropped"
+commands = "party 16; scene 4; wait 6000; click 261 368 press; wait 300; click 267 329 move; wait 250; click 280 289 move; wait 250; click 300 250 move; wait 600; screenshot dragging; click 300 250 release; wait 1500; screenshot dropped"
+
+[cliffs-right-and-wrong]
+description = "Zoombinis are sent over both bridges of Allergic Cliffs: the cliff sneezes at those it dislikes"
+commands = "party 8; scene 7; wait 6000; screenshot start; drag zoombini 0 place 1; wait 1500; drag zoombini 1 place 2; wait 1500; screenshot two-sent; drag zoombini 2 place 1; wait 1500; drag zoombini 3 place 2; wait 2800; screenshot sneeze; wait until crossingUnderway == 0; assert sentBackCount 2; screenshot after"
+seed = 7
+
+[pizza-wrong-pizza]
+description = "A pizza is served to the trolls: its topping is not what they want"
+commands = "party 8; scene 9; wait 8000; drag zoombini 0 place 1; wait 1500; click 60 197; wait 600; screenshot topping-picked; click 76 127; wait 8000; screenshot refused"
+seed = 7
+
+[pizza-wants]
+description = "Pizza Pass at level 2 with the debug keys: what the trolls want, then a pizza served"
+commands = "level 1 3; party 8; scene 9; wait 8000; debug on; key 82; key 79; key 68; key 112; wait 2500; screenshot trolls-eat"
+seed = 7
+
+[ferry-load-and-go]
+description = "Zoombinis are put on the ferry; it sets off"
+commands = "party 8; scene 10; wait 7000; drag zoombini 0 place 2; wait 1000; drag zoombini 1 place 3; wait 1000; drag zoombini 2 place 4; wait 1000; screenshot loaded; click 618 458; wait 2400; screenshot moving"
+seed = 7
+# where the boat is mid-crossing depends on timing (up to 11% of the screen differed): the picture
+# before it sets off is exact, the moving one is only roughly compared
+tolerance = 0.15
+
+[toads-wrong-piece]
+description = "A toad is put in a row whose lily pad doesn't match it: it goes back"
+commands = "party 8; scene 11; wait 7000; screenshot start; drag 68 119 151 79; wait 1500; screenshot refused; assert padsPlaced 0"
+seed = 7
+
+[toads-place-and-go]
+description = "Eight toads are put in matching rows; the Zoombinis set off on them"
+commands = "party 8; scene 11; wait 7000; drag 19 346 126 282; wait 900; drag 48 178 146 136; wait 900; drag 68 119 108 369; wait 900; drag 45 364 148 108; wait 900; drag 49 328 134 224; wait 900; drag 54 263 151 79; wait 900; drag 41 290 141 195; wait 900; drag 60 206 144 166; wait 900; assert padsPlaced 8; screenshot placed; click 618 458; wait 4000; screenshot hopping"
+seed = 7
+seconds = 120
+
+[stonerise-place]
+description = "Zoombinis are put on the cells of Stone Rise: stones light between those that share a feature"
+commands = "party 8; scene 12; wait 7000; drag zoombini 0 place 1; wait 1200; drag zoombini 1 place 2; wait 1200; drag zoombini 2 place 3; wait 1200; drag zoombini 3 place 4; wait 1200; screenshot four-placed; drag zoombini 4 place 5; wait 1200; drag zoombini 5 place 6; wait 1200; drag zoombini 6 place 7; wait 1200; drag zoombini 7 place 8; wait 1200; wait 1000; screenshot eight-placed"
+seed = 7
+
+[fleens-pick]
+description = "Zoombinis are put down beside fleens"
+commands = "party 8; scene 13; wait 7000; drag zoombini 0 place 1; wait 2500; screenshot first; drag zoombini 1 place 1; wait 5500; screenshot second"
+seed = 7
+
+[hotel-rooms]
+description = "Zoombinis are sent into rooms of the hotel"
+commands = "level 3 3; party 8; scene 14; wait 8000; drag zoombini 0 place 3; wait 1500; screenshot first-room; drag zoombini 1 place 8; wait 1500; drag zoombini 2 place 13; wait 2500; screenshot three-rooms"
+seed = 7
+
+[mudball-codes]
+description = "A shape and a colour are picked for the code machine"
+commands = "party 8; scene 15; wait 7000; click 540 415; wait 600; click 490 440; wait 600; click 565 415; wait 1500; screenshot code-set"
+seed = 3
+
+[lion-places]
+description = "Zoombinis are put on the stones of the Lion's Lair"
+commands = "party 8; scene 16; wait 7000; drag zoombini 0 place 8; wait 1500; screenshot one; drag zoombini 1 place 11; wait 1500; drag zoombini 2 place 14; wait 1500; drag zoombini 3 place 17; wait 2000; screenshot four"
+seed = 7
+
+[caves-door]
+description = "A Zoombini goes to a door of Stone Cold Caves and the guard speaks"
+commands = "party 8; scene 8; wait 5000; drag zoombini 0 place 1; wait 4500; screenshot guard"
+seed = 7
+
+[town-monuments]
+description = "Zoombiniville with every monument: one is opened, and the clock tower is wound"
+commands = "records 16; scene 6; wait 8000; screenshot town; click 270 360 move; wait 600; click 270 360; wait 2500; screenshot plaque; click 270 360; wait 1500; click 632 200; wait 1800; click 632 200; wait 1800; screenshot clock-screen"
+
+[journeys]
+description = "The journey screens between places: to a place of the next group, and to Zoombiniville"
+commands = "party 8; scene 9; wait 3000; transitions off; scene 4 map; wait 4000; screenshot to-the-ferry; wait scene 4; scene 18; wait 3000; scene 6 map; wait 4000; screenshot to-the-town"
+seconds = 120
+
+[dialog-options]
+description = "The options dialog over the map: a toggle is switched off (background music) and the dialog is closed with OK"
+commands = "scene 1; wait 4000; key 63; wait 2500; assert dialog 1; screenshot options; click 178 249; wait 800; screenshot music-off; click 460 337; wait 1500; assert dialog 0; screenshot closed"
+
+[dialog-save-game]
+description = "The save-a-game dialog is opened (Ctrl-S) and cancelled"
+commands = "scene 1; wait 4000; key 19; wait 2500; screenshot save-game; click 230 345; wait 1500; assert dialog 0; screenshot cancelled"
+
+[dialog-keep-party]
+description = "Leaving a puzzle by the map button asks whether to keep the party: KEEP 'EM stays in the puzzle"
+commands = "party 8; scene 7; wait 6000; click 618 415; wait 2500; assert dialog 8; screenshot asked; click 231 258; wait 2500; assert dialog 0; assert scene 7; screenshot kept"
+
+[dialog-lose-party]
+description = "Leaving a puzzle by the map button asks whether to keep the party: LOSE 'EM goes to the map"
+commands = "party 8; scene 7; wait 6000; click 618 415; wait 2500; click 405 258; wait 3000; assert dialog 0; assert scene 1; screenshot map"
+

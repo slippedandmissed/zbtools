@@ -18,6 +18,8 @@ uv run port run headless_wasm --seconds 20 --record build/port/audio.wav
 
 The `zoombinis` executable itself takes `--drive C=<dir>`, `--cdrom D=<dir>[,label[,serial]]`, `--program <Windows path>` and `-- <game command line>` (for example `-- d` for the game's debug switch). `uv run port run` fills these in.
 
+`uv run visual` plays scripted flows and compares their screenshots with checked-in baselines ([Visual tests](visual-tests.md)).
+
 To get into a state quickly (a scene, a level, a party), the build includes [debug tools](debug-tools.md): `--cmd "scene 9; party 8"`, `--script`, `?cmd=` in the URL.
 
 ## What to look at when something is wrong

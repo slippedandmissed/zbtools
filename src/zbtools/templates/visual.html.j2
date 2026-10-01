@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visual tests</title>
+<style>
+:root { --bg: #fbfaf8; --panel: #fff; --text: #1f1d1a; --muted: #6b665e; --border: #e4e0d8;
+        --ok: #2f8f5b; --bad: #c0392b; --warn: #d49a2a; --code: #f5f3ef; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #161513; --panel: #1f1e1b; --text: #ece8e1; --muted: #a39e95; --border: #34322e;
+          --ok: #4fb57f; --bad: #e86a5a; --warn: #e0b14f; --code: #1a1917; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+       font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+main { max-width: 1500px; margin: 0 auto; padding: 28px 20px 64px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 18px; margin: 36px 0 12px; }
+h3 { font-size: 15px; margin: 0 0 4px; }
+.muted { color: var(--muted); }
+code, pre { font: 12px ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+pre { background: var(--code); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px;
+      overflow-x: auto; white-space: pre-wrap; word-break: break-word; margin: 8px 0; }
+.stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+.stat { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; }
+.stat b { display: block; font-size: 22px; }
+.ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+table { border-collapse: collapse; width: 100%; background: var(--panel); border: 1px solid var(--border); }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.case { background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--bad);
+        border-radius: 8px; padding: 14px 16px; margin: 16px 0; }
+.case.changed { border-left-color: var(--warn); }
+.shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0 18px; }
+.shots figure { margin: 0; }
+.shots img { width: 100%; height: auto; display: block; border: 1px solid var(--border);
+             image-rendering: pixelated; background: #000; }
+.shots figcaption { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.shots.one { grid-template-columns: minmax(0, 1fr); max-width: 520px; }
+@media (max-width: 900px) { .shots { grid-template-columns: 1fr; } }
+details { margin: 6px 0; }
+summary { cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Visual tests{% if mode == "rebaseline" %}: baselines rewritten{% endif %}</h1>
+  <div class="muted">{{ generated }} · {{ total }} cases, {{ pictures }} pictures · {{ "%.0f"|format(seconds) }} s of play</div>
+
+  <div class="stats">
+    {% if mode == "rebaseline" %}
+    <div class="stat"><b>{{ failed|length }}</b> cases with pictures that changed</div>
+    <div class="stat"><b>{{ passed|length }}</b> unchanged</div>
+    {% else %}
+    <div class="stat"><b class="{{ 'bad' if failed else 'ok' }}">{{ failed|length }}</b> failed</div>
+    <div class="stat"><b class="ok">{{ passed|length }}</b> passed</div>
+    {% if flaky %}<div class="stat"><b class="warn">{{ flaky|length }}</b> needed a second try</div>{% endif %}
+    {% endif %}
+  </div>
+
+  {% if failed %}
+  <h2>{% if mode == "rebaseline" %}Changed pictures{% else %}Failures{% endif %}</h2>
+  {% for outcome in failed %}
+  <section class="case{% if mode == 'rebaseline' and not outcome.problem %} changed{% endif %}" id="{{ outcome.name }}">
+    <h3><code>{{ outcome.name }}</code></h3>
+    <div class="muted">{{ outcome.case.description }}</div>
+    <details><summary>The commands</summary><pre>{{ outcome.case.script }}</pre></details>
+    {% if outcome.problem %}
+    <p class="bad"><b>{{ outcome.problem }}</b></p>
+    <details open><summary>The game's output (the end of it)</summary><pre>{{ outcome.output }}</pre></details>
+    {% endif %}
+    {% for picture in outcome.pictures if picture.failed %}
+    {% set item = shown[(outcome.name, picture.name)] %}
+    <h3 style="margin-top:14px"><code>{{ picture.name }}</code>
+      <span class="{{ 'warn' if mode == 'rebaseline' else 'bad' }}">{{ picture.note }}</span></h3>
+    {% if item.omitted %}
+    <p class="muted">Not embedded (the report is full): the pictures are in <code>build/visual/{{ outcome.name }}/</code>.</p>
+    {% elif item.baseline %}
+    <div class="shots">
+      <figure><img src="{{ item.baseline }}" alt="baseline"><figcaption>{{ "before" if mode == "rebaseline" else "baseline" }}</figcaption></figure>
+      <figure><img src="{{ item.actual }}" alt="generated"><figcaption>{{ "after" if mode == "rebaseline" else "generated" }}</figcaption></figure>
+      <figure><img src="{{ item.marked }}" alt="differences"><figcaption>differences (red)</figcaption></figure>
+    </div>
+    {% else %}
+    <div class="shots one">
+      <figure><img src="{{ item.actual }}" alt="generated"><figcaption>generated (there is no baseline)</figcaption></figure>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </section>
+  {% endfor %}
+  {% endif %}
+
+  <h2>All cases</h2>
+  <table>
+    <tr><th>Case</th><th>Result</th><th>Pictures</th><th>Largest difference</th><th>Tries</th><th>Seconds</th></tr>
+    {% for outcome in failed + passed %}
+    <tr>
+      <td><a href="#{{ outcome.name }}"><code>{{ outcome.name }}</code></a><div class="muted">{{ outcome.case.description }}</div></td>
+      <td>{% if outcome.problem %}<span class="bad">crashed</span>
+          {% elif outcome.failed %}<span class="{{ 'warn' if mode == 'rebaseline' else 'bad' }}">{{ 'changed' if mode == 'rebaseline' else 'differs' }}</span>
+          {% else %}<span class="ok">ok</span>{% endif %}</td>
+      <td>{{ outcome.pictures|length }}</td>
+      <td>{{ "%.3f"|format(outcome.worst * 100) }}%</td>
+      <td>{{ outcome.attempts }}</td>
+      <td>{{ "%.0f"|format(outcome.seconds) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</main>
+</body>
+</html>
