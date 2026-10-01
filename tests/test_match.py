@@ -155,6 +155,9 @@ def test_parameter_types_drop_names() -> None:
     assert parameter_types("void") == ""
     assert parameter_types("") == ""
     assert parameter_types("fileSpec *path, short") == "fileSpec*,short"
+    # decomp/zoombinis.h's pointer-sized types are what BCC32 mangles: long
+    assert parameter_types("LONG_PTR volume, const char *path") == "long,constchar*"
+    assert parameter_types("UINT_PTR, DWORD_PTR data") == "unsignedlong,unsignedlong"
 
 
 def test_release_by_directive_or_override() -> None:
