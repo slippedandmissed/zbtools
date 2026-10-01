@@ -48,9 +48,13 @@ The map has **sixteen hotspots** (`placeNames`), each a place:
 
 Between most scenes the game shows the party travelling across the map, and the map's grid filling in.
 
+![A map screen mid-journey: Zoombinis walking in along the path to the next place, with the map's name.](../images/journey-travel.png)
+
 > 📷 **Screenshot: `journey-travel`**
-> *A map screen mid-journey: Zoombinis walking along a path, with the map's name and the grid of places visited.*
-> *Capture:* leave a puzzle for the next without "transitions off" (Ctrl-T).
+> *A map screen mid-journey: Zoombinis walking in along the path to the next place, with the map's name.*
+> *Capture:* with "transitions" off (Ctrl-T), leave a puzzle for a place in the next group.
+
+![The "zoombiniville population N" sign.](../images/journey-population-sign.png)
 
 > 📷 **Screenshot: `journey-population-sign`**
 > *The "zoombiniville population N" sign.*

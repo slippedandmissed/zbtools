@@ -271,8 +271,10 @@ void changeScene(short scene, bool viaMap)
     skipJourneyMap = !viaMap;
     resetViewClock(); /* (the journey scene leaves once the clock, idle time, passes 300 ticks) */
     pendingScene = scene;
-    waitingForScene = scene;
     enterNextScene();
+    /* The scene entered: `scene` itself, or with `map` the journey scene (2) on the way, which
+       lasts as long as its narration; `wait scene N` waits for the destination. */
+    waitingForScene = currentScene;
     sceneChanged = true;
 }
 
