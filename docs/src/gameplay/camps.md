@@ -56,3 +56,5 @@ Setting out sends the Zoombinis walking off (`sendSnoids(0x2a8, y, 0x2d)`, `mark
 - **Group order.** Shelter Rock offers group 2 *or* group 3; both end at Shade Tree, which leads to group 4.
 - **Unlocking.** Each camp's map hotspot is open only when the "left" bits in `gameState` say its group was finished (`gameState[0x50] & 0xf`, `+0x52`, `+0x51`).
 - The camps share their input items with the isle's style: two button items and a whole-screen item, plus `campAreaItems`/`bookAreaItems` for the drag areas.
+
+- **Palette.** Every scene copies the palette its images set (`loadedPalette`) into the one the screen fades in to (`targetPalette`) with `copyPaletteRange(10, 236)`, and Shelter Rock's own palette (`BaseCamp.MHK`'s shape list 1000, entries 10-228) is unlike the journey's. `enterCamp` once passed the two numbers the wrong way round, `(0xec, 10)`, copying only entries 236-245: the backdrop then came out in whatever palette the scene before had left (`uv run port run --headless --cmd "debug on; party 8; scene 9; wait 3000; scene 4 map; wait 20000"` showed it), and the debug command `paldiff` shows such a mismatch.
