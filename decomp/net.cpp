@@ -95,7 +95,7 @@ Point acrossSpots[19] = {
     {367, 314}, {404, 305},
 };
 Group g_4a2e22[1] = {{g_4a0766, (InputItem *)netButtons, 18, 0x2068}};
-GroupList netGroupList[1] = {{(Group *)&acrossSpots[19], 1, 0, netClicked}};
+GroupList netGroupList[1] = {{g_4a2e22, 1, 0, netClicked}};
 Scene g_4a2e3e[1] = {{openNet, closeNet, netFrame, 0, netKey}};
 long netButtonResource = 0;
 short markerColumnKind = 0;
