@@ -106,3 +106,12 @@ commands = "scene 1; wait 4000; key 19; wait 2000; quit"
 
 [town-clock]
 commands = "records 16; scene 6; wait 8000; click 632 200; wait 1800; click 632 200; wait 1800; quit"
+
+# (`scene N map` goes by the journey scene, 2, only between groups, and with "transitions" off;
+# the journey stays up for its narration, so a few seconds in is mid-journey.)
+[journey-travel]
+commands = "party 8; scene 9; wait 3000; transitions off; scene 4 map; wait 4000; quit"
+
+[journey-population-sign]
+commands = "party 8; scene 18; wait 3000; transitions off; scene 6 map; wait 4000; quit"
+
