@@ -36,6 +36,7 @@ static char *unsignedToText(unsigned long value, char *buffer, int radix, bool n
     return buffer;
 }
 
+#ifndef _WIN32 /* (Windows' C library has them all) */
 char *itoa(int value, char *buffer, int radix)
 {
     return ltoa(value, buffer, radix);
@@ -48,10 +49,14 @@ char *ltoa(long value, char *buffer, int radix)
     return unsignedToText((unsigned long)value, buffer, radix, false);
 }
 
+#endif
+
 char *ultoa(unsigned long value, char *buffer, int radix)
 {
     return unsignedToText(value, buffer, radix, false);
 }
+
+#ifndef _WIN32
 
 int strnicmp(const char *a, const char *b, size_t n)
 {
@@ -95,6 +100,7 @@ char *strlwr(char *s)
         *p = (char)tolower((unsigned char)*p);
     return s;
 }
+#endif
 
 void gettime(struct ::time *now)
 {

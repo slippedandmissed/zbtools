@@ -38,14 +38,18 @@ char *getcwd(char *buffer, int size);
 int chdir(const char *path);
 FILE *fopen(const char *path, const char *mode);
 
+#ifndef _WIN32 /* (Windows' C library has them all) */
 char *itoa(int value, char *buffer, int radix);
 char *ltoa(long value, char *buffer, int radix);
+#endif
 char *ultoa(unsigned long value, char *buffer, int radix);
+#ifndef _WIN32
 int stricmp(const char *a, const char *b);
 int strnicmp(const char *a, const char *b, size_t n);
 int memicmp(const void *a, const void *b, size_t n);
 char *strupr(char *s);
 char *strlwr(char *s);
+#endif
 
 /* The text functions with Borland's long (32 bits) in their formats: where
    long is 64 bits, `%ld` is `%d` (prelude.h redirects the game's calls here). */

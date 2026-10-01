@@ -47,6 +47,9 @@
 #define fopen miniwin::fopen
 #define getcwd miniwin::getcwd
 #define chdir miniwin::chdir
+#ifdef _WIN32
+#define ultoa miniwin::ultoa /* (Windows' C library lacks it) */
+#endif
 #if __SIZEOF_LONG__ == 8
 #define sprintf miniwin::bcSprintf
 #define fprintf miniwin::bcFprintf

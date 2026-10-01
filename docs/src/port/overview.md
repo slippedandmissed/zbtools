@@ -56,7 +56,7 @@ All are fetched at pinned versions and checksums (`port.py`, `port/CMakeLists.tx
 
 ## Limits
 
-- **Only the 64-bit Linux build has been run so far** (the intro, every scene, headless under valgrind and a scene sweep); the macOS, Windows and 32-bit native builds should work but aren't tried. See [64-bit targets](#64-bit-targets).
+- Run so far: the 64-bit Linux and macOS builds (every scene), and the 64-bit Windows build under Wine; the 32-bit Windows build is built but not run. See [Native builds](native.md).
 - The game assumes Windows 95 behaviour in places; miniwin reproduces it where relied on (see [Quirks](quirks.md)).
 
 ## Status

@@ -143,7 +143,20 @@ add_library(host STATIC ${HOST_SOURCES})
 target_include_directories(host PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(host PRIVATE SDL2::SDL2)
 
-add_executable(zoombinis main.cpp $<TARGET_OBJECTS:game>)
+# Windows: a program with a window and no console, unless it's a debugging build
+# (its debug commands and messages go to the console).
+# ZB_WINDOWS_ICON: an .ico for the program (uv run port makes one from the game's).
+set(ZB_RESOURCES "")
+if(WIN32 AND ZB_WINDOWS_ICON)
+    enable_language(RC)
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/zoombinis.rc" "1 ICON \"${ZB_WINDOWS_ICON}\"\n")
+    set(ZB_RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/zoombinis.rc")
+endif()
+if(WIN32 AND NOT ZB_DEBUG)
+    add_executable(zoombinis WIN32 main.cpp ${ZB_RESOURCES} $<TARGET_OBJECTS:game>)
+else()
+    add_executable(zoombinis main.cpp ${ZB_RESOURCES} $<TARGET_OBJECTS:game>)
+endif()
 target_include_directories(zoombinis PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(zoombinis PRIVATE miniwin host SDL2::SDL2)
 if(ZB_DEBUG)

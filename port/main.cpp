@@ -35,6 +35,8 @@
 #include <string>
 #include <vector>
 
+/* (We have our own main, on Windows too: not SDL's SDL_main.) */
+#define SDL_MAIN_HANDLED
 #include <SDL.h>
 
 #include "miniwin/internal.h"

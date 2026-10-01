@@ -56,6 +56,8 @@ PORT_DIR = BUILD_DIR / "port"
 PORT_WEB_DIR = PORT_DIR / "web"
 PORT_NATIVE_DIR = PORT_DIR / "native"
 PORT_HEADLESS_DIR = PORT_DIR / "headless"
+PORT_WIN32_DIR = PORT_DIR / "win32"
+PORT_WIN64_DIR = PORT_DIR / "win64"
 PORT_DATA_DIR = PORT_DIR / "data"
 # The web build and the game's data, ready to host (`uv run port package`),
 # and what's made on the way.
@@ -66,6 +68,8 @@ PORT_DIST_DIR = PORT_DIR / "dist"
 PORT_DIST_STAGING = PORT_DIR / "dist-staging"
 # The Emscripten SDK the web build uses (`uv run port setup`).
 EMSDK_DIR = BUILD_DIR / "emsdk"
+# llvm-mingw, which builds the Windows targets (`uv run port setup-windows`).
+MINGW_DIR = BUILD_DIR / "llvm-mingw"
 # The General MIDI SoundFont the port plays the music with.
 SOUNDFONT_DIR = BUILD_DIR / "soundfont"
 
@@ -158,6 +162,8 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
         PORT_WEB_DIR,
         PORT_NATIVE_DIR,
         PORT_HEADLESS_DIR,
+        PORT_WIN32_DIR,
+        PORT_WIN64_DIR,
         PORT_SITE_DIR,
         PORT_SITE_STAGING,
         PORT_DIST_DIR,
@@ -166,6 +172,7 @@ CLEAN_CATEGORIES: dict[str, list[CleanEntry]] = {
     # The native build's saved games live here: only removed when asked for.
     "port-data": [PORT_DATA_DIR],
     "emsdk": [EMSDK_DIR],
+    "mingw": [MINGW_DIR],
     "soundfont": [SOUNDFONT_DIR],
     "python": [REPO_ROOT / ".venv", REPO_ROOT / "src" / "**" / "__pycache__"],
     # The whole build/ directory, so stray files can't survive a full clean.

@@ -51,7 +51,22 @@ SOUNDFONT = paths.SOUNDFONT_DIR / "GeneralUser-GS.sf2"
 # Where the web build finds it.
 _WEB_SOUNDFONT = "/soundfont/GeneralUser-GS.sf2"
 
-TARGETS = ("web", "headless", "native")
+TARGETS = ("web", "headless", "native", "win32", "win64")
+# Windows targets: llvm-mingw's architecture, and what the package is called.
+WINDOWS_TARGETS = {"win32": ("i686", "x86"), "win64": ("x86_64", "x64")}
+
+# llvm-mingw (clang and mingw-w64: https://github.com/mstorsjo/llvm-mingw), which
+# builds for Windows from macOS, Linux or Windows. Its releases by host: the
+# platform in the file name, and the SHA-256 to pin (empty until pinned: run
+# `uv run port setup-windows`, which says what the download hashes to, and check
+# that against the release page). ZB_MINGW_DIR names an existing installation instead.
+_MINGW_VERSION = "20250114"
+_MINGW_HOSTS: dict[tuple[str, str], tuple[str, str]] = {
+    ("Darwin", "arm64"): ("macos-universal", ""),
+    ("Darwin", "x86_64"): ("macos-universal", ""),
+    ("Linux", "x86_64"): ("ubuntu-22.04-x86_64", ""),
+    ("Linux", "aarch64"): ("ubuntu-22.04-aarch64", ""),
+}
 PROGRAM = r"C:\ZOOMBI32\ZOOMBI32.EXE"
 CD_LABEL = "ZOOMBINIS"
 CD_SERIAL = 0x1996_0101
@@ -73,9 +88,12 @@ class PortError(RuntimeError):
 
 
 def build_dir(target: str) -> Path:
-    return {"web": paths.PORT_WEB_DIR, "headless": paths.PORT_HEADLESS_DIR}.get(
-        target, paths.PORT_NATIVE_DIR
-    )
+    return {
+        "web": paths.PORT_WEB_DIR,
+        "headless": paths.PORT_HEADLESS_DIR,
+        "win32": paths.PORT_WIN32_DIR,
+        "win64": paths.PORT_WIN64_DIR,
+    }.get(target, paths.PORT_NATIVE_DIR)
 
 
 def _emsdk_ready() -> bool:
@@ -112,6 +130,43 @@ def setup_soundfont(force: bool = False) -> Path:
     if force or not SOUNDFONT.exists():
         download.fetch(_SOUNDFONT_URL, _SOUNDFONT_SHA256, SOUNDFONT)
     return SOUNDFONT
+
+
+def mingw_dir() -> Path:
+    """Where llvm-mingw is: ZB_MINGW_DIR, or the pinned release in build/llvm-mingw/."""
+    given = os.environ.get("ZB_MINGW_DIR")
+    return Path(given) if given else paths.MINGW_DIR
+
+
+def setup_mingw(force: bool = False) -> Path:
+    """Downloads the pinned llvm-mingw into build/llvm-mingw/, unless
+    ZB_MINGW_DIR names one or it's there; its directory."""
+    directory = mingw_dir()
+    if os.environ.get("ZB_MINGW_DIR") or ((directory / "bin").is_dir() and not force):
+        return directory
+    key = (platform.system(), platform.machine())
+    if key not in _MINGW_HOSTS:
+        raise PortError(f"no llvm-mingw release is pinned for {key[0]} {key[1]}: set ZB_MINGW_DIR")
+    name, sha256 = _MINGW_HOSTS[key]
+    stem = f"llvm-mingw-{_MINGW_VERSION}-ucrt-{name}"
+    url = f"https://github.com/mstorsjo/llvm-mingw/releases/download/{_MINGW_VERSION}/{stem}.tar.xz"
+    archive = paths.BUILD_DIR / f"{stem}.tar.xz"
+    download.fetch(url, sha256, archive)
+    shutil.rmtree(directory, ignore_errors=True)
+    unpacked = paths.BUILD_DIR / "llvm-mingw-unpack"
+    shutil.rmtree(unpacked, ignore_errors=True)
+    download.extract_tar(archive, unpacked)
+    archive.unlink()
+    (unpacked / stem).rename(directory)
+    shutil.rmtree(unpacked)
+    return directory
+
+
+def _mingw_env() -> dict[str, str]:
+    """The environment with llvm-mingw's compilers on the PATH."""
+    env = dict(os.environ)
+    env["PATH"] = os.pathsep.join([str(setup_mingw() / "bin"), env.get("PATH", "")])
+    return env
 
 
 def _emsdk_env() -> dict[str, str]:
@@ -157,6 +212,18 @@ def build(target: str, build_type: str = "RelWithDebInfo", debug_tools: bool = T
         toolchain = _emscripten_dir() / "cmake" / "Modules" / "Platform" / "Emscripten.cmake"
         configure.append(f"-DCMAKE_TOOLCHAIN_FILE={toolchain}")
         configure.append(f"-DZB_HEADLESS={'ON' if target == 'headless' else 'OFF'}")
+    if target in WINDOWS_TARGETS:
+        env = _mingw_env()
+        architecture, _ = WINDOWS_TARGETS[target]
+        # The program's icon, for its .exe (port/CMakeLists.txt makes the resource).
+        ico = paths.PORT_DIR / "zoombinis.ico"
+        ico.parent.mkdir(parents=True, exist_ok=True)
+        ico.write_bytes(icon.ico_file(exe_resources.app_icon()))
+        configure += [
+            f"-DCMAKE_TOOLCHAIN_FILE={paths.PORT_SOURCE_DIR / 'toolchains' / 'mingw.cmake'}",
+            f"-DZB_MINGW_ARCH={architecture}",
+            f"-DZB_WINDOWS_ICON={ico}",
+        ]
     if target == "native" and host.SYSTEM == "Darwin":
         # One program for Apple silicon and Intel Macs.
         configure += [
@@ -170,14 +237,16 @@ def build(target: str, build_type: str = "RelWithDebInfo", debug_tools: bool = T
     ):
         subprocess.run(configure, check=True, env=env)
     subprocess.run([_tool("cmake"), "--build", str(out)], check=True, env=env)
-    return out / {"web": WEB_PAGE, "headless": "zoombinis.js"}.get(target, "zoombinis")
+    program = "zoombinis.exe" if target in WINDOWS_TARGETS else "zoombinis"
+    return out / {"web": WEB_PAGE, "headless": "zoombinis.js"}.get(target, program)
 
 
-def package_native(debug_tools: bool = False) -> Path:
-    """Builds the native program and packs it with the game for players into
-    build/port/dist/ (see bundle.py): on macOS Zoombinis.app (signed ad hoc) in
-    a .dmg, elsewhere a directory in an archive. The path of the archive."""
-    program = build("native", "RelWithDebInfo", debug_tools)
+def package_native(target: str = "native", debug_tools: bool = False) -> Path:
+    """Builds the program for `target` (native, win32 or win64) and packs it with
+    the game for players into build/port/dist/ (see bundle.py): on macOS
+    Zoombinis.app (signed ad hoc) in a .dmg, for Windows a directory in a .zip,
+    elsewhere a directory in a .tar.gz. The path of the archive."""
+    program = build(target, "RelWithDebInfo", debug_tools)
     for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
         print(line)
     for line in pack_scenes(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
@@ -197,6 +266,10 @@ def package_native(debug_tools: bool = False) -> Path:
     dist = paths.PORT_DIST_DIR
     dist.mkdir(parents=True, exist_ok=True)
     images = exe_resources.app_icon()
+    if target in WINDOWS_TARGETS:
+        name = f"{bundle.APP_NAME.lower()}-{version}-windows-{WINDOWS_TARGETS[target][1]}"
+        directory = bundle.assemble_directory(dist / name, program, game)
+        return bundle.make_archive(directory, dist / f"{name}.zip")
     if bundle.is_macos():
         app = bundle.assemble_app(
             dist / f"{bundle.APP_NAME}.app", program, game, images[0], version
@@ -455,9 +528,19 @@ def setup(force: Annotated[bool, typer.Option(help="Reinstall")] = False) -> Non
     print(f"The SoundFont is {soundfont.relative_to(paths.REPO_ROOT)}")
 
 
+@app.command(name="setup-windows")
+def setup_windows(force: Annotated[bool, typer.Option(help="Reinstall")] = False) -> None:
+    """Install llvm-mingw (the Windows cross-compiler) into build/llvm-mingw/."""
+    try:
+        directory = setup_mingw(force)
+    except PortError as e:
+        _fail(e)
+    print(f"llvm-mingw is in {directory}")
+
+
 @app.command(name="build")
 def build_command(
-    target: Annotated[str, typer.Argument(help="web or native")] = "web",
+    target: Annotated[str, typer.Argument(help="web, headless, native, win32 or win64")] = "web",
     debug: Annotated[bool, typer.Option(help="Build without optimisation")] = False,
     debug_tools: Annotated[
         bool, typer.Option(help="Build the debug tools in (port/debug/)")
@@ -490,15 +573,18 @@ def package(
 
 @app.command(name="bundle")
 def bundle_command(
+    target: Annotated[str, typer.Argument(help="native, win32 or win64")] = "native",
     debug_tools: Annotated[
         bool, typer.Option(help="Build the debug tools in (port/debug/)")
     ] = False,
 ) -> None:
-    """Build the native program and pack it with the game for players, into
-    build/port/dist/: Zoombinis.app in a .dmg on macOS, a directory in a
-    .tar.gz elsewhere."""
+    """Build the program and pack it with the game for players, into
+    build/port/dist/: Zoombinis.app in a .dmg on macOS, a directory in a .zip for
+    Windows (win32 or win64, from any host), a .tar.gz elsewhere."""
+    if target not in ("native", *WINDOWS_TARGETS):
+        raise typer.BadParameter("the targets are native, win32 and win64")
     try:
-        out = package_native(debug_tools)
+        out = package_native(target, debug_tools)
     except (PortError, subprocess.CalledProcessError) as e:
         _fail(e)
     print(f"Packaged {out.relative_to(paths.REPO_ROOT)}")
