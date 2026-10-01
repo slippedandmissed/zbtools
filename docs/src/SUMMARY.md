@@ -30,6 +30,7 @@
 - [The Windows 98 VM](reference/vm.md)
 - [Python conventions](reference/python-conventions.md)
 - [Cleaning up](reference/cleaning.md)
+- [About this book](reference/book.md)
 - [Continuous integration](reference/ci.md)
 
 # File formats

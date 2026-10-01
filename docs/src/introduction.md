@@ -23,6 +23,7 @@ The long-term goal is source code that builds and runs on modern systems. The ga
 - **Looking for the code behind something you saw in the game?** Go to [Gameplay and the code](gameplay/index.md): it walks through the game in the order a player meets it, with a code map for every screen and puzzle.
 - **Learning the engine?** Read [Architecture](codebase/architecture.md) and the chapters after it.
 - **Working on the web port?** Read [The port](port/overview.md).
+- **Editing this book?** See [About this book](reference/book.md).
 - **Poking at assets?** See [Formats](formats/mohawk.md).
 
 ## Conventions
