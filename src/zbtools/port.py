@@ -62,10 +62,22 @@ WINDOWS_TARGETS = {"win32": ("i686", "x86"), "win64": ("x86_64", "x64")}
 # that against the release page). ZB_MINGW_DIR names an existing installation instead.
 _MINGW_VERSION = "20250114"
 _MINGW_HOSTS: dict[tuple[str, str], tuple[str, str]] = {
-    ("Darwin", "arm64"): ("macos-universal", ""),
-    ("Darwin", "x86_64"): ("macos-universal", ""),
-    ("Linux", "x86_64"): ("ubuntu-22.04-x86_64", ""),
-    ("Linux", "aarch64"): ("ubuntu-22.04-aarch64", ""),
+    ("Darwin", "arm64"): (
+        "macos-universal",
+        "80b2e7ade71ba2dfe9e8d27fe47ae5738b1fb8d34e057faa2beef3070392f2d6",
+    ),
+    ("Darwin", "x86_64"): (
+        "macos-universal",
+        "80b2e7ade71ba2dfe9e8d27fe47ae5738b1fb8d34e057faa2beef3070392f2d6",
+    ),
+    ("Linux", "x86_64"): (
+        "ubuntu-22.04-x86_64",
+        "a16f52dee819797248e6c7d63b8b1e50a92119f45767ecd8e9633d1733b896e2",
+    ),
+    ("Linux", "aarch64"): (
+        "ubuntu-22.04-aarch64",
+        "3b7b675a17189621700b5796d745db0aea6e29756870352390112101ad38afff",
+    ),
 }
 PROGRAM = r"C:\ZOOMBI32\ZOOMBI32.EXE"
 CD_LABEL = "ZOOMBINIS"
