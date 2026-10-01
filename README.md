@@ -23,7 +23,7 @@ Every function in `zoombi32.exe`'s game code and Mohawk engine (about 2,100) is 
 
 The game's resources are in `assets/`, converted to modern formats (about 10,000 images as PNG, 1,333 sounds as WAV, the music as MIDI, scripts and tables as TOML, the intro movie as sprites and a WAV), and `uv run assets pack` rebuilds archives identical, byte for byte, to the disc's.
 
-The decompiled code links, with the original's linker, into a `zoombi32.exe` that starts in an emulated Windows 98 and runs as far as Zoombini Isle, and compiles unchanged over *miniwin*, a Win32 subset on SDL2, for WebAssembly, macOS, Linux and Windows (32- and 64-bit). Every push is checked by [CI](https://docs.zoombinis.online/reference/ci.html): all targets build, a visual regression suite plays the headless port through scripted flows, and every function that matched still does.
+The decompiled code links, with the original's linker, into a `zoombi32.exe` that starts in an emulated Windows 98 and runs as far as Zoombini Isle, and compiles unchanged over *miniwin*, a Win32 subset on SDL2, for WebAssembly, macOS, Linux and Windows (32- and 64-bit). Every pull request is checked by [CI](https://docs.zoombinis.online/reference/ci.html): all targets build, a visual regression suite plays the headless port through scripted flows, and every function that matched still does.
 
 ## Quick start
 
