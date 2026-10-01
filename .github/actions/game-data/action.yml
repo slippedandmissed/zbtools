@@ -34,10 +34,15 @@ runs:
           "gs://zbtools-ci-2610-data/Borland C++ 4.5.iso" \
           data/
 
-    # 7-Zip reads the ISOs; Wine runs Borland's 32-bit command-line tools (it needs the
-    # 32-bit architecture); the JDK is for Ghidra.
+    # 7-Zip reads the ISOs; Wine runs Borland's 32-bit command-line tools (WineHQ's stable
+    # release, as on macOS: Ubuntu's 9.0 doesn't run TLINK32, which loses its library path);
+    # the JDK is for Ghidra.
     - shell: bash
       run: |
+        sudo mkdir -pm755 /etc/apt/keyrings
+        sudo wget -q -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+        sudo wget -q -NP /etc/apt/sources.list.d/ "https://dl.winehq.org/wine-builds/ubuntu/dists/$(lsb_release -cs)/winehq-$(lsb_release -cs).sources"
         sudo dpkg --add-architecture i386
         sudo apt-get update
-        sudo apt-get install -y --no-install-recommends 7zip wine wine32:i386 openjdk-21-jdk-headless
+        sudo apt-get install -y --no-install-recommends 7zip openjdk-21-jdk-headless winehq-stable
+        wine --version
