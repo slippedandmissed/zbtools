@@ -2,9 +2,13 @@
 
 ## The map (scene 1)
 
+![The map with its sixteen hotspots drawn on the terrain and the text box at upper left.](../images/map-overview.png)
+
 > 📷 **Screenshot: `map-overview`**
 > *The map with its sixteen hotspots drawn on the terrain and the text box at upper left.*
 > *Capture:* from Zoombini Isle click the map button (panel button 5).
+
+![The map in practice mode: the level list (1-4) and the "snoids to practice with" count in the text box.](../images/map-practice-levels.png)
 
 > 📷 **Screenshot: `map-practice-levels`**
 > *The map in practice mode: the level list (1-4) and the "snoids to practice with" count in the text box.*

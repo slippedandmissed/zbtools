@@ -4,6 +4,8 @@ Chosen at Shelter Rock (button 1 → scene 10). Chained: Captain Cajun's Ferrybo
 
 ## Captain Cajun's Ferryboat (scene 10)
 
+![The river with Captain Cajun's ferry, the landing places and the Zoombinis waiting on the bank.](../images/ferry-overview.png)
+
 > 📷 **Screenshot: `ferry-overview`**
 > *The river with Captain Cajun's ferry, the landing places and the Zoombinis waiting on the bank.*
 > *Capture:* from Shelter Rock, set out with button 1.
@@ -33,6 +35,8 @@ Chosen at Shelter Rock (button 1 → scene 10). Chained: Captain Cajun's Ferrybo
 **Things to know**: Captain Cajun has pools of lines for greetings, idle remarks and for good and bad placing (`cajunGreetings`, `goodPlacingRemarks`, `badPlacingRemarks`, sound ids `0x708`-`0x723`). The ferry's routes use slots allocated with `returnRoutesUsed`.
 
 ## Titanic Tattooed Toads (scene 11)
+
+![The river with the grid of lily pads and toads.](../images/toads-overview.png)
 
 > 📷 **Screenshot: `toads-overview`**
 > *The river with the grid of lily pads and toads.*
@@ -65,6 +69,8 @@ The module is 46 KB, the biggest puzzle (its boundary with `hotel` is found from
 | `checkLillyArrivals` | `0x42e6b5` | have they got across |
 
 ## Stone Rise (scene 12)
+
+![The cliff of stones with the Zoombinis waiting at the bottom and the cells above.](../images/stonerise-overview.png)
 
 > 📷 **Screenshot: `stonerise-overview`**
 > *The cliff of stones with the Zoombinis waiting at the bottom and the cells above.*

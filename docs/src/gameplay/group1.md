@@ -4,6 +4,8 @@ Reached from Zoombini Isle (`isleButtonClicked` button 6 sets `sceneDue = 7`) an
 
 ## Allergic Cliffs (scene 7)
 
+![The cliffs: two bridges, upper and lower, with Zoombinis waiting at the left and the buttons at lower right.](../images/cliffs-overview.png)
+
 > 📷 **Screenshot: `cliffs-overview`**
 > *The cliffs: two bridges, upper and lower, with Zoombinis waiting at the left and the buttons at lower right.*
 > *Capture:* start a new game, make a party, click button 6, wait for the journey.
@@ -41,6 +43,8 @@ Reached from Zoombini Isle (`isleButtonClicked` button 6 sets `sceneDue = 7`) an
 
 ## Stone Cold Caves (scene 8)
 
+![The caves: four doors in the rock face, the characters at them, and Zoombinis queuing.](../images/caves-overview.png)
+
 > 📷 **Screenshot: `caves-overview`**
 > *The caves: four doors in the rock face, the characters at them, and Zoombinis queuing.*
 > *Capture:* complete Allergic Cliffs.
@@ -71,12 +75,16 @@ Reached from Zoombini Isle (`isleButtonClicked` button 6 sets `sceneDue = 7`) an
 
 ## Pizza Pass (scene 9)
 
+![Pizza Pass: the pizza being assembled in the middle with the topping buttons to its left, and the trolls waiting.](../images/pizza-overview.png)
+
 > 📷 **Screenshot: `pizza-overview`**
 > *Pizza Pass: the pizza being assembled in the middle with the topping buttons to its left, and the trolls waiting.*
 > *Capture:* complete Stone Cold Caves.
 
+![The trolls Arno, Willa and Shyler, each with a thought bubble of what they want.](../images/pizza-trolls.png)
+
 > 📷 **Screenshot: `pizza-trolls`**
-> *The trolls Arno, Willa and Shyler, each with a thought bubble of what they want.*
+> *The three trolls on their rocks (Arno at left, then Willa and Shyler), each with the pizza it has been served.*
 > *Capture:* higher levels have more trolls.
 
 > 📷 **Screenshot: `pizza-yuck`**

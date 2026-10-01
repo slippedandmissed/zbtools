@@ -181,21 +181,23 @@ def _build_type(out: Path) -> str | None:
 
 
 def lay_out_drives(
-    installed: Path = paths.INSTALLED_ASSETS, packed: Path = paths.PACKED_ASSETS_DIR
+    installed: Path = paths.INSTALLED_ASSETS,
+    packed: Path = paths.PACKED_ASSETS_DIR,
+    c: Path | None = None,
 ) -> Path:
     r"""C: in build/port/data/c/: the game installed in C:\ZOOMBI32 (what it
     reads of it, and the configuration its installer would have written) and
     its font in C:\WINDOWS\FONTS. The installed files are assets/'s
     (`assets.INSTALLED_FILES`, and MIDIMAP.DAT, which `assets pack` builds),
     so nothing here needs the game's disc. What the game has saved there is
-    kept."""
+    kept. `c` lays it out somewhere else instead (a fresh one, for a test)."""
     midimap = packed / "MIDIMAP.DAT"
     if not (installed / _FONT).is_file():
         raise PortError(f"{installed} not found: run `uv run assets extract`")
     if not midimap.is_file():
         raise PortError(f"{midimap} not found: run `uv run assets pack`")
     files = assets.load_installed(installed)
-    c = paths.PORT_DATA_DIR / "c"
+    c = c or paths.PORT_DATA_DIR / "c"
     target_dir = c / "ZOOMBI32"
     target_dir.mkdir(parents=True, exist_ok=True)
     fonts = c / "WINDOWS" / "FONTS"

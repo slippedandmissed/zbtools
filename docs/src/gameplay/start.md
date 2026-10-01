@@ -2,6 +2,8 @@
 
 ## On screen
 
+![The intro logo movie playing full screen (a frame from `Logo025.MOV`), at 640×480.](../images/start-logo.png)
+
 > 📷 **Screenshot: `start-logo`**
 > *The intro logo movie playing full screen (a frame from `Logo025.MOV`), at 640×480.*
 > *Capture:* the first seconds after pressing Play in the port; or `uv run assets frames LOGO025 1 701` for stills from the converted movie.
@@ -37,13 +39,19 @@ After the logo the game goes to Zoombini Isle (a fresh game) or straight back to
 
 ## Dialogs and saved games
 
+![The dialog "the current party of zoombinis will be lost if you go to the map" with its LOSE 'EM / KEEP 'EM buttons.](../images/dialog-keep-party.png)
+
 > 📷 **Screenshot: `dialog-keep-party`**
 > *The dialog "the current party of zoombinis will be lost if you go to the map" with its LOSE 'EM / KEEP 'EM buttons.*
 > *Capture:* from a puzzle, click the map button while Zoombinis are in the party.
 
+![The saved-games dialog (LOAD / SAVE) listing games.](../images/dialog-games.png)
+
 > 📷 **Screenshot: `dialog-games`**
-> *The saved-games dialog (LOAD / SAVE) listing games.*
-> *Capture:* press Ctrl-L (or Ctrl-S) at any time.
+> *The save-a-game dialog: the list of saved games (empty here), the name box and the CANCEL and SAVE buttons; Ctrl-L opens the same list to load.*
+> *Capture:* press Ctrl-S (or Ctrl-L) at any time.
+
+![The options/help dialog with the ON/OFF toggles (music, sound, less/more action, hide cursor, sticky mouse…).](../images/dialog-options.png)
 
 > 📷 **Screenshot: `dialog-options`**
 > *The options/help dialog with the ON/OFF toggles (music, sound, less/more action, hide cursor, sticky mouse…).*

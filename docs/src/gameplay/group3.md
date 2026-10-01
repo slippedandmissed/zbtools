@@ -4,6 +4,8 @@ Chosen at Shelter Rock (button 2 → scene 13). Chained: Fleens! → Hotel Dimen
 
 ## Fleens (scene 13)
 
+![The Fleens scene: a row of Fleens (small creatures) beside a line of Zoombinis.](../images/fleens-overview.png)
+
 > 📷 **Screenshot: `fleens-overview`**
 > *The Fleens scene: a row of Fleens (small creatures) beside a line of Zoombinis.*
 > *Capture:* from Shelter Rock, set out with button 2.
@@ -32,8 +34,10 @@ Chosen at Shelter Rock (button 2 → scene 13). Chained: Fleens! → Hotel Dimen
 
 ## Hotel Dimensia (scene 14)
 
+![The hotel front: rows and columns of rooms, with labels along the top and left, and Zoombinis arriving.](../images/hotel-overview.png)
+
 > 📷 **Screenshot: `hotel-overview`**
-> *The hotel front: rows and columns of rooms, with labels along the top and left, and Zoombinis arriving.*
+> *The hotel at a higher level: five columns of rooms with their ledges and some doors crossed out, a figure climbing the vine at right, and the Zoombinis arriving along the bottom.*
 > *Capture:* complete the Fleens.
 
 > 📷 **Screenshot: `hotel-rooms`**
@@ -59,6 +63,8 @@ Chosen at Shelter Rock (button 2 → scene 13). Chained: Fleens! → Hotel Dimen
 | `darkenPalette` | | the lights going out |
 
 ## Mudball Wall (scene 15)
+
+![The wall of 5×5 stones with a rope along its top and the pond below; a Zoombini on the rocks.](../images/mudball-overview.png)
 
 > 📷 **Screenshot: `mudball-overview`**
 > *The wall of 5×5 stones with a rope along its top and the pond below; a Zoombini on the rocks.*
