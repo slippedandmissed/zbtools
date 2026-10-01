@@ -127,16 +127,6 @@ def wine_bin_dir() -> Path:
     return Path(require("Wine", "wine")).parent
 
 
-def wine_locale() -> dict[str, str]:
-    """Locale variables for Wine. On Linux Borland's tools lose the library path from their
-    .CFG files (TLINK32 then takes `T:\\BC45\\LIB\\import32.lib` for a relative name) unless
-    the locale is set explicitly with LC_ALL, as it is by a macOS shell's UTF-8 locale; a CI
-    runner only has LANG=C.UTF-8."""
-    if SYSTEM == "Linux" and not os.environ.get("LC_ALL"):
-        return {"LC_ALL": "C.UTF-8"}
-    return {}
-
-
 def java_home() -> Path:
     """A JDK 21 installation (Ghidra 12 needs it): $JAVA_HOME if it's set,
     otherwise the platform's usual install locations."""

@@ -90,7 +90,6 @@ def _wine_env(path: str = "") -> dict[str, str]:
     """Environment for Wine; path is added to the Windows PATH (WINEPATH)."""
     return {
         **os.environ,
-        **host.wine_locale(),
         "WINEPATH": path,
         "WINEPREFIX": str(paths.WINE_PREFIX),
         "WINEDEBUG": "-all",

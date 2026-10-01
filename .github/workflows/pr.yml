@@ -108,10 +108,13 @@ jobs:
         if: failure()
         run: |
           set +e
+          echo "== toolchain setup again"; uv run toolchain setup 2>&1 | tail -5
           export WINEPREFIX="$GITHUB_WORKSPACE/build/wine/prefix" WINEDEBUG=-all WINEPATH='T:\\BC45\\BIN'
           cd build/toolchain/check/4.5; rm -f hello.exe
-          echo "== without LC_ALL"; env -u LC_ALL wine 'T:\\BC45\\BIN\\BCC32.EXE' -WC hello.c 2>&1; ls hello.exe
-          rm -f hello.exe
-          echo "== with LC_ALL=C.UTF-8"; LC_ALL=C.UTF-8 wine 'T:\\BC45\\BIN\\BCC32.EXE' -WC hello.c 2>&1; ls hello.exe
+          U="$GITHUB_WORKSPACE/build/toolchain/4.5/BC45/BIN/BCC32.EXE"
+          echo "== V1: program as a unix path"; wine "$U" -WC hello.c 2>&1 | tail -3; ls hello.exe; rm -f hello.exe
+          echo "== V2: unix path, DLL overrides"; WINEDLLOVERRIDES="mscoree,mshtml=" wine "$U" -WC hello.c 2>&1 | tail -3; ls hello.exe; rm -f hello.exe
+          echo "== V3: T: path, output to files"; wine 'T:\\BC45\\BIN\\BCC32.EXE' -WC hello.c >out.txt 2>err.txt; cat out.txt err.txt | tail -3; ls hello.exe; rm -f hello.exe
+          echo "== V4: unix path, output to files"; wine "$U" -WC hello.c >out.txt 2>err.txt; cat out.txt err.txt | tail -3; ls hello.exe
       - run: uv run match
       - run: uv run match-data -q
