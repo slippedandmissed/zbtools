@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -106,18 +108,14 @@ int main(int argc, char **argv)
         else if (!strcmp(argv[i], "--cmd") && i + 1 < argc)
             zbDebugRun(argv[++i]);
         else if (!strcmp(argv[i], "--script") && i + 1 < argc) {
-            FILE *file = fopen(argv[++i], "rb");
+            std::ifstream file(argv[++i], std::ios::binary);
             if (!file) {
                 fprintf(stderr, "cannot read %s\n", argv[i]);
                 return 2;
             }
-            std::string text;
-            char buffer[4096];
-            size_t got;
-            while ((got = fread(buffer, 1, sizeof buffer, file)) > 0)
-                text.append(buffer, got);
-            fclose(file);
-            zbDebugRun(text.c_str());
+            std::stringstream text;
+            text << file.rdbuf();
+            zbDebugRun(text.str().c_str());
         }
 #endif
         else if (!strcmp(argv[i], "--program") && i + 1 < argc)
