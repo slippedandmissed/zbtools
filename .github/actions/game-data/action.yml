@@ -35,8 +35,8 @@ runs:
           data/
 
     # 7-Zip reads the ISOs; Wine runs Borland's 32-bit command-line tools (WineHQ's stable
-    # release, as on macOS: Ubuntu's 9.0 doesn't run TLINK32, which loses its library path);
-    # the JDK is for Ghidra.
+    # release, the version the macOS build pins; Ubuntu's own 9.0 was not tried once the real
+    # problem, a case-sensitive file name in `toolchain setup`, was found); the JDK is for Ghidra.
     - shell: bash
       run: |
         sudo mkdir -pm755 /etc/apt/keyrings
