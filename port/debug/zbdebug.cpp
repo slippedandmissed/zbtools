@@ -319,9 +319,12 @@ void run(const std::string &line)
         debugPartyCount = a < 0 ? 0 : a > 16 ? 16 : a;
         makeParty(a);
     } else if (command == "unlock" && n == 1) {
-        gameState[0x50] |= 0xf;
-        gameState[0x51] |= 0xf;
-        *(short *)(gameState + 0x52) |= 0xff;
+        /* The lowest bit of each group's nibble, as the game's own debug key '@' sets (the
+           map takes a nibble as a level number: all four bits set would index past the
+           four levels' views). */
+        gameState[0x50] |= 1;
+        gameState[0x51] |= 1;
+        *(short *)(gameState + 0x52) |= 0x11;
     } else if (command == "records" && n == 2 && number(w[1], &a)) {
         fillRecords(a);
     } else if (command == "state" && n >= 3 && w[1] == "get" && number(w[2], &a)) {
