@@ -10,8 +10,10 @@ Reached from Shade Tree (`camp2Clicked` button 1 → scene 16). Chained: The Lio
 > *The lair: the lion's paw over the golden stepping stones across the chasm, with Zoombinis at the left.*
 > *Capture:* from Shade Tree, set out.
 
+![Zoombinis standing on stones that match the feature the lion wants.](../images/lion-places.png)
+
 > 📷 **Screenshot: `lion-places`**
-> *Zoombinis standing on stones that match the feature the lion wants.*
+> *A Zoombini on a stone of the path across the chasm, with the lion's paw above and the others waiting at left.*
 > *Capture:* drag Zoombinis onto the stones.
 
 | | |

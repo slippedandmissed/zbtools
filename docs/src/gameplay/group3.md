@@ -10,8 +10,10 @@ Chosen at Shelter Rock (button 2 → scene 13). Chained: Fleens! → Hotel Dimen
 > *The Fleens scene: a row of Fleens (small creatures) beside a line of Zoombinis.*
 > *Capture:* from Shelter Rock, set out with button 2.
 
+![A Zoombini dragged beside a fleen; the pair walking on together.](../images/fleens-pick.png)
+
 > 📷 **Screenshot: `fleens-pick`**
-> *A Zoombini dragged beside a fleen; the pair walking on together.*
+> *A fleen walking out to the Zoombini put down beside it, with the other fleens waiting in the trees.*
 > *Capture:* drag a Zoombini to a fleen.
 
 | | |
@@ -40,8 +42,10 @@ Chosen at Shelter Rock (button 2 → scene 13). Chained: Fleens! → Hotel Dimen
 > *The hotel at a higher level: five columns of rooms with their ledges and some doors crossed out, a figure climbing the vine at right, and the Zoombinis arriving along the bottom.*
 > *Capture:* complete the Fleens.
 
+![Zoombinis sent into rooms; a room that doesn't fit stays dark.](../images/hotel-rooms.png)
+
 > 📷 **Screenshot: `hotel-rooms`**
-> *Zoombinis sent into rooms; a room that doesn't fit stays dark.*
+> *A Zoombini sent into a room (its window lit) at a higher level, with rooms already crossed out.*
 > *Capture:* send a Zoombini to a room.
 
 | | |

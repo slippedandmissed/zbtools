@@ -42,26 +42,26 @@ Use PNG, at the game's native 640×480 where you can, named `<id>.png`.
 | `camp1-drag` | [gameplay/camps](../gameplay/camps.md) | A Zoombini picked up from its slot and being dragged toward the "party" area. | click and hold on a Zoombini in the camp. |
 | `camp2-book` | [gameplay/camps](../gameplay/camps.md) | Shade Tree: the "book" of Zoombinis waiting there, with its scroll arrows. | finish Stone Rise or Mudball Wall. |
 | `cliffs-overview` | [gameplay/group1](../gameplay/group1.md) | The cliffs: two bridges, upper and lower, with Zoombinis waiting at the left and the buttons at lower right. | start a new game, make a party, click button 6, wait for the journey. |
-| `cliffs-sneeze` | [gameplay/group1](../gameplay/group1.md) | A Zoombini turned back by a sneezing cliff. | send a Zoombini across the wrong bridge. |
+| `cliffs-sneeze` | [gameplay/group1](../gameplay/group1.md) | The cliff sneezes: a Zoombini sent the wrong way, and the upper bridge thrown up into the air. | send a Zoombini across the wrong bridge. |
 | `caves-overview` | [gameplay/group1](../gameplay/group1.md) | The caves: four doors in the rock face, the characters at them, and Zoombinis queuing. | complete Allergic Cliffs. |
 | `caves-remark` | [gameplay/group1](../gameplay/group1.md) | A guard speaking one of its remarks. | wait on the screen. |
 | `pizza-overview` | [gameplay/group1](../gameplay/group1.md) | Pizza Pass: the pizza being assembled in the middle with the topping buttons to its left, and the trolls waiting. | complete Stone Cold Caves. |
 | `pizza-trolls` | [gameplay/group1](../gameplay/group1.md) | The three trolls on their rocks (Arno at left, then Willa and Shyler), each with the pizza it has been served. | higher levels have more trolls. |
 | `pizza-yuck` | [gameplay/group1](../gameplay/group1.md) | A troll reacting to a pizza it dislikes. | serve a pizza with a topping the troll doesn't want. |
 | `ferry-overview` | [gameplay/group2](../gameplay/group2.md) | The river with Captain Cajun's ferry, the landing places and the Zoombinis waiting on the bank. | from Shelter Rock, set out with button 1. |
-| `ferry-crossing` | [gameplay/group2](../gameplay/group2.md) | The ferry mid-river carrying Zoombinis, with Captain Cajun at the helm. | place some Zoombinis on the ferry's seats and let it cross. |
+| `ferry-crossing` | [gameplay/group2](../gameplay/group2.md) | The ferry loaded with Zoombinis and moving off, Captain Cajun at the helm at the right edge. | place some Zoombinis on the ferry's seats and let it cross. |
 | `toads-overview` | [gameplay/group2](../gameplay/group2.md) | The river with the grid of lily pads and toads. | complete the ferry. |
 | `toads-hop` | [gameplay/group2](../gameplay/group2.md) | A Zoombini hopping across lily pads. | start the crossing once the board is set. |
 | `stonerise-overview` | [gameplay/group2](../gameplay/group2.md) | The cliff of stones with the Zoombinis waiting at the bottom and the cells above. | complete the toads. |
-| `stonerise-lit-path` | [gameplay/group2](../gameplay/group2.md) | A path of lit stones between Zoombinis that share a feature. | place Zoombinis in adjacent cells. |
+| `stonerise-lit-path` | [gameplay/group2](../gameplay/group2.md) | Zoombinis placed on the hexes, with the red stones lit between them. | place Zoombinis in adjacent cells. |
 | `fleens-overview` | [gameplay/group3](../gameplay/group3.md) | The Fleens scene: a row of Fleens (small creatures) beside a line of Zoombinis. | from Shelter Rock, set out with button 2. |
-| `fleens-pick` | [gameplay/group3](../gameplay/group3.md) | A Zoombini dragged beside a fleen; the pair walking on together. | drag a Zoombini to a fleen. |
+| `fleens-pick` | [gameplay/group3](../gameplay/group3.md) | A fleen walking out to the Zoombini put down beside it, with the other fleens waiting in the trees. | drag a Zoombini to a fleen. |
 | `hotel-overview` | [gameplay/group3](../gameplay/group3.md) | The hotel at a higher level: five columns of rooms with their ledges and some doors crossed out, a figure climbing the vine at right, and the Zoombinis arriving along the bottom. | complete the Fleens. |
-| `hotel-rooms` | [gameplay/group3](../gameplay/group3.md) | Zoombinis sent into rooms; a room that doesn't fit stays dark. | send a Zoombini to a room. |
+| `hotel-rooms` | [gameplay/group3](../gameplay/group3.md) | A Zoombini sent into a room (its window lit) at a higher level, with rooms already crossed out. | send a Zoombini to a room. |
 | `mudball-overview` | [gameplay/group3](../gameplay/group3.md) | The wall of 5×5 stones with a rope along its top and the pond below; a Zoombini on the rocks. | complete the hotel. |
 | `mudball-codes` | [gameplay/group3](../gameplay/group3.md) | The code machine on its rock after a shape and a colour were picked on the panel below it: its head shows the choice. | click the controls to set a code. |
 | `lion-overview` | [gameplay/group4](../gameplay/group4.md) | The lair: the lion's paw over the golden stepping stones across the chasm, with Zoombinis at the left. | from Shade Tree, set out. |
-| `lion-places` | [gameplay/group4](../gameplay/group4.md) | Zoombinis standing on stones that match the feature the lion wants. | drag Zoombinis onto the stones. |
+| `lion-places` | [gameplay/group4](../gameplay/group4.md) | A Zoombini on a stone of the path across the chasm, with the lion's paw above and the others waiting at left. | drag Zoombinis onto the stones. |
 | `mirror-overview` | [gameplay/group4](../gameplay/group4.md) | The mine: a boulder wedged overhead, wooden trestles and a rail track, with two rows of Zoombinis facing each other. | complete the Lion's Lair. |
 | `mirror-grid` | [gameplay/group4](../gameplay/group4.md) | The Mirror Machine at its highest level: the green panels, each showing the features it asks for, over the trestles, and Zoombinis waiting at left. | at higher levels. |
 | `bubble-overview` | [gameplay/group4](../gameplay/group4.md) | The chasm with the purple grid laid over it, its arrows and symbols, and the Zoombinis waiting at lower left. | complete the Mirror Machine. |
