@@ -67,8 +67,8 @@ else()
     endif()
 endif()
 
-# The game's sources: decomp/ (each replaced by port/decomp/'s file of the
-# same name, if there is one) and glue/.
+# The game's sources: decomp/ and glue/ (each replaced by port/decomp/'s or
+# port/glue/'s file of the same name, if there is one).
 file(GLOB DECOMP_SOURCES CONFIGURE_DEPENDS "${REPO_ROOT}/decomp/*.cpp")
 file(GLOB PORT_DECOMP_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/decomp/*.cpp")
 foreach(replacement IN LISTS PORT_DECOMP_SOURCES)
@@ -76,7 +76,12 @@ foreach(replacement IN LISTS PORT_DECOMP_SOURCES)
     list(REMOVE_ITEM DECOMP_SOURCES "${REPO_ROOT}/decomp/${name}")
 endforeach()
 file(GLOB GLUE_SOURCES CONFIGURE_DEPENDS "${REPO_ROOT}/glue/*.cpp")
-set(GAME_SOURCES ${DECOMP_SOURCES} ${PORT_DECOMP_SOURCES} ${GLUE_SOURCES})
+file(GLOB PORT_GLUE_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/glue/*.cpp")
+foreach(replacement IN LISTS PORT_GLUE_SOURCES)
+    get_filename_component(name "${replacement}" NAME)
+    list(REMOVE_ITEM GLUE_SOURCES "${REPO_ROOT}/glue/${name}")
+endforeach()
+set(GAME_SOURCES ${DECOMP_SOURCES} ${PORT_DECOMP_SOURCES} ${GLUE_SOURCES} ${PORT_GLUE_SOURCES})
 
 # The game's code is Borland C++ 4.5's dialect: miniwin/prelude.h makes clang
 # read it the same way (byte packing, the Borland runtime's extras). Its

@@ -1,10 +1,12 @@
 import random
+import struct
 from pathlib import Path
 
 import pytest
 
 from zbtools import movies
 from zbtools.formats import Unconvertible, mov, qkbk
+from zbtools.formats import scene as movies_scene
 
 GREY = [f"#{i:02x}{i:02x}{i:02x}" for i in range(256)]
 
@@ -230,3 +232,31 @@ def test_editing_a_movies_files_changes_the_packed_movie(tmp_path: Path) -> None
     assert movies.verify_all(disc, tmp_path / "assets") == [("T", ["DATA/T.MOV: differs"])]
     [written] = movies.render_frames(out, [1], tmp_path / "frames")
     assert written.name == "T-0001.png"
+
+
+def test_a_scene_file_holds_the_frames_casts_and_sound() -> None:
+    scene = _scene()
+    data = movies_scene.build(
+        scene, size=(13, 6), milliseconds=100, rate=11025, sound=bytes([1, 2, 3])
+    )
+    assert data[:4] == b"ZBSC"
+    version, width, height, ms, frames, rate, samples, casts = struct.unpack_from(
+        "<IHHIIIII", data, 4
+    )
+    assert (version, width, height, ms, frames, rate, samples, casts) == (
+        1, 13, 6, 100, 3, 11025, 3, 4,
+    )  # fmt: skip
+    assert data.endswith(bytes([1, 2, 3]))
+    at = 32
+    fill, count, palette = struct.unpack_from("<BBH", data, at)
+    assert (fill, count, palette) == (2, 1, 10)
+    assert struct.unpack_from("<Hhh", data, at + 4) == (20, -2, 0)
+
+
+def test_the_edit_list_turns_into_silence_and_sound_on_one_timeline() -> None:
+    signed = bytes([0, 1, 2, 3, 4, 5, 6, 7])  # unsigned: 128, 129, ...
+    # 600 units a second and 10 samples a second: each unit is 1/60 of a sample
+    track = movies_scene.expand_edits(signed, [(120, -1), (180, 2), (60, -1)], 600, 10)
+    assert track == bytes([128, 128, 130, 131, 132, 128])
+    # (the sound runs out after one sample: the rest is silence)
+    assert movies_scene.expand_edits(signed, [(120, 7)], 600, 10) == bytes([135, 128])

@@ -14,8 +14,8 @@ library (CW32.LIB) and the Windows imports (IMPORT32.LIB). The options are
 the original's: a Windows GUI program, its sections aligned to 64 KB.
 
 glue/ holds code standing in for what the game links but we don't have:
-QuickTime for Windows' SDK glue (glue/quicktime.cpp, a stand-in that plays
-no movies).
+QuickTime for Windows' SDK glue (glue/quicktime.cpp, which loads QuickTime
+and forwards the game's calls to it, as the original does).
 """
 
 import shutil
