@@ -97,3 +97,5 @@ uv run lint         # ruff, ruff format, strict mypy, pytest
 uv run lint --fix   # apply fixes and formatting first
 uv run pre-commit install   # once: runs lint when Python code changes
 ```
+
+The hook runs only `lint`, which needs none of the game files, so someone who works on the port or the tools never needs the ISOs. The checks that do need them (`match`, `match-data`, the progress report) run in [CI](../reference/ci.md) on every pull request from this repository, with the files fetched from a private bucket; run them locally when you change `decomp/` (steps 1, 2 and 5), since a pull request from a fork doesn't get them and a maintainer has to push its branch to run them.
