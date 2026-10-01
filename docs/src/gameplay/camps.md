@@ -4,9 +4,13 @@ Between the puzzle groups the party rests at a camp, where Zoombinis that have b
 
 ## Shelter Rock (scene 4)
 
+![Shelter Rock: the scrolling rows of camp slots, the Zoombinis standing in them, and the buttons at the right edge.](../images/camp1-overview.png)
+
 > 📷 **Screenshot: `camp1-overview`**
 > *Shelter Rock: the scrolling rows of camp slots, the Zoombinis standing in them, and the buttons at the right edge.*
 > *Capture:* finish Pizza Pass (or use practice mode off with a saved game that has).
+
+![A Zoombini picked up from its slot and being dragged toward the "party" area.](../images/camp1-drag.png)
 
 > 📷 **Screenshot: `camp1-drag`**
 > *A Zoombini picked up from its slot and being dragged toward the "party" area.*
@@ -31,6 +35,8 @@ Between the puzzle groups the party rests at a camp, where Zoombinis that have b
 Setting out sends the Zoombinis walking off (`sendSnoids(0x2a8, y, 0x2d)`, `markPlacedSnoids`) and plays sound 996.
 
 ## Shade Tree (scene 5)
+
+![Shade Tree: the "book" of Zoombinis waiting there, with its scroll arrows.](../images/camp2-book.png)
 
 > 📷 **Screenshot: `camp2-book`**
 > *Shade Tree: the "book" of Zoombinis waiting there, with its scroll arrows.*

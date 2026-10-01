@@ -4,6 +4,8 @@ The final destination, and the memorial of every journey.
 
 ## On screen
 
+![Zoombiniville: one of the six 320-pixel-wide screens of the town, with townsfolk walking and the settled Zoombinis around.](../images/town-overview.png)
+
 > 📷 **Screenshot: `town-overview`**
 > *Zoombiniville: one of the six 320-pixel-wide screens of the town, with townsfolk walking and the settled Zoombinis around.*
 > *Capture:* finish Bubblewonder Abyss, or open the town from the map (hotspot 16).
@@ -11,6 +13,8 @@ The final destination, and the memorial of every journey.
 > 📷 **Screenshot: `town-monument`**
 > *A monument's plaque open: "this monument was made to honor the zoombinis who:" and the journey it records.*
 > *Capture:* click a building in the town.
+
+![The clock tower, with hands showing the real time; clicking it winds them.](../images/town-clock.png)
 
 > 📷 **Screenshot: `town-clock`**
 > *The clock tower, with hands showing the real time; clicking it winds them.*

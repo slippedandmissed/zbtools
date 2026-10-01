@@ -4,6 +4,8 @@ Reached from Shade Tree (`camp2Clicked` button 1 → scene 16). Chained: The Lio
 
 ## The Lion's Lair (scene 16)
 
+![The lair: the lion's paw over the golden stepping stones across the chasm, with Zoombinis at the left.](../images/lion-overview.png)
+
 > 📷 **Screenshot: `lion-overview`**
 > *The lair: the lion's paw over the golden stepping stones across the chasm, with Zoombinis at the left.*
 > *Capture:* from Shade Tree, set out.
@@ -34,12 +36,16 @@ The module is named for its strings, since it also holds the [saved-game code](.
 
 ## Mirror Machine (scene 17)
 
+![The mine: a boulder wedged overhead, wooden trestles and a rail track, with two rows of Zoombinis facing each other.](../images/mirror-overview.png)
+
 > 📷 **Screenshot: `mirror-overview`**
 > *The mine: a boulder wedged overhead, wooden trestles and a rail track, with two rows of Zoombinis facing each other.*
 > *Capture:* complete the Lion's Lair.
 
+![The hex grid of Zoombinis filling in, neighbours sharing features.](../images/mirror-grid.png)
+
 > 📷 **Screenshot: `mirror-grid`**
-> *The hex grid of Zoombinis filling in, neighbours sharing features.*
+> *The Mirror Machine at its highest level: the green panels, each showing the features it asks for, over the trestles, and Zoombinis waiting at left.*
 > *Capture:* at higher levels.
 
 | | |
@@ -65,12 +71,16 @@ The module is named for its strings, since it also holds the [saved-game code](.
 
 ## Bubblewonder Abyss (scene 18)
 
+![The dark chasm with the Zoombinis' bubbles rising over it.](../images/bubble-overview.png)
+
 > 📷 **Screenshot: `bubble-overview`**
-> *The dark chasm with the Zoombinis' bubbles rising over it.*
+> *The chasm with the purple grid laid over it, its arrows and symbols, and the Zoombinis waiting at lower left.*
 > *Capture:* complete the Mirror Machine.
 
+![The squares and lines the sequence is set on.](../images/bubble-lines.png)
+
 > 📷 **Screenshot: `bubble-lines`**
-> *The squares and lines the sequence is set on.*
+> *The grid at a higher level: more squares carry arrows, swirls and symbols.*
 > *Capture:* at higher levels.
 
 | | |

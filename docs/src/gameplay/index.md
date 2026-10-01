@@ -63,6 +63,8 @@ Addresses are into `zoombi32.exe`; find the source with `grep -rn 0x41a506 decom
 
 Boxes like this one mark where an image of the running game belongs. Each has an id (`isle-queue`), a description, and a capture hint. See [Screenshots](../appendix/screenshots.md) for the full list, the capture workflow, and how to replace a placeholder with an image.
 
+![The map screen with all sixteen hotspots visible and the map's text box showing "choose a level".](../images/journey-overview.png)
+
 > 📷 **Screenshot: `journey-overview`**
 > *The map screen with all sixteen hotspots visible and the map's text box showing "choose a level".*
 > *Capture:* from the map (scene 1), in practice mode.
