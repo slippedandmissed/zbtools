@@ -90,6 +90,7 @@ def _wine_env(path: str = "") -> dict[str, str]:
     """Environment for Wine; path is added to the Windows PATH (WINEPATH)."""
     return {
         **os.environ,
+        **host.wine_locale(),
         "WINEPATH": path,
         "WINEPREFIX": str(paths.WINE_PREFIX),
         "WINEDEBUG": "-all",
@@ -126,8 +127,7 @@ def ensure_prefix() -> None:
     """Create the Wine prefix if needed, and map each installed release's
     drive and the repository's."""
     bin_dir = host.wine_bin_dir()
-    created = not (paths.WINE_PREFIX / "system.reg").exists()
-    if created:
+    if not (paths.WINE_PREFIX / "system.reg").exists():
         print("Creating the Wine prefix (first run only)")
         paths.WINE_PREFIX.mkdir(parents=True, exist_ok=True)
         subprocess.run(
@@ -146,12 +146,6 @@ def ensure_prefix() -> None:
         if not link.is_symlink() or link.resolve() != target.resolve():
             link.unlink(missing_ok=True)
             link.symlink_to(target, target_is_directory=True)
-    if created:
-        # A Wine server that outlived wineboot doesn't know the drives linked above, and
-        # TLINK32 (unlike BCC32) takes a path on an unknown drive for a relative one, so
-        # it can't find its libraries: restart the server so it reads them.
-        subprocess.run([str(bin_dir / "wineserver"), "-k"], env=_wine_env(), check=False)
-        subprocess.run([str(bin_dir / "wineserver"), "-w"], env=_wine_env(), check=False)
 
 
 def wine(
