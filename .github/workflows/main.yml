@@ -64,3 +64,19 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy build/port/site --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
+
+  # The handbook (docs/), built with mdBook into build/book/ (see docs/book.toml).
+  deploy-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install mdBook
+        run: |
+          curl -sSL https://github.com/rust-lang/mdBook/releases/download/v0.4.52/mdbook-v0.4.52-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          echo "$PWD" >> "$GITHUB_PATH"
+      - run: mdbook build docs
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/book --project-name=${{ vars.CLOUDFLARE_DOCS_PAGES_PROJECT }} --branch=main

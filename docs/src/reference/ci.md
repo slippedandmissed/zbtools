@@ -7,13 +7,14 @@ Workflows are in `.github/workflows/`.
 | Job | Does |
 | --- | --- |
 | `python` | `uv run lint`: ruff, ruff format, strict mypy, pytest (which includes the book's link and screenshot-index tests) |
-| `book` | builds this handbook with mdBook |
+| `book` | builds this handbook with `mdbook build docs`, so a broken chapter or `SUMMARY.md` fails the PR |
 | `wasm` | `uv run port setup` and `uv run port build web`: the decompiled game compiles for WebAssembly (needs only the source) |
 | `regressions` | `uv run extract-game`, `toolchain setup`, `match`, `match-data`: every recorded match still matches, and the data still matches. Needs the game CD and the Borland CD, so it runs on a **self-hosted runner** labelled `zbtools-data` |
 
 **`main.yml`** (pushes to `main`):
 
 - Deploys the port (`uv run port package`) to Cloudflare Pages with `wrangler-action`, on a GitHub runner (it needs only the repository). Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; variable `CLOUDFLARE_PAGES_PROJECT`.
+- Deploys this handbook (`mdbook build docs`, output `build/book/`) to a second Cloudflare Pages project, with the same two secrets and the variable `CLOUDFLARE_DOCS_PAGES_PROJECT`.
 - Runs `uv run report` on the self-hosted runner and uploads it as an artifact. The report contains the game's disassembly, so keep the repository private.
 
 ## The self-hosted runner
