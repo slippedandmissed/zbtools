@@ -1,0 +1,125 @@
+name: Package
+
+# Builds every target (see `uv run port --help`), on GitHub's runners: needs
+# only the repository, since the game's data is in assets/. Called by pr.yml,
+# which checks that everything builds, and by main.yml, which publishes it.
+#
+# Artifacts: zoombinis-<target> (the package for players: a .dmg, .zip or
+# .tar.gz) for each player target, and site-browser_wasm (the web page, as
+# `port package browser_wasm` writes it). headless_wasm is only built: it is the
+# testing build, with nothing to ship.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  # The packages for players.
+  players:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS builds on a Mac (universal: Apple silicon and Intel).
+          - target: macos_universal
+            os: macos-14
+          # Windows is cross-compiled with llvm-mingw, Linux in a container.
+          - target: windows_x86
+            os: ubuntu-latest
+          - target: windows_x64
+            os: ubuntu-latest
+          - target: linux_x64
+            os: ubuntu-latest
+          # (arm64 runs under QEMU: slow, but hosted arm64 runners aren't
+          # available to private repositories. `ubuntu-24.04-arm` would be native.)
+          - target: linux_arm64
+            os: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - uses: actions/cache@v4
+        if: startsWith(matrix.target, 'windows_')
+        with:
+          path: build/llvm-mingw
+          # The release is pinned in port.py.
+          key: llvm-mingw-${{ hashFiles('src/zbtools/port.py') }}
+      - uses: docker/setup-qemu-action@v3
+        if: matrix.target == 'linux_arm64'
+        with:
+          platforms: arm64
+      - run: uv run port package ${{ matrix.target }}
+      # The package itself starts and plays for a few seconds, with SDL's dummy
+      # video and audio (so it needs no screen): this is the "installed game"
+      # mode, which finds its data beside the program. (Windows would need Wine,
+      # and arm64 is emulated.)
+      - name: Smoke test
+        if: matrix.target == 'macos_universal' || matrix.target == 'linux_x64'
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+        run: |
+          directory=$(ls -d build/port/dist/zoombinis-*/ | head -n 1)
+          program="${directory}zoombinis"
+          if [ "${{ matrix.target }}" = macos_universal ]; then
+            program="${directory}Zoombinis.app/Contents/MacOS/zoombinis"
+          fi
+          "$program" --run-for 8000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zoombinis-${{ matrix.target }}
+          path: |
+            build/port/dist/*.dmg
+            build/port/dist/*.zip
+            build/port/dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+  # The web page, ready to host.
+  browser:
+    name: browser_wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - uses: actions/cache@v4
+        with:
+          path: build/emsdk
+          # The SDK version is pinned in port.py.
+          key: emsdk-${{ hashFiles('src/zbtools/port.py') }}
+      - run: uv run port setup browser_wasm
+      # Every file under Cloudflare Pages' 25 MiB limit.
+      - run: uv run port package browser_wasm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-browser_wasm
+          path: build/port/dist/browser_wasm/
+          if-no-files-found: error
+          retention-days: 14
+
+  # The testing build (under Node, no screen or sound): it must still compile.
+  headless:
+    name: headless_wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - uses: actions/cache@v4
+        with:
+          path: build/emsdk
+          key: emsdk-${{ hashFiles('src/zbtools/port.py') }}
+      - run: uv run port setup headless_wasm
+      - run: uv run port build headless_wasm

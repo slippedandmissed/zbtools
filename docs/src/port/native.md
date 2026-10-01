@@ -10,7 +10,7 @@ The program and a `game/` directory: `C/` (what the installer would have written
 
 `port package macos_universal` (on a Mac: it needs Xcode) makes `Zoombinis.app` (the program in `Contents/MacOS/`, `game/` in `Contents/Resources/`, an icon made from the program's own, `Info.plist`), signs it ad hoc (Apple silicon won't run an unsigned program) and puts it in a `.dmg`. The program is universal (`arm64;x86_64`, macOS 11 or later), so SDL2 is built from the pinned release rather than taken from Homebrew, whose copy is for one architecture (`-DZB_SYSTEM_SDL=ON` takes the system's). It is not notarised (that needs an Apple developer account): the first run needs Control-click, Open.
 
-The `native` workflow builds and uploads the `.dmg` on every pull request.
+CI builds every target on each pull request, and releases the packages on each push to `main` ([CI](../reference/ci.md)).
 
 **Status.** Run on a Mac (Apple silicon) through the game. Float-to-integer conversions saturate on arm64 where x86 gives `0x80000000`, which the decompiled code might rely on somewhere not yet reached; the fibers (`port/host/posix.cpp`) use `ucontext`, which macOS deprecates but provides.
 

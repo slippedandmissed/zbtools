@@ -41,28 +41,55 @@ jobs:
           path: build/report/
           retention-days: 14
 
+  # Every target, built once (package.yml): the web page is deployed and the
+  # packages for players are released from its artifacts.
+  package:
+    uses: ./.github/workflows/package.yml
+
   deploy:
+    needs: package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/download-artifact@v4
         with:
-          enable-cache: true
-      - run: uv sync --locked
-      - uses: actions/cache@v4
-        with:
-          path: build/emsdk
-          # The SDK version is pinned in port.py.
-          key: emsdk-${{ hashFiles('src/zbtools/port.py') }}
-      - run: uv run port setup browser_wasm
-      # build/port/dist/browser_wasm/: the page and the game's data, every file under
-      # Cloudflare Pages' 25 MiB limit.
-      - run: uv run port package browser_wasm
+          name: site-browser_wasm
+          path: site
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build/port/dist/browser_wasm --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
+          command: pages deploy site --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
+
+  # A release with a package for every player target (macOS, Windows x86 and x64,
+  # Linux x64 and arm64), numbered by this workflow's run. The web page and the
+  # headless build are not released: one is deployed above, the other is for testing.
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: pyproject.toml
+          sparse-checkout-cone-mode: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: zoombinis-*
+          merge-multiple: true
+          path: packages
+      - name: Create the release
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -n 1)
+          tag="v${version}-build.${GITHUB_RUN_NUMBER}"
+          ls -l packages
+          gh release create "$tag" packages/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Build ${GITHUB_RUN_NUMBER} (${GITHUB_SHA::7})" \
+            --generate-notes
 
   # The handbook (docs/), built with mdBook into build/book/ (see docs/book.toml).
   deploy-docs:
