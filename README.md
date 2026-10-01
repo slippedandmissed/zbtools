@@ -14,7 +14,7 @@ A nostalgic game from my childhood, and my latest attempt at getting it decompil
 
 The target is the 1996 Windows release by Broderbund. The disc ships two builds of the game; this project targets the **32-bit Windows 95 build** (`zoombi32.exe`, a PE32 executable built with Borland C++ 4.5). Its assets are Mohawk archives, the container format of Myst and Living Books.
 
-- **Play it:** the decompiled game runs in your browser as WebAssembly at **[zoombinis.online](https://zoombinis.online)**. It starts, reaches Zoombini Isle and plays its music, sound effects and intro movie. It is an unofficial fan project, not affiliated with the game's creators or publishers.
+- **Play it:** the decompiled game runs in your browser as WebAssembly at **[zoombinis.online](https://zoombinis.online)**. It starts, plays its music, sound effects and intro movie, and the first few levels are fully playable. It isn't fully tested yet, so you may encounter bugs further in. It is an unofficial fan project, not affiliated with the game's creators or publishers.
 - **Read about it:** the **[handbook](https://docs.zoombinis.online)** explains how everything works: the tools, the file formats, the decompiled code and engine, the port, and a walk through the game that links each screen and puzzle to the code behind it. Its source is in [`docs/`](docs/src/introduction.md).
 
 ## Status
@@ -23,7 +23,7 @@ Every function in `zoombi32.exe`'s game code and Mohawk engine (about 2,100) is 
 
 The game's resources are in `assets/`, converted to modern formats (about 10,000 images as PNG, 1,333 sounds as WAV, the music as MIDI, scripts and tables as TOML, the intro movie as sprites and a WAV), and `uv run assets pack` rebuilds archives identical, byte for byte, to the disc's.
 
-The decompiled code links, with the original's linker, into a `zoombi32.exe` that starts in an emulated Windows 98 and runs as far as Zoombini Isle, and compiles unchanged for WebAssembly over *miniwin*, a Win32 subset on SDL2.
+The decompiled code links, with the original's linker, into a `zoombi32.exe` that starts in an emulated Windows 98 and runs as far as Zoombini Isle, and compiles unchanged for WebAssembly over *miniwin*, a Win32 subset on SDL2. The web port is playable through at least the first few levels; the rest hasn't been fully tested yet.
 
 ## Quick start
 
