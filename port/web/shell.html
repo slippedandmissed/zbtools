@@ -15,9 +15,13 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg-deep); color: var(--fg);
-               font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+               font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: auto; }
+  /* The canvas's size is set by the script below (--w, --h) so that browser zoom
+     scales it; this fallback fills the viewport. When zoomed in past the window it
+     overflows and the page scrolls. */
   #canvas { position: absolute; inset: 0; margin: auto; display: block;
-            width: min(100vw, calc(100vh * 4 / 3)); height: min(100vh, calc(100vw * 3 / 4));
+            width: var(--w, min(100vw, calc(100vh * 4 / 3)));
+            height: var(--h, min(100vh, calc(100vw * 3 / 4)));
             image-rendering: pixelated; outline: none; cursor: none; }
   #overlay { position: absolute; inset: 0; overflow-y: auto; display: flex;
              padding: 24px 16px;
@@ -92,6 +96,22 @@
     if (zbLog.length > 5000)
       zbLog.splice(0, 1000);
   }
+  // Size the canvas to fill the window at 4:3, but in a unit that browser zoom
+  // doesn't change: innerWidth * devicePixelRatio is the window's size in device
+  // pixels whatever the zoom. Dividing by the ratio at load (rather than the
+  // current one) makes the CSS size constant, so zooming in enlarges the game
+  // (scrolling when it outgrows the window) and zooming out shrinks it.
+  var baseRatio = window.devicePixelRatio || 1;
+  function fitCanvas() {
+    var ratio = window.devicePixelRatio || 1;
+    var w = window.innerWidth * ratio, h = window.innerHeight * ratio;
+    var fitW = Math.min(w, h * 4 / 3);
+    var style = document.documentElement.style;
+    style.setProperty('--w', (fitW / baseRatio) + 'px');
+    style.setProperty('--h', (fitW * 3 / 4 / baseRatio) + 'px');
+  }
+  fitCanvas();
+  window.addEventListener('resize', fitCanvas);
   var overlay = document.getElementById('overlay');
   var statusLine = document.getElementById('status');
   var startButton = document.getElementById('start');
