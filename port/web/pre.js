@@ -20,10 +20,10 @@ if (typeof location !== 'undefined')
     Module.arguments.push('--cmd', cmd);
   });
 window.zbDebug = function (commands) {
-  if (Module.ccall && Module._zbDebugRun)
-    Module.ccall('zbDebugRun', null, ['string'], [commands]);
-  else
-    console.warn('zbDebug: this build has no debug tools (or the game has not started)');
+  // Queued here, not passed to the program: the game collects it on its next
+  // frame (a call into the program while it sleeps would not be safe).
+  (Module.zbDebugQueue = Module.zbDebugQueue || []).push(String(commands));
+  return 'queued';
 };
 Module.preRun = Module.preRun || [];
 Module.preRun.push(function () {

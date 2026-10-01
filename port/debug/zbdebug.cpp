@@ -6,9 +6,11 @@
  *
  * Commands are separated by ';' or newlines; `#` starts a comment. They come
  * from the command line (--cmd, --script), the URL (?cmd=) and the page's
- * console (zbDebug("...")) through zbDebugRun. A command runs when the game is
- * at rest (active, no dialog, no scene change pending); one that changes the
- * scene holds up the ones after it until the scene has opened.
+ * console (zbDebug("..."), which only queues the text in JavaScript: zbDebugFrame
+ * collects it, so nothing calls into the program while Asyncify has it
+ * suspended). A command runs when the game is at rest (active, no dialog, no
+ * scene change pending); one that changes the scene holds up the ones after it
+ * until the scene has opened.
  *
  * This is port code, not decompiled code: it uses the game's globals and
  * functions as the decompilation declares them, and nothing here is part of
@@ -28,9 +30,21 @@
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
-#define ZB_EXPORT extern "C" EMSCRIPTEN_KEEPALIVE
-#else
-#define ZB_EXPORT extern "C"
+
+/* The next text the page's zbDebug() queued (web/pre.js), copied to buffer: 0 if none. */
+EM_JS_DEPS(zbDebugDeps, "$stringToUTF8,$lengthBytesUTF8");
+EM_JS(int, takePageCommands, (char *buffer, int size), {
+    var queue = Module.zbDebugQueue;
+    if (!queue || !queue.length)
+        return 0;
+    var text = queue.shift();
+    if (lengthBytesUTF8(text) + 1 > size) {
+        console.warn('zbDebug: too long, ignored');
+        return 0;
+    }
+    stringToUTF8(text, buffer, size);
+    return 1;
+});
 #endif
 
 namespace {
@@ -40,6 +54,8 @@ DWORD waitUntil;
 bool waitingForTime;
 short waitingForScene = -2; /* -2: not waiting */
 short assertionsFailed;
+long debugPartyCount = -1; /* the last `party N`: -1 if none */
+bool sceneChanged; /* a command changed the scene this pass */
 
 std::vector<std::string> words(const std::string &line)
 {
@@ -157,6 +173,23 @@ void makeParty(long n)
     }
 }
 
+/* Leaves the current scene as the game does (each scene closes itself before it
+   sets pendingScene: enterNextScene only opens the next, so without this the
+   old scene's views, sounds and resources stay), makes the party again (a
+   scene's closing can empty it), then opens scene N. */
+void changeScene(short scene, bool viaMap)
+{
+    if (currentScene != -1 && scenes[currentScene]->close)
+        scenes[currentScene]->close();
+    if (debugPartyCount >= 0)
+        makeParty(debugPartyCount);
+    skipJourneyMap = !viaMap;
+    pendingScene = scene;
+    waitingForScene = scene;
+    enterNextScene();
+    sceneChanged = true;
+}
+
 void fillRecords(long count)
 {
     for (long i = 0; i < 16; i++) {
@@ -206,15 +239,14 @@ void run(const std::string &line)
         debugMessagesOn = w[1] == "on";
         debugMode = debugMessagesOn;
     } else if (command == "scene" && n >= 2 && number(w[1], &a) && a >= 0 && a <= 21) {
-        skipJourneyMap = !(n >= 3 && w[2] == "map");
-        pendingScene = (short)a;
-        waitingForScene = (short)a;
+        changeScene((short)a, n >= 3 && w[2] == "map");
     } else if (command == "level" && n == 3 && number(w[1], &a) && number(w[2], &b) && a >= 1 && a <= 4
                && b >= 1 && b <= 4) {
         puzzleLevels()[a] = (short)(b - 1);
     } else if (command == "practice" && n == 2 && number(w[1], &a) && a >= 0 && a <= 4) {
         practiceLevel = (short)a;
     } else if (command == "party" && n == 2 && number(w[1], &a)) {
+        debugPartyCount = a < 0 ? 0 : a > 16 ? 16 : a;
         makeParty(a);
     } else if (command == "unlock" && n == 1) {
         gameState[0x50] |= 0xf;
@@ -275,7 +307,7 @@ void run(const std::string &line)
 } /* namespace */
 
 /* Queues commands (separated by ';' or newlines) to run as the game gets to them. */
-ZB_EXPORT void zbDebugRun(const char *text)
+extern "C" void zbDebugRun(const char *text)
 {
     std::string line;
 
@@ -297,8 +329,15 @@ ZB_EXPORT void zbDebugRun(const char *text)
 /* Called at the start of every pass of the game's frame hook. */
 void zbDebugFrame()
 {
+#ifdef __EMSCRIPTEN__
+    static char text[65536];
+
+    while (takePageCommands(text, sizeof text))
+        zbDebugRun(text);
+#endif
     if (pending.empty())
         return;
+    sceneChanged = false;
     for (;;) {
         if (!gameActive || dialogFlags || currentScene == -1 || pendingScene != -1)
             return;
@@ -312,8 +351,8 @@ void zbDebugFrame()
                 return;
             waitingForScene = -2;
         }
-        if (pending.empty())
-            return;
+        if (pending.empty() || sceneChanged)
+            return; /* (a new scene gets a pass of its own before the next command) */
         std::string line = pending.front();
         pending.pop_front();
         run(line);
