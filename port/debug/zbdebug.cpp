@@ -267,6 +267,23 @@ bool zoombiniStands(long n, long *standX, long *standY)
     return true;
 }
 
+/* Whether a command may run while a game dialog is open (the options, the saved games, "keep the
+   party?"): those that look, wait or send input, which is how a dialog is operated. The others
+   (changing the scene or the state) wait for it to close. */
+bool worksInDialog(const std::string &line)
+{
+    std::vector<std::string> w = words(line);
+
+    if (w.empty())
+        return true;
+    static const char *const verbs[] = {"screenshot", "get", "assert", "dump", "help", "quit", "wait",
+                                         "click", "key", "zoombinis", "places", "monuments", "toads"};
+    for (const char *verb : verbs)
+        if (w[0] == verb)
+            return !(w[0] == "click" && w.size() >= 2 && w[1] == "zoombini");
+    return false;
+}
+
 /* Puts commands at the front of the queue, to run next. */
 void runNext(const std::vector<std::string> &commands)
 {
@@ -729,7 +746,9 @@ void zbDebugFrame()
         return;
     sceneChanged = false;
     for (;;) {
-        if (busy || !gameActive || dialogFlags || currentScene == -1 || pendingScene != -1)
+        if (busy || !gameActive || currentScene == -1 || pendingScene != -1)
+            return;
+        if (dialogFlags && !pending.empty() && !worksInDialog(pending.front()))
             return;
         if (waitingForTime) {
             if ((LONG)(GetTickCount() - waitUntil) < 0)

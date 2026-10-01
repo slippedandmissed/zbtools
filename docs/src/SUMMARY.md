@@ -85,6 +85,7 @@
 - [Native builds](port/native.md)
 - [Debugging the port](port/debugging.md)
 - [Debug tools](port/debug-tools.md)
+- [Visual tests](port/visual-tests.md)
 - [Quirks](port/quirks.md)
 
 # Appendix
