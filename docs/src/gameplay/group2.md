@@ -71,6 +71,7 @@ The module is 46 KB, the biggest puzzle (its boundary with `hotel` is found from
 | `dragLillyPiece` | `0x42d9c5` | dragging a square |
 | `addLillyActors`, `lillyNotify30/44/49/54/60/70`, `hopperNotify`, `hopNotify` | `0x42b857`, `0x42f49d` | the hoppers and their script events |
 | `checkLillyArrivals` | `0x42e6b5` | have they got across |
+| `lillyFrame`'s jumper queues | `0x428d84` | a toad that has crossed goes back in stages: `jumperQueue` (script 10057, `lillyNotify44`, event 44 → `event44Views`), then script 10060/10061 (`lillyNotify60`, event 60 → `event60Views`), then script 10058 (`lillyNotify49`, event 49 → `landedJumper`) to its place on the near bank (`jumpPlaces`); `jumperBusy` guards the first two stages and `jumper2Busy` the last. The frame once waited for `jumperBusy` to start the second, which only its own event 60 clears: the toads then stayed on the far bank and the party could not be got across |
 
 ## Stone Rise (scene 12)
 

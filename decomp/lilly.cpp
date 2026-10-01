@@ -3408,7 +3408,12 @@ void lillyFrame()
                 setViewScript(view, parts[20] + 10043, 1);
             }
         }
-        while (event44Count > 0 && !jumperBusy) {
+        /* (A toad that has crossed is started on its way back in three stages. Waiting here for
+           jumperBusy, as this once did, never ended: jumperBusy is set from the first stage and
+           cleared only by the third's event 60 (lillyNotify60), which this loop starts, so the
+           toad stayed on the far bank. jumper2Busy, which the register allocation of the original
+           also points to, gates the stage this starts.) */
+        while (event44Count > 0 && !jumper2Busy) {
             view = findView(event44Views[--event44Count]);
             if (view) {
                 actor = (LillyActor *)&view->body;
