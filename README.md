@@ -365,10 +365,10 @@ Paths are relative to the disc root (`build/disc/` after extraction).
 - [x] Define the game's globals with their initial values, and check them, and the code's references to them, against the original (`uv run define-data`, `uv run match-data`)
 - [x] Link the decompiled code and its resources (the icon) with TLINK32 into a `zoombi32.exe` that runs in the VM (`uv run build`, `uv run vm run --exe`)
 - [ ] Play the rebuilt game through in the VM, fixing what differs from the original
-- [x] Reverse-engineer Broderbund's `QkBk` video codec, and convert the movies to a modern format and back, exactly (`uv run assets`; plan: [`docs/movies.md`](docs/movies.md))
+- [x] Reverse-engineer Broderbund's `QkBk` video codec, and convert the movies to a modern format and back, exactly (`uv run assets`, `uv run movie-check`)
 - [x] Replace the QuickTime stand-in with working glue, so the rebuilt game plays its intro movie in the VM (the packed movie is byte for byte the disc's, which the VM's game reads from its CD)
 - [x] Play the intro movie in the port, from its modern format (`port/glue/quicktime.cpp`, replacing the QuickTime glue)
-- [ ] Port to a modern platform layer
+- [x] Port to a modern platform layer: SDL2 and a Win32 subset, running the decompiled game as WebAssembly, natively and headless, with the intro movie, sound and music (`uv run port`)
 
 ## Legal
 
