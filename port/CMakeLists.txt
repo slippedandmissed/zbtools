@@ -97,6 +97,19 @@ target_compile_options(game PRIVATE
     -fsigned-char -fno-exceptions -fno-rtti -fno-strict-aliasing -fwrapv
     -w -Wno-register -Wno-c++11-narrowing)
 
+# ZB_DEBUG: the debug tooling (port/debug/: text commands to jump to a scene,
+# set levels, fill the party, edit the saved state; see the handbook). The
+# hook in decomp/game.cpp exists only when it's defined, so the matching
+# build never sees it.
+option(ZB_DEBUG "Build the debug tooling" ON)
+if(ZB_DEBUG)
+    set(DEBUG_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/debug/zbdebug.cpp")
+    # (-iquote: decomp/ has headers named like system ones, e.g. features.h.)
+    set_source_files_properties("${DEBUG_SOURCE}" PROPERTIES COMPILE_OPTIONS "-iquote;${REPO_ROOT}/decomp")
+    target_sources(game PRIVATE "${DEBUG_SOURCE}")
+    target_compile_definitions(game PRIVATE ZB_DEBUG)
+endif()
+
 # miniwin: the Win32 API over SDL2.
 file(GLOB MINIWIN_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/miniwin/*.cpp")
 add_library(miniwin STATIC ${MINIWIN_SOURCES})
@@ -123,6 +136,9 @@ target_link_libraries(host PRIVATE SDL2::SDL2)
 add_executable(zoombinis main.cpp $<TARGET_OBJECTS:game>)
 target_include_directories(zoombinis PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(zoombinis PRIVATE miniwin host SDL2::SDL2)
+if(ZB_DEBUG)
+    target_compile_definitions(zoombinis PRIVATE ZB_DEBUG)
+endif()
 
 # ZB_HEADLESS (Emscripten only): a build for Node, with no screen or sound,
 # reading the host's files directly: for testing and debugging in a terminal.
@@ -135,6 +151,9 @@ if(EMSCRIPTEN AND ZB_HEADLESS)
         -sSTACK_SIZE=1048576 -sINITIAL_MEMORY=134217728 -sALLOW_MEMORY_GROWTH
         -sENVIRONMENT=node -sNODERAWFS -sEXIT_RUNTIME=1)
 elseif(EMSCRIPTEN)
+    if(ZB_DEBUG)
+        target_link_options(zoombinis PRIVATE "-sEXPORTED_FUNCTIONS=_main,_zbDebugRun")
+    endif()
     # Asyncify lets the game's blocking loops (and its fibers) give the
     # browser its turn: see host/emscripten.cpp.
     set_target_properties(zoombinis PROPERTIES SUFFIX ".html")
@@ -142,7 +161,7 @@ elseif(EMSCRIPTEN)
         -sASYNCIFY -sASYNCIFY_STACK_SIZE=262144
         -sSTACK_SIZE=1048576 -sINITIAL_MEMORY=134217728 -sALLOW_MEMORY_GROWTH
         -sFORCE_FILESYSTEM -lidbfs.js
-        -sEXPORTED_RUNTIME_METHODS=FS,IDBFS,addRunDependency,removeRunDependency
+        -sEXPORTED_RUNTIME_METHODS=FS,IDBFS,addRunDependency,removeRunDependency,ccall
         -sEXIT_RUNTIME=1
         --shell-file "${CMAKE_CURRENT_SOURCE_DIR}/web/shell.html"
         --pre-js "${CMAKE_CURRENT_SOURCE_DIR}/web/pre.js")

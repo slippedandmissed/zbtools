@@ -131,8 +131,10 @@ def _tool(name: str) -> str:
     return found
 
 
-def build(target: str, build_type: str = "RelWithDebInfo") -> Path:
-    """Configures (the first time) and builds the target; the program."""
+def build(target: str, build_type: str = "RelWithDebInfo", debug_tools: bool = True) -> Path:
+    """Configures (the first time, or when the build type or the debug tools
+    change) and builds the target; the program. `debug_tools` builds
+    port/debug/ in (CMake's ZB_DEBUG); the published site is built without."""
     out = build_dir(target)
     env = dict(os.environ)
     configure = [
@@ -145,6 +147,7 @@ def build(target: str, build_type: str = "RelWithDebInfo") -> Path:
         "Ninja",
         f"-DCMAKE_MAKE_PROGRAM={_tool('ninja')}",
         f"-DCMAKE_BUILD_TYPE={build_type}",
+        f"-DZB_DEBUG={'ON' if debug_tools else 'OFF'}",
     ]
     if target in ("web", "headless"):
         setup_emsdk()
@@ -152,20 +155,29 @@ def build(target: str, build_type: str = "RelWithDebInfo") -> Path:
         toolchain = _emscripten_dir() / "cmake" / "Modules" / "Platform" / "Emscripten.cmake"
         configure.append(f"-DCMAKE_TOOLCHAIN_FILE={toolchain}")
         configure.append(f"-DZB_HEADLESS={'ON' if target == 'headless' else 'OFF'}")
-    if not (out / "build.ninja").exists() or _build_type(out) != build_type:
+    if (
+        not (out / "build.ninja").exists()
+        or _build_type(out) != build_type
+        or _cache_value(out, "ZB_DEBUG") != ("ON" if debug_tools else "OFF")
+    ):
         subprocess.run(configure, check=True, env=env)
     subprocess.run([_tool("cmake"), "--build", str(out)], check=True, env=env)
     return out / {"web": WEB_PAGE, "headless": "zoombinis.js"}.get(target, "zoombinis")
 
 
-def _build_type(out: Path) -> str | None:
+def _cache_value(out: Path, name: str) -> str | None:
+    """A variable's value in the build directory's CMake cache."""
     cache = out / "CMakeCache.txt"
     if not cache.exists():
         return None
     for line in cache.read_text().splitlines():
-        if line.startswith("CMAKE_BUILD_TYPE:"):
+        if line.startswith(f"{name}:"):
             return line.split("=", 1)[1]
     return None
+
+
+def _build_type(out: Path) -> str | None:
+    return _cache_value(out, "CMAKE_BUILD_TYPE")
 
 
 def lay_out_drives(
@@ -295,7 +307,7 @@ def _page_files(c: Path, data: Path, soundfont: Path) -> list[tuple[Path, str, i
     return [(f, target, f.stat().st_size) for f, target in found if f.is_file()]
 
 
-def package_web() -> Path:
+def package_web(debug_tools: bool = False) -> Path:
     """Builds the web page and packs the game for it into build/port/site/,
     holding only what a web server needs, each file under SITE_FILE_LIMIT:
     the page (index.html, zoombinis.js, .wasm), its icon (favicon.ico and
@@ -303,9 +315,10 @@ def package_web() -> Path:
     drives and the SoundFont), and the page's file system in
     zoombinis-data-<n>.data packages, loaded by zoombinis-data.js. D:'s
     archives are packed from assets/, and the intro movie as a scene file
-    (formats/scene.py; the .MOV files are left out: the port can't play QkBk)."""
+    (formats/scene.py; the .MOV files are left out: the port can't play QkBk).
+    The debug tools are left out unless `debug_tools` (a development site)."""
     web = build_dir("web")
-    build("web", _build_type(web) or "RelWithDebInfo")
+    build("web", _build_type(web) or "RelWithDebInfo", debug_tools)
     for line in assets.pack_all(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
         print(line)
     for line in pack_scenes(paths.ASSETS_DIR, paths.PACKED_ASSETS_DIR):
@@ -401,23 +414,30 @@ def setup(force: Annotated[bool, typer.Option(help="Reinstall")] = False) -> Non
 def build_command(
     target: Annotated[str, typer.Argument(help="web or native")] = "web",
     debug: Annotated[bool, typer.Option(help="Build without optimisation")] = False,
+    debug_tools: Annotated[
+        bool, typer.Option(help="Build the debug tools in (port/debug/)")
+    ] = True,
 ) -> None:
     """Build the port for a target."""
     if target not in TARGETS:
         raise typer.BadParameter(f"the targets are {', '.join(TARGETS)}")
     try:
-        program = build(target, "Debug" if debug else "RelWithDebInfo")
+        program = build(target, "Debug" if debug else "RelWithDebInfo", debug_tools)
     except (PortError, subprocess.CalledProcessError) as e:
         _fail(e)
     print(f"Built {program.relative_to(paths.REPO_ROOT)}")
 
 
 @app.command()
-def package() -> None:
+def package(
+    debug_tools: Annotated[
+        bool, typer.Option(help="Build the debug tools in (a development site)")
+    ] = False,
+) -> None:
     """Build the web page and pack the game for it into build/port/site/:
     everything a web server needs, and nothing else."""
     try:
-        out = package_web()
+        out = package_web(debug_tools)
     except (PortError, subprocess.CalledProcessError) as e:
         _fail(e)
     print(f"The site is in {out.relative_to(paths.REPO_ROOT)}")
@@ -439,7 +459,7 @@ def serve(
 
 
 @app.command()
-def run(
+def run(  # noqa: PLR0917 (a CLI's options)
     headless: Annotated[
         bool, typer.Option(help="Run the headless build under Node (for testing)")
     ] = False,
@@ -456,6 +476,13 @@ def run(
     ] = None,
     record: Annotated[
         Path | None, typer.Option(help="Write what's played to this WAV file")
+    ] = None,
+    cmd: Annotated[
+        list[str] | None,
+        typer.Option(help="Debug commands to run (repeatable; ';' separates; see `help`)"),
+    ] = None,
+    script: Annotated[
+        Path | None, typer.Option(help="A file of debug commands, one per line")
     ] = None,
 ) -> None:
     """Run the native build (or the headless one) on the game's drives (packed from
@@ -484,6 +511,10 @@ def run(
         arguments += ["--run-for", str(int(seconds * 1000))]
     for spec in click or []:
         arguments += ["--click", spec]
+    for commands in cmd or []:
+        arguments += ["--cmd", commands]
+    if script:
+        arguments += ["--script", str(script.resolve())]
     if headless:
         node = sorted((paths.EMSDK_DIR / "node").glob("*/bin/node"))
         command = [str(node[-1]), str(program), *arguments]

@@ -6,6 +6,7 @@
  *             [--program <Windows path of the program>] [--screenshot <file.bmp>]
  *             [--run-for <milliseconds>] [--click <ms>:<x>,<y>[:press|move|release]]...
  *             [--soundfont <file.sf2>] [--record <file.wav>]
+ *             [--cmd <debug commands>]... [--script <file>]   (ZB_DEBUG builds)
  *             [-- <game command line>]
  *
  * C: holds the installed game (and what it saves), D: the CD; `uv run port`
@@ -16,7 +17,7 @@
  * tests; with :press, :move or :release it only presses the button, moves the
  * pointer or releases the button, to script a drag). --soundfont is the General MIDI SoundFont the music plays with
  * (without one, it's silent); --record writes what's played to a WAV file
- * (for tests).
+ * (for tests). --cmd and --script queue the debug tooling's commands (port/debug/).
  */
 
 #include <stdio.h>
@@ -29,6 +30,10 @@
 #include "miniwin/internal.h"
 
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR commandLine, int showCommand);
+
+#ifdef ZB_DEBUG
+extern "C" void zbDebugRun(const char *commands); /* port/debug/zbdebug.cpp */
+#endif
 
 static void usage()
 {
@@ -97,6 +102,24 @@ int main(int argc, char **argv)
             soundFont = argv[++i];
         else if (!strcmp(argv[i], "--record") && i + 1 < argc)
             miniwin::setRecordPath(argv[++i]);
+#ifdef ZB_DEBUG
+        else if (!strcmp(argv[i], "--cmd") && i + 1 < argc)
+            zbDebugRun(argv[++i]);
+        else if (!strcmp(argv[i], "--script") && i + 1 < argc) {
+            FILE *file = fopen(argv[++i], "rb");
+            if (!file) {
+                fprintf(stderr, "cannot read %s\n", argv[i]);
+                return 2;
+            }
+            std::string text;
+            char buffer[4096];
+            size_t got;
+            while ((got = fread(buffer, 1, sizeof buffer, file)) > 0)
+                text.append(buffer, got);
+            fclose(file);
+            zbDebugRun(text.c_str());
+        }
+#endif
         else if (!strcmp(argv[i], "--program") && i + 1 < argc)
             miniwin::setProgramPath(argv[++i]);
         else if (!strcmp(argv[i], "--")) {

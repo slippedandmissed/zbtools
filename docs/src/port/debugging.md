@@ -18,6 +18,8 @@ uv run port run --headless --seconds 20 --record build/port/audio.wav
 
 The `zoombinis` executable itself takes `--drive C=<dir>`, `--cdrom D=<dir>[,label[,serial]]`, `--program <Windows path>` and `-- <game command line>` (for example `-- d` for the game's debug switch). `uv run port run` fills these in.
 
+To get into a state quickly (a scene, a level, a party), the build includes [debug tools](debug-tools.md): `--cmd "scene 9; party 8"`, `--script`, `?cmd=` in the URL.
+
 ## What to look at when something is wrong
 
 - **The console** prints what miniwin doesn't support (`unsupported`, once each), no-display notices, and the game's own error messages (`showError`). In a browser they're in the developer console and `window.zbLog`.

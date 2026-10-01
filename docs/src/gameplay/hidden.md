@@ -9,11 +9,11 @@
 
 > 📷 **Screenshot: `hidden-catch`**
 > *The hidden catching game.*
-> *Capture:* on the map, type the cheat code that `isCheat(0x469110d3, 0x1e1c32f2)` tests for, then click hotspot 9.
+> *Capture:* on the map, type the cheat code that `isCheat(0x469110d3, 0x1e1c32f2)` tests for, then click hotspot 9 (or, in the port's [debug tools](../port/debug-tools.md), `scene 19`).
 
 > 📷 **Screenshot: `hidden-targets`**
 > *The hidden targets game.*
-> *Capture:* on the map, enter the code that `isCheat(0xc07a877d, 0xedfa7273)` tests for, then click hotspot 8.
+> *Capture:* on the map, enter the code that `isCheat(0xc07a877d, 0xedfa7273)` tests for, then click hotspot 8 (or `scene 20`).
 
 `mapClicked` sends hotspot 8 (Stone Rise) to scene 20 and hotspot 9 (Fleens) to scene 19 *when the matching cheat code has just been typed*. Cheat codes are not stored: `noteCheatKey` (`basecamp.cpp`) hashes the last keys typed into two words, and `isCheat(hash, code)` compares against constants, so the code words themselves appear nowhere in the decompilation.
 
