@@ -162,7 +162,11 @@ A puzzle is won by working out a hidden rule, which a recorded list of moves can
 | `ferry seat right\|wrong` | drags the next Zoombini of that seating to its place (they are seated in place order, as the game checks a drop against the occupied places it touches); `wrong` drags a waiting Zoombini to a free place beside one it shares no feature with, so it is sent back |
 | `ferry send right\|wrong [N]` | N times (once): waits until nothing is walking back or sailing (`ferryIdle`), then `ferry seat` |
 
-Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved); `ferrySeated` (Zoombinis seated on the ferry), `ferryIdle` (nothing walking back, sailing or arriving).
+| `toads match` | Titanic Tattooed Toads (scene 11): the toads that could cross from a free row now, and the rows (a toad with attribute *a* and value *v* crosses from a row whose first square has *v* at *a* and whose squares with *v* join up, up/right/down/left, to the far column) |
+| `toads place right\|dead\|wrong` | drags the next toad to a row it crosses from (`right`), to one whose first square fits but from which it can't cross (`dead`: it stays on the board for good), or to one it doesn't fit (`wrong`: it goes back) |
+| `toads send right [N]` | N times: waits until a toad that can cross is free (the toads come back for the next trip), then `toads place right` |
+
+Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved); `ferrySeated` (Zoombinis seated on the ferry), `ferryIdle` (nothing walking back, sailing or arriving); `toadsAvailable` (toads that could cross from a free row now), `toadsOnBoard` (toads set down and not yet back, hopping included).
 
 ```sh
 level 1 2; party 16; scene 7; wait 6000

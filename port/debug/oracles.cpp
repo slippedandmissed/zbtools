@@ -5,11 +5,13 @@
 #include "tunnels.h"
 #include "pizza.h"
 #include "ferry.h"
+#include "lilly.h"
 #include "snoids.h"
 #include "view.h"
 #include "oracles.h"
 
 #include <cstdio>
+#include <utility>
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -604,6 +606,190 @@ bool ferryCommand(const std::vector<std::string> &w, OracleResult *result)
     return true;
 }
 
+
+/* ---- Titanic Tattooed Toads (scene 11) ------------------------------------------------------------
+ *
+ * A toad (a piece, kind 0) with an attribute (1-3) and a value is dropped on a row of the lily-pad
+ * board whose first square has that value for that attribute; it then hops over squares with that value,
+ * square by square (up, right, down, left), to the far edge (the 12th column), carrying a Zoombini
+ * across. One that can't get across fails to. The right rows for the toads are a matching of toads
+ * to rows by such paths, as many as there are Zoombinis.
+ */
+
+bool toadsOpen_()
+{
+    return currentScene == 11;
+}
+
+struct ToadPiece
+{
+    View *view;
+    int x, y;
+    int attribute, value;
+};
+
+/* The toads still to be placed (kind 0, not on the board), as `toads` lists them. */
+std::vector<ToadPiece> toadPieces()
+{
+    std::vector<ToadPiece> found;
+
+    for (View *view = viewListEnd(1); view; view = view->next) {
+        const unsigned char *body = (const unsigned char *)&view->body;
+
+        if ((view->flags & 0x980002) != 0x980002 || *(const short *)(body + 0xc0) != 0 || body[0xc2])
+            continue;
+        ToadPiece piece;
+
+        piece.view = view;
+        piece.x = (view->body.bounds.left + view->body.bounds.right) / 2;
+        piece.y = (view->body.bounds.top + view->body.bounds.bottom) / 2;
+        piece.attribute = body[0xde];
+        piece.value = body[0xdf];
+        found.push_back(piece);
+    }
+    return found;
+}
+
+/* Whether a toad with the attribute and value, put on `row`, can hop to the far column: its first
+   square has the value and squares with it join up to column 11. */
+bool toadCanCross(int attribute, int value, int row)
+{
+    bool reached[12][12] = {};
+    std::vector<std::pair<int, int>> open;
+
+    if (attribute < 1 || attribute > 3 || lillyBoard[row][0].attributes[attribute] != value)
+        return false;
+    reached[row][0] = true;
+    open.push_back({row, 0});
+    for (size_t i = 0; i < open.size(); i++) {
+        int r = open[i].first, c = open[i].second;
+        const int step[4][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+
+        if (c == 11)
+            return true;
+        for (const auto &d : step) {
+            int nr = r + d[0], nc = c + d[1];
+
+            if (nr >= 0 && nr < 12 && nc >= 0 && nc < 12 && !reached[nr][nc]
+                && lillyBoard[nr][nc].attributes[attribute] == value) {
+                reached[nr][nc] = true;
+                open.push_back({nr, nc});
+            }
+        }
+    }
+    return false;
+}
+
+bool rowFree(int row)
+{
+    return !lillyBoard[row][0].attributes[0];
+}
+
+/* Augmenting-path matching of toads to rows: `rowOf[toad]` for the matched ones. */
+bool toadAugment(size_t toad, const std::vector<std::vector<int>> &rows, std::vector<int> &toadAtRow, std::vector<bool> &seen)
+{
+    for (int row : rows[toad]) {
+        if (seen[row])
+            continue;
+        seen[row] = true;
+        if (toadAtRow[row] < 0 || toadAugment(toadAtRow[row], rows, toadAtRow, seen)) {
+            toadAtRow[row] = (int)toad;
+            return true;
+        }
+    }
+    return false;
+}
+
+/* The most toads that can be put on distinct free rows from which they cross (`how` "right"), or
+   that fit the first square but can't cross ("dead"); as (toad index, row) pairs. */
+std::vector<std::pair<size_t, int>> toadMatching(const std::vector<ToadPiece> &pieces, bool crossing)
+{
+    std::vector<std::vector<int>> rows(pieces.size());
+    std::vector<int> toadAtRow(12, -1);
+    std::vector<std::pair<size_t, int>> pairs;
+
+    for (size_t t = 0; t < pieces.size(); t++)
+        for (int row = 0; row < 12; row++)
+            if (rowFree(row) && lillyBoard[row][0].attributes[pieces[t].attribute] == pieces[t].value
+                && toadCanCross(pieces[t].attribute, pieces[t].value, row) == crossing)
+                rows[t].push_back(row);
+    for (size_t t = 0; t < pieces.size(); t++) {
+        std::vector<bool> seen(12, false);
+
+        toadAugment(t, rows, toadAtRow, seen);
+    }
+    for (int row = 0; row < 12; row++)
+        if (toadAtRow[row] >= 0)
+            pairs.push_back({(size_t)toadAtRow[row], row});
+    return pairs;
+}
+
+std::string toadDrag(const ToadPiece &piece, int row)
+{
+    const ShortRect &entry = rowEntryRects[row];
+
+    return "drag " + std::to_string(piece.x) + " " + std::to_string(piece.y) + " "
+           + std::to_string((entry.left + entry.right) / 2) + " " + std::to_string((entry.top + entry.bottom) / 2);
+}
+
+bool toadsCommand(const std::vector<std::string> &w, OracleResult *result)
+{
+    if (!toadsOpen_()) {
+        result->error = "toads: Titanic Tattooed Toads (scene 11) isn't open";
+        return true;
+    }
+    std::vector<ToadPiece> pieces = toadPieces();
+
+    if (w.size() == 2 && w[1] == "match") {
+        /* `toads match`: the toads that can cross, and the rows they go to */
+        for (const auto &pair : toadMatching(pieces, true))
+            result->said.push_back("toad at " + std::to_string(pieces[pair.first].x) + "," + std::to_string(pieces[pair.first].y)
+                                   + " -> row " + std::to_string(pair.second));
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "place" && (w[2] == "right" || w[2] == "dead" || w[2] == "wrong")) {
+        /* `toads place right|dead|wrong`: the next toad to a row it crosses from (`right`), one whose first
+           square fits but can't cross (`dead`), or one it doesn't fit at all (`wrong`: it goes back) */
+        if (w[2] == "wrong") {
+            for (const ToadPiece &piece : pieces)
+                for (int row = 0; row < 12; row++)
+                    if (rowFree(row) && lillyBoard[row][0].attributes[piece.attribute] != piece.value) {
+                        result->commands.push_back(toadDrag(piece, row));
+                        result->commands.push_back("wait 1200");
+                        result->said.push_back("toads: toad at " + std::to_string(piece.x) + "," + std::to_string(piece.y)
+                                               + " to row " + std::to_string(row) + " (wrong)");
+                        return true;
+                    }
+            result->error = "toads place wrong: no toad misfits a free row";
+            return true;
+        }
+        std::vector<std::pair<size_t, int>> pairs = toadMatching(pieces, w[2] == "right");
+
+        if (pairs.empty()) {
+            result->error = "toads place " + w[2] + ": no such toad and row";
+            return true;
+        }
+        result->commands.push_back(toadDrag(pieces[pairs[0].first], pairs[0].second));
+        result->commands.push_back("wait 1200");
+        result->said.push_back("toads: toad at " + std::to_string(pieces[pairs[0].first].x) + ","
+                               + std::to_string(pieces[pairs[0].first].y) + " to row " + std::to_string(pairs[0].second)
+                               + " (" + w[2] + ")");
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "send" && w[2] == "right") {
+        /* `toads send right [N]`: N times, when a toad that can cross is free, it to its row */
+        int count = w.size() >= 4 ? atoi(w[3].c_str()) : 1;
+
+        for (int i = 0; i < count; i++) {
+            result->commands.push_back("wait until toadsAvailable > 0"); /* (the toads come back for the next trip) */
+            result->commands.push_back("toads place right");
+        }
+        return true;
+    }
+    result->error = "toads: expected `toads match`, `toads place right|dead|wrong` or `toads send right [N]`";
+    return true;
+}
+
 } /* namespace */
 
 bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
@@ -616,6 +802,8 @@ bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
         return pizzaCommand(w, result);
     if (!w.empty() && w[0] == "ferry")
         return ferryCommand(w, result);
+    if (!w.empty() && w[0] == "toads" && w.size() > 1)
+        return toadsCommand(w, result);
     return false;
 }
 
@@ -667,6 +855,23 @@ bool zbOracleValue(const std::string &name, long *value)
         for (View *view : zbDebugZoombiniViews())
             seated += viewSnoid(view)->chosen != 0 ? 1 : 0;
         *value = seated;
+        return true;
+    }
+    if (name == "toadsAvailable") {
+        *value = toadsOpen_() ? (long)toadMatching(toadPieces(), true).size() : 0; /* the toads that could cross from a free row now */
+        return true;
+    }
+    if (name == "toadsOnBoard") {
+        long onBoard = 0;
+
+        if (toadsOpen_())
+            for (View *view = viewListEnd(1); view; view = view->next) {
+                const unsigned char *body = (const unsigned char *)&view->body;
+
+                if ((view->flags & 0x980002) == 0x980002 && *(const short *)(body + 0xc0) == 0 && body[0xc2])
+                    onBoard++; /* the toads on the board: set down and hopping */
+            }
+        *value = onBoard;
         return true;
     }
     return false;

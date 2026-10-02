@@ -270,6 +270,34 @@ commands = "level 2 1; party 16; scene 10; wait 7000; click 618 458; wait 2500; 
 seconds = 170
 
 
+# --- Titanic Tattooed Toads, played with the `toads` oracle: it reads the lily-pad board and puts each toad on a row
+# from which it can hop to the far side. (The scene opens with `skipJourneyMap` set, as in the game: no journey to Stone Rise.)
+
+[toads-win-level-1]
+description = "Titanic Tattooed Toads at group 2's level 1: eight toads are put on rows they can cross from (as the toads come back for the next trip), all eight Zoombinis arrive, and the go button leaves for Stone Rise"
+commands = "level 2 1; party 8; scene 11; wait 7000; assert lillyLevel 1; toads send right 8; wait until padsPlaced == 8; wait until padsArrived == 8; wait 3000; assert lillyGoReady 1; click 618 458; wait scene 12; assert scene 12; assert zoombinis 8"
+seconds = 170
+seed = 7
+
+[toads-win-level-2]
+description = "Titanic Tattooed Toads at group 2's level 2: eight toads are put on rows they can cross from (as the toads come back for the next trip), all eight Zoombinis arrive, and the go button leaves for Stone Rise"
+commands = "level 2 2; party 8; scene 11; wait 7000; assert lillyLevel 2; toads send right 8; wait until padsPlaced == 8; wait until padsArrived == 8; wait 3000; assert lillyGoReady 1; click 618 458; wait scene 12; assert scene 12; assert zoombinis 8"
+seconds = 170
+seed = 7
+
+[toads-win-level-3]
+description = "Titanic Tattooed Toads at group 2's level 3: eight toads are put on rows they can cross from (as the toads come back for the next trip), all eight Zoombinis arrive, and the go button leaves for Stone Rise"
+commands = "level 2 3; party 8; scene 11; wait 7000; assert lillyLevel 3; toads send right 8; wait until padsPlaced == 8; wait until padsArrived == 8; wait 3000; assert lillyGoReady 1; click 618 458; wait scene 12; assert scene 12; assert zoombinis 8"
+seconds = 170
+# (seed 5: on some boards a toad's way across is blocked by the others and the wand is needed; this one is not)
+seed = 5
+
+[toads-dead-end-strands-one]
+description = "A toad put on a row whose squares don't lead across stays on the board for good (its Zoombini is stranded), but the other seven cross and the go button leaves with them"
+commands = "level 2 1; party 8; scene 11; wait 7000; toads place dead; wait 2000; assert padsPlaced 1; assert toadsOnBoard 1; toads send right 7; wait until padsPlaced == 8; wait until padsArrived == 7; wait until toadsOnBoard == 1; wait 2000; assert toadsOnBoard 1; assert padsArrived 7; click 618 458; wait scene 12; assert scene 12; assert zoombinis 7"
+seconds = 170
+seed = 7
+
 [pizza-wrong-pizza]
 description = "A pizza is served to the trolls: its topping is not what they want"
 commands = "party 8; scene 9; wait 8000; drag zoombini 0 place 1; wait 1500; click 60 197; wait 600; screenshot topping-picked; click 76 127; wait 8000; screenshot refused"
