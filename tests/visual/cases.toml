@@ -107,8 +107,8 @@ commands = "party 8; scene 16; wait 7000; drag zoombini 0 place 8; wait 1500; sc
 seed = 7
 
 [lion-right-stone]
-description = "A Zoombini is put on the stone the lion wants for it (the first right one: it cheers); the game must go on"
-commands = "party 8; scene 16; wait 7000; drag zoombini 0 place 13; wait 3000; assert cavesPlacedCount 1; assert droppedCave 13; assert assignedCave 13; assert scene 16; screenshot cheering; wait 3000; assert scene 16; screenshot after"
+description = "A Zoombini is put on the stone the lion wants for it (it hops, cheering, then stands); the game must go on"
+commands = "party 8; scene 16; wait 7000; drag zoombini 0 place 13; wait 800; screenshot cheering; wait 2200; assert cavesPlacedCount 1; assert droppedCave 13; assert assignedCave 13; assert scene 16; screenshot after"
 seed = 7
 
 [caves-door]
