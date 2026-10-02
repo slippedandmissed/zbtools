@@ -116,6 +116,124 @@ description = "Zoombinis are sent over both bridges of Allergic Cliffs: the clif
 commands = "party 8; scene 7; wait 6000; screenshot start; drag zoombini 0 place 1; wait 1500; drag zoombini 1 place 2; wait 1500; screenshot two-sent; drag zoombini 2 place 1; wait 1500; drag zoombini 3 place 2; wait 2800; screenshot sneeze; wait until crossingUnderway == 0; assert sentBackCount 2; screenshot after"
 seed = 7
 
+# --- Allergic Cliffs, played with the `cliffs` oracle (port/debug/oracles.cpp): it reads the cliff's rule from the game
+# and sends each Zoombini to the bridge where it is let across (or, deliberately, to the other).
+
+[cliffs-win-level-1]
+description = "Allergic Cliffs at group 1's level 1: all sixteen Zoombinis are sent over the right bridges, nobody is turned back, and the go button leaves for Stone Cold Caves with all of them"
+commands = "level 1 1; party 16; scene 7; wait 6000; assert bridgeLevel 0; cliffs send right 16; wait until cliffsAcross == 16; wait 3000; assert sentBackCount 0; assert cliffsWaiting 0; assert crossingUnderway 0; screenshot won; click 618 458; wait scene 2; assert journeyFrom 7; assert journeyTo 8; wait scene 8; assert scene 8; assert tunnelsLevel 0; assert zoombinis 16"
+seconds = 150
+# the Zoombinis settle and fidget on the far side
+tolerance = 0.05
+
+[cliffs-win-level-2]
+description = "Allergic Cliffs at group 1's level 2: all sixteen Zoombinis are sent over the right bridges, nobody is turned back, and the go button leaves for Stone Cold Caves with all of them"
+commands = "level 1 2; party 16; scene 7; wait 6000; assert bridgeLevel 1; cliffs send right 16; wait until cliffsAcross == 16; wait 3000; assert sentBackCount 0; assert cliffsWaiting 0; assert crossingUnderway 0; click 618 458; wait scene 2; assert journeyFrom 7; assert journeyTo 8; wait scene 8; assert scene 8; assert tunnelsLevel 1; assert zoombinis 16"
+seconds = 150
+
+[cliffs-win-level-3]
+description = "Allergic Cliffs at group 1's level 3: all sixteen Zoombinis are sent over the right bridges, nobody is turned back, and the go button leaves for Stone Cold Caves with all of them"
+commands = "level 1 3; party 16; scene 7; wait 6000; assert bridgeLevel 2; cliffs send right 16; wait until cliffsAcross == 16; wait 3000; assert sentBackCount 0; assert cliffsWaiting 0; assert crossingUnderway 0; click 618 458; wait scene 2; assert journeyFrom 7; assert journeyTo 8; wait scene 8; assert scene 8; assert tunnelsLevel 2; assert zoombinis 16"
+seconds = 150
+
+[cliffs-win-level-4]
+description = "Allergic Cliffs at group 1's level 4: all sixteen Zoombinis are sent over the right bridges, nobody is turned back, and the go button leaves for Stone Cold Caves with all of them"
+commands = "level 1 4; party 16; scene 7; wait 6000; assert bridgeLevel 3; cliffs send right 16; wait until cliffsAcross == 16; wait 3000; assert sentBackCount 0; assert cliffsWaiting 0; assert crossingUnderway 0; screenshot won; click 618 458; wait scene 2; assert journeyFrom 7; assert journeyTo 8; wait scene 8; assert scene 8; assert tunnelsLevel 3; assert zoombinis 16"
+seconds = 150
+# the Zoombinis settle and fidget on the far side
+tolerance = 0.05
+
+[cliffs-wrong-then-right]
+description = "A Zoombini sent to the wrong bridge sneezes and comes back (one counted), then the whole party crosses the right way"
+commands = "party 8; scene 7; wait 6000; cliffs send wrong 1; wait until sentBackCount == 1; wait until cliffsWaiting == 8; assert crossingUnderway 0; assert cliffsAcross 0; cliffs send right 8; wait until cliffsAcross == 8; wait 3000; assert sentBackCount 1; assert cliffsWaiting 0"
+seconds = 150
+
+[cliffs-six-sent-back]
+description = "After six are sent back the cliff takes no more: a drop does nothing, and with nobody across the go button stays dead (the party can only leave by the map button)"
+commands = "party 8; scene 7; wait 6000; cliffs send wrong 6; wait until sentBackCount == 6; wait until cliffsWaiting == 8; assert bridgeGoReady 0; drag zoombini 0 place 1; wait 3000; assert queuedCount 0; assert cliffsAcross 0; assert sentBackCount 6; click 618 458; wait 2500; assert scene 7"
+seconds = 150
+
+[cliffs-leave-with-one]
+description = "One Zoombini across and six sent back: the go button is live and leaves with the one that crossed"
+commands = "party 8; scene 7; wait 6000; cliffs send right 1; wait until cliffsAcross == 1; wait 2000; cliffs send wrong 6; wait until sentBackCount == 6; wait until cliffsWaiting == 7; click 618 458; wait scene 2; assert journeyFrom 7; wait scene 8; assert scene 8; assert zoombinis 1"
+seconds = 150
+
+
+# --- Stone Cold Caves, played with the `tunnels` oracle: it works out from the game which doors let a Zoombini in.
+
+[tunnels-win-level-1]
+description = "Stone Cold Caves at group 1's level 1: all 16 Zoombinis are sent to doors that let them in, no turn-back is used, and the go button leaves for Pizza Pass with all of them"
+commands = "level 1 1; party 16; scene 8; wait 7000; assert tunnelsLevel 0; assert turnBacksLeft 16; tunnels send right 16; wait until tunnelsIn == 16; wait 3000; assert turnBacksLeft 16; assert tunnelsWaiting 0; screenshot won; click 618 458; wait scene 2; assert journeyFrom 8; assert journeyTo 9; wait scene 9; assert scene 9; assert pizzaLevel 0; assert zoombinis 16"
+seconds = 170
+# the guards talk and the Zoombinis fidget
+tolerance = 0.05
+
+[tunnels-win-level-2]
+description = "Stone Cold Caves at group 1's level 2: all 8 Zoombinis are sent to doors that let them in, no turn-back is used, and the go button leaves for Pizza Pass with all of them"
+commands = "level 1 2; party 8; scene 8; wait 7000; assert tunnelsLevel 1; assert turnBacksLeft 18; tunnels send right 8; wait until tunnelsIn == 8; wait 3000; assert turnBacksLeft 18; assert tunnelsWaiting 0; click 618 458; wait scene 2; assert journeyFrom 8; assert journeyTo 9; wait scene 9; assert scene 9; assert pizzaLevel 1; assert zoombinis 8"
+seconds = 170
+
+[tunnels-win-level-3]
+description = "Stone Cold Caves at group 1's level 3: all 8 Zoombinis are sent to doors that let them in, no turn-back is used, and the go button leaves for Pizza Pass with all of them"
+commands = "level 1 3; party 8; scene 8; wait 7000; assert tunnelsLevel 2; assert turnBacksLeft 20; tunnels send right 8; wait until tunnelsIn == 8; wait 3000; assert turnBacksLeft 20; assert tunnelsWaiting 0; click 618 458; wait scene 2; assert journeyFrom 8; assert journeyTo 9; wait scene 9; assert scene 9; assert pizzaLevel 2; assert zoombinis 8"
+seconds = 170
+
+[tunnels-win-level-4]
+description = "Stone Cold Caves at group 1's level 4: all 16 Zoombinis are sent to doors that let them in, no turn-back is used, and the go button leaves for Pizza Pass with all of them"
+commands = "level 1 4; party 16; scene 8; wait 7000; assert tunnelsLevel 3; assert turnBacksLeft 22; tunnels send right 16; wait until tunnelsIn == 16; wait 3000; assert turnBacksLeft 22; assert tunnelsWaiting 0; click 618 458; wait scene 2; assert journeyFrom 8; assert journeyTo 9; wait scene 9; assert scene 9; assert pizzaLevel 3; assert zoombinis 16"
+seconds = 170
+
+[tunnels-wrong-then-right]
+description = "A Zoombini sent to a door that turns it back walks away and uses a turn-back, then the whole party is let in"
+commands = "level 1 1; party 8; scene 8; wait 7000; tunnels send wrong 1; wait until turnBacksLeft == 15; wait until tunnelsWaiting == 8; assert tunnelsIn 0; tunnels send right 8; wait until tunnelsIn == 8; wait 3000; assert turnBacksLeft 15; assert tunnelsWaiting 0"
+seconds = 170
+
+[tunnels-out-of-turn-backs]
+description = "Out of turn-backs (set to two for the test) the doors take no more drops, and with nobody let in the go button stays dead"
+commands = "level 1 1; party 8; scene 8; wait 7000; set turnBacksLeft 2; tunnels send wrong 2; wait until turnBacksLeft == 0; wait until closingRemarkDone == 1; assert tunnelsIn 0; assert tunnelsGoReady 0; drag zoombini 0 place 2; wait 3000; assert tunnelsIn 0; click 618 458; wait 3000; assert scene 8"
+seconds = 170
+
+[tunnels-leave-with-one]
+description = "One Zoombini let in, then the turn-backs run out (set to one for the test): the go button is live and leaves with the one that got in"
+commands = "level 1 1; party 8; scene 8; wait 7000; tunnels send right 1; wait until tunnelsIn == 1; wait 2000; set turnBacksLeft 1; tunnels send wrong 1; wait until turnBacksLeft == 0; wait until closingRemarkDone == 1; assert tunnelsIn 1; click 618 458; wait scene 2; assert journeyFrom 8; wait scene 9; assert scene 9; assert zoombinis 1"
+seconds = 170
+
+
+# --- Pizza Pass, played with the `pizza` oracle: it reads what each troll wants and builds the pizza that suits it.
+
+[pizza-win-level-1]
+description = "Pizza Pass at group 1's level 1: a pizza with exactly what each of the 1 troll wants is served, every troll is satisfied, and the go button leaves for Shelter Rock with all 16 Zoombinis"
+commands = "level 1 1; party 16; scene 9; wait 5000; assert pizzaLevel 0; assert pizzasLeft 6; pizza serve right 1; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; wait 2000; assert arnoState 3; click 620 460; wait scene 2; assert journeyFrom 9; assert journeyTo 4; wait scene 4; assert scene 4; assert state:0x50 1; assert zoombinis 16"
+seconds = 170
+
+[pizza-win-level-2]
+description = "Pizza Pass at group 1's level 2: a pizza with exactly what each of the 2 trolls want is served, every troll is satisfied, and the go button leaves for Shelter Rock with all 8 Zoombinis"
+commands = "level 1 2; party 8; scene 9; wait 5000; assert pizzaLevel 1; assert pizzasLeft 7; pizza serve right 2; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; wait 2000; assert arnoState 3; assert willaState 3; click 620 460; wait scene 2; assert journeyFrom 9; assert journeyTo 4; wait scene 4; assert scene 4; assert state:0x50 2; assert zoombinis 8"
+seconds = 170
+
+[pizza-win-level-3]
+description = "Pizza Pass at group 1's level 3: a pizza with exactly what each of the 3 trolls want is served, every troll is satisfied, and the go button leaves for Shelter Rock with all 8 Zoombinis"
+commands = "level 1 3; party 8; scene 9; wait 5000; assert pizzaLevel 2; assert pizzasLeft 7; pizza serve right 3; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; wait 2000; assert arnoState 3; assert willaState 3; assert shylerState 3; screenshot won; click 620 460; wait scene 2; assert journeyFrom 9; assert journeyTo 4; wait scene 4; assert scene 4; assert state:0x50 4; assert zoombinis 8"
+seconds = 170
+# the trolls fidget and the Zoombinis walk
+tolerance = 0.05
+
+[pizza-win-level-4]
+description = "Pizza Pass at group 1's level 4: a pizza with exactly what each of the 3 trolls want is served, every troll is satisfied, and the go button leaves for Shelter Rock with all 16 Zoombinis"
+commands = "level 1 4; party 16; scene 9; wait 5000; assert pizzaLevel 3; assert pizzasLeft 7; pizza serve right 3; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; wait 2000; assert arnoState 3; assert willaState 3; assert shylerState 3; click 620 460; wait scene 2; assert journeyFrom 9; assert journeyTo 4; wait scene 4; assert scene 4; assert state:0x50 8; assert zoombinis 16"
+seconds = 170
+
+[pizza-wrong-and-partial-then-right]
+description = "Level 1: a pizza with a topping Arno doesn't want is refused (it costs a pizza), one short of what he wants only gets a request for more, and then the right one satisfies him"
+commands = "level 1 1; party 8; scene 9; wait 5000; assert pizzasLeft 6; pizza serve wrong 1; wait until pizzaReady == 1; assert arnoState 1; assert pizzasLeft 5; pizza serve partial 1; wait until pizzaReady == 1; assert arnoState 1; assert pizzaSolved 0; pizza serve right 1; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; assert arnoState 3"
+seconds = 170
+
+[pizza-out-of-pizzas]
+description = "With the last pizza gone (set to one for the test, and spent on a wrong one) the puzzle is not over: the right pizza still satisfies Arno and opens the go button"
+commands = "level 1 1; party 8; scene 9; wait 5000; set pizzasLeft 1; pizza serve wrong 1; wait until pizzaReady == 1; assert pizzasLeft 0; assert pizzaSolved 0; assert pizzaGoReady 0; click 620 460; wait 2500; assert scene 9; pizza serve right 1; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; assert pizzasLeft 0; assert arnoState 3"
+seconds = 170
+
+
 [pizza-wrong-pizza]
 description = "A pizza is served to the trolls: its topping is not what they want"
 commands = "party 8; scene 9; wait 8000; drag zoombini 0 place 1; wait 1500; click 60 197; wait 600; screenshot topping-picked; click 76 127; wait 8000; screenshot refused"

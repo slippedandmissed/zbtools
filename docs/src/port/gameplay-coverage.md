@@ -45,9 +45,9 @@ Every scene now has an *opens* case with a picture. Each puzzle's own level numb
 | 1 | hotspot 5 / 12 / 16 | 4 / 5 / 6 | only if group 1 / group 2 or 3 / group 4 has been left (`gameState` bits `+0x50`, `+0x52`, `+0x51`); otherwise nothing happens | `transition-map-walk` (locked, then unlocked) |
 | 1 | hotspots 2-4, 6-11, 13-15 | 7-9, 10-12 (note 8 and 9: 20 and 19 with the cheat code), 14, 15, 16-18 | **practice mode only** | `transition-practice-mode` (hotspot 2, and a locked camp stays shut) |
 | 1 | Ctrl-P, 1-4, `+`/`-` | stays | practice mode on, level, party size | `map-practice`, `transition-practice-mode` |
-| 7 | button 2 (`bridgeGoReady`) | 8 (via journey) | | no |
-| 8 | button 2 | 9 (via journey) | | no |
-| 9 | button 2 | 4 (via journey) | sets `puzzleLeft = 9` and bit `1 << level` in `gameState[0x50]`; may raise group 1's level | `perfect-clears` (state forced) |
+| 7 | button 2 (`bridgeGoReady`) | 8 (via journey) | | `cliffs-win-level-1..4`, `cliffs-leave-with-one` |
+| 8 | button 2 | 9 (via journey) | needs someone let in (`tunnelsGoReady`) and the guards' closing remark done | `tunnels-win-level-1..4`, `tunnels-leave-with-one` |
+| 9 | button 2 | 4 (via journey) | needs every troll satisfied (`pizzaGoReady`); sets `puzzleLeft = 9` and bit `1 << level` in `gameState[0x50]`; may raise group 1's level | `pizza-win-level-1..4` (the bit asserted), `perfect-clears` (the level rise, state forced) |
 | 4 | button 1 | 10 (via journey) | needs enough chosen, else a random remark | `transition-shelter-rock-set-out-group-2`, `transition-shelter-rock-not-enough` |
 | 4 | button 2 | 13 (via journey) | as above | `transition-shelter-rock-set-out-group-3`, `transition-shelter-rock-not-enough` |
 | 4 | button 3 | 1 | | `transition-shelter-rock-to-map`, `transition-map-walk` |
@@ -78,9 +78,9 @@ For each puzzle the cases to have: **O** opens (asserts), **W** won at the lowes
 
 | # | Puzzle | Levels | Rule an oracle must read | Failure / limit to cover | Cases today |
 | --- | --- | --- | --- | --- | --- |
-| 7 | Allergic Cliffs | 0-3 (`bridgeLevel`) | `makeBridgeRule`: which side a feature value goes to (`FeatureRules`) | sent back 6 times (`sentBackCount >= 6`: what happens then, to confirm) | O (opens), X (`cliffs-right-and-wrong`) |
-| 8 | Stone Cold Caves | rules by level, 16-22 turn-backs | `makeOneFeatureRule`...`makeTwoFeatureRules`: what each door accepts (partly random) | turn-backs allowed run out | O, `caves-door` (a guard speaks) |
-| 9 | Pizza Pass | `pizzaButtonsLevel0-3` | each troll's wants (`shareToppings`, `judgePizza`) | pizzas left run out; a refused pizza | X (`pizza-wrong-pizza`), `pizza-wants` |
+| 7 | Allergic Cliffs | 0-3 (`bridgeLevel`) | `makeBridgeRule`: which side a feature value goes to (`FeatureRules`) | sent back 6 times: the cliff takes no more, and with nobody across the go button stays dead, so the party can only leave by the map button (what the code does; to confirm against the original) | O, W at levels 1-4 with 16 Zoombinis (`cliffs-win-level-1..4`), X (`cliffs-wrong-then-right`, `cliffs-right-and-wrong`), L (`cliffs-six-sent-back`), E (`cliffs-win-level-*`, `cliffs-leave-with-one`: leaves with those across) |
+| 8 | Stone Cold Caves | rules by level (`tunnelsLevel` 0-3), 16, 18, 20 or 22 turn-backs | `turnedBackAtDoor` over `tunnelRules`, and at level 0 the shut pair of doors (`closedDoorPair`) | out of turn-backs: the doors take no more drops; with nobody let in the go button stays dead, so the party can only leave by the map button (what the code does; to confirm against the original) | O, W at levels 1-4 (16 Zoombinis at levels 1 and 4, 8 at 2 and 3: `tunnels-win-level-1..4`), X (`tunnels-wrong-then-right`), L (`tunnels-out-of-turn-backs`, with the turn-backs set to two), E (`tunnels-win-level-*`, `tunnels-leave-with-one`), `caves-door` (a guard speaks) |
+| 9 | Pizza Pass | `pizzaLevel` 0-3: 1, 2, 3, 3 trolls | each troll's wants (`arnoWants`, `willaWants`, `shylerWants`): a pizza of exactly them satisfies it (`judgePizza`) | a refused pizza costs one of the pizzas left (6 or 7), but running out doesn't end the puzzle: the right pizza still satisfies the troll (what the code does; to confirm against the original), so there is no way to fail it, only to leave by the map button | O, W at levels 1-4 (16 Zoombinis at levels 1 and 4, 8 at 2 and 3: `pizza-win-level-1..4`), X (`pizza-wrong-and-partial-then-right`, `pizza-wrong-pizza`), L (`pizza-out-of-pizzas`, the pizzas set to one), E (`pizza-win-level-*`), `pizza-wants` |
 | 10 | Captain Cajun's Ferryboat | 0-4, 16-20 Zoombinis | `layOutFerryLevel`: which seats are paired | wrong seating remarks | `ferry-load-and-go` (mechanics) |
 | 11 | Titanic Tattooed Toads | `lillyLevel` | `setUpBoard`: which row takes which piece | wrong piece (goes back) | X (`toads-wrong-piece`), `toads-place-and-go`, `toads-come-back` |
 | 12 | Stone Rise | levels 1-4 | `groupInThrees`, `sharedStone`: the intended solution | wrong cells | `stonerise-place` (mechanics) |
@@ -91,7 +91,7 @@ For each puzzle the cases to have: **O** opens (asserts), **W** won at the lowes
 | 17 | Mirror Machine | `smokeLevel` 1-4 | `giveSlotFeatures`, `shareFeature`: the features of the picked Zoombini(s) | wrong cell | `high-levels` (L4 opens) |
 | 18 | Bubblewonder Abyss | `mazeLevel` 0-4 (3 with under 5 Zoombinis plays as 4) | `chooseSequence1-5`: the sequence of values | wrong square | `high-levels` (L4 opens) |
 
-So **no puzzle is won in any case today**; seven have a wrong-move case; the transitions between puzzles and camps are covered only by forcing state.
+So **three puzzles (Allergic Cliffs, Stone Cold Caves and Pizza Pass, all of group 1) are won in cases at every level**, with their wrong-move, limit and exit paths; five others have a wrong-move or mechanics case, and the other nine are not won yet. The `cliffs`, `tunnels` and `pizza` oracles (in [Debug tools](debug-tools.md)) are the template for the rest.
 
 ## Branches beyond the main line
 

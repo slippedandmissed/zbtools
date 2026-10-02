@@ -138,3 +138,31 @@ A puzzle is played with drags, and a few things about the game's own input matte
 - **Aim by where the Zoombini stands.** The game claims a drop spot when the Zoombini's *feet* are within `placeSnapRadius` of it, which is why `drag zoombini N place K` and `drag zoombini N X Y` work in feet, not pointer, coordinates.
 - **Pause before the release** (the built-in drags do): the game's drag loop has to see the pointer at the end before the button goes up.
 - **Wait for the game, not the clock**: `wait until crossingUnderway == 1`, `wait until placeHeld == 0` and the like. While a drag or a click handler runs, the game runs its own loops, and the commands go on in them.
+
+## Oracles: solving a puzzle by its rule
+
+A puzzle is won by working out a hidden rule, which a recorded list of moves can't do reliably (the rule depends on the random numbers, and the list breaks whenever they shift). An *oracle* is a debug command that reads the rule from the game's own state and plays the next correct (or deliberately wrong) move through real mouse input. They are in `port/debug/oracles.cpp` and are not part of the game. An oracle command is turned into plain commands (`drag ...`, `wait until ...`) at the moment it runs, so it sees the state as it is then; each one that plays a move says what it chose (`cliffs: zoombini 3 to bridge 2 (right)`), and an oracle may add values to `get`/`assert`/`wait until` (`cliffsAcross`, `cliffsWaiting`).
+
+| Command | Does |
+| --- | --- |
+| `cliffs` | Allergic Cliffs (scene 7): lists every Zoombini with its features, the bridge where the cliff lets it across and whether it is waiting |
+| `cliffs pick right\|wrong` | drags the first waiting Zoombini to its right bridge (or the other one); fails if six have been sent back (the cliff takes no more) |
+| `cliffs send right\|wrong [N]` | N times (once): waits for the queue and the crossing to clear, then `cliffs pick`; waits a moment after each drop for the game to take it |
+
+| `tunnels` | Stone Cold Caves (scene 8): lists every Zoombini with the doors that let it in (the rule `turnedBackAtDoor`, and at level 0 the pair of doors that is shut) and whether it is waiting |
+| `tunnels pick right\|wrong` | drags the first waiting Zoombini to a door that lets it in (or turns it back); fails if there are no turn-backs left (the doors take no more drops) |
+| `tunnels send right\|wrong [N]` | N times (once): waits for the guards to be done with the last one, then `tunnels pick` |
+
+| `pizza` | Pizza Pass (scene 9): what each troll wants (topping numbers from 0), their states, the pizzas left and whether a pizza can be served now |
+| `pizza make right\|wrong\|partial` | toggles the toppings with the buttons and serves the pizza, now: for the first troll not yet satisfied, exactly what it wants (`right`), that and one it doesn't want (`wrong`: it rejects the pizza) or one short (`partial`: it asks for more) |
+| `pizza serve right\|wrong\|partial [N]` | N times (once): waits until a pizza can be served (`pizzaReady`), then `pizza make`; a `right` one does nothing once the puzzle is solved |
+
+Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved).
+
+```sh
+level 1 2; party 16; scene 7; wait 6000
+cliffs send right 16; wait until cliffsAcross == 16
+assert sentBackCount 0; click 618 458; wait scene 8
+```
+
+The other puzzles get theirs as their cases are written (see the [coverage map](gameplay-coverage.md)).
