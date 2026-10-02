@@ -1,23 +1,23 @@
-"""Visual regression tests: the headless port plays scripted flows and its screenshots are
+"""Instrumented gameplay tests: the headless port plays scripted flows and its screenshots are
 compared with baselines checked into the repository.
 
-`tests/visual/cases.toml` holds the cases: each a string of debug commands (the handbook's
+`tests/gameplay/cases.toml` holds the cases: each a string of debug commands (the handbook's
 "Debug tools") that takes the game to a scene and plays something (a puzzle won or lost in some
 way, a dialog, a journey), with `screenshot NAME` wherever a picture should be compared and
-`assert` wherever the game's own state should be checked. `uv run visual` runs every case on the
+`assert` wherever the game's own state should be checked. `uv run gameplay` runs every case on the
 headless build (`uv run port build headless_wasm`), several at a time, each on a fresh C: drive,
-and compares each screenshot with `tests/visual/baselines/<case>/<NAME>.png`. It fails if a
+and compares each screenshot with `tests/gameplay/baselines/<case>/<NAME>.png`. It fails if a
 picture differs by more than the tolerance, if a baseline is missing or no case takes it, or if
-a case crashes, fails an `assert` or does not finish. `uv run visual --rebaseline` writes the
+a case crashes, fails an `assert` or does not finish. `uv run gameplay --rebaseline` writes the
 pictures instead (only those that changed, so git sees only real differences) and removes
 baselines no case takes any more.
 
-Every run writes a report, build/visual/report.html: one self-contained file (the pictures are
+Every run writes a report, build/gameplay/report.html: one self-contained file (the pictures are
 inside it) with a summary, every case, and for each failing picture the baseline, the new
 picture and the differences highlighted, plus the game's own output for a case that crashed. The
 same summary as Markdown goes to `--summary FILE` (the pull request pipeline passes the job's
 summary file, which GitHub shows on the run's page). The failing pictures are also written to
-build/visual/<case>/ as `NAME.actual.png` and `NAME.diff.png` (baseline | new | differences).
+build/gameplay/<case>/ as `NAME.actual.png` and `NAME.diff.png` (baseline | new | differences).
 
 The game runs in real time on the host, but with `seed` (every case starts with one) and the
 scripts' waits its pictures are repeatable: a case whose pictures differ is played again before
@@ -45,14 +45,14 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 from zbtools import assets, paths, port, shots
 
-CASES = paths.REPO_ROOT / "tests" / "visual" / "cases.toml"
-BASELINES = paths.REPO_ROOT / "tests" / "visual" / "baselines"
+CASES = paths.REPO_ROOT / "tests" / "gameplay" / "cases.toml"
+BASELINES = paths.REPO_ROOT / "tests" / "gameplay" / "baselines"
 # A pixel differs when some channel differs by more than this (of 255); a picture fails when more
 # than a case's tolerance of its pixels differ.
 CHANNEL_DELTA = 24
 TOLERANCE = 0.005
 # The most the report embeds of failing pictures (bytes of data URIs): a change that breaks every
-# picture must not make a report too big to open (the files are in build/visual/ either way).
+# picture must not make a report too big to open (the files are in build/gameplay/ either way).
 REPORT_BUDGET = 24_000_000
 _NAME = re.compile(r"[a-z0-9][a-z0-9-]*")
 _RUN_VARIABLES = ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_RUN_ID")
@@ -251,7 +251,7 @@ _NOISE = ("miniwin: GetProcAddress", "mCreateFile", "miniwin: CreateFile")
 
 def play(name: str, case: Case, setup: shots.Setup) -> Play:
     """Runs one case on a fresh C: drive; its pictures, or what went wrong."""
-    with tempfile.TemporaryDirectory(prefix=f"visual-{name}-") as work:
+    with tempfile.TemporaryDirectory(prefix=f"gameplay-{name}-") as work:
         c = port.lay_out_drives(c=Path(work) / "c")
         recipe = shots.Recipe(commands=case.script, seconds=case.seconds)
         run = subprocess.run(
@@ -293,7 +293,7 @@ def compare(
     for picture, actual in played.items():
         path = baselines / name / f"{picture}.png"
         if not path.exists():
-            note = f"no baseline (run `uv run visual --rebaseline {name}`)"
+            note = f"no baseline (run `uv run gameplay --rebaseline {name}`)"
             found.append(Picture(picture, actual, None, 1.0, note))
             continue
         with Image.open(path) as image:
@@ -406,7 +406,7 @@ def render_html(outcomes: list[Outcome], mode: str, budget: int = REPORT_BUDGET)
     )
     failed = [o for o in outcomes if o.failed]
     passed = [o for o in outcomes if not o.failed]
-    return environment.get_template("visual.html.j2").render(
+    return environment.get_template("gameplay.html.j2").render(
         mode=mode,
         failed=failed,
         passed=passed,
@@ -430,9 +430,10 @@ def render_summary(outcomes: list[Outcome], mode: str, stale: list[str]) -> str:
     failed = [o for o in outcomes if o.failed]
     flaky = [o for o in outcomes if not o.failed and o.attempts > 1]
     if mode == "rebaseline":
-        lines = [f"## Visual tests: baselines written for {len(outcomes)} cases", ""]
+        lines = [f"## Gameplay tests: baselines written for {len(outcomes)} cases", ""]
     else:
-        lines = [f"## Visual tests: {len(outcomes) - len(failed)} of {len(outcomes)} cases passed"]
+        passed = len(outcomes) - len(failed)
+        lines = [f"## Gameplay tests: {passed} of {len(outcomes)} cases passed"]
         lines.append("")
     if failed or stale:
         lines += ["| Case | Result |", "| --- | --- |"]
@@ -444,14 +445,14 @@ def render_summary(outcomes: list[Outcome], mode: str, stale: list[str]) -> str:
         lines += [
             f"| `{item}` | a baseline no case takes (`--rebaseline` removes it) |" for item in stale
         ]
-        where = f"[`visual-report.html`]({run_url()}#artifacts)" if run_url() else "`report.html`"
+        where = f"[`gameplay-report.html`]({run_url()}#artifacts)" if run_url() else "`report.html`"
         lines += [
             "",
             "The baseline, the new picture and the differences of each failing picture are in"
             f" {where} (one file, with the pictures inside it: download it from the run's artifacts"
             " and open it in a browser).",
-            "If the change is intended, run `uv run visual --rebaseline` and commit"
-            " `tests/visual/baselines/`.",
+            "If the change is intended, run `uv run gameplay --rebaseline` and commit"
+            " `tests/gameplay/baselines/`.",
         ]
     if flaky:
         lines += ["", "Passed only on a second try: " + ", ".join(f"`{o.name}`" for o in flaky)]
@@ -523,7 +524,7 @@ def main(  # noqa: PLR0917 (a CLI's options)
     ] = None,
     output: Annotated[
         Path, typer.Option(help="Where the report and the failing pictures are written")
-    ] = paths.VISUAL_DIR,
+    ] = paths.GAMEPLAY_DIR,
     summary: Annotated[
         Path | None,
         typer.Option(

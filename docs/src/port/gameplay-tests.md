@@ -1,17 +1,17 @@
-# Visual tests
+# Instrumented gameplay tests
 
-`uv run visual` plays scripted flows on the headless port and compares the screenshots it takes with baselines checked into the repository, so a change that alters what the game draws (or breaks a scene, a puzzle's mechanics or a dialog) is caught. It runs locally and in the pull request pipeline.
+`uv run gameplay` plays scripted flows on the headless port, checks the game's own state as it goes (`assert`: the scene reached, a puzzle's counters, the party, the level) and compares the few screenshots it takes with baselines checked into the repository, so a change that breaks a scene, a puzzle's mechanics or a dialog, or alters what the game draws, is caught. The aim is confidence that the port is playable from start to end: the cases are *instrumented* (they read the game's globals through the [debug tools](debug-tools.md)), and together should cover every scene and every major path through the game; pictures are the exception, kept for what only a picture can show.
 
 ```sh
 uv run port build headless_wasm      # once, and after changing the port or decomp/
-uv run visual                        # play every case and compare
-uv run visual cliffs-right-and-wrong # one case (or several)
-uv run visual --rebaseline           # write the pictures as the new baselines
+uv run gameplay                        # play every case and compare
+uv run gameplay cliffs-right-and-wrong # one case (or several)
+uv run gameplay --rebaseline           # write the pictures as the new baselines
 ```
 
 ## What a case is
 
-`tests/visual/cases.toml` has one table per case: a `description`, and `commands`, a script of [debug-tool](debug-tools.md) commands that takes the game somewhere and plays something. `screenshot NAME` takes a picture to compare; `assert NAME VALUE` checks the game's own state (a failed assertion fails the case); `wait until` waits for the game rather than the clock. Every case starts by turning "sticky mouse" off and seeding the game's random numbers (`seed`, 1 unless the case sets `seed`), and ends by itself: leave out `quit`.
+`tests/gameplay/cases.toml` has one table per case: a `description`, and `commands`, a script of [debug-tool](debug-tools.md) commands that takes the game somewhere and plays something. `screenshot NAME` takes a picture to compare; `assert NAME VALUE` checks the game's own state (a failed assertion fails the case); `wait until` waits for the game rather than the clock. Every case starts by turning "sticky mouse" off and seeding the game's random numbers (`seed`, 1 unless the case sets `seed`), and ends by itself: leave out `quit`.
 
 ```toml
 [cliffs-right-and-wrong]
@@ -20,7 +20,7 @@ seed = 7
 commands = "party 8; scene 7; wait 6000; screenshot start; drag zoombini 0 place 1; wait 1500; ...; assert sentBackCount 2; screenshot after"
 ```
 
-The baselines are `tests/visual/baselines/<case>/<NAME>.png`: 640×480 screens as 256-colour PNGs (about 170 KB each; the screen has at most 256 colours, so nothing is lost). Each case runs on a fresh C: drive, so none sees what another saved, and several run at once (`--jobs`, 4 by default).
+The baselines are `tests/gameplay/baselines/<case>/<NAME>.png`: 640×480 screens as 256-colour PNGs (about 170 KB each; the screen has at most 256 colours, so nothing is lost). Each case runs on a fresh C: drive, so none sees what another saved, and several run at once (`--jobs`, 4 by default).
 
 ### What the cases cover
 
@@ -44,23 +44,23 @@ The game runs in real time, but with the seed and the scripts' waits its picture
 
 ## Rebaselining
 
-When a change is meant to alter what the game draws, run `uv run visual --rebaseline` (or name the cases) and commit `tests/visual/baselines/`. It writes only the pictures that changed, so git sees only real differences, removes baselines no case takes any more, and says what it wrote; the report then shows the **before and after** of every picture it changed, which is what to review in the pull request. The baselines are binary files, so each change adds to the repository's size: keep cases few and meaningful rather than a picture of everything.
+When a change is meant to alter what the game draws, run `uv run gameplay --rebaseline` (or name the cases) and commit `tests/gameplay/baselines/`. It writes only the pictures that changed, so git sees only real differences, removes baselines no case takes any more, and says what it wrote; the report then shows the **before and after** of every picture it changed, which is what to review in the pull request. The baselines are binary files, so each change adds to the repository's size: keep cases few and meaningful rather than a picture of everything.
 
-A new case: add it to `cases.toml`, run `uv run visual NAME --rebaseline`, look at the pictures (they are in `tests/visual/baselines/NAME/`), and commit them. A test (`tests/test_visual.py`, part of `uv run lint`) checks that every picture a case takes has a baseline, that none is left over, and that they are whole screens, so a forgotten file is caught without playing anything.
+A new case: add it to `cases.toml`, run `uv run gameplay NAME --rebaseline`, look at the pictures (they are in `tests/gameplay/baselines/NAME/`), and commit them. A test (`tests/test_gameplay.py`, part of `uv run lint`) checks that every picture a case takes has a baseline, that none is left over, and that they are whole screens, so a forgotten file is caught without playing anything.
 
 ## The report
 
-Every run writes `build/visual/report.html`: **one self-contained file** (its pictures are inside it, so it can be opened anywhere, sent, or attached) with the counts, every failing case first (its commands, the game's own output if it crashed, and for each failing picture the **baseline, the new picture and the differences in red** side by side), and a table of all cases. The failing pictures are also files in `build/visual/<case>/` (`NAME.actual.png`, and `NAME.diff.png`, the three side by side). If a change breaks so many pictures that the report would be too big, the ones past the limit are listed without their images (the files are in `build/visual/`).
+Every run writes `build/gameplay/report.html`: **one self-contained file** (its pictures are inside it, so it can be opened anywhere, sent, or attached) with the counts, every failing case first (its commands, the game's own output if it crashed, and for each failing picture the **baseline, the new picture and the differences in red** side by side), and a table of all cases. The failing pictures are also files in `build/gameplay/<case>/` (`NAME.actual.png`, and `NAME.diff.png`, the three side by side). If a change breaks so many pictures that the report would be too big, the ones past the limit are listed without their images (the files are in `build/gameplay/`).
 
 ## In the pull request pipeline
 
-The `visual` job in `.github/workflows/pr.yml` builds the headless port, runs `uv run visual` and fails the pull request if any case fails. What it leaves for a failed run:
+The `gameplay` job in `.github/workflows/pr.yml` builds the headless port, runs `uv run gameplay` and fails the pull request if any case fails. What it leaves for a failed run:
 
 - **The run's page** shows a summary of the failures (`--summary "$GITHUB_STEP_SUMMARY"`: a table of cases and what was wrong, as Markdown, which GitHub renders on the page itself, with a link to the artifacts). It carries no pictures: they are in the report.
-- **`visual-report.html`**, in the run's artifacts: the report, uploaded unzipped (`actions/upload-artifact` with `archive: false`, which names the artifact after its file), so it is one click to download (a login is needed) and opens straight in a browser. Whether GitHub shows an HTML artifact in its own page rather than downloading it is not something this relies on; showing the pictures in the page itself would need them hosted somewhere (a preview deployment of the report, say), which this does not set up.
-- **`visual-pictures`**: the failing pictures as files (zipped).
+- **`gameplay-report.html`**, in the run's artifacts: the report, uploaded unzipped (`actions/upload-artifact` with `archive: false`, which names the artifact after its file), so it is one click to download (a login is needed) and opens straight in a browser. Whether GitHub shows an HTML artifact in its own page rather than downloading it is not something this relies on; showing the pictures in the page itself would need them hosted somewhere (a preview deployment of the report, say), which this does not set up.
+- **`gameplay-pictures`**: the failing pictures as files (zipped).
 
-Locally the report is `build/visual/report.html`; open it in a browser.
+Locally the report is `build/gameplay/report.html`; open it in a browser.
 
 ## Limits
 
