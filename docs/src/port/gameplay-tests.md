@@ -36,6 +36,8 @@ The baselines are `tests/gameplay/baselines/<case>/<NAME>.png`: 640×480 screens
 
 These play the **mechanics** of each puzzle, not whole solutions: a puzzle is won by working out its rule from what the Zoombinis do, which a script can't, so no case plays one to its end. Adding the final steps (every Zoombini through, the way on to the next scene) is the natural next case once a rule can be read from the game's own state (`get`/`wait until` on its globals, [Debug tools](debug-tools.md)).
 
+What is covered and what is still to cover is in the [coverage map](gameplay-coverage.md).
+
 ## Watching a run
 
 The run prints as it goes (it is the longest job of the pull request pipeline, so its page should show what it is doing): a `start` line when a case begins, a line when it finishes, in the order they finish, with how far the run is (`[12/41  05:31]`: cases done of all, minutes and seconds since the start) and how long the case took, a `retry` line when a case's pictures differed and it is played again, and, after a minute of nothing else, a `...` line naming the cases still running and for how long. A case that hangs is therefore visible while it hangs, not when its time runs out. (Output is line-buffered, so it reaches a pipe or CI's log at once.)
