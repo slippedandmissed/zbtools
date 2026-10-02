@@ -139,16 +139,17 @@ char *rosterError;
 short clickTime;
 
 /*
- * The notify of the Zoombinis cheering on the roster screen (cavesFrame),
- * which returns its event plus one (ignored).
- * The original adds one with `sub eax, -1`; BCC32 turns every way of writing
- * it tried so far (+ 1, - -1, enums, consts, unsigned, compound assignment,
- * locals, other -O options, and Borland C++ 4.52 as well as 4.5) into `inc eax`.
+ * The notify of the Zoombinis cheering on the roster screen (cavesFrame).
+ * The original returns its event plus one (ignored, and `sub eax, -1`, which
+ * BCC32 turns every way of writing it into `inc eax`); it is installed as a
+ * ViewNotify, which returns nothing, and calling a function through a pointer
+ * of another type traps in WebAssembly (the Lion's Lair crashed when the first
+ * Zoombini was placed on its right stone).
  */
-/* @zoombi32 0x0041d3e6 */
-int cheerNotify(View *, short value)
+/* Functional: returns nothing, as ViewNotify does. */
+/* @zoombi32-functional 0x0041d3e6 */
+void cheerNotify(View *, short)
 {
-    return value + 1;
 }
 
 /* @zoombi32 0x0041d9e4 */
@@ -1687,7 +1688,7 @@ void cavesFrame()
                 snoid = viewSnoid(view);
                 startSnoidScript(viewSnoid(view), snoid->features[3] + 12999, cheerAnchor, 0);
                 view->notifyEnd = 1;
-                view->notify = (ViewNotify)cheerNotify;
+                view->notify = cheerNotify;
                 cheerAnchor = 0;
             }
         }
@@ -1704,7 +1705,7 @@ void cavesFrame()
                             snoid = viewSnoid(view);
                             startSnoidScript(viewSnoid(view), snoid->features[3] + 12999, 0, 0);
                             view->notifyEnd = 1;
-                            view->notify = (ViewNotify)cheerNotify;
+                            view->notify = cheerNotify;
                             cheersDone++;
                             started = 1;
                         }

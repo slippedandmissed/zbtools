@@ -106,6 +106,11 @@ description = "Zoombinis are put on the stones of the Lion's Lair"
 commands = "party 8; scene 16; wait 7000; drag zoombini 0 place 8; wait 1500; screenshot one; drag zoombini 1 place 11; wait 1500; drag zoombini 2 place 14; wait 1500; drag zoombini 3 place 17; wait 2000; screenshot four"
 seed = 7
 
+[lion-right-stone]
+description = "A Zoombini is put on the stone the lion wants for it (the first right one: it cheers); the game must go on"
+commands = "party 8; scene 16; wait 7000; drag zoombini 0 place 13; wait 3000; assert cavesPlacedCount 1; assert droppedCave 13; assert assignedCave 13; assert scene 16; screenshot cheering; wait 3000; assert scene 16; screenshot after"
+seed = 7
+
 [caves-door]
 description = "A Zoombini goes to a door of Stone Cold Caves and the guard speaks"
 commands = "party 8; scene 8; wait 5000; drag zoombini 0 place 1; wait 4500; screenshot guard"
