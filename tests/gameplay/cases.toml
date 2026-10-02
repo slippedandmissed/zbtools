@@ -234,6 +234,42 @@ commands = "level 1 1; party 8; scene 9; wait 5000; set pizzasLeft 1; pizza serv
 seconds = 170
 
 
+# --- Captain Cajun's Ferryboat, played with the `ferry` oracle: it searches for a seating where every two
+# touching places hold Zoombinis sharing a feature, and seats them in it.
+
+[ferry-win-level-1]
+description = "Captain Cajun's ferry at group 2's level 1: all 16 Zoombinis are seated so that every touching pair shares a feature (none is sent back), and the go button crosses to the toads with all of them"
+commands = "level 2 1; party 16; scene 10; wait 7000; assert ferryLevel 0; assert ferrySnoidCount 16; ferry send right 16; wait until ferrySeated == 16; wait 2000; assert badPlacings 0; assert ferryHasPassengers 16; click 618 458; wait scene 2; assert journeyFrom 10; assert journeyTo 11; wait scene 11; assert scene 11; assert lillyLevel 1; assert zoombinis 16"
+seconds = 170
+
+[ferry-win-level-2]
+description = "Captain Cajun's ferry at group 2's level 2: all 8 Zoombinis are seated so that every touching pair shares a feature (none is sent back), and the go button crosses to the toads with all of them"
+commands = "level 2 2; party 8; scene 10; wait 7000; assert ferryLevel 1; assert ferrySnoidCount 8; ferry send right 8; wait until ferrySeated == 8; wait 2000; assert badPlacings 0; assert ferryHasPassengers 8; click 618 458; wait scene 2; assert journeyFrom 10; assert journeyTo 11; wait scene 11; assert scene 11; assert lillyLevel 2; assert zoombinis 8"
+seconds = 170
+
+[ferry-win-level-3]
+description = "Captain Cajun's ferry at group 2's level 3: all 8 Zoombinis are seated so that every touching pair shares a feature (none is sent back), and the go button crosses to the toads with all of them"
+commands = "level 2 3; party 8; scene 10; wait 7000; assert ferryLevel 2; assert ferrySnoidCount 8; ferry send right 8; wait until ferrySeated == 8; wait 2000; assert badPlacings 0; assert ferryHasPassengers 8; click 618 458; wait scene 2; assert journeyFrom 10; assert journeyTo 11; wait scene 11; assert scene 11; assert lillyLevel 3; assert zoombinis 8"
+seconds = 170
+
+[ferry-win-level-4]
+description = "Captain Cajun's ferry at group 2's level 4: all 16 Zoombinis are seated so that every touching pair shares a feature (none is sent back), and the go button crosses to the toads with all of them"
+commands = "level 2 4; party 16; scene 10; wait 7000; assert ferryLevel 3; assert ferrySnoidCount 16; ferry send right 16; wait until ferrySeated == 16; wait 2000; assert badPlacings 0; assert ferryHasPassengers 16; screenshot loaded; click 618 458; wait scene 2; assert journeyFrom 10; assert journeyTo 11; wait scene 11; assert scene 11; assert lillyLevel 4; assert zoombinis 16"
+seconds = 170
+# the Zoombinis fidget
+tolerance = 0.03
+
+[ferry-wrong-then-right]
+description = "A Zoombini put beside one it shares no feature with is sent back to wait (one bad placing, nobody lost), then the whole party is seated"
+commands = "level 2 1; party 16; scene 10; wait 7000; ferry send right 3; wait until ferrySeated == 3; ferry send wrong 1; wait until ferryIdle == 1; assert ferrySeated 3; assert badPlacings 1; ferry send right 13; wait until ferrySeated == 16; wait 2000; assert ferryHasPassengers 16"
+seconds = 170
+
+[ferry-leave-with-three]
+description = "The go button does nothing with nobody aboard; with three seated it crosses with those three"
+commands = "level 2 1; party 16; scene 10; wait 7000; click 618 458; wait 2500; assert scene 10; assert ferryLeaving 0; ferry send right 3; wait until ferrySeated == 3; wait 2000; click 618 458; wait scene 2; assert journeyFrom 10; wait scene 11; assert scene 11; assert zoombinis 3"
+seconds = 170
+
+
 [pizza-wrong-pizza]
 description = "A pizza is served to the trolls: its topping is not what they want"
 commands = "party 8; scene 9; wait 8000; drag zoombini 0 place 1; wait 1500; click 60 197; wait 600; screenshot topping-picked; click 76 127; wait 8000; screenshot refused"

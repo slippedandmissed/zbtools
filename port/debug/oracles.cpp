@@ -4,6 +4,7 @@
 #include "bridge.h"
 #include "tunnels.h"
 #include "pizza.h"
+#include "ferry.h"
 #include "snoids.h"
 #include "view.h"
 #include "oracles.h"
@@ -382,6 +383,227 @@ bool pizzaCommand(const std::vector<std::string> &w, OracleResult *result)
     return true;
 }
 
+
+/* ---- Captain Cajun's Ferryboat (scene 10) ---------------------------------------------------------
+ *
+ * The Zoombinis are seated on the ferry's places (placed views 1..N; ferryLinks lists, for each, the
+ * places it touches). A Zoombini dropped on a place stays only if it shares a feature with each
+ * occupied place the place touches (else it is sent back), so a seating where every touching pair
+ * shares a feature can be made in any order. The oracle finds one by search and seats the Zoombinis
+ * in place order, as the game checks them.
+ */
+
+bool ferryOpen_()
+{
+    return currentScene == 10;
+}
+
+/* The places (from 1) that place `place` touches. */
+std::vector<int> ferryTouching(int place)
+{
+    std::vector<int> found;
+
+    for (int k = 0; k < 8; k++)
+        if (ferryLinks[place - 1][k])
+            found.push_back(ferryLinks[place - 1][k]);
+    return found;
+}
+
+bool shareFeature(Snoid *a, Snoid *b)
+{
+    for (int f = 0; f < 4; f++)
+        if (a->features[f] == b->features[f])
+            return true;
+    return false;
+}
+
+struct FerryPlan
+{
+    std::vector<View *> views;
+    std::vector<int> seatOf; /* per Zoombini: its place (from 1), 0 if it stays behind */
+    std::vector<int> occupant; /* per place (from 1): the Zoombini's index, or -1 (empty or not decided) */
+    std::vector<bool> decided; /* per place (from 1): has a Zoombini or is left empty */
+    int places;
+    long nodes;
+};
+
+/* Whether Zoombini `z` may take `place` given the places already decided (the game checks a drop
+   against the occupied places the place touches; the lists are symmetric, so the order is free). */
+bool ferryFits(const FerryPlan &plan, size_t z, int place)
+{
+    for (int other : ferryTouching(place))
+        if (plan.decided[other] && plan.occupant[other] >= 0
+            && !shareFeature(viewSnoid(plan.views[z]), viewSnoid(plan.views[plan.occupant[other]])))
+            return false;
+    return true;
+}
+
+/* Seats the Zoombinis by search: the undecided place with the fewest Zoombinis that fit goes next
+   (a place nobody fits ends that branch), a place may be left empty while places outnumber the
+   Zoombinis. Gives up after a budget of nodes. */
+bool ferrySeat(FerryPlan &plan, int empties)
+{
+    if (++plan.nodes > 3000000)
+        return false;
+    int best = 0;
+    size_t bestCount = 1000;
+
+    for (int place = 1; place <= plan.places; place++) {
+        if (plan.decided[place])
+            continue;
+        size_t count = empties > 0 ? 1 : 0;
+
+        for (size_t z = 0; z < plan.views.size(); z++)
+            if (!plan.seatOf[z] && ferryFits(plan, z, place))
+                count++;
+        if (count < bestCount) {
+            best = place;
+            bestCount = count;
+            if (count == 0)
+                return false;
+        }
+    }
+    if (!best)
+        return true; /* (every place decided; every Zoombini seated, as the empties were counted) */
+    plan.decided[best] = true;
+    for (size_t z = 0; z < plan.views.size(); z++) {
+        if (plan.seatOf[z] || !ferryFits(plan, z, best))
+            continue;
+        plan.seatOf[z] = best;
+        plan.occupant[best] = (int)z;
+        if (ferrySeat(plan, empties))
+            return true;
+        plan.seatOf[z] = 0;
+        plan.occupant[best] = -1;
+    }
+    if (empties > 0 && ferrySeat(plan, empties - 1))
+        return true;
+    plan.decided[best] = false;
+    return false;
+}
+
+/* A seating of every Zoombini on the ferry, if the search finds one. */
+bool ferryPlanFor(FerryPlan *plan)
+{
+    plan->views = zbDebugZoombiniViews();
+    plan->seatOf.assign(plan->views.size(), 0);
+    plan->places = placedViewCount;
+    plan->occupant.assign(plan->places + 1, -1);
+    plan->decided.assign(plan->places + 1, false);
+    plan->nodes = 0;
+    int empties = plan->places - (int)plan->views.size();
+
+    return empties >= 0 && ferrySeat(*plan, empties);
+}
+
+/* Whether the Zoombini is standing among those not yet seated. */
+bool ferryWaiting(View *view)
+{
+    return viewSnoid(view)->chosen == 0 && viewSnoid(view)->action != 4;
+}
+
+bool ferryBusy()
+{
+    return returnUnderway || returnDue || ferryLeaving || snoidsOnTheirWay > 0;
+}
+
+bool ferryCommand(const std::vector<std::string> &w, OracleResult *result)
+{
+    if (!ferryOpen_()) {
+        result->error = "ferry: Captain Cajun's Ferryboat (scene 10) isn't open";
+        return true;
+    }
+    std::vector<View *> views = zbDebugZoombiniViews();
+
+    if (w.size() == 1) {
+        /* `ferry`: a seating that works, if there is one */
+        FerryPlan plan;
+
+        if (!ferryPlanFor(&plan)) {
+            result->said.push_back("ferry: no seating of every Zoombini works");
+            return true;
+        }
+        for (size_t z = 0; z < views.size(); z++)
+            result->said.push_back("zoombini " + std::to_string(z) + " -> place " + std::to_string(plan.seatOf[z]));
+        result->said.push_back("(found in " + std::to_string(plan.nodes) + " nodes)");
+        return true;
+    }
+    if (w.size() == 2 && w[1] == "links") {
+        /* `ferry links`: which places each place touches */
+        for (int place = 1; place <= placedViewCount; place++) {
+            std::string line = "place " + std::to_string(place) + " touches";
+
+            for (int other : ferryTouching(place))
+                line += " " + std::to_string(other);
+            result->said.push_back(line);
+        }
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "seat" && w[2] == "right") {
+        /* `ferry seat right`: the next Zoombini of the seating to its place */
+        FerryPlan plan;
+
+        if (!ferryPlanFor(&plan)) {
+            result->error = "ferry seat: no seating of every Zoombini works";
+            return true;
+        }
+        for (int place = 1; place <= plan.places; place++) {
+            int z = plan.occupant[place];
+
+            if (z >= 0 && placeClaims[place - 1] != plan.views[z]->id && ferryWaiting(plan.views[z])) {
+                result->commands.push_back("drag zoombini " + std::to_string(z) + " place " + std::to_string(place));
+                result->commands.push_back("wait 800"); /* (the game takes the drop a moment after the release) */
+                result->said.push_back("ferry: zoombini " + std::to_string(z) + " to place " + std::to_string(place));
+                return true;
+            }
+        }
+        result->error = "ferry seat: everyone is seated";
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "seat" && w[2] == "wrong") {
+        /* `ferry seat wrong`: a waiting Zoombini to a free place it doesn't fit (it is sent back) */
+        for (size_t z = 0; z < views.size(); z++) {
+            if (!ferryWaiting(views[z]))
+                continue;
+            for (int place = 1; place <= placedViewCount; place++) {
+                if (placeClaims[place - 1])
+                    continue;
+                bool occupiedNeighbour = false, shares = true;
+
+                for (int other : ferryTouching(place)) {
+                    View *there = findView(placeClaims[other - 1]);
+
+                    if (there) {
+                        occupiedNeighbour = true;
+                        shares = shares && shareFeature(viewSnoid(views[z]), viewSnoid(there));
+                    }
+                }
+                if (occupiedNeighbour && !shares) {
+                    result->commands.push_back("drag zoombini " + std::to_string(z) + " place " + std::to_string(place));
+                    result->commands.push_back("wait 800");
+                    result->said.push_back("ferry: zoombini " + std::to_string(z) + " to place " + std::to_string(place)
+                                           + " (wrong)");
+                    return true;
+                }
+            }
+        }
+        result->error = "ferry seat wrong: no waiting Zoombini misfits a free place";
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "send" && (w[2] == "right" || w[2] == "wrong")) {
+        /* `ferry send right [N]` / `ferry send wrong`: N times, when nothing is moving, seat the next one */
+        int count = w.size() >= 4 ? atoi(w[3].c_str()) : 1;
+
+        for (int i = 0; i < count; i++) {
+            result->commands.push_back("wait until ferryIdle == 1");
+            result->commands.push_back("ferry seat " + w[2]);
+        }
+        return true;
+    }
+    result->error = "ferry: expected `ferry`, `ferry seat right|wrong` or `ferry send right|wrong [N]`";
+    return true;
+}
+
 } /* namespace */
 
 bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
@@ -392,6 +614,8 @@ bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
         return tunnelsCommand(w, result);
     if (!w.empty() && w[0] == "pizza")
         return pizzaCommand(w, result);
+    if (!w.empty() && w[0] == "ferry")
+        return ferryCommand(w, result);
     return false;
 }
 
@@ -431,6 +655,18 @@ bool zbOracleValue(const std::string &name, long *value)
     }
     if (name == "pizzaReady") {
         *value = pizzaReady() ? 1 : 0;
+        return true;
+    }
+    if (name == "ferryIdle") {
+        *value = ferryBusy() ? 0 : 1; /* nothing is walking back, sailing or arriving */
+        return true;
+    }
+    if (name == "ferrySeated") {
+        long seated = 0;
+
+        for (View *view : zbDebugZoombiniViews())
+            seated += viewSnoid(view)->chosen != 0 ? 1 : 0;
+        *value = seated;
         return true;
     }
     return false;

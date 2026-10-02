@@ -157,7 +157,12 @@ A puzzle is won by working out a hidden rule, which a recorded list of moves can
 | `pizza make right\|wrong\|partial` | toggles the toppings with the buttons and serves the pizza, now: for the first troll not yet satisfied, exactly what it wants (`right`), that and one it doesn't want (`wrong`: it rejects the pizza) or one short (`partial`: it asks for more) |
 | `pizza serve right\|wrong\|partial [N]` | N times (once): waits until a pizza can be served (`pizzaReady`), then `pizza make`; a `right` one does nothing once the puzzle is solved |
 
-Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved).
+| `ferry` | Captain Cajun's Ferryboat (scene 10): a seating of every Zoombini where each two touching places hold Zoombinis that share a feature, found by search, and how many nodes it took |
+| `ferry links` | which places each place touches (`ferryLinks`) |
+| `ferry seat right\|wrong` | drags the next Zoombini of that seating to its place (they are seated in place order, as the game checks a drop against the occupied places it touches); `wrong` drags a waiting Zoombini to a free place beside one it shares no feature with, so it is sent back |
+| `ferry send right\|wrong [N]` | N times (once): waits until nothing is walking back or sailing (`ferryIdle`), then `ferry seat` |
+
+Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved); `ferrySeated` (Zoombinis seated on the ferry), `ferryIdle` (nothing walking back, sailing or arriving).
 
 ```sh
 level 1 2; party 16; scene 7; wait 6000
