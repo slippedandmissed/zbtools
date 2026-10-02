@@ -149,7 +149,11 @@ A puzzle is won by working out a hidden rule, which a recorded list of moves can
 | `cliffs pick right\|wrong` | drags the first waiting Zoombini to its right bridge (or the other one); fails if six have been sent back (the cliff takes no more) |
 | `cliffs send right\|wrong [N]` | N times (once): waits for the queue and the crossing to clear, then `cliffs pick`; waits a moment after each drop for the game to take it |
 
-Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones).
+| `tunnels` | Stone Cold Caves (scene 8): lists every Zoombini with the doors that let it in (the rule `turnedBackAtDoor`, and at level 0 the pair of doors that is shut) and whether it is waiting |
+| `tunnels pick right\|wrong` | drags the first waiting Zoombini to a door that lets it in (or turns it back); fails if there are no turn-backs left (the doors take no more drops) |
+| `tunnels send right\|wrong [N]` | N times (once): waits for the guards to be done with the last one, then `tunnels pick` |
+
+Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with).
 
 ```sh
 level 1 2; party 16; scene 7; wait 6000
