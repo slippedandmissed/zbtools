@@ -298,6 +298,27 @@ commands = "level 2 1; party 8; scene 11; wait 7000; toads place dead; wait 2000
 seconds = 170
 seed = 7
 
+# --- Stone Rise (levels 1 and 2), played with the `stone` oracle: it arranges the Zoombinis on the cells so that every
+# feature stone has its two neighbours sharing its feature. (Levels 3 and 4 light by winding routes over a hex lattice: not covered.)
+
+[stone-rise-win-level-1]
+description = "Stone Rise at group 2's level 1: the 16 Zoombinis are arranged so that every stone lights, all 16 cells are lit, and the go button leaves for Shade Tree with all of them and group 2's bit for the level set"
+commands = "level 2 1; party 16; scene 12; wait 7000; assert stoneRiseLevel 0; stone send right; wait until stoneLit == 16; wait 2500; assert slidesGoReady 1; screenshot lit; click 620 460; wait scene 2; assert journeyFrom 12; assert journeyTo 5; wait scene 5; assert scene 5; assert zoombinis 16; assert state:0x52 1"
+seconds = 170
+# the Zoombinis fidget
+tolerance = 0.03
+
+[stone-rise-win-level-2]
+description = "Stone Rise at group 2's level 2: the 8 Zoombinis are arranged so that every stone lights, all 8 cells are lit, and the go button leaves for Shade Tree with all of them and group 2's bit for the level set"
+commands = "level 2 2; party 8; scene 12; wait 7000; assert stoneRiseLevel 1; stone send right; wait until stoneLit == 8; wait 2500; assert slidesGoReady 1; click 620 460; wait scene 2; assert journeyFrom 12; assert journeyTo 5; wait scene 5; assert scene 5; assert zoombinis 8; assert state:0x52 2"
+seconds = 170
+
+[stone-rise-misfit-stays-dark]
+description = "Level 1: a Zoombini that doesn't share the stone's feature with its neighbour leaves its cell unlit; going then takes only the lit one"
+commands = "level 2 1; party 8; scene 12; wait 7000; stone seat right; wait 1500; assert stoneLit 1; stone seat wrong; wait 1500; assert stoneLit 1; assert slidesGoReady 1; click 620 460; wait scene 2; wait scene 5; assert scene 5; assert zoombinis 1"
+seconds = 170
+
+
 [pizza-wrong-pizza]
 description = "A pizza is served to the trolls: its topping is not what they want"
 commands = "party 8; scene 9; wait 8000; drag zoombini 0 place 1; wait 1500; click 60 197; wait 600; screenshot topping-picked; click 76 127; wait 8000; screenshot refused"

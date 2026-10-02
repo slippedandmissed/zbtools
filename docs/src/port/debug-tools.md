@@ -166,7 +166,12 @@ A puzzle is won by working out a hidden rule, which a recorded list of moves can
 | `toads place right\|dead\|wrong` | drags the next toad to a row it crosses from (`right`), to one whose first square fits but from which it can't cross (`dead`: it stays on the board for good), or to one it doesn't fit (`wrong`: it goes back) |
 | `toads send right [N]` | N times: waits until a toad that can cross is free (the toads come back for the next trip), then `toads place right` |
 
-Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved); `ferrySeated` (Zoombinis seated on the ferry), `ferryIdle` (nothing walking back, sailing or arriving); `toadsAvailable` (toads that could cross from a free row now), `toadsOnBoard` (toads set down and not yet back, hopping included).
+| `stone` | Stone Rise (scene 12), levels 1 and 2 (the row levels): an arrangement of the Zoombinis on the listed cells where every feature stone (a cell whose `snoid` is 510 hair, 511 eyes, 512 nose, 513 feet) has the two Zoombinis either side of it sharing its feature, found by search |
+| `stone dump` | the board: the listed cells and every non-empty cell with its state, stone code and links |
+| `stone seat right\|wrong` | drags the next Zoombini of the arrangement onto its cell (in cell order); `wrong` drags a free Zoombini onto a free cell beside a seated one it shares no feature with (so the stone stays dark) |
+| `stone send right [N]` | N times (every cell): `stone seat right` |
+
+Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved); `ferrySeated` (Zoombinis seated on the ferry), `ferryIdle` (nothing walking back, sailing or arriving); `toadsAvailable` (toads that could cross from a free row now), `toadsOnBoard` (toads set down and not yet back, hopping included); `stoneLit` (the Zoombinis on lit cells).
 
 ```sh
 level 1 2; party 16; scene 7; wait 6000

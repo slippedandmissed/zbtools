@@ -6,6 +6,7 @@
 #include "pizza.h"
 #include "ferry.h"
 #include "lilly.h"
+#include "slides.h"
 #include "snoids.h"
 #include "view.h"
 #include "oracles.h"
@@ -790,6 +791,216 @@ bool toadsCommand(const std::vector<std::string> &w, OracleResult *result)
     return true;
 }
 
+
+/* ---- Stone Rise (scene 12) -------------------------------------------------------------------------
+ *
+ * A staircase of hexagonal cells (hexCells, 13 rows of 9) from the bottom to the top. Zoombinis are
+ * put on the cells listed in listedCells; the stones between them light when the Zoombinis either
+ * side of a feature stone (a cell whose snoid is 510 hair, 511 eyes, 512 nose, 513 feet) share that
+ * feature. (First, a dump of the board; the solver follows.)
+ */
+
+bool stoneOpen_()
+{
+    return currentScene == 12;
+}
+
+/* The feature (0-3) a stone cell tests, or -1 if it is not a feature stone. */
+int stoneFeature(const HexCell &cell)
+{
+    return cell.state != 500 && cell.snoid >= 510 && cell.snoid <= 513 ? cell.snoid - 510 : -1;
+}
+
+/* Where a stone's two neighbours are, the way the path lights them (lightPath: back and ahead). */
+bool stoneNeighbours(const HexCell &cell, int *back, int *ahead)
+{
+    *back = cell.links[5] != -1 ? cell.links[5] : cell.links[4] != -1 ? cell.links[4] : cell.links[3];
+    *ahead = cell.links[0] != -1 ? cell.links[0] : cell.links[1] != -1 ? cell.links[1] : cell.links[2];
+    return *back != -1 && *ahead != -1;
+}
+
+struct StoneEdge
+{
+    int a, b; /* listed cell indexes (from 1) either side of a feature stone */
+    int feature;
+};
+
+/* The stones that hold two listed cells apart: each wants its two Zoombinis to share its feature. */
+std::vector<StoneEdge> stoneEdges()
+{
+    std::vector<StoneEdge> edges;
+    std::vector<int> listedAt(117, 0);
+
+    for (int i = 1; i <= listedCount; i++)
+        listedAt[listedCells[i]] = i;
+    for (int cell = 0; cell < 117; cell++) {
+        int feature = stoneFeature(hexCells[cell]), back, ahead;
+
+        if (feature >= 0 && stoneNeighbours(hexCells[cell], &back, &ahead) && listedAt[back] && listedAt[ahead])
+            edges.push_back({listedAt[ahead], listedAt[back], feature});
+    }
+    return edges;
+}
+
+struct StonePlan
+{
+    std::vector<View *> views;
+    std::vector<int> zoombiniAt; /* per listed cell (from 1): the Zoombini's index, or -1 */
+    std::vector<bool> used;
+    std::vector<StoneEdge> edges;
+    long nodes = 0;
+};
+
+bool stoneAssign(StonePlan &plan, int i)
+{
+    if (i > listedCount)
+        return true;
+    if (++plan.nodes > 2000000)
+        return false;
+    for (size_t z = 0; z < plan.views.size(); z++) {
+        if (plan.used[z])
+            continue;
+        bool fits = true;
+
+        for (const StoneEdge &e : plan.edges) {
+            int other = e.a == i ? e.b : e.b == i ? e.a : 0;
+
+            if (other && other < i && plan.zoombiniAt[other] >= 0
+                && viewSnoid(plan.views[z])->features[e.feature]
+                       != viewSnoid(plan.views[plan.zoombiniAt[other]])->features[e.feature])
+                fits = false;
+        }
+        if (!fits)
+            continue;
+        plan.used[z] = true;
+        plan.zoombiniAt[i] = (int)z;
+        if (stoneAssign(plan, i + 1))
+            return true;
+        plan.used[z] = false;
+        plan.zoombiniAt[i] = -1;
+    }
+    return false;
+}
+
+bool stonePlanFor(StonePlan *plan)
+{
+    plan->views = zbDebugZoombiniViews();
+    plan->zoombiniAt.assign(listedCount + 1, -1);
+    plan->used.assign(plan->views.size(), false);
+    plan->edges = stoneEdges();
+    return (int)plan->views.size() >= listedCount && stoneAssign(*plan, 1);
+}
+
+long stoneLit()
+{
+    long lit = 0;
+
+    for (int i = 1; i <= listedCount; i++)
+        lit += hexCells[listedCells[i]].state == 508 ? 1 : 0;
+    return lit;
+}
+
+bool stoneCommand(const std::vector<std::string> &w, OracleResult *result)
+{
+    if (!stoneOpen_()) {
+        result->error = "stone: Stone Rise (scene 12) isn't open";
+        return true;
+    }
+    if (w.size() == 2 && w[1] == "dump") {
+        result->said.push_back("level " + std::to_string(stoneRiseLevel) + ", listed " + std::to_string(listedCount)
+                               + ", startState " + std::to_string(startState));
+        for (int i = 1; i <= listedCount; i++)
+            result->said.push_back("listed " + std::to_string(i) + " = cell " + std::to_string(listedCells[i]));
+        for (int cell = 0; cell < 117; cell++) {
+            const HexCell &c = hexCells[cell];
+
+            if (!c.state || c.state == 500)
+                continue;
+            std::string line = "cell " + std::to_string(cell) + " state " + std::to_string(c.state) + " snoid "
+                               + std::to_string(c.snoid) + " links";
+
+            for (int k = 0; k < 6; k++)
+                line += " " + std::to_string(c.links[k]);
+            result->said.push_back(line);
+        }
+        return true;
+    }
+    if (w.size() == 1) {
+        /* `stone`: an arrangement of the Zoombinis on the listed cells where every feature stone has its two
+           neighbours sharing its feature */
+        StonePlan plan;
+
+        if (!stonePlanFor(&plan)) {
+            result->said.push_back("stone: no arrangement works");
+            return true;
+        }
+        for (int i = 1; i <= listedCount; i++)
+            result->said.push_back("cell " + std::to_string(listedCells[i]) + " (place " + std::to_string(i) + ") <- zoombini "
+                                   + std::to_string(plan.zoombiniAt[i]));
+        result->said.push_back("(found in " + std::to_string(plan.nodes) + " nodes)");
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "seat" && w[2] == "right") {
+        /* `stone seat right`: the next Zoombini of the arrangement onto its cell (in cell order) */
+        StonePlan plan;
+
+        if (!stonePlanFor(&plan)) {
+            result->error = "stone seat: no arrangement works";
+            return true;
+        }
+        for (int i = 1; i <= listedCount; i++) {
+            View *view = plan.views[plan.zoombiniAt[i]];
+
+            if (hexCells[listedCells[i]].snoid != view->id) {
+                result->commands.push_back("drag zoombini " + std::to_string(plan.zoombiniAt[i]) + " place " + std::to_string(i));
+                result->commands.push_back("wait 1000"); /* (the game takes the drop a moment after the release) */
+                result->said.push_back("stone: zoombini " + std::to_string(plan.zoombiniAt[i]) + " to place " + std::to_string(i));
+                return true;
+            }
+        }
+        result->error = "stone seat: everyone is on their cell";
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "seat" && w[2] == "wrong") {
+        /* `stone seat wrong`: a Zoombini that shares no feature with a seated one, on the free cell the other side of their stone */
+        std::vector<View *> views = zbDebugZoombiniViews();
+        std::vector<StoneEdge> edges = stoneEdges();
+
+        for (const StoneEdge &e : edges)
+            for (int pair = 0; pair < 2; pair++) {
+                int seated = pair ? e.b : e.a, free = pair ? e.a : e.b;
+                View *other = findView(hexCells[listedCells[seated]].snoid);
+
+                if (!other || hexCells[listedCells[free]].snoid > 0 || hexCells[listedCells[free]].snoid == -1)
+                    continue;
+                for (size_t z = 0; z < views.size(); z++) {
+                    bool onACell = false;
+
+                    for (int i = 1; i <= listedCount; i++)
+                        onACell = onACell || hexCells[listedCells[i]].snoid == views[z]->id;
+                    if (!onACell && viewSnoid(views[z])->features[e.feature] != viewSnoid(other)->features[e.feature]) {
+                        result->commands.push_back("drag zoombini " + std::to_string(z) + " place " + std::to_string(free));
+                        result->commands.push_back("wait 1000");
+                        result->said.push_back("stone: zoombini " + std::to_string(z) + " to place " + std::to_string(free) + " (wrong)");
+                        return true;
+                    }
+                }
+            }
+        result->error = "stone seat wrong: no free cell beside a seated Zoombini has one that misfits";
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "send" && w[2] == "right") {
+        /* `stone send right [N]`: N times (all of them), the next Zoombini to its cell */
+        int count = w.size() >= 4 ? atoi(w[3].c_str()) : listedCount;
+
+        for (int i = 0; i < count; i++)
+            result->commands.push_back("stone seat right");
+        return true;
+    }
+    result->error = "stone: expected `stone`, `stone dump`, `stone seat right` or `stone send right [N]`";
+    return true;
+}
+
 } /* namespace */
 
 bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
@@ -804,6 +1015,8 @@ bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
         return ferryCommand(w, result);
     if (!w.empty() && w[0] == "toads" && w.size() > 1)
         return toadsCommand(w, result);
+    if (!w.empty() && w[0] == "stone")
+        return stoneCommand(w, result);
     return false;
 }
 
@@ -872,6 +1085,10 @@ bool zbOracleValue(const std::string &name, long *value)
                     onBoard++; /* the toads on the board: set down and hopping */
             }
         *value = onBoard;
+        return true;
+    }
+    if (name == "stoneLit") {
+        *value = stoneOpen_() ? stoneLit() : 0; /* the Zoombinis on lit cells */
         return true;
     }
     return false;
