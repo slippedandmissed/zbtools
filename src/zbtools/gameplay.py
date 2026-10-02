@@ -30,10 +30,13 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
+import threading
 import time
 import tomllib
-from concurrent.futures import ThreadPoolExecutor
+from collections.abc import Callable
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Annotated, NamedTuple
@@ -309,7 +312,12 @@ def compare(
     return found
 
 
-def run_case(name: str, case: Case, settings: Settings) -> Outcome:
+def run_case(
+    name: str,
+    case: Case,
+    settings: Settings,
+    on_retry: Callable[[str], None] = lambda _: None,
+) -> Outcome:
     """Plays a case, again if its pictures differ, and compares them with the baselines."""
     started = time.monotonic()
     limit = case.tolerance if settings.tolerance is None else settings.tolerance
@@ -321,6 +329,8 @@ def run_case(name: str, case: Case, settings: Settings) -> Outcome:
         outcome.pictures = compare(name, played.pictures, settings.baselines, limit)
         if outcome.problem or not outcome.failed:
             break
+        if attempt < settings.retries:
+            on_retry(name)
     outcome.seconds = time.monotonic() - started
     return outcome
 
@@ -479,20 +489,69 @@ def prepare(output: Path) -> shots.Setup:
     return shots.Setup(nodes[-1], program, paths.PACKED_ASSETS_DIR, output)
 
 
-def say(outcome: Outcome, rebaselined: tuple[int, int] | None) -> None:
-    """Prints how a case went."""
+class Progress:
+    """What the run prints as it goes, so that a long run (CI's) can be watched: each case as it
+    starts and as it finishes (with the count and the time so far), and a line every
+    `HEARTBEAT` seconds naming the cases still running when nothing else was said."""
+
+    def __init__(self, total: int) -> None:
+        self.total = total
+        self.finished = 0
+        self.began = time.monotonic()
+        self.running: dict[str, float] = {}
+        self.lock = threading.Lock()
+
+    def clock(self) -> str:
+        seconds = int(time.monotonic() - self.began)
+        return f"{seconds // 60:02d}:{seconds % 60:02d}"
+
+    def started(self, name: str) -> None:
+        with self.lock:
+            self.running[name] = time.monotonic()
+            print(f"        start   {name}  [{self.clock()}]")
+
+    def retrying(self, name: str) -> None:
+        with self.lock:
+            print(
+                f"        retry   {name}: its pictures differed, playing it again  [{self.clock()}]"
+            )
+
+    def finish(self, outcome: Outcome, rebaselined: tuple[int, int] | None) -> None:
+        with self.lock:
+            self.running.pop(outcome.name, None)
+            self.finished += 1
+            count = f"[{self.finished}/{self.total}  {self.clock()}]"
+            say(outcome, rebaselined, count)
+
+    def heartbeat(self) -> None:
+        with self.lock:
+            now = time.monotonic()
+            names = ", ".join(f"{n} ({int(now - t)}s)" for n, t in self.running.items())
+            done = f"{self.finished}/{self.total} done"
+            print(f"        ...     {done}, running: {names}  [{self.clock()}]")
+
+
+# Seconds of silence after which the run says which cases it is waiting for.
+HEARTBEAT = 60
+
+
+def say(outcome: Outcome, rebaselined: tuple[int, int] | None, count: str = "") -> None:
+    """Prints how a case went (`count`: where the run is, as the first thing on the line)."""
+    seconds = f" ({outcome.seconds:.0f} s)"
+    prefix = f"{count} " if count else ""
     if outcome.problem:
-        print(f"FAILED  {outcome.name}: {outcome.problem}")
+        print(f"{prefix}FAILED  {outcome.name}: {outcome.problem}{seconds}")
     elif rebaselined is not None:
-        print(f"ok      {outcome.name}: {rebaselined[0]} written, {rebaselined[1]} unchanged")
+        done = f"{rebaselined[0]} written, {rebaselined[1]} unchanged"
+        print(f"{prefix}ok      {outcome.name}: {done}{seconds}")
     elif outcome.failed:
-        print(f"FAILED  {outcome.name}")
+        print(f"{prefix}FAILED  {outcome.name}{seconds}")
         for picture in outcome.pictures:
             if picture.failed:
                 print(f"          {picture.name}: {picture.note}")
     else:
         tries = f" (needed {outcome.attempts} tries)" if outcome.attempts > 1 else ""
-        print(f"ok      {outcome.name}{tries}")
+        print(f"{prefix}ok      {outcome.name}{tries}{seconds}")
 
 
 def remove_stale(stale: list[tuple[str, str]]) -> None:
@@ -503,6 +562,43 @@ def remove_stale(stale: list[tuple[str, str]]) -> None:
     for directory in BASELINES.glob("*"):
         if directory.is_dir() and not any(directory.iterdir()):
             directory.rmdir()
+
+
+def play_all(  # noqa: PLR0917 (what a run is made of)
+    chosen: list[str],
+    cases: dict[str, Case],
+    settings: Settings,
+    jobs: int,
+    output: Path,
+    writing: bool,
+) -> tuple[list[Outcome], int]:
+    """Plays the cases `jobs` at a time, saying how each goes as it finishes, and writes the
+    baselines if `writing`: the outcomes in the cases' order, and how many pictures were written."""
+    outcomes: list[Outcome] = []
+    written = 0
+    progress = Progress(len(chosen))
+
+    def play_case(name: str) -> Outcome:
+        progress.started(name)
+        return run_case(name, cases[name], settings, progress.retrying)
+
+    with ThreadPoolExecutor(jobs) as pool:
+        waiting: set[Future[Outcome]] = {pool.submit(play_case, n) for n in chosen}
+        while waiting:
+            done, waiting = wait(waiting, timeout=HEARTBEAT, return_when=FIRST_COMPLETED)
+            if not done:
+                progress.heartbeat()
+            for future in done:
+                outcome = future.result()
+                outcomes.append(outcome)
+                rebaselined = (
+                    None if outcome.problem or not writing else rebaseline(outcome, BASELINES)
+                )
+                written += rebaselined[0] if rebaselined else 0
+                progress.finish(outcome, rebaselined)
+                write_failures(outcome, output)
+    outcomes.sort(key=lambda o: chosen.index(o.name))  # (the report keeps the cases' order)
+    return outcomes, written
 
 
 @app.command()
@@ -533,6 +629,8 @@ def main(  # noqa: PLR0917 (a CLI's options)
     ] = None,
 ) -> None:
     """Play every case and compare its pictures with the baselines (or write them)."""
+    if isinstance(sys.stdout, io.TextIOWrapper):
+        sys.stdout.reconfigure(line_buffering=True)  # (a pipe, as in CI, would hold it back)
     cases = load_cases()
     wrong = problems_with(cases)
     if wrong:
@@ -549,19 +647,7 @@ def main(  # noqa: PLR0917 (a CLI's options)
         0.0 if rebaseline_pictures else tolerance,
         0 if rebaseline_pictures else retries,
     )
-    outcomes: list[Outcome] = []
-    written = 0
-    with ThreadPoolExecutor(jobs) as pool:
-        for outcome in pool.map(lambda n: run_case(n, cases[n], settings), chosen):
-            outcomes.append(outcome)
-            done = (
-                None
-                if outcome.problem or not rebaseline_pictures
-                else rebaseline(outcome, BASELINES)
-            )
-            written += done[0] if done else 0
-            say(outcome, done)
-            write_failures(outcome, output)
+    outcomes, written = play_all(chosen, cases, settings, jobs, output, rebaseline_pictures)
     stale = sorted(baseline_files() - expected_baselines(cases)) if names is None else []
     stale_names = [f"{c}/{p}.png" for c, p in stale]
     mode = "rebaseline" if rebaseline_pictures else "compare"

@@ -222,3 +222,20 @@ def test_the_summary_links_to_the_workflow_run_when_there_is_one(
     text = gameplay.render_summary([failing_outcome(tmp_path)], "compare", [])
     assert "(https://github.com/owner/repo/actions/runs/42#artifacts)" in text
     assert "gameplay-report.html" in text
+
+
+def test_progress_says_what_starts_finishes_and_is_still_running(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    progress = gameplay.Progress(2)
+    progress.started("slow")
+    progress.started("quick")
+    progress.heartbeat()
+    quick = gameplay.Outcome("quick", case())
+    progress.finish(quick, None)
+    out = capsys.readouterr().out
+    assert "start   slow" in out
+    assert "0/2 done, running: slow (0s), quick (0s)" in out
+    assert "[1/2  00:00] ok      quick" in out
+    progress.heartbeat()
+    assert "1/2 done, running: slow" in capsys.readouterr().out
