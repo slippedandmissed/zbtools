@@ -86,6 +86,7 @@
 - [Debugging the port](port/debugging.md)
 - [Debug tools](port/debug-tools.md)
 - [Instrumented gameplay tests](port/gameplay-tests.md)
+- [Gameplay test coverage map](port/gameplay-coverage.md)
 - [Quirks](port/quirks.md)
 
 # Appendix
