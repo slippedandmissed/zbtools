@@ -9,6 +9,8 @@ commands = "scene 1; wait 5000; assert scene 1; assert practice 0; assert picked
 [open-isle]
 description = "Zoombini Isle opens with no Zoombinis made or waiting"
 commands = "scene 3; wait 5000; assert scene 3; assert enoughToLeaveChosen 0; assert enoughToLeave 16; assert zoombinis 0; screenshot isle"
+# the sea's colours cycle and the party idles, so on a busy machine they differ (3-7% of the pixels in a stressed run)
+tolerance = 0.10
 
 [open-shelter-rock]
 description = "Shelter Rock opens with a party of sixteen: enough to set out"
@@ -41,7 +43,8 @@ commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 10; wait 
 [open-toads]
 description = "Titanic Tattooed Toads opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
 commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 11; wait 5000; assert scene 11; assert lillyLevel 2; assert padsPlaced 0; assert zoombinis 8; screenshot toads"
-
+# a toad hops and the Zoombinis idle (2.2% differed in a stressed run)
+tolerance = 0.04
 [open-stone-rise]
 description = "Stone Rise opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
 commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 12; wait 5000; assert scene 12; assert stoneRiseLevel 1; assert slidesGoReady 0; assert zoombinis 8; screenshot stone-rise"
@@ -57,7 +60,8 @@ commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 14; wait 
 [open-mudball-wall]
 description = "Mudball Wall opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
 commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 15; wait 5000; assert scene 15; assert netLevel 2; assert zoombinis 8; screenshot mudball"
-
+# the Zoombinis and the machine idle (1.1% differed in a stressed run)
+tolerance = 0.03
 [open-lions-lair]
 description = "The Lion's Lair opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
 commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 16; wait 5000; assert scene 16; assert cavesLevel 4; assert chosenCount 8; assert cavesPlacedCount 0; assert zoombinis 8; screenshot lion"
@@ -73,12 +77,11 @@ commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 18; wait 
 [open-hidden-targets]
 description = "The hidden target-shooting game opens (scene 20) with its score and ships"
 commands = "party 8; scene 20; wait 5000; assert scene 20; assert targetScore 0; assert shipsLeft 3; screenshot targets"
-
+# the targets drift (0.5% differed in a stressed run)
+tolerance = 0.02
 [open-hidden-catch]
 description = "The hidden catching game opens (scene 19)"
 commands = "party 8; scene 19; wait 5000; assert scene 19; assert party 8; screenshot catch"
-# Zoombinis cross at timed moments, so the picture may differ a little
-tolerance = 0.15
 
 [open-hidden-catch-21]
 description = "The catching game's second entry (scene 21) opens"
@@ -99,7 +102,9 @@ commands = "debug on; practice 1; scene 1; wait 4000; screenshot practice-1; key
 
 [isle-make-party-and-send]
 description = "Sixteen Zoombinis are made on the isle; the go button sends them to the ship"
-commands = "debug on; scene 3; wait 6000; click 25 323; wait 250; click 25 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 65 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 105 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 145 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 185 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 65 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 105 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 145 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 185 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 25 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 105 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 145 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 185 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 25 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 65 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 145 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; wait 3000; screenshot party-made; click 618 458; wait 4500; screenshot boarding"
+commands = "debug on; scene 3; wait 6000; click 25 323; wait 250; click 25 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 65 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 105 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 145 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 185 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 65 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 105 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 145 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 185 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 25 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 105 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; click 65 323; wait 250; click 145 367; wait 250; click 105 410; wait 250; click 185 455; wait 250; click 232 322; wait 1500; click 105 323; wait 250; click 185 367; wait 250; click 185 410; wait 250; click 105 455; wait 250; click 232 322; wait 1500; click 145 323; wait 250; click 25 367; wait 250; click 65 410; wait 250; click 25 455; wait 250; click 232 322; wait 1500; click 185 323; wait 250; click 65 367; wait 250; click 145 410; wait 250; click 145 455; wait 250; click 232 322; wait 1500; click 25 323; wait 250; click 145 367; wait 250; click 25 410; wait 250; click 65 455; wait 250; click 232 322; wait 1500; wait 3000; screenshot party-made; click 618 458; wait 4500; screenshot boarding; wait scene 2; assert journeyFrom 3; assert journeyTo 7; wait scene 7; assert scene 7; assert zoombinis 16"
+# the sea's colours cycle and the party idles, so on a busy machine the pictures differ (3-7% of the pixels in a stressed run)
+tolerance = 0.10
 seconds = 150
 
 [camp-drag]
@@ -182,6 +187,85 @@ commands = "records 16; scene 6; wait 8000; screenshot town; click 270 360 move;
 [journeys]
 description = "The journey screens between places: to a place of the next group, and to Zoombiniville"
 commands = "party 8; scene 9; wait 3000; transitions off; scene 4 map; wait 4000; assert scene 2; assert journeyFrom 9; assert journeyTo 4; screenshot to-the-ferry; wait scene 4; assert journeyFrom 2; scene 18; wait 3000; scene 6 map; wait 4000; assert scene 2; assert journeyFrom 18; assert journeyTo 6; screenshot to-the-town; wait scene 6; assert scene 6"
+seconds = 120
+
+# --- Transitions: leaving a scene by the player's own click and arriving where the code says. (A puzzle's own
+# exits need the puzzle won: they belong to the puzzle's cases.) The intro cases set the saved scene (offset 0xcc of the
+# game state) while the logo plays; `scene 0` must not be used there, it opens the intro a second time.
+
+[transition-intro-fresh-game]
+description = "The logo is skipped by a click: a new game goes to Zoombini Isle"
+commands = "wait 2000; assert scene 0; click 300 300; wait scene 3; assert scene 3; assert zoombinis 0"
+
+[transition-intro-resumes-in-a-puzzle]
+description = "The logo is skipped: a saved game that was in a puzzle, with a party, resumes in it"
+commands = "wait 2000; state set 0xcc 7 2; party 8; click 300 300; wait scene 7; assert scene 7; assert zoombinis 8"
+
+[transition-intro-puzzle-without-party]
+description = "A saved game that was in a puzzle but has no party goes to Zoombini Isle"
+commands = "wait 2000; state set 0xcc 7 2; click 300 300; wait scene 3; assert scene 3"
+
+[transition-intro-resumes-at-camp]
+description = "A saved game that was at Shade Tree resumes there"
+commands = "wait 2000; state set 0xcc 5 2; click 300 300; wait scene 5; assert scene 5"
+
+[transition-intro-resumes-in-town]
+description = "A saved game that was in Zoombiniville resumes there"
+commands = "wait 2000; state set 0xcc 6 2; click 300 300; wait scene 6; assert scene 6"
+
+[transition-intro-resumes-at-map]
+description = "A saved game that was at the map resumes there"
+commands = "wait 2000; state set 0xcc 1 2; click 300 300; wait scene 1; assert scene 1"
+
+[transition-isle-to-map]
+description = "The isle's map button goes to the map"
+commands = "scene 3; wait 5000; click 620 421; wait scene 1; assert scene 1"
+
+[transition-map-walk]
+description = "The map's hotspots: the camps and the town are locked until their group is left, then open, and each leaves by its own map button; the isle always opens"
+commands = "scene 1; wait 4000; party 8; click 236 269; wait 2500; assert scene 1; click 442 211; wait 2500; assert scene 1; click 578 65; wait 2500; assert scene 1; state set 0x50 1 1; state set 0x52 1 1; state set 0x51 1 1; click 236 269; wait scene 4; wait 3000; assert scene 4; click 618 366; wait scene 1; wait 1500; click 442 211; wait scene 5; wait 3000; assert scene 5; click 618 376; wait scene 1; wait 1500; click 578 65; wait scene 6; wait 3000; assert scene 6; click 620 421; wait scene 1; wait 1500; click 60 400; wait scene 3; assert scene 3"
+seconds = 120
+
+[transition-shelter-rock-set-out-group-2]
+description = "Shelter Rock with a full party: its first set-out button goes to group 2 (the ferry) by the journey scene"
+commands = "party 16; scene 4; wait 6000; click 618 328; wait scene 2; assert journeyFrom 4; assert journeyTo 10; wait scene 10; assert scene 10; assert zoombinis 16"
+
+[transition-shelter-rock-set-out-group-3]
+description = "Shelter Rock: its second set-out button goes to group 3 (the fleens)"
+commands = "party 16; scene 4; wait 6000; click 618 404; wait scene 2; assert journeyFrom 4; assert journeyTo 13; wait scene 13; assert scene 13; assert zoombinis 16"
+
+[transition-shelter-rock-not-enough]
+description = "Shelter Rock with too few Zoombinis chosen: the set-out button only remarks"
+commands = "party 8; scene 4; wait 6000; assert campEnoughChosen 0; click 618 328; wait 4000; assert scene 4; click 618 404; wait 4000; assert scene 4"
+
+[transition-shelter-rock-to-map]
+description = "Shelter Rock's map button goes to the map"
+commands = "party 8; scene 4; wait 6000; click 618 366; wait scene 1; assert scene 1"
+
+[transition-shade-tree-set-out]
+description = "Shade Tree with a full party: set out for group 4 (the lion) by the journey scene"
+commands = "party 16; scene 5; wait 6000; click 618 338; wait scene 2; assert journeyFrom 5; assert journeyTo 16; wait scene 16; assert scene 16; assert zoombinis 16"
+
+[transition-shade-tree-not-enough]
+description = "Shade Tree with too few Zoombinis chosen: the set-out button only remarks"
+commands = "party 8; scene 5; wait 6000; click 618 338; wait 4000; assert scene 5"
+
+[transition-shade-tree-to-map]
+description = "Shade Tree's map button goes to the map"
+commands = "party 8; scene 5; wait 6000; click 618 376; wait scene 1; assert scene 1"
+
+[transition-journey-click-skips]
+description = "A click on the journey scene goes on at once, not after its 300 ticks"
+commands = "party 16; scene 4; wait 6000; click 618 328; wait scene 2; wait 1500; assert scene 2; click 300 300; wait 1500; assert scene 10"
+
+[transition-practice-mode]
+description = "Practice mode: a locked camp stays shut, a puzzle opens at the chosen level, leaving goes to the map, and nothing of the journey is saved"
+commands = "debug on; practice 2; party 8; scene 1; wait 4000; click 236 269; wait 2500; assert scene 1; click 170 343; wait scene 7; wait 3000; assert practice 2; click 618 415; wait scene 1; wait 1500; assert practice 2; assert state:0x50 0; assert state:0x51 0; assert state:0x52 0; assert level1 1"
+seconds = 120
+
+[transition-hidden-games-leave]
+description = "The hidden games' leave buttons go to the map"
+commands = "party 8; scene 20; wait 4000; click 618 458; wait scene 1; assert scene 1; scene 19; wait 4000; click 24 24; wait scene 1; assert scene 1; scene 21; wait 4000; click 24 24; wait scene 1; assert scene 1"
 seconds = 120
 
 [dialog-options]

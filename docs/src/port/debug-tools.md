@@ -42,7 +42,7 @@ The commands name things from the game's own structure; this is what they are (t
 
 | # | Scene | What it is | Notes for `scene N` |
 | --- | --- | --- | --- |
-| 0 | intro | the logo movie, then on | the game starts here |
+| 0 | intro | the logo movie, then on | the game starts here: do not jump to it while it is showing, which opens the intro a second time and corrupts the heap (set the saved scene during the logo and click instead) |
 | 1 | map | the world map | |
 | 2 | journey | the party travelling between places | entered with a route chosen by the game; not useful to jump to |
 | 3 | isle | Zoombini Isle: making the Zoombinis | |
