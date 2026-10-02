@@ -16,7 +16,7 @@ Workflows are in `.github/workflows/`.
 | Job | Does |
 | --- | --- |
 | `package` | `package.yml`: every target builds and packages (below) |
-| `deploy` | deploys the `browser_wasm` site it built to Cloudflare Pages with `wrangler-action`. Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; variable `CLOUDFLARE_PAGES_PROJECT` |
+| `deploy-web-port` | deploys the `browser_wasm` site it built to Cloudflare Pages with `wrangler-action`. Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; variable `CLOUDFLARE_PAGES_PROJECT` |
 | `release` | creates a GitHub release, `v<version>-build.<run number>`, with the package of every player target attached (macOS, Windows x86 and x64, Linux x64 and arm64) and generated notes. The web page and `headless_wasm` aren't released: one is deployed, the other is the testing build |
 | `deploy-docs` | deploys this handbook (`mdbook build docs`, output `build/book/`) to a second Cloudflare Pages project, with the same two secrets and the variable `CLOUDFLARE_DOCS_PAGES_PROJECT` |
 | `report` | the progress report: `extract-game`, `toolchain setup`, `ghidra setup`, `runtime-symbols`, `classes`, then `uv run report --no-embed-binary`, uploaded as the artifact `report`. Needs the game CD and the Borland CD, which the [game-data action](#the-game-data-action) fetches |
@@ -48,7 +48,7 @@ Each player package is uploaded as the artifact `zoombinis-<target>` (kept 14 da
 | `gameplay-pictures` | pull requests (`gameplay`), when it fails | the run's artifacts | 14 days | the failing pictures as files: the new one, and baseline, new and differences side by side |
 | `report` | `main` (`report`) | the run's artifacts | 14 days | the progress report, without the original's disassembly: `index.html` (progress by region, module and file, and the data), `functions.html` (every function and its status) and a page per source file, with `style.css`. Build the full one locally with `uv run report` |
 | a GitHub release, `v<version>-build.<n>` | `main` (`release`) | Releases | until deleted | the five `zoombinis-<target>` packages, unzipped, with generated notes |
-| the web site | `main` (`deploy`) | Cloudflare Pages (the project in `CLOUDFLARE_PAGES_PROJECT`) | the latest | the game as played in a browser |
+| the web site | `main` (`deploy-web-port`) | Cloudflare Pages (the project in `CLOUDFLARE_PAGES_PROJECT`) | the latest | the game as played in a browser |
 | the handbook | `main` (`deploy-docs`) | Cloudflare Pages (the project in `CLOUDFLARE_DOCS_PAGES_PROJECT`) | the latest | this book |
 
 The `regressions` job (pull requests) produces nothing: it passes or fails. `python`, `book` and the `headless_wasm` build (`package.yml`, built only, as the testing build) produce nothing either.
