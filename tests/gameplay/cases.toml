@@ -1,5 +1,5 @@
-# Visual test cases (`uv run visual`; see the handbook's "Visual tests"): each is a debug-command script that plays
-# something and takes pictures with `screenshot NAME`, compared with tests/visual/baselines/<case>/<NAME>.png.
+# Gameplay test cases (`uv run gameplay`; see the handbook's "Instrumented gameplay tests"): each is a debug-command script that plays
+# something and takes pictures with `screenshot NAME`, compared with tests/gameplay/baselines/<case>/<NAME>.png.
 # Every case starts by turning "sticky mouse" off and seeding the game's random numbers (`seed`).
 
 [scenes-camps-and-town]

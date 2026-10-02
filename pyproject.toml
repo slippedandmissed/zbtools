@@ -45,7 +45,7 @@ movie-check = "zbtools.qb32:app"
 port = "zbtools.port:app"
 book = "zbtools.book:app"
 shots = "zbtools.shots:app"
-visual = "zbtools.visual:app"
+gameplay = "zbtools.gameplay:app"
 
 [build-system]
 requires = ["uv_build>=0.11,<0.12"]

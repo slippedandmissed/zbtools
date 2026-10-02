@@ -1,23 +1,23 @@
-"""Visual regression tests: the headless port plays scripted flows and its screenshots are
+"""Instrumented gameplay tests: the headless port plays scripted flows and its screenshots are
 compared with baselines checked into the repository.
 
-`tests/visual/cases.toml` holds the cases: each a string of debug commands (the handbook's
+`tests/gameplay/cases.toml` holds the cases: each a string of debug commands (the handbook's
 "Debug tools") that takes the game to a scene and plays something (a puzzle won or lost in some
 way, a dialog, a journey), with `screenshot NAME` wherever a picture should be compared and
-`assert` wherever the game's own state should be checked. `uv run visual` runs every case on the
+`assert` wherever the game's own state should be checked. `uv run gameplay` runs every case on the
 headless build (`uv run port build headless_wasm`), several at a time, each on a fresh C: drive,
-and compares each screenshot with `tests/visual/baselines/<case>/<NAME>.png`. It fails if a
+and compares each screenshot with `tests/gameplay/baselines/<case>/<NAME>.png`. It fails if a
 picture differs by more than the tolerance, if a baseline is missing or no case takes it, or if
-a case crashes, fails an `assert` or does not finish. `uv run visual --rebaseline` writes the
+a case crashes, fails an `assert` or does not finish. `uv run gameplay --rebaseline` writes the
 pictures instead (only those that changed, so git sees only real differences) and removes
 baselines no case takes any more.
 
-Every run writes a report, build/visual/report.html: one self-contained file (the pictures are
+Every run writes a report, build/gameplay/report.html: one self-contained file (the pictures are
 inside it) with a summary, every case, and for each failing picture the baseline, the new
 picture and the differences highlighted, plus the game's own output for a case that crashed. The
 same summary as Markdown goes to `--summary FILE` (the pull request pipeline passes the job's
 summary file, which GitHub shows on the run's page). The failing pictures are also written to
-build/visual/<case>/ as `NAME.actual.png` and `NAME.diff.png` (baseline | new | differences).
+build/gameplay/<case>/ as `NAME.actual.png` and `NAME.diff.png` (baseline | new | differences).
 
 The game runs in real time on the host, but with `seed` (every case starts with one) and the
 scripts' waits its pictures are repeatable: a case whose pictures differ is played again before
@@ -30,10 +30,13 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
+import threading
 import time
 import tomllib
-from concurrent.futures import ThreadPoolExecutor
+from collections.abc import Callable
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Annotated, NamedTuple
@@ -45,14 +48,14 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 from zbtools import assets, paths, port, shots
 
-CASES = paths.REPO_ROOT / "tests" / "visual" / "cases.toml"
-BASELINES = paths.REPO_ROOT / "tests" / "visual" / "baselines"
+CASES = paths.REPO_ROOT / "tests" / "gameplay" / "cases.toml"
+BASELINES = paths.REPO_ROOT / "tests" / "gameplay" / "baselines"
 # A pixel differs when some channel differs by more than this (of 255); a picture fails when more
 # than a case's tolerance of its pixels differ.
 CHANNEL_DELTA = 24
 TOLERANCE = 0.005
 # The most the report embeds of failing pictures (bytes of data URIs): a change that breaks every
-# picture must not make a report too big to open (the files are in build/visual/ either way).
+# picture must not make a report too big to open (the files are in build/gameplay/ either way).
 REPORT_BUDGET = 24_000_000
 _NAME = re.compile(r"[a-z0-9][a-z0-9-]*")
 _RUN_VARIABLES = ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_RUN_ID")
@@ -251,7 +254,7 @@ _NOISE = ("miniwin: GetProcAddress", "mCreateFile", "miniwin: CreateFile")
 
 def play(name: str, case: Case, setup: shots.Setup) -> Play:
     """Runs one case on a fresh C: drive; its pictures, or what went wrong."""
-    with tempfile.TemporaryDirectory(prefix=f"visual-{name}-") as work:
+    with tempfile.TemporaryDirectory(prefix=f"gameplay-{name}-") as work:
         c = port.lay_out_drives(c=Path(work) / "c")
         recipe = shots.Recipe(commands=case.script, seconds=case.seconds)
         run = subprocess.run(
@@ -293,7 +296,7 @@ def compare(
     for picture, actual in played.items():
         path = baselines / name / f"{picture}.png"
         if not path.exists():
-            note = f"no baseline (run `uv run visual --rebaseline {name}`)"
+            note = f"no baseline (run `uv run gameplay --rebaseline {name}`)"
             found.append(Picture(picture, actual, None, 1.0, note))
             continue
         with Image.open(path) as image:
@@ -309,7 +312,12 @@ def compare(
     return found
 
 
-def run_case(name: str, case: Case, settings: Settings) -> Outcome:
+def run_case(
+    name: str,
+    case: Case,
+    settings: Settings,
+    on_retry: Callable[[str], None] = lambda _: None,
+) -> Outcome:
     """Plays a case, again if its pictures differ, and compares them with the baselines."""
     started = time.monotonic()
     limit = case.tolerance if settings.tolerance is None else settings.tolerance
@@ -321,6 +329,8 @@ def run_case(name: str, case: Case, settings: Settings) -> Outcome:
         outcome.pictures = compare(name, played.pictures, settings.baselines, limit)
         if outcome.problem or not outcome.failed:
             break
+        if attempt < settings.retries:
+            on_retry(name)
     outcome.seconds = time.monotonic() - started
     return outcome
 
@@ -406,7 +416,7 @@ def render_html(outcomes: list[Outcome], mode: str, budget: int = REPORT_BUDGET)
     )
     failed = [o for o in outcomes if o.failed]
     passed = [o for o in outcomes if not o.failed]
-    return environment.get_template("visual.html.j2").render(
+    return environment.get_template("gameplay.html.j2").render(
         mode=mode,
         failed=failed,
         passed=passed,
@@ -430,9 +440,10 @@ def render_summary(outcomes: list[Outcome], mode: str, stale: list[str]) -> str:
     failed = [o for o in outcomes if o.failed]
     flaky = [o for o in outcomes if not o.failed and o.attempts > 1]
     if mode == "rebaseline":
-        lines = [f"## Visual tests: baselines written for {len(outcomes)} cases", ""]
+        lines = [f"## Gameplay tests: baselines written for {len(outcomes)} cases", ""]
     else:
-        lines = [f"## Visual tests: {len(outcomes) - len(failed)} of {len(outcomes)} cases passed"]
+        passed = len(outcomes) - len(failed)
+        lines = [f"## Gameplay tests: {passed} of {len(outcomes)} cases passed"]
         lines.append("")
     if failed or stale:
         lines += ["| Case | Result |", "| --- | --- |"]
@@ -444,14 +455,14 @@ def render_summary(outcomes: list[Outcome], mode: str, stale: list[str]) -> str:
         lines += [
             f"| `{item}` | a baseline no case takes (`--rebaseline` removes it) |" for item in stale
         ]
-        where = f"[`visual-report.html`]({run_url()}#artifacts)" if run_url() else "`report.html`"
+        where = f"[`gameplay-report.html`]({run_url()}#artifacts)" if run_url() else "`report.html`"
         lines += [
             "",
             "The baseline, the new picture and the differences of each failing picture are in"
             f" {where} (one file, with the pictures inside it: download it from the run's artifacts"
             " and open it in a browser).",
-            "If the change is intended, run `uv run visual --rebaseline` and commit"
-            " `tests/visual/baselines/`.",
+            "If the change is intended, run `uv run gameplay --rebaseline` and commit"
+            " `tests/gameplay/baselines/`.",
         ]
     if flaky:
         lines += ["", "Passed only on a second try: " + ", ".join(f"`{o.name}`" for o in flaky)]
@@ -478,20 +489,69 @@ def prepare(output: Path) -> shots.Setup:
     return shots.Setup(nodes[-1], program, paths.PACKED_ASSETS_DIR, output)
 
 
-def say(outcome: Outcome, rebaselined: tuple[int, int] | None) -> None:
-    """Prints how a case went."""
+class Progress:
+    """What the run prints as it goes, so that a long run (CI's) can be watched: each case as it
+    starts and as it finishes (with the count and the time so far), and a line every
+    `HEARTBEAT` seconds naming the cases still running when nothing else was said."""
+
+    def __init__(self, total: int) -> None:
+        self.total = total
+        self.finished = 0
+        self.began = time.monotonic()
+        self.running: dict[str, float] = {}
+        self.lock = threading.Lock()
+
+    def clock(self) -> str:
+        seconds = int(time.monotonic() - self.began)
+        return f"{seconds // 60:02d}:{seconds % 60:02d}"
+
+    def started(self, name: str) -> None:
+        with self.lock:
+            self.running[name] = time.monotonic()
+            print(f"        start   {name}  [{self.clock()}]")
+
+    def retrying(self, name: str) -> None:
+        with self.lock:
+            print(
+                f"        retry   {name}: its pictures differed, playing it again  [{self.clock()}]"
+            )
+
+    def finish(self, outcome: Outcome, rebaselined: tuple[int, int] | None) -> None:
+        with self.lock:
+            self.running.pop(outcome.name, None)
+            self.finished += 1
+            count = f"[{self.finished}/{self.total}  {self.clock()}]"
+            say(outcome, rebaselined, count)
+
+    def heartbeat(self) -> None:
+        with self.lock:
+            now = time.monotonic()
+            names = ", ".join(f"{n} ({int(now - t)}s)" for n, t in self.running.items())
+            done = f"{self.finished}/{self.total} done"
+            print(f"        ...     {done}, running: {names}  [{self.clock()}]")
+
+
+# Seconds of silence after which the run says which cases it is waiting for.
+HEARTBEAT = 60
+
+
+def say(outcome: Outcome, rebaselined: tuple[int, int] | None, count: str = "") -> None:
+    """Prints how a case went (`count`: where the run is, as the first thing on the line)."""
+    seconds = f" ({outcome.seconds:.0f} s)"
+    prefix = f"{count} " if count else ""
     if outcome.problem:
-        print(f"FAILED  {outcome.name}: {outcome.problem}")
+        print(f"{prefix}FAILED  {outcome.name}: {outcome.problem}{seconds}")
     elif rebaselined is not None:
-        print(f"ok      {outcome.name}: {rebaselined[0]} written, {rebaselined[1]} unchanged")
+        done = f"{rebaselined[0]} written, {rebaselined[1]} unchanged"
+        print(f"{prefix}ok      {outcome.name}: {done}{seconds}")
     elif outcome.failed:
-        print(f"FAILED  {outcome.name}")
+        print(f"{prefix}FAILED  {outcome.name}{seconds}")
         for picture in outcome.pictures:
             if picture.failed:
                 print(f"          {picture.name}: {picture.note}")
     else:
         tries = f" (needed {outcome.attempts} tries)" if outcome.attempts > 1 else ""
-        print(f"ok      {outcome.name}{tries}")
+        print(f"{prefix}ok      {outcome.name}{tries}{seconds}")
 
 
 def remove_stale(stale: list[tuple[str, str]]) -> None:
@@ -502,6 +562,43 @@ def remove_stale(stale: list[tuple[str, str]]) -> None:
     for directory in BASELINES.glob("*"):
         if directory.is_dir() and not any(directory.iterdir()):
             directory.rmdir()
+
+
+def play_all(  # noqa: PLR0917 (what a run is made of)
+    chosen: list[str],
+    cases: dict[str, Case],
+    settings: Settings,
+    jobs: int,
+    output: Path,
+    writing: bool,
+) -> tuple[list[Outcome], int]:
+    """Plays the cases `jobs` at a time, saying how each goes as it finishes, and writes the
+    baselines if `writing`: the outcomes in the cases' order, and how many pictures were written."""
+    outcomes: list[Outcome] = []
+    written = 0
+    progress = Progress(len(chosen))
+
+    def play_case(name: str) -> Outcome:
+        progress.started(name)
+        return run_case(name, cases[name], settings, progress.retrying)
+
+    with ThreadPoolExecutor(jobs) as pool:
+        waiting: set[Future[Outcome]] = {pool.submit(play_case, n) for n in chosen}
+        while waiting:
+            done, waiting = wait(waiting, timeout=HEARTBEAT, return_when=FIRST_COMPLETED)
+            if not done:
+                progress.heartbeat()
+            for future in done:
+                outcome = future.result()
+                outcomes.append(outcome)
+                rebaselined = (
+                    None if outcome.problem or not writing else rebaseline(outcome, BASELINES)
+                )
+                written += rebaselined[0] if rebaselined else 0
+                progress.finish(outcome, rebaselined)
+                write_failures(outcome, output)
+    outcomes.sort(key=lambda o: chosen.index(o.name))  # (the report keeps the cases' order)
+    return outcomes, written
 
 
 @app.command()
@@ -523,7 +620,7 @@ def main(  # noqa: PLR0917 (a CLI's options)
     ] = None,
     output: Annotated[
         Path, typer.Option(help="Where the report and the failing pictures are written")
-    ] = paths.VISUAL_DIR,
+    ] = paths.GAMEPLAY_DIR,
     summary: Annotated[
         Path | None,
         typer.Option(
@@ -532,6 +629,8 @@ def main(  # noqa: PLR0917 (a CLI's options)
     ] = None,
 ) -> None:
     """Play every case and compare its pictures with the baselines (or write them)."""
+    if isinstance(sys.stdout, io.TextIOWrapper):
+        sys.stdout.reconfigure(line_buffering=True)  # (a pipe, as in CI, would hold it back)
     cases = load_cases()
     wrong = problems_with(cases)
     if wrong:
@@ -548,19 +647,7 @@ def main(  # noqa: PLR0917 (a CLI's options)
         0.0 if rebaseline_pictures else tolerance,
         0 if rebaseline_pictures else retries,
     )
-    outcomes: list[Outcome] = []
-    written = 0
-    with ThreadPoolExecutor(jobs) as pool:
-        for outcome in pool.map(lambda n: run_case(n, cases[n], settings), chosen):
-            outcomes.append(outcome)
-            done = (
-                None
-                if outcome.problem or not rebaseline_pictures
-                else rebaseline(outcome, BASELINES)
-            )
-            written += done[0] if done else 0
-            say(outcome, done)
-            write_failures(outcome, output)
+    outcomes, written = play_all(chosen, cases, settings, jobs, output, rebaseline_pictures)
     stale = sorted(baseline_files() - expected_baselines(cases)) if names is None else []
     stale_names = [f"{c}/{p}.png" for c, p in stale]
     mode = "rebaseline" if rebaseline_pictures else "compare"

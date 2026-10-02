@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Visual tests</title>
+<title>Instrumented gameplay tests</title>
 <style>
 :root { --bg: #fbfaf8; --panel: #fff; --text: #1f1d1a; --muted: #6b665e; --border: #e4e0d8;
         --ok: #2f8f5b; --bad: #c0392b; --warn: #d49a2a; --code: #f5f3ef; }
@@ -45,7 +45,7 @@ summary { cursor: pointer; }
 </head>
 <body>
 <main>
-  <h1>Visual tests{% if mode == "rebaseline" %}: baselines rewritten{% endif %}</h1>
+  <h1>Instrumented gameplay tests{% if mode == "rebaseline" %}: baselines rewritten{% endif %}</h1>
   <div class="muted">{{ generated }} · {{ total }} cases, {{ pictures }} pictures · {{ "%.0f"|format(seconds) }} s of play</div>
 
   <div class="stats">
@@ -75,7 +75,7 @@ summary { cursor: pointer; }
     <h3 style="margin-top:14px"><code>{{ picture.name }}</code>
       <span class="{{ 'warn' if mode == 'rebaseline' else 'bad' }}">{{ picture.note }}</span></h3>
     {% if item.omitted %}
-    <p class="muted">Not embedded (the report is full): the pictures are in <code>build/visual/{{ outcome.name }}/</code>.</p>
+    <p class="muted">Not embedded (the report is full): the pictures are in <code>build/gameplay/{{ outcome.name }}/</code>.</p>
     {% elif item.baseline %}
     <div class="shots">
       <figure><img src="{{ item.baseline }}" alt="baseline"><figcaption>{{ "before" if mode == "rebaseline" else "baseline" }}</figcaption></figure>

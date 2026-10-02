@@ -16,7 +16,7 @@ Workflows are in `.github/workflows/`.
 | Job | Does |
 | --- | --- |
 | `package` | `package.yml`: every target builds and packages (below) |
-| `deploy` | deploys the `browser_wasm` site it built to Cloudflare Pages with `wrangler-action`. Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; variable `CLOUDFLARE_PAGES_PROJECT` |
+| `deploy-web-port` | deploys the `browser_wasm` site it built to Cloudflare Pages with `wrangler-action`. Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`; variable `CLOUDFLARE_PAGES_PROJECT` |
 | `release` | creates a GitHub release, `v<version>-build.<run number>`, with the package of every player target attached (macOS, Windows x86 and x64, Linux x64 and arm64) and generated notes. The web page and `headless_wasm` aren't released: one is deployed, the other is the testing build |
 | `deploy-docs` | deploys this handbook (`mdbook build docs`, output `build/book/`) to a second Cloudflare Pages project, with the same two secrets and the variable `CLOUDFLARE_DOCS_PAGES_PROJECT` |
 | `report` | the progress report: `extract-game`, `toolchain setup`, `ghidra setup`, `runtime-symbols`, `classes`, then `uv run report --no-embed-binary`, uploaded as the artifact `report`. Needs the game CD and the Borland CD, which the [game-data action](#the-game-data-action) fetches |
@@ -44,11 +44,11 @@ Each player package is uploaded as the artifact `zoombinis-<target>` (kept 14 da
 | --- | --- | --- | --- | --- |
 | `zoombinis-<target>` (five: `macos_universal`, `windows_x86`, `windows_x64`, `linux_x64`, `linux_arm64`) | pull requests and `main` (`package.yml`) | the run's artifacts | 14 days | the package for players of that target: a `.dmg` (macOS), `.zip` (Windows) or `.tar.gz` (Linux), with `game/` beside the program ([native builds](../port/native.md)). Zipped by GitHub, so a `.dmg` is inside a `.zip` |
 | `site-browser_wasm` | pull requests and `main` | the run's artifacts | 14 days | the hostable web site (`uv run port package browser_wasm`), every file under Cloudflare Pages' limit ([the web build](../port/web.md)) |
-| `visual-report.html` | pull requests (`visual`), always | the run's artifacts | 14 days | the [visual tests](../port/visual-tests.md)' report: one HTML file, uploaded unzipped, with the baseline, new picture and highlighted differences of each failing case. A summary of the failures is also on the run's page |
-| `visual-pictures` | pull requests (`visual`), when it fails | the run's artifacts | 14 days | the failing pictures as files: the new one, and baseline, new and differences side by side |
+| `gameplay-report.html` | pull requests (`gameplay`), always | the run's artifacts | 14 days | the [instrumented gameplay tests](../port/gameplay-tests.md)' report: one HTML file, uploaded unzipped, with the baseline, new picture and highlighted differences of each failing case. A summary of the failures is also on the run's page |
+| `gameplay-pictures` | pull requests (`gameplay`), when it fails | the run's artifacts | 14 days | the failing pictures as files: the new one, and baseline, new and differences side by side |
 | `report` | `main` (`report`) | the run's artifacts | 14 days | the progress report, without the original's disassembly: `index.html` (progress by region, module and file, and the data), `functions.html` (every function and its status) and a page per source file, with `style.css`. Build the full one locally with `uv run report` |
 | a GitHub release, `v<version>-build.<n>` | `main` (`release`) | Releases | until deleted | the five `zoombinis-<target>` packages, unzipped, with generated notes |
-| the web site | `main` (`deploy`) | Cloudflare Pages (the project in `CLOUDFLARE_PAGES_PROJECT`) | the latest | the game as played in a browser |
+| the web site | `main` (`deploy-web-port`) | Cloudflare Pages (the project in `CLOUDFLARE_PAGES_PROJECT`) | the latest | the game as played in a browser |
 | the handbook | `main` (`deploy-docs`) | Cloudflare Pages (the project in `CLOUDFLARE_DOCS_PAGES_PROJECT`) | the latest | this book |
 
 The `regressions` job (pull requests) produces nothing: it passes or fails. `python`, `book` and the `headless_wasm` build (`package.yml`, built only, as the testing build) produce nothing either.

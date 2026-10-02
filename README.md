@@ -23,7 +23,7 @@ Every function in `zoombi32.exe`'s game code and Mohawk engine (about 2,100) is 
 
 The game's resources are in `assets/`, converted to modern formats (about 10,000 images as PNG, 1,333 sounds as WAV, the music as MIDI, scripts and tables as TOML, the intro movie as sprites and a WAV), and `uv run assets pack` rebuilds archives identical, byte for byte, to the disc's.
 
-The decompiled code links, with the original's linker, into a `zoombi32.exe` that starts in an emulated Windows 98 and runs as far as Zoombini Isle, and compiles unchanged over *miniwin*, a Win32 subset on SDL2, for WebAssembly, macOS, Linux and Windows (32- and 64-bit). Every pull request is checked by [CI](https://docs.zoombinis.online/reference/ci.html): all targets build, a visual regression suite plays the headless port through scripted flows, and every function that matched still does.
+The decompiled code links, with the original's linker, into a `zoombi32.exe` that starts in an emulated Windows 98 and runs as far as Zoombini Isle, and compiles unchanged over *miniwin*, a Win32 subset on SDL2, for WebAssembly, macOS, Linux and Windows (32- and 64-bit). Every pull request is checked by [CI](https://docs.zoombinis.online/reference/ci.html): all targets build, a gameplay regression suite plays the headless port through scripted flows, and every function that matched still does.
 
 ## Quick start
 
@@ -38,7 +38,7 @@ uv run port serve                 # then open http://127.0.0.1:8000/
 uv run port package               # a package for players, for this machine (a Mac: .dmg; Linux: .tar.gz)
 uv run port package windows_x64   # or any target, from any host (see `uv run port --help`)
 uv run assets pack                # assets/ back into Mohawk archives, in build/assets/
-uv run visual                     # visual regression tests (needs `uv run port build headless_wasm`)
+uv run gameplay                   # instrumented gameplay tests (needs `uv run port build headless_wasm`)
 ```
 
 **To work on the decompilation** you need your own copies of the game and the compiler, put in the gitignored `data/` directory:
@@ -100,7 +100,7 @@ Development checks: `uv run lint` (ruff, strict mypy, pytest), also run as a pre
 - [ ] Port to Windows (native): cross-compiled for 32- and 64-bit; the 64-bit build has been run only under Wine, the 32-bit one not at all
 - [ ] Play the port through every puzzle, fixing what differs from the original
 - [x] Make the decompiled code 64-bit clean (pointer-sized handles are `LONG_PTR`), so the port builds natively on 64-bit hosts
-- [x] Debug tools for the port (jump to a scene, set levels, script clicks) and visual regression tests built on them (`uv run visual`)
+- [x] Debug tools for the port (jump to a scene, set levels, script clicks) and instrumented gameplay tests built on them (`uv run gameplay`)
 - [x] CI: every target builds and is released from `main`; `match` and `match-data` run on pull requests, and a progress report without the original's disassembly is published, with the game's files fetched from a private bucket (`--no-embed-binary`)
 - [x] The port raises a group's level after three perfect clears, as players expect (the original does it after one)
 

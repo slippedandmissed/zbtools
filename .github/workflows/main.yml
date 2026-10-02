@@ -48,7 +48,7 @@ jobs:
   package:
     uses: ./.github/workflows/package.yml
 
-  deploy:
+  deploy-web-port:
     needs: package
     runs-on: ubuntu-latest
     steps:
