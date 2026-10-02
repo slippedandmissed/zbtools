@@ -26,7 +26,7 @@ The baselines are `tests/gameplay/baselines/<case>/<NAME>.png`: 640×480 screens
 
 | Cases | What they do |
 | --- | --- |
-| `scenes-*` | every scene opens: Shelter Rock, Shade Tree, Zoombiniville, the isle and the map, the twelve puzzles and the two hidden games, each with `assert scene N` and a picture |
+| `open-*` | **one case per scene** (`open-map`, `open-isle`, `open-shelter-rock`, ..., `open-hidden-catch-21`): the scene opens, with the state it should start in asserted (the level of its group, the party's Zoombinis on screen, its counters at zero, go-ready off) and a picture, so one that opens into the wrong state or draws wrongly fails by name |
 | `intro-logo`, `high-levels`, `map-practice`, `journeys` | the intro, the highest level of three puzzles, the map's practice mode, the journey screens between places |
 | `isle-make-party-and-send`, `camp-drag` | sixteen Zoombinis made by clicking the isle's panel and sent to the ship; a Zoombini dragged in Shelter Rock |
 | `cliffs-right-and-wrong`, `pizza-wrong-pizza`, `pizza-wants`, `toads-wrong-piece` | **wrong moves**: the cliff sneezing, trolls refusing a pizza, a toad put in a row it doesn't match |
@@ -46,7 +46,7 @@ The run prints as it goes (it is the longest job of the pull request pipeline, s
 
 A picture fails when more than the case's `tolerance` (0.5% by default) of its pixels differ, a pixel differing when some channel is more than 24 (of 255) off. A case also fails if it crashes (a trap in the game's code), an `assert` fails, it doesn't finish within `seconds` (a wait that never ends), a picture has no baseline, or a baseline has no case (`STALE`).
 
-The game runs in real time, but with the seed and the scripts' waits its pictures are mostly repeatable: in the full runs made while writing these, most cases were identical to the pixel every time, and a few needed a second try now and then (`scenes-hidden`, whose Zoombinis cross at timed moments, and `ferry-load-and-go`, whose boat is mid-crossing in one picture: that case has a larger `tolerance` for it). A case whose pictures differ is therefore played once more before it counts as failed (`--retries`), and a case that passed only the second time is reported as such: one that needs it often should wait on the game's state (`wait until`) instead of the clock. A virtual clock for the headless build (time advancing by the game's own frames, not the machine's speed) would remove the dependence on timing altogether; it is not done.
+The game runs in real time, but with the seed and the scripts' waits its pictures are mostly repeatable: in the full runs made while writing these, most cases were identical to the pixel every time, and a few needed a second try now and then (`open-hidden-catch`, whose Zoombinis cross at timed moments (it has a larger `tolerance`), and `ferry-load-and-go`, whose boat is mid-crossing in one picture: that case has a larger `tolerance` for it). A case whose pictures differ is therefore played once more before it counts as failed (`--retries`), and a case that passed only the second time is reported as such: one that needs it often should wait on the game's state (`wait until`) instead of the clock. A virtual clock for the headless build (time advancing by the game's own frames, not the machine's speed) would remove the dependence on timing altogether; it is not done.
 
 ## Rebaselining
 

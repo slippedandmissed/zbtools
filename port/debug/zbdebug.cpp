@@ -341,6 +341,8 @@ bool lookup(const std::string &name, long *value)
         *value = transitionsOn;
     else if (name == "party")
         *value = party()->count;
+    else if (name == "zoombinis")
+        *value = (long)zoombiniViews().size(); /* the Zoombinis on the screen (see `zoombinis`) */
     else if (name == "debug")
         *value = debugMessagesOn;
     else if (name == "dialog")
