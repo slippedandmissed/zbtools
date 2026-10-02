@@ -153,7 +153,11 @@ A puzzle is won by working out a hidden rule, which a recorded list of moves can
 | `tunnels pick right\|wrong` | drags the first waiting Zoombini to a door that lets it in (or turns it back); fails if there are no turn-backs left (the doors take no more drops) |
 | `tunnels send right\|wrong [N]` | N times (once): waits for the guards to be done with the last one, then `tunnels pick` |
 
-Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with).
+| `pizza` | Pizza Pass (scene 9): what each troll wants (topping numbers from 0), their states, the pizzas left and whether a pizza can be served now |
+| `pizza make right\|wrong\|partial` | toggles the toppings with the buttons and serves the pizza, now: for the first troll not yet satisfied, exactly what it wants (`right`), that and one it doesn't want (`wrong`: it rejects the pizza) or one short (`partial`: it asks for more) |
+| `pizza serve right\|wrong\|partial [N]` | N times (once): waits until a pizza can be served (`pizzaReady`), then `pizza make`; a `right` one does nothing once the puzzle is solved |
+
+Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved).
 
 ```sh
 level 1 2; party 16; scene 7; wait 6000

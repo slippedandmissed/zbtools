@@ -199,6 +199,41 @@ commands = "level 1 1; party 8; scene 8; wait 7000; tunnels send right 1; wait u
 seconds = 170
 
 
+# --- Pizza Pass, played with the `pizza` oracle: it reads what each troll wants and builds the pizza that suits it.
+
+[pizza-win-level-1]
+description = "Pizza Pass at group 1's level 1: a pizza with exactly what each of the 1 troll wants is served, every troll is satisfied, and the go button leaves for Shelter Rock with all 16 Zoombinis"
+commands = "level 1 1; party 16; scene 9; wait 5000; assert pizzaLevel 0; assert pizzasLeft 6; pizza serve right 1; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; wait 2000; assert arnoState 3; click 620 460; wait scene 2; assert journeyFrom 9; assert journeyTo 4; wait scene 4; assert scene 4; assert state:0x50 1; assert zoombinis 16"
+seconds = 170
+
+[pizza-win-level-2]
+description = "Pizza Pass at group 1's level 2: a pizza with exactly what each of the 2 trolls want is served, every troll is satisfied, and the go button leaves for Shelter Rock with all 8 Zoombinis"
+commands = "level 1 2; party 8; scene 9; wait 5000; assert pizzaLevel 1; assert pizzasLeft 7; pizza serve right 2; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; wait 2000; assert arnoState 3; assert willaState 3; click 620 460; wait scene 2; assert journeyFrom 9; assert journeyTo 4; wait scene 4; assert scene 4; assert state:0x50 2; assert zoombinis 8"
+seconds = 170
+
+[pizza-win-level-3]
+description = "Pizza Pass at group 1's level 3: a pizza with exactly what each of the 3 trolls want is served, every troll is satisfied, and the go button leaves for Shelter Rock with all 8 Zoombinis"
+commands = "level 1 3; party 8; scene 9; wait 5000; assert pizzaLevel 2; assert pizzasLeft 7; pizza serve right 3; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; wait 2000; assert arnoState 3; assert willaState 3; assert shylerState 3; screenshot won; click 620 460; wait scene 2; assert journeyFrom 9; assert journeyTo 4; wait scene 4; assert scene 4; assert state:0x50 4; assert zoombinis 8"
+seconds = 170
+# the trolls fidget and the Zoombinis walk
+tolerance = 0.05
+
+[pizza-win-level-4]
+description = "Pizza Pass at group 1's level 4: a pizza with exactly what each of the 3 trolls want is served, every troll is satisfied, and the go button leaves for Shelter Rock with all 16 Zoombinis"
+commands = "level 1 4; party 16; scene 9; wait 5000; assert pizzaLevel 3; assert pizzasLeft 7; pizza serve right 3; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; wait 2000; assert arnoState 3; assert willaState 3; assert shylerState 3; click 620 460; wait scene 2; assert journeyFrom 9; assert journeyTo 4; wait scene 4; assert scene 4; assert state:0x50 8; assert zoombinis 16"
+seconds = 170
+
+[pizza-wrong-and-partial-then-right]
+description = "Level 1: a pizza with a topping Arno doesn't want is refused (it costs a pizza), one short of what he wants only gets a request for more, and then the right one satisfies him"
+commands = "level 1 1; party 8; scene 9; wait 5000; assert pizzasLeft 6; pizza serve wrong 1; wait until pizzaReady == 1; assert arnoState 1; assert pizzasLeft 5; pizza serve partial 1; wait until pizzaReady == 1; assert arnoState 1; assert pizzaSolved 0; pizza serve right 1; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; assert arnoState 3"
+seconds = 170
+
+[pizza-out-of-pizzas]
+description = "With the last pizza gone (set to one for the test, and spent on a wrong one) the puzzle is not over: the right pizza still satisfies Arno and opens the go button"
+commands = "level 1 1; party 8; scene 9; wait 5000; set pizzasLeft 1; pizza serve wrong 1; wait until pizzaReady == 1; assert pizzasLeft 0; assert pizzaSolved 0; assert pizzaGoReady 0; click 620 460; wait 2500; assert scene 9; pizza serve right 1; wait until pizzaSolved == 1; wait until pizzaGoReady == 1; assert pizzasLeft 0; assert arnoState 3"
+seconds = 170
+
+
 [pizza-wrong-pizza]
 description = "A pizza is served to the trolls: its topping is not what they want"
 commands = "party 8; scene 9; wait 8000; drag zoombini 0 place 1; wait 1500; click 60 197; wait 600; screenshot topping-picked; click 76 127; wait 8000; screenshot refused"

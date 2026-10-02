@@ -3,6 +3,7 @@
 #include "zoombinis.h"
 #include "bridge.h"
 #include "tunnels.h"
+#include "pizza.h"
 #include "snoids.h"
 #include "view.h"
 #include "oracles.h"
@@ -232,6 +233,155 @@ bool tunnelsCommand(const std::vector<std::string> &w, OracleResult *result)
     return true;
 }
 
+
+/* ---- Pizza Pass (scene 9) --------------------------------------------------------------------------
+ *
+ * The trolls (Arno, Willa and Shyler: one, two or three by level) each want a set of toppings
+ * (arnoWants, willaWants, shylerWants). A pizza is made by toggling topping buttons 4-11 (topping
+ * n-4) and served by clicking the pizza (button 3) once the next Zoombini has come up with it; the
+ * trolls judge it in turn (judgePizza): the one whose wants it is exactly is satisfied, one with a
+ * topping it doesn't want rejects it, one that wants more says so. Pizzas are limited (pizzasLeft).
+ * The puzzle is solved when every troll at the level is satisfied.
+ */
+
+bool pizzaOpen_()
+{
+    return currentScene == 9;
+}
+
+short *trollWants(int troll)
+{
+    return troll == 0 ? arnoWants : troll == 1 ? willaWants : shylerWants;
+}
+
+short trollState(int troll)
+{
+    return troll == 0 ? arnoState : troll == 1 ? willaState : shylerState;
+}
+
+/* The first troll that hasn't been satisfied yet (-1: all are). */
+int firstUnsatisfiedTroll()
+{
+    for (int troll = 0; troll < 3; troll++)
+        if (trollState(troll) == 1)
+            return troll;
+    return -1;
+}
+
+/* Whether the next pizza can be made and served: the serve conditions of pizzaButtonClicked (or the
+   puzzle is over, so that waiting for it ends). */
+bool pizzaReady()
+{
+    return pizzaSolved
+           || (!zoombiniComing && !levelTrollStarted && !partyThrough && !arnoGroup && !willaGroup && !shylerGroup
+               && !pileGroup && !pizzaView7000Group && placeClaims[0]);
+}
+
+/* The centre of a button of the scene (1-13). */
+std::string pizzaButtonPoint(int button)
+{
+    const ShortRect &rect = pizzaButtons[button - 1].rect;
+
+    return std::to_string((rect.left + rect.right) / 2) + " " + std::to_string((rect.top + rect.bottom) / 2);
+}
+
+/* The toppings of the pizza that suits the first unsatisfied troll `how`: "right" (exactly what it
+   wants), "wrong" (and one it doesn't want: it rejects the pizza) or "partial" (one short of what it
+   wants: it asks for more). Fails if there is no such pizza. */
+bool pizzaFor(const std::string &how, std::vector<int> *toppings, std::string *error)
+{
+    int troll = firstUnsatisfiedTroll();
+
+    if (troll < 0) {
+        *error = "every troll is satisfied";
+        return false;
+    }
+    short *wants = trollWants(troll);
+
+    for (int i = 0; i < toppingCount; i++)
+        if (wants[i])
+            toppings->push_back(i);
+    if (how == "wrong") {
+        for (int i = 0; i < toppingCount; i++)
+            if (!wants[i] && !(pizzaLevel == 1 && i == 4)) { /* (level 1 has no topping 4) */
+                toppings->push_back(i);
+                return true;
+            }
+        *error = "the troll wants every topping";
+        return false;
+    }
+    if (how == "partial") {
+        if (toppings->size() < 2) {
+            *error = "the troll wants only one topping";
+            return false;
+        }
+        toppings->pop_back();
+    }
+    return true;
+}
+
+bool pizzaCommand(const std::vector<std::string> &w, OracleResult *result)
+{
+    if (!pizzaOpen_()) {
+        result->error = "pizza: Pizza Pass (scene 9) isn't open";
+        return true;
+    }
+    if (w.size() == 1) {
+        /* `pizza`: what the trolls want */
+        const char *names[3] = {"Arno", "Willa", "Shyler"};
+
+        for (int troll = 0; troll < 3; troll++) {
+            if (!trollState(troll))
+                continue;
+            std::string line = std::string(names[troll]) + " (state " + std::to_string(trollState(troll)) + ") wants:";
+
+            for (int i = 0; i < toppingCount; i++)
+                if (trollWants(troll)[i])
+                    line += " " + std::to_string(i);
+            result->said.push_back(line);
+        }
+        result->said.push_back("pizzas left " + std::to_string(pizzasLeft) + ", " + (pizzaReady() ? "ready" : "not ready"));
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "make" && (w[2] == "right" || w[2] == "wrong" || w[2] == "partial")) {
+        /* `pizza make right|wrong|partial`: toggles the toppings and serves the pizza, now */
+        std::vector<int> toppings;
+        std::string error;
+
+        if (pizzaSolved) {
+            result->said.push_back("pizza: already solved, nothing to serve");
+            return true;
+        }
+        if (!pizzaFor(w[2], &toppings, &error)) {
+            result->error = "pizza make: " + error;
+            return true;
+        }
+        std::string made;
+
+        for (int topping : toppings) {
+            result->commands.push_back("click " + pizzaButtonPoint(topping + 4));
+            result->commands.push_back("wait 300");
+            made += " " + std::to_string(topping);
+        }
+        result->commands.push_back("click " + pizzaButtonPoint(3));
+        result->commands.push_back("wait 800");
+        result->said.push_back("pizza: served a " + w[2] + " pizza with toppings" + made);
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "serve" && (w[2] == "right" || w[2] == "wrong" || w[2] == "partial")) {
+        /* `pizza serve right|wrong|partial [N]`: N times (once), when the pizza can be served, make one */
+        int count = w.size() >= 4 ? atoi(w[3].c_str()) : 1;
+
+        for (int i = 0; i < count; i++) {
+            result->commands.push_back("wait until pizzaReady == 1");
+            result->commands.push_back("pizza make " + w[2]);
+        }
+        return true;
+    }
+    result->error = "pizza: expected `pizza`, `pizza make right|wrong|partial` or `pizza serve right|wrong|partial [N]`";
+    return true;
+}
+
 } /* namespace */
 
 bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
@@ -240,6 +390,8 @@ bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
         return cliffsCommand(w, result);
     if (!w.empty() && w[0] == "tunnels")
         return tunnelsCommand(w, result);
+    if (!w.empty() && w[0] == "pizza")
+        return pizzaCommand(w, result);
     return false;
 }
 
@@ -275,6 +427,10 @@ bool zbOracleValue(const std::string &name, long *value)
         for (View *view : zbDebugZoombiniViews())
             waiting += tunnelsWaiting(view) ? 1 : 0;
         *value = waiting;
+        return true;
+    }
+    if (name == "pizzaReady") {
+        *value = pizzaReady() ? 1 : 0;
         return true;
     }
     return false;
