@@ -9,7 +9,7 @@
 void newSaveFileName(const char *, char *file, short *nextId);
 void readRoster();
 void saveRoster();
-int cheerNotify(View *, short value);
+void cheerNotify(View *, short event);
 void cavesNoDraw(View *);
 void cavesNoUpdate(View *, short);
 extern long glyphShape; /* @data 0x4a0fd4 */
