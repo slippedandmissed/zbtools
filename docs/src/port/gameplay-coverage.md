@@ -6,27 +6,28 @@ Sources: the transitions are read from the code (every `sceneDue`/`pendingScene`
 
 ## Principles
 
-1. **Every scene has an *opens* case**: it asserts the scene and the state that scene is supposed to start with (the party's size, the level, the scene's own counters), and takes **at least one screenshot**, so that a scene that opens into the wrong state, or renders wrongly, fails. Today the `scenes-*` cases only assert `scene N`.
+1. **Every scene has an *opens* case**: it asserts the scene and the state that scene is supposed to start with (the party's size, the level, the scene's own counters), and takes **at least one screenshot**, so that a scene that opens into the wrong state, or renders wrongly, fails. (Done: the `open-*` cases.)
 2. **Assert state, not pictures**, for everything after that: the scene reached, a puzzle's counters, the party, the level, the records. Pictures are for the moments only a picture can show (the win animation, a refusal).
 3. **Use the game's own rules, not recorded moves.** A puzzle is won by working out a hidden rule; a case can't know it from the seed alone without breaking whenever the random numbers shift. Each puzzle gets an *oracle* in `port/debug/` that reads the rule from the game's globals and plays the next correct (or deliberately wrong) move through real mouse input.
 4. **Real transitions where they are the point.** A case about a transition leaves the scene by the player's own click and asserts where it arrives (and that the journey scene was or wasn't shown); cases about a puzzle may enter it with `scene N`.
 
 ## The scenes
 
-| # | Scene | Opens case today | State to assert on opening | Screenshot today |
-| --- | --- | --- | --- | --- |
-| 0 | intro (logo movie) | `intro-logo` (no assert) | `scene 0`, movie playing; ends by itself or by a click | yes |
-| 1 | map | `scenes-camps-and-town`, `map-practice` | open hotspots by the groups' left bits; practice level and party | yes |
-| 2 | journey | `journeys` | `journeyFrom`, `journeyTo`, `journeyRoute` | yes |
-| 3 | isle | `scenes-camps-and-town`, `isle-make-party-and-send` | made count, queue, `enoughToLeaveChosen` | yes |
-| 4 | Shelter Rock | `scenes-camps-and-town`, `camp-drag` | the party's return, camp slots, `campEnoughChosen` | yes |
-| 5 | Shade Tree | `scenes-camps-and-town` | as 4, and the book | yes |
-| 6 | Zoombiniville | `scenes-camps-and-town`, `town-monuments` | records, `townPartySize` | yes |
-| 7-18 | the twelve puzzles | `scenes-group-1..4` (open only) | the level, the party's views, the rule built (`bridgeLevel`, ...) | yes |
-| 19, 20 | hidden games | `scenes-hidden` | scene, score 0, throws/ships left | yes |
-| 21 | catch (second entry) | none | to confirm how it is reached (`openCatch` shares scenes 19 and 21) | no |
+| # | Scene | Opens case | State asserted on opening |
+| --- | --- | --- | --- |
+| 0 | intro (logo movie) | `intro-logo` | `scene 0`, `movieShowing 1` |
+| 1 | map | `open-map` | no practice mode, no hotspot picked |
+| 2 | journey | `journeys` (entered by a real move, not `scene 2`) | `journeyFrom`, `journeyTo` |
+| 3 | isle | `open-isle` | nothing made or waiting, 16 needed to leave |
+| 4 | Shelter Rock | `open-shelter-rock` | the party's Zoombinis on screen, `campEnoughChosen` (with 16) |
+| 5 | Shade Tree | `open-shade-tree` | the party on screen, `bookCount` |
+| 6 | Zoombiniville | `open-zoombiniville` | `townPartySize`, `recordHotspotCount` |
+| 7-18 | the twelve puzzles | `open-allergic-cliffs`, `open-stone-cold-caves`, `open-pizza-pass`, `open-ferry`, `open-toads`, `open-stone-rise`, `open-fleens`, `open-hotel`, `open-mudball-wall`, `open-lions-lair`, `open-mirror-machine`, `open-bubblewonder-abyss` | the level of the puzzle's group (groups 1-4 set to levels 1-4, so a mix-up between groups shows), the party's Zoombinis on screen, its counters at zero, go-ready off |
+| 19, 20 | hidden games | `open-hidden-catch`, `open-hidden-targets` | scene, score 0, ships left (targets) |
+| 21 | catch (second entry) | `open-hidden-catch-21` | scene 21 opens as the catching game (how the game itself reaches it is still to confirm) |
 
-Gaps to close first: richer *opens* asserts for all 22, and a case for scene 21.
+Every scene now has an *opens* case with a picture. Each puzzle's own level number runs on a different base (`bridgeLevel` 0 at group level 1, `lillyLevel` 2 at group level 2, `cavesLevel` 4 at group level 4, ...); the cases assert what the game gives, which is what the puzzle's code expects.
+
 
 ## Every transition
 
@@ -110,7 +111,7 @@ So **no puzzle is won in any case today**; seven have a wrong-move case; the tra
 
 ## Order of work
 
-1. **Opens everywhere.** Strengthen every `scenes-*` case with per-scene state asserts and a screenshot each (a case per scene, so a failure names the scene), add scene 21, and add the *real transition* cases for the camps, the map, the town and the journey (no puzzle has to be solved: set the group bits with `state set`).
+1. **Opens everywhere** (done: the `open-*` cases, one per scene with state asserts and a picture, scene 21 included). Next, the *real transition* cases for the camps, the map, the town and the journey (no puzzle has to be solved: set the group bits with `state set`).
 2. **One oracle, as the template: Allergic Cliffs**, then the rest one per pull request, each with W (low and high level), X and E. Oracle commands live in `port/debug/` (a command per puzzle that queues the next right or wrong move as real input), documented in [Debug tools](debug-tools.md).
 3. **The group chains**: group 1 end to end (7 → 8 → 9 → 4, leaving by the buttons), then groups 2, 3 and 4, then the two camps and the town's record.
 4. **The branches** above, smallest first (practice, saved games, the isle), then the hidden games.

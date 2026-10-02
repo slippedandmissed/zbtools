@@ -2,33 +2,92 @@
 # something and takes pictures with `screenshot NAME`, compared with tests/gameplay/baselines/<case>/<NAME>.png.
 # Every case starts by turning "sticky mouse" off and seeding the game's random numbers (`seed`).
 
-[scenes-camps-and-town]
-description = "Shelter Rock, Shade Tree, Zoombiniville, Zoombini Isle and the map, each entered from the last"
-commands = "party 16; scene 4; wait 5000; assert scene 4; screenshot camp-1; scene 5; wait 5000; assert scene 5; screenshot camp-2; scene 6; wait 5000; assert scene 6; screenshot town; scene 3; wait 5000; assert scene 3; screenshot isle; scene 1; wait 5000; assert scene 1; screenshot map"
+[open-map]
+description = "The map opens: no practice mode, no hotspot picked"
+commands = "scene 1; wait 5000; assert scene 1; assert practice 0; assert pickedHotspot 0; screenshot map"
 
-[scenes-group-1]
-description = "The three puzzles of group 1 open: Allergic Cliffs, Stone Cold Caves, Pizza Pass"
-commands = "party 8; scene 7; wait 5000; assert scene 7; screenshot cliffs; scene 8; wait 5000; assert scene 8; screenshot caves; scene 9; wait 5000; assert scene 9; screenshot pizza"
+[open-isle]
+description = "Zoombini Isle opens with no Zoombinis made or waiting"
+commands = "scene 3; wait 5000; assert scene 3; assert enoughToLeaveChosen 0; assert enoughToLeave 16; assert zoombinis 0; screenshot isle"
 
-[scenes-group-2]
-description = "The three puzzles of group 2 open: the ferry, the toads, Stone Rise"
-commands = "party 8; scene 10; wait 5000; assert scene 10; screenshot ferry; scene 11; wait 5000; assert scene 11; screenshot toads; scene 12; wait 5000; assert scene 12; screenshot stone-rise"
+[open-shelter-rock]
+description = "Shelter Rock opens with a party of sixteen: enough to set out"
+commands = "party 16; scene 4; wait 5000; assert scene 4; assert zoombinis 16; assert campEnoughChosen 1; assert campCount 0; screenshot camp-1"
 
-[scenes-group-3]
-description = "The three puzzles of group 3 open: Fleens, Hotel Dimensia, Mudball Wall"
-commands = "party 8; scene 13; wait 5000; assert scene 13; screenshot fleens; scene 14; wait 5000; assert scene 14; screenshot hotel; scene 15; wait 5000; assert scene 15; screenshot mudball"
+[open-shade-tree]
+description = "Shade Tree opens with the party in its book"
+commands = "party 16; scene 5; wait 5000; assert scene 5; assert zoombinis 16; assert bookCount 0; screenshot camp-2"
 
-[scenes-group-4]
-description = "The three puzzles of group 4 open: the Lion's Lair, the Mirror Machine, Bubblewonder Abyss"
-commands = "party 8; scene 16; wait 5000; assert scene 16; screenshot lion; scene 17; wait 5000; assert scene 17; screenshot mirror; scene 18; wait 5000; assert scene 18; screenshot bubble"
+[open-zoombiniville]
+description = "Zoombiniville opens with the party settled and its buildings' hotspots"
+commands = "party 8; scene 6; wait 5000; assert scene 6; assert townPartySize 8; assert recordHotspotCount 6; screenshot town"
 
-[scenes-hidden]
-description = "The two hidden mini-games open (scenes 19 and 20)"
-commands = "party 8; scene 19; wait 5000; assert scene 19; screenshot catch; scene 20; wait 5000; assert scene 20; screenshot targets"
+[open-allergic-cliffs]
+description = "Allergic Cliffs opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 7; wait 5000; assert scene 7; assert bridgeLevel 0; assert bridgeGoReady 0; assert sentBackCount 0; assert zoombinis 8; screenshot cliffs"
+
+[open-stone-cold-caves]
+description = "Stone Cold Caves opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 8; wait 5000; assert scene 8; assert tunnelsLevel 0; assert turnBacksLeft 16; assert zoombinis 8; screenshot caves"
+
+[open-pizza-pass]
+description = "Pizza Pass opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 9; wait 5000; assert scene 9; assert pizzaLevel 0; assert trollsAtLevel 1; assert pizzasLeft 6; assert pizzaGoReady 0; assert zoombinis 8; screenshot pizza"
+
+[open-ferry]
+description = "Captain Cajun's Ferryboat opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 10; wait 5000; assert scene 10; assert ferryLevel 1; assert ferrySnoidCount 8; assert zoombinis 8; screenshot ferry"
+
+[open-toads]
+description = "Titanic Tattooed Toads opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 11; wait 5000; assert scene 11; assert lillyLevel 2; assert padsPlaced 0; assert zoombinis 8; screenshot toads"
+
+[open-stone-rise]
+description = "Stone Rise opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 12; wait 5000; assert scene 12; assert stoneRiseLevel 1; assert slidesGoReady 0; assert zoombinis 8; screenshot stone-rise"
+
+[open-fleens]
+description = "Fleens! opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 13; wait 5000; assert scene 13; assert fleensLevel 2; assert fleensGoReady 0; assert zoombinis 8; screenshot fleens"
+
+[open-hotel]
+description = "Hotel Dimensia opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 14; wait 5000; assert scene 14; assert hotelLevel 2; assert hotelGoReady 0; assert zoombinis 8; screenshot hotel"
+
+[open-mudball-wall]
+description = "Mudball Wall opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 15; wait 5000; assert scene 15; assert netLevel 2; assert zoombinis 8; screenshot mudball"
+
+[open-lions-lair]
+description = "The Lion's Lair opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 16; wait 5000; assert scene 16; assert cavesLevel 4; assert chosenCount 8; assert cavesPlacedCount 0; assert zoombinis 8; screenshot lion"
+
+[open-mirror-machine]
+description = "Mirror Machine opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 17; wait 5000; assert scene 17; assert smokeLevel 4; assert smokeGoReady 0; assert zoombinis 8; screenshot mirror"
+
+[open-bubblewonder-abyss]
+description = "Bubblewonder Abyss opens with the party of eight at the level its group is at (groups 1-4 at levels 1-4)"
+commands = "level 1 1; level 2 2; level 3 3; level 4 4; party 8; scene 18; wait 5000; assert scene 18; assert mazeLevel 3; assert mazeGoReady 0; assert zoombinis 8; screenshot bubble"
+
+[open-hidden-targets]
+description = "The hidden target-shooting game opens (scene 20) with its score and ships"
+commands = "party 8; scene 20; wait 5000; assert scene 20; assert targetScore 0; assert shipsLeft 3; screenshot targets"
+
+[open-hidden-catch]
+description = "The hidden catching game opens (scene 19)"
+commands = "party 8; scene 19; wait 5000; assert scene 19; assert party 8; screenshot catch"
+# Zoombinis cross at timed moments, so the picture may differ a little
+tolerance = 0.15
+
+[open-hidden-catch-21]
+description = "The catching game's second entry (scene 21) opens"
+commands = "party 8; scene 21; wait 5000; assert scene 21; assert party 8; screenshot catch-21"
+tolerance = 0.15
 
 [intro-logo]
 description = "The intro movie's first seconds"
-commands = "wait 3000; screenshot logo"
+commands = "wait 3000; assert scene 0; assert movieShowing 1; screenshot logo"
 
 [high-levels]
 description = "The group 4 puzzles and the hotel at their highest level (the rules change with the level)"
@@ -122,7 +181,7 @@ commands = "records 16; scene 6; wait 8000; screenshot town; click 270 360 move;
 
 [journeys]
 description = "The journey screens between places: to a place of the next group, and to Zoombiniville"
-commands = "party 8; scene 9; wait 3000; transitions off; scene 4 map; wait 4000; screenshot to-the-ferry; wait scene 4; scene 18; wait 3000; scene 6 map; wait 4000; screenshot to-the-town"
+commands = "party 8; scene 9; wait 3000; transitions off; scene 4 map; wait 4000; assert scene 2; assert journeyFrom 9; assert journeyTo 4; screenshot to-the-ferry; wait scene 4; assert journeyFrom 2; scene 18; wait 3000; scene 6 map; wait 4000; assert scene 2; assert journeyFrom 18; assert journeyTo 6; screenshot to-the-town; wait scene 6; assert scene 6"
 seconds = 120
 
 [dialog-options]
