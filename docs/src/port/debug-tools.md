@@ -138,3 +138,23 @@ A puzzle is played with drags, and a few things about the game's own input matte
 - **Aim by where the Zoombini stands.** The game claims a drop spot when the Zoombini's *feet* are within `placeSnapRadius` of it, which is why `drag zoombini N place K` and `drag zoombini N X Y` work in feet, not pointer, coordinates.
 - **Pause before the release** (the built-in drags do): the game's drag loop has to see the pointer at the end before the button goes up.
 - **Wait for the game, not the clock**: `wait until crossingUnderway == 1`, `wait until placeHeld == 0` and the like. While a drag or a click handler runs, the game runs its own loops, and the commands go on in them.
+
+## Oracles: solving a puzzle by its rule
+
+A puzzle is won by working out a hidden rule, which a recorded list of moves can't do reliably (the rule depends on the random numbers, and the list breaks whenever they shift). An *oracle* is a debug command that reads the rule from the game's own state and plays the next correct (or deliberately wrong) move through real mouse input. They are in `port/debug/oracles.cpp` and are not part of the game. An oracle command is turned into plain commands (`drag ...`, `wait until ...`) at the moment it runs, so it sees the state as it is then; each one that plays a move says what it chose (`cliffs: zoombini 3 to bridge 2 (right)`), and an oracle may add values to `get`/`assert`/`wait until` (`cliffsAcross`, `cliffsWaiting`).
+
+| Command | Does |
+| --- | --- |
+| `cliffs` | Allergic Cliffs (scene 7): lists every Zoombini with its features, the bridge where the cliff lets it across and whether it is waiting |
+| `cliffs pick right\|wrong` | drags the first waiting Zoombini to its right bridge (or the other one); fails if six have been sent back (the cliff takes no more) |
+| `cliffs send right\|wrong [N]` | N times (once): waits for the queue and the crossing to clear, then `cliffs pick`; waits a moment after each drop for the game to take it |
+
+Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones).
+
+```sh
+level 1 2; party 16; scene 7; wait 6000
+cliffs send right 16; wait until cliffsAcross == 16
+assert sentBackCount 0; click 618 458; wait scene 8
+```
+
+The other puzzles get theirs as their cases are written (see the [coverage map](gameplay-coverage.md)).

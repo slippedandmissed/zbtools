@@ -118,9 +118,10 @@ if(ZB_DEBUG)
     # (The globals the debug commands read by name: written by `uv run port build`; without it
     # the table is empty.)
     set(ZB_DEBUG_GENERATED_DIR "${CMAKE_BINARY_DIR}/../generated" CACHE PATH "Where debug_globals.inc is")
-    set_source_files_properties("${DEBUG_SOURCE}" PROPERTIES COMPILE_OPTIONS
+    set(DEBUG_SOURCES "${DEBUG_SOURCE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/oracles.cpp")
+    set_source_files_properties(${DEBUG_SOURCES} PROPERTIES COMPILE_OPTIONS
         "-iquote;${REPO_ROOT}/decomp;-iquote;${ZB_DEBUG_GENERATED_DIR}")
-    target_sources(game PRIVATE "${DEBUG_SOURCE}")
+    target_sources(game PRIVATE ${DEBUG_SOURCES})
     target_compile_definitions(game PRIVATE ZB_DEBUG)
 endif()
 

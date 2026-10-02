@@ -22,6 +22,7 @@
 #include "debug.h"
 #include "mainloop.h"
 #include "net.h"
+#include "oracles.h"
 #include "roster.h"
 #include "snoids.h"
 #include "lilly.h"
@@ -341,6 +342,8 @@ bool lookup(const std::string &name, long *value)
         *value = transitionsOn;
     else if (name == "party")
         *value = party()->count;
+    else if (zbOracleValue(name, value))
+        return true;
     else if (name == "zoombinis")
         *value = (long)zoombiniViews().size(); /* the Zoombinis on the screen (see `zoombinis`) */
     else if (name == "debug")
@@ -723,11 +726,24 @@ void run(const std::string &line)
     } else if (command == "help") {
         help();
     } else {
-        fail(line, "bad command (try help)");
+        OracleResult oracle;
+
+        if (!zbOracleCommand(w, &oracle))
+            return fail(line, "bad command (try help)");
+        if (!oracle.error.empty())
+            return fail(line, oracle.error.c_str());
+        for (const std::string &text : oracle.said)
+            say("%s", text.c_str());
+        runNext(oracle.commands);
     }
 }
 
 } /* namespace */
+
+std::vector<View *> zbDebugZoombiniViews()
+{
+    return zoombiniViews();
+}
 
 /* Queues commands (separated by ';' or newlines) to run as the game gets to them. */
 extern "C" void zbDebugRun(const char *text)
