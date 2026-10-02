@@ -67,12 +67,14 @@ def test_problems_with_the_cases_are_reported() -> None:
     cases = {
         "Bad Name": case(),
         "silent": case("scene 1"),
+        "asserting": case("scene 1; assert scene 1"),
         "twice": case("screenshot a; screenshot a"),
         "bad-picture": case("screenshot Not_ok"),
     }
     found = "\n".join(gameplay.problems_with(cases))
     assert "Bad Name" in found
-    assert "silent: takes no picture" in found
+    assert "silent: checks nothing" in found
+    assert "asserting" not in found  # (a case may check the state alone)
     assert "twice: takes a more than once" in found
     assert "Not_ok" in found
 

@@ -88,6 +88,11 @@ class Case(BaseModel):
         return f"set clickToDragOption 0; set dragClicks 0; seed {self.seed}; {self.commands}; quit"
 
     @property
+    def asserts(self) -> bool:
+        """Whether the commands check the game's state."""
+        return any(part.split()[:1] == ["assert"] for part in self.commands.split(";"))
+
+    @property
     def pictures(self) -> list[str]:
         """The names of the pictures the commands take, in order."""
         return screenshot_names(self.commands)
@@ -111,13 +116,13 @@ def load_cases(path: Path = CASES) -> dict[str, Case]:
 
 
 def problems_with(cases: dict[str, Case]) -> list[str]:
-    """What is wrong with the cases themselves (names, pictures taken twice or not at all)."""
+    """What is wrong with the cases themselves (names, pictures taken twice, nothing checked)."""
     found: list[str] = []
     for name, case in cases.items():
         if not _NAME.fullmatch(name):
             found.append(f"{name}: a case's name is lower-case words with hyphens")
-        if not case.pictures:
-            found.append(f"{name}: takes no picture (add `screenshot NAME`)")
+        if not case.pictures and not case.asserts:
+            found.append(f"{name}: checks nothing (add `assert NAME VALUE` or `screenshot NAME`)")
         for picture in case.pictures:
             if not _NAME.fullmatch(picture):
                 found.append(f"{name}: picture name {picture!r} is lower-case words with hyphens")

@@ -36,38 +36,38 @@ Every scene now has an *opens* case with a picture. Each puzzle's own level numb
 | From | Trigger | To | Condition / what changes | Covered now |
 | --- | --- | --- | --- | --- |
 | start | `WinMain` | 0 | | `intro-logo` |
-| 0 | click or movie end | the saved scene (3, 4, 5, 6, 1, or 7-18 if the party is not empty), else 3 | resumes with `skipJourneyMap`; a fresh game goes to the isle | no |
+| 0 | click or movie end | the saved scene (3, 4, 5, 6, 1, or 7-18 if the party is not empty), else 3 | resumes with `skipJourneyMap`; a fresh game goes to the isle | `transition-intro-fresh-game`, `transition-intro-resumes-*` (a puzzle with a party, a puzzle without, a camp, the town, the map) |
 | 0 | movie fails to start | as above | `logoFailed` | no (the port plays a scene file) |
-| 3 | panel button 5 | 1 | | no |
-| 3 | panel button 6 | 7 (via journey) | needs `enoughToLeaveChosen` (16 or the population of 625); otherwise a remark and no move | `isle-make-party-and-send` (sends; arrival asserted? no) |
+| 3 | panel button 5 | 1 | | `transition-isle-to-map` |
+| 3 | panel button 6 | 7 (via journey) | needs `enoughToLeaveChosen` (16 or the population of 625); otherwise a remark and no move | `isle-make-party-and-send` (to scene 7 through the journey) |
 | 3 | Ctrl-N / Ctrl-L | 3 | new game / load a saved game | no |
-| 1 | hotspot 1 | 3 | leaves practice | no |
-| 1 | hotspot 5 / 12 / 16 | 4 / 5 / 6 | only if group 1 / group 2 or 3 / group 4 has been left (`gameState` bits `+0x50`, `+0x52`, `+0x51`); otherwise nothing happens | no |
-| 1 | hotspots 2-4, 6-11, 13-15 | 7-9, 10-12 (note 8 and 9: 20 and 19 with the cheat code), 14, 15, 16-18 | **practice mode only** | `map-practice` (opens the list only) |
-| 1 | Ctrl-P, 1-4, `+`/`-` | stays | practice mode on, level, party size | `map-practice` |
+| 1 | hotspot 1 | 3 | leaves practice | `transition-map-walk` |
+| 1 | hotspot 5 / 12 / 16 | 4 / 5 / 6 | only if group 1 / group 2 or 3 / group 4 has been left (`gameState` bits `+0x50`, `+0x52`, `+0x51`); otherwise nothing happens | `transition-map-walk` (locked, then unlocked) |
+| 1 | hotspots 2-4, 6-11, 13-15 | 7-9, 10-12 (note 8 and 9: 20 and 19 with the cheat code), 14, 15, 16-18 | **practice mode only** | `transition-practice-mode` (hotspot 2, and a locked camp stays shut) |
+| 1 | Ctrl-P, 1-4, `+`/`-` | stays | practice mode on, level, party size | `map-practice`, `transition-practice-mode` |
 | 7 | button 2 (`bridgeGoReady`) | 8 (via journey) | | no |
 | 8 | button 2 | 9 (via journey) | | no |
 | 9 | button 2 | 4 (via journey) | sets `puzzleLeft = 9` and bit `1 << level` in `gameState[0x50]`; may raise group 1's level | `perfect-clears` (state forced) |
-| 4 | button 1 | 10 (via journey) | needs enough chosen, else a random remark | no |
-| 4 | button 2 | 13 (via journey) | as above | no |
-| 4 | button 3 | 1 | | no |
+| 4 | button 1 | 10 (via journey) | needs enough chosen, else a random remark | `transition-shelter-rock-set-out-group-2`, `transition-shelter-rock-not-enough` |
+| 4 | button 2 | 13 (via journey) | as above | `transition-shelter-rock-set-out-group-3`, `transition-shelter-rock-not-enough` |
+| 4 | button 3 | 1 | | `transition-shelter-rock-to-map`, `transition-map-walk` |
 | 10 | button 2 | 11 | `ferryLeaving` once everyone has crossed | no |
 | 11 | button 2 | 12 | `padsArrived` | `toads-place-and-go` (to the hopping only) |
 | 12 | finish | 5 (via journey) | `puzzleLeft = 12`, bit in `gameState+0x52` | no |
 | 13 | button 2 | 14 | | no |
 | 14 | finish | 15 | | no |
 | 15 | finish | 5 (via journey) | `puzzleLeft = 15`, bit `<< 4` in `gameState+0x52` | no |
-| 5 | button 1 | 16 (via journey) | needs enough chosen | no |
-| 5 | other button | 1 | | no |
+| 5 | button 1 | 16 (via journey) | needs enough chosen | `transition-shade-tree-set-out`, `transition-shade-tree-not-enough` |
+| 5 | other button | 1 | | `transition-shade-tree-to-map`, `transition-map-walk` |
 | 16 | button 2 | 17 | `cavesGoReady` | no |
 | 17 | finish | 18 | | no |
 | 18 | finish | 6 (via journey) | `puzzleLeft = 18`, bit in `gameState+0x51`, `recordParty` adds a monument | no |
-| 6 | button 1 | 1 | | no |
+| 6 | button 1 | 1 | | `transition-map-walk` |
 | 7-18 | button 1, then KEEP 'EM | stays | `dialog-keep-party` | `dialog-keep-party` |
 | 7-18 | button 1, then LOSE 'EM | 1 | the party is dropped | `dialog-lose-party` |
 | any puzzle in practice mode | any exit | 1 | no bookkeeping (`enterNextScene`) | no |
-| 2 | click or 300 ticks | `journeyTo` | | `journeys` |
-| 19, 20 | their buttons | 1 | | no |
+| 2 | click or 300 ticks | `journeyTo` | | `journeys`, `transition-journey-click-skips` (a click) |
+| 19, 20 | their buttons | 1 | | `transition-hidden-games-leave` (19, 20 and 21) |
 | any | Ctrl-S / options / Ctrl-Q | stays / quits | dialogs | `dialog-save-game`, `dialog-options` |
 
 Not a transition but must work with them: the **saved game** (a game saved in one scene resumes in it, or on the isle if it was in a puzzle with no party) and the **population cap** (625 made: the isle's "population full" ending, reachable in the port's debug mode with Ctrl on button 1).
@@ -111,7 +111,7 @@ So **no puzzle is won in any case today**; seven have a wrong-move case; the tra
 
 ## Order of work
 
-1. **Opens everywhere** (done: the `open-*` cases, one per scene with state asserts and a picture, scene 21 included). Next, the *real transition* cases for the camps, the map, the town and the journey (no puzzle has to be solved: set the group bits with `state set`).
+1. **Opens everywhere** (done: the `open-*` cases, one per scene with state asserts and a picture, scene 21 included) and **the transitions that need no puzzle solved** (done: the `transition-*` cases: the intro's routing, the isle, the map's locked and unlocked hotspots, both camps' set-out buttons and their "not enough" remarks, the journey's click, practice mode, the hidden games' exits; the group bits are set with `state set`). What is left of the table is every puzzle's own exit, which belongs to the puzzle's win case.
 2. **One oracle, as the template: Allergic Cliffs**, then the rest one per pull request, each with W (low and high level), X and E. Oracle commands live in `port/debug/` (a command per puzzle that queues the next right or wrong move as real input), documented in [Debug tools](debug-tools.md).
 3. **The group chains**: group 1 end to end (7 → 8 → 9 → 4, leaving by the buttons), then groups 2, 3 and 4, then the two camps and the town's record.
 4. **The branches** above, smallest first (practice, saved games, the isle), then the hidden games.
