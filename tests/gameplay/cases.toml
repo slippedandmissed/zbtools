@@ -234,6 +234,91 @@ commands = "level 1 1; party 8; scene 9; wait 5000; set pizzasLeft 1; pizza serv
 seconds = 170
 
 
+# --- Captain Cajun's Ferryboat, played with the `ferry` oracle: it searches for a seating where every two
+# touching places hold Zoombinis sharing a feature, and seats them in it.
+
+[ferry-win-level-1]
+description = "Captain Cajun's ferry at group 2's level 1: all 16 Zoombinis are seated so that every touching pair shares a feature (none is sent back), and the go button crosses to the toads with all of them"
+commands = "level 2 1; party 16; scene 10; wait 7000; assert ferryLevel 0; assert ferrySnoidCount 16; ferry send right 16; wait until ferrySeated == 16; wait 2000; assert badPlacings 0; assert ferryHasPassengers 16; click 618 458; wait scene 2; assert journeyFrom 10; assert journeyTo 11; wait scene 11; assert scene 11; assert lillyLevel 1; assert zoombinis 16"
+seconds = 170
+
+[ferry-win-level-2]
+description = "Captain Cajun's ferry at group 2's level 2: all 8 Zoombinis are seated so that every touching pair shares a feature (none is sent back), and the go button crosses to the toads with all of them"
+commands = "level 2 2; party 8; scene 10; wait 7000; assert ferryLevel 1; assert ferrySnoidCount 8; ferry send right 8; wait until ferrySeated == 8; wait 2000; assert badPlacings 0; assert ferryHasPassengers 8; click 618 458; wait scene 2; assert journeyFrom 10; assert journeyTo 11; wait scene 11; assert scene 11; assert lillyLevel 2; assert zoombinis 8"
+seconds = 170
+
+[ferry-win-level-3]
+description = "Captain Cajun's ferry at group 2's level 3: all 8 Zoombinis are seated so that every touching pair shares a feature (none is sent back), and the go button crosses to the toads with all of them"
+commands = "level 2 3; party 8; scene 10; wait 7000; assert ferryLevel 2; assert ferrySnoidCount 8; ferry send right 8; wait until ferrySeated == 8; wait 2000; assert badPlacings 0; assert ferryHasPassengers 8; click 618 458; wait scene 2; assert journeyFrom 10; assert journeyTo 11; wait scene 11; assert scene 11; assert lillyLevel 3; assert zoombinis 8"
+seconds = 170
+
+[ferry-win-level-4]
+description = "Captain Cajun's ferry at group 2's level 4: all 16 Zoombinis are seated so that every touching pair shares a feature (none is sent back), and the go button crosses to the toads with all of them"
+commands = "level 2 4; party 16; scene 10; wait 7000; assert ferryLevel 3; assert ferrySnoidCount 16; ferry send right 16; wait until ferrySeated == 16; wait 2000; assert badPlacings 0; assert ferryHasPassengers 16; screenshot loaded; click 618 458; wait scene 2; assert journeyFrom 10; assert journeyTo 11; wait scene 11; assert scene 11; assert lillyLevel 4; assert zoombinis 16"
+seconds = 170
+# the Zoombinis fidget
+tolerance = 0.03
+
+[ferry-wrong-then-right]
+description = "A Zoombini put beside one it shares no feature with is sent back to wait (one bad placing, nobody lost), then the whole party is seated"
+commands = "level 2 1; party 16; scene 10; wait 7000; ferry send right 3; wait until ferrySeated == 3; ferry send wrong 1; wait until ferryIdle == 1; assert ferrySeated 3; assert badPlacings 1; ferry send right 13; wait until ferrySeated == 16; wait 2000; assert ferryHasPassengers 16"
+seconds = 170
+
+[ferry-leave-with-three]
+description = "The go button does nothing with nobody aboard; with three seated it crosses with those three"
+commands = "level 2 1; party 16; scene 10; wait 7000; click 618 458; wait 2500; assert scene 10; assert ferryLeaving 0; ferry send right 3; wait until ferrySeated == 3; wait 2000; click 618 458; wait scene 2; assert journeyFrom 10; wait scene 11; assert scene 11; assert zoombinis 3"
+seconds = 170
+
+
+# --- Titanic Tattooed Toads, played with the `toads` oracle: it reads the lily-pad board and puts each toad on a row
+# from which it can hop to the far side. (The scene opens with `skipJourneyMap` set, as in the game: no journey to Stone Rise.)
+
+[toads-win-level-1]
+description = "Titanic Tattooed Toads at group 2's level 1: eight toads are put on rows they can cross from (as the toads come back for the next trip), all eight Zoombinis arrive, and the go button leaves for Stone Rise"
+commands = "level 2 1; party 8; scene 11; wait 7000; assert lillyLevel 1; toads send right 8; wait until padsPlaced == 8; wait until padsArrived == 8; wait 3000; assert lillyGoReady 1; click 618 458; wait scene 12; assert scene 12; assert zoombinis 8"
+seconds = 170
+seed = 7
+
+[toads-win-level-2]
+description = "Titanic Tattooed Toads at group 2's level 2: eight toads are put on rows they can cross from (as the toads come back for the next trip), all eight Zoombinis arrive, and the go button leaves for Stone Rise"
+commands = "level 2 2; party 8; scene 11; wait 7000; assert lillyLevel 2; toads send right 8; wait until padsPlaced == 8; wait until padsArrived == 8; wait 3000; assert lillyGoReady 1; click 618 458; wait scene 12; assert scene 12; assert zoombinis 8"
+seconds = 170
+seed = 7
+
+[toads-win-level-3]
+description = "Titanic Tattooed Toads at group 2's level 3: eight toads are put on rows they can cross from (as the toads come back for the next trip), all eight Zoombinis arrive, and the go button leaves for Stone Rise"
+commands = "level 2 3; party 8; scene 11; wait 7000; assert lillyLevel 3; toads send right 8; wait until padsPlaced == 8; wait until padsArrived == 8; wait 3000; assert lillyGoReady 1; click 618 458; wait scene 12; assert scene 12; assert zoombinis 8"
+seconds = 170
+# (seed 5: on some boards a toad's way across is blocked by the others and the wand is needed; this one is not)
+seed = 5
+
+[toads-dead-end-strands-one]
+description = "A toad put on a row whose squares don't lead across stays on the board for good (its Zoombini is stranded), but the other seven cross and the go button leaves with them"
+commands = "level 2 1; party 8; scene 11; wait 7000; toads place dead; wait 2000; assert padsPlaced 1; assert toadsOnBoard 1; toads send right 7; wait until padsPlaced == 8; wait until padsArrived == 7; wait until toadsOnBoard == 1; wait 2000; assert toadsOnBoard 1; assert padsArrived 7; click 618 458; wait scene 12; assert scene 12; assert zoombinis 7"
+seconds = 170
+seed = 7
+
+# --- Stone Rise (levels 1 and 2), played with the `stone` oracle: it arranges the Zoombinis on the cells so that every
+# feature stone has its two neighbours sharing its feature. (Levels 3 and 4 light by winding routes over a hex lattice: not covered.)
+
+[stone-rise-win-level-1]
+description = "Stone Rise at group 2's level 1: the 16 Zoombinis are arranged so that every stone lights, all 16 cells are lit, and the go button leaves for Shade Tree with all of them and group 2's bit for the level set"
+commands = "level 2 1; party 16; scene 12; wait 7000; assert stoneRiseLevel 0; stone send right; wait until stoneLit == 16; wait 2500; assert slidesGoReady 1; screenshot lit; click 620 460; wait scene 2; assert journeyFrom 12; assert journeyTo 5; wait scene 5; assert scene 5; assert zoombinis 16; assert state:0x52 1"
+seconds = 170
+# the Zoombinis fidget
+tolerance = 0.03
+
+[stone-rise-win-level-2]
+description = "Stone Rise at group 2's level 2: the 8 Zoombinis are arranged so that every stone lights, all 8 cells are lit, and the go button leaves for Shade Tree with all of them and group 2's bit for the level set"
+commands = "level 2 2; party 8; scene 12; wait 7000; assert stoneRiseLevel 1; stone send right; wait until stoneLit == 8; wait 2500; assert slidesGoReady 1; click 620 460; wait scene 2; assert journeyFrom 12; assert journeyTo 5; wait scene 5; assert scene 5; assert zoombinis 8; assert state:0x52 2"
+seconds = 170
+
+[stone-rise-misfit-stays-dark]
+description = "Level 1: a Zoombini that doesn't share the stone's feature with its neighbour leaves its cell unlit; going then takes only the lit one"
+commands = "level 2 1; party 8; scene 12; wait 7000; stone seat right; wait 1500; assert stoneLit 1; stone seat wrong; wait 1500; assert stoneLit 1; assert slidesGoReady 1; click 620 460; wait scene 2; wait scene 5; assert scene 5; assert zoombinis 1"
+seconds = 170
+
+
 [pizza-wrong-pizza]
 description = "A pizza is served to the trolls: its topping is not what they want"
 commands = "party 8; scene 9; wait 8000; drag zoombini 0 place 1; wait 1500; click 60 197; wait 600; screenshot topping-picked; click 76 127; wait 8000; screenshot refused"
