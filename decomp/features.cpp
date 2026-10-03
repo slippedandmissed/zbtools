@@ -21,7 +21,7 @@
 #include "sound.h"
 #include "view.h"
 
-char gameName[] = "New Game";
+char gameName[22] = "New Game";
 const char *dialogTexts[289] = {
     "THE CURRENT PARTY OF ZOOMBINIS WILL BE LOST IF YOU GO TO THE MAP", "LOSE ' EM", "KEEP ' EM",
     "OK", "CANCEL", "LOAD", "SAVE", "OPTIONS", "= ON", "= OFF", "ON/OFF TOGGLES:",

@@ -1000,7 +1000,7 @@ extern Callback clickHook; /* @data 0x4a07e8 */
 extern Callback paintHook; /* @data 0x4a07ec: draws the window's contents, if set */
 extern Scene *scenes[]; /* @data 0x4a26e8 */
 extern char installFromDirKey[]; /* @data 0x4a3f06 */
-extern char userFileName[]; /* @data 0x4a4900 */
+extern char userFileName[32]; /* @data 0x4a4900: the saved game's file (ZOOMnnnn.txt); 32 bytes in the original, up to rosterFileName */
 extern char rosterFileName[]; /* @data 0x4a4920 */
 extern short loadingImages; /* @data 0x4a4974 */
 extern void (*gameActivateHook)(short active); /* @data 0x4a4a00: told when the window is (de)activated */
@@ -3680,7 +3680,7 @@ enum DialogText
     textReallyQuit = 41,
     textCreditLines = 42,
 };
-extern char gameName[]; /* @data 0x4a48ea */
+extern char gameName[22]; /* @data 0x4a48ea: 22 bytes in the original, up to userFileName */
 extern char clickToDragOption; /* @data 0x4b8800: the options' click-to-drag setting */
 extern unsigned short transitionsOn; /* @data 0x4b0d4a */
 extern short townDialogView; /* @data 0x4a74dc */

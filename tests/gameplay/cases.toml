@@ -633,3 +633,49 @@ commands = "party 8; scene 11; wait 7000; drag 19 346 126 282; wait 900; drag 48
 description = "Three flawless trips through Pizza Pass raise group 1's level (the port's rule; the original needs one); a trip that loses Zoombinis counts for nothing"
 commands = "party 4; scene 9; wait 8000; state set 0x54 1 2; set pizzaGoReady 1; click 620 458; wait scene 4; wait 1000; assert clears1 1; assert level1 1; party 4; scene 9; wait 5000; scene 4; wait 2000; assert clears1 1; assert level1 1; party 4; scene 9; wait 8000; state set 0x54 1 2; set pizzaGoReady 1; click 620 458; wait scene 4; wait 1000; assert clears1 2; assert level1 1; scene 1; wait 3000; screenshot two-clears; party 4; scene 9; wait 8000; state set 0x54 1 2; set pizzaGoReady 1; click 620 458; wait scene 4; wait 1000; assert clears1 0; assert level1 2; scene 1; wait 3000; screenshot three-clears"
 seconds = 240
+
+# --- The level rising after three flawless clears of a group's last puzzle (the port's rule; see the handbook), played
+# through the real exits of Stone Rise (group 2) and Mudball Wall (group 3) with their oracles, a party of four each time.
+
+[perfect-clears-group-2]
+description = "Three flawless trips through Stone Rise raise group 2's level, and the first adds Zoombiniville's record of the group at level 1; a trip that loses nobody counts, the level rises on the third"
+commands = "party 4; scene 12; wait 7000; state set 0x54 1 2; stone send right; wait until stoneLit == 4; wait 2500; click 620 460; wait scene 5; wait 1500; assert clears2 1; assert level2 1; party 4; scene 12; wait 7000; state set 0x54 1 2; stone send right; wait until stoneLit == 4; wait 2500; click 620 460; wait scene 5; wait 1500; assert clears2 2; assert level2 1; party 4; scene 12; wait 7000; state set 0x54 1 2; stone send right; wait until stoneLit == 4; wait 2500; click 620 460; wait scene 5; wait 1500; assert clears2 0; assert level2 2; assert state:0xa2 2; assert state:0xb2 1"
+seconds = 240
+
+[perfect-clears-group-3]
+description = "The same for group 3 through Mudball Wall"
+commands = "party 4; scene 15; wait 9000; state set 0x54 1 2; mud fill; wait until netGoAllowed == 1; wait 4000; click 620 460; wait scene 5; wait 1500; assert clears3 1; assert level3 1; party 4; scene 15; wait 9000; state set 0x54 1 2; mud fill; wait until netGoAllowed == 1; wait 4000; click 620 460; wait scene 5; wait 1500; assert clears3 2; assert level3 1; party 4; scene 15; wait 9000; state set 0x54 1 2; mud fill; wait until netGoAllowed == 1; wait 4000; click 620 460; wait scene 5; wait 1500; assert clears3 0; assert level3 2; assert state:0xa2 3; assert state:0xb2 1"
+seconds = 360
+
+[practice-puzzle-played-through]
+description = "Practice mode through a whole puzzle: from the map a practice party plays Allergic Cliffs at the chosen level, all sixteen cross, and leaving goes back to the map still in practice with nothing of the journey saved (no group bit, level or clear)"
+commands = "debug on; practice 3; scene 1; wait 4000; click 170 343; wait scene 7; wait 6000; assert practice 3; assert bridgeLevel 2; assert zoombinis 16; cliffs send right 16; wait until cliffsAcross == 16; wait 3000; click 618 458; wait scene 1; wait 1500; assert practice 3; assert state:0x50 0; assert state:0x51 0; assert state:0x52 0; assert level1 1; assert clears1 0"
+seconds = 150
+seed = 7
+
+[saved-game-round-trip]
+description = "A game is saved by name from the camp (Ctrl-S), the level is changed, and Ctrl-L loads the saved game back from the town: the level and the camp are restored"
+commands = "level 1 3; party 8; scene 4; wait 5000; key 19; wait 2500; key 65; key 66; wait 500; screenshot naming; click 410 345; wait 2500; assert dialog 0; state set 0xc2 0 2; assert level1 1; scene 6; wait 4000; key 12; wait 2500; screenshot list; click 410 318; wait 6000; assert dialog 0; assert level1 3; assert scene 4"
+seconds = 90
+
+[new-game-resets]
+description = "Ctrl-N asks whether to create a new game over the unsaved one; NEW GAME starts afresh: back on Zoombini Isle with no party and the levels reset"
+commands = "level 1 3; party 8; scene 4; wait 5000; key 14; wait 2500; assert dialog 8; screenshot ask; click 405 257; wait 5000; assert dialog 0; assert scene 3; assert level1 1; assert party 0"
+seconds = 60
+
+[new-game-cancelled]
+description = "Cancelling the new-game question keeps the game as it was"
+commands = "level 1 3; party 8; scene 4; wait 5000; key 14; wait 2500; assert dialog 8; click 230 257; wait 2500; assert dialog 0; assert scene 4; assert level1 3"
+seconds = 60
+
+[dialog-quit-prompt]
+description = "Ctrl-Q asks whether to save the progress before quitting (both answers leave the game, so the case only looks)"
+commands = "level 1 3; party 8; scene 4; wait 5000; key 17; wait 2500; assert dialog 8; screenshot ask"
+seconds = 60
+
+[hidden-targets-controls]
+description = "The hidden targets game (scene 20): 6 and 4 turn the ship, 5 fires a shot, and the leave button goes back to the map"
+commands = "party 8; scene 20; wait 4000; assert shipDirection 0; key 54; wait 400; assert shipDirection 1; key 54; wait 400; assert shipDirection 2; key 52; wait 400; assert shipDirection 1; key 53; wait 200; assert shotsStarted 1; screenshot shot; click 618 458; wait scene 1; assert scene 1"
+seconds = 60
+# the shot is a moment in flight
+tolerance = 0.04
