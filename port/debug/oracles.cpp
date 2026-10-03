@@ -7,6 +7,7 @@
 #include "ferry.h"
 #include "lilly.h"
 #include "slides.h"
+#include "fleens.h"
 #include "snoids.h"
 #include "view.h"
 #include "oracles.h"
@@ -18,6 +19,37 @@
 #include <vector>
 
 namespace {
+
+
+/* A `drag` command that brings the Zoombini's feet to place `place` (from 1), grabbing it at a point where
+   the game itself finds this Zoombini (in a crowd the middle of its picture can be under another one's), or
+   "" if there is no such point. (The same offset as `drag zoombini N place P` works out.) */
+std::string dragZoombiniToPlace(View *view, int place)
+{
+    const ShortRect &b = view->body.bounds;
+    Snoid *snoid = viewSnoid(view);
+
+    for (int radius = 0; radius < 80; radius += 2)
+        for (int dy = -radius; dy <= radius; dy += 2)
+            for (int dx = -radius; dx <= radius; dx += 2) {
+                if (radius && abs(dx) != radius && abs(dy) != radius)
+                    continue;
+                Point at;
+
+                at.x = (short)((b.left + b.right) / 2 + dx);
+                at.y = (short)((b.top + b.bottom) / 2 + dy);
+                View *hit = viewAt(at, 1, 1);
+
+                if (hit && hit->id == view->id) {
+                    int toX = placedViewPoints[place - 1].x + at.x - snoid->body.x;
+                    int toY = placedViewPoints[place - 1].y + at.y - snoid->body.y;
+
+                    return "drag " + std::to_string(at.x) + " " + std::to_string(at.y) + " " + std::to_string(toX) + " "
+                           + std::to_string(toY);
+                }
+            }
+    return "";
+}
 
 /* ---- Allergic Cliffs (scene 7) ---------------------------------------------------------------------
  *
@@ -1001,6 +1033,95 @@ bool stoneCommand(const std::vector<std::string> &w, OracleResult *result)
     return true;
 }
 
+
+/* ---- Fleens! (scene 13) -----------------------------------------------------------------------------
+ *
+ * Each Zoombini has a fleen made from it (fleenViews, by party index), its features shifted by the hidden
+ * rule; three of the fleens (pickedFleens, from 1) stand apart. Dropping a Zoombini on the place in front
+ * of the fleens brings its own fleen up to it; when that fleen is one of the three picked, it counts
+ * (pickedFleensFound), and at three the puzzle is solved (fleensGoReady, and fleensEntered once the
+ * scene has played out). So the right Zoombinis are those whose fleens were picked.
+ */
+
+bool fleensOpen_()
+{
+    return currentScene == 13;
+}
+
+/* Whether the Zoombini of party index `i` is one whose fleen was picked. */
+bool fleensPicked(int i)
+{
+    for (int k = 0; k < 3; k++)
+        if (pickedFleens[k] == i + 1)
+            return true;
+    return false;
+}
+
+/* The `drag zoombini N` number of party index `i`, or -1. */
+int fleensIndexOf(int i, const std::vector<View *> &views)
+{
+    for (size_t n = 0; n < views.size(); n++)
+        if (views[n]->id == partyViews[i])
+            return (int)n;
+    return -1;
+}
+
+bool fleensCommand(const std::vector<std::string> &w, OracleResult *result)
+{
+    if (!fleensOpen_()) {
+        result->error = "fleens: Fleens! (scene 13) isn't open";
+        return true;
+    }
+    std::vector<View *> views = zbDebugZoombiniViews();
+
+    if (w.size() == 1) {
+        /* `fleens`: which Zoombinis have picked fleens */
+        for (int i = 0; i < fleensPartySize; i++) {
+            View *view = findView(partyViews[i]);
+
+            result->said.push_back("zoombini " + std::to_string(fleensIndexOf(i, views)) + ": its fleen is "
+                                   + (fleensPicked(i) ? "one of the three picked" : "not picked")
+                                   + (view && viewSnoid(view)->chosen ? " (already put down)" : ""));
+        }
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "pick" && (w[2] == "right" || w[2] == "wrong")) {
+        /* `fleens pick right|wrong`: the next Zoombini whose fleen is picked (or isn't), to the place */
+        for (int i = 0; i < fleensPartySize; i++) {
+            View *view = findView(partyViews[i]);
+
+            if (!view || viewSnoid(view)->chosen || fleensPicked(i) != (w[2] == "right"))
+                continue;
+            int n = fleensIndexOf(i, views);
+
+            std::string drag = dragZoombiniToPlace(view, 1);
+
+            if (drag.empty()) {
+                result->error = "fleens pick: zoombini " + std::to_string(n) + " can't be grabbed (it is under others)";
+                return true;
+            }
+            result->commands.push_back(drag);
+            result->commands.push_back("wait 1000"); /* (the game takes the drop a moment after the release) */
+            result->said.push_back("fleens: zoombini " + std::to_string(n) + " put down (" + w[2] + ")");
+            return true;
+        }
+        result->error = "fleens pick " + w[2] + ": no such Zoombini is left";
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "send" && (w[2] == "right" || w[2] == "wrong")) {
+        /* `fleens send right|wrong [N]`: N times (three), when the scene is at rest, the next Zoombini */
+        int count = w.size() >= 4 ? atoi(w[3].c_str()) : 3;
+
+        for (int i = 0; i < count; i++) {
+            result->commands.push_back("wait until fleensIdle == 1");
+            result->commands.push_back("fleens pick " + w[2]);
+        }
+        return true;
+    }
+    result->error = "fleens: expected `fleens`, `fleens pick right|wrong` or `fleens send right|wrong [N]`";
+    return true;
+}
+
 } /* namespace */
 
 bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
@@ -1017,6 +1138,8 @@ bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
         return toadsCommand(w, result);
     if (!w.empty() && w[0] == "stone")
         return stoneCommand(w, result);
+    if (!w.empty() && w[0] == "fleens")
+        return fleensCommand(w, result);
     return false;
 }
 
@@ -1089,6 +1212,10 @@ bool zbOracleValue(const std::string &name, long *value)
     }
     if (name == "stoneLit") {
         *value = stoneOpen_() ? stoneLit() : 0; /* the Zoombinis on lit cells */
+        return true;
+    }
+    if (name == "fleensIdle") {
+        *value = fleensOpen_() && !activeSnoid && !leaderWalking && !putDownFleen && snoidsOnTheirWay <= 0 ? 1 : 0;
         return true;
     }
     return false;

@@ -171,12 +171,18 @@ A puzzle is won by working out a hidden rule, which a recorded list of moves can
 | `stone seat right\|wrong` | drags the next Zoombini of the arrangement onto its cell (in cell order); `wrong` drags a free Zoombini onto a free cell beside a seated one it shares no feature with (so the stone stays dark) |
 | `stone send right [N]` | N times (every cell): `stone seat right` |
 
-Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved); `ferrySeated` (Zoombinis seated on the ferry), `ferryIdle` (nothing walking back, sailing or arriving); `toadsAvailable` (toads that could cross from a free row now), `toadsOnBoard` (toads set down and not yet back, hopping included); `stoneLit` (the Zoombinis on lit cells).
+| `fleens` | Fleens! (scene 13): which Zoombinis have one of the three picked fleens (the ones that stand apart) |
+| `fleens pick right\|wrong` | drops the next Zoombini whose fleen was picked (or wasn't) on the place in front of the fleens |
+| `fleens send right\|wrong [N]` | N times (three): waits until the scene is at rest (`fleensIdle`), then `fleens pick` |
+
+Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved); `ferrySeated` (Zoombinis seated on the ferry), `ferryIdle` (nothing walking back, sailing or arriving); `toadsAvailable` (toads that could cross from a free row now), `toadsOnBoard` (toads set down and not yet back, hopping included); `stoneLit` (the Zoombinis on lit cells); `fleensIdle` (nothing walking up or being put down).
 
 ```sh
 level 1 2; party 16; scene 7; wait 6000
 cliffs send right 16; wait until cliffsAcross == 16
 assert sentBackCount 0; click 618 458; wait scene 8
 ```
+
+An oracle that drags a Zoombini grabs it at a point where the game itself finds that Zoombini (`viewAt`), since in a crowd the middle of its picture can be under another Zoombini's (`drag zoombini N ...` grabs the middle, and put the wrong Zoombini down with a party of 16 in Fleens).
 
 The other puzzles get theirs as their cases are written (see the [coverage map](gameplay-coverage.md)).

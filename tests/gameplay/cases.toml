@@ -358,6 +358,36 @@ description = "Zoombinis are put down beside fleens"
 commands = "party 8; scene 13; wait 7000; drag zoombini 0 place 1; wait 2500; screenshot first; drag zoombini 1 place 1; wait 5500; screenshot second"
 seed = 7
 
+# --- Fleens!, played with the `fleens` oracle: it knows which Zoombinis have the three picked fleens (the three that stand apart).
+
+[fleens-win-level-1]
+description = "Fleens! at group 3's level 1: the three Zoombinis whose fleens stand apart are put down in turn, the go button lights, and it leaves for Hotel Dimensia with all 16 Zoombinis"
+commands = "level 3 1; party 16; scene 13; wait 8000; assert fleensLevel 0; assert fleensPartySize 16; fleens send right 3; wait until pickedFleensFound == 3; wait until fleensGoReady == 1; wait until fleensEntered == 1; wait 2000; click 620 460; wait scene 2; assert journeyFrom 13; assert journeyTo 14; wait scene 14; assert scene 14; assert hotelLevel 0; assert zoombinis 16"
+seconds = 170
+
+[fleens-win-level-2]
+description = "Fleens! at group 3's level 2: the three Zoombinis whose fleens stand apart are put down in turn, the go button lights, and it leaves for Hotel Dimensia with all 8 Zoombinis"
+commands = "level 3 2; party 8; scene 13; wait 8000; assert fleensLevel 1; assert fleensPartySize 8; fleens send right 3; wait until pickedFleensFound == 3; wait until fleensGoReady == 1; wait until fleensEntered == 1; wait 2000; screenshot found; click 620 460; wait scene 2; assert journeyFrom 13; assert journeyTo 14; wait scene 14; assert scene 14; assert hotelLevel 1; assert zoombinis 8"
+seconds = 170
+# the fleens and Zoombinis fidget
+tolerance = 0.03
+
+[fleens-win-level-3]
+description = "Fleens! at group 3's level 3: the three Zoombinis whose fleens stand apart are put down in turn, the go button lights, and it leaves for Hotel Dimensia with all 8 Zoombinis"
+commands = "level 3 3; party 8; scene 13; wait 8000; assert fleensLevel 2; assert fleensPartySize 8; fleens send right 3; wait until pickedFleensFound == 3; wait until fleensGoReady == 1; wait until fleensEntered == 1; wait 2000; click 620 460; wait scene 2; assert journeyFrom 13; assert journeyTo 14; wait scene 14; assert scene 14; assert hotelLevel 2; assert zoombinis 8"
+seconds = 170
+
+[fleens-win-level-4]
+description = "Fleens! at group 3's level 4: the three Zoombinis whose fleens stand apart are put down in turn, the go button lights, and it leaves for Hotel Dimensia with all 16 Zoombinis"
+commands = "level 3 4; party 16; scene 13; wait 8000; assert fleensLevel 3; assert fleensPartySize 16; fleens send right 3; wait until pickedFleensFound == 3; wait until fleensGoReady == 1; wait until fleensEntered == 1; wait 2000; click 620 460; wait scene 2; assert journeyFrom 13; assert journeyTo 14; wait scene 14; assert scene 14; assert hotelLevel 3; assert zoombinis 16"
+seconds = 170
+
+[fleens-wrong-then-right]
+description = "A Zoombini whose fleen was not picked is put down: it goes in the line but counts for nothing (and the go button stays dark); then the three right ones solve it"
+commands = "level 3 1; party 8; scene 13; wait 8000; fleens send wrong 1; wait until fleensIdle == 1; assert pickedFleensFound 0; assert fleensGoReady 0; fleens send right 3; wait until pickedFleensFound == 3; wait until fleensGoReady == 1; wait until fleensEntered == 1"
+seconds = 170
+
+
 [hotel-rooms]
 description = "Zoombinis are sent into rooms of the hotel"
 commands = "level 3 3; party 8; scene 14; wait 8000; drag zoombini 0 place 3; wait 1500; screenshot first-room; drag zoombini 1 place 8; wait 1500; drag zoombini 2 place 13; wait 2500; screenshot three-rooms"
