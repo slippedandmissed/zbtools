@@ -388,6 +388,45 @@ commands = "level 3 1; party 8; scene 13; wait 8000; fleens send wrong 1; wait u
 seconds = 170
 
 
+# --- Hotel Dimensia, played with the `hotel` oracle: it asks the game which rooms a Zoombini fits (and, where rooms are
+# blocked or overlap on the screen, plans which rows, columns and layers the features take). `hotel fill` skips the
+# guide's introduction with a click and then puts every Zoombini in a room.
+
+[hotel-win-level-1]
+description = "Hotel Dimensia at group 3's level 1: all 16 Zoombinis are put in rooms that fit (none turned away), the go button lights, and it leaves for Mudball Wall with all of them"
+commands = "level 3 1; party 16; scene 14; wait 3000; assert hotelLevel 0; hotel fill; wait until hotelGoReady == 1; wait 2500; assert roomsFilled 16; assert hotelFails 0; click 620 460; wait scene 15; assert scene 15; assert netLevel 0; assert zoombinis 16"
+seconds = 170
+
+[hotel-win-level-2]
+description = "Hotel Dimensia at group 3's level 2: all 8 Zoombinis are put in rooms that fit (none turned away), the go button lights, and it leaves for Mudball Wall with all of them"
+commands = "level 3 2; party 8; scene 14; wait 3000; assert hotelLevel 1; hotel fill; wait until hotelGoReady == 1; wait 2500; assert roomsFilled 8; assert hotelFails 0; click 620 460; wait scene 15; assert scene 15; assert netLevel 1; assert zoombinis 8"
+seconds = 170
+
+[hotel-win-level-3]
+description = "Hotel Dimensia at group 3's level 3: all 16 Zoombinis are put in rooms that fit (none turned away), the go button lights, and it leaves for Mudball Wall with all of them"
+commands = "level 3 3; party 16; scene 14; wait 3000; assert hotelLevel 2; hotel fill; wait until hotelGoReady == 1; wait 2500; assert roomsFilled 16; assert hotelFails 0; screenshot full; click 620 460; wait scene 15; assert scene 15; assert netLevel 2; assert zoombinis 16"
+seconds = 170
+# the Zoombinis fidget
+tolerance = 0.03
+
+[hotel-win-level-4]
+description = "Hotel Dimensia at group 3's level 4: all 16 Zoombinis are put in rooms that fit (none turned away), the go button lights, and it leaves for Mudball Wall with all of them"
+commands = "level 3 4; party 16; scene 14; wait 3000; assert hotelLevel 3; hotel fill; wait until hotelGoReady == 1; wait 2500; assert roomsFilled 16; assert hotelFails 0; click 620 460; wait scene 15; assert scene 15; assert netLevel 3; assert zoombinis 16"
+seconds = 170
+# (seed 7: the 3D rooms overlap on the screen, so only some can be dropped on, and on some seeds there is no way to give the features rows, layers and columns that avoid the rest)
+seed = 7
+
+[hotel-wrong-then-right]
+description = "A Zoombini put in a room it doesn't fit is turned away (nothing placed, one guide step used), then everyone is put in the right rooms"
+commands = "level 3 2; party 8; scene 14; wait 3000; hotel send right 2; wait until hotelIdle == 1; assert roomsFilled 2; hotel send wrong 1; wait until hotelIdle == 1; assert roomsFilled 2; assert hotelFails 0; hotel fill; wait until hotelGoReady == 1; assert roomsFilled 8; assert hotelFails 0"
+seconds = 170
+
+[hotel-out-of-tries]
+description = "After eleven misplacements the hotel gives up on the round: drops do nothing, but the Zoombini already in can leave (what the code does; to confirm against the original)"
+commands = "level 3 2; party 8; scene 14; wait 3000; hotel send right 1; hotel send wrong 11; wait until hotelFails == 1; wait 3000; assert roomsFilled 1; assert hotelGoReady 1; drag zoombini 1 place 6; wait 3000; assert roomsFilled 1; click 620 460; wait scene 15; assert scene 15; assert zoombinis 1"
+seconds = 170
+
+
 [hotel-rooms]
 description = "Zoombinis are sent into rooms of the hotel"
 commands = "level 3 3; party 8; scene 14; wait 8000; drag zoombini 0 place 3; wait 1500; screenshot first-room; drag zoombini 1 place 8; wait 1500; drag zoombini 2 place 13; wait 2500; screenshot three-rooms"

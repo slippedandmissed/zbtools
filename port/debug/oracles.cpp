@@ -8,11 +8,14 @@
 #include "lilly.h"
 #include "slides.h"
 #include "fleens.h"
+#include "hotel.h"
 #include "snoids.h"
 #include "view.h"
 #include "oracles.h"
 
+#include <algorithm>
 #include <cstdio>
+#include <functional>
 #include <utility>
 #include <cstdlib>
 #include <string>
@@ -21,18 +24,46 @@
 namespace {
 
 
-/* A `drag` command that brings the Zoombini's feet to place `place` (from 1), grabbing it at a point where
-   the game itself finds this Zoombini (in a crowd the middle of its picture can be under another one's), or
-   "" if there is no such point. (The same offset as `drag zoombini N place P` works out.) */
-std::string dragZoombiniToPlace(View *view, int place)
+/* The place (from 1) the game would take for a Zoombini let go with its feet at (x, y): dragSnoid takes the
+   first free place, in order, whose point is within placeSnapRadius of the feet. 0 if none. */
+int placeTakenAt(int x, int y, bool ignoreClaims = false)
+{
+    for (int i = 0; i < placedViewCount; i++)
+        if ((ignoreClaims || !placeClaims[i]) && std::abs(placedViewPoints[i].x - x) <= placeSnapRadius
+            && std::abs(placedViewPoints[i].y - y) <= placeSnapRadius && findView(placedViews[i]))
+            return i + 1;
+    return 0;
+}
+
+/* A `drag` command that puts the Zoombini on place `place` (from 1): it grabs the Zoombini at a point where the
+   game itself finds this Zoombini (in a crowd the middle of its picture can be under another one's), and lets
+   it go with its feet where the game takes exactly that place (places can overlap, and the first within reach
+   wins, so the place's own point isn't always the one); "" if there is no such way. */
+std::string dragZoombiniToPlace(View *view, int place, bool ignoreClaims = false)
 {
     const ShortRect &b = view->body.bounds;
     Snoid *snoid = viewSnoid(view);
+    int feetX = -1, feetY = -1;
 
+    for (int radius = 0; radius <= placeSnapRadius && feetX < 0; radius += 1)
+        for (int dy = -radius; dy <= radius && feetX < 0; dy++)
+            for (int dx = -radius; dx <= radius; dx++) {
+                if (radius && std::abs(dx) != radius && std::abs(dy) != radius)
+                    continue;
+                int x = placedViewPoints[place - 1].x + dx, y = placedViewPoints[place - 1].y + dy;
+
+                if (placeTakenAt(x, y, ignoreClaims) == place) {
+                    feetX = x;
+                    feetY = y;
+                    break;
+                }
+            }
+    if (feetX < 0)
+        return "";
     for (int radius = 0; radius < 80; radius += 2)
         for (int dy = -radius; dy <= radius; dy += 2)
             for (int dx = -radius; dx <= radius; dx += 2) {
-                if (radius && abs(dx) != radius && abs(dy) != radius)
+                if (radius && std::abs(dx) != radius && std::abs(dy) != radius)
                     continue;
                 Point at;
 
@@ -40,13 +71,9 @@ std::string dragZoombiniToPlace(View *view, int place)
                 at.y = (short)((b.top + b.bottom) / 2 + dy);
                 View *hit = viewAt(at, 1, 1);
 
-                if (hit && hit->id == view->id) {
-                    int toX = placedViewPoints[place - 1].x + at.x - snoid->body.x;
-                    int toY = placedViewPoints[place - 1].y + at.y - snoid->body.y;
-
-                    return "drag " + std::to_string(at.x) + " " + std::to_string(at.y) + " " + std::to_string(toX) + " "
-                           + std::to_string(toY);
-                }
+                if (hit && hit->id == view->id)
+                    return "drag " + std::to_string(at.x) + " " + std::to_string(at.y) + " "
+                           + std::to_string(feetX + at.x - snoid->body.x) + " " + std::to_string(feetY + at.y - snoid->body.y);
             }
     return "";
 }
@@ -1122,6 +1149,348 @@ bool fleensCommand(const std::vector<std::string> &w, OracleResult *result)
     return true;
 }
 
+
+/* ---- Hotel Dimensia (scene 14) ----------------------------------------------------------------------
+ *
+ * The Zoombinis are put in rooms (places; room = place - 1, at level 0 floor p being room (p - 1) * 5 + 4).
+ * The rooms sort by features (rowSortFeature, columnSortFeature, and at level 3 layerSortFeature): the first
+ * Zoombini goes anywhere, then each has to fit the rows, columns and layers set so far (fitsRoom,
+ * fitsRoom3d; at level 0 a floor holds one value). The oracle asks the game's own functions.
+ */
+
+bool hotelOpen_()
+{
+    return currentScene == 14;
+}
+
+int hotelPlaces()
+{
+    return hotelLevel == 0 ? 5 : hotelLevel == 3 ? 125 : 25;
+}
+
+/* Whether putting `snoid` in place `place` (from 1) is right. */
+bool hotelFits(Snoid *snoid, int place)
+{
+    if (hotelLevel == 0) {
+        int room = (place - 1) * 5 + 4;
+        int value = snoid->features[rowSortFeature];
+
+        if (firstPlacementFree)
+            return true;
+        if (roomRowValues[room])
+            return roomRowValues[room] == value;
+        for (int i = 0; i < 5; i++)
+            if (roomRowValues[i * 5 + 4] == value)
+                return false;
+        return true;
+    }
+    int room = place - 1;
+
+    if (hotelLevel < 3 && roomOccupancy[room] < 0)
+        return false; /* (a blocked room: the game takes no drop there) */
+    if (firstPlacementFree)
+        return true;
+    int a = snoid->features[rowSortFeature], b = snoid->features[columnSortFeature];
+
+    if (hotelLevel == 3)
+        return fitsRoom3d(a, b, snoid->features[layerSortFeature], room) != 0;
+    return fitsRoom(a, b, room) != 0;
+}
+
+/* Whether the place takes a drop at all (a blocked room doesn't). */
+bool hotelTakesDrops(int place)
+{
+    return hotelLevel == 0 || hotelLevel == 3 || roomOccupancy[place - 1] >= 0;
+}
+
+
+/* Levels 1 and 2 (5 by 5 rooms; some blocked at level 2): where Zoombini `z` goes so that every Zoombini
+   can still be put in its room. A Zoombini's rowSortFeature value picks its column and its columnSortFeature
+   value its row (setRowAndColumn), so values are given distinct columns and rows, those already given
+   kept, such that no room needed is blocked. Returns the place (from 1), or 0 if there is no way. */
+int hotelPlannedPlace(const std::vector<View *> &views, size_t z)
+{
+    std::vector<int> aValues, bValues; /* the distinct values of the party */
+
+    for (View *view : views) {
+        int a = viewSnoid(view)->features[rowSortFeature], b = viewSnoid(view)->features[columnSortFeature];
+
+        if (std::find(aValues.begin(), aValues.end(), a) == aValues.end())
+            aValues.push_back(a);
+        if (std::find(bValues.begin(), bValues.end(), b) == bValues.end())
+            bValues.push_back(b);
+    }
+    int colOf[8] = {0}, rowOf[8] = {0}; /* by value (1-5): the column / row, or -1 */
+    bool colUsed[5] = {false}, rowUsed[5] = {false};
+
+    for (int v = 0; v < 8; v++)
+        colOf[v] = rowOf[v] = -1;
+    for (int c = 0; c < 5; c++)
+        if (roomRowValues[c]) {
+            colOf[roomRowValues[c]] = c;
+            colUsed[c] = true;
+        }
+    for (int r = 0; r < 5; r++)
+        if (roomLayerValues[r * 5]) {
+            rowOf[roomLayerValues[r * 5]] = r;
+            rowUsed[r] = true;
+        }
+    /* assign the values still without a column or row, trying each free one in turn */
+    std::vector<int> needCols, needRows;
+
+    for (int a : aValues)
+        if (colOf[a] < 0)
+            needCols.push_back(a);
+    for (int b : bValues)
+        if (rowOf[b] < 0)
+            needRows.push_back(b);
+    std::function<bool(size_t, size_t)> assign = [&](size_t ci, size_t ri) -> bool {
+        if (ci == needCols.size() && ri == needRows.size()) {
+            for (View *view : views) {
+                int room = rowOf[viewSnoid(view)->features[columnSortFeature]] * 5 + colOf[viewSnoid(view)->features[rowSortFeature]];
+
+                if (roomOccupancy[room] < 0)
+                    return false;
+            }
+            return true;
+        }
+        if (ci < needCols.size()) {
+            for (int c = 0; c < 5; c++)
+                if (!colUsed[c]) {
+                    colUsed[c] = true;
+                    colOf[needCols[ci]] = c;
+                    if (assign(ci + 1, ri))
+                        return true;
+                    colUsed[c] = false;
+                    colOf[needCols[ci]] = -1;
+                }
+            return false;
+        }
+        for (int r = 0; r < 5; r++)
+            if (!rowUsed[r]) {
+                rowUsed[r] = true;
+                rowOf[needRows[ri]] = r;
+                if (assign(ci, ri + 1))
+                    return true;
+                rowUsed[r] = false;
+                rowOf[needRows[ri]] = -1;
+            }
+        return false;
+    };
+
+    if (!assign(0, 0))
+        return 0;
+    return rowOf[viewSnoid(views[z])->features[columnSortFeature]] * 5 + colOf[viewSnoid(views[z])->features[rowSortFeature]] + 1;
+}
+
+/* Level 3 (5 by 5 by 5 rooms): the same, with a third dimension: room n is column n % 5, row (n % 25) / 5 and
+   layer n / 25, and a Zoombini's rowSortFeature value picks its row, columnSortFeature its layer and
+   layerSortFeature its column (setRowLayerColumn). Only the rooms in `reach` can be dropped on. */
+int hotelPlannedPlace3d(const std::vector<View *> &views, size_t z, const std::vector<bool> &reach)
+{
+    std::vector<int> values[3]; /* the distinct values: of the row, layer and column features */
+    const int features[3] = {rowSortFeature, columnSortFeature, layerSortFeature};
+
+    for (View *view : views)
+        for (int d = 0; d < 3; d++) {
+            int v = viewSnoid(view)->features[features[d]];
+
+            if (std::find(values[d].begin(), values[d].end(), v) == values[d].end())
+                values[d].push_back(v);
+        }
+    int indexOf[3][8], used[3][5] = {};
+    const short *assigned[3] = {roomRowValues, roomLayerValues, roomColumnValues}; /* index d: row, layer, column */
+
+    for (int d = 0; d < 3; d++)
+        for (int v = 0; v < 8; v++)
+            indexOf[d][v] = -1;
+    for (int i = 0; i < 5; i++)
+        for (int d = 0; d < 3; d++)
+            if (assigned[d][i]) {
+                indexOf[d][assigned[d][i]] = i;
+                used[d][i] = 1;
+            }
+    std::vector<std::pair<int, int>> need; /* (dimension, value) still without an index */
+
+    for (int d = 0; d < 3; d++)
+        for (int v : values[d])
+            if (indexOf[d][v] < 0)
+                need.push_back({d, v});
+    auto roomOf = [&](View *view) {
+        Snoid *snoid = viewSnoid(view);
+        int row = indexOf[0][snoid->features[features[0]]], layer = indexOf[1][snoid->features[features[1]]],
+            column = indexOf[2][snoid->features[features[2]]];
+
+        return layer * 25 + row * 5 + column;
+    };
+    std::function<bool(size_t)> assign = [&](size_t k) -> bool {
+        if (k == need.size()) {
+            for (View *view : views)
+                if (!reach[roomOf(view) + 1])
+                    return false;
+            return true;
+        }
+        for (int i = 0; i < 5; i++)
+            if (!used[need[k].first][i]) {
+                used[need[k].first][i] = 1;
+                indexOf[need[k].first][need[k].second] = i;
+                if (assign(k + 1))
+                    return true;
+                used[need[k].first][i] = 0;
+                indexOf[need[k].first][need[k].second] = -1;
+            }
+        return false;
+    };
+
+    return assign(0) ? roomOf(views[z]) + 1 : 0;
+}
+
+bool hotelWaiting(View *view)
+{
+    Snoid *snoid = viewSnoid(view);
+
+    return snoid->chosen == 0 && snoid->action != 7 && snoid->action != 8 && snoid->action != 9;
+}
+
+/* The game takes a drop only when nothing of the scene is going on (hotelClicked). */
+bool hotelAtRest()
+{
+    return !talkerStarted && !roundResetGroup && !talkerGroup && !hotelFails && !snoidArriving && snoidsOnTheirWay <= 0
+           && !snoidRejected;
+}
+
+bool hotelCommand(const std::vector<std::string> &w, OracleResult *result)
+{
+    if (!hotelOpen_()) {
+        result->error = "hotel: Hotel Dimensia (scene 14) isn't open";
+        return true;
+    }
+    std::vector<View *> views = zbDebugZoombiniViews();
+
+    if (w.size() == 1) {
+        /* `hotel`: what the rooms sort by, and where each waiting Zoombini would fit */
+        const char *names = "HENF";
+
+        std::string line = std::string("rows by ") + names[rowSortFeature] + ", columns by " + names[columnSortFeature];
+
+        if (hotelLevel == 3)
+            line += std::string(", layers by ") + names[layerSortFeature];
+        result->said.push_back(line + (firstPlacementFree ? " (the first placement is free)" : ""));
+        for (size_t z = 0; z < views.size(); z++) {
+            std::string fits;
+
+            for (int place = 1; place <= hotelPlaces(); place++)
+                if (hotelWaiting(views[z]) && hotelFits(viewSnoid(views[z]), place))
+                    fits += " " + std::to_string(place);
+            result->said.push_back("zoombini " + std::to_string(z) + (hotelWaiting(views[z]) ? " fits places" + fits : " is in"));
+        }
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "place" && (w[2] == "right" || w[2] == "wrong")) {
+        /* `hotel place right|wrong`: the first waiting Zoombini to the first place it fits (or doesn't) */
+        bool right = w[2] == "right";
+
+        for (size_t z = 0; z < views.size(); z++) {
+            if (!hotelWaiting(views[z]))
+                continue;
+            int planned = right && (hotelLevel == 1 || hotelLevel == 2) ? hotelPlannedPlace(views, z) : 0;
+
+            if (right && hotelLevel == 3) {
+                std::vector<bool> reach(hotelPlaces() + 2, false);
+
+                for (int place = 1; place <= hotelPlaces(); place++)
+                    reach[place] = !dragZoombiniToPlace(views[z], place, true).empty(); /* (the hotel clears the claims at every drag) */
+                planned = hotelPlannedPlace3d(views, z, reach);
+                if (!planned) {
+                    result->error = "hotel place: no arrangement puts every Zoombini in a room that can be dropped on";
+                    return true;
+                }
+            }
+
+            for (int place = 1; place <= hotelPlaces(); place++) {
+                if (planned && place != planned)
+                    continue;
+                if (!hotelTakesDrops(place) || hotelFits(viewSnoid(views[z]), place) != right)
+                    continue;
+                std::string drag = dragZoombiniToPlace(views[z], place, true); /* (the hotel clears the claims at every drag) */
+
+                if (drag.empty())
+                    continue; /* (a place the game can't be made to take, or a Zoombini that can't be grabbed) */
+                result->commands.push_back(drag);
+                result->commands.push_back("wait 1000"); /* (the game takes the drop a moment after the release) */
+                result->said.push_back("hotel: zoombini " + std::to_string(z) + " to place " + std::to_string(place) + " ("
+                                       + w[2] + ")");
+                return true;
+            }
+            result->error = "hotel place " + w[2] + ": zoombini " + std::to_string(z) + " has no such place";
+            return true;
+        }
+        result->error = "hotel place: no Zoombini is waiting";
+        return true;
+    }
+    if (w.size() == 2 && w[1] == "reach") {
+        /* `hotel reach`: the places a Zoombini can be dropped on (the game takes the first within reach) */
+        std::string line = "reachable places:";
+
+        for (size_t z = 0; z < views.size(); z++)
+            if (hotelWaiting(views[z])) {
+                for (int place = 1; place <= hotelPlaces(); place++)
+                    if (!dragZoombiniToPlace(views[z], place, true).empty())
+                        line += " " + std::to_string(place);
+                break;
+            }
+        result->said.push_back(line);
+        return true;
+    }
+    if (w.size() == 2 && w[1] == "intro") {
+        /* `hotel intro`: while the guide's introduction is on, a click skips it */
+        if (talkerStarted) {
+            result->commands.push_back("click 300 240");
+            result->commands.push_back("wait 1500");
+            result->commands.push_back("hotel intro");
+        }
+        return true;
+    }
+    if (w.size() == 2 && w[1] == "fill") {
+        /* `hotel fill`: until every Zoombini is in a room, when the scene is at rest, the next one to a place it fits
+           (a drop the game didn't take is tried again) */
+        bool waiting = talkerStarted != 0; /* (during the introduction they aren't taking drops yet) */
+
+        for (View *view : views)
+            waiting = waiting || hotelWaiting(view);
+        static int tries = 0; /* (so that a drop that never takes ends in an error, not a loop) */
+
+        if (waiting && ++tries > 120) {
+            tries = 0;
+            result->error = "hotel fill: gave up after 120 tries (a Zoombini that can't be put in a room?)";
+            return true;
+        }
+        if (!waiting)
+            tries = 0;
+        if (waiting) {
+            result->commands.push_back("wait 300");
+            result->commands.push_back("hotel intro");
+            result->commands.push_back("wait until hotelIdle == 1");
+            result->commands.push_back("hotel place right");
+            result->commands.push_back("hotel fill");
+        }
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "send" && (w[2] == "right" || w[2] == "wrong")) {
+        /* `hotel send right|wrong [N]`: N times, when the scene is at rest, the next Zoombini */
+        int count = w.size() >= 4 ? atoi(w[3].c_str()) : 1;
+
+        result->commands.push_back("hotel intro");
+        for (int i = 0; i < count; i++) {
+            result->commands.push_back("wait until hotelIdle == 1");
+            result->commands.push_back("hotel place " + w[2]);
+        }
+        return true;
+    }
+    result->error = "hotel: expected `hotel`, `hotel place right|wrong` or `hotel send right|wrong [N]`";
+    return true;
+}
+
 } /* namespace */
 
 bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
@@ -1140,6 +1509,8 @@ bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
         return stoneCommand(w, result);
     if (!w.empty() && w[0] == "fleens")
         return fleensCommand(w, result);
+    if (!w.empty() && w[0] == "hotel")
+        return hotelCommand(w, result);
     return false;
 }
 
@@ -1216,6 +1587,10 @@ bool zbOracleValue(const std::string &name, long *value)
     }
     if (name == "fleensIdle") {
         *value = fleensOpen_() && !activeSnoid && !leaderWalking && !putDownFleen && snoidsOnTheirWay <= 0 ? 1 : 0;
+        return true;
+    }
+    if (name == "hotelIdle") {
+        *value = hotelOpen_() && hotelAtRest() ? 1 : 0;
         return true;
     }
     return false;
