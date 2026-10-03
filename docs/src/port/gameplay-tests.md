@@ -38,6 +38,10 @@ The baselines are `tests/gameplay/baselines/<case>/<NAME>.png`: 640×480 screens
 | `hotel-win-level-1..4`, `hotel-wrong-then-right`, `hotel-out-of-tries` | **Hotel Dimensia played to the end with its oracle**: 16 or 8 Zoombinis put in rooms that fit at each of the four levels (including the boarded-up and 3D hotels), none turned away, the go button leaving for Mudball Wall with them; a room that doesn't fit turns a Zoombini away; eleven of those and the hotel gives up on the round |
 | `mudball-win-level-1..4`, `mudball-miss-costs-a-shot`, `mudball-out-of-shots` | **Mudball Wall played to the end with its oracle**: a mudball fired at the tile each group of Zoombinis stands behind, at each of the four levels, all eight crossing and the go button leaving for Shade Tree with group 3's bit set; a miss costs one of the limited shots; out of shots only those that crossed leave |
 | `lion-win-level-1..4`, `lion-wrong-stone-walks-to-right-one` | **The Lion's Lair played to the end with its oracle**: every Zoombini (16 or 8) put on a stone that wants it, at each of the four levels, and the go button leaving for the Mirror Machine; one put on the wrong stone walks to the right one |
+| `perfect-clears-group-2`, `perfect-clears-group-3` | the level rising after three flawless clears of a group's last puzzle, through the real exits of Stone Rise and Mudball Wall (a party of four; the first clear also records the group for Zoombiniville) |
+| `practice-puzzle-played-through` | practice mode through a whole puzzle with its oracle; leaving saves nothing |
+| `saved-game-round-trip`, `new-game-resets`, `new-game-cancelled`, `dialog-quit-prompt` | saving by name (Ctrl-S) and loading back (Ctrl-L), the new-game question both ways (Ctrl-N), the quit prompt |
+| `hidden-targets-controls` | the hidden targets game's keys |
 | `intro-logo`, `high-levels`, `map-practice`, `journeys` | the intro, the highest level of three puzzles, the map's practice mode, the journey screens between places |
 | `isle-make-party-and-send`, `camp-drag` | sixteen Zoombinis made by clicking the isle's panel and sent to the ship; a Zoombini dragged in Shelter Rock |
 | `cliffs-right-and-wrong`, `pizza-wrong-pizza`, `pizza-wants`, `toads-wrong-piece` | **wrong moves**: the cliff sneezing, trolls refusing a pizza, a toad put in a row it doesn't match |
@@ -73,11 +77,11 @@ Every run writes `build/gameplay/report.html`: **one self-contained file** (its 
 
 ## In the pull request pipeline
 
-The `gameplay` job in `.github/workflows/pr.yml` builds the headless port, runs `uv run gameplay` and fails the pull request if any case fails. What it leaves for a failed run:
+The `gameplay` jobs in `.github/workflows/pr.yml` (four shards, `gameplay (1/4)` to `gameplay (4/4)`, each building the headless port and playing every 4th case: `uv run gameplay --shard N/4`) run the cases and fail the pull request if any case fails. What it leaves for a failed run:
 
 - **The run's page** shows a summary of the failures (`--summary "$GITHUB_STEP_SUMMARY"`: a table of cases and what was wrong, as Markdown, which GitHub renders on the page itself, with a link to the artifacts). It carries no pictures: they are in the report.
-- **`gameplay-report.html`**, in the run's artifacts: the report, uploaded unzipped (`actions/upload-artifact` with `archive: false`, which names the artifact after its file), so it is one click to download (a login is needed) and opens straight in a browser. Whether GitHub shows an HTML artifact in its own page rather than downloading it is not something this relies on; showing the pictures in the page itself would need them hosted somewhere (a preview deployment of the report, say), which this does not set up.
-- **`gameplay-pictures`**: the failing pictures as files (zipped).
+- **`gameplay-report-N.html`**, in the run's artifacts: the report, uploaded unzipped (`actions/upload-artifact` with `archive: false`, which names the artifact after its file), so it is one click to download (a login is needed) and opens straight in a browser. Whether GitHub shows an HTML artifact in its own page rather than downloading it is not something this relies on; showing the pictures in the page itself would need them hosted somewhere (a preview deployment of the report, say), which this does not set up.
+- **`gameplay-pictures-N`**: the failing pictures as files (zipped).
 
 Locally the report is `build/gameplay/report.html`; open it in a browser.
 

@@ -142,7 +142,7 @@ unsigned long leastFreeMemory = 0x98967f;
 unsigned short showMemoryStats = 0;
 short leavingGame = 0;
 short tempFileExists = 0;
-char userFileName[] = "ZBUser";
+char userFileName[32] = "ZBUser";
 char rosterFileName[42] = {
     90, 111, 111, 109, 98, 105, 110, 105, 46, 119, 104, 111, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 122, 111, 111, 109, 115, 105, 116, 101,

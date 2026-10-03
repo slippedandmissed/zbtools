@@ -43,10 +43,17 @@ jobs:
   # port plays the scripted flows in tests/gameplay/cases.toml and its screenshots are
   # compared with the baselines checked in beside them. Needs only the source. The
   # run's page shows a summary of the failures; the report (one HTML file with the
-  # baseline, new picture and differences of each) is its artifact, gameplay-report.html.
+  # baseline, new picture and differences of each) is its artifact, gameplay-report-N.html.
+  # The cases are split over four jobs (`--shard N/4`, every 4th case from the Nth), each of which
+  # builds the headless port: one job took over twenty minutes of its thirty.
   gameplay:
+    name: gameplay (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -61,23 +68,23 @@ jobs:
       - run: uv run port setup headless_wasm
       - run: uv run port build headless_wasm
       - name: Play the cases and compare their pictures
-        run: uv run gameplay --summary "$GITHUB_STEP_SUMMARY"
+        run: uv run gameplay --shard ${{ matrix.shard }}/4 --summary "$GITHUB_STEP_SUMMARY"
       # The artifact is named after its file (archive: false), and not zipped: download it and open it.
       - name: Name the report
         if: always()
         run: |
-          if [ -f build/gameplay/report.html ]; then cp build/gameplay/report.html gameplay-report.html; fi
+          if [ -f build/gameplay/report.html ]; then cp build/gameplay/report.html gameplay-report-${{ matrix.shard }}.html; fi
       - uses: actions/upload-artifact@v7
-        if: always() && hashFiles('gameplay-report.html') != ''
+        if: always() && hashFiles('gameplay-report-${{ matrix.shard }}.html') != ''
         with:
-          path: gameplay-report.html
+          path: gameplay-report-${{ matrix.shard }}.html
           archive: false
           retention-days: 14
       # The failing pictures themselves (the new one, and baseline | new | differences).
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: gameplay-pictures
+          name: gameplay-pictures-${{ matrix.shard }}
           path: build/gameplay/
           if-no-files-found: ignore
           retention-days: 14

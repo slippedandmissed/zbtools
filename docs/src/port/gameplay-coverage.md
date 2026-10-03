@@ -98,15 +98,15 @@ So **four puzzles (Allergic Cliffs, Stone Cold Caves and Pizza Pass of group 1, 
 | Branch | What to cover |
 | --- | --- |
 | Group 2 versus group 3 | Shelter Rock's two set-out buttons; both end at Shade Tree (5) with different bits (`+0x52` low nibble versus `<< 4`); the camp's hotspot opens after either |
-| Levels rising | the perfect-clear rule (`perfect-clears` covers group 1 at Pizza Pass): the same for groups 2-4, a trip that loses a Zoombini counting for nothing, level 4 not rising, the town's monument recorded by group and level |
+| Levels rising | the perfect-clear rule: group 1 at Pizza Pass (`perfect-clears`, state forced), groups 2 and 3 through the real exits of Stone Rise and Mudball Wall with their oracles (`perfect-clears-group-2`, `perfect-clears-group-3`: three flawless trips raise the level, and the first records the group at its level for Zoombiniville). Still to cover: group 4 (needs Bubblewonder Abyss), level 4 not rising |
 | The camps | not enough chosen (the three remarks), set out with enough; picking a Zoombini up and dropping it (`camp-drag`); scrolling; Shade Tree's book; the population cap's remarks |
 | The isle | making Zoombinis (`isle-make-party-and-send` makes 16), rename, random, remake from the queue, population full |
-| Hidden scenes | the cheat codes (typed by hash: the debug command `cheatcode HASH CODE`) from the map to 19 and 20, playing each to its score; how scene 21 is entered |
-| Practice mode | every puzzle reachable at a chosen level and party size, leaving returns to the map, nothing saved (bits and records unchanged) |
+| Hidden scenes | the ships and shots of the targets game (`hidden-targets-controls`) and the exits of both (`transition-hidden-games-leave`). Still to cover: the cheat codes (typed by hash: the debug command `cheatcode HASH CODE`) from the map, a score in either game, how scene 21 is entered |
+| Practice mode | `transition-practice-mode` (the map, a locked camp, leaving) and `practice-puzzle-played-through` (a whole puzzle with 16 practice Zoombinis at level 3; leaving returns to the map still in practice with the bits, level and clears untouched) |
 | The town | monuments (`town-monuments`), the clock, settling the party (`settleTravellers`), scrolling the six screens, a full town (625) |
-| Saved games | save in each kind of scene, load (Ctrl-L), resume at start (`sceneToReturnTo`: the saved scene, or the isle if it was in a puzzle with no party), new game (Ctrl-N) |
+| Saved games | `saved-game-round-trip` (save by name from the camp, change the state, load it back from the town), the resumes at start (`transition-intro-resumes-*`), `new-game-resets` and `new-game-cancelled` (Ctrl-N). Still to cover: saving in the other kinds of scene, a game with several saves, the replace and too-many-games prompts. **A `level` debug command right after a save hangs the headless build** (found while writing these; it is the command, not a player action), so the cases change state with `state set` instead |
 | Losing Zoombinis | a party that dwindles to nothing mid-group: what the game does next (to confirm) |
-| Dialogs | keep/lose party (covered), save/load/new/quit, options toggles (covered: music) |
+| Dialogs | keep/lose party, save, load, new game, quit (`dialog-quit-prompt`: only the prompt, since both answers leave the game) and the options toggle are covered |
 | Journeys | every route (`journeyRoute` 1-16), clicking to skip, `transitionsOn`/`skipJourneyMap` |
 
 ## Order of work

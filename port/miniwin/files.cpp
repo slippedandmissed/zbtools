@@ -9,6 +9,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
+#ifdef __EMSCRIPTEN__
+#include <unistd.h>
+#endif
 #include <string.h>
 
 #include <filesystem>
@@ -325,7 +328,22 @@ BOOL WriteFile(HANDLE handle, LPCVOID buffer, DWORD size, LPDWORD written, LPOVE
         *written = 0;
     if (!file)
         return FALSE;
+#ifdef __EMSCRIPTEN__
+    /* Under Node on Linux, fwrite on the async worker's fiber sometimes never returns (it spins
+       in musl's __stdio_write, writing nothing; whether it does depends on where the heap put
+       the FILE), which hung practice mode's first save of its temporary roster. Writing the
+       same bytes with write(2) doesn't. The cause isn't known. */
+    fflush(file->file);
+    size_t count = 0;
+    while (count < size) {
+        ssize_t n = ::write(fileno(file->file), (const char *)buffer + count, size - count);
+        if (n <= 0)
+            break;
+        count += (size_t)n;
+    }
+#else
     size_t count = fwrite(buffer, 1, size, file->file);
+#endif
     file->written = true;
     if (written)
         *written = (DWORD)count;
