@@ -171,12 +171,30 @@ A puzzle is won by working out a hidden rule, which a recorded list of moves can
 | `stone seat right\|wrong` | drags the next Zoombini of the arrangement onto its cell (in cell order); `wrong` drags a free Zoombini onto a free cell beside a seated one it shares no feature with (so the stone stays dark) |
 | `stone send right [N]` | N times (every cell): `stone seat right` |
 
-Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved); `ferrySeated` (Zoombinis seated on the ferry), `ferryIdle` (nothing walking back, sailing or arriving); `toadsAvailable` (toads that could cross from a free row now), `toadsOnBoard` (toads set down and not yet back, hopping included); `stoneLit` (the Zoombinis on lit cells).
+| `fleens` | Fleens! (scene 13): which Zoombinis have one of the three picked fleens (the ones that stand apart) |
+| `fleens pick right\|wrong` | drops the next Zoombini whose fleen was picked (or wasn't) on the place in front of the fleens |
+| `fleens send right\|wrong [N]` | N times (three): waits until the scene is at rest (`fleensIdle`), then `fleens pick` |
+
+| `hotel` | Hotel Dimensia (scene 14): what the rooms sort by, and for each waiting Zoombini the places it fits |
+| `hotel intro` | while the guide's introduction is on (`talkerStarted`), clicks to skip it |
+| `hotel place right\|wrong` | drops the first waiting Zoombini on the first place it fits (or doesn't). Levels 1 and 2 plan which column and row each feature value takes, so that no needed room is one of those boarded up; level 3 does the same for rows, layers and columns, over the rooms that can be dropped on |
+| `hotel fill` | until every Zoombini is in a room: waits for the scene to be at rest (`hotelIdle`), then `hotel place right`, trying again if the game didn't take a drop; gives up with an error after 120 tries |
+| `hotel send right\|wrong [N]` | N times, when the scene is at rest, `hotel place` |
+| `hotel reach` | the places a Zoombini can be dropped on |
+
+| `mud dump` | Mudball Wall (scene 15): the groups' sizes and which tiles of the wall have Zoombinis behind them (`placeGroups`: the count, -1 once found or missed) |
+| `mud shoot right\|wrong [TILE]` | sets the shape and colour codes (a third, at levels 3 and 4, with the layer) that `findCodeEntry` maps to a tile that has Zoombinis behind it (or to one with none), spacing the clicks (one is ignored while the last code is being shown), and fires; `TILE` names the tile to try |
+| `mud fill` | until no tile has Zoombinis behind it: waits until the machine is ready (`mudIdle`), then `mud shoot right` |
+| `mud send right\|wrong [N]` | N times, when the machine is ready, a shot |
+
+Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved); `ferrySeated` (Zoombinis seated on the ferry), `ferryIdle` (nothing walking back, sailing or arriving); `toadsAvailable` (toads that could cross from a free row now), `toadsOnBoard` (toads set down and not yet back, hopping included); `stoneLit` (the Zoombinis on lit cells); `fleensIdle` (nothing walking up or being put down); `hotelIdle` (the hotel takes a drop: the introduction is over and nothing is arriving, being turned away or being reset); `mudIdle` (the machine takes a shot: nothing flying, crossing or being said, and shots are left).
 
 ```sh
 level 1 2; party 16; scene 7; wait 6000
 cliffs send right 16; wait until cliffsAcross == 16
 assert sentBackCount 0; click 618 458; wait scene 8
 ```
+
+An oracle that drags a Zoombini grabs it at a point where the game itself finds that Zoombini (`viewAt`), since in a crowd the middle of its picture can be under another Zoombini's (`drag zoombini N ...` grabs the middle, and put the wrong Zoombini down with a party of 16 in Fleens). It also lets the Zoombini go where the game takes the intended *place*: a drop takes the first free place, in order, within `placeSnapRadius` of the feet, and where places overlap (the hotel's 3D rooms) the place's own point may belong to a lower-numbered one, so some places can't be dropped on at all.
 
 The other puzzles get theirs as their cases are written (see the [coverage map](gameplay-coverage.md)).
