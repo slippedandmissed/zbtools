@@ -10,6 +10,7 @@
 #include "fleens.h"
 #include "hotel.h"
 #include "net.h"
+#include "roster.h"
 #include "snoids.h"
 #include "view.h"
 #include "oracles.h"
@@ -1620,6 +1621,116 @@ bool mudCommand(const std::vector<std::string> &w, OracleResult *result)
     return true;
 }
 
+
+/* ---- The Lion's Lair (scene 16) --------------------------------------------------------------------
+ *
+ * The Zoombinis are put on the lion's golden stones (places 1-20; the first few are taken for the party being
+ * short of 20). Each stone wants particular values of the roster's one or two features (cavePlaceValues);
+ * a Zoombini put on a free stone that wants its values stays and cheers, one put elsewhere walks to such a
+ * stone (pickCave). The oracle puts each Zoombini on a stone that wants it.
+ */
+
+bool lionOpen_()
+{
+    return currentScene == 16;
+}
+
+/* The values (first, second) of the roster's features that a Zoombini has among the values asked about. */
+void lionValuesOf(Snoid *snoid, int *first, int *second)
+{
+    *first = *second = 0;
+    for (int i = 0; i < caveValueCount; i++)
+        if (snoid->features[caveFeatures[0]] == caveValues[0][i])
+            *first = caveValues[0][i];
+    for (int i = 0; i < caveValueCount; i++)
+        if (snoid->features[caveFeatures[1]] == caveValues[1][i])
+            *second = caveValues[1][i];
+}
+
+/* Whether stone `place` (from 1) is free and wants the Zoombini (as pickCave tests the one it was put on). */
+bool lionWants(Snoid *snoid, int place)
+{
+    int first, second;
+
+    lionValuesOf(snoid, &first, &second);
+    if (place < firstCave || place > 20 || spotSnoids[place] || first != cavePlaceValues[0][place])
+        return false;
+    return caveFeatureCount <= 1 || second == cavePlaceValues[1][place];
+}
+
+bool lionPlaced(View *view)
+{
+    for (int i = 1; i < 21; i++)
+        if (spotSnoids[i] == view->id)
+            return true;
+    return false;
+}
+
+bool lionAtRest()
+{
+    return !cavesBusy && snoidsOnTheirWay <= 0 && !walkDue && !walkOnDue && !allPlaced;
+}
+
+bool lionCommand(const std::vector<std::string> &w, OracleResult *result)
+{
+    if (!lionOpen_()) {
+        result->error = "lion: the Lion's Lair (scene 16) isn't open";
+        return true;
+    }
+    std::vector<View *> views = zbDebugZoombiniViews();
+
+    if (w.size() == 1) {
+        /* `lion`: the stones each waiting Zoombini fits */
+        for (size_t z = 0; z < views.size(); z++) {
+            std::string stones;
+
+            for (int place = 1; place < 21; place++)
+                if (lionWants(viewSnoid(views[z]), place))
+                    stones += " " + std::to_string(place);
+            result->said.push_back("zoombini " + std::to_string(z) + (lionPlaced(views[z]) ? " is on a stone" : " fits stones" + stones));
+        }
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "place" && (w[2] == "right" || w[2] == "wrong")) {
+        /* `lion place right|wrong`: the first Zoombini not on a stone, to a stone that wants it (or one that doesn't) */
+        bool right = w[2] == "right";
+
+        for (size_t z = 0; z < views.size(); z++) {
+            if (lionPlaced(views[z]))
+                continue;
+            for (int place = firstCave; place < 21; place++) {
+                if (spotSnoids[place] || lionWants(viewSnoid(views[z]), place) != right)
+                    continue;
+                std::string drag = dragZoombiniToPlace(views[z], place);
+
+                if (drag.empty())
+                    continue;
+                result->commands.push_back(drag);
+                result->commands.push_back("wait 1000"); /* (the game takes the drop a moment after the release) */
+                result->said.push_back("lion: zoombini " + std::to_string(z) + " to stone " + std::to_string(place) + " ("
+                                       + w[2] + ")");
+                return true;
+            }
+            result->error = "lion place " + w[2] + ": zoombini " + std::to_string(z) + " has no such stone";
+            return true;
+        }
+        result->error = "lion place: every Zoombini is on a stone";
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "send" && (w[2] == "right" || w[2] == "wrong")) {
+        /* `lion send right|wrong [N]`: N times (every Zoombini), when nothing is walking, the next one */
+        int count = w.size() >= 4 ? atoi(w[3].c_str()) : (int)views.size();
+
+        for (int i = 0; i < count; i++) {
+            result->commands.push_back("wait until lionIdle == 1");
+            result->commands.push_back("lion place " + w[2]);
+        }
+        return true;
+    }
+    result->error = "lion: expected `lion`, `lion place right|wrong` or `lion send right|wrong [N]`";
+    return true;
+}
+
 } /* namespace */
 
 bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
@@ -1642,6 +1753,8 @@ bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
         return hotelCommand(w, result);
     if (!w.empty() && w[0] == "mud")
         return mudCommand(w, result);
+    if (!w.empty() && w[0] == "lion")
+        return lionCommand(w, result);
     return false;
 }
 
@@ -1730,6 +1843,10 @@ bool zbOracleValue(const std::string &name, long *value)
                          && !groupToCross && !netTriesOver
                      ? 1
                      : 0; /* the machine takes a shot: nothing flying, crossing or being said */
+        return true;
+    }
+    if (name == "lionIdle") {
+        *value = lionOpen_() && lionAtRest() ? 1 : 0;
         return true;
     }
     return false;
