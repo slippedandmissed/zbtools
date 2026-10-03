@@ -5,12 +5,13 @@ request pipeline); what is checked here needs nothing: the comparison, the repor
 cases and the baselines in tests/gameplay/ agree.
 """
 
+import subprocess
 from pathlib import Path
 
 import pytest
 from PIL import Image, ImageDraw
 
-from zbtools import gameplay
+from zbtools import gameplay, port, shots
 
 SCREEN = (640, 480)
 
@@ -241,3 +242,18 @@ def test_progress_says_what_starts_finishes_and_is_still_running(
     assert "[1/2  00:00] ok      quick" in out
     progress.heartbeat()
     assert "1/2 done, running: slow" in capsys.readouterr().out
+
+
+def test_a_game_that_hangs_fails_its_case_with_what_it_printed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    def hang(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        raise subprocess.TimeoutExpired(command, 5, output=b"[zbdebug] scene = 7\n")
+
+    monkeypatch.setattr(subprocess, "run", hang)
+    monkeypatch.setattr(port, "lay_out_drives", lambda c: c)
+    setup = shots.Setup(Path("node"), Path("zoombinis.js"), tmp_path, tmp_path)
+    played = gameplay.play("stuck", case("scene 7; assert scene 7"), setup)
+    assert "hung" in played.problem
+    assert "scene = 7" in played.output
+    assert played.pictures == {}

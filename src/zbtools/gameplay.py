@@ -257,21 +257,35 @@ class Play(NamedTuple):
 _NOISE = ("miniwin: GetProcAddress", "mCreateFile", "miniwin: CreateFile")
 
 
+def _text(captured: str | bytes | None) -> str:
+    """What a timed-out process had printed so far (the exception holds bytes or text)."""
+    if captured is None:
+        return ""
+    return captured if isinstance(captured, str) else captured.decode(errors="replace")
+
+
 def play(name: str, case: Case, setup: shots.Setup) -> Play:
     """Runs one case on a fresh C: drive; its pictures, or what went wrong."""
     with tempfile.TemporaryDirectory(prefix=f"gameplay-{name}-") as work:
         c = port.lay_out_drives(c=Path(work) / "c")
         recipe = shots.Recipe(commands=case.script, seconds=case.seconds)
-        run = subprocess.run(
-            shots.game_command(setup, c, recipe, Path(work) / "screen.bmp"),
-            capture_output=True,
-            text=True,
-            timeout=case.seconds + 60,
-            check=False,
-        )
-        lines = [
-            line for line in (run.stdout + run.stderr).splitlines() if not line.startswith(_NOISE)
-        ]
+        limit = case.seconds + 60
+        try:
+            run = subprocess.run(
+                shots.game_command(setup, c, recipe, Path(work) / "screen.bmp"),
+                capture_output=True,
+                text=True,
+                timeout=limit,
+                check=False,
+            )
+            printed = run.stdout + run.stderr
+        except subprocess.TimeoutExpired as hung:
+            # (The game quits itself after `seconds`; one still there a minute later is stuck where
+            # it never returns to its frame, such as a modal box nobody can answer.)
+            lines = (_text(hung.stdout) + _text(hung.stderr)).splitlines()
+            output = "\n".join(line for line in lines if not line.startswith(_NOISE))[-6000:]
+            return Play({}, f"the game hung (still running {limit:g} s after it started)", output)
+        lines = [line for line in printed.splitlines() if not line.startswith(_NOISE)]
         output = "\n".join(lines[-60:])
         errors = [
             line
