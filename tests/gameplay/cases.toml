@@ -427,6 +427,42 @@ commands = "level 3 2; party 8; scene 14; wait 3000; hotel send right 1; hotel s
 seconds = 170
 
 
+# --- Mudball Wall, played with the `mud` oracle: it reads which tile each group of Zoombinis stands behind and sets the
+# shape and colour codes that name that tile.
+
+[mudball-win-level-1]
+description = "Mudball Wall at group 3's level 1: a mudball is fired at the tile each group of the eight Zoombinis stands behind, all eight cross, and the go button leaves for Shade Tree with them and group 3's bit for the level set"
+commands = "level 3 1; party 8; scene 15; wait 9000; assert netLevel 0; mud fill; wait until snoidsFound == 8; wait until netGoAllowed == 1; wait 4000; assert allAcross 1; click 620 460; wait scene 2; assert journeyFrom 15; assert journeyTo 5; wait scene 5; assert scene 5; assert zoombinis 8; assert state:0x52 16"
+seconds = 170
+
+[mudball-win-level-2]
+description = "Mudball Wall at group 3's level 2: a mudball is fired at the tile each group of the eight Zoombinis stands behind, all eight cross, and the go button leaves for Shade Tree with them and group 3's bit for the level set"
+commands = "level 3 2; party 8; scene 15; wait 9000; assert netLevel 1; mud fill; wait until snoidsFound == 8; wait until netGoAllowed == 1; wait 4000; assert allAcross 1; screenshot across; click 620 460; wait scene 2; assert journeyFrom 15; assert journeyTo 5; wait scene 5; assert scene 5; assert zoombinis 8; assert state:0x52 32"
+seconds = 170
+# the Zoombinis fidget
+tolerance = 0.03
+
+[mudball-win-level-3]
+description = "Mudball Wall at group 3's level 3: a mudball is fired at the tile each group of the eight Zoombinis stands behind, all eight cross, and the go button leaves for Shade Tree with them and group 3's bit for the level set"
+commands = "level 3 3; party 8; scene 15; wait 9000; assert netLevel 2; mud fill; wait until snoidsFound == 8; wait until netGoAllowed == 1; wait 4000; assert allAcross 1; click 620 460; wait scene 2; assert journeyFrom 15; assert journeyTo 5; wait scene 5; assert scene 5; assert zoombinis 8; assert state:0x52 64"
+seconds = 170
+
+[mudball-win-level-4]
+description = "Mudball Wall at group 3's level 4: a mudball is fired at the tile each group of the eight Zoombinis stands behind, all eight cross, and the go button leaves for Shade Tree with them and group 3's bit for the level set"
+commands = "level 3 4; party 8; scene 15; wait 9000; assert netLevel 3; mud fill; wait until snoidsFound == 8; wait until netGoAllowed == 1; wait 4000; assert allAcross 1; click 620 460; wait scene 2; assert journeyFrom 15; assert journeyTo 5; wait scene 5; assert scene 5; assert zoombinis 8; assert state:0x52 128"
+seconds = 170
+
+[mudball-miss-costs-a-shot]
+description = "A mudball fired at a tile nobody stands behind finds no one and uses one of the shots (eleven with four groups); then the right tiles still take everyone across"
+commands = "level 3 1; party 8; scene 15; wait 9000; assert revealSteps 11; mud send wrong 1; wait until mudIdle == 1; assert snoidsFound 0; assert revealSteps 10; mud fill; wait until snoidsFound == 8; wait until netGoAllowed == 1"
+seconds = 170
+
+[mudball-out-of-shots]
+description = "Out of shots (the count is set to one, after one right shot, to avoid eleven real misses) the machine takes no more: the two Zoombinis that crossed leave and the rest don't (what the code does; to confirm against the original)"
+commands = "level 3 1; party 8; scene 15; wait 9000; mud send right 1; wait until snoidsFound == 2; wait until mudIdle == 1; set revealSteps 1; mud send wrong 2; wait until netTriesOver == 1; wait 15000; assert snoidsFound 2; assert netGoAllowed 1; click 620 460; wait scene 2; wait scene 5; assert scene 5; assert zoombinis 2; assert state:0x52 16"
+seconds = 170
+
+
 [hotel-rooms]
 description = "Zoombinis are sent into rooms of the hotel"
 commands = "level 3 3; party 8; scene 14; wait 8000; drag zoombini 0 place 3; wait 1500; screenshot first-room; drag zoombini 1 place 8; wait 1500; drag zoombini 2 place 13; wait 2500; screenshot three-rooms"

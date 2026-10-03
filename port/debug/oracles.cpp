@@ -9,6 +9,7 @@
 #include "slides.h"
 #include "fleens.h"
 #include "hotel.h"
+#include "net.h"
 #include "snoids.h"
 #include "view.h"
 #include "oracles.h"
@@ -1491,6 +1492,134 @@ bool hotelCommand(const std::vector<std::string> &w, OracleResult *result)
     return true;
 }
 
+
+/* ---- Mudball Wall (scene 15) -----------------------------------------------------------------------
+ *
+ * A wall of tiles (5 by 5, or 5 by 5 by 5 from level 2) with the Zoombinis in groups (netGroups: their sizes)
+ * standing behind particular tiles (placeGroups). The player sets two (or three) codes with the shape and
+ * colour buttons and fires at the wall (button 3); the tile the codes name (findCodeEntry) is hit, and a group
+ * behind it crosses. The oracle works out the codes for a tile from the tables (codeColumns, codeRows,
+ * codeLayers) the way findCodeEntry reads them.
+ */
+
+bool mudOpen_()
+{
+    return currentScene == 15;
+}
+
+/* The centre of a button of the scene (1-18). */
+std::string mudButtonPoint(int button)
+{
+    const ShortRect &rect = netButtons[button - 1].rect;
+
+    return std::to_string((rect.left + rect.right) / 2) + " " + std::to_string((rect.top + rect.bottom) / 2);
+}
+
+int mudEntries()
+{
+    return netLevel < 2 ? 25 : 125;
+}
+
+bool mudCommand(const std::vector<std::string> &w, OracleResult *result)
+{
+    if (!mudOpen_()) {
+        result->error = "mud: Mudball Wall (scene 15) isn't open";
+        return true;
+    }
+    if (w.size() == 2 && w[1] == "dump") {
+        result->said.push_back("level " + std::to_string(netLevel) + ", groups " + std::to_string(netGroupCount) + ", order "
+                               + std::to_string(codeOrder1) + "/" + std::to_string(codeOrderHigh));
+        for (int g = 0; g < netGroupCount; g++)
+            result->said.push_back("group " + std::to_string(g) + " has " + std::to_string(netGroups[g]));
+        for (int e = 0; e < mudEntries(); e++)
+            if (placeGroups[e])
+                result->said.push_back("entry " + std::to_string(e) + " holds group " + std::to_string(placeGroups[e]));
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "shoot" && (w[2] == "right" || w[2] == "wrong")) {
+        /* `mud shoot right|wrong`: sets the codes for a tile a group stands behind (or for an empty tile) and fires */
+        int target = -1;
+        bool right = w[2] == "right";
+
+        if (w.size() >= 4) /* (`mud shoot right N`: that tile, for trying) */
+            target = atoi(w[3].c_str());
+        for (int e = 0; e < mudEntries() && target < 0; e++)
+            if ((placeGroups[e] > 0) == right)
+                target = e;
+        if (target < 0) {
+            result->error = "mud shoot " + w[2] + ": no such tile";
+            return true;
+        }
+        int col = codeColumns[target], row = codeRows[target], layer = netLevel >= 2 ? codeLayers[target] : 0;
+        int c1 = -1, c2, c3; /* the codes the buttons set: the order says which of column, row and layer each is */
+
+        if (netLevel < 2) {
+            c3 = codeOrder1 == 2 ? col : row;
+            c2 = codeOrder1 == 2 ? row : col;
+        } else {
+            switch (codeOrderHigh) {
+            case 0: c3 = col; c2 = row; c1 = layer; break;
+            case 1: c3 = row; c2 = col; c1 = layer; break;
+            case 2: c3 = row; c2 = layer; c1 = col; break;
+            case 3: c3 = col; c2 = layer; c1 = row; break;
+            case 4: c3 = layer; c2 = col; c1 = row; break;
+            default: c3 = layer; c2 = row; c1 = col; break;
+            }
+        }
+        if (c1 >= 0) {
+            result->commands.push_back("click " + mudButtonPoint(4 + c1));
+            result->commands.push_back("wait 800"); /* (a click is ignored while the last code is still being shown) */
+        }
+        result->commands.push_back("click " + mudButtonPoint(9 + c2));
+        result->commands.push_back("wait 800");
+        result->commands.push_back("click " + mudButtonPoint(14 + c3));
+        result->commands.push_back("wait 800");
+        result->commands.push_back("click " + mudButtonPoint(3)); /* (fire) */
+        result->commands.push_back("wait 800");
+        result->said.push_back("mud: fired at tile " + std::to_string(target) + " (" + w[2] + "), codes " + (c1 >= 0 ? std::to_string(c1) + " " : "")
+                               + std::to_string(c2) + " " + std::to_string(c3));
+        return true;
+    }
+    if (w.size() == 2 && w[1] == "fill") {
+        /* `mud fill`: until no tile has Zoombinis behind it, when the machine is ready (a shot's tile is only
+           marked once it has landed), a shot at one */
+        result->commands.push_back("wait until mudIdle == 1");
+        result->commands.push_back("mud fill now");
+        return true;
+    }
+    if (w.size() == 3 && w[1] == "fill" && w[2] == "now") {
+        bool left = false;
+        static int tries = 0;
+
+        for (int e = 0; e < mudEntries(); e++)
+            left = left || placeGroups[e] > 0;
+        if (left && ++tries > 60) {
+            tries = 0;
+            result->error = "mud fill: gave up after 60 shots";
+            return true;
+        }
+        if (!left) {
+            tries = 0;
+            return true;
+        }
+        result->commands.push_back("mud shoot right");
+        result->commands.push_back("mud fill");
+        return true;
+    }
+    if (w.size() >= 3 && w[1] == "send" && (w[2] == "right" || w[2] == "wrong")) {
+        /* `mud send right|wrong [N]`: N times, when the machine is ready, a shot */
+        int count = w.size() >= 4 ? atoi(w[3].c_str()) : 1;
+
+        for (int i = 0; i < count; i++) {
+            result->commands.push_back("wait until mudIdle == 1");
+            result->commands.push_back("mud shoot " + w[2]);
+        }
+        return true;
+    }
+    result->error = "mud: expected `mud dump`, `mud shoot right|wrong` or `mud send right|wrong [N]`";
+    return true;
+}
+
 } /* namespace */
 
 bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
@@ -1511,6 +1640,8 @@ bool zbOracleCommand(const std::vector<std::string> &w, OracleResult *result)
         return fleensCommand(w, result);
     if (!w.empty() && w[0] == "hotel")
         return hotelCommand(w, result);
+    if (!w.empty() && w[0] == "mud")
+        return mudCommand(w, result);
     return false;
 }
 
@@ -1591,6 +1722,14 @@ bool zbOracleValue(const std::string &name, long *value)
     }
     if (name == "hotelIdle") {
         *value = hotelOpen_() && hotelAtRest() ? 1 : 0;
+        return true;
+    }
+    if (name == "mudIdle") {
+        *value = mudOpen_() && !codesLocked && !promptHeld && !promptHeld2 && !markerGroup && !markerStep1Group && !markerStep2Group
+                         && !markerStep3Group && !markerStep4Group && !markerStep5Group && !crossDue && !standingGroup && !stepGroup
+                         && !groupToCross && !netTriesOver
+                     ? 1
+                     : 0; /* the machine takes a shot: nothing flying, crossing or being said */
         return true;
     }
     return false;

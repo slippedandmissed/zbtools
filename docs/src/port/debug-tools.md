@@ -182,7 +182,12 @@ A puzzle is won by working out a hidden rule, which a recorded list of moves can
 | `hotel send right\|wrong [N]` | N times, when the scene is at rest, `hotel place` |
 | `hotel reach` | the places a Zoombini can be dropped on |
 
-Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved); `ferrySeated` (Zoombinis seated on the ferry), `ferryIdle` (nothing walking back, sailing or arriving); `toadsAvailable` (toads that could cross from a free row now), `toadsOnBoard` (toads set down and not yet back, hopping included); `stoneLit` (the Zoombinis on lit cells); `fleensIdle` (nothing walking up or being put down); `hotelIdle` (the hotel takes a drop: the introduction is over and nothing is arriving, being turned away or being reset).
+| `mud dump` | Mudball Wall (scene 15): the groups' sizes and which tiles of the wall have Zoombinis behind them (`placeGroups`: the count, -1 once found or missed) |
+| `mud shoot right\|wrong [TILE]` | sets the shape and colour codes (a third, at levels 3 and 4, with the layer) that `findCodeEntry` maps to a tile that has Zoombinis behind it (or to one with none), spacing the clicks (one is ignored while the last code is being shown), and fires; `TILE` names the tile to try |
+| `mud fill` | until no tile has Zoombinis behind it: waits until the machine is ready (`mudIdle`), then `mud shoot right` |
+| `mud send right\|wrong [N]` | N times, when the machine is ready, a shot |
+
+Values: `cliffsAcross` (the Zoombinis that have crossed), `cliffsWaiting` (those standing among the waiting ones); `tunnelsIn` (let in), `tunnelsWaiting`, `tunnelsQueued` (entries the guards have yet to deal with); `pizzaReady` (a pizza can be served: the next Zoombini has come up with it and nothing is animating, or the puzzle is solved); `ferrySeated` (Zoombinis seated on the ferry), `ferryIdle` (nothing walking back, sailing or arriving); `toadsAvailable` (toads that could cross from a free row now), `toadsOnBoard` (toads set down and not yet back, hopping included); `stoneLit` (the Zoombinis on lit cells); `fleensIdle` (nothing walking up or being put down); `hotelIdle` (the hotel takes a drop: the introduction is over and nothing is arriving, being turned away or being reset); `mudIdle` (the machine takes a shot: nothing flying, crossing or being said, and shots are left).
 
 ```sh
 level 1 2; party 16; scene 7; wait 6000
