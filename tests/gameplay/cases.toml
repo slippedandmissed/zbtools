@@ -473,6 +473,37 @@ description = "A shape and a colour are picked for the code machine"
 commands = "party 8; scene 15; wait 7000; click 540 415; wait 600; click 490 440; wait 600; click 565 415; wait 1500; screenshot code-set"
 seed = 3
 
+# --- The Lion's Lair, played with the `lion` oracle: it puts each Zoombini on a stone that wants its values of the
+# roster's features (the stones the lion has to spare, not the first few taken for a short party).
+
+[lion-win-level-1]
+description = "The Lion's Lair at group 4's level 1: all 16 Zoombinis are put on stones that want them (each stays and cheers), and the go button leaves for the Mirror Machine with all of them"
+commands = "level 4 1; party 16; scene 16; wait 7000; assert cavesLevel 1; lion send right; wait until cavesPlacedCount == 16; wait 4000; assert cavesGoReady 1; click 608 448; wait scene 2; assert journeyFrom 16; assert journeyTo 17; wait scene 17; assert scene 17; assert smokeLevel 1; assert zoombinis 16"
+seconds = 170
+
+[lion-win-level-2]
+description = "The Lion's Lair at group 4's level 2: all 8 Zoombinis are put on stones that want them (each stays and cheers), and the go button leaves for the Mirror Machine with all of them"
+commands = "level 4 2; party 8; scene 16; wait 7000; assert cavesLevel 2; lion send right; wait until cavesPlacedCount == 8; wait 4000; assert cavesGoReady 1; click 608 448; wait scene 2; assert journeyFrom 16; assert journeyTo 17; wait scene 17; assert scene 17; assert smokeLevel 2; assert zoombinis 8"
+seconds = 170
+
+[lion-win-level-3]
+description = "The Lion's Lair at group 4's level 3: all 8 Zoombinis are put on stones that want them (each stays and cheers), and the go button leaves for the Mirror Machine with all of them"
+commands = "level 4 3; party 8; scene 16; wait 7000; assert cavesLevel 3; lion send right; wait until cavesPlacedCount == 8; wait 4000; assert cavesGoReady 1; screenshot placed; click 608 448; wait scene 2; assert journeyFrom 16; assert journeyTo 17; wait scene 17; assert scene 17; assert smokeLevel 3; assert zoombinis 8"
+seconds = 170
+# the Zoombinis fidget
+tolerance = 0.03
+
+[lion-win-level-4]
+description = "The Lion's Lair at group 4's level 4: all 16 Zoombinis are put on stones that want them (each stays and cheers), and the go button leaves for the Mirror Machine with all of them"
+commands = "level 4 4; party 16; scene 16; wait 7000; assert cavesLevel 4; lion send right; wait until cavesPlacedCount == 16; wait 4000; assert cavesGoReady 1; click 608 448; wait scene 2; assert journeyFrom 16; assert journeyTo 17; wait scene 17; assert scene 17; assert smokeLevel 4; assert zoombinis 16"
+seconds = 170
+
+[lion-wrong-stone-walks-to-right-one]
+description = "A Zoombini put on a stone that doesn't want it walks to one that does (it still counts as placed); then the others are put on their stones"
+commands = "level 4 1; party 8; scene 16; wait 7000; lion send wrong 1; wait until lionIdle == 1; assert cavesPlacedCount 1; lion send right 7; wait until cavesPlacedCount == 8; assert cavesGoReady 1"
+seconds = 170
+
+
 [lion-places]
 description = "Zoombinis are put on the stones of the Lion's Lair"
 commands = "party 8; scene 16; wait 7000; drag zoombini 0 place 8; wait 1500; screenshot one; drag zoombini 1 place 11; wait 1500; drag zoombini 2 place 14; wait 1500; drag zoombini 3 place 17; wait 2000; screenshot four"
