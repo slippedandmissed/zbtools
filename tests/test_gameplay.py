@@ -196,8 +196,10 @@ def test_the_html_report_escapes_what_cases_say() -> None:
 
 
 def test_the_markdown_summary_lists_failures_and_says_where_the_pictures_are(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    for variable in ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_RUN_ID"):
+        monkeypatch.delenv(variable, raising=False)  # as outside a workflow run, as in CI
     ok = gameplay.Outcome("fine", case(), attempts=2)
     text = gameplay.render_summary([failing_outcome(tmp_path), ok], "compare", ["gone/old.png"])
     assert "0 of 2 cases passed" not in text  # `fine` passed
