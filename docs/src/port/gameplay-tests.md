@@ -77,11 +77,11 @@ Every run writes `build/gameplay/report.html`: **one self-contained file** (its 
 
 ## In the pull request pipeline
 
-The `gameplay` job in `.github/workflows/pr.yml` builds the headless port, runs `uv run gameplay` and fails the pull request if any case fails. What it leaves for a failed run:
+The `gameplay` jobs in `.github/workflows/pr.yml` (four shards, `gameplay (1/4)` to `gameplay (4/4)`, each building the headless port and playing every 4th case: `uv run gameplay --shard N/4`) run the cases and fail the pull request if any case fails. What it leaves for a failed run:
 
 - **The run's page** shows a summary of the failures (`--summary "$GITHUB_STEP_SUMMARY"`: a table of cases and what was wrong, as Markdown, which GitHub renders on the page itself, with a link to the artifacts). It carries no pictures: they are in the report.
-- **`gameplay-report.html`**, in the run's artifacts: the report, uploaded unzipped (`actions/upload-artifact` with `archive: false`, which names the artifact after its file), so it is one click to download (a login is needed) and opens straight in a browser. Whether GitHub shows an HTML artifact in its own page rather than downloading it is not something this relies on; showing the pictures in the page itself would need them hosted somewhere (a preview deployment of the report, say), which this does not set up.
-- **`gameplay-pictures`**: the failing pictures as files (zipped).
+- **`gameplay-report-N.html`**, in the run's artifacts: the report, uploaded unzipped (`actions/upload-artifact` with `archive: false`, which names the artifact after its file), so it is one click to download (a login is needed) and opens straight in a browser. Whether GitHub shows an HTML artifact in its own page rather than downloading it is not something this relies on; showing the pictures in the page itself would need them hosted somewhere (a preview deployment of the report, say), which this does not set up.
+- **`gameplay-pictures-N`**: the failing pictures as files (zipped).
 
 Locally the report is `build/gameplay/report.html`; open it in a browser.
 

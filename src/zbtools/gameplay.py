@@ -474,7 +474,11 @@ def render_summary(outcomes: list[Outcome], mode: str, stale: list[str]) -> str:
         lines += [
             f"| `{item}` | a baseline no case takes (`--rebaseline` removes it) |" for item in stale
         ]
-        where = f"[`gameplay-report.html`]({run_url()}#artifacts)" if run_url() else "`report.html`"
+        where = (
+            f"[the `gameplay-report-N.html` artifacts]({run_url()}#artifacts)"
+            if run_url()
+            else "`report.html`"
+        )
         lines += [
             "",
             "The baseline, the new picture and the differences of each failing picture are in"
@@ -573,6 +577,17 @@ def say(outcome: Outcome, rebaselined: tuple[int, int] | None, count: str = "") 
         print(f"{prefix}ok      {outcome.name}{tries}{seconds}")
 
 
+def pick_shard(names: list[str], shard: str | None) -> list[str]:
+    """The cases of shard `N/M` (1 to M): every Mth from the Nth, so that the long cases, which
+    come in runs (a puzzle's four levels), are spread over the shards. All of them without one."""
+    if shard is None:
+        return names
+    index, _, count = shard.partition("/")
+    if not (index.isdigit() and count.isdigit() and 1 <= int(index) <= int(count)):
+        raise typer.BadParameter(f"--shard is N/M with N from 1 to M, not {shard!r}")
+    return names[int(index) - 1 :: int(count)]
+
+
 def remove_stale(stale: list[tuple[str, str]]) -> None:
     """Deletes baselines no case takes, and the directories that leaves empty."""
     for case_name, picture_name in stale:
@@ -640,6 +655,12 @@ def main(  # noqa: PLR0917 (a CLI's options)
     output: Annotated[
         Path, typer.Option(help="Where the report and the failing pictures are written")
     ] = paths.GAMEPLAY_DIR,
+    shard: Annotated[
+        str | None,
+        typer.Option(
+            help="Play only shard N of M (N/M: every Mth case from the Nth), to split a run"
+        ),
+    ] = None,
     summary: Annotated[
         Path | None,
         typer.Option(
@@ -659,6 +680,7 @@ def main(  # noqa: PLR0917 (a CLI's options)
     unknown = [n for n in chosen if n not in cases]
     if unknown:
         raise typer.BadParameter(f"no case: {', '.join(unknown)}")
+    chosen = pick_shard(chosen, shard)
     # (when writing baselines any difference at all is a change to write, and nothing is retried)
     settings = Settings(
         prepare(output),
@@ -667,7 +689,11 @@ def main(  # noqa: PLR0917 (a CLI's options)
         0 if rebaseline_pictures else retries,
     )
     outcomes, written = play_all(chosen, cases, settings, jobs, output, rebaseline_pictures)
-    stale = sorted(baseline_files() - expected_baselines(cases)) if names is None else []
+    stale = (
+        sorted(baseline_files() - expected_baselines(cases))
+        if names is None and shard is None
+        else []
+    )
     stale_names = [f"{c}/{p}.png" for c, p in stale]
     mode = "rebaseline" if rebaseline_pictures else "compare"
     if rebaseline_pictures:

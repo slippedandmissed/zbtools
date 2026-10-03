@@ -9,6 +9,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+import typer
 from PIL import Image, ImageDraw
 
 from zbtools import gameplay, port, shots
@@ -224,7 +225,7 @@ def test_the_summary_links_to_the_workflow_run_when_there_is_one(
     monkeypatch.setenv("GITHUB_RUN_ID", "42")
     text = gameplay.render_summary([failing_outcome(tmp_path)], "compare", [])
     assert "(https://github.com/owner/repo/actions/runs/42#artifacts)" in text
-    assert "gameplay-report.html" in text
+    assert "gameplay-report-N.html" in text
 
 
 def test_progress_says_what_starts_finishes_and_is_still_running(
@@ -257,3 +258,17 @@ def test_a_game_that_hangs_fails_its_case_with_what_it_printed(
     assert "hung" in played.problem
     assert "scene = 7" in played.output
     assert played.pictures == {}
+
+
+def test_shards_split_the_cases_between_them() -> None:
+    names = [f"case-{i}" for i in range(7)]
+    parts = [gameplay.pick_shard(names, f"{n}/3") for n in (1, 2, 3)]
+    assert sorted(name for part in parts for name in part) == sorted(names)
+    assert parts[0] == ["case-0", "case-3", "case-6"]
+    assert gameplay.pick_shard(names, None) == names
+
+
+def test_a_bad_shard_is_refused() -> None:
+    for bad in ("0/3", "4/3", "x", "1/"):
+        with pytest.raises(typer.BadParameter):
+            gameplay.pick_shard(["a"], bad)
